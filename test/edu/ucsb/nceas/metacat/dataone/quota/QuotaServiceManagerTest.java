@@ -43,6 +43,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -510,8 +511,8 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         sid.setValue(sidStr);
         sysmeta.setSeriesId(sid);
         object.close();
-        HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
-        
+        //HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+        SystemMetadataManager.getInstance().store(sysmeta);
         //Check if we have enough portal quota space in the remote server
         List<Quota> quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
         int quotaId = 0;
@@ -760,8 +761,8 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         sid.setValue(sidStr);
         sysmeta.setSeriesId(sid);
         object.close();
-        HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
-        
+        //HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+        SystemMetadataManager.getInstance().store(sysmeta);
         //Check if we have enough portal quota space in the remote server
         List<Quota> quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
         int quotaId = 0;
@@ -1564,7 +1565,8 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             sid.setValue(sidStr);
             sysmeta.setSeriesId(sid);
             object.close();
-            HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+            //HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+            SystemMetadataManager.getInstance().store(sysmeta);
             QuotaServiceManager.getInstance().enforce(SUBSCRIBERWITHOUTENOUGHQUOTA, submitter, sysmeta, QuotaServiceManager.CREATEMETHOD);
             fail("Test can't get here since the user doesn't have enough quota");
         } catch (InsufficientResources e) {
@@ -1593,7 +1595,8 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             sid.setValue(sidStr);
             sysmeta.setSeriesId(sid);
             object.close();
-            HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+            //HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+            SystemMetadataManager.getInstance().store(sysmeta);
             QuotaServiceManager.getInstance().enforce(SUBSCRIBERWITHOUTENOUGHQUOTA, submitter, sysmeta, QuotaServiceManager.CREATEMETHOD);
             fail("Test can't get here since the user doesn't have enough quota");
         } catch (InsufficientResources e) {
@@ -1622,7 +1625,8 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             sid.setValue(sidStr);
             sysmeta.setSeriesId(sid);
             object.close();
-            HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+            //HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+            SystemMetadataManager.getInstance().store(sysmeta);
             QuotaServiceManager.getInstance().enforce(SUBSCRIBERWITHOUTENOUGHQUOTA, submitter, sysmeta, QuotaServiceManager.CREATEMETHOD);
             fail("Test can't get here since the user doesn't have enough quota");
         } catch (Exception e) {
