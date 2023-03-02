@@ -6,4 +6,5 @@ metadata:
   labels:
     {{- include "metacat.labels" . | nindent 4 }}
 data:
-{{ (tpl (.Files.Glob "config/*").AsConfig . ) | indent 4 }}
+  {{ (tpl (.Files.Glob "config/*").AsConfig . ) | indent 4 }}
+  

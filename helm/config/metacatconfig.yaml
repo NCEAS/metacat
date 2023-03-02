@@ -1,0 +1,11 @@
+ADMIN: admin@localhost
+ADMINPASS: admin
+HOST: metacat.example.com
+METACAT_APP_CONTEXT: metacat
+METACAT_VERSION: "2.18.0"
+PORT: "8080"
+POSTGRES_HOST: host.docker.internal
+POSTGRES_DB: metacat
+POSTGRES_USER: metacat
+POSTGRES_PASSWORD: metacat
+SOLR_HOST: host.docker.internal

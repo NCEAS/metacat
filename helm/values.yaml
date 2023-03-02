@@ -16,11 +16,11 @@ fullnameOverride: ""
 
 global:
     #TODO storageClass: csi-rbd-sc
-    solrPort: &global-solr-port 8983
+    #solrPort: &global-solr-port 8983
 
 serviceAccount:
   # Specifies whether a service account should be created
-  create: true
+  create: false
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
@@ -42,47 +42,29 @@ securityContext: {}
 
 service:
   type: LoadBalancer
-  port: 8080
+  ports:
+  - port: 8080
+    name: metacat-web
+  - port: 8009
+    name: apache-connect
+  - port: 5701
+    name: hazelcast
+  # - port: 5005
+  #   name: metacat-debug
 
 ingress:
   enabled: false
   className: ""
   annotations: {}
-  #   # kubernetes.io/ingress.class: nginx
-  #   # kubernetes.io/tls-acme: "true"
-  # hosts:
-  #   - host: chart-example.local
-  #     paths:
-  #       - path: /
-  #         pathType: ImplementationSpecific
-  #         backend:
-  #           service:
-  #             name: metacat-service
-  #             port:
-  #               number: *global-solr-port
   tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
+ 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  # resources, such as Minikube.
 
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  # targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
 nodeSelector: {}
 
@@ -90,51 +72,11 @@ tolerations: []
 
 affinity: {}
 
-# MB: do we need to share pv after indexer goes online?
-#persistence:
-#   claimName: d1index-metacat-pvc
-#   volumeName: d1index-metacat-pv
+# persistence:
+#   claimName: metacat-pvc
+#   volumeName: metacat-pv
 #   mountPath: /var/metacat
 
-persistence:
-  claimName: metacat-pvc
-  volumeName: metacat-pv
-  mountPath: /var/metacat
-
-# solr:
-#   collection: temp_collection
-#   customCollection: dataone_index
-#   coreNames:
-#     - dataone_core
-#   #javaMem: "-Xms512m -Xmx2g"
-#   hostname: d1index-solr-headless.d1index.svc
-#   service:
-#     ports:
-#         http: *global-solr-port
-#     nodePorts:
-#         http: *global-solr-port
-#   containerPorts:
-#     http: *global-solr-port
-#   auth:
-#     adminUsername: solradmin
-#     adminPassword: change-to-using-a-solr-secret
-#     #existingSecret: solr-secret
-#   persistence:
-#       storageClass: csi-rbd-sc
-#       size: 10Gi
-#   extraVolumes:
-#     - name: solr-config
-#       configMap:
-#         name: d1index-configfiles
-#         defaultMode: 0777
-#   extraVolumeMounts:
-#     - name: solr-config
-#       mountPath: /solrconfig
-#     - name: solr-config
-#       mountPath: /opt/bitnami/scripts/solr/entrypoint.sh
-#       subPath: entrypoint.sh
-  #initContainers:
-  #  - name: zk-ready
   #readinessProbe:
   #    enabled: false
   #customReadinessProbe:
@@ -144,10 +86,7 @@ persistence:
   #    successThreshold: 1
   #    timeoutSeconds: 15
   #    initialDelaySeconds: 60
-  #    timeoutSeconds: 15
   #    failureThreshold: 6
-  #    periodSeconds: 10
-  #    successThreshold: 1
   #    exec:
   #      command:
   #        - /bin/bash
@@ -159,16 +98,4 @@ persistence:
   #       exec:
           # #command: ["/bin/bash", "-c", "env > /tmp/lifecycle-env"]
           # command: ["/bin/bash", "-c", "/solrconfig/config-solr.sh"]
-  #sidecars:
-  #- name: solr-cfg-sidecar
-  #  image: ubuntu:22.04
-  #  imagePullPolicy: IfNotPresent
-  #  #command: ['bash', '-c', "/solrconfig/config-solr.sh"]
-  #  command: ['bash', '-c', "df -h && ls -l / && sleep 3600"]
-  #  volumeMounts:
-  #    - name: solr-config
-  #      mountPath: /solrconfig
-  #    - name: data
-  #      mountPath: /bitnami/solr
-  # containerSecurityContext:
-  #   runAsUser: 1000
+

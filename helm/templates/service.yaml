@@ -7,9 +7,6 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
+    {{- toYaml .Values.service.ports | nindent 4 }}
   selector:
     {{- include "metacat.selectorLabels" . | nindent 4 }}
