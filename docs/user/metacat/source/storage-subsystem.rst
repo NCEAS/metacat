@@ -646,7 +646,7 @@ The methods below will be included in the public API:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | store_sysmeta      | cid, sysmeta, pid            | string (s_cid)                   | In Progress (update_sysmeta adjustments)    |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| retrieve           | pid                          | list(sysmeta, io.BufferedIOBase) | Review Method & Tests                       |
+| retrieve_object    | pid                          | list(sysmeta, io.BufferedIOBase) | Review Method & Tests                       |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | retrieve_sysmeta   | pid                          | string (sysmeta)                 | Review Method & Tests                       |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
@@ -657,6 +657,8 @@ The proposed public methods below require further discussion to determine their 
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
 | delete             | pid                          |                                  | To Do - method exists in HashFS             |
++--------------------+------------------------------+----------------------------------+---------------------------------------------+
+| get_checksum       | pid, algorithm               | string (checksum)                | Discuss utility method                      |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
 The following methods are to be made private and/or removed:
