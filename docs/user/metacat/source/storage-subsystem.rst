@@ -644,11 +644,13 @@ The methods below will be included in the public API:
 +====================+==============================+==================================+=============================================+
 | store_object       | io.BufferedIOBase, checksums | array (list(alg, base64_cid))    | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| store_sysmeta      | cid, sysmeta, pid            | string (s_cid)                   | In Progress (update_sysmeta adjustments)    |
+| store_sysmeta      | cid, sysmeta, pid            | string (s_cid)                   | WIP                                         |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| retrieve_object    | pid                          | list(sysmeta, io.BufferedIOBase) | Review Method & Tests                       |
+| retrieve_object    | pid                          | list(sysmeta, io.BufferedIOBase) | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| retrieve_sysmeta   | pid                          | string (sysmeta)                 | Review Method & Tests                       |
+| retrieve_sysmeta   | pid                          | string (sysmeta)                 | Pending Review                              |
++--------------------+------------------------------+----------------------------------+---------------------------------------------+
+| delete             | pid                          |                                  | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
 The proposed public methods below require further discussion to determine their inclusion in the public API:
@@ -656,8 +658,6 @@ The proposed public methods below require further discussion to determine their 
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
-| delete             | pid                          |                                  | To Do - method exists in HashFS             |
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | get_checksum       | pid, algorithm               | string (checksum)                | Discuss utility method                      |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
