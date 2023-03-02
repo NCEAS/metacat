@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "metacat.fullname" . }}
+  labels:
+    {{- include "metacat.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "metacat.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "metacat.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "metacat.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+            - name: apache-connect
+              containerPort: 8009
+            - name: hazelcast
+              containerPort: 5701
+            - name: tomcat-debug
+              containerPort: 5005
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /etc/metacat/app.properties
+              subPath: app.properties
+              name: {{ .Release.Name }}-config-volume
+            - mountPath: {{ .Values.persistence.mountPath }}
+              name: {{ .Values.persistence.volumeName }}
+              readOnly: true
+          env:
+            - name: DEBUG
+              value: "{{ .Values.idxworker.debug }}"
+            - name: DATAONE_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: dataone-token
+                  key: DataONEauthToken
+                  # If 'false", the secret must exist before the pod can start
+                  # App versions before v2.3.4 will read this value from a config file, not the env var.
+                  optional: true
+      initContainers:
+        - name: init-solr
+          image: busybox:latest
+          command: ['sh', '-c', "until nc -z {{ .Values.solr.hostname}} {{ .Values.solr.service.ports.http }} > /dev/null; do echo waiting for Solr; sleep 5; done"]
+        - name: init-rabbitmq
+          image: busybox:latest
+          command: ['sh', '-c', "until nc -z {{ .Values.rabbitmq.hostname }} {{ .Values.rabbitmq.hostport}} > /dev/null; do echo waiting for RabbitMQ; sleep 2; done"]
+     {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ .Release.Name }}-config-volume
+          configMap:
+            name: {{ .Release.Name }}-configfiles
+            defaultMode: 0644
+        - name: {{ .Values.persistence.volumeName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.claimName }}
+            readOnly: true
