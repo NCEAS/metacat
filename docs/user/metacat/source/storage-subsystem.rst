@@ -642,15 +642,17 @@ The methods below will be included in the public API:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
-| store_object       | io.BufferedIOBase, checksums | array (list(alg, base64_cid))    | Pending Review                              |
+| store_object       | io.BufferedIOBase, checksums | array (list(alg, base64_cid))    | WIP                                         |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| store_sysmeta      | cid, sysmeta, pid            | string (s_cid)                   | WIP                                         |
+| store_sysmeta      | cid, sysmeta, pid            | string (s_cid)                   | In Review                                   |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | retrieve_object    | pid                          | list(sysmeta, io.BufferedIOBase) | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | retrieve_sysmeta   | pid                          | string (sysmeta)                 | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| delete             | pid                          |                                  | Pending Review                              |
+| delete_object      | pid                          |                                  | Pending Review                              |
++--------------------+------------------------------+----------------------------------+---------------------------------------------+
+| delete_sysmeta     | pid                          |                                  | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
 The proposed public methods below require further discussion to determine their inclusion in the public API:
