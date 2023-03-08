@@ -23,6 +23,7 @@
 package edu.ucsb.nceas.metacat.systemmetadata;
 
 import java.sql.SQLException;
+import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,6 +42,8 @@ public class SystemMetadataManager {
     private static Log logMetacat = LogFactory.getLog(SystemMetadataManager.class);
     
     private static SystemMetadataManager manager = null;
+    private final static int TIME_OUT = 3000;
+    private static Vector<String> lockedIds = new Vector<String>(); 
     
     /**
      * Private constructor
@@ -98,8 +101,23 @@ public class SystemMetadataManager {
         if (sysmeta != null) {
             Identifier pid = sysmeta.getIdentifier();
             if (pid != null && pid.getValue() != null & !pid.getValue().trim().equals("")) {
+                //Check if there is another thread is storing the system metadata for the same pid
+                //Event though the Vector class is thread-safe, we still need the synchronized keyword
+                // to make sure the lockedIds.contains and lockedIds.add methods can be accessed by one thread (atomic).
+                synchronized (lockedIds) {
+                    while (lockedIds.contains(pid.getValue())) {
+                        try {
+                            lockedIds.wait(TIME_OUT);
+                        } catch (InterruptedException e) {
+                            logMetacat.info("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue() + 
+                                             " the lock waiting was interrupted " + e.getMessage());
+                        }
+                    }
+                    lockedIds.add(pid.getValue());
+                }
+                //Try to write the system metadata into db and remove the pid from the vector and wake up the waiting threads. 
                 try {
-                    logMetacat.debug("SystemMetadataManager.store - storing System Metadata to store: " + pid.getValue());
+                    logMetacat.debug("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue());
                     IdentifierManager.getInstance().insertOrUpdateSystemMetadata(sysmeta);
                 } catch (McdbDocNotFoundException e) {
                     throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
@@ -107,6 +125,9 @@ public class SystemMetadataManager {
                     throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
                 } catch (InvalidSystemMetadata e) {
                     throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
+                } finally {
+                    lockedIds.remove(pid.getValue());
+                    lockedIds.notifyAll();
                 }
             }
         }

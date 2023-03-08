@@ -986,8 +986,6 @@
 		        </copy>
 		<copy file="lib/log4j2.properties" todir="${war.classes}"
 			filtering="yes" /> 
-		<copy file="lib/hazelcast.xml" todir="${war.webinf}"
-			filtering="yes" />
 		<!--<copy file="lib/oa4mp_client.xml" todir="${war.webinf}"
 			filtering="yes" /> -->
 		<copy todir="${war.context}" filtering="no">
