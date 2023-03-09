@@ -28,107 +28,39 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-      - name: {{ .Chart.Name }}
-        securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-        - containerPort: 8080
-          name: metacat-web
-        - containerPort: 8009
-          name: apache-connect
-        - containerPort: 5701
-          name: hazelcast
-        - containerPort: 5005
-          name: metacat-debug
-        livenessProbe:
-          httpGet:
-            path: /
-            port: metacat-web
-        readinessProbe:
-          httpGet:
-            path: /
-            port: metacat-web
-        resources:
-          {{- toYaml .Values.resources | nindent 12 }}
-        # volumeMounts:
-        #   - mountPath: /etc/metacat/app.properties
-        #     subPath: app.properties
-        #     name: { { .Release.Name } }-config-volume
-        #   - mountPath: { { .Values.persistence.mountPath } }
-        #     name: { { .Values.persistence.volumeName } }
-        #     readOnly: true
-        env:
-          - name: ADMIN
-            valueFrom:
-              configMapKeyRef:
-                key: ADMIN
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: metacat-web
+            - containerPort: 8009
+              name: apache-connect
+            - containerPort: 5701
+              name: hazelcast
+            - containerPort: 5005
+              name: metacat-debug
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          envFrom:
+            - configMapRef:
                 name: {{ .Release.Name }}-configfiles
-          - name: ADMINPASS
-            valueFrom:
-              configMapKeyRef:
-                key: ADMINPASS
-                name: {{ .Release.Name }}-configfiles
-          - name: HOST
-            valueFrom:
-              configMapKeyRef:
-                key: HOST
-                name: {{ .Release.Name }}-configfiles
-          - name: METACAT_APP_CONTEXT
-            valueFrom:
-              configMapKeyRef:
-                key: METACAT_APP_CONTEXT
-                name: {{ .Release.Name }}-configfiles
-          - name: METACAT_VERSION
-            valueFrom:
-              configMapKeyRef:
-                key: METACAT_VERSION
-                name: {{ .Release.Name }}-configfiles
-          - name: PORT
-            valueFrom:
-              configMapKeyRef:
-                key: PORT
-                name: {{ .Release.Name }}-configfiles
-          - name: POSTGRES_DB
-            valueFrom:
-              configMapKeyRef:
-                key: POSTGRES_DB
-                name: {{ .Release.Name }}-configfiles
-          - name: POSTGRES_HOST
-            valueFrom:
-              configMapKeyRef:
-                key: POSTGRES_HOST
-                name: {{ .Release.Name }}-configfiles
-          - name: POSTGRES_PASSWORD
-            valueFrom:
-              configMapKeyRef:
-                key: POSTGRES_PASSWORD
-                name: {{ .Release.Name }}-configfiles
-          - name: POSTGRES_USER
-            valueFrom:
-              configMapKeyRef:
-                key: POSTGRES_USER
-                name: {{ .Release.Name }}-configfiles
-          - name: SOLR_HOST
-            valueFrom:
-              configMapKeyRef:
-                key: SOLR_HOST
-                name: {{ .Release.Name }}-configfiles
-          # - name: DATAONE_AUTH_TOKEN
-          #   valueFrom:
-          #     secretKeyRef:
-          #       name: metacat-admin-pw
-          #       key: mcAdminPass
-          #       # If 'false", the secret must exist before the pod can start
-          #       # App versions before v2.3.4 will read this value from a config file, not the env var.
-          #       optional: true
-      # volumes:
-      #   - name: { { .Release.Name } }-config-volume
-      #     configMap:
-      #       name: { { .Release.Name } }-configfiles
-      #       defaultMode: 0644
-      #   - name: { { .Values.persistence.volumeName } }
-      #     persistentVolumeClaim:
-      #       claimName: { { .Values.persistence.claimName } }
-      #       readOnly: true
+#          volumeMounts:
+#            - mountPath: /etc/metacat/app.properties
+#              subPath: app.properties
+#              name: {{ .Release.Name }}-config-volume
+          livenessProbe:
+            httpGet:
+              path: /
+              port: metacat-web
+          readinessProbe:
+            httpGet:
+              path: /
+              port: metacat-web
+#      volumes:
+#        - name: {{ .Release.Name }}-config-volume
+#          configMap:
+#            name: {{ .Release.Name }}-configfiles
+#            defaultMode: 0644
