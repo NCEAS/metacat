@@ -125,10 +125,15 @@ public class SystemMetadataManager {
                 } catch (InvalidSystemMetadata e) {
                     throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
                 } finally {
-                    synchronized (lockedIds) {
-                        lockedIds.remove(pid.getValue());
+                    try {
+                        synchronized (lockedIds) {
+                            lockedIds.remove(pid.getValue());
+                            lockedIds.notifyAll();
+                        }
+                    } catch (RuntimeException e) {
+                        logMetacat.error("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue() + 
+                                " we can't move the id from the control list (lockedIds) since " + e.getMessage());
                     }
-                    lockedIds.notifyAll();
                 }
             }
         }
