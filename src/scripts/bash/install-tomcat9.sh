@@ -36,7 +36,8 @@ JAVA_OPT_MAX=-Xmx
 JAVA_OPT_MIN=-Xms
 JAVA_OPTS='${JAVA_OPTS}'
 LOG4J='-Dlog4j2.formatMsgNoLookups=true'
-
+NEW_JDK_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+DEFAULT_JAVA_HOME=/usr/lib/jvm/default-java
 
 if [ $# -lt 1 ]; then
    echo "Usage: ./install-tomcat9 Metacat-context-name [tomcat_max_memory_size] [tomcat_min_memory_size]";
@@ -59,6 +60,18 @@ echo "install ${NEW_TOMCAT}"
 sudo ${INIT_START_DIR}/${OLD_TOMCAT} stop
 sudo apt-get install ${NEW_TOMCAT}
 sudo systemctl stop tomcat9
+
+sudo apt install libecj-java
+sudo ln -s /usr/share/java/ecj.jar /var/lib/tomcat9/lib
+
+echo "configure java, java, keytool and javaws"
+sudo update-alternatives --set java ${NEW_JDK_HOME}/jre/bin/java
+sudo update-alternatives --set javac ${NEW_JDK_HOME}/bin/javac
+sudo update-alternatives --set keytool ${NEW_JDK_HOME}/jre/bin/keytool
+echo "set the defaul-java to openjdk 8"
+sudo rm -rf $DEFAULT_JAVA_HOME
+sudo ln -s  $NEW_JDK_HOME $DEFAULT_JAVA_HOME
+
 echo "configure ${NEW_TOMCAT}"
 sudo cp ${NEW_CATALINA_PROPERTIES} "${NEW_CATALINA_PROPERTIES}.org"
 if grep -q "${TOMCAT_CONFIG_SLASH}" ${NEW_CATALINA_PROPERTIES}; then  
@@ -103,6 +116,7 @@ else
   sudo xmlstarlet ed -L -P -s "/Server/Service[@name='Catalina']" -t elem -name Connector -v "" $NEW_TOMCAT_SERVER_CONIF
   sudo xmlstarlet ed -L -P -s "/Server/Service/Connector[not(@port)]" --type attr -n port -v 8009 $NEW_TOMCAT_SERVER_CONIF
   sudo xmlstarlet ed -L -P -s "/Server/Service/Connector[not(@protocol)]" --type attr -n protocol -v AJP/1.3 $NEW_TOMCAT_SERVER_CONIF
+  sudo xmlstarlet ed -L -P -s "/Server/Service/Connector[not(@address)]" --type attr -n address -v ::1 $NEW_TOMCAT_SERVER_CONIF
   sudo xmlstarlet ed -L -P -s "/Server/Service/Connector[not(@secretRequired)]" --type attr -n secretRequired -v false $NEW_TOMCAT_SERVER_CONIF
   sudo xmlstarlet ed -L -P -s "/Server/Service/Connector[not(@redirectPort)]" --type attr -n redirectPort -v 8443 $NEW_TOMCAT_SERVER_CONIF
 fi
@@ -130,12 +144,12 @@ sudo chmod -R g+r ${METACAT_DATA_DIR}
 sudo chmod -R g+w ${METACAT_DATA_DIR}
 
 #Bring the system editor to open a file. When the file is saved, it will be /etc/systemd/system/tomcat9.service (the file doesn't exist before you save)
-#in the log section: comment out the line of "SyslogIdentifier=tomcat9" and add two lines:
-#StandardOutput=file:/var/log/tomcat9/catalina.out
-#StandardError=file:/var/log/tomcat9/catalina.out
 #in the security section, add the two lines:
 #ReadWritePaths=/var/metacat
 #ReadWritePaths=/etc/default/solr.in.sh
+#Add a blank line and those two lines at end of file
+#StandardOutput=file:/var/log/tomcat9/catalina.out
+#StandardError=file:/var/log/tomcat9/catalina.out
  
 sudo systemctl edit --full tomcat9.service
 
