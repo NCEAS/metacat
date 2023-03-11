@@ -1,7 +1,6 @@
 #!/bin/bash
-#This script will install openjdk-8 and tomcat8.
-#It will update the alternatives for java, javac, keytool and javaws to openjdk-8.
-#It will modify the /etc/tomcat8/catalina.properties to allow DataONE idenifiers.
+#This script will install tomcat9.
+#It will modify the /etc/tomcat9/catalina.properties to allow DataONE idenifiers.
 #It will modify the workers.properties file for apache-tomcat connector.
 #It will move Metacat and other web applications from the old context directory to the new context directory.
 #The user running the script should have the sudo permission.
@@ -148,8 +147,8 @@ sudo chmod -R g+w ${METACAT_DATA_DIR}
 #ReadWritePaths=/var/metacat
 #ReadWritePaths=/etc/default/solr.in.sh
 #Add a blank line and those two lines at end of file
-#StandardOutput=file:/var/log/tomcat9/catalina.out
-#StandardError=file:/var/log/tomcat9/catalina.out
+#StandardOutput=append:/var/log/tomcat9/catalina.out
+#StandardError=append:/var/log/tomcat9/catalina.out
  
 sudo systemctl edit --full tomcat9.service
 
