@@ -60,8 +60,13 @@ sudo ${INIT_START_DIR}/${OLD_TOMCAT} stop
 sudo apt-get install ${NEW_TOMCAT}
 sudo systemctl stop tomcat9
 
+echo "instal libecj-java"
 sudo apt install libecj-java
 sudo ln -s /usr/share/java/ecj.jar /var/lib/tomcat9/lib
+
+echo "change the group of solr and tomcat"
+sudo usermod -a -G solr tomcat
+sudo usermod -a -G tomcat solr
 
 echo "configure java, java, keytool and javaws"
 sudo update-alternatives --set java ${NEW_JDK_HOME}/jre/bin/java
@@ -122,7 +127,7 @@ fi
 
 
 echo "move Metacat and other web applications from $OLD_TOMCAT to $NEW_TOMCAT"
-sudo cp -R `ls -d -1 ${OLD_TOMCAT_BASE}/${WEBAPPS}/** -A | grep -v "ROOT"` ${NEW_TOMCAT_BASE}/${WEBAPPS}/.
+sudo cp -R `ls -d -1 ${OLD_TOMCAT_BASE}/${WEBAPPS}/** -A | grep -v -e "ROOT" -e ".war"` ${NEW_TOMCAT_BASE}/${WEBAPPS}/.
 sudo chown -R ${NEW_TOMCAT_USER}:${NEW_TOMCAT_USER} ${NEW_TOMCAT_BASE}/${WEBAPPS}/*
 echo "change the value of the application.deployDir in the metacat.properties file"
 SAFE_NEW_TOMCAT_WEBAPPS=$(printf '%s\n' "$NEW_TOMCAT_BASE/$WEBAPPS" | sed 's/[[\.*^$(){}?+|/]/\\&/g')
