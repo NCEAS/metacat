@@ -9,14 +9,13 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   #tag: ""
-
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+  
 global:
-    #TODO storageClass: csi-rbd-sc
-    #solrPort: &global-solr-port 8983
+  #TODO storageClass: csi-rbd-sc
+  #solrPort: &global-solr-port 8983
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -99,3 +98,15 @@ affinity: {}
           # #command: ["/bin/bash", "-c", "env > /tmp/lifecycle-env"]
           # command: ["/bin/bash", "-c", "/solrconfig/config-solr.sh"]
 
+metacat:
+  administratorId: admin@localhost
+  serverHostName: metacat.example.com
+  serverHttpPort: "8080"
+  serverHttpSslPort: "8443"
+  applicationContext: metacat
+  solrHostname: host.docker.internal
+  databaseHostname: host.docker.internal
+  databaseName: metacat
+  databaseUser: metacat
+  # TODO - MB -- MOVE TO SECRETS!!
+  databasePassword: metacat

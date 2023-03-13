@@ -25,10 +25,10 @@ services:
       - '8009:8009'
       - '5701:5701'
       - '5005:5005'
-    volumes:
-      - type: bind
-        source: /Users/brooke/metacat
-        target: /var/metacat
+    # volumes:
+    #   - type: bind
+    #     source: /Users/brooke/metacat
+    #     target: /var/metacat
       
 #    volumes:
 #      - webdata:/var/metacat

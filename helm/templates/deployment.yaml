@@ -44,13 +44,18 @@ spec:
               name: metacat-debug
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          envFrom:
-            - configMapRef:
-                name: {{ .Release.Name }}-configfiles
-#          volumeMounts:
-#            - mountPath: /etc/metacat/app.properties
-#              subPath: app.properties
-#              name: {{ .Release.Name }}-config-volume
+          env: 
+            # TODO - MB:
+            # ADMINPASS SHOULD BE IN SECRETS! Better still, how can we omit this step altogether? (Used only by 
+            # docker-entrypoint.sh to curl-login to metacat admin interface.)
+            - name: ADMIN
+              value: admin@localhost
+            - name: ADMINPASS
+              value: admin
+          volumeMounts:
+            - mountPath: /etc/metacat/metacat.app.properties
+              subPath: app.properties
+              name: {{ .Release.Name }}-config-volume
           livenessProbe:
             httpGet:
               path: /
@@ -59,8 +64,8 @@ spec:
             httpGet:
               path: /
               port: metacat-web
-#      volumes:
-#        - name: {{ .Release.Name }}-config-volume
-#          configMap:
-#            name: {{ .Release.Name }}-configfiles
-#            defaultMode: 0644
+      volumes:
+        - name: {{ .Release.Name }}-config-volume
+          configMap:
+            name: {{ .Release.Name }}-configfiles
+            defaultMode: 0644

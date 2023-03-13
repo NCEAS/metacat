@@ -38,30 +38,9 @@ if [ "$1" = 'catalina.sh' ]; then
         /var/metacat/temporary \
         /var/metacat/logs
 
-    # Initialize the solr home directory
-#    if [ ! -d /var/metacat/solr-home ]; then
-#        mkdir -p /var/metacat/solr-home
-#
-#        # Copy the default solr conf files
-#        SOLR_CONF_DEFAULT_LOCATION=./webapps/metacat-index/WEB-INF/classes/solr-home/
-#        SOLR_CONF_LOCATION=/var/metacat/solr-home
-#        SOLR_CONF_FILES=$(find ${SOLR_CONF_DEFAULT_LOCATION})
-#        for f in "${SOLR_CONF_FILES[@]}"; do
-#            NEW_FILE=${f#*${SOLR_CONF_DEFAULT_LOCATION}}
-#            if [ "$NEW_FILE" != "" ]; then
-#                NEW_DIR=$(dirname "$NEW_FILE")
-#                if [ ! -f $SOLR_CONF_LOCATION/"$NEW_FILE" ] && [ -f "$f" ]; then
-#                    echo "Copying Solr configuration file: $SOLR_CONF_LOCATION/$NEW_FILE"
-#                    mkdir -p $SOLR_CONF_LOCATION/"$NEW_DIR"
-#                    cp "$f" $SOLR_CONF_LOCATION/"$NEW_FILE"
-#                fi
-#            fi
-#        done
-#    fi
-
     # Set up application properties
     DEFAULT_PROPERTIES_FILE=${METACAT_DIR}/WEB-INF/metacat.properties
-    APP_PROPERTIES_FILE=${APP_PROPERTIES_FILE:-/app.properties}
+    APP_PROPERTIES_FILE=${APP_PROPERTIES_FILE:-/etc/metacat/metacat.app.properties}
     if [ -s "$APP_PROPERTIES_FILE" ]; then
         # shellcheck disable=SC2162
         while read line; do
