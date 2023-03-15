@@ -54,7 +54,7 @@ spec:
               value: admin
           volumeMounts:
             - mountPath: /etc/metacat/metacat.app.properties
-              subPath: app.properties
+              subPath: metacat.properties
               name: {{ .Release.Name }}-config-volume
           livenessProbe:
             httpGet:

@@ -32,12 +32,13 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext: {}
-  # capabilities:
+#  fsGroup: metacat
+#  runAsUser: metacat
+#  capabilities:
+#    readOnlyRootFilesystem: true
+#    runAsNonRoot: true
   #   drop:
   #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
 service:
   type: LoadBalancer

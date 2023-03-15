@@ -1,54 +1,37 @@
 FROM tomcat:8.0-jre8
-MAINTAINER Matthew B. Jones <jones@nceas.ucsb.edu>
 
-ARG METACAT_VERSION=2.18.0
+# ARG default values that can be overridden at build-time
+ARG TAG=2.18.0
+ARG DEBUG=''
+
+# ENV default key=value env vars shared with container at runtime
 ENV METACAT_APP_CONTEXT=metacat
+ENV TC_HOME=/usr/local/tomcat
+ENV USRBINDIR=/usr/local/bin
+ENV PATH=${USRBINDIR}:$PATH
+ENV DEBUG=${DEBUG}
 
-ADD metacat-bin-${METACAT_VERSION}.tar.gz /tmp
+ADD metacat-bin-${TAG}.tar.gz /tmp
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        python-bcrypt \
-        # needed for dev only: \
-        vim procps lsof \
-    && rm -rf /var/lib/apt/lists/* \
-    && cp /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war /usr/local/tomcat/webapps
+RUN apt-get update && apt-get install -y --no-install-recommends python-bcrypt    && \
+    bash -c "if [[ \"$DEBUG\" == \"TRUE\" ]]; then echo '* * * DEBUG BUILD * * *' && \
+        apt-get install -y --no-install-recommends vim procps lsof telnet; fi"    && \
+    rm -rf /var/lib/apt/lists/* && \
+    cp /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war ${TC_HOME}/webapps && \
+    # Tomcat Mods - TODO MB - remove after Tomcat9 upgrade
+    cp  ${TC_HOME}/conf/server.xml  ${TC_HOME}/conf/server.xml.original && \
+    sed -i 's/port="8080"/relaxedPathChars="\[\]\|" \
+        relaxedQueryChars="\[\]\|\{\}\^\&\#x5c\;\&\#x60\;\&quot\;\&lt\;\&gt\;\&\#x2a\;\&\#x2c\;" port="8080"/g' \
+        $TC_HOME/conf/server.xml
 
-RUN mkdir -p /var/metacat
-
-COPY apply_config.py /usr/local/bin/
-RUN ln -s usr/local/bin/apply_config.py / # backwards compat
-
-COPY apply_context.py /usr/local/bin/
-RUN ln -s usr/local/bin/apply_context.py / # backwards compat
-
-COPY app.properties /app.properties
-
-# Tomcat Mods
-RUN mv /usr/local/tomcat/conf/server.xml /usr/local/tomcat/conf/server.xml.original
-RUN cat /usr/local/tomcat/conf/server.xml.original | sed -e \
-	's/port="8080"/relaxedPathChars="\[\]\|" relaxedQueryChars="\[\]\|\{\}\^\&\#x5c\;\&\#x60\;\&quot\;\&lt\;\&gt\;\&\#x2a\;\&\#x2c\;" port="8080"/g' \
-  > /usr/local/tomcat/conf/server.xml
-
-ENV PATH /usr/local/bin:$PATH
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN ln -s usr/local/bin/docker-entrypoint.sh / # backwards compat
-
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+COPY apply_context.py     ${USRBINDIR}/
+COPY docker-entrypoint.sh ${USRBINDIR}/
 
 EXPOSE 8080
 EXPOSE 8009
 EXPOSE 8443
 EXPOSE 5701
 
-# START -- INSECURE!!! DEV DEBUGGING ONLY!!!!!!!!
-COPY ./tomcat_DEBUG/metacat.xml /usr/local/tomcat/conf/Catalina/localhost/metacat.xml
-COPY ./tomcat_DEBUG/metacatui.xml /usr/local/tomcat/conf/Catalina/localhost/metacatui.xml
-COPY ./tomcat_DEBUG/setenv.sh /usr/local/tomcat/bin/setenv.sh
-EXPOSE 5005
-# END ---- INSECURE!!! DEV DEBUGGING ONLY!!!!!!!!
-
-# Show KNB skin if nothing else configured
-RUN mkdir /usr/local/tomcat/webapps/config
-COPY ./tomcat_DEBUG/metacatui_config.js /usr/local/tomcat/webapps/config/config.js
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 CMD ["catalina.sh","start"]
