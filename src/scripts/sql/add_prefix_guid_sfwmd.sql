@@ -57,9 +57,17 @@ update xml_relation set subject = concat('sfwmd-',  subject) where subject not l
 update xml_relation set object = concat('sfwmd-',  object) where object not like 'auto%' and object not like 'sfwmd-';
 
 /*
- * Update the nodedata column if it has an object id. The docid column were already updated during the updating process of xml_documents.
+ * Update the nodedata column in xml_path_index if it has an object id. The docid column were already updated during the updating process of xml_documents.
  */
 update xml_path_index set nodedata=concat('sfwmd-', nodedata) where path like '@packageId';
 UPDATE xml_path_index SET nodedata = CONCAT(LEFT(nodedata, LENGTH(nodedata) - POSITION('/' IN REVERSE(nodedata)) + 1),'sfwmd-', RIGHT(nodedata, POSITION('/' IN REVERSE(nodedata)) - 1)) WHERE path LIKE  '%url' and nodedata not like '%sfwmd-%' and nodedata like 'ecogrid%';
+
+/*
+ * Update xml_nodes table - the docid column and node data for path packageId and url.
+ */
+update xml_nodes SET nodedata = concat('sfwmd-', nodedata) from xml_index where xml_nodes.nodeid=xml_index.nodeid  and xml_index.path like '%packageId' and nodetype='ATTRIBUTE' and nodedata not like '%sfwmd-%';
+update xml_nodes SET nodedata = CONCAT(LEFT(nodedata, LENGTH(nodedata) - POSITION('/' IN REVERSE(nodedata)) + 1),'sfwmd-', RIGHT(nodedata, POSITION('/' IN REVERSE(nodedata)) - 1)) from xml_index where xml_nodes.parentnodeid=xml_index.nodeid  and xml_index.path like '%distribution/online/url' and nodetype='TEXT' and nodedata like 'ecogrid%' and nodedata not like '%sfwmd-%';
+update xml_nodes SET docid=concat('sfwmd-', docid) where docid not like 'auto%' and docid not like 'sfwmd-%';
+
 
 COMMIT;
