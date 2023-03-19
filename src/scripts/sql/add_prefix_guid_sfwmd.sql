@@ -36,10 +36,6 @@ ALTER TABLE xml_accesssubtree ADD CONSTRAINT xml_accesssubtree_docid_fk FOREIGN 
 COMMIT;
 
 /*
- * Update other tables
- */
-BEGIN;
-/*
  * The access_log table
  */
 update access_log set docid = concat('sfwmd-',  docid) where docid not like 'autogen%' and docid not like 'sfwmd-';
@@ -69,5 +65,21 @@ update xml_nodes SET nodedata = concat('sfwmd-', nodedata) from xml_index where 
 update xml_nodes SET nodedata = CONCAT(LEFT(nodedata, LENGTH(nodedata) - POSITION('/' IN REVERSE(nodedata)) + 1),'sfwmd-', RIGHT(nodedata, POSITION('/' IN REVERSE(nodedata)) - 1)) from xml_index where xml_nodes.parentnodeid=xml_index.nodeid  and xml_index.path like '%distribution/online/url' and nodetype='TEXT' and nodedata like 'ecogrid%' and nodedata not like '%sfwmd-%';
 update xml_nodes SET docid=concat('sfwmd-', docid) where docid not like 'auto%' and docid not like 'sfwmd-%';
 
+/*
+ * Update xml_nodes_revisions table - the docid column and nodedata column for packageId and url.
+ */
+update xml_nodes_revisions SET docid=concat('sfwmd-', docid) where docid not like 'auto%' and docid not like 'sfwmd-%';
+update xml_nodes_revisions SET nodedata=concat('sfwmd-', nodedata) where nodetype='ATTRIBUTE' and nodename like '%packageId' and nodedata not like 'auto%' and nodedata not like 'sfwmd-%'; 
+update xml_nodes_revisions t1  set nodedata=CONCAT(LEFT(t1.nodedata, LENGTH(t1.nodedata) - POSITION('/' IN REVERSE(t1.nodedata)) + 1),'sfwmd-', RIGHT(t1.nodedata, POSITION('/' IN REVERSE(t1.nodedata)) - 1)) FROM xml_nodes_revisions t2 where t1.parentnodeid = t2.nodeid and t1.nodetype='TEXT' and t2.nodetype='ELEMENT' and t2.nodename='url' and t1.nodedata not like '%auto%' and t1.nodedata not like '%sfwmd-%' and t1.nodedata like 'ecogrid%';
 
-COMMIT;
+/*
+ * Update the docids in xml_revisions table
+ */
+update xml_revisions set docid = concat('sfwmd-',  docid) where docid not like 'auto%' and docid not like 'sfwmd-%';
+
+/*
+ * Delete everything from the xml_queryresult table.
+ */
+delete from xml_queryresult;
+
+
