@@ -64,7 +64,7 @@ public class PropertyService extends BaseService {
 	public static String CONFIG_FILE_DIR = null;
 	public static String CONFIG_FILE_NAME = null;
 	public static String CONFIG_FILE_PATH = null;
-	
+
 	public static String TEST_CONFIG_FILE_NAME = null;
 
 	private static String DEFAULT_PROPERTY_CLASS_NAME = "edu.ucsb.nceas.metacat.properties.ConfigurableProperties";
@@ -76,9 +76,6 @@ public class PropertyService extends BaseService {
 
 	/**
 	 * private constructor since this is a singleton
-	 * 
-	 * @param servletContext
-	 *            the context we will use to get relative paths
 	 */
 	private PropertyService() throws ServiceException {
 		_serviceName = "PropertyService";
