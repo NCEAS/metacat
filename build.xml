@@ -1161,6 +1161,7 @@
                     <exclude name="**/MockCNode.class"/>
                     <!--<exclude name="**/D1NodeServiceTest.class" />-->
                     <exclude name="**/D1NodeServiceTest$*.class"/>
+                    <exclude name="**/LeanTestUtils$*.class"/>
                     <exclude name="**/QueryRunner.class"/>
                     <exclude name="**/MockObjectPathMap.class"/>
                     <exclude name="**/HzObjectPathMapTest$1.class"/>
