@@ -116,7 +116,7 @@ public class PropertyService extends BaseService {
 	 * Get the single instance of PropertyService for test purposes. In this
 	 * case, we allow the configuration directory to be passed in.
 	 *
-	 * @param configDir the configuration directory we need to look in
+	 * @param testConfigFileDir the test configuration directory we need to look in
 	 * @return the single instance of PropertyService
 	 */
 	 public static PropertyService getInstance(String testConfigFileDir)
