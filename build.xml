@@ -1,14 +1,9 @@
 <?xml version="1.0"?>
 <!--
-	*   '$RCSfile$'
 	*     Authors: Matt Jones, Chad Berkley, Jivka Bojilova
 	*   Copyright: 2000 Regents of the University of California and the
 	*              National Center for Ecological Analysis and Synthesis
 	* For Details: http://www.nceas.ucsb.edu/
-	*
-	*    '$Author$'
-	*    '$Date$'
-	*    '$Revision$'
 	*
 	* Build file for the Ant cross-platform build system for metacat
 	* See http://jakarta.apache.org for details on Ant
@@ -124,9 +119,9 @@
 
 		Prefers, in this order:
 
-	 	- The value set in build.properties. The reason for this is because this
+	 	- The value set in build.properties. The reason is that this
 		  build file loads all properties from build.properties and properties are
-		  immutable so it's easiest to just use the same precedence chain.
+		  immutable, so it's easiest to just use the same precedence chain.
 		- The value set in the $MAVEN_HOME environmental variable.
 		- The value found via the shell magic in the <exex> below.
 	-->
@@ -273,7 +268,6 @@
 			<fileset dir="${libdir.mvn}">
 				<include name="*.jar" />
 			</fileset>
-
 		</path>
 		
 		<path id="test.classpath">
@@ -338,9 +332,6 @@
 		<property name="eml2_1_0-schema-tag" value="RELEASE_EML_2_1_0" />
 		<property name="eml2_1_1-schema-tag" value="RELEASE_EML_2_1_1" />
 		<property name="eml2_2_0-schema-tag" value="RELEASE_EML_2_2_0" />
-		<!--<property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_0_7" />-->
-		
-
 		<property name="eml2_0_0namespace"
 			value="eml://ecoinformatics.org/eml-2.0.0" />
 		<property name="eml2_0_1namespace"
@@ -437,11 +428,6 @@
 		<filter token="pisco-user" value="${piscouser}" />
 		<filter token="pisco-pass" value="${piscopassword}" />
 
-
-		<!-- MCD BYE filter token="timedreplication"     value="${timedreplication}" / -->
-		<!-- MCD BYE filter token="firsttimedreplication" value="${firsttimedreplication}" / -->
-		<!-- MCD BYE filter token="timedreplicationinterval" value="${timedreplicationinterval}" / -->
-
 		<property name="srcdir" value="./src" />
 		<property name="lib.dir" value="./lib" />
 		<property name="docdir" value="./docs" />
@@ -493,8 +479,6 @@
 					value="https://github.com/NCEAS/metacatui.git" />
 		<property name="metacatui.git.repository.refname"
 							value="${metacatui-tag}" />
-		<!--<property name="metacatui.git.repository.refname"
-									value="master" />-->
 		<property name="metacatui.build.dir"
 					value="${build.dir}/metacatui_build" />
 		<property name="metacatui.war.name"
@@ -736,13 +720,11 @@
 				dir="${build.tmp}/eml_${eml2_0_0-schema-tag}">
 				<include name="*.xsd" />
 			</fileset>
-
 			<!-- shouldn't we have a mapper here like this??
 				<mapper type="glob" from="eml-*.xsd" to="eml-*-${eml-version}.xsd" />
 				
 				Jing's code didn't have one - does it need to be added?
 				NOTE that eml-version is set to beta 6, so this would need changing -->
-
 		</copy>
 
 		<!-- Checkout eml201 for given schema tag-->
@@ -886,17 +868,6 @@
 				<exclude name="**/.#*" />
 			</fileset>
 		</copy>
-		<!--
-			<mkdir dir="${installdir}/style/skins/${skin-name}/images" />
-			<copy todir="${installdir}/style/skins/${skin-name}/images" filtering="no">
-			<fileset dir="lib/style/skins/${skin-name}/images">
-			<include name="*.png"/>
-			<include name="*.gif"/>
-			<include name="*.jpg"/>
-			</fileset>
-			</copy>
-		-->
-
 		<echo message="Install Skin completed." />
 	</target>
 
@@ -941,10 +912,6 @@
 		<mkdir dir="${war.context.temp}" />
 		<mkdir dir="${war.context.templates}" />
 
-		<!--copy file="${lib.dir}/${jdbc.lib.postgres}" todir="${war.lib}" / -->
-		<!--copy file="${lib.dir}/${jdbc.lib.sqlserver1}" todir="${war.lib}" / -->
-		<!--copy file="${lib.dir}/${jdbc.lib.sqlserver2}" todir="${war.lib}" / -->
-		<!--copy file="${lib.dir}/${jdbc.lib.sqlserver3}" todir="${war.lib}" / -->
 		<copy file="${build.dir}/${name}.jar" todir="${war.lib}" />
 		<copy file="${build.dir}/${name}-client.jar" todir="${war.lib}" />
 		<copy file="${build.dir}/harvester.jar" todir="${war.lib}" />
@@ -988,8 +955,6 @@
 			filtering="yes" /> 
 		<copy file="lib/hazelcast.xml" todir="${war.webinf}"
 			filtering="yes" />
-		<!--<copy file="lib/oa4mp_client.xml" todir="${war.webinf}"
-			filtering="yes" /> -->
 		<copy todir="${war.context}" filtering="no">
 			<fileset dir="lib">
 				<include name="**/*.jpg" />
@@ -1136,7 +1101,7 @@
 	</target>
 
 	<target name="runoneclass" depends="testprep"
-		description="Uses the ant to run a class">
+		description="Uses ant to run a class">
 		
 		<java classname="${classtorun}" fork="true">
 			<arg line="${args}" />
@@ -1281,7 +1246,7 @@
 		</junit>
 	</target>
 
-	<!-- run this target, we need to check out a another morpho souce dir was checked out. -->
+	<!-- run this target, we need to ensure another morpho source dir was already checked out. -->
 	<target name="nettest" depends="install"
 		description="compiles and runs the metacatnettest code">
 
@@ -1462,7 +1427,6 @@
 		<gzip zipfile="./${name}-src-${release}.tar.gz"
 			src="./${name}-src-${release}.tar" />
 		<delete file="./${name}-src-${release}.tar" />
-		<!--delete dir="${dist.dir}"/ -->
 	</target>
 
 	<target name="deb-package" depends="distbin"
@@ -1526,11 +1490,6 @@
 		<include name="dnsjava-1.3.2.jar" />
 		<include name="mail.jar" />
 		<include name="commons-logging-1.0.4.jar" />
-		<!-- These jars may be needed but seem to not actually be,
-			so leaving them out for now
-			<include name="axis-ant.jar" />
-		-->
-		<!--<include name="GenCastor.class" />-->
 	</patternset>
 	<patternset id="lib.jars">
 		<include name="log4j-1.2.12.jar" />
@@ -1552,7 +1511,6 @@
 			<include name="metacat.jar" />
 		</fileset>
 	</path>
-
 	
 	<!-- build metacat-common jar -->
 	<target name="build-metacat-common" depends="setMavenHome" description="Calls the Maven build for metacat-common jar" unless="build-metacat-common-called" >
@@ -1604,7 +1562,6 @@
 		        <include name="cgi-bin/**"/>
 		      	<include name="style/**"/>  
 		      </fileset>
-		      
 		   </war>
 	</target>
 	
