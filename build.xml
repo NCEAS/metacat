@@ -1,28 +1,28 @@
 <?xml version="1.0"?>
 <!--
-	*     Authors: Matt Jones, Chad Berkley, Jivka Bojilova
-	*   Copyright: 2000 Regents of the University of California and the
-	*              National Center for Ecological Analysis and Synthesis
-	* For Details: http://www.nceas.ucsb.edu/
-	*
-	* Build file for the Ant cross-platform build system for metacat
-	* See http://jakarta.apache.org for details on Ant
-	*
-	* usage: ant [compile|jar|install|documentation]
-	*
-	* This program is free software; you can redistribute it and/or modify
-	* it under the terms of the GNU General Public License as published by
-	* the Free Software Foundation; either version 2 of the License, or
-	* (at your option) any later version.
-	*
-	* This program is distributed in the hope that it will be useful,
-	* but WITHOUT ANY WARRANTY; without even the implied warranty of
-	* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	* GNU General Public License for more details.
-	*
-	* You should have received a copy of the GNU General Public License
-	* along with this program; if not, write to the Free Software
-	* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    *     Authors: Matt Jones, Chad Berkley, Jivka Bojilova
+    *   Copyright: 2000 Regents of the University of California and the
+    *              National Center for Ecological Analysis and Synthesis
+    * For Details: http://www.nceas.ucsb.edu/
+    *
+    * Build file for the Ant cross-platform build system for metacat
+    * See http://jakarta.apache.org for details on Ant
+    *
+    * usage: ant [compile|jar|install|documentation]
+    *
+    * This program is free software; you can redistribute it and/or modify
+    * it under the terms of the GNU General Public License as published by
+    * the Free Software Foundation; either version 2 of the License, or
+    * (at your option) any later version.
+    *
+    * This program is distributed in the hope that it will be useful,
+    * but WITHOUT ANY WARRANTY; without even the implied warranty of
+    * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    * GNU General Public License for more details.
+    *
+    * You should have received a copy of the GNU General Public License
+    * along with this program; if not, write to the Free Software
+    * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -->
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
@@ -116,7 +116,7 @@
     <available file="${build.tomcat.dir}/common/lib/servlet-api.jar"
                property="tomcat.common.exists"/>
 
-    <!-- 
+    <!--
         Attempt to find and set the path to Maven
 
         Prefers, in this order:
@@ -725,7 +725,7 @@
             </fileset>
             <!-- shouldn't we have a mapper here like this??
                 <mapper type="glob" from="eml-*.xsd" to="eml-*-${eml-version}.xsd" />
-                
+
                 Jing's code didn't have one - does it need to be added?
                 NOTE that eml-version is set to beta 6, so this would need changing -->
         </copy>
@@ -811,8 +811,17 @@
         </java>
     </target>
 
-    <target name="install" depends="build-metacat"
-            description="* Install Metacat For Development *">
+    <target name="install" depends="warNoDocs, dist-metacat-index, build-metacat-ui,deploy"
+            description="* * * Install Metacat For Development. Lightweight install: does not include docs * * *">
+        <echo>Dev install completed at ${NOW}</echo>
+    </target>
+
+    <target name="full-install" depends="build-metacat,deploy"
+            description="Full installation of Metacat For Development, including documentation">
+        <echo>Full install completed at ${NOW}</echo>
+    </target>
+
+    <target name="deploy">
         <copy file="${dist.dir}/${metacat.context}.war"
               todir="${app.deploy.dir}"/>
         <delete dir="${app.deploy.dir}/${metacat.context}"/>
@@ -825,9 +834,8 @@
         <tstamp>
             <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa"/>
         </tstamp>
-        <echo>Dev install completed at ${NOW}</echo>
     </target>
-
+    
     <target name="build-metacat" depends="war, dist-metacat-index, build-metacat-ui"
             description="Build Metacat">
     </target>
@@ -874,8 +882,14 @@
         <echo message="Install Skin completed."/>
     </target>
 
-    <target name="war" depends="warPrepare"
-            description="Create a web archive (WAR) for servlet deployment">
+    <target name="war" depends="warPrepare,createWar"
+            description="Create a web archive (WAR) for servlet deployment"/>
+
+    <!-- Generate a lightweight war file for dev purposes. Does not include documentation -->
+    <target name="warNoDocs" depends="warPrepareNoDocs,createWar"/>
+
+    <!-- Utility target to enerate a war from prepared files -->
+    <target name="createWar">
         <mkdir dir="${dist.dir}"/>
         <war destfile="${dist.dir}/${metacat.context}.war"
              webxml="${build.war}/web.xml">
@@ -887,11 +901,10 @@
             <webinf dir="${war.webinf}"/>
         </war>
     </target>
-
-    <target name="warPrepare"
-            depends="cgiPrepare,jar,clientjar,harvesterjar,testPrepare,documentation"
-            description="Prepare files for creating a web archive (WAR)">
-
+    
+    <target name="warPrepare" depends="documentation,warPrepareNoDocs" />
+    
+    <target name="warPrepareNoDocs" depends="cgiPrepare,jar,clientjar,harvesterjar,testPrepare">
         <property name="war.lib" value="${build.war}/lib"/>
         <property name="war.classes" value="${build.war}/classes"/>
         <property name="war.webinf" value="${build.war}/WEB-INF"/>
@@ -925,9 +938,6 @@
             </fileset>
             <fileset dir="${libdir.mvn}"/>
         </copy>
-        <!-- MCD copy file="lib/web.xml.${tomcatversion}"
-            tofile="${build.war}/web.xml" / -->
-        <!-- MCD added next - Remove the tomcat5 reference-->
         <copy file="lib/web.xml.tomcat6" tofile="${build.war}/web.xml"/>
         <copy file="lib/metacat.properties" todir="${war.webinf}"
               filtering="yes"/>
@@ -1571,5 +1581,4 @@
             </fileset>
         </war>
     </target>
-
 </project>
