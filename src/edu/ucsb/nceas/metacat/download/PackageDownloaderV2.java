@@ -48,6 +48,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 import org.dataone.speedbagit.SpeedBagIt;
+import org.dataone.speedbagit.SpeedBagException;
 import org.dspace.foresite.ORESerialiserException;
 import org.dspace.foresite.ResourceMap;
 
@@ -208,17 +209,26 @@ public class PackageDownloaderV2 {
 				dataPath = Paths.get(dataDirectory, dataPath).toString();
 			}
 			logMetacat.debug("Adding data file to the bag at " + dataPath);
-			this.speedBag.addFile(inputStream, dataPath, false);
-		} catch (Exception e) {
-			logMetacat.error("Error adding the datafile to the bag", e);
-			throw new ServiceFailure("There was an error creating the temporary download directories.", e.getMessage());
+			try {
+				this.speedBag.addFile(inputStream, dataPath, false);
+			} catch (SpeedBagException e) {
+				String duplicateDataPath = Paths.get(dataDirectory, "0-duplicates", dataPath).toString();
+				logMetacat.warn("Duplicate data filename, renaming file to add to bag: " + duplicateDataPath, e);
+				this.speedBag.addFile(inputStream, dataPath, false);
+			}
+		} catch (SpeedBagException e) {
+			throw new ServiceFailure("There was an error creating the BagIt bag.", e.getMessage());
+		} catch (NoSuchAlgorithmException e) {
+			throw new ServiceFailure("There was an error creating the BagIt bag.", e.getMessage());
+		} catch (PropertyNotFoundException e) {
+			throw new ServiceFailure("There was an error creating the BagIt bag.", e.getMessage());
 		}
 	}
 
 	/*
 	 * Adds all the science metadata objects to the bag
 	 */
-	public void addScienceMetadatas() throws NoSuchAlgorithmException {
+	public void addScienceMetadatas() throws NoSuchAlgorithmException, ServiceFailure {
 		int metadata_count = 0;
 
 		for (Pair<SystemMetadata, InputStream> scienceMetadata: this.scienceMetadatas) {
@@ -245,15 +255,23 @@ public class PackageDownloaderV2 {
 				filePath = Paths.get("metadata", filename).toString();
 			}
 			logMetacat.debug("Adding metadata file to the bag as " + filePath);
-			this.speedBag.addFile(scienceMetadata.getValue(), filePath, true);
-			this.addSystemMetadata(scienceMetadata.getKey());
+			try {
+				this.speedBag.addFile(scienceMetadata.getValue(), filePath, true);
+				this.addSystemMetadata(scienceMetadata.getKey());
+			} catch (SpeedBagException e) {
+				e.printStackTrace();
+				ServiceFailure sf = new ServiceFailure("1030",
+						"Error while adding science metadata to the bag. " + e.getMessage());
+				sf.initCause(e);
+				throw sf;
+			}
 		}
 	}
 
 	/**
 	 * Adds the resource map to the bag.
 	 */
-	public void addResourceMap() throws NoSuchAlgorithmException {
+	public void addResourceMap() throws NoSuchAlgorithmException, ServiceFailure {
 		// Add its associated system metadata to the bag
 		this.addSystemMetadata(this.resourceMapSystemMetadata);
 		String resmapPath = "";
@@ -272,7 +290,15 @@ public class PackageDownloaderV2 {
 					"and write it to disk.", e);
 		}
 		logMetacat.debug("Adding resource map to "+ resmapPath);
-		this.speedBag.addFile(new ByteArrayInputStream(resMapString.getBytes()), resmapPath, true);
+		try {
+			this.speedBag.addFile(new ByteArrayInputStream(resMapString.getBytes()), resmapPath, true);
+		} catch (SpeedBagException e) {
+			e.printStackTrace();
+			ServiceFailure sf = new ServiceFailure("1030",
+					"Error while adding resource map to the bag. " + e.getMessage());
+			sf.initCause(e);
+			throw sf;
+		}
 	}
 
 	/**
@@ -313,6 +339,9 @@ public class PackageDownloaderV2 {
 			}
 			// Add it to the bag
 			this.speedBag.addFile(sysMetaInputstream, systemMetaPath, true);
+		} catch (SpeedBagException e) {
+			logMetacat.error("Failed to add sysmeta to the BagIt bag. ID: " +
+					systemMetadata.getIdentifier().getValue(), e);
 		} catch (MarshallingException e) {
 			logMetacat.error("There was an error converting the metadata document. ID: " +
 					systemMetadata.getIdentifier().getValue(), e);
@@ -341,7 +370,13 @@ public class PackageDownloaderV2 {
 			this.addResourceMap();
 			this.addScienceMetadatas();
 			return speedBag.stream();
-		} catch (NullPointerException | IOException e) {
+		} catch (IOException e) {
+			e.printStackTrace();
+			ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+					"error while streaming the downloaded data package. " + e.getMessage());
+			sf.initCause(e);
+			throw sf;
+		} catch (NullPointerException e) {
 			e.printStackTrace();
 			ServiceFailure sf = new ServiceFailure("1030", "There was an " +
 					"error while streaming the downloaded data package. " + e.getMessage());
@@ -390,8 +425,8 @@ public class PackageDownloaderV2 {
 				this.addCoreMetadataIdentifier(identifier);
 				this.addScienceSystemMetadata(identifier);
 			}
-		} catch (Exception e) {
-			logMetacat.error("There was an error while parsing an atLocation field.", e);
+		} catch (UnsupportedEncodingException e) {
+			logMetacat.error("There was an error with decoding the identifier.", e);
 		}
 	}
 
@@ -401,10 +436,13 @@ public class PackageDownloaderV2 {
 		// Try to get the resource map as a string for Jena
 		try {
 			resMapString = ResourceMapFactory.getInstance().serializeResourceMap(this.resourceMap);
-			targetStream = IOUtils.toInputStream(resMapString);
+			targetStream = IOUtils.toInputStream(resMapString, "UTF-8");
+		} catch (IOException e) {
+			// Log that there was an error, but don't interrupt the download
+			logMetacat.error("There was an I/O error while serializing the resource map.", e);
 		} catch (ORESerialiserException e) {
 			// Log that there was an error, but don't interrupt the download
-			logMetacat.error("There was an error while serializing the resource map.", e);
+			logMetacat.error("Problem serializing the resource map.", e);
 		}
 
 		if (targetStream == null) {

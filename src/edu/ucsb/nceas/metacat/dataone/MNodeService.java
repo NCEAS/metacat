@@ -147,6 +147,7 @@ import org.dataone.service.types.v1_1.QueryField;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
 import org.dataone.speedbagit.SpeedBagIt;
+import org.dataone.speedbagit.SpeedBagException;
 import org.dspace.foresite.OREException;
 import org.dspace.foresite.OREParserException;
 import org.dspace.foresite.ORESerialiserException;
@@ -2776,7 +2777,14 @@ public class MNodeService extends D1NodeService
 
                     // Add the stream of the file to the bag object & write to the pid mapping file
                     InputStream entryInputStream = this.get(session, entryPid);
-                    downloader.speedBag.addFile(entryInputStream, Paths.get("data/", fileName).toString(), false);
+                    boolean success = false;
+                    try {
+                        downloader.speedBag.addFile(entryInputStream, Paths.get("data/", fileName).toString(), false);
+                    } catch (SpeedBagException e) {
+                        fileName = "0-duplicate-" + fileName;
+                        logMetacat.warn("Duplicate data filename, renaming file to add to bag: " + fileName, e);
+                        downloader.speedBag.addFile(entryInputStream, Paths.get("data/", fileName).toString(), false);
+                    }
                     downloader.pidMapping.append(entryPid.getValue() + "\t" + "data/" + fileName + "\n");
                 }
 
@@ -2784,6 +2792,12 @@ public class MNodeService extends D1NodeService
                 ByteArrayInputStream pidFile = new ByteArrayInputStream(
                         downloader.pidMapping.toString().getBytes(StandardCharsets.UTF_8));
                 downloader.speedBag.addFile(pidFile, "pid-mapping.txt", true);
+            } catch (SpeedBagException e) {
+                // report as service failure
+                e.printStackTrace();
+                ServiceFailure sf = new ServiceFailure("1030", "Error creating the bag: " + e.getMessage());
+                sf.initCause(e);
+                throw sf;                
             } catch (IOException e) {
                 // report as service failure
                 e.printStackTrace();
@@ -2875,7 +2889,7 @@ public class MNodeService extends D1NodeService
                     downloader.addSystemMetadata(entrySysMeta);
                 } catch (NoSuchAlgorithmException e) {
                     ServiceFailure sf = new ServiceFailure("1030", "While creating the package." +
-                            "Could not add thr system metadata to the zipfile. " + e.getMessage());
+                            "Could not add the system metadata to the zipfile. " + e.getMessage());
                     sf.initCause(e);
                     throw sf;
                 }
