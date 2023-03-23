@@ -811,12 +811,12 @@
         </java>
     </target>
 
-    <target name="install" depends="warNoDocs, dist-metacat-index, build-metacat-ui,deploy"
+    <target name="install-dev" depends="warNoDocs, dist-metacat-index, build-metacat-ui,deploy"
             description="* * * Install Metacat For Development. Lightweight install: does not include docs * * *">
         <echo>Dev install completed at ${NOW}</echo>
     </target>
 
-    <target name="full-install" depends="build-metacat,deploy"
+    <target name="install" depends="build-metacat,deploy"
             description="Full installation of Metacat For Development, including documentation">
         <echo>Full install completed at ${NOW}</echo>
     </target>
