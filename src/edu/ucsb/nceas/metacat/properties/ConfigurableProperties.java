@@ -394,7 +394,7 @@ public class ConfigurableProperties extends BaseService implements PropertiesInt
     /**
      * Reports whether properties are fully configured.
      *
-     * @return a boolean that is true if properties are not unconfigured and false otherwise
+     * @return a boolean that is true if properties are configured and false otherwise
      */
     public boolean arePropertiesConfigured() throws GeneralPropertyException {
         String propertiesConfigured = getProperty("configutil.propertiesConfigured");
@@ -404,10 +404,10 @@ public class ConfigurableProperties extends BaseService implements PropertiesInt
     /**
      * Determine if the system is configured to bypass configuration. If so, the system will look
      * for backup configuration files at startup time and use those to configure metacat. The bypass
-     * options should only be set by developers. Production code should never bypass confguration.
+     * options should only be set by developers. Production code should never bypass configuration.
      *
-     * @return true if dev.runConfiguration is set to true in metacat.properties and we have not
-     * already checked for bypass, false otherwise.
+     * @return true if dev.runConfiguration is set to true in metacat.properties, and we have not
+     * already checked for bypass; false otherwise.
      */
     public boolean doBypass() throws PropertyNotFoundException {
         // We only want to go through the check once to see if we want to
@@ -438,7 +438,7 @@ public class ConfigurableProperties extends BaseService implements PropertiesInt
      * Reports whether the metacat configuration utility should be run. Returns false if --
      * dev.runConfiguration=false and -- backup properties file exists Note that
      * dev.runConfiguration should only be set to false when reinstalling the same version of the
-     * application in developement.
+     * application in development.
      */
     public void bypassConfiguration() throws GeneralPropertyException {
         try {
@@ -487,7 +487,7 @@ public class ConfigurableProperties extends BaseService implements PropertiesInt
     }
 
     /**
-     * Take input from the user in an HTTP request about an property to be changed and update the
+     * Take input from the user in an HTTP request about a property to be changed and update the
      * metacat property file with that new value if it has changed from the value that was
      * originally set.
      *
