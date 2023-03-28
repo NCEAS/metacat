@@ -60,7 +60,9 @@ public interface PropertiesInterface {
 	public Vector<String> getPropertyNamesByGroup(String groupName);
 	
 	public  Map<String, String> getPropertiesByGroup(String groupName) throws PropertyNotFoundException;
-	
+
+	// TODO: MB - can we get rid of this? Default java.util.Properties behavior is to add a new
+	//  entry if it doesn't already exist, when setProperty() is called; so addProperty() not needed
 	public void addProperty(String propertyName, String value) throws GeneralPropertyException;
 	
 	public void setProperty(String propertyName, String newValue) throws GeneralPropertyException;
