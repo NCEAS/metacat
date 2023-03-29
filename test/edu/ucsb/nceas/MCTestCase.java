@@ -60,7 +60,6 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.IOUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
-import edu.ucsb.nceas.utilities.SortedProperties;
 
 /**
  * A base JUnit class for Metacat tests
@@ -109,12 +108,14 @@ public class MCTestCase
 	
 	static {
 		try {
-			SortedProperties testProperties = 
-				new SortedProperties("build/tests/test.properties");
-			testProperties.load();
+			Properties testProperties = new Properties();
+			testProperties.load(
+				Files.newBufferedReader(Paths.get("build/tests/test.properties")));
+			if (testProperties.isEmpty()) {
+				fail("Couldn't load test properties");
+			}
 			metacatContextDir = testProperties.getProperty("metacat.contextDir");
 			PropertyService.getInstance(metacatContextDir + "/WEB-INF");
-//			PropertyService.getInstance();
 		    String printDebugString = PropertyService.getProperty("test.printdebug");
 		    printDebug = Boolean.parseBoolean(printDebugString);
 
@@ -139,47 +140,43 @@ public class MCTestCase
 			        String description = null;
                     authFile.addGroup(KNBUSERGOURP, description);
                 } catch (Exception e) {
-                    System.out.println("Couldn't add the group "+KNBUSERGOURP+" to the password file since "+e.getMessage());
+                    System.out.println("Couldn't add the group "+KNBUSERGOURP+" to the password file: "+e.getMessage());
                 }
 			    String[] groups = null;
 			    try {
 			        authFile.addUser(username, groups, password, null, null, null, null, null);
 			    } catch (Exception e) {
-			        System.out.println("Couldn't add the user "+username+" to the password file since "+e.getMessage());
+			        System.out.println("Couldn't add the user "+username+" to the password file: "+e.getMessage());
 			    }
-			    
 			    try {
 			        String[] anotherGroup = {KNBUSERGOURP};
                     authFile.addUser(anotheruser, anotherGroup, anotherpassword, null, null, null, null, null);
                 } catch (Exception e) {
-                    System.out.println("Couldn't add the user "+anotheruser+" to the password file since "+e.getMessage());
+                    System.out.println("Couldn't add the user "+anotheruser+" to the password file: "+e.getMessage());
                 }
 			    try {
                     authFile.addUser(lteruser, groups, lterpassword, null, null, null, null, null);
                 } catch (Exception e) {
-                    System.out.println("Couldn't add the user "+lteruser+" to the password file since "+e.getMessage());
+                    System.out.println("Couldn't add the user "+lteruser+" to the password file: "+e.getMessage());
                 }
 			    try {
                     authFile.addUser(referraluser, groups, referralpassword, null, null, null, null, null);
                 } catch (Exception e) {
-                    System.out.println("Couldn't add the user "+referraluser+" to the password file since "+e.getMessage());
+                    System.out.println("Couldn't add the user "+referraluser+" to the password file: "+e.getMessage());
                 }
 			    
 			    try {
                     authFile.addUser(piscouser, groups, piscopassword, null, null, null, null, null);
                 } catch (Exception e) {
-                    System.out.println("Couldn't add the user "+piscouser+" to the password file since "+e.getMessage());
+                    System.out.println("Couldn't add the user "+piscouser+" to the password file: "+e.getMessage());
                 }
 			}
 		} catch (IOException ioe) {
-			System.err.println("Could not read property file in static block: " 
-					+ ioe.getMessage());
+			fail("Could not read property file in static block: " + ioe.getMessage());
 		} catch (PropertyNotFoundException pnfe) {
-			System.err.println("Could not get property in static block: " 
-					+ pnfe.getMessage());
+			fail("Could not get property in static block: " + pnfe.getMessage());
 		} catch (ServiceException se) {
-			System.err.println("Could not get PropertyService instance in static block: " 
-					+ se.getMessage());
+			fail("Could not get PropertyService instance in static block: " + se.getMessage());
 		}
 	}
 	
@@ -281,8 +278,8 @@ public class MCTestCase
      * Then check if the testTitle exists in the doc.
      * @param titlePart the part of the title of the doc to look for
      * @param testTitle the title containing special characters
+	  @param emlVersion
      * @param result are we expecting SUCCESS or FAILURE
-     * @param expextedKarmaFailure
      */
     protected void queryDocWhichHasTitle(String titlePart, String testTitle,
                                          String emlVersion, boolean result) {
