@@ -101,7 +101,7 @@ public class D1NodeServiceTest extends MCTestCase {
         suite.addTest(new D1NodeServiceTest("initialize"));
         suite.addTest(new D1NodeServiceTest("testExpandRighsHolder"));
         suite.addTest(new D1NodeServiceTest("testIsValidIdentifier"));
-        suite.addTest(new D1NodeServiceTest("testAddParaFromSkinProperties"));
+        suite.addTest(new D1NodeServiceTest("testAddParamsFromSkinProperties"));
         suite.addTest(new D1NodeServiceTest("testAccessPolicyEqual"));
         suite.addTest(new D1NodeServiceTest("testIsAccessControlDirty"));
         
@@ -268,9 +268,9 @@ public class D1NodeServiceTest extends MCTestCase {
 	 * Test the method of addParasFromSkinProperties
 	 * @throws Exception
 	 */
-	public void testAddParaFromSkinProperties() throws Exception {
+	public void testAddParamsFromSkinProperties() throws Exception {
 	    String SKIN_NAME = "test-theme";
-	    //setings for testing
+	    //settings for testing
 	    Vector<String> originalSkinNames = SkinUtil.getSkinNames();
         Vector<String> newNames = new Vector<String>();
         newNames.add(SKIN_NAME);
@@ -289,7 +289,7 @@ public class D1NodeServiceTest extends MCTestCase {
         value = params.get("testUser");
         assertTrue(value[0].equals("uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org")); //value of "test.mcUser" from the metacat.properties file
         value = params.get("testThirdUser");
-        assertTrue(value[0].equals("http://orcid.org\\0023-0001-7868-2567")); //value of "test.mcThirdUser" from the metacat.properties file
+        assertTrue(value[0].equals("http://orcid.org/0023-0001-7868-2567")); //value of "test.mcThirdUser" from the metacat.properties file
         value = params.get("organization");
         assertTrue(value[0].equals("ESS-DIVE")); //real value
         SkinUtil.setSkinName(originalSkinNames);
