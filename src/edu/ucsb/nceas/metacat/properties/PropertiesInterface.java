@@ -70,7 +70,10 @@ public interface PropertiesInterface {
 	public void setPropertyNoPersist(String propertyName, String newValue) throws GeneralPropertyException;
 	
 	public void persistProperties() throws GeneralPropertyException;
-	
+
+	// TODO: MB - can we get rid of this? AFAICT, only callers do not use the boolean return value
+	//  (but double-check!), so a simple "setProperty" call should suffice (assuming we get rid of
+	//  "addProperty" and the PropertyNotFoundException)
 	public boolean checkAndSetProperty(HttpServletRequest request, String propertyName) throws GeneralPropertyException;
 
 	public SortedProperties getMainBackupProperties() throws GeneralPropertyException;

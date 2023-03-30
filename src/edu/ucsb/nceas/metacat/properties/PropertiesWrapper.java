@@ -51,29 +51,23 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
     private static final String MAIN_CONFIG_FILE_NAME = "metacat.properties";
     private static final String MAIN_METADATA_FILE_NAME = "metacat.properties.metadata.xml";
     private static final String MAIN_BACKUP_FILE_NAME = "metacat.properties.backup";
-    private static final String AUTH_METADATA_FILE_NAME = "auth.properties.metadata.xml";
-    private static final String AUTH_BACKUP_FILE_NAME = "auth.properties.backup";
     private static String mainConfigFilePath = null;
     private static Properties mainProperties = null;
     private static String mainMetadataFilePath = null;
     private static PropertiesMetaData mainMetaData = null;
     private static String mainBackupFilePath = null;
     private static SortedProperties mainBackupProperties = null;
-    private static String authMetadataFilePath = null;
-    private static PropertiesMetaData authMetaData = null;
-    private static String authBackupFilePath = null;
-    private static SortedProperties authBackupProperties = null;
 
     private static boolean bypassAlreadyChecked = false;
 
     private static final Log logMetacat = LogFactory.getLog(PropertiesWrapper.class);
+    private AuthPropertiesDelegate authPropertiesDelegate;
 
     /**
      * private constructor since this is a singleton
      */
     protected PropertiesWrapper() throws ServiceException {
-        _serviceName = "ConfigurableProperties";
-
+        _serviceName = "PropertiesWrapper";
         initialize();
     }
 
@@ -85,23 +79,18 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
         initialize();
     }
 
-    public void stop() throws ServiceException {
-    }
+    public void stop() throws ServiceException {}
 
     /**
      * Initialize the singleton.
      */
     private void initialize() throws ServiceException {
-
         logMetacat.debug("Initializing ConfigurableProperties");
-
         try {
             mainConfigFilePath =
                 PropertyService.CONFIG_FILE_DIR + FileUtil.getFS() + MAIN_CONFIG_FILE_NAME;
             mainMetadataFilePath =
                 PropertyService.CONFIG_FILE_DIR + FileUtil.getFS() + MAIN_METADATA_FILE_NAME;
-            authMetadataFilePath =
-                PropertyService.CONFIG_FILE_DIR + FileUtil.getFS() + AUTH_METADATA_FILE_NAME;
 
             // mainProperties will hold the primary configuration values for
             // metacat.
@@ -122,50 +111,17 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
             // xml metadata file
             mainMetaData = new PropertiesMetaData(mainMetadataFilePath);
 
-            // authMetaData holds configuration information about organization
-            // level
-            // properties. This is primarily used to display input fields on
-            // the auth configuration page. The information is retrieved
-            // from an xml metadata file dedicated just to auth properties.
-            authMetaData = new PropertiesMetaData(authMetadataFilePath);
+            // The mainBackupProperties hold properties that were backed up
+            // the last time the application was configured. On disk, the
+            // file will look like a smaller version of metacat.properties.
+            // It is stored in the data storage directory outside the
+            // application directories.
+            mainBackupFilePath = getSitePropsPath() + FileUtil.getFS() + MAIN_BACKUP_FILE_NAME;
+            mainBackupProperties = new SortedProperties(mainBackupFilePath);
+            mainBackupProperties.load();
 
-            String recommendedExternalDir = SystemUtil.discoverExternalDir();
-            PropertyService.setRecommendedExternalDir(recommendedExternalDir);
+            authPropertiesDelegate = new AuthPropertiesDelegate(getSitePropsPath());
 
-            String backupPath = getProperty("application.backupDir");
-            if (backupPath == null || backupPath.equals("")) {
-                backupPath = SystemUtil.getStoredBackupDir();
-            }
-            if ((backupPath == null || backupPath.equals("")) && recommendedExternalDir != null) {
-                backupPath =
-                    recommendedExternalDir + FileUtil.getFS() + "." + ServiceService.getRealApplicationContext();
-            }
-
-            // if backupPath is still null, no reason to initialize the
-            // backup properties. The system will need to prompt the user for
-            // the backup properties and reinitialize ConfigurableProperties.
-            if (backupPath != null && !backupPath.equals("")) {
-                setProperty("application.backupDir", backupPath);
-                SystemUtil.writeStoredBackupFile(backupPath);
-
-                // The mainBackupProperties hold properties that were backed up
-                // the last time the application was configured. On disk, the
-                // file will look like a smaller version of metacat.properties.
-                // It is stored in the data storage directory outside the
-                // application directories.
-                mainBackupFilePath = backupPath + FileUtil.getFS() + MAIN_BACKUP_FILE_NAME;
-                mainBackupProperties = new SortedProperties(mainBackupFilePath);
-                mainBackupProperties.load();
-
-                // The authBackupProperties hold properties that were backed up
-                // the last time the auth was configured. On disk, the file
-                // will look like a smaller version of metacat.properties. It
-                // is stored in the data storage directory outside the
-                // application directories.
-                authBackupFilePath = backupPath + FileUtil.getFS() + AUTH_BACKUP_FILE_NAME;
-                authBackupProperties = new SortedProperties(authBackupFilePath);
-                authBackupProperties.load();
-            }
         } catch (TransformerException te) {
             throw new ServiceException(
                 "Transform problem while loading properties: " + te.getMessage());
@@ -178,6 +134,34 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
             throw new ServiceException(
                 "Utilities problem while loading properties: " + ue.getMessage());
         }
+    }
+
+    private String getSitePropsPath()
+        throws PropertyNotFoundException, MetacatUtilException, ServiceException {
+
+        String backupPath = getProperty("application.backupDir");
+        if (backupPath == null || backupPath.equals("")) {
+            backupPath = SystemUtil.getStoredBackupDir();
+        }
+        if ((backupPath == null || backupPath.equals(""))
+            && PropertyService.getRecommendedExternalDir() != null) {
+            backupPath = PropertyService.getRecommendedExternalDir()
+                + FileUtil.getFS() + "." + ServiceService.getRealApplicationContext();
+        }
+        // if backupPath is still null, no reason to initialize the
+        // backup properties. The system will need to prompt the user for
+        // the backup properties and reinitialize ConfigurableProperties.
+        if (backupPath != null && !backupPath.equals("")) {
+            try {
+                setProperty("application.backupDir", backupPath);
+            } catch (GeneralPropertyException e) {
+                logMetacat.error(
+                    "Problem trying to set property 'application.backupDir' to value "
+                        + backupPath, e);
+            }
+            SystemUtil.writeStoredBackupFile(backupPath);
+        }
+        return backupPath;
     }
 
     /**
@@ -322,7 +306,7 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
      * @return a SortedProperties object with the backup properties
      */
     public SortedProperties getAuthBackupProperties() {
-        return authBackupProperties;
+        return authPropertiesDelegate.getAuthBackupProperties();
     }
 
     /**
@@ -342,7 +326,7 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
      * @return a PropertiesMetaData object with the organization properties metadata
      */
     public PropertiesMetaData getAuthMetaData() {
-        return authMetaData;
+        return authPropertiesDelegate.getAuthMetaData();
     }
 
     /**
@@ -388,38 +372,7 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
      */
     public void persistAuthBackupProperties(ServletContext servletContext)
         throws GeneralPropertyException {
-
-        // Use the metadata to extract configurable properties from the
-        // overall properties list, and store those properties.
-        try {
-            SortedProperties backupProperties = new SortedProperties(authBackupFilePath);
-
-            // Populate the backup properties for auth properties using
-            // the associated metadata file
-            PropertiesMetaData authMetadata = new PropertiesMetaData(authMetadataFilePath);
-
-            Map<String, MetaDataProperty> authKeyMap = authMetadata.getProperties();
-            Set<String> authKeySet = authKeyMap.keySet();
-            for (String propertyKey : authKeySet) {
-                // don't backup passwords
-                MetaDataProperty metaData = authKeyMap.get(propertyKey);
-                if (!metaData.getFieldType().equals(MetaDataProperty.PASSWORD_TYPE)) {
-                    backupProperties.addProperty(propertyKey, getProperty(propertyKey));
-                }
-            }
-
-            // store the properties to file
-            backupProperties.store();
-            authBackupProperties = new SortedProperties(authBackupFilePath);
-            authBackupProperties.load();
-
-        } catch (TransformerException te) {
-            throw new GeneralPropertyException(
-                "Could not transform backup properties xml: " + te.getMessage());
-        } catch (IOException ioe) {
-            throw new GeneralPropertyException(
-                "Could not backup configurable properties: " + ioe.getMessage());
-        }
+        authPropertiesDelegate.persistAuthBackupProperties(servletContext);
     }
 
     /**
@@ -489,10 +442,12 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
             }
 
             logMetacat.debug("bypassConfiguration: setting auth backup properties.");
-            SortedProperties authBackupProperties = getAuthBackupProperties();
-            Vector<String> authBackupPropertyNames = authBackupProperties.getPropertyNames();
+            Vector<String> authBackupPropertyNames
+                = authPropertiesDelegate.getAuthBackupProperties().getPropertyNames();
             for (String authBackupPropertyName : authBackupPropertyNames) {
-                String value = authBackupProperties.getProperty(authBackupPropertyName);
+                String value
+                    = authPropertiesDelegate.getAuthBackupProperties().getProperty(
+                        authBackupPropertyName);
                 setPropertyNoPersist(authBackupPropertyName, value);
             }
 
@@ -522,6 +477,9 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
      * @param request      that was generated by the user
      * @param propertyName the name of the property to be checked and set
      */
+    // TODO: MB - can we get rid of this? AFAICT, only callers do not use the boolean return value
+    //  (but double-check!), so a simple "setProperty" call should suffice (assuming we get rid of
+    //  "addProperty" and the PropertyNotFoundException)
     public boolean checkAndSetProperty(HttpServletRequest request, String propertyName)
         throws GeneralPropertyException {
         boolean changed = false;

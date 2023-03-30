@@ -26,6 +26,8 @@ import java.util.Vector;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
+import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -346,6 +348,9 @@ public class PropertyService extends BaseService {
     properties.bypassConfiguration();
   }
 
+  // TODO: MB - can we get rid of this? AFAICT, only callers do not use the boolean return value
+  //  (but double-check!), so a simple "setProperty" call should suffice (assuming we get rid of
+  //  "addProperty" and the PropertyNotFoundException)
   /**
    * Take input from the user in an HTTP request about an property to be changed and update the
    * metacat property file with that new value if it has changed from the value that was originally
@@ -376,6 +381,14 @@ public class PropertyService extends BaseService {
    * @return a String holding the recommended external directory
    */
   public static String getRecommendedExternalDir() {
+    if (RECOMMENDED_EXTERNAL_DIR == null) {
+      try {
+        RECOMMENDED_EXTERNAL_DIR = SystemUtil.discoverExternalDir();
+      } catch (MetacatUtilException e) {
+        logMetacat.error("Error calling SystemUtil.discoverExternalDir(): None assigned: "
+            + e.getMessage(), e);
+      }
+    }
     return RECOMMENDED_EXTERNAL_DIR;
   }
 
