@@ -783,7 +783,7 @@ public class SystemMetadataFactory {
 			}
             
             //insert the systemmetadata object or just update it as needed
-        	IdentifierManager.getInstance().insertOrUpdateSystemMetadata(sm);
+        	SystemMetadataManager.getInstance().insertOrUpdateSystemMetadata(sm);
         	logMetacat.info("Generated or Updated SystemMetadata for " + localId);
             
         	logMetacat.trace("METRICS:\tGENERATE_SYSTEM_METADATA:\tEND:\tLOCALID:\t" + localId);

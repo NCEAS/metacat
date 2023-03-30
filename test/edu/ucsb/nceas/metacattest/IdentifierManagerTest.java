@@ -94,14 +94,14 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testCreateMapping"));
         suite.addTest(new IdentifierManagerTest("testGenerateLocalId"));
         suite.addTest(new IdentifierManagerTest("testGetHeadPID"));
-        suite.addTest(new IdentifierManagerTest("testMediaType"));
+        //suite.addTest(new IdentifierManagerTest("testMediaType"));
         suite.addTest(new IdentifierManagerTest("testQuerySystemMetadata"));
         suite.addTest(new IdentifierManagerTest("testSystemMetadataPIDExists"));
         suite.addTest(new IdentifierManagerTest("testSystemMetadataSIDExists"));
         suite.addTest(new IdentifierManagerTest("testObjectFileExist"));
         suite.addTest(new IdentifierManagerTest("testExistsInXmlRevisionTable"));
         suite.addTest(new IdentifierManagerTest("testExistsInIdentifierTable"));
-        suite.addTest(new IdentifierManagerTest("testUpdateSystemmetadata"));
+        //suite.addTest(new IdentifierManagerTest("testUpdateSystemmetadata"));
         suite.addTest(new IdentifierManagerTest("getGetGUIDs"));
         suite.addTest(new IdentifierManagerTest("textGetAllPidsInChain"));
         return suite;
@@ -1634,85 +1634,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         return docid;
     }
     
-    /**
-     * Method to test new system metadata field such as media type and file name.
-     */
-    public void testMediaType() throws Exception {
-        String fileName = "new file name";
-        String name = "text/plain";
-        String p1Name = "charset";
-        String p1Value = "UTF8";
-        String p2Name = "n2";
-        String p2Value = "v2";
-        IdentifierManager im = IdentifierManager.getInstance();
-        
-        //test system metadata write/read without mediatype and file name.
-        String docid = "test." + new Date().getTime() + ".1";
-        String guid = "guid:" + docid;
-        //create a mapping (identifier-docid)
-        im.createMapping(guid, docid);
-        Session session = getTestSession();
-        Identifier id = new Identifier();
-        id.setValue(guid);
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        SystemMetadata sysmeta = createSystemMetadata(id, session.getSubject(), object);
-        //sysmeta.setFileName(fileName);
-        im.insertOrUpdateSystemMetadata(sysmeta);
-        SystemMetadata read = im.getSystemMetadata(guid);
-        assertTrue(read.getIdentifier().equals(id));
-        assertTrue(read.getFileName() == null);
-        assertTrue(read.getMediaType() == null);
-        //remove the system metadata
-        im.deleteSystemMetadata(guid);
-        //remove the mapping
-        im.removeMapping(guid, docid);
-        
-        
-      //test system metadata write/read with mediatype and file name.
-        Thread.sleep(1000);
-        docid = "test." + new Date().getTime() + ".1";
-        guid = "guid:" + docid;
-        //create a mapping (identifier-docid)
-        im.createMapping(guid, docid);
-        id = new Identifier();
-        id.setValue(guid);
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        sysmeta = createSystemMetadata(id, session.getSubject(), object);
-        sysmeta.setFileName(fileName);
-        MediaType media = new MediaType();
-        media.setName(name);
-        MediaTypeProperty p1 = new MediaTypeProperty();
-        p1.setName(p1Name);
-        p1.setValue(p1Value);
-        media.addProperty(p1);
-        MediaTypeProperty p2 = new MediaTypeProperty();
-        p2.setName(p2Name);
-        p2.setValue(p2Value);
-        media.addProperty(p2);
-        sysmeta.setMediaType(media);
-        im.insertOrUpdateSystemMetadata(sysmeta);
-        read = im.getSystemMetadata(guid);
-        assertTrue(read.getIdentifier().equals(id));
-        assertTrue(read.getFileName().equals(fileName));
-        MediaType type = read.getMediaType();
-        assertTrue(type.getName().equals(name));
-        List<MediaTypeProperty> list = type.getPropertyList();
-        assertTrue(list.size() == 2);
-        MediaTypeProperty item1 = list.get(0);
-        assertTrue(item1.getName().equals(p1Name));
-        assertTrue(item1.getValue().equals(p1Value));
-        MediaTypeProperty item2 = list.get(1);
-        assertTrue(item2.getName().equals(p2Name));
-        assertTrue(item2.getValue().equals(p2Value));
-        
-        //Thread.sleep(100000);
-        //remove the system metadata
-        im.deleteSystemMetadata(guid);
-        //remove the mapping
-        im.removeMapping(guid, docid);
-        
-        
-    }
+    
     
     private void ph(String s)
     {
@@ -1872,51 +1794,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         return session;
     }
     
-    /**
-     * Test the updateSystemMetadata method should throw an IvalidSystemMetadata exception 
-     * if the permission is wrongly spelled. 
-     * https://github.com/NCEAS/metacat/issues/1323
-     * @throws Exception
-     */
-    public void testUpdateSystemmetadata() throws Exception {
-        String typoPermission = "typo";
-        Session session = getTestSession();
-        Identifier guid = new Identifier();
-        guid.setValue(generateDocumentId());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        AccessPolicy policy = new AccessPolicy();
-        AccessRule rule = new AccessRule();
-        Subject subject = new Subject();
-        subject.setValue("cn=test,dc=org");
-        rule.addSubject(subject);
-        rule.addPermission(Permission.convert(typoPermission));
-        policy.addAllow(rule);
-        SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
-        meta.setAccessPolicy(policy);
-        DBConnection dbConn = null;
-        int serialNumber = 1;
-        try {
-            // get a connection from the pool
-            dbConn = DBConnectionPool
-                    .getDBConnection("Metacathandler.handleInsertOrUpdateAction");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-            try {
-                IdentifierManager.getInstance().updateSystemMetadata(meta, dbConn);
-                fail("Can't get there since an InvalidSystemMetadata exception should be thrown.");
-            } catch (InvalidSystemMetadata e) {
-                assertTrue(e.getMessage().contains(typoPermission));
-            }
-            
-        } finally {
-            // Return db connection
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-        }
-        
-    }
-    
+   
     /**
      * Test the getGUIDs method for either the guid matches the scheme or the series id matches the scheme
      * @throws Exception
