@@ -66,6 +66,7 @@ public class MCTestCase
     extends TestCase {
 
     private static boolean printDebug = false;
+    protected static Properties _testProperties;
 
     protected static String EML2_0_0 = "EML2_0_0";
     protected static String EML2_0_1 = "EML2_0_1";
@@ -105,13 +106,13 @@ public class MCTestCase
 
     static {
         try {
-            Properties testProperties = new Properties();
-            testProperties.load(
+            _testProperties = new Properties();
+            _testProperties.load(
                 Files.newBufferedReader(Paths.get("build/tests/test.properties")));
-            if (testProperties.isEmpty()) {
+            if (_testProperties.isEmpty()) {
                 fail("Couldn't load test properties");
             }
-            metacatContextDir = testProperties.getProperty("metacat.contextDir");
+            metacatContextDir = _testProperties.getProperty("metacat.contextDir");
             PropertyService.getInstance(metacatContextDir + "/WEB-INF");
             String printDebugString = PropertyService.getProperty("test.printdebug");
             printDebug = Boolean.parseBoolean(printDebugString);

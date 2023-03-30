@@ -18,12 +18,6 @@
  */
 package edu.ucsb.nceas.metacat.util;
 
-import java.util.Arrays;
-import java.util.Vector;
-import java.util.regex.Pattern;
-
-import com.hp.hpl.jena.sparql.pfunction.library.str;
-
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 
@@ -79,20 +73,22 @@ public class SystemUtilTest extends MCTestCase {
      * @throws Exception
      */
     public void testGetInternalURLs() throws Exception {
+       String expectedUrl = _testProperties.getProperty("internalURL", "http://localhost:80");
        String internalURL = SystemUtil.getInternalServerURL();
        System.out.println("============the internal url is "+internalURL);
        System.out.println("=============the internal url has been replaced by the external url is "+SystemUtil.isInternalURLReplacedByExternal());
        if(!SystemUtil.isInternalURLReplacedByExternal()) {
-           assertTrue(internalURL.equals("http://localhost:80"));
+           assertEquals(expectedUrl, internalURL);
        }
        internalURL = SystemUtil.getInternalServerURL();
        if(!SystemUtil.isInternalURLReplacedByExternal()) {
-           assertTrue(internalURL.equals("http://localhost:80"));
+           assertEquals(expectedUrl, internalURL);
        }
        String contextURL = SystemUtil.getInternalContextURL();
        System.out.println("========================= the context url is "+contextURL);
-       if(!SystemUtil.isInternalURLReplacedByExternal()) {
-           assertTrue(contextURL.equals("http://localhost:80"+"/"+PropertyService.getProperty("application.context")));
+       if (!SystemUtil.isInternalURLReplacedByExternal()) {
+           assertEquals(expectedUrl + "/" + PropertyService.getProperty("application.context"),
+               contextURL);
        }
     }
     
