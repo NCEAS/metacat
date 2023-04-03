@@ -327,7 +327,7 @@ public class SystemMetadataManager {
         // save access policy
         AccessPolicy accessPolicy = sm.getAccessPolicy();
         if (accessPolicy != null) {
-            this.insertAccessPolicy(guid, accessPolicy);
+            this.insertAccessPolicy(guid, accessPolicy, dbConn);
         }
     }
     
@@ -511,7 +511,8 @@ public class SystemMetadataManager {
      * @throws AccessException
      * @throws InvalidSystemMetadata 
      */
-    private void insertAccessPolicy(String guid, AccessPolicy accessPolicy) throws McdbDocNotFoundException, AccessException, InvalidSystemMetadata {
+    private void insertAccessPolicy(String guid, AccessPolicy accessPolicy, DBConnection conn) 
+                                    throws McdbDocNotFoundException, AccessException, InvalidSystemMetadata, SQLException {
         
         // check for the existing permOrder so that we remain compatible with it (DataONE does not care)
         XMLAccessAccess accessController  = new XMLAccessAccess();
@@ -544,7 +545,7 @@ public class SystemMetadataManager {
             }
         }
         // remove all existing allow records
-        accessController.deleteXMLAccessForDoc(guid, AccessControlInterface.ALLOW);
+        accessController.deleteXMLAccessForDoc(guid, AccessControlInterface.ALLOW, conn);
         // add the ones we can for this guid
         accessController.insertAccess(guid, accessDAOs);
     }

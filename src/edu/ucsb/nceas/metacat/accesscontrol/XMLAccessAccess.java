@@ -634,54 +634,54 @@ public class XMLAccessAccess extends BaseAccess {
 		}	   
 	}
 	
+	
+	
 	/**
-	 * Delete xml access.  This removes all access records from the database for a principal 
-	 * for a given document
-	 * 
-	 * @param guid
-	 *            document id
-	 * @param principal
-	 *            principal credentials
-	 */
-	public void deleteXMLAccessForDoc(String guid, String permType) throws AccessException {
-		if (guid == null) {
-			throw new AccessException("XMLAccessAccess.deleteXMLAccessForDoc - id is required when " + 
-					"deleting XML access record");
-		}
-		if (permType == null) {
-			throw new AccessException("XMLAccessAccess.deleteXMLAccessForDoc - permType is required when " + 
-					"deleting XML access record");
-		}
-		
-	    PreparedStatement pstmt = null;
-		DBConnection conn = null;
-		int serialNumber = -1;
-		try {
-			// check out DBConnection
-			conn = DBConnectionPool.getDBConnection("XMLAccessAccess.deleteXMLAccessForDoc");
-    		serialNumber = conn.getCheckOutSerialNumber();
-    		
-			String sql = "DELETE FROM xml_access WHERE guid = ? AND perm_type = ?";
-			pstmt = conn.prepareStatement(sql);
+     * Delete xml access.  This removes all access records from the database for a principal 
+     * for a given document
+     * 
+     * @param guid
+     *            document id
+     * @param principal
+     *            principal credentials
+     * @param conn
+     *            the db connection which will be used to run the delete query
+     */
+    public void deleteXMLAccessForDoc(String guid, String permType, DBConnection conn) throws AccessException, SQLException {
+        if (guid == null) {
+            throw new AccessException("XMLAccessAccess.deleteXMLAccessForDoc - id is required when " + 
+                    "deleting XML access record");
+        }
+        if (permType == null) {
+            throw new AccessException("XMLAccessAccess.deleteXMLAccessForDoc - permType is required when " + 
+                    "deleting XML access record");
+        }
+        
+        PreparedStatement pstmt = null;
+        try {
+            String sql = "DELETE FROM xml_access WHERE guid = ? AND perm_type = ?";
+            pstmt = conn.prepareStatement(sql);
 
-			// Bind the values to the query
-			pstmt.setString(1, guid);
-			pstmt.setString(2, permType);
+            // Bind the values to the query
+            pstmt.setString(1, guid);
+            pstmt.setString(2, permType);
 
-			String sqlReport = "XMLAccessAccess.deleteXMLAccessForDoc - SQL: " + sql;
-			sqlReport += " [" + guid + "," + permType + "]";
-			
-			logMetacat.info(sqlReport);
+            String sqlReport = "XMLAccessAccess.deleteXMLAccessForDoc - SQL: " + sql;
+            sqlReport += " [" + guid + "," + permType + "]";
+            
+            logMetacat.info(sqlReport);
 
-			pstmt.execute();
-		} catch (SQLException sqle) {
-			throw new AccessException("XMLAccessAccess.deleteXMLAccessForDoc - SQL error when deleting"
-					+ "xml access permissions for id: " + guid + ", permType: " + 
-					permType + ":" + sqle.getMessage());
-		} finally {
-			closeDBObjects(pstmt, conn, serialNumber, logMetacat);
-		}	   
-	}
+            pstmt.execute();
+        } catch (SQLException sqle) {
+            throw new AccessException("XMLAccessAccess.deleteXMLAccessForDoc - SQL error when deleting"
+                    + "xml access permissions for id: " + guid + ", permType: " + 
+                    permType + ":" + sqle.getMessage());
+        } finally {
+            if (pstmt != null) {
+                pstmt.close();
+            }
+        }      
+    }
 	
 	/**
 	 * Checks to see if there is a permission order conflict for a given document.  Each 
