@@ -324,6 +324,25 @@ public class XMLAccessAccess extends BaseAccess {
 		
 		insertAccess(guid, xmlAccessList);
 	}
+	/**
+     * Set permissions for a given document. This means first removing all access control for the
+     * document and then adding the given rules.
+     * 
+     * @param id
+     *            document id
+     * @param xmlAccessList
+     *            list of xml access dao objects that hold new access for the document
+     */
+    public void insertAccess(String guid, List<XMLAccessDAO> xmlAccessList) throws AccessException {
+        
+        // if more than one record exists for this principal on this document with the same
+        // access type / access order combination, call cleanup to combine common access and then
+        // re-retrieve the access list.
+        for(XMLAccessDAO xmlAccessDAO : xmlAccessList) {
+            insertXMLAccess(guid, xmlAccessDAO.getPrincipalName(), xmlAccessDAO.getPermission(), 
+                    xmlAccessDAO.getPermType(), xmlAccessDAO.getPermOrder(), xmlAccessDAO.getAccessFileId(), xmlAccessDAO.getSubTreeId());
+        }
+    }
 	
 	/**
 	 * Set permissions for a given document. This means first removing all access control for the
@@ -333,23 +352,93 @@ public class XMLAccessAccess extends BaseAccess {
 	 *            document id
 	 * @param xmlAccessList
 	 *            list of xml access dao objects that hold new access for the document
+	 * @param conn  the database connection to run the query
 	 */
-	public void insertAccess(String guid, List<XMLAccessDAO> xmlAccessList) throws AccessException {
+	public void insertAccess(String guid, List<XMLAccessDAO> xmlAccessList, DBConnection conn) throws AccessException, SQLException {
 		
 		// if more than one record exists for this principal on this document with the same
 		// access type / access order combination, call cleanup to combine common access and then
 		// re-retrieve the access list.
 		for(XMLAccessDAO xmlAccessDAO : xmlAccessList) {
-			insertXMLAccess(guid, xmlAccessDAO.getPrincipalName(), xmlAccessDAO.getPermission(), 
+			insertXMLAccess(conn, guid, xmlAccessDAO.getPrincipalName(), xmlAccessDAO.getPermission(), 
 					xmlAccessDAO.getPermType(), xmlAccessDAO.getPermOrder(), xmlAccessDAO.getAccessFileId(), xmlAccessDAO.getSubTreeId());
 		}
 	}
+	
+	/**
+     * Insert an xml access record.  It is assumed that the checks have already been made to 
+     * make sure the principal does not already have an access record for this document.  If 
+     * one does already exist, that record should be updated and this insert not called.
+     * 
+     * @param id
+     *            document id
+     * @param principal
+     *            principal credentials
+     * @param permission
+     *            permission bitmap
+     * @param permType
+     *            permission type
+     * @param permOrder
+     *            permission order
+     */
+    private void insertXMLAccess(String guid, String principalName, Long permission, String permType,
+            String permOrder, String accessFileId, String subTreeId) throws AccessException {
+        //System.out.println("permission in insertXMLAccess: " + permission);
+        try
+        {
+            if(permission == -1)
+            {
+                throw new Exception("Permission is -1 in XMLAccessAccess.insertXMLAccess().");
+            }
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            logMetacat.warn(e.getMessage());
+        }
+        
+        if (guid == null) {
+            throw new AccessException("XMLAccessAccess.insertXMLAccess - id is required when " + 
+                    "inserting XML access record");
+        }
+        if (principalName == null) {
+            throw new AccessException("XMLAccessAccess.insertXMLAccess - principal is required when " + 
+                    "inserting XML access record");
+        }
+        if (permission == null) {
+            throw new AccessException("XMLAccessAccess.insertXMLAccess - permission is required when " + 
+                    "inserting XML access record");
+        }
+        if (permType == null) {
+            throw new AccessException("XMLAccessAccess.insertXMLAccess - permType is required when " + 
+                    "inserting XML access record");
+        }
+        if (permOrder == null) {
+            permOrder = AccessControlInterface.ALLOWFIRST;
+        }
+        DBConnection conn = null;
+        int serialNumber = -1;
+        try {
+            // check out DBConnection
+            conn = DBConnectionPool.getDBConnection("XMLAccessAccess.insertXMLAccess");
+            serialNumber = conn.getCheckOutSerialNumber();
+            insertXMLAccess(conn, guid, principalName, permission, permType,
+                    permOrder, accessFileId, subTreeId);
+        } catch (SQLException sqle) {
+            throw new AccessException("XMLAccessAccess.insertXMLAccess - SQL error when inserting"
+                    + "xml access permissions for id: " + guid + ", principal: " + 
+                    principalName + ":" + sqle.getMessage());
+        } finally {
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+        }   
+    }
 	
 	/**
 	 * Insert an xml access record.  It is assumed that the checks have already been made to 
 	 * make sure the principal does not already have an access record for this document.  If 
 	 * one does already exist, that record should be updated and this insert not called.
 	 * 
+	 * @param conn  the database connection to run the query
 	 * @param id
 	 *            document id
 	 * @param principal
@@ -361,8 +450,8 @@ public class XMLAccessAccess extends BaseAccess {
 	 * @param permOrder
 	 *            permission order
 	 */
-	private void insertXMLAccess(String guid, String principalName, Long permission, String permType,
-			String permOrder, String accessFileId, String subTreeId) throws AccessException {
+	private void insertXMLAccess(DBConnection conn, String guid, String principalName, Long permission, String permType,
+			String permOrder, String accessFileId, String subTreeId) throws AccessException, SQLException{
 	    //System.out.println("permission in insertXMLAccess: " + permission);
 	    try
 	    {
@@ -398,19 +487,12 @@ public class XMLAccessAccess extends BaseAccess {
 		}
 		
 	    PreparedStatement pstmt = null;
-		DBConnection conn = null;
-		int serialNumber = -1;
 		try {
-			// check out DBConnection
-			conn = DBConnectionPool.getDBConnection("XMLAccessAccess.insertXMLAccess");
-			serialNumber = conn.getCheckOutSerialNumber();
 			
 			String sql = "INSERT INTO xml_access " +
 				"(guid, principal_name, permission, perm_type, perm_order, accessfileid, subtreeid ) " + 
 				"VALUES (?,?,?,?,?,?,?)";
 			pstmt = conn.prepareStatement(sql);
-
-			
 			// Bind the values to the query
 			pstmt.setString(1, guid);
 			pstmt.setString(2, principalName);
@@ -431,7 +513,9 @@ public class XMLAccessAccess extends BaseAccess {
 					+ "xml access permissions for id: " + guid + ", principal: " + 
 					principalName + ":" + sqle.getMessage());
 		} finally {
-			closeDBObjects(pstmt, conn, serialNumber, logMetacat); 
+			if (pstmt != null) {
+			    pstmt.close();
+			}
 		}   
 	}
 	

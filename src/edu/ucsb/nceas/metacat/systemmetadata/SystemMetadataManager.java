@@ -547,7 +547,7 @@ public class SystemMetadataManager {
         // remove all existing allow records
         accessController.deleteXMLAccessForDoc(guid, AccessControlInterface.ALLOW, conn);
         // add the ones we can for this guid
-        accessController.insertAccess(guid, accessDAOs);
+        accessController.insertAccess(guid, accessDAOs, conn);
     }
     
     /**
