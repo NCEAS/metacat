@@ -200,7 +200,7 @@ public class SystemMetadataManager {
      * @throws SQLException 
      * @throws InvalidSystemMetadata 
      */
-    public void insertOrUpdateSystemMetadata(SystemMetadata sysmeta) 
+    protected void insertOrUpdateSystemMetadata(SystemMetadata sysmeta) 
         throws McdbDocNotFoundException, SQLException, InvalidSystemMetadata {
         String guid = sysmeta.getIdentifier().getValue();
         
@@ -256,7 +256,7 @@ public class SystemMetadataManager {
      * @throws InvalidSystemMetadata 
      * @throws AccessException 
      */
-    public void updateSystemMetadata(SystemMetadata sm, DBConnection dbConn) 
+    protected void updateSystemMetadata(SystemMetadata sm, DBConnection dbConn) 
       throws McdbDocNotFoundException, SQLException, InvalidSystemMetadata, AccessException {
         
       Boolean replicationAllowed = false;
