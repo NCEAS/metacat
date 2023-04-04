@@ -24,40 +24,54 @@ import edu.ucsb.nceas.utilities.MetaDataProperty;
 import edu.ucsb.nceas.utilities.PropertiesMetaData;
 import edu.ucsb.nceas.utilities.SortedProperties;
 
-import javax.servlet.ServletContext;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
 public class AuthPropertiesDelegate {
     protected static final String AUTH_METADATA_FILE_NAME = "auth.properties.metadata.xml";
     protected static final String AUTH_BACKUP_FILE_NAME = "auth.properties.backup";
     protected static String authMetadataFilePath = null;
     protected static PropertiesMetaData authMetaData = null;
-    protected static String authBackupFilePath = null;
+    protected static String siteAuthPropsFilePath = null;
     protected static SortedProperties authBackupProperties = null;
+    private static AuthPropertiesDelegate authPropertiesDelegate;
 
-    public AuthPropertiesDelegate(String sitePropertiesPath)
-        throws IOException, TransformerException {
+    private AuthPropertiesDelegate(String sitePropertiesPath) throws GeneralPropertyException {
 
         authMetadataFilePath =
             PropertyService.CONFIG_FILE_DIR + FileUtil.getFS() + AUTH_METADATA_FILE_NAME;
+        try {
+            // authMetaData holds configuration information about organization-level
+            // properties. This is primarily used to display input fields on
+            // the auth configuration page. The information is retrieved
+            // from an xml metadata file dedicated just to auth properties.
+            authMetaData = new PropertiesMetaData(authMetadataFilePath);
 
-        // authMetaData holds configuration information about organization-level
-        // properties. This is primarily used to display input fields on
-        // the auth configuration page. The information is retrieved
-        // from an xml metadata file dedicated just to auth properties.
-        authMetaData = new PropertiesMetaData(authMetadataFilePath);
+            // The siteAuthPropsFile holds properties that were backed up
+            // the last time the auth was configured. On disk, the file
+            // will look like a smaller version of metacat.properties. It
+            // is stored in the data storage directory outside the
+            // application directories.
+            siteAuthPropsFilePath = sitePropertiesPath + FileUtil.getFS() + AUTH_BACKUP_FILE_NAME;
+            authBackupProperties = new SortedProperties(siteAuthPropsFilePath);
+            authBackupProperties.load();
+        } catch (TransformerException te) {
+            throw new GeneralPropertyException(
+                "Transform problem while loading properties: " + te.getMessage());
+        } catch (IOException ioe) {
+            throw new GeneralPropertyException("I/O problem while loading properties: " + ioe.getMessage());
+        }
+    }
 
-        // The authBackupProperties hold properties that were backed up
-        // the last time the auth was configured. On disk, the file
-        // will look like a smaller version of metacat.properties. It
-        // is stored in the data storage directory outside the
-        // application directories.
-        authBackupFilePath = sitePropertiesPath + FileUtil.getFS() + AUTH_BACKUP_FILE_NAME;
-        authBackupProperties = new SortedProperties(authBackupFilePath);
-        authBackupProperties.load();
+    protected static AuthPropertiesDelegate getInstance(String sitePropertiesPath)
+        throws GeneralPropertyException {
+        if (authPropertiesDelegate == null) {
+            authPropertiesDelegate = new AuthPropertiesDelegate(sitePropertiesPath);
+        }
+        return authPropertiesDelegate;
     }
 
     /**
@@ -84,13 +98,13 @@ public class AuthPropertiesDelegate {
     /**
      * Writes out backup configurable properties to a file.
      */
-    protected void persistAuthBackupProperties(ServletContext servletContext)
+    protected void persistAuthBackupProperties()
         throws GeneralPropertyException {
 
         // Use the metadata to extract configurable properties from the
         // overall properties list, and store those properties.
         try {
-            SortedProperties backupProperties = new SortedProperties(authBackupFilePath);
+            SortedProperties backupProperties = new SortedProperties(siteAuthPropsFilePath);
 
             // Populate the backup properties for auth properties using
             // the associated metadata file
@@ -109,7 +123,7 @@ public class AuthPropertiesDelegate {
 
             // store the properties to file
             backupProperties.store();
-            authBackupProperties = new SortedProperties(authBackupFilePath);
+            authBackupProperties = new SortedProperties(siteAuthPropsFilePath);
             authBackupProperties.load();
 
         } catch (TransformerException te) {
@@ -118,6 +132,15 @@ public class AuthPropertiesDelegate {
         } catch (IOException ioe) {
             throw new GeneralPropertyException(
                 "Could not backup configurable properties: " + ioe.getMessage());
+        }
+    }
+
+    protected void bypassAuthConfiguration(PropertiesWrapper properties) throws GeneralPropertyException {
+        Vector<String> authBackupPropertyNames
+            = getAuthBackupProperties().getPropertyNames();
+        for (String authBackupPropertyName : authBackupPropertyNames) {
+            String value = getAuthBackupProperties().getProperty(authBackupPropertyName);
+            properties.setPropertyNoPersist(authBackupPropertyName, value);
         }
     }
 }

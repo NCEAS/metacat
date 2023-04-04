@@ -48,7 +48,9 @@ public class PropertyService extends BaseService {
 
   private static PropertyService propertyService = null;
 
-  private static PropertiesInterface properties = null;
+  private static PropertiesWrapper properties = null;
+
+  private static AuthPropertiesDelegate authPropertiesDelegate = null;
 
   // system is configured
   public static final String CONFIGURED = PropertiesInterface.CONFIGURED;
@@ -58,15 +60,8 @@ public class PropertyService extends BaseService {
 
   private static final String DEFAULT_CONFIG_FILE_DIR = "WEB-INF";
   public static String CONFIG_FILE_DIR = null;
-  public static String CONFIG_FILE_NAME = null;
+
   public static String CONFIG_FILE_PATH = null;
-
-  public static String TEST_CONFIG_FILE_NAME = null;
-
-  private static final String DEFAULT_PROPERTY_CLASS_NAME
-      = "edu.ucsb.nceas.metacat.properties.PropertiesWrapper";
-//      = "edu.ucsb.nceas.metacat.properties.ConfigurableProperties";
-  private static String PROPERTY_CLASS_NAME = null;
 
   private static String RECOMMENDED_EXTERNAL_DIR = null;
 
@@ -77,9 +72,20 @@ public class PropertyService extends BaseService {
    */
   private PropertyService() throws ServiceException {
     _serviceName = "PropertyService";
-
     initialize();
   }
+
+
+  /**
+   * Initialize the singleton.
+   */
+  private void initialize() throws ServiceException {
+    logMetacat.debug("Initializing PropertyService");
+
+    properties = PropertiesWrapper.getInstance();
+    authPropertiesDelegate = properties.getAuthPropertiesDelegate();
+  }
+
 
   /**
    * Get the single instance of PropertyService.
@@ -88,21 +94,12 @@ public class PropertyService extends BaseService {
    */
   public static PropertyService getInstance(ServletContext context) throws ServiceException {
     if (propertyService == null) {
-
       String applicationName = (String) context.getAttribute("APPLICATION_NAME");
-
       CONFIG_FILE_DIR = context.getInitParameter("configFileDir");
       if (CONFIG_FILE_DIR == null) {
-        String configDir = context.getRealPath(DEFAULT_CONFIG_FILE_DIR);
-        CONFIG_FILE_DIR = configDir;
+        CONFIG_FILE_DIR = context.getRealPath(DEFAULT_CONFIG_FILE_DIR);
       }
-
       CONFIG_FILE_PATH = CONFIG_FILE_DIR + FileUtil.getFS() + applicationName + ".properties";
-
-      PROPERTY_CLASS_NAME = context.getInitParameter("propertyClassName");
-      if (PROPERTY_CLASS_NAME == null) {
-        PROPERTY_CLASS_NAME = DEFAULT_PROPERTY_CLASS_NAME;
-      }
 
       propertyService = new PropertyService();
     }
@@ -119,9 +116,6 @@ public class PropertyService extends BaseService {
   public static PropertyService getInstance(String testConfigFileDir) throws ServiceException {
     if (propertyService == null) {
       CONFIG_FILE_DIR = testConfigFileDir;
-
-      PROPERTY_CLASS_NAME = DEFAULT_PROPERTY_CLASS_NAME;
-
       propertyService = new PropertyService();
     }
     return propertyService;
@@ -136,7 +130,8 @@ public class PropertyService extends BaseService {
   public static PropertyService getInstance() throws ServiceException {
     if (propertyService == null) {
       throw new ServiceException(
-          "PropertyService.getInstance - cannot call " + "getInstance without parameters until property service has been created " + "with either servlet context or config file path.");
+          "PropertyService.getInstance() - cannot call getInstance without parameters until "
+          + "property service has been created with either servlet context or config file path.");
     }
     return propertyService;
   }
@@ -152,27 +147,6 @@ public class PropertyService extends BaseService {
   public void stop() throws ServiceException {
   }
 
-  /**
-   * Initialize the singleton.
-   */
-  private void initialize() throws ServiceException {
-
-    logMetacat.debug("Initializing PropertyService");
-
-    try {
-      Class<?> classDef = Class.forName(PROPERTY_CLASS_NAME);
-      properties = (PropertiesInterface) classDef.newInstance();
-    } catch (InstantiationException ie) {
-      throw new ServiceException(
-          "Could not instantiate property class: " + PROPERTY_CLASS_NAME + " " + ie.getMessage());
-    } catch (IllegalAccessException iae) {
-      throw new ServiceException(
-          "Access error when intantiating property class: " + PROPERTY_CLASS_NAME + " " + iae.getMessage());
-    } catch (ClassNotFoundException cnfe) {
-      throw new ServiceException(
-          "Could not find property class: " + PROPERTY_CLASS_NAME + " " + cnfe.getMessage());
-    }
-  }
 
   /**
    * Utility method to get a property value from the properties file
@@ -187,7 +161,7 @@ public class PropertyService extends BaseService {
   /**
    * Get a set of all property names.
    *
-   * @return Set of property names
+   * @return Vector of property names
    */
   public static Vector<String> getPropertyNames() {
     return properties.getPropertyNames();
@@ -280,7 +254,7 @@ public class PropertyService extends BaseService {
    * @return a SortedProperties object with the backup properties
    */
   public static SortedProperties getAuthBackupProperties() throws GeneralPropertyException {
-    return properties.getAuthBackupProperties();
+    return authPropertiesDelegate.getAuthBackupProperties();
   }
 
   /**
@@ -300,24 +274,22 @@ public class PropertyService extends BaseService {
    * @return a PropertiesMetaData object with the organization properties metadata
    */
   public static PropertiesMetaData getAuthMetaData() throws GeneralPropertyException {
-    return properties.getAuthMetaData();
+    return authPropertiesDelegate.getAuthMetaData();
   }
 
   /**
    * Writes out backup configurable properties to a file.
    */
   public static void persistMainBackupProperties() throws GeneralPropertyException {
-
     properties.persistMainBackupProperties();
   }
 
   /**
    * Writes out backup configurable properties to a file.
    */
-  public static void persistAuthBackupProperties(ServletContext servletContext)
+  public static void persistAuthBackupProperties()
       throws GeneralPropertyException {
-
-    properties.persistAuthBackupProperties(servletContext);
+    authPropertiesDelegate.persistAuthBackupProperties();
   }
 
   /**
@@ -359,9 +331,9 @@ public class PropertyService extends BaseService {
    * @param request      that was generated by the user
    * @param propertyName the name of the property to be checked and set
    */
-  public static boolean checkAndSetProperty(HttpServletRequest request, String propertyName)
+  public static void checkAndSetProperty(HttpServletRequest request, String propertyName)
       throws GeneralPropertyException {
-    return properties.checkAndSetProperty(request, propertyName);
+    properties.checkAndSetProperty(request, propertyName);
   }
 
   /**
@@ -406,5 +378,4 @@ public class PropertyService extends BaseService {
       throw new GeneralPropertyException(e.getMessage());
     }
   }
-
 }

@@ -46,7 +46,9 @@ import java.util.*;
 /**
  * A suite of utility classes for the metadata configuration utility
  */
-public class PropertiesWrapper extends BaseService implements PropertiesInterface {
+public class PropertiesWrapper extends BaseService {
+
+    private static PropertiesWrapper propertiesWrapper = null;
 
     private static final String MAIN_CONFIG_FILE_NAME = "metacat.properties";
     private static final String MAIN_METADATA_FILE_NAME = "metacat.properties.metadata.xml";
@@ -66,9 +68,16 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
     /**
      * private constructor since this is a singleton
      */
-    protected PropertiesWrapper() throws ServiceException {
+    private PropertiesWrapper() throws ServiceException {
         _serviceName = "PropertiesWrapper";
         initialize();
+    }
+
+    public static PropertiesWrapper getInstance() throws ServiceException {
+        if (propertiesWrapper == null) {
+            propertiesWrapper = new PropertiesWrapper();
+        }
+        return propertiesWrapper;
     }
 
     public boolean refreshable() {
@@ -85,7 +94,7 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
      * Initialize the singleton.
      */
     private void initialize() throws ServiceException {
-        logMetacat.debug("Initializing ConfigurableProperties");
+        logMetacat.debug("Initializing PropertiesWrapper");
         try {
             mainConfigFilePath =
                 PropertyService.CONFIG_FILE_DIR + FileUtil.getFS() + MAIN_CONFIG_FILE_NAME;
@@ -120,7 +129,7 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
             mainBackupProperties = new SortedProperties(mainBackupFilePath);
             mainBackupProperties.load();
 
-            authPropertiesDelegate = new AuthPropertiesDelegate(getSitePropsPath());
+            authPropertiesDelegate = AuthPropertiesDelegate.getInstance(getSitePropsPath());
 
         } catch (TransformerException te) {
             throw new ServiceException(
@@ -299,17 +308,6 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
     }
 
     /**
-     * Get the auth backup properties file. These are configurable properties that are stored
-     * outside the metacat install directories so the user does not need to re-enter all the
-     * configuration information every time they do an upgrade.
-     *
-     * @return a SortedProperties object with the backup properties
-     */
-    public SortedProperties getAuthBackupProperties() {
-        return authPropertiesDelegate.getAuthBackupProperties();
-    }
-
-    /**
      * Get the main properties metadata. This is retrieved from an xml file that describes the
      * attributes of configurable properties.
      *
@@ -317,16 +315,6 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
      */
     public PropertiesMetaData getMainMetaData() {
         return mainMetaData;
-    }
-
-    /**
-     * Get the auth properties metadata. This is retrieved from an xml file that describes the
-     * attributes of configurable properties.
-     *
-     * @return a PropertiesMetaData object with the organization properties metadata
-     */
-    public PropertiesMetaData getAuthMetaData() {
-        return authPropertiesDelegate.getAuthMetaData();
     }
 
     /**
@@ -368,21 +356,13 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
     }
 
     /**
-     * Writes out backup configurable properties to a file.
-     */
-    public void persistAuthBackupProperties(ServletContext servletContext)
-        throws GeneralPropertyException {
-        authPropertiesDelegate.persistAuthBackupProperties(servletContext);
-    }
-
-    /**
      * Reports whether properties are fully configured.
      *
      * @return a boolean that is true if properties are configured and false otherwise
      */
     public boolean arePropertiesConfigured() throws GeneralPropertyException {
         String propertiesConfigured = getProperty("configutil.propertiesConfigured");
-        return propertiesConfigured != null && !propertiesConfigured.equals(UNCONFIGURED);
+        return propertiesConfigured != null && !propertiesConfigured.equals("false");
     }
 
     /**
@@ -442,14 +422,7 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
             }
 
             logMetacat.debug("bypassConfiguration: setting auth backup properties.");
-            Vector<String> authBackupPropertyNames
-                = authPropertiesDelegate.getAuthBackupProperties().getPropertyNames();
-            for (String authBackupPropertyName : authBackupPropertyNames) {
-                String value
-                    = authPropertiesDelegate.getAuthBackupProperties().getProperty(
-                        authBackupPropertyName);
-                setPropertyNoPersist(authBackupPropertyName, value);
-            }
+            authPropertiesDelegate.bypassAuthConfiguration(this);
 
             logMetacat.debug("bypassConfiguration: setting configutil sections to true.");
             setPropertyNoPersist("configutil.propertiesConfigured", "true");
@@ -491,6 +464,13 @@ public class PropertiesWrapper extends BaseService implements PropertiesInterfac
         }
         return changed;
     }
+
+
+
+    protected AuthPropertiesDelegate getAuthPropertiesDelegate() {
+        return authPropertiesDelegate;
+    }
+
 
     //Properties class is thread-safe - no need to synchronize. See:
     // https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html
