@@ -44,12 +44,11 @@ import edu.ucsb.nceas.utilities.SortedProperties;
  * A suite of utility classes for the metadata configuration utility
  */
 public class PropertyService extends BaseService {
-
     // system is configured
-    public static final String CONFIGURED = PropertiesInterface.CONFIGURED;
+    public static final String CONFIGURED = "true";
     // system has never been configured
-    public static final String UNCONFIGURED = PropertiesInterface.UNCONFIGURED;
-    public static final String BYPASSED = PropertiesInterface.BYPASSED;
+    public static final String UNCONFIGURED = "false";
+    public static final String BYPASSED = "bypassed";
     private static final String DEFAULT_CONFIG_FILE_DIR = "WEB-INF";
     private static final Log logMetacat = LogFactory.getLog(PropertyService.class);
     public static String CONFIG_FILE_DIR = null;
@@ -294,7 +293,7 @@ public class PropertyService extends BaseService {
     }
 
     /**
-     * Take input from the user in an HTTP request about an property to be changed and update the
+     * Take input from the user in an HTTP request about a property to be changed and update the
      * metacat property file with that new value if it has changed from the value that was
      * originally
      * set.

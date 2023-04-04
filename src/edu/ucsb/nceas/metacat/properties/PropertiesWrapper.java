@@ -33,7 +33,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.transform.TransformerException;
 import java.io.FileWriter;
@@ -438,7 +437,6 @@ public class PropertiesWrapper extends BaseService {
         } catch (GeneralPropertyException gpe) {
             logMetacat.error("bypassConfiguration: General property error: " + gpe.getMessage());
         }
-
         bypassAlreadyChecked = true;
     }
 
@@ -453,18 +451,14 @@ public class PropertiesWrapper extends BaseService {
     // TODO: MB - can we get rid of this? AFAICT, only callers do not use the boolean return value
     //  (but double-check!), so a simple "setProperty" call should suffice (assuming we get rid of
     //  "addProperty" and the PropertyNotFoundException)
-    public boolean checkAndSetProperty(HttpServletRequest request, String propertyName)
+    public void checkAndSetProperty(HttpServletRequest request, String propertyName)
         throws GeneralPropertyException {
-        boolean changed = false;
         String value = getProperty(propertyName);
         String newValue = request.getParameter(propertyName);
         if (newValue != null && !newValue.trim().equals(value)) {
             setPropertyNoPersist(propertyName, newValue.trim());
-            changed = true;
         }
-        return changed;
     }
-
 
 
     protected AuthPropertiesDelegate getAuthPropertiesDelegate() {
