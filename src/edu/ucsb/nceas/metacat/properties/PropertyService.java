@@ -1,20 +1,5 @@
 /**
- * Purpose: A Class that implements properties methods for metacat
- * Copyright: 2008
- * Regents of the University of California and the National Center for Ecological
- * Analysis and Synthesis
- *
- * This program is free software; you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program; if
- * not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307  USA
+ * Purpose: A Service that provides access to configuration properties methods for metacat.
  */
 
 package edu.ucsb.nceas.metacat.properties;
@@ -63,7 +48,11 @@ public class PropertyService extends BaseService {
      */
     private PropertyService() throws ServiceException {
         _serviceName = "PropertyService";
-        initialize();
+        try {
+            initialize();
+        } catch (GeneralPropertyException e) {
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     /**
@@ -282,14 +271,17 @@ public class PropertyService extends BaseService {
      * already checked for bypass; false otherwise.
      */
     public static boolean doBypass() throws GeneralPropertyException {
-        return properties.doBypass();
+        return properties.canBypass();
     }
 
     /**
      * Bypasses the metacat properties configuration utility (for dev use only).
      */
     public static void bypassConfiguration() throws GeneralPropertyException {
+        logMetacat.debug("bypassConfiguration(): setting main backup properties.");
         properties.bypassConfiguration();
+        logMetacat.debug("bypassConfiguration(): setting auth backup properties.");
+        authPropertiesDelegate.bypassAuthConfiguration(properties);
     }
 
     /**
@@ -352,19 +344,22 @@ public class PropertyService extends BaseService {
     /**
      * Initialize the singleton.
      */
-    private void initialize() throws ServiceException {
+    private void initialize() throws GeneralPropertyException {
         logMetacat.debug("Initializing PropertyService");
 
         properties = PropertiesWrapper.getInstance();
-        authPropertiesDelegate = properties.getAuthPropertiesDelegate();
+        authPropertiesDelegate = AuthPropertiesDelegate.getInstance(properties);
     }
-
     public boolean refreshable() {
         return true;
     }
 
     public void doRefresh() throws ServiceException {
-        initialize();
+        try {
+            initialize();
+        } catch (GeneralPropertyException e) {
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     public void stop() throws ServiceException {

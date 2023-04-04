@@ -22,11 +22,9 @@
 package edu.ucsb.nceas.metacat.properties;
 
 import edu.ucsb.nceas.metacat.service.ServiceService;
-import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
-
 import edu.ucsb.nceas.utilities.*;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
@@ -45,10 +43,9 @@ import java.util.*;
 /**
  * A suite of utility classes for the metadata configuration utility
  */
-public class PropertiesWrapper extends BaseService {
+public class PropertiesWrapper {
 
     private static PropertiesWrapper propertiesWrapper = null;
-
     private static final String MAIN_CONFIG_FILE_NAME = "metacat.properties";
     private static final String MAIN_METADATA_FILE_NAME = "metacat.properties.metadata.xml";
     private static final String MAIN_BACKUP_FILE_NAME = "metacat.properties.backup";
@@ -62,37 +59,26 @@ public class PropertiesWrapper extends BaseService {
     private static boolean bypassAlreadyChecked = false;
 
     private static final Log logMetacat = LogFactory.getLog(PropertiesWrapper.class);
-    private AuthPropertiesDelegate authPropertiesDelegate;
 
     /**
      * private constructor since this is a singleton
      */
-    private PropertiesWrapper() throws ServiceException {
-        _serviceName = "PropertiesWrapper";
+    private PropertiesWrapper() throws GeneralPropertyException {
         initialize();
     }
 
-    public static PropertiesWrapper getInstance() throws ServiceException {
+    public static PropertiesWrapper getInstance()
+        throws GeneralPropertyException {
         if (propertiesWrapper == null) {
             propertiesWrapper = new PropertiesWrapper();
         }
         return propertiesWrapper;
     }
 
-    public boolean refreshable() {
-        return true;
-    }
-
-    public void doRefresh() throws ServiceException {
-        initialize();
-    }
-
-    public void stop() throws ServiceException {}
-
     /**
      * Initialize the singleton.
      */
-    private void initialize() throws ServiceException {
+    private void initialize() throws GeneralPropertyException {
         logMetacat.debug("Initializing PropertiesWrapper");
         try {
             mainConfigFilePath =
@@ -124,52 +110,16 @@ public class PropertiesWrapper extends BaseService {
             // file will look like a smaller version of metacat.properties.
             // It is stored in the data storage directory outside the
             // application directories.
-            mainBackupFilePath = getSitePropsPath() + FileUtil.getFS() + MAIN_BACKUP_FILE_NAME;
+            mainBackupFilePath =
+                getSitePropertiesPath() + FileUtil.getFS() + MAIN_BACKUP_FILE_NAME;
             mainBackupProperties = new SortedProperties(mainBackupFilePath);
             mainBackupProperties.load();
-
-            authPropertiesDelegate = AuthPropertiesDelegate.getInstance(getSitePropsPath());
-
         } catch (TransformerException te) {
-            throw new ServiceException(
+            throw new GeneralPropertyException(
                 "Transform problem while loading properties: " + te.getMessage());
         } catch (IOException ioe) {
-            throw new ServiceException("I/O problem while loading properties: " + ioe.getMessage());
-        } catch (GeneralPropertyException gpe) {
-            throw new ServiceException(
-                "General properties problem while loading properties: " + gpe.getMessage());
-        } catch (MetacatUtilException ue) {
-            throw new ServiceException(
-                "Utilities problem while loading properties: " + ue.getMessage());
+            throw new GeneralPropertyException("I/O problem while loading properties: " + ioe.getMessage());
         }
-    }
-
-    private String getSitePropsPath()
-        throws PropertyNotFoundException, MetacatUtilException, ServiceException {
-
-        String backupPath = getProperty("application.backupDir");
-        if (backupPath == null || backupPath.equals("")) {
-            backupPath = SystemUtil.getStoredBackupDir();
-        }
-        if ((backupPath == null || backupPath.equals(""))
-            && PropertyService.getRecommendedExternalDir() != null) {
-            backupPath = PropertyService.getRecommendedExternalDir()
-                + FileUtil.getFS() + "." + ServiceService.getRealApplicationContext();
-        }
-        // if backupPath is still null, no reason to initialize the
-        // backup properties. The system will need to prompt the user for
-        // the backup properties and reinitialize ConfigurableProperties.
-        if (backupPath != null && !backupPath.equals("")) {
-            try {
-                setProperty("application.backupDir", backupPath);
-            } catch (GeneralPropertyException e) {
-                logMetacat.error(
-                    "Problem trying to set property 'application.backupDir' to value "
-                        + backupPath, e);
-            }
-            SystemUtil.writeStoredBackupFile(backupPath);
-        }
-        return backupPath;
     }
 
     /**
@@ -365,36 +315,29 @@ public class PropertiesWrapper extends BaseService {
     }
 
     /**
-     * Determine if the system is configured to bypass configuration. If so, the system will look
+     * Determine if the system is able to bypass configuration. If so, the system will look
      * for backup configuration files at startup time and use those to configure metacat. The bypass
      * options should only be set by developers. Production code should never bypass configuration.
      *
      * @return true if dev.runConfiguration is set to true in metacat.properties, and we have not
      * already checked for bypass; false otherwise.
      */
-    public boolean doBypass() throws PropertyNotFoundException {
-        // We only want to go through the check once to see if we want to
-        // bypass the configuration. We don't want to run through all of
-        // this every time we hit metacat.
+    public boolean canBypass() throws PropertyNotFoundException {
+        boolean result = false;
+        // We only want to go through the check once to see if we want to bypass the configuration.
+        // We don't want to run through all of this every time we hit metacat.
         if (bypassAlreadyChecked) {
+            logMetacat.debug("canBypass() returning false, since already previously checked");
+        } else {
+            // check how dev.runConfiguration is set in metacat.properties
+            String strRunConfiguration = getProperty("dev.runConfiguration");
             logMetacat.debug(
-                "bypassConfiguration not performing full bypass check.  Bypass set to false");
-            return false;
+                "canBypass(): 'dev.runConfiguration property' set to: " + strRunConfiguration);
+            boolean runConfiguration = Boolean.parseBoolean(strRunConfiguration);
+            bypassAlreadyChecked = runConfiguration;
+            result = !runConfiguration;
         }
-
-        // check how dev.runConfiguration is set in metacat.properties
-        String strRunConfiguration = getProperty("dev.runConfiguration");
-        boolean runConfiguration = Boolean.parseBoolean(strRunConfiguration);
-        logMetacat.debug(
-            "bypassConfiguration: dev.runConfiguration property set to: " + strRunConfiguration);
-
-        // if the dev.runConfiguration is true, return false here.
-        if (runConfiguration) {
-            bypassAlreadyChecked = true;
-            return false;
-        }
-
-        return true;
+        return result;
     }
 
     /**
@@ -402,13 +345,10 @@ public class PropertiesWrapper extends BaseService {
      */
     public void bypassConfiguration() {
         try {
-            boolean doBypass = doBypass();
-
-            if (!doBypass) {
+            if (!canBypass()) {
                 throw new GeneralPropertyException(
                     "Attempting to do bypass when system is not configured for it.");
             }
-
             // The system is bypassing the configuration utility. We need to
             // get the backup properties and replace existing properties with
             // backup values.  We do this for main and org properties.
@@ -419,10 +359,6 @@ public class PropertiesWrapper extends BaseService {
                 String value = mainBackupProperties.getProperty(backupPropertyName);
                 setPropertyNoPersist(backupPropertyName, value);
             }
-
-            logMetacat.debug("bypassConfiguration: setting auth backup properties.");
-            authPropertiesDelegate.bypassAuthConfiguration(this);
-
             logMetacat.debug("bypassConfiguration: setting configutil sections to true.");
             setPropertyNoPersist("configutil.propertiesConfigured", "true");
             setPropertyNoPersist("configutil.authConfigured", "true");
@@ -460,17 +396,59 @@ public class PropertiesWrapper extends BaseService {
         }
     }
 
-
-    protected AuthPropertiesDelegate getAuthPropertiesDelegate() {
-        return authPropertiesDelegate;
-    }
-
-
     //Properties class is thread-safe - no need to synchronize. See:
     // https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html
     private void store(Properties properties, String FilePath) throws IOException {
         try (Writer output = new FileWriter(FilePath)) {
             properties.store(output, null);
         }
+    }
+
+    /**
+     * Get the path to the directory where the site-specific properties (aka backup properties) are
+     * stored
+     *
+     * @return String representation of the directory path
+     * @throws GeneralPropertyException if there are issues retrieving or persisting the value
+     */
+     String getSitePropertiesPath() throws GeneralPropertyException {
+
+        String sitePropertiesPath = getProperty("application.backupDir");
+        if (sitePropertiesPath == null || sitePropertiesPath.equals("")) {
+            try {
+                sitePropertiesPath = SystemUtil.getStoredBackupDir();
+            } catch (MetacatUtilException e) {
+                logMetacat.error("Problem calling SystemUtil.getStoredBackupDir(): "
+                        + e.getMessage(), e);
+            }
+        }
+        if ((sitePropertiesPath == null || sitePropertiesPath.equals(""))
+            && PropertyService.getRecommendedExternalDir() != null) {
+            try {
+                sitePropertiesPath = PropertyService.getRecommendedExternalDir()
+                    + FileUtil.getFS() + "." + ServiceService.getRealApplicationContext();
+            } catch (ServiceException e) {
+                logMetacat.error("Problem calling ServiceService.getRealApplicationContext: "
+                    + e.getMessage(), e);
+            }
+        }
+        if (sitePropertiesPath != null && !sitePropertiesPath.equals("")) {
+            try {
+                setProperty("application.backupDir", sitePropertiesPath);
+                SystemUtil.writeStoredBackupFile(sitePropertiesPath);
+            } catch (GeneralPropertyException e) {
+                logMetacat.error(
+                    "Problem trying to set property: 'application.backupDir' to value: "
+                        + sitePropertiesPath, e);
+                throw e;
+            } catch (MetacatUtilException e) {
+                String msg =
+                    "Problem calling SystemUtil.writeStoredBackupFile() with sitePropertiesPath: "
+                       + sitePropertiesPath +". Exception was: " + e.getMessage();
+                logMetacat.error(msg, e);
+                throw new GeneralPropertyException(msg);
+            }
+        }
+        return sitePropertiesPath;
     }
 }

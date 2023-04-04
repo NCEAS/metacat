@@ -1,20 +1,5 @@
 /**
- *    Purpose: A Class that handles Authentication properties for metacat configuration
- *  Copyright: 2023 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Author:  Matthew Brooke
- *
- * This program is free software; you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program; if
- * not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307  USA
+ *    Purpose: A Class that handles Authentication-related properties for metacat configuration
  */
 package edu.ucsb.nceas.metacat.properties;
 
@@ -39,7 +24,8 @@ public class AuthPropertiesDelegate {
     protected static SortedProperties authBackupProperties = null;
     private static AuthPropertiesDelegate authPropertiesDelegate;
 
-    private AuthPropertiesDelegate(String sitePropertiesPath) throws GeneralPropertyException {
+    private AuthPropertiesDelegate(PropertiesWrapper propertiesWrapper)
+        throws GeneralPropertyException {
 
         authMetadataFilePath =
             PropertyService.CONFIG_FILE_DIR + FileUtil.getFS() + AUTH_METADATA_FILE_NAME;
@@ -55,7 +41,8 @@ public class AuthPropertiesDelegate {
             // will look like a smaller version of metacat.properties. It
             // is stored in the data storage directory outside the
             // application directories.
-            siteAuthPropsFilePath = sitePropertiesPath + FileUtil.getFS() + AUTH_BACKUP_FILE_NAME;
+            siteAuthPropsFilePath = propertiesWrapper.getSitePropertiesPath()
+                + FileUtil.getFS() + AUTH_BACKUP_FILE_NAME;
             authBackupProperties = new SortedProperties(siteAuthPropsFilePath);
             authBackupProperties.load();
         } catch (TransformerException te) {
@@ -66,10 +53,10 @@ public class AuthPropertiesDelegate {
         }
     }
 
-    protected static AuthPropertiesDelegate getInstance(String sitePropertiesPath)
+    protected static AuthPropertiesDelegate getInstance(PropertiesWrapper propertiesWrapper)
         throws GeneralPropertyException {
         if (authPropertiesDelegate == null) {
-            authPropertiesDelegate = new AuthPropertiesDelegate(sitePropertiesPath);
+            authPropertiesDelegate = new AuthPropertiesDelegate(propertiesWrapper);
         }
         return authPropertiesDelegate;
     }
@@ -135,7 +122,8 @@ public class AuthPropertiesDelegate {
         }
     }
 
-    protected void bypassAuthConfiguration(PropertiesWrapper properties) throws GeneralPropertyException {
+    protected void bypassAuthConfiguration(PropertiesWrapper properties)
+        throws GeneralPropertyException {
         Vector<String> authBackupPropertyNames
             = getAuthBackupProperties().getPropertyNames();
         for (String authBackupPropertyName : authBackupPropertyNames) {
