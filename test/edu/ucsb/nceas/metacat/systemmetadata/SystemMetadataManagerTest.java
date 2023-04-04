@@ -85,7 +85,7 @@ public class SystemMetadataManagerTest extends D1NodeServiceTest {
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
         SystemMetadata sysmeta = createSystemMetadata(id, session.getSubject(), object);
         //sysmeta.setFileName(fileName);
-        SystemMetadataManager.getInstance().insertOrUpdateSystemMetadata(sysmeta);
+        SystemMetadataManager.getInstance().store(sysmeta);
         SystemMetadata read = im.getSystemMetadata(guid);
         assertTrue(read.getIdentifier().equals(id));
         assertTrue(read.getFileName() == null);
@@ -118,7 +118,7 @@ public class SystemMetadataManagerTest extends D1NodeServiceTest {
         p2.setValue(p2Value);
         media.addProperty(p2);
         sysmeta.setMediaType(media);
-        SystemMetadataManager.getInstance().insertOrUpdateSystemMetadata(sysmeta);
+        SystemMetadataManager.getInstance().store(sysmeta);
         read = im.getSystemMetadata(guid);
         assertTrue(read.getIdentifier().equals(id));
         assertTrue(read.getFileName().equals(fileName));

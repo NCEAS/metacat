@@ -134,16 +134,77 @@ public class SystemMetadataManager {
                     lockedIds.add(pid.getValue());
                 }
                 //Try to write the system metadata into db and remove the pid from the vector and wake up the waiting threads. 
+                DBConnection dbConn = null;
+                int serialNumber = -1;
                 try {
                     logMetacat.debug("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue());
-                    insertOrUpdateSystemMetadata(sysmeta);
+                    dbConn = DBConnectionPool.getDBConnection("IdentifierManager.store");
+                    serialNumber = dbConn.getCheckOutSerialNumber();
+                    // use a single transaction for it all
+                    dbConn.setAutoCommit(false);
+                    // insert the record if needed
+                    if (!IdentifierManager.getInstance().systemMetadataPIDExists(pid.getValue())) {
+                        insertSystemMetadata(pid.getValue(), dbConn);
+                    }
+                    // update with the values
+                    updateSystemMetadata(sysmeta, dbConn);
+                    // commit if we got here with no errors
+                    dbConn.commit();
                 } catch (McdbDocNotFoundException e) {
+                    if (dbConn != null) {
+                        try {
+                            dbConn.rollback();
+                        } catch (SQLException ee) {
+                            logMetacat.error("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue() + 
+                                    " we can't roll back the database changes since " + ee.getMessage());
+                        }
+                    }
                     throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
                 } catch (SQLException e) {
+                    if (dbConn != null) {
+                        try {
+                            dbConn.rollback();
+                        } catch (SQLException ee) {
+                            logMetacat.error("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue() + 
+                                    " we can't roll back the database changes since " + ee.getMessage());
+                        }
+                    }
                     throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
                 } catch (InvalidSystemMetadata e) {
+                    if (dbConn != null) {
+                        try {
+                            dbConn.rollback();
+                        } catch (SQLException ee) {
+                            logMetacat.error("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue() + 
+                                    " we can't roll back the database changes since " + ee.getMessage());
+                        }
+                    }
                     throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
+                } catch (AccessException e) {
+                    if (dbConn != null) {
+                        try {
+                            dbConn.rollback();
+                        } catch (SQLException ee) {
+                            logMetacat.error("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue() + 
+                                    " we can't roll back the database changes since " + ee.getMessage());
+                        }
+                    }
+                    throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
+                } catch (RuntimeException e) {
+                    if (dbConn != null) {
+                        try {
+                            dbConn.rollback();
+                        } catch (SQLException ee) {
+                            logMetacat.error("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue() + 
+                                    " we can't roll back the database changes since " + ee.getMessage());
+                        }
+                    }
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
                 } finally {
+                    if (dbConn != null) {
+                        // Return database connection to the pool
+                        DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+                    }
                     try {
                         synchronized (lockedIds) {
                             lockedIds.remove(pid.getValue());
@@ -190,47 +251,7 @@ public class SystemMetadataManager {
         
     }
 
-    /**
-     * creates a system metadata mapping and adds additional fields from sysmeta
-     * to the table for quick searching.
-     * 
-     * @param guid the id to insert
-     * @param localId the systemMetadata object to get the local id for
-     * @throws McdbDocNotFoundException 
-     * @throws SQLException 
-     * @throws InvalidSystemMetadata 
-     */
-    protected void insertOrUpdateSystemMetadata(SystemMetadata sysmeta) 
-        throws McdbDocNotFoundException, SQLException, InvalidSystemMetadata {
-        String guid = sysmeta.getIdentifier().getValue();
-        
-         // Get a database connection from the pool
-        DBConnection dbConn = DBConnectionPool.getDBConnection("IdentifierManager.insertSystemMetadata");
-        int serialNumber = dbConn.getCheckOutSerialNumber();
-        
-        try {
-            // use a single transaction for it all
-            dbConn.setAutoCommit(false);
-            
-            // insert the record if needed
-            if (!IdentifierManager.getInstance().systemMetadataPIDExists(guid)) {
-                insertSystemMetadata(guid, dbConn);
-            }
-            // update with the values
-            updateSystemMetadata(sysmeta, dbConn);
-            
-            // commit if we got here with no errors
-            dbConn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-            logMetacat.error("Error while creating " + IdentifierManager.TYPE_SYSTEM_METADATA + " record: " + guid, e );
-            dbConn.rollback();
-            throw new SQLException("Can't save system metadata "+e.getMessage());
-        } finally {
-            // Return database connection to the pool
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-        }
-    }
+    
     /**
      * create the systemmetadata record
      * @param guid
