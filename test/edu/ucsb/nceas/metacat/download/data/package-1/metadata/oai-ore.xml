@@ -56,4 +56,10 @@
     <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">b9ba3f69-6b83-44ff-ab1d-2c4fbd8566c5</dcterms:identifier>
     <j.0:isDocumentedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/735a9a2f-7d91-40d0-85e6-877de645fcf9"/>
   </rdf:Description>
+  <rdf:Description rdf:about="https://cn-sandbox.test.dataone.org/cn/v2/resolve/d593121c-cd7a-44ef-b67a-8e27ddbcbe2a_DUPLICATE">
+    <ore:isAggregatedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/resource_map_735a9a2f-7d91-40d0-85e6-877de645fcf9#aggregation"/>
+    <j.1:atLocation>inputs/daily-total-female-births.csv</j.1:atLocation>
+    <j.0:isDocumentedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/735a9a2f-7d91-40d0-85e6-877de645fcf9"/>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">d593121c-cd7a-44ef-b67a-8e27ddbcbe2a_DUPLICATE</dcterms:identifier>
+  </rdf:Description>
 </rdf:RDF>

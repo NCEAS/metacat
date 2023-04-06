@@ -1,23 +1,3 @@
-/**
- * '$RCSfile$' Purpose: A class that defines the download of a data package. Copyright: 2019 Regents
- * of the University of California and the National Center for Ecological Analysis and Synthesis
- * Authors: Thomas Thelen
- *
- * '$Author$' '$Date$' '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program; if
- * not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.download;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -63,19 +43,16 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * A class that handles downloading data packages under the V2 format. It contains a number of
- * private
- * members that hold information about the data package (lists of identifiers, metadata, file
- * paths, etc).
- * The public member functions are used as interfaces: identifiers, metadata, etc are added to
- * this class
- * through them.
+ * private members that hold information about the data package (lists of identifiers, metadata,
+ * file paths, etc). The public member functions are used as interfaces: identifiers, metadata,
+ * etc. are added to this class through them.
  */
 public class PackageDownloaderV2 {
     // The resource map pid
     private Identifier pid;
     // A list of science and resource map pids
     private List<Identifier> coreMetadataIdentifiers = new ArrayList<>();
-    ;
+
     // Identifiers for the science metadata documents
     private List<Identifier> scienceMetadataIdentifiers = new ArrayList<>();
     // The resource map describing the package
@@ -226,7 +203,7 @@ public class PackageDownloaderV2 {
                 logMetacat.warn(
                     "Duplicate data filename, renaming file to add to bag: " + duplicateDataPath,
                     e);
-                this.speedBag.addFile(inputStream, dataPath, false);
+                this.speedBag.addFile(inputStream, duplicateDataPath, false);
             }
         } catch (SpeedBagException e) {
             throw new ServiceFailure("There was an error creating the BagIt bag.", e.getMessage());
@@ -395,14 +372,14 @@ public class PackageDownloaderV2 {
         } catch (IOException e) {
             e.printStackTrace();
             ServiceFailure sf = new ServiceFailure("1030",
-                "There was an " + "error while streaming the downloaded data package. "
+                "There was an i/o error while streaming the downloaded data package. "
                     + e.getMessage());
             sf.initCause(e);
             throw sf;
         } catch (NullPointerException e) {
             e.printStackTrace();
             ServiceFailure sf = new ServiceFailure("1030",
-                "There was an " + "error while streaming the downloaded data package. "
+                "There was an error while streaming the downloaded data package. "
                     + e.getMessage());
             sf.initCause(e);
             throw sf;
@@ -516,7 +493,7 @@ public class PackageDownloaderV2 {
 
                 // Check if we have any results
                 if (locationStr == null || subjectStr == null) {
-                    logMetacat.debug("Failed to find any locaton values");
+                    logMetacat.debug("Failed to find any location values");
                     continue;
                 }
 
@@ -527,14 +504,11 @@ public class PackageDownloaderV2 {
                 this._filePathMap.put(subjectStr, locationStr);
             }
         } catch (Exception e) {
-            // I'm a bastard for this but there are a large number of exceptions that can be
-			// thrown from the above.
-            // In any case, they should be passed over.
             logMetacat.error("There was an error while parsing an atLocation field.", e);
         }
     }
 
-    // Sanitizes the 'filename' parameter; only alows numbers and letters
+    // Sanitizes the 'filename' parameter; only allows numbers and letters
     String sanitizeFilename(String filename) {
         return filename.replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
     }
