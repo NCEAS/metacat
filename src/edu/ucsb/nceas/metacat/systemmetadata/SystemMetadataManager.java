@@ -61,7 +61,7 @@ public class SystemMetadataManager {
     private static Log logMetacat = LogFactory.getLog(SystemMetadataManager.class);
     
     private static SystemMetadataManager manager = null;
-    private final static int TIME_OUT = 3000;
+    private final static int TIME_OUT_MILLISEC = 1000;
     private static ArrayList<String> lockedIds = new ArrayList<String>(100); 
     
     /**
@@ -125,7 +125,7 @@ public class SystemMetadataManager {
                 synchronized (lockedIds) {
                     while (lockedIds.contains(pid.getValue())) {
                         try {
-                            lockedIds.wait(TIME_OUT);
+                            lockedIds.wait(TIME_OUT_MILLISEC);
                         } catch (InterruptedException e) {
                             logMetacat.info("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue() + 
                                              " the lock waiting was interrupted " + e.getMessage());
@@ -201,10 +201,6 @@ public class SystemMetadataManager {
                     }
                     throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
                 } finally {
-                    if (dbConn != null) {
-                        // Return database connection to the pool
-                        DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-                    }
                     try {
                         synchronized (lockedIds) {
                             lockedIds.remove(pid.getValue());
@@ -213,6 +209,10 @@ public class SystemMetadataManager {
                     } catch (RuntimeException e) {
                         logMetacat.error("SystemMetadataManager.store - storing system metadata to store: " + pid.getValue() + 
                                 " we can't move the id from the control list (lockedIds) since " + e.getMessage());
+                    }
+                    if (dbConn != null) {
+                        // Return database connection to the pool
+                        DBConnectionPool.returnDBConnection(dbConn, serialNumber);
                     }
                 }
             }
