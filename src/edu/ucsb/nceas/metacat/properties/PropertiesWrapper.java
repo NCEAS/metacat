@@ -1,24 +1,3 @@
-/**
- *    Purpose: A Class that implements properties methods for metacat
- *  Copyright: 2023 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Author: Matthew Brooke
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.properties;
 
 import edu.ucsb.nceas.metacat.service.ServiceService;
@@ -37,11 +16,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
 /**
- * A suite of utility classes for the metadata configuration utility
+ * A Class that provides a wrapper around standard java.util.Properties to provide
+ * backwards compatibility with metacat's original properties implementation
  */
 public class PropertiesWrapper {
 
@@ -49,9 +30,11 @@ public class PropertiesWrapper {
     private static final String MAIN_CONFIG_FILE_NAME = "metacat.properties";
     private static final String MAIN_METADATA_FILE_NAME = "metacat.properties.metadata.xml";
     private static final String MAIN_BACKUP_FILE_NAME = "metacat.properties.backup";
-    private static String mainConfigFilePath = null;
+    private static final String SITE_CONFIG_FILE_NAME = "metacat-site.properties";
+
     private static Properties mainProperties = null;
     private static String mainMetadataFilePath = null;
+    String siteConfigFilePath = null;
     private static PropertiesMetaData mainMetaData = null;
     private static String mainBackupFilePath = null;
     private static SortedProperties mainBackupProperties = null;
@@ -67,7 +50,7 @@ public class PropertiesWrapper {
         initialize();
     }
 
-    public static PropertiesWrapper getInstance()
+    protected static PropertiesWrapper getInstance()
         throws GeneralPropertyException {
         if (propertiesWrapper == null) {
             propertiesWrapper = new PropertiesWrapper();
@@ -81,20 +64,34 @@ public class PropertiesWrapper {
     private void initialize() throws GeneralPropertyException {
         logMetacat.debug("Initializing PropertiesWrapper");
         try {
-            mainConfigFilePath =
+            String mainConfigFilePath =
                 PropertyService.CONFIG_FILE_DIR + FileUtil.getFS() + MAIN_CONFIG_FILE_NAME;
             mainMetadataFilePath =
                 PropertyService.CONFIG_FILE_DIR + FileUtil.getFS() + MAIN_METADATA_FILE_NAME;
 
-            // mainProperties will hold the primary configuration values for
-            // metacat.
-            mainProperties = new Properties();
-            mainProperties.load(Files.newBufferedReader(Paths.get(mainConfigFilePath)));
+            // mainDefaultProperties will hold the default configuration from metacat.properties
+            Properties mainDefaultProperties = new Properties();
+            mainDefaultProperties.load(Files.newBufferedReader(Paths.get(mainConfigFilePath)));
+
+            // mainProperties is the aggregation of the default props from metacat.properties,
+            // overlaid with the site-specific configurable properties from metacatSite.properties
+            mainProperties = new Properties(mainDefaultProperties);
+            siteConfigFilePath = getSitePropertiesPath() + FileUtil.getFS() + SITE_CONFIG_FILE_NAME;
+            Path sitePropsFilePathObj = Paths.get(siteConfigFilePath);
+            if (!Files.exists(sitePropsFilePathObj)) {
+                Files.createFile(sitePropsFilePathObj); // checks no file exists before creating
+                logMetacat.info("created empty site properties file at: " + siteConfigFilePath);
+            }
+            mainProperties.load(Files.newBufferedReader(sitePropsFilePathObj));
+            logMetacat.info("loaded defaults and site config from " + siteConfigFilePath
+                + " into mainProperties.");
+            store(); //to persist new value of site properties path
 
             // include main metacat properties in d1 properties as overrides
             try {
                 Settings.getConfiguration();
                 Settings.augmentConfiguration(mainConfigFilePath);
+                Settings.augmentConfiguration(siteConfigFilePath);
             } catch (ConfigurationException e) {
                 logMetacat.error("Could not augment DataONE properties. " + e.getMessage(), e);
             }
@@ -128,7 +125,7 @@ public class PropertiesWrapper {
      * @param propertyName the name of the property requested
      * @return the String value for the property
      */
-    public String getProperty(String propertyName) throws PropertyNotFoundException {
+    protected String getProperty(String propertyName) throws PropertyNotFoundException {
         String returnVal = mainProperties.getProperty(propertyName);
         if (returnVal == null) {
             throw new PropertyNotFoundException("No property found with name " + propertyName);
@@ -142,7 +139,7 @@ public class PropertiesWrapper {
      *
      * @return Vector of property names
      */
-    public Vector<String> getPropertyNames() {
+    protected Vector<String> getPropertyNames() {
         return new Vector<>(mainProperties.stringPropertyNames());
     }
 
@@ -153,7 +150,7 @@ public class PropertiesWrapper {
      * @param groupName the prefix of the keys to search for.
      * @return enumeration of property names
      */
-    public Vector<String> getPropertyNamesByGroup(String groupName) {
+    protected Vector<String> getPropertyNamesByGroup(String groupName) {
 
         groupName = groupName.trim();
         if (!groupName.endsWith(".")) {
@@ -171,7 +168,7 @@ public class PropertiesWrapper {
      * @param groupName the prefix of the keys to search for.
      * @return Map of property names
      */
-    public Map<String, String> getPropertiesByGroup(String groupName)
+    protected Map<String, String> getPropertiesByGroup(String groupName)
         throws PropertyNotFoundException {
 
         HashMap<String, String> groupPropertyMap = new HashMap<>();
@@ -189,13 +186,9 @@ public class PropertiesWrapper {
      * @param propertyName the name of the property to add
      * @param value        the value for the property
      */
-    public void addProperty(String propertyName, String value) throws GeneralPropertyException {
+    protected void addProperty(String propertyName, String value) throws GeneralPropertyException {
         mainProperties.setProperty(propertyName, value);
-        try {
-            store(mainProperties, mainConfigFilePath);
-        } catch (IOException e) {
-            throw new GeneralPropertyException(e.toString());
-        }
+        store();
     }
 
     /**
@@ -204,13 +197,9 @@ public class PropertiesWrapper {
      * @param propertyName the name of the property requested
      * @param newValue     the new value for the property
      */
-    public void setProperty(String propertyName, String newValue) throws GeneralPropertyException {
+    protected void setProperty(String propertyName, String newValue) throws GeneralPropertyException {
         setPropertyNoPersist(propertyName, newValue);
-        try {
-            store(mainProperties, mainConfigFilePath);
-        } catch (IOException e) {
-            throw new GeneralPropertyException(e.toString());
-        }
+        store();
     }
 
     /**
@@ -222,7 +211,7 @@ public class PropertiesWrapper {
      * @param propertyName the name of the property requested
      * @param newValue     the new value for the property
      */
-    public void setPropertyNoPersist(String propertyName, String newValue)
+    protected void setPropertyNoPersist(String propertyName, String newValue)
         throws GeneralPropertyException {
         if (null == mainProperties.getProperty(propertyName)) {
             // TODO: MB - can we get rid of this? Default java.util.Properties behavior is
@@ -235,14 +224,10 @@ public class PropertiesWrapper {
     }
 
     /**
-     * Save the properties to a properties file. Note, the order and comments will be preserved.
+     * Save the properties to a properties file.
      */
-    public void persistProperties() throws GeneralPropertyException {
-        try {
-            store(mainProperties, mainConfigFilePath);
-        } catch (IOException e) {
-            throw new GeneralPropertyException(e.toString());
-        }
+    protected void persistProperties() throws GeneralPropertyException {
+        store();
     }
 
     /**
@@ -252,7 +237,7 @@ public class PropertiesWrapper {
      *
      * @return a SortedProperties object with the backup properties
      */
-    public SortedProperties getMainBackupProperties() {
+    protected SortedProperties getMainBackupProperties() {
         return mainBackupProperties;
     }
 
@@ -262,14 +247,14 @@ public class PropertiesWrapper {
      *
      * @return a PropertiesMetaData object with the main properties metadata
      */
-    public PropertiesMetaData getMainMetaData() {
+    protected PropertiesMetaData getMainMetaData() {
         return mainMetaData;
     }
 
     /**
      * Writes out backup configurable properties to a file.
      */
-    public void persistMainBackupProperties() throws GeneralPropertyException {
+    protected void persistMainBackupProperties() throws GeneralPropertyException {
 
         // Use the metadata to extract configurable properties from the
         // overall properties list, and store those properties.
@@ -309,7 +294,7 @@ public class PropertiesWrapper {
      *
      * @return a boolean that is true if properties are configured and false otherwise
      */
-    public boolean arePropertiesConfigured() throws GeneralPropertyException {
+    protected boolean arePropertiesConfigured() throws GeneralPropertyException {
         String propertiesConfigured = getProperty("configutil.propertiesConfigured");
         return propertiesConfigured != null && !propertiesConfigured.equals("false");
     }
@@ -322,7 +307,7 @@ public class PropertiesWrapper {
      * @return true if dev.runConfiguration is set to true in metacat.properties, and we have not
      * already checked for bypass; false otherwise.
      */
-    public boolean canBypass() throws PropertyNotFoundException {
+    protected boolean canBypass() throws PropertyNotFoundException {
         boolean result = false;
         // We only want to go through the check once to see if we want to bypass the configuration.
         // We don't want to run through all of this every time we hit metacat.
@@ -343,7 +328,7 @@ public class PropertiesWrapper {
     /**
      * Bypasses the metacat properties configuration utility. (Dev use only)
      */
-    public void bypassConfiguration() {
+    protected void bypassConfiguration() {
         try {
             if (!canBypass()) {
                 throw new GeneralPropertyException(
@@ -387,7 +372,7 @@ public class PropertiesWrapper {
     // TODO: MB - can we get rid of this? AFAICT, only callers do not use the boolean return value
     //  (but double-check!), so a simple "setProperty" call should suffice (assuming we get rid of
     //  "addProperty" and the PropertyNotFoundException)
-    public void checkAndSetProperty(HttpServletRequest request, String propertyName)
+    protected void checkAndSetProperty(HttpServletRequest request, String propertyName)
         throws GeneralPropertyException {
         String value = getProperty(propertyName);
         String newValue = request.getParameter(propertyName);
@@ -396,11 +381,21 @@ public class PropertiesWrapper {
         }
     }
 
-    //Properties class is thread-safe - no need to synchronize. See:
-    // https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html
-    private void store(Properties properties, String FilePath) throws IOException {
-        try (Writer output = new FileWriter(FilePath)) {
-            properties.store(output, null);
+
+    /**
+     * store the properties to file. NOTE that this will persist only the properties that are:
+     * (a) not included in mainDefaultProperties, or
+     * (b) have changed from the values in mainDefaultProperties.
+     * From the <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html">
+     *     java.util.Properties javadoc</a>: "Properties from the defaults
+     * table of this Properties table (if any) are not written out by this method."
+     * Also, Properties class is thread-safe - no need to synchronize.
+     */
+    private void store() throws GeneralPropertyException {
+        try (Writer output = new FileWriter(siteConfigFilePath)) {
+            mainProperties.store(output, null);
+        } catch (IOException e) {
+            throw new GeneralPropertyException(e.toString());
         }
     }
 
@@ -411,7 +406,7 @@ public class PropertiesWrapper {
      * @return String representation of the directory path
      * @throws GeneralPropertyException if there are issues retrieving or persisting the value
      */
-     String getSitePropertiesPath() throws GeneralPropertyException {
+     protected String getSitePropertiesPath() throws GeneralPropertyException {
 
         String sitePropertiesPath = getProperty("application.backupDir");
         if (sitePropertiesPath == null || sitePropertiesPath.equals("")) {
@@ -432,23 +427,23 @@ public class PropertiesWrapper {
                     + e.getMessage(), e);
             }
         }
-        if (sitePropertiesPath != null && !sitePropertiesPath.equals("")) {
-            try {
-                setProperty("application.backupDir", sitePropertiesPath);
-                SystemUtil.writeStoredBackupFile(sitePropertiesPath);
-            } catch (GeneralPropertyException e) {
-                logMetacat.error(
-                    "Problem trying to set property: 'application.backupDir' to value: "
-                        + sitePropertiesPath, e);
-                throw e;
-            } catch (MetacatUtilException e) {
-                String msg =
-                    "Problem calling SystemUtil.writeStoredBackupFile() with sitePropertiesPath: "
-                       + sitePropertiesPath +". Exception was: " + e.getMessage();
-                logMetacat.error(msg, e);
-                throw new GeneralPropertyException(msg);
-            }
-        }
+         if (sitePropertiesPath != null && !sitePropertiesPath.equals("")) {
+             try {
+                 setPropertyNoPersist("application.backupDir", sitePropertiesPath);
+                 SystemUtil.writeStoredBackupFile(sitePropertiesPath);
+             } catch (GeneralPropertyException e) {
+                 logMetacat.error(
+                     "Problem trying to set property: 'application.backupDir' to value: "
+                         + sitePropertiesPath, e);
+                 throw e;
+             } catch (MetacatUtilException e) {
+                 String msg =
+                     "Problem calling SystemUtil.writeStoredBackupFile() with sitePropertiesPath: "
+                         + sitePropertiesPath + ". Exception was: " + e.getMessage();
+                 logMetacat.error(msg, e);
+                 throw new GeneralPropertyException(msg);
+             }
+         }
         return sitePropertiesPath;
     }
 }
