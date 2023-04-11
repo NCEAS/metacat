@@ -159,7 +159,7 @@ public class PackageDownloaderV2 {
             this.sanitizeFilename(objectSystemMetadataID.getValue()) + "-" + objectFormatType;
 
         // Try and determine the extension. Leave it extensionless if one isn't defined in the
-		// system metadata
+        // system metadata
         try {
             String extension =
                 ObjectFormatInfo.instance().getExtension(systemMetadata.getFormatId().getValue());
@@ -212,24 +212,20 @@ public class PackageDownloaderV2 {
         int metadata_count = 0;
 
         for (Pair<SystemMetadata, InputStream> scienceMetadata : this.scienceMetadatas) {
-            String filename = "";
+            String filename;
             try {
                 filename = PropertyService.getProperty("package.download.file.science-metadata");
             } catch (PropertyNotFoundException e) {
                 logMetacat.error("Failed to find the science metadata name property.", e);
                 filename = "science-metadata.xml";
             }
-            // extension doesn't include the '.'
-            String extension = FilenameUtils.getExtension(filename);
-            String name = FilenameUtils.getName(filename);
             if (metadata_count > 0) {
                 // Append the count to the file name. This gives naming doc(1), doc(2), doc(3)
-                filename =
-                    FilenameUtils.getPath(filename) + name + '(' + String.valueOf(metadata_count)
-                        + ')' + '.' + extension;
+                filename = FilenameUtils.getPath(filename) + FilenameUtils.getBaseName(filename) + '('
+                    + metadata_count + ')' + '.' + FilenameUtils.getExtension(filename);
             }
             // Add the bag directory to the beginning of the filename
-            String filePath = "";
+            String filePath;
             try {
                 filePath = Paths.get(
                     PropertyService.getProperty("package.download.bag.directory.metadata"),
@@ -248,6 +244,7 @@ public class PackageDownloaderV2 {
                 sf.initCause(e);
                 throw sf;
             }
+            metadata_count++;
         }
     }
 
@@ -308,8 +305,8 @@ public class PackageDownloaderV2 {
         systemMetadataFilename = this.sanitizeFilename(systemMetadataFilename);
         logMetacat.debug("Sanitized the system metadata filename: " + systemMetadataFilename);
         try {
-            // The type marshler needs an OutputStream and we need an InputStream, so get an output
-            // stream and turn it into an InputStream
+            // The type marshaller needs an OutputStream and we need an InputStream, so get an
+            // output stream and turn it into an InputStream
             ByteArrayOutputStream sysMetaOutputstream = new ByteArrayOutputStream();
             TypeMarshaller.marshalTypeToOutputStream(systemMetadata, sysMetaOutputstream);
             InputStream sysMetaInputstream =

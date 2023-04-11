@@ -229,6 +229,31 @@ public class PackageDownloaderV2Test { //extends MCTestCase {
         }
     }
 
+    @Test
+    public void addScienceMetadatas() {
+        PackageDownloaderV2 downloader = createSimpleDownloader();
+        try {
+            String eml = "<eml:eml><dataset id=\"TEST-ID-1\"/></eml:eml>";
+            SystemMetadata emlSysMeta = getSystemMetadataV2(getUniqueIdentifier(),
+                new ByteArrayInputStream(eml.getBytes()));
+
+            downloader.addScienceMetadata(emlSysMeta, new ByteArrayInputStream(eml.getBytes()));
+            downloader.addScienceMetadata(emlSysMeta, new ByteArrayInputStream(eml.getBytes()));
+            downloader.addScienceMetadata(emlSysMeta, new ByteArrayInputStream(eml.getBytes()));
+            downloader.addScienceMetadatas();
+
+            assertTrue(
+                downloader.speedBag.getTagFiles().containsKey("metadata/science-metadata.xml"));
+            assertTrue(
+                downloader.speedBag.getTagFiles().containsKey("metadata/science-metadata(1).xml"));
+            assertTrue(
+                downloader.speedBag.getTagFiles().containsKey("metadata/science-metadata(2).xml"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
+    }
+
     private static boolean streamContains(InputStream zipStream, String testString)
         throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
