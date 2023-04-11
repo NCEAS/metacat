@@ -2,64 +2,46 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.lang.NullPointerException;
-import java.math.BigInteger;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.UUID;
-import java.util.Vector;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import edu.ucsb.nceas.metacat.DBQuery;
+import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
+import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.MetaCatServlet;
+import edu.ucsb.nceas.metacat.MetacatHandler;
+import edu.ucsb.nceas.metacat.MetacatVersion;
+import edu.ucsb.nceas.metacat.ReadOnlyChecker;
+import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
+import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
+import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
+import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.doi.DOIException;
+import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
+import edu.ucsb.nceas.metacat.download.PackageDownloaderV1;
+import edu.ucsb.nceas.metacat.download.PackageDownloaderV2;
+import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
+import edu.ucsb.nceas.metacat.util.DocumentUtil;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import edu.ucsb.nceas.utilities.XMLUtilities;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
+import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.CNode;
-import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.formats.ObjectFormatCache;
-import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
@@ -85,22 +67,10 @@ import org.dataone.service.mn.v2.MNView;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
-import org.dataone.service.types.v1.DescribeResponse;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.Log;
-import org.dataone.service.types.v2.LogEntry;
-import org.dataone.service.types.v2.OptionList;
-import org.dataone.service.types.v2.Property;
-import org.dataone.service.types.v1.MonitorInfo;
-import org.dataone.service.types.v1.MonitorList;
-import org.dataone.service.types.v2.Node;
-import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeState;
 import org.dataone.service.types.v1.NodeType;
-import org.dataone.service.types.v2.ObjectFormat;
-import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
@@ -114,60 +84,56 @@ import org.dataone.service.types.v1.Services;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.Synchronization;
-import org.dataone.service.types.v2.SystemMetadata;
-import org.dataone.service.types.v2.TypeFactory;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v1_1.QueryField;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.ObjectFormat;
+import org.dataone.service.types.v2.Property;
+import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.types.v2.TypeFactory;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
-import org.dataone.speedbagit.SpeedBagIt;
 import org.dataone.speedbagit.SpeedBagException;
 import org.dspace.foresite.OREException;
 import org.dspace.foresite.OREParserException;
-import org.dspace.foresite.ORESerialiserException;
 import org.dspace.foresite.ResourceMap;
-import org.ecoinformatics.datamanager.parser.DataPackage;
-import org.ecoinformatics.datamanager.parser.Entity;
-import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
-import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 import org.w3c.dom.Document;
 
-import edu.ucsb.nceas.metacat.DBQuery;
-import edu.ucsb.nceas.metacat.DBTransform;
-import edu.ucsb.nceas.metacat.EventLog;
-import edu.ucsb.nceas.metacat.EventLogData;
-import edu.ucsb.nceas.metacat.IdentifierManager;
-import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
-import edu.ucsb.nceas.metacat.MetaCatServlet;
-import edu.ucsb.nceas.metacat.MetacatHandler;
-import edu.ucsb.nceas.metacat.MetacatVersion;
-import edu.ucsb.nceas.metacat.ReadOnlyChecker;
-import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
-import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
-import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
-import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
-import edu.ucsb.nceas.metacat.doi.DOIException;
-import edu.ucsb.nceas.metacat.doi.DOIService;
-import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
-import edu.ucsb.nceas.metacat.download.PackageDownloaderV1;
-import edu.ucsb.nceas.metacat.download.PackageDownloaderV2;
-import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
-import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
-import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
-import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.util.AuthUtil;
-import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.metacat.util.SkinUtil;
-import edu.ucsb.nceas.metacat.util.SystemUtil;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
-import edu.ucsb.nceas.utilities.XMLUtilities;
-import edu.ucsb.nceas.utilities.export.HtmlToPdf;
+import javax.servlet.http.HttpServletRequest;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Represents Metacat's implementation of the DataONE Member Node service API. Methods implement the
@@ -285,7 +251,7 @@ public class MNodeService extends D1NodeService
      * metadata object.
      *
      * @param session - the Session object containing the credentials for the Subject
-     * @param pid     - The object identifier to be deleted
+     * @param id     - The object identifier to be deleted
      * @return pid - the identifier of the object used for the deletion
      * @throws InvalidToken
      * @throws ServiceFailure
@@ -1357,8 +1323,9 @@ public class MNodeService extends D1NodeService
      *                      (>=)
      * @param endTime       - Specifies the beginning of the time range from which to return object
      *                      (>=)
-     * @param objectFormat  - Restrict results to the specified object format
+     * @param objectFormatId  - Restrict results to the specified object format
      * @param replicaStatus - Indicates if replicated objects should be returned in the list
+     * @param identifier    - identifier
      * @param start         - The zero-based index of the first value, relative to the first record
      *                      of the resultset that matches the parameters.
      * @param count         - The maximum number of entries that should be returned in the response.
@@ -2478,8 +2445,8 @@ public class MNodeService extends D1NodeService
      * object "publishing" the update with the DOI. This includes updating the ORE map that
      * describes the Science Metadata+data.
      *
+     * @param session
      * @param originalIdentifier
-     * @param request
      * @throws InvalidRequest
      * @throws NotImplemented
      * @throws NotAuthorized
@@ -2490,7 +2457,7 @@ public class MNodeService extends D1NodeService
      * @throws InsufficientResources
      * @throws UnsupportedType
      * @throws IdentifierNotUnique
-     * @see https://projects.ecoinformatics.org/ecoinfo/issues/6014
+     * @see 'https://projects.ecoinformatics.org/ecoinfo/issues/6014'
      */
     public Identifier publish(Session session, Identifier originalIdentifier)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest,
@@ -3550,7 +3517,7 @@ public class MNodeService extends D1NodeService
      * Make status of the given identifier (e.g. a DOI) public
      *
      * @param session   the subject who calls the method
-     * @param identifer the identifier whose status will be public. It can be a pid or sid.
+     * @param identifier the identifier whose status will be public. It can be a pid or sid.
      * @throws InvalidToken
      * @throws ServiceFailure
      * @throws NotAuthorized
