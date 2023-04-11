@@ -1541,6 +1541,15 @@ public class MNodeService extends D1NodeService
                 logMetacat.warn("MNodeService.getCapabilities - couldn't get the metacat version since " + e.getMessage());
             }
             
+            //add the property of read-only mode
+            String readOnlyStatus = Settings.getConfiguration().getString("application.readOnlyMode");
+            if (readOnlyStatus != null && !readOnlyStatus.trim().equals("")) {
+                Property readOnlyStatusProperty = new Property();
+                readOnlyStatusProperty.setKey("read_only_mode");
+                readOnlyStatusProperty.setValue(readOnlyStatus);
+                node.addProperty(readOnlyStatusProperty);
+            }
+            
             return node;
 
         } catch (PropertyNotFoundException pnfe) {

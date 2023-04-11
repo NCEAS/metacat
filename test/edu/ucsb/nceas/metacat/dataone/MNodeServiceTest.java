@@ -102,6 +102,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.OptionList;
+import org.dataone.service.types.v2.Property;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
@@ -1377,6 +1378,13 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       }
       assertTrue(hasV1MNStorage);
       assertTrue(hasV2MNStorage);
+      List<Property> properties = node.getPropertyList();
+      for (int i=0 ; i<properties.size(); i++) {
+          Property property = properties.get(i);
+          if(property.getKey().equals("read_only_mode")) {
+              assertTrue(property.getValue().equals("false"));
+          }
+      }
     } catch (MarshallingException e) {
         e.printStackTrace();
         fail("The node instance couldn't be parsed correctly:" + e.getMessage());
