@@ -1,17 +1,14 @@
 package edu.ucsb.nceas.metacat.download;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.log4j.Logger;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.exceptions.MarshallingException;
@@ -27,7 +24,6 @@ import org.dspace.foresite.ORESerialiserException;
 import org.dspace.foresite.ResourceMap;
 
 import java.io.*;
-import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Paths;
@@ -48,10 +44,8 @@ import com.hp.hpl.jena.rdf.model.Model;
  * etc. are added to this class through them.
  */
 public class PackageDownloaderV2 {
-    // The resource map pid
-    private Identifier pid;
     // A list of science and resource map pids
-    private List<Identifier> coreMetadataIdentifiers = new ArrayList<>();
+    private List<Identifier> coreMetadataIdentifiers;
 
     // Identifiers for the science metadata documents
     private List<Identifier> scienceMetadataIdentifiers = new ArrayList<>();
@@ -62,7 +56,6 @@ public class PackageDownloaderV2 {
     // A map between data object PID and the location where it should go on disk
     private Map<String, String> _filePathMap;
     private List<Pair<SystemMetadata, InputStream>> scienceMetadatas = new ArrayList<>();
-    private SystemMetadata _scienceSystemMetadata;
     // The underling SpeedBagIt object that holds the file streams
     public SpeedBagIt speedBag = null;
 
@@ -75,16 +68,14 @@ public class PackageDownloaderV2 {
      */
     public PackageDownloaderV2(Identifier pid, ResourceMap resourceMap,
         SystemMetadata resourceMapSystemMetadata)
-        throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, InvalidRequest,
-        NotImplemented {
+        throws ServiceFailure {
         // PID of the package
-        this.pid = pid;
         this.resourceMap = resourceMap;
         this.resourceMapSystemMetadata = resourceMapSystemMetadata;
         this.coreMetadataIdentifiers = new ArrayList<Identifier>();
         // A map of a Subject to its full filepath from prov:atLocation. Unsanitized.
         this._filePathMap = new HashMap<String, String>();
-        // A new SpeedBagIt instance that's BagIt Version 1.0 and using MD5 as the hasing algorithm
+        // A new SpeedBagIt instance that's BagIt Version 1.0 and using MD5 as the hashing algorithm
         try {
             this.speedBag = new SpeedBagIt(1.0, "MD5");
         } catch (IOException e) {
@@ -356,7 +347,7 @@ public class PackageDownloaderV2 {
     /**
      * Streams the completed bag to the caller.
      *
-     * @return An InputStream consiting of the bag bytes
+     * @return An InputStream consisting of the bag bytes
      * @throws ServiceFailure
      * @throws InvalidToken
      * @throws NotAuthorized
