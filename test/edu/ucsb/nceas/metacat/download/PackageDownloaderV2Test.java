@@ -256,14 +256,17 @@ public class PackageDownloaderV2Test { //extends MCTestCase {
     @Test
     public void addScienceMetadatas() {
         PackageDownloaderV2 downloader = createSimpleDownloader();
+        String[] eml = new String[3];
+        SystemMetadata[] emlSysMeta = new SystemMetadata[3];
         try {
-            String eml = "<eml:eml><dataset id=\"TEST-ID-1\"/></eml:eml>";
-            SystemMetadata emlSysMeta = getSystemMetadataV2(getUniqueIdentifier(),
-                new ByteArrayInputStream(eml.getBytes()));
+            for (int i=0; i < 3; i++) {
+                eml[i] = "<eml:eml><dataset id=\"TEST-ID-" + i + "\"/></eml:eml>";
+                 emlSysMeta[i] = getSystemMetadataV2(getUniqueIdentifier(),
+                    new ByteArrayInputStream(eml[i].getBytes()));
 
-            downloader.addScienceMetadata(emlSysMeta, new ByteArrayInputStream(eml.getBytes()));
-            downloader.addScienceMetadata(emlSysMeta, new ByteArrayInputStream(eml.getBytes()));
-            downloader.addScienceMetadata(emlSysMeta, new ByteArrayInputStream(eml.getBytes()));
+                downloader.addScienceMetadata(emlSysMeta[i],
+                    new ByteArrayInputStream(eml[i].getBytes()));
+            }
             downloader.addScienceMetadatas();
 
             assertTrue(
