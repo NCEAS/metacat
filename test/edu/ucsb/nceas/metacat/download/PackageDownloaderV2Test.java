@@ -48,12 +48,16 @@ import static org.junit.Assert.fail;
 public class PackageDownloaderV2Test { //extends MCTestCase {
 
     private static InputStream birthsInputStream;
-    private static InputStream identicalBirthsInputStream;
+    private static InputStream duplicateBirthsInputStream1;
+    private static InputStream duplicateBirthsInputStream2;
+    private static InputStream duplicatePlotInputStream1;
+
     private static SystemMetadata birthsSysMeta;
     private static InputStream plotInputStream;
     private static SystemMetadata plotSysMeta;
     private static SystemMetadata resourceMapSysMeta;
     private static ResourceMap resourceMap;
+
 
     static {
         new MCTestCase(); //initializes test properties
@@ -65,14 +69,16 @@ public class PackageDownloaderV2Test { //extends MCTestCase {
             Path birthsPath =
                 Paths.get(testFilesPath + "/data/inputs/daily-total-female-births.csv");
             birthsInputStream = new ByteArrayInputStream(Files.readAllBytes(birthsPath));
-            identicalBirthsInputStream = new ByteArrayInputStream(Files.readAllBytes(birthsPath));
+            duplicateBirthsInputStream1 = new ByteArrayInputStream(Files.readAllBytes(birthsPath));
+            duplicateBirthsInputStream2 = new ByteArrayInputStream(Files.readAllBytes(birthsPath));
             InputStream birthsSysMetaStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(
                 testFilesPath
                     + "/metadata/sysmeta/sysmeta-b9ba3f69-6b83-44ff-ab1d-2c4fbd8566c5.xml")));
             birthsSysMeta = getSystemMetadataV2(getUniqueIdentifier(), birthsSysMetaStream);
 
-            plotInputStream = new ByteArrayInputStream(
-                Files.readAllBytes(Paths.get(testFilesPath + "/data/plot.py")));
+            Path plotPath = Paths.get(testFilesPath + "/data/plot.py");
+            plotInputStream = new ByteArrayInputStream(Files.readAllBytes(plotPath));
+            duplicatePlotInputStream1 = new ByteArrayInputStream(Files.readAllBytes(plotPath));
             InputStream plotSysMetaStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(
                 testFilesPath
                     + "/metadata/sysmeta/sysmeta-735a9a2f-7d91-40d0-85e6-877de645fcf9.xml")));
@@ -144,22 +150,36 @@ public class PackageDownloaderV2Test { //extends MCTestCase {
     @Test
     public void download() throws Exception {
 
-        PackageDownloaderV2 downloader = createSimpleDownloader();
-
-        // Add the files to the package
         Identifier plotId = new Identifier();
         plotId.setValue("b9ba3f69-6b83-44ff-ab1d-2c4fbd8566c5");
         plotSysMeta.setIdentifier(plotId);
-        downloader.addDataFile(plotSysMeta, plotInputStream);
+
+        //identical plot.py file #1 to check bagit handles this elegantly:
+        Identifier plotId1 = new Identifier();
+        plotId1.setValue("b9ba3f69-6b83-44ff-ab1d-2c4fbd8566c5_DUPLICATE1");
+        plotSysMeta.setIdentifier(plotId1);
+
         Identifier birthsId1 = new Identifier();
         birthsId1.setValue("d593121c-cd7a-44ef-b67a-8e27ddbcbe2a");
         birthsSysMeta.setIdentifier(birthsId1);
-        downloader.addDataFile(birthsSysMeta, birthsInputStream);
-        //identical file to check bagit handles elegantly:
+
+        //identical births file #2 to check bagit handles this elegantly:
         Identifier birthsId2 = new Identifier();
-        birthsId2.setValue("d593121c-cd7a-44ef-b67a-8e27ddbcbe2a_DUPLICATE");
+        birthsId2.setValue("d593121c-cd7a-44ef-b67a-8e27ddbcbe2a_DUPLICATE1");
         birthsSysMeta.setIdentifier(birthsId2);
-        downloader.addDataFile(birthsSysMeta, identicalBirthsInputStream);
+
+        //identical births file #3 to check bagit handles this elegantly:
+        Identifier birthsId3 = new Identifier();
+        birthsId3.setValue("d593121c-cd7a-44ef-b67a-8e27ddbcbe2a_DUPLICATE2");
+        birthsSysMeta.setIdentifier(birthsId3);
+
+        // Add the files to the package
+        PackageDownloaderV2 downloader = createSimpleDownloader();
+        downloader.addDataFile(birthsSysMeta, birthsInputStream);
+        downloader.addDataFile(plotSysMeta, plotInputStream);
+        downloader.addDataFile(birthsSysMeta, duplicateBirthsInputStream1);
+        downloader.addDataFile(plotSysMeta, duplicatePlotInputStream1);
+        downloader.addDataFile(birthsSysMeta, duplicateBirthsInputStream2);
 
         // Download the bag
         InputStream bagStream = downloader.download();
@@ -188,12 +208,14 @@ public class PackageDownloaderV2Test { //extends MCTestCase {
                         checklist.add(filePath);
                         break;
                     case "data/plot.py":
+                    case "data/0-duplicates/data/plot.py":
                         plotInputStream.reset();
                         assertTrue(IOUtils.contentEquals(stream, plotInputStream));
                         checklist.add(filePath);
                         break;
-                    case "data/0-duplicates/data/inputs/daily-total-female-births.csv":
                     case "data/inputs/daily-total-female-births.csv":
+                    case "data/0-duplicates/data/inputs/daily-total-female-births.csv":
+                    case "data/1-duplicates/data/inputs/daily-total-female-births.csv":
                         birthsInputStream.reset();
                         assertTrue(IOUtils.contentEquals(stream, birthsInputStream));
                         checklist.add(filePath);
@@ -204,9 +226,11 @@ public class PackageDownloaderV2Test { //extends MCTestCase {
             }
             String[] expected = new String[] {
                 "metadata/oai-ore.xml",
-                "data/0-duplicates/data/inputs/daily-total-female-births.csv",
-                "data/inputs/daily-total-female-births.csv",
                 "data/plot.py",
+                "data/0-duplicates/data/plot.py",
+                "data/inputs/daily-total-female-births.csv",
+                "data/0-duplicates/data/inputs/daily-total-female-births.csv",
+                "data/1-duplicates/data/inputs/daily-total-female-births.csv",
                 "metadata/sysmeta/sysmeta-735a9a2f-7d91-40d0-85e6-877de645fcf9.xml",
                 "bag-info.txt",
                 "bagit.txt",

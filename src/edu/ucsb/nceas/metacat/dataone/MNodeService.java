@@ -3030,6 +3030,7 @@ public class MNodeService extends D1NodeService
                  * getting an InputStream to it, and adding it to the bag.
                  */
                 Set<Identifier> packagePidsUnique = new HashSet<>(downloader.packagePids);
+                int index = 0;
                 for (Identifier entryPid : packagePidsUnique) {
                     //Get the system metadata for each item
                     SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
@@ -3060,7 +3061,7 @@ public class MNodeService extends D1NodeService
                         downloader.speedBag.addFile(entryInputStream,
                             Paths.get("data/", fileName).toString(), false);
                     } catch (SpeedBagException e) {
-                        fileName = "0-duplicate-" + fileName;
+                        fileName = index++ + "-duplicate-" + fileName;
                         logMetacat.warn(
                             "Duplicate data filename, renaming file to add to bag: " + fileName, e);
                         downloader.speedBag.addFile(entryInputStream,

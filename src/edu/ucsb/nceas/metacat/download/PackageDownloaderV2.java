@@ -185,17 +185,22 @@ public class PackageDownloaderV2 {
                 dataPath = this.sanitizeFilepath(dataPath);
                 dataPath = Paths.get(dataDirectory, dataPath).toString();
             }
-            logMetacat.debug("Adding data file to the bag at " + dataPath);
-            try {
-                this.speedBag.addFile(inputStream, dataPath, false);
-            } catch (SpeedBagException e) {
-                String duplicateDataPath =
-                    Paths.get(dataDirectory, "0-duplicates", dataPath).toString();
-                logMetacat.warn(
-                    "Duplicate data filename, renaming file to add to bag: " + duplicateDataPath,
-                    e);
-                this.speedBag.addFile(inputStream, duplicateDataPath, false);
+            //check for duplicate paths
+            int index = 0;
+            boolean isRenamed = false;
+            String duplicateDataPath = dataPath;
+            while (this.speedBag.getDataFiles().containsKey(duplicateDataPath)) {
+                duplicateDataPath = Paths.get(dataDirectory, index++ + "-duplicates", dataPath).toString();
+                isRenamed = true;
             }
+            if (isRenamed) {
+                logMetacat.warn("Duplicate data filename (" + dataPath + ") was renamed...");
+                dataPath = duplicateDataPath;
+            }
+            logMetacat.debug("Adding data file to the bag at " + dataPath);
+
+            this.speedBag.addFile(inputStream, dataPath, false);
+
         } catch (SpeedBagException e) {
             throw new ServiceFailure("There was an error creating the BagIt bag.", e.getMessage());
         } catch (NoSuchAlgorithmException e) {
