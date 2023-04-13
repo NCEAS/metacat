@@ -26,6 +26,7 @@ import org.dspace.foresite.ResourceMap;
 import java.io.*;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -176,24 +177,29 @@ public class PackageDownloaderV2 {
         // See if it has a path defined in the resource map
         logMetacat.debug("Determining if file has a record in the resource map");
         String dataPath = this._filePathMap.get(objectSystemMetadataID.getValue());
+        String bagDataFilePath;
         try {
             String dataDirectory =
                 PropertyService.getProperty("package.download.bag.directory.data");
             if (dataPath == null) {
+                bagDataFilePath = dataObjectFileName;
                 dataPath = Paths.get(dataDirectory, dataObjectFileName).toString();
             } else {
                 dataPath = this.sanitizeFilepath(dataPath);
+                bagDataFilePath = dataPath;
                 dataPath = Paths.get(dataDirectory, dataPath).toString();
             }
             //check for duplicate paths
-            int index = 0;
-            boolean isRenamed = false;
-            String duplicateDataPath = dataPath;
-            while (this.speedBag.getDataFiles().containsKey(duplicateDataPath)) {
-                duplicateDataPath = Paths.get(dataDirectory, index++ + "-duplicates", dataPath).toString();
-                isRenamed = true;
-            }
-            if (isRenamed) {
+            if (this.speedBag.getDataFiles().containsKey(dataPath)) {
+                Path path = Paths.get(bagDataFilePath);
+                Path parentPath = path.getParent();
+                String dataFilePath = (parentPath == null) ? "" : parentPath.toString();
+                int index = 0;
+                String duplicateDataPath = dataPath;
+                while (this.speedBag.getDataFiles().containsKey(duplicateDataPath)) {
+                    duplicateDataPath = Paths.get(dataDirectory, dataFilePath,
+                        index++ + "-duplicate-" + path.getFileName()).toString();
+                }
                 logMetacat.warn("Duplicate data filename (" + dataPath + ") was renamed...");
                 dataPath = duplicateDataPath;
             }

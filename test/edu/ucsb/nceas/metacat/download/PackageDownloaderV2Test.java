@@ -208,29 +208,35 @@ public class PackageDownloaderV2Test { //extends MCTestCase {
                         checklist.add(filePath);
                         break;
                     case "data/plot.py":
-                    case "data/0-duplicates/data/plot.py":
+                    case "data/0-duplicate-plot.py":
                         plotInputStream.reset();
                         assertTrue(IOUtils.contentEquals(stream, plotInputStream));
                         checklist.add(filePath);
                         break;
                     case "data/inputs/daily-total-female-births.csv":
-                    case "data/0-duplicates/data/inputs/daily-total-female-births.csv":
-                    case "data/1-duplicates/data/inputs/daily-total-female-births.csv":
+                    case "data/inputs/0-duplicate-daily-total-female-births.csv":
+                    case "data/inputs/1-duplicate-daily-total-female-births.csv":
                         birthsInputStream.reset();
                         assertTrue(IOUtils.contentEquals(stream, birthsInputStream));
                         checklist.add(filePath);
                         break;
-                    default:
+                    case "bag-info.txt":
+                    case "bagit.txt":
+                    case "manifest-md5.txt":
+                    case "tagmanifest-md5.txt":
                         checklist.add(filePath);
+                        break;
+                    default:
+                        fail("unrecognized bag contents: " + filePath);
                 }
             }
             String[] expected = new String[] {
                 "metadata/oai-ore.xml",
                 "data/plot.py",
-                "data/0-duplicates/data/plot.py",
+                "data/0-duplicate-plot.py",
                 "data/inputs/daily-total-female-births.csv",
-                "data/0-duplicates/data/inputs/daily-total-female-births.csv",
-                "data/1-duplicates/data/inputs/daily-total-female-births.csv",
+                "data/inputs/0-duplicate-daily-total-female-births.csv",
+                "data/inputs/1-duplicate-daily-total-female-births.csv",
                 "metadata/sysmeta/sysmeta-735a9a2f-7d91-40d0-85e6-877de645fcf9.xml",
                 "bag-info.txt",
                 "bagit.txt",
@@ -242,7 +248,6 @@ public class PackageDownloaderV2Test { //extends MCTestCase {
             Arrays.sort(actual);
             String msg = "\nCONTENTS (order unimportant) -- expected:\n" + Arrays.toString(expected)
                 + "\nActual:\n" + Arrays.toString(actual);
-
             assertEquals("incorrect number of bag entries found" + msg, expected.length,
                 checklist.size());
             assertTrue("incorrect bag contents" + msg,
