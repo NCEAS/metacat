@@ -66,6 +66,20 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.19.0
+New features and bugs fixed in this release:
+* getPackage implementation doesn't handle duplicate data object filenames
+* PackageDownloaderV2 doesn't increment filenames for duplicate science metadata objects
+* Deleting objects failed to remove solr doc
+* Sampling citation not showing up in view service
+* Mis-Formatting of Data Package Contents
+* Unhelpful error message when trying to create as a denied submitter 
+* Data objects miss after a package was published
+* Multiple updates on a single DOI happen when users use the metacat admin page to update DOIs
+* Metacat updated the DOI metadata (datacite) when the system metadata of an obsoleted object was updated if the obsolescent chain has a DOI Sid
+* getPackage fails to include system metadata 
+
 ### Release Notes for 2.18.0
 This release focuses on improving indexing performance.
 New features and bugs fixed in this release:
