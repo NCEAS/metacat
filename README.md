@@ -79,6 +79,7 @@ New features and bugs fixed in this release:
 * Multiple updates on a single DOI happen when users use the metacat admin page to update DOIs
 * Metacat updated the DOI metadata (datacite) when the system metadata of an obsoleted object was updated if the obsolescent chain has a DOI Sid
 * getPackage fails to include system metadata 
+* OSTI DOI Plugin Notifications need more information
 
 ### Release Notes for 2.18.0
 This release focuses on improving indexing performance.
