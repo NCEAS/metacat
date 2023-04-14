@@ -36,7 +36,8 @@ data are well and consistently described.
 - Michael Daigle (daigle@nceas.ucsb.edu)
 - Lauren Walker (walker@nceas.ucsb.edu)
 - Peter Slaughter (slaughter@nceas.ucsb.edu)
-- Rob Nahf (rnahf@epscor.unm.edu) 
+- Rob Nahf (rnahf@epscor.unm.edu)
+- Matthew Brooke (brooke@nceas.ucsb.edu)
 
 ### Patch contributors
 - Andrea Chadden (chadden@nceas.ucsb.edu)
