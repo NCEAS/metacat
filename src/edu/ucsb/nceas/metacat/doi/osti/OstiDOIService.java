@@ -155,7 +155,7 @@ public class OstiDOIService extends DOIService{
                         }
                         throw new DOIException(ee.getMessage());
                     }
-                    logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured to auto publish doi and the current status is "
+                    logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured NOT to auto publish doi and the current status is "
                                      + status + " for the identifier " + identifier.getValue());
                     if (status != null && status.equalsIgnoreCase(OSTIElinkService.SAVED)) {
                         //we need to preserve the saved status, so the site url should be null. 

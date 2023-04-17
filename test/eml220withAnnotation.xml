@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:eml="https://eml.ecoinformatics.org/eml-2.2.0" xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.2" packageId="eml-test-doc" system="https://arcticdata.io" scope="system" xsi:schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0 eml.xsd">
+  <dataset>
+    <title>EML Annotation Example</title>
+    <creator>
+      <individualName>
+        <givenName>EML</givenName>
+        <surName>Annotator</surName>
+      </individualName>
+    </creator>
+    <contact>
+      <individualName>
+        <givenName>EML</givenName>
+        <surName>Annotator</surName>
+      </individualName>
+    </contact>
+    <project>
+        <title>MY PROJECT</title>
+        <personnel>
+          <individualName>
+            <givenName>EML</givenName>
+            <surName>Annotator</surName>
+          </individualName>
+          <role>principalInvestigator</role>
+        </personnel>
+        <funding>
+          SOME_RANDOM_FUNDING_INFO
+        </funding>
+        <award>
+          <funderName>My Funder</funderName>
+          <funderIdentifier>MY_FUNDER</funderIdentifier>
+          <awardNumber>AWARD1</awardNumber>
+          <title>An example award title</title>
+          <awardUrl>https://example.org/someaward</awardUrl>
+        </award>
+      </project>
+    <dataTable>
+      <entityName>myDataTable</entityName>
+      <physical id="myDataTable">
+        <objectName>myDataTable</objectName>
+        <dataFormat>
+          <textFormat>
+            <numHeaderLines>1</numHeaderLines>
+            <recordDelimiter>\n\r</recordDelimiter>
+            <attributeOrientation>column</attributeOrientation>
+            <simpleDelimited>
+              <fieldDelimiter>,</fieldDelimiter>
+            </simpleDelimited>
+          </textFormat>
+        </dataFormat>
+      </physical>
+      <attributeList>
+        <attribute id="myatt">
+          <attributeName>SOME_ATTRIBUTE</attributeName>
+          <attributeDefinition>SOME_ATTRIBUTE's definition</attributeDefinition>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <textDomain>
+                  <definition>SOME_ATTRIBUTE's VALUES</definition>
+                </textDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+          <annotation>
+            <propertyURI label="contains measurements of type">http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#containsMeasurementsOfType</propertyURI>
+            <valueURI label="Chlorophyll-a Concentration">http://purl.dataone.org/odo/ECSO_00000516</valueURI>
+          </annotation>
+          <annotation>
+            <propertyURI label="has unit">http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#hasUnit</propertyURI>
+            <valueURI label="microgram per liter">http://purl.obolibrary.org/obo/UO_0000301</valueURI>
+          </annotation>
+        </attribute>
+      </attributeList>
+    </dataTable>
+  </dataset>
+</eml:eml>

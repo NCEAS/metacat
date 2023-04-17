@@ -153,10 +153,12 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 		final IndexTask task = entryEvent.getValue();
 		//System.out.println("the size of queue is " + source.size());
 		//System.out.println("+++++++++++++++++++++++++++++ the systemmetadata last modifying time is " + task.getSystemMetadata().getDateSysMetadataModified().getTime());
-		log.info("===================================SystemMetadataEventListener. entryUpdated - adding the document " + pid.getValue());
 		final boolean deletingTask = task.isDeleting();
+		log.info("===================================SystemMetadataEventListener. entryUpdated - adding the document " + 
+		          pid.getValue() + ". Is it a deleting task? " + deletingTask);
 		final long startFromQueuing = task.getTimeAddToQueque();
 		final boolean isSysmetaChangeOnly = task.isSysmetaChangeOnly();
+		final SystemMetadata originSysmeta = task.getSystemMetadata();
 		
 		// what do we have to index?
 		Runnable runner = new Runnable() {
@@ -177,10 +179,11 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
                     //SystemMetadata systemMetadata = task.getSystemMetadata();
                     SystemMetadata systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
                     Map<String, List<Object>> fields = task.getFields();
-                    if (systemMetadata != null) {
-                        if(deletingTask) {
-                            solrIndex.remove(pid, systemMetadata);
-                        } else {
+                    if(deletingTask) {
+                        //since this is a deleting task, the system metadata is gone and we have to use the one stored in the task.
+                        solrIndex.remove(pid, originSysmeta);
+                    } else {
+                        if (systemMetadata != null) {
                             solrIndex.update(pid, systemMetadata, isSysmetaChangeOnly);
                         }
                     }

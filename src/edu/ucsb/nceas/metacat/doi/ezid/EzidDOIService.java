@@ -241,13 +241,24 @@ public class EzidDOIService extends DOIService {
         String dataCiteXML = generateDataCiteXML(identifier.getValue(), sysMeta);
         metadata.put(DATACITE, dataCiteXML);
         metadata.put(InternalProfile.TARGET.toString(), target);
-        try {
-            // make sure we have a current login
-            this.refreshLogin();
-            // set using the API
-            ezid.createOrUpdate(identifier.getValue(), metadata);
-        } catch (EZIDException e) {
-            throw new DOIException(e.getMessage());
+        for (int i=1; i <= MAX_ATTEMPT; i++) {
+            logMetacat.debug("EzidDOIService.submitDOIMetadata - the " + i + " time try to set the metadata for " + identifier.getValue());
+            try {
+                // make sure we have a current login
+                this.refreshLogin();
+                // set using the API
+                ezid.createOrUpdate(identifier.getValue(), metadata);
+                break;
+            } catch (EZIDException e) {
+                if (i == MAX_ATTEMPT) {
+                    throw new DOIException(e.getMessage()); //Metacat throws an exception (stops trying) if the max_attempt tries failed
+                } else {
+                    logMetacat.debug("EzidDOIService.submitDOIMetadata - the " + i + " time setting the metadata for " + identifier.getValue() + " failed since a DOIExcpetion " +
+                                      e.getMessage() + ". Metacat is going to log-in the EZID service and try to set it again.");
+                    ezid.login(username, password);
+                    lastLogin = Calendar.getInstance().getTime();
+                }
+            } 
         }
 	}
 
@@ -379,16 +390,33 @@ public class EzidDOIService extends DOIService {
         HashMap<String, String> metadata = new HashMap<String, String>();
         metadata.put(InternalProfile.STATUS.toString(), InternalProfileValues.PUBLIC.toString());
         metadata.put(InternalProfile.EXPORT.toString(), InternalProfileValues.YES.toString());
-        try {
-            // make sure we have a current login
-            this.refreshLogin();
-            // set using the API
-            ezid.setMetadata(identifier.getValue(), metadata);
-        } catch (EZIDException e) {
-            throw new DOIException(e.getMessage());
-        } catch (InterruptedException e) {
-            throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+        for (int i=1; i <= MAX_ATTEMPT; i++) {
+            logMetacat.debug("EzidDOIService.publishIdentifier - the " + i + " time try to publish " + identifier.getValue());
+            try {
+                // make sure we have a current login
+                this.refreshLogin();
+                // set using the API
+                ezid.setMetadata(identifier.getValue(), metadata);
+                break;
+            } catch (EZIDException e) {
+                if (i == MAX_ATTEMPT) {
+                    throw new DOIException(e.getMessage()); //Metacat throws an exception (stops trying) if the max_attempt tries failed
+                } else {
+                    logMetacat.debug("EzidDOIService.publishIdentifier - the " + i + " time publishing the " + identifier.getValue() + " failed since a DOIExcpetion " +
+                                      e.getMessage() + ". Metacat is going to log-in the EZID service and try to publish it again.");
+                    ezid.login(username, password);
+                    lastLogin = Calendar.getInstance().getTime();
+                }
+            } catch (InterruptedException e) {
+                if (i == MAX_ATTEMPT) {
+                    throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+                } else {
+                    logMetacat.debug("EzidDOIService.publishIdentifier - the " + i + " time publishing the " + identifier.getValue() + " failed since " +
+                            e.getMessage() + ". Metacat is going to log-in the EZID service and try to publish it again.");
+                    ezid.login(username, password);
+                    lastLogin = Calendar.getInstance().getTime();
+                }
+            }
         }
-       
     }
 }

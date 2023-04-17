@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.ecoinformatics</groupId>
     <artifactId>metacat</artifactId>
-    <version>2.18.0</version>
+    <version>2.19.0</version>
     <name>metacat</name>
     <packaging>war</packaging>
     <url>http://maven.apache.org</url>
@@ -12,26 +12,24 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <d1_libclient_version>2.3.1</d1_libclient_version>
         <d1_portal_version>2.3.2</d1_portal_version>
-        <metacat_common_version>2.18.0</metacat_common_version>
+        <metacat_common_version>2.19.0</metacat_common_version>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
     </properties>
     <repositories>
         <repository>
-			<id>dataone.org</id>
-			<url>http://maven.dataone.org</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-      <id>osgeo</id>
-      <name>OSGeo Release Repository</name>
-      <url>https://repo.osgeo.org/repository/release/</url>
-      <snapshots><enabled>false</enabled></snapshots>
-      <releases><enabled>true</enabled></releases>
-    </repository>
+            <id>dataone.org</id>
+            <url>http://maven.dataone.org</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+        <repository>
+            <id>osgeo</id>
+            <name>OSGeo Release Repository</name>
+            <url>https://repo.osgeo.org/repository/release/</url>
+            <snapshots><enabled>false</enabled></snapshots>
+            <releases><enabled>true</enabled></releases>
+        </repository>
         <repository>
             <id>central maven repo</id>
              <name>central maven repo https</name>
@@ -44,12 +42,12 @@
         </repository>
     </repositories>
     <dependencies>
-    	<dependency>
-			<groupId>edu.ucsb.nceas</groupId>
-			<artifactId>utilities</artifactId>
-			<version>2.0.0</version>
-			<exclusions>
-			     <exclusion>
+        <dependency>
+            <groupId>edu.ucsb.nceas</groupId>
+            <artifactId>utilities</artifactId>
+            <version>2.0.0</version>
+            <exclusions>
+                 <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpclient</artifactId>
                 </exclusion>
@@ -58,51 +56,51 @@
                     <artifactId>log4j</artifactId>
                 </exclusion>
             </exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.ecoinformatics.eml</groupId>
-			<artifactId>datamanager</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-    	<dependency>
+        </dependency>
+        <dependency>
+            <groupId>org.ecoinformatics.eml</groupId>
+            <artifactId>datamanager</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
             <artifactId>d1_portal</artifactId>
             <groupId>org.dataone</groupId>
             <version>${d1_portal_version}</version>
             <type>jar</type>
             <!-- exclude extraneous artifacts (jars) -->
-			<exclusions>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-tools</artifactId>
-		        </exclusion>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-schema</artifactId>
-		        </exclusion>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-extras</artifactId>
-		        </exclusion>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-bind</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-clean-plugin</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.jibx</groupId>
-					<artifactId>maven-jibx-plugin</artifactId>
-		        </exclusion>
+            <exclusions>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-tools</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-schema</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-extras</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-bind</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jibx</groupId>
+                    <artifactId>maven-jibx-plugin</artifactId>
+                </exclusion>
                  <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpclient</artifactId>
@@ -117,226 +115,226 @@
                 </exclusion>
             </exclusions>
         </dependency>
-    	<dependency>
+        <dependency>
             <groupId>edu.ucsb.nceas.metacat.common</groupId>
             <artifactId>metacat-common</artifactId>
             <version>${metacat_common_version}</version>
             <type>jar</type>
             <!-- exclude extraneous artifacts (jars) -->
-			<exclusions>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-tools</artifactId>
-		        </exclusion>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-schema</artifactId>
-		        </exclusion>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-extras</artifactId>
-		        </exclusion>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-bind</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-clean-plugin</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.jibx</groupId>
-					<artifactId>maven-jibx-plugin</artifactId>
-		        </exclusion>
-			</exclusions>
-        </dependency>
-		<dependency>
-			<groupId>org.dataone</groupId>
-			<artifactId>d1_libclient_java</artifactId>
-			<version>${d1_libclient_version}</version>
-			<type>jar</type>
-			<scope>runtime</scope>
-			<!-- exclude extraneous artifacts (jars) -->
-			<exclusions>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-tools</artifactId>
-		        </exclusion>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-schema</artifactId>
-		        </exclusion>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-extras</artifactId>
-		        </exclusion>
-		        <exclusion>
-		          <groupId>org.jibx</groupId>
-		          <artifactId>jibx-bind</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-clean-plugin</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.jibx</groupId>
-					<artifactId>maven-jibx-plugin</artifactId>
-		        </exclusion>
-		        <!-- TODO: refine the JCS requirements -->
-		        <exclusion>
-		        	<groupId>berkeleydb</groupId>
-      				<artifactId>berkeleydb</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>mysql</groupId>
-      				<artifactId>mysql-connector-java</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>hsqldb</groupId>
-					<artifactId>hsqldb</artifactId>
-		        </exclusion>
-		        <exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>junit</groupId>
-					<artifactId>junit</artifactId>
-		        </exclusion>
-		        <exclusion>
-					<groupId>xerces</groupId>
-					<artifactId>xercesImpl</artifactId>
-		        </exclusion>
-		        <exclusion>
-					<groupId>com.hp.hpl.jena</groupId>
-					<artifactId>jena</artifactId>
-				</exclusion>
-                 <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpclient</artifactId>
+            <exclusions>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-tools</artifactId>
                 </exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>edu.ucsb.nceas</groupId>
-			<artifactId>ezid</artifactId>
-			<version>1.0.3</version>
-			<exclusions>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-schema</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-extras</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-bind</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jibx</groupId>
+                    <artifactId>maven-jibx-plugin</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.dataone</groupId>
+            <artifactId>d1_libclient_java</artifactId>
+            <version>${d1_libclient_version}</version>
+            <type>jar</type>
+            <scope>runtime</scope>
+            <!-- exclude extraneous artifacts (jars) -->
+            <exclusions>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-tools</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-schema</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-extras</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>org.jibx</groupId>
+                  <artifactId>jibx-bind</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jibx</groupId>
+                    <artifactId>maven-jibx-plugin</artifactId>
+                </exclusion>
+                <!-- TODO: refine the JCS requirements -->
+                <exclusion>
+                    <groupId>berkeleydb</groupId>
+                      <artifactId>berkeleydb</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>mysql</groupId>
+                      <artifactId>mysql-connector-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>hsqldb</groupId>
+                    <artifactId>hsqldb</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.hp.hpl.jena</groupId>
+                    <artifactId>jena</artifactId>
+                </exclusion>
                  <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpclient</artifactId>
                 </exclusion>
             </exclusions>
-		</dependency>
-		<!-- geotools -->
-		<dependency>
+        </dependency>
+        <dependency>
+            <groupId>edu.ucsb.nceas</groupId>
+            <artifactId>ezid</artifactId>
+            <version>1.0.3</version>
+            <exclusions>
+                 <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- geotools -->
+        <dependency>
             <groupId>org.geotools</groupId>
-			<artifactId>gt-api</artifactId>
-			<version>2.6.4</version>
-		</dependency>
-		<dependency>
+            <artifactId>gt-api</artifactId>
+            <version>2.6.4</version>
+        </dependency>
+        <dependency>
             <groupId>org.geotools</groupId>
-			<artifactId>gt-data</artifactId>
-			<version>2.6.4</version>
-		</dependency>
-		<dependency>
+            <artifactId>gt-data</artifactId>
+            <version>2.6.4</version>
+        </dependency>
+        <dependency>
             <groupId>org.geotools</groupId>
-			<artifactId>gt-shapefile</artifactId>
-			<version>2.6.4</version>
-		</dependency>
-		<dependency>
-        	<groupId>com.servlets</groupId>
-        	<artifactId>cos</artifactId>
-        	<version>05Nov2002</version>
-		</dependency>
-		<dependency>
-			<groupId>com.hazelcast</groupId>
-			<artifactId>hazelcast</artifactId>
-			<version>2.4.1</version>
-		</dependency>
-		<dependency>
-        	<groupId>net.sf.opencsv</groupId>
-        	<artifactId>opencsv</artifactId>
-        	<version>1.8</version>
-		</dependency>
-		<dependency>
-    		<groupId>org.apache.wicket</groupId>
-    		<artifactId>wicket-core</artifactId>
-			<version>7.17.0</version>
-			<exclusions>
+            <artifactId>gt-shapefile</artifactId>
+            <version>2.6.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.servlets</groupId>
+            <artifactId>cos</artifactId>
+            <version>05Nov2002</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>2.4.1</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.wicket</groupId>
+            <artifactId>wicket-core</artifactId>
+            <version>7.17.0</version>
+            <exclusions>
                 <exclusion>
                   <groupId>org.slf4j</groupId>
                   <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
-		</dependency>
-		<dependency>
-			<groupId>postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>8.0-312.jdbc3</version>
-		</dependency>
-		<!-- <dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-core</artifactId>
-			<version>3.4.0</version>
-		</dependency>-->
-		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-solrj</artifactId>
-			<version>8.8.2</version>
-			<exclusions>
-				<exclusion>
-		        	<groupId>junit</groupId>
-					<artifactId>junit</artifactId>
-		        </exclusion>
-		        <exclusion>
+        </dependency>
+        <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>8.0-312.jdbc3</version>
+        </dependency>
+        <!-- <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-core</artifactId>
+            <version>3.4.0</version>
+        </dependency>-->
+        <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+            <version>8.8.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
                   <groupId>org.slf4j</groupId>
                   <artifactId>slf4j-jdk</artifactId>
                 </exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.7</version>
-		</dependency>
-		<dependency>
-      		<groupId>org.dspace</groupId>
-			<artifactId>oaicat</artifactId>
-			<version>1.5.48</version>
-		</dependency>
-		<dependency>
-			<groupId>javax.xml</groupId>
-			<artifactId>jaxrpc-api</artifactId>
-			<version>1.1</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
-		</dependency>
-		<dependency>
-			<groupId>xerces</groupId>
-			<artifactId>xercesImpl</artifactId>
-			<version>2.12.2</version>
-		</dependency>
-		<dependency>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.7</version>
+        </dependency>
+        <dependency>
+              <groupId>org.dspace</groupId>
+            <artifactId>oaicat</artifactId>
+            <version>1.5.48</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml</groupId>
+            <artifactId>jaxrpc-api</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+            <version>2.12.2</version>
+        </dependency>
+        <dependency>
             <groupId>commons-jxpath</groupId>
             <artifactId>commons-jxpath</artifactId>
             <version>1.3</version>
@@ -348,17 +346,17 @@
         </dependency>
         <!-- jena tdb -->
         <dependency>
-			<groupId>org.apache.jena</groupId>
-			<artifactId>jena-tdb</artifactId>
-			<version>1.1.2</version>
-			<exclusions>
-			     <exclusion>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>jena-tdb</artifactId>
+            <version>1.1.2</version>
+            <exclusions>
+                 <exclusion>
                     <groupId>log4j</groupId>
                     <artifactId>log4j</artifactId>
                 </exclusion>
-			</exclusions>
-		</dependency>
-		 <dependency>
+            </exclusions>
+        </dependency>
+         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.5</version>
@@ -437,12 +435,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
-	<dependency>
-		<groupId>org.dataone</groupId>
-		<artifactId>speedbagit</artifactId>
-		<version>1.0.2</version>
-		<type>jar</type>
-	</dependency>
+    <dependency>
+        <groupId>org.dataone</groupId>
+        <artifactId>speedbagit</artifactId>
+        <version>1.0.4</version>
+        <type>jar</type>
+    </dependency>
         <dependency>
             <groupId>com.github.jsonld-java</groupId>
             <artifactId>jsonld-java</artifactId>

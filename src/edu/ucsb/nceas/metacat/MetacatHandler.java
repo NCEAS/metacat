@@ -24,7 +24,6 @@
 
 package edu.ucsb.nceas.metacat;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -79,7 +78,6 @@ import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
@@ -383,7 +381,7 @@ public class MetacatHandler {
         try {
             sess = new AuthSession();
         } catch (Exception e) {
-            String errorMsg = "MetacatServlet.handleLoginAction - Problem in MetacatServlet.handleLoginAction() authenicating session: "
+            String errorMsg = "MetacatServlet.handleLoginAction - Problem in MetacatServlet.handleLoginAction() authenticating session: "
                 + e.getMessage();
             logMetacat.error(errorMsg);
             out.write(errorMsg);
@@ -392,7 +390,7 @@ public class MetacatHandler {
         }
         boolean isValid = sess.authenticate(request, un, pw);
         
-        //if it is authernticate is true, store the session
+        //if authenticate is true, store the session
         if (isValid) {
             HttpSession session = sess.getSessions();
             String id = session.getId();
@@ -494,13 +492,15 @@ public class MetacatHandler {
     
     // SQUERY & QUERY SECTION
     /**
-     * Retreive the squery xml, execute it and display it
+     * Retrieve the squery xml, execute it and display it
      *
      * @param out the output stream to the client
      * @param params the Hashtable of parameters that should be included in the
      *            squery.
      * @param response the response object linked to the client
-     * @param conn the database connection
+     * @param user the user name (it maybe different to the one in param)
+     * @param groups the group array
+     * @param sessionid  the sessionid
      */
     protected void handleSQuery(Writer out, Hashtable<String, String[]> params,
             HttpServletResponse response, String user, String[] groups,
@@ -902,7 +902,7 @@ public class MetacatHandler {
                         response.setContentType("text/xml"); //MIME type
                         // Send back error message if out = null
                         if (pw == null) {
-                            // If pw is null, open the respnose
+                            // If pw is null, open the response
                             pw = response.getWriter();
                         }
                         pw.println("<?xml version=\"1.0\"?>");
@@ -1632,7 +1632,7 @@ public class MetacatHandler {
                              this.ERROR +
                              "User '" + 
                              user + 
-                             "' is not allowed to insert and update" +
+                             "' is not allowed to insert or update. Check the Allowed and Denied Submitters lists" +
                              this.ERRORCLOSE;
                 if(out != null)
                 {
