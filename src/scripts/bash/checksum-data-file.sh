@@ -6,7 +6,6 @@ prefix="$directory/"
 rm data-checksum.txt
 for file in "$directory"/*; do
     if [[  "$file" =~ ^$directory/auto ]]; then
-        #checksum=$(md5sum "$file" | awk '{print $1}')
         checksum=$(md5 "$file" | awk '{print $4}')
 
         # Extract the "foo.2" and "1" parts of the filename

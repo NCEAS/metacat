@@ -76,7 +76,7 @@ New features and bugs fixed in this release:
 * Sampling citation not showing up in view service
 * Mis-Formatting of Data Package Contents
 * Unhelpful error message when trying to create as a denied submitter 
-* Data objects miss after a package was published
+* Data objects missing after a package was published
 * Multiple updates on a single DOI happen when users use the metacat admin page to update DOIs
 * Metacat updated the DOI metadata (datacite) when the system metadata of an obsoleted object was updated if the obsolescent chain has a DOI Sid
 * getPackage fails to include system metadata 

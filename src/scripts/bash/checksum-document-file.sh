@@ -5,7 +5,6 @@ prefix="$directory/"
 
 rm document-checksum.txt
 for file in "$directory"/*; do
-        #checksum=$(md5sum "$file" | awk '{print $1}')
         checksum=$(md5 "$file" | awk '{print $4}')
 
         # Extract the "foo.2" and "1" parts of the filename

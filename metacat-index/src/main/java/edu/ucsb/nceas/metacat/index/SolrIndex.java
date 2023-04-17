@@ -780,10 +780,7 @@ public class SolrIndex {
             try {
                 List<SolrDoc> docsToUpdate = getUpdatedSolrDocsByRemovingResourceMap(pid);
                 if (docsToUpdate != null && !docsToUpdate.isEmpty()) {
-                    //SolrElementAdd addCommand = new SolrElementAdd(docsToUpdate);
-                    //httpService.sendUpdate(solrIndexUri, addCommand);
                     for(SolrDoc doc : docsToUpdate) {
-                        //removeFromIndex(doc.getIdentifier());
                         insertToIndex(doc);
                     }
                 }
@@ -1058,7 +1055,6 @@ public class SolrIndex {
                         SolrDoc solrDoc = ResourceMapSubprocessor.getSolrDoc(documentsValue);
                         if (solrDoc != null) {
                             solrDoc.removeFieldsWithValue(SolrElementField.FIELD_ISDOCUMENTEDBY, pid);
-                            //removeFromIndex(documentsValue);
                             insertToIndex(solrDoc);
                         }
                         break;
@@ -1083,8 +1079,6 @@ public class SolrIndex {
                         SolrDoc solrDoc = ResourceMapSubprocessor.getSolrDoc(documentedByValue);
                         if (solrDoc != null) {
                             solrDoc.removeFieldsWithValue(SolrElementField.FIELD_DOCUMENTS, pid);
-                            //docsToUpdate.add(solrDoc);
-                            //removeFromIndex(documentedByValue);
                             insertToIndex(solrDoc);
                         }
                         break;
