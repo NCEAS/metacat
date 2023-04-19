@@ -46,15 +46,15 @@ public class MetacatIndexServlet extends HttpServlet {
     // see http://www.docjar.com/docs/api/org/springframework/context/support/FileSystemXmlApplicationContext.html
     //private static final String FILEPREFIX = "file:";
     
-	private static Log log = LogFactory.getLog(MetacatIndexServlet.class);
+    private static Log log = LogFactory.getLog(MetacatIndexServlet.class);
 
     /**
      * Initialize the servlet 
      */
     public void init(ServletConfig config) throws ServletException {
         //System.out.println("++++++++++++++++++++++++------------------- start the servlet");
-    	//initializeSharedConfiguration(config);
-    	// initialize the application using the configured application-context
+        //initializeSharedConfiguration(config);
+        // initialize the application using the configured application-context
         //URL url = getClass().getResource("/index-processor-context.xml");
         //find the sibling metacat.properties file
         String metacatPropertiesFilePath = config.getServletContext().getInitParameter("metacat.properties.path");
@@ -89,32 +89,32 @@ public class MetacatIndexServlet extends HttpServlet {
      * @param config the servlet config
      */
     /*private void initializeSharedConfiguration(ServletConfig config) {
-    	
-		try {
-			// find the sibling metacat.properties file
-			String metacatPropertiesFilePath = config.getServletContext().getInitParameter("metacat.properties.path");
-			File contextDeploymentDir = new File(config.getServletContext().getRealPath("/"));
-			String fullMetacatPropertiesFilePath = contextDeploymentDir.getParent()  + metacatPropertiesFilePath;
-			Settings.augmentConfiguration(fullMetacatPropertiesFilePath);
-		} catch (ConfigurationException e) {
-			log.error("Could not initialize shared Metacat properties. " + e.getMessage(), e);
-		}
-		
-		// make sure hazelcast configuration is defined so that
-		String hzConfigFileName = Settings.getConfiguration().getString("dataone.hazelcast.configFilePath");
-		if (hzConfigFileName == null) {
-			// use default metacat hazelcast.xml file in metacat deployment
-			hzConfigFileName = 
-    				Settings.getConfiguration().getString("application.deployDir") +
-    				"/" +
-    				Settings.getConfiguration().getString("application.context") + 
-    				"/WEB-INF/hazelcast.xml";
-			// set it for other parts of the code
-			Settings.getConfiguration().setProperty("dataone.hazelcast.configFilePath", hzConfigFileName);
-			//set data.hazelcast.location.clientconfig. This property will be used in d1_cn_index_processor module.
-			//if we don't set this property, d1_cn_index_processor will use the default location /etc/dataone/storage.
-			Settings.getConfiguration().setProperty("dataone.hazelcast.location.clientconfig", hzConfigFileName);
-		}
+        
+        try {
+            // find the sibling metacat.properties file
+            String metacatPropertiesFilePath = config.getServletContext().getInitParameter("metacat.properties.path");
+            File contextDeploymentDir = new File(config.getServletContext().getRealPath("/"));
+            String fullMetacatPropertiesFilePath = contextDeploymentDir.getParent()  + metacatPropertiesFilePath;
+            Settings.augmentConfiguration(fullMetacatPropertiesFilePath);
+        } catch (ConfigurationException e) {
+            log.error("Could not initialize shared Metacat properties. " + e.getMessage(), e);
+        }
+        
+        // make sure hazelcast configuration is defined so that
+        String hzConfigFileName = Settings.getConfiguration().getString("dataone.hazelcast.configFilePath");
+        if (hzConfigFileName == null) {
+            // use default metacat hazelcast.xml file in metacat deployment
+            hzConfigFileName = 
+                    Settings.getConfiguration().getString("application.deployDir") +
+                    "/" +
+                    Settings.getConfiguration().getString("application.context") + 
+                    "/WEB-INF/hazelcast.xml";
+            // set it for other parts of the code
+            Settings.getConfiguration().setProperty("dataone.hazelcast.configFilePath", hzConfigFileName);
+            //set data.hazelcast.location.clientconfig. This property will be used in d1_cn_index_processor module.
+            //if we don't set this property, d1_cn_index_processor will use the default location /etc/dataone/storage.
+            Settings.getConfiguration().setProperty("dataone.hazelcast.location.clientconfig", hzConfigFileName);
+        }
     }*/
     
     /**

@@ -202,23 +202,23 @@ public class ApplicationController implements Runnable {
         solrIndexes = (List<SolrIndex>) context.getBean(SOLRINDEXES);
         
         // use factory to create the correct impl
-    	SolrClient solrServer = null;
-		try {
-			solrServer = SolrServerFactory.createSolrServer();
-		} catch (Exception e) {
-			log.error("Could not create SolrServer form factory", e);
-			throw e;
-		}
+        SolrClient solrServer = null;
+        try {
+            solrServer = SolrServerFactory.createSolrServer();
+        } catch (Exception e) {
+            log.error("Could not create SolrServer form factory", e);
+            throw e;
+        }
 
         // start the SystemMetadata listener[s] (only expect there to be one)
         for (SolrIndex solrIndex: solrIndexes) {
-        	// set the solr server to use
-			solrIndex.setSolrServer(solrServer);
-			
-			// start listening for events
-        	SystemMetadataEventListener smel = new SystemMetadataEventListener();
-        	smel.setSolrIndex(solrIndex);
-        	sysmetaListeners.add(smel);
+            // set the solr server to use
+            solrIndex.setSolrServer(solrServer);
+
+            // start listening for events
+            SystemMetadataEventListener smel = new SystemMetadataEventListener();
+            smel.setSolrIndex(solrIndex);
+            sysmetaListeners.add(smel);
         }
         
     }
