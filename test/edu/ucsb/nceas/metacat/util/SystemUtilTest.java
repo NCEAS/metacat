@@ -18,6 +18,7 @@
  */
 package edu.ucsb.nceas.metacat.util;
 
+import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 
@@ -73,23 +74,25 @@ public class SystemUtilTest extends MCTestCase {
      * @throws Exception
      */
     public void testGetInternalURLs() throws Exception {
-       String expectedUrl = _testProperties.getProperty("internalURL", "http://localhost:80");
-       String internalURL = SystemUtil.getInternalServerURL();
-       System.out.println("============the internal url is "+internalURL);
-       System.out.println("=============the internal url has been replaced by the external url is "+SystemUtil.isInternalURLReplacedByExternal());
-       if(!SystemUtil.isInternalURLReplacedByExternal()) {
-           assertEquals(expectedUrl, internalURL);
-       }
-       internalURL = SystemUtil.getInternalServerURL();
-       if(!SystemUtil.isInternalURLReplacedByExternal()) {
-           assertEquals(expectedUrl, internalURL);
-       }
-       String contextURL = SystemUtil.getInternalContextURL();
-       System.out.println("========================= the context url is "+contextURL);
-       if (!SystemUtil.isInternalURLReplacedByExternal()) {
-           assertEquals(expectedUrl + "/" + PropertyService.getProperty("application.context"),
-               contextURL);
-       }
+        String expectedUrl = LeanTestUtils.getExpectedProperties()
+            .getProperty("expected.internalURL", "http" + "://localhost:80");
+        String internalURL = SystemUtil.getInternalServerURL();
+        System.out.println("============the internal url is " + internalURL);
+        System.out.println("=============the internal url has been replaced by the external url is "
+            + SystemUtil.isInternalURLReplacedByExternal());
+        if (!SystemUtil.isInternalURLReplacedByExternal()) {
+            assertEquals(expectedUrl, internalURL);
+        }
+        internalURL = SystemUtil.getInternalServerURL();
+        if (!SystemUtil.isInternalURLReplacedByExternal()) {
+            assertEquals(expectedUrl, internalURL);
+        }
+        String contextURL = SystemUtil.getInternalContextURL();
+        System.out.println("========================= the context url is " + contextURL);
+        if (!SystemUtil.isInternalURLReplacedByExternal()) {
+            assertEquals(expectedUrl + "/" + PropertyService.getProperty("application.context"),
+                contextURL);
+        }
     }
     
   

@@ -1,23 +1,3 @@
-/**
- *  Copyright: 2008 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *  Purpose: To test the Access Controls in metacat by JUnit
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas;
 
 import java.io.BufferedReader;
@@ -27,15 +7,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Properties;
 import java.util.Vector;
 
 import junit.framework.TestCase;
@@ -52,7 +29,6 @@ import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -66,8 +42,6 @@ public class MCTestCase
     extends TestCase {
 
     private static boolean printDebug = false;
-    protected static Properties _testProperties;
-
     protected static String EML2_0_0 = "EML2_0_0";
     protected static String EML2_0_1 = "EML2_0_1";
     protected static String EML2_1_0 = "EML2_1_0";
@@ -106,19 +80,12 @@ public class MCTestCase
 
     static {
         try {
-            _testProperties = new Properties();
-            _testProperties.load(
-                Files.newBufferedReader(Paths.get("build/tests/test.properties")));
-            if (_testProperties.isEmpty()) {
-                fail("Couldn't load test properties");
-            }
-            metacatContextDir = _testProperties.getProperty("metacat.contextDir");
-            PropertyService.getInstance(metacatContextDir + "/WEB-INF");
+            LeanTestUtils.initializePropertyService();
             String printDebugString = PropertyService.getProperty("test.printdebug");
             printDebug = Boolean.parseBoolean(printDebugString);
-
+            metacatContextDir =
+                LeanTestUtils.getExpectedProperties().getProperty("metacat.contextDir");
             metacatUrl = SystemUtil.getServletURL();
-            //System.out.println("The metacat url (servlet) is ==================== "+metacatUrl);
             username = PropertyService.getProperty("test.mcUser");
             password = PropertyService.getProperty("test.mcPassword");
             anotheruser = PropertyService.getProperty("test.mcAnotherUser");
@@ -130,7 +97,7 @@ public class MCTestCase
             piscouser = PropertyService.getProperty("test.piscoUser");
             piscopassword = PropertyService.getProperty("test.piscoPassword");
             String authenClass = PropertyService.getProperty("auth.class");
-            if(authenClass != null && authenClass.equals(AUTHFILECLASSNAME)) {
+            if (authenClass != null && authenClass.equals(AUTHFILECLASSNAME)) {
 
                 //add those test users to the authentication file
                 AuthFile authFile = new AuthFile();
@@ -173,8 +140,6 @@ public class MCTestCase
             fail("Could not read property file in static block: " + ioe.getMessage());
         } catch (PropertyNotFoundException pnfe) {
             fail("Could not get property in static block: " + pnfe.getMessage());
-        } catch (ServiceException se) {
-            fail("Could not get PropertyService instance in static block: " + se.getMessage());
         }
     }
 

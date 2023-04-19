@@ -4,26 +4,25 @@
 
 package edu.ucsb.nceas.metacat.properties;
 
-import java.util.Map;
-import java.util.Vector;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-
+import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
+import edu.ucsb.nceas.utilities.GeneralPropertyException;
+import edu.ucsb.nceas.utilities.PropertiesMetaData;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import edu.ucsb.nceas.utilities.SortedProperties;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
 
-import edu.ucsb.nceas.metacat.shared.BaseService;
-import edu.ucsb.nceas.metacat.shared.ServiceException;
-import edu.ucsb.nceas.utilities.FileUtil;
-import edu.ucsb.nceas.utilities.GeneralPropertyException;
-import edu.ucsb.nceas.utilities.PropertiesMetaData;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
-import edu.ucsb.nceas.utilities.SortedProperties;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Vector;
 
 /**
  * A suite of utility classes for the metadata configuration utility
@@ -36,8 +35,12 @@ public class PropertyService extends BaseService {
     public static final String BYPASSED = "bypassed";
     private static final String DEFAULT_CONFIG_FILE_DIR = "WEB-INF";
     private static final Log logMetacat = LogFactory.getLog(PropertyService.class);
+
+    /**
+     * The directory holding properties and other configuration files
+     */
     public static String CONFIG_FILE_DIR = null;
-    public static String CONFIG_FILE_PATH = null;
+
     private static PropertyService propertyService = null;
     private static PropertiesWrapper properties = null;
     private static AuthPropertiesDelegate authPropertiesDelegate = null;
@@ -45,13 +48,21 @@ public class PropertyService extends BaseService {
 
     /**
      * private constructor since this is a singleton
+     *
+     * @param defaultPropertiesFilePath (Can be null) Full path to the default properties file (e.g.
+     *                                  /var/lib/tomcat/webapps/WEB-INF/metacat.properties)
+     * @param sitePropertiesFilePath    (Can be null) Full path to the site properties file (e.g.
+     *                                  /var/metacat/.metacat/metacat-site.properties)
      */
-    private PropertyService() throws ServiceException {
+    private PropertyService(Path defaultPropertiesFilePath, Path sitePropertiesFilePath)
+        throws ServiceException {
         _serviceName = "PropertyService";
         try {
-            initialize();
+            initialize(defaultPropertiesFilePath, sitePropertiesFilePath);
         } catch (GeneralPropertyException e) {
-            throw new ServiceException(e.getMessage());
+            ServiceException se = new ServiceException(e.getMessage());
+            se.fillInStackTrace();
+            throw se;
         }
     }
 
@@ -68,9 +79,8 @@ public class PropertyService extends BaseService {
             if (CONFIG_FILE_DIR == null) {
                 CONFIG_FILE_DIR = context.getRealPath(DEFAULT_CONFIG_FILE_DIR);
             }
-            CONFIG_FILE_PATH = CONFIG_FILE_DIR + FileUtil.getFS() + applicationName + ".properties";
-
-            propertyService = new PropertyService();
+            Path defaultPropsPath = Paths.get(CONFIG_FILE_DIR, applicationName + ".properties");
+            propertyService = new PropertyService(defaultPropsPath, null);
         }
         return propertyService;
     }
@@ -85,7 +95,50 @@ public class PropertyService extends BaseService {
     public static PropertyService getInstance(String testConfigFileDir) throws ServiceException {
         if (propertyService == null) {
             CONFIG_FILE_DIR = testConfigFileDir;
-            propertyService = new PropertyService();
+            propertyService = new PropertyService(null, null);
+        }
+        return propertyService;
+    }
+
+    /**
+     * Get the single instance of PropertyService for test purposes. In this case, we allow the
+     * configuration directory to be passed in.
+     *
+     * @return the single instance of PropertyService
+     */
+    public static PropertyService getTestInstance(Path defaultPropertiesFilePath,
+        Path sitePropertiesFilePath) throws ServiceException {
+        if (propertyService == null) {
+            CONFIG_FILE_DIR = defaultPropertiesFilePath.getParent().toString();
+            propertyService =
+                new PropertyService(defaultPropertiesFilePath, sitePropertiesFilePath);
+        }
+        return propertyService;
+    }
+
+    /**
+     * Get the single instance of PropertyService for test purposes. In this case, we allow passing
+     * in the paths (relative to the working directory) to both the default properties file (e.g.
+     * lib/metacat.properties) and the site-specific (or in this case, the test-specific) properties
+     * file (eg test/test.properties) to be overlaid on top of those defaults.
+     *
+     * @param testDefaultPropertiesFilePath the path to the default properties file (relative to the
+     *                                      working directory)
+     * @param testSitePropertiesFilePath    the path to the site-specific properties overlay file
+     *                                      (relative to the working directory)
+     * @return the single instance of PropertyService
+     */
+    public static PropertyService getInstance(Path testDefaultPropertiesFilePath,
+        Path testSitePropertiesFilePath) throws ServiceException {
+        if (propertyService == null) {
+            CONFIG_FILE_DIR = testDefaultPropertiesFilePath.getParent().toString();
+            logMetacat.info(
+                "PropertyService.getInstance() received " + "testDefaultPropertiesFilePath: "
+                    + testDefaultPropertiesFilePath + " & testSitePropertiesFilePath: "
+                    + testSitePropertiesFilePath + "; setting CONFIG_FILE_DIR to: "
+                    + CONFIG_FILE_DIR);
+            propertyService =
+                new PropertyService(testDefaultPropertiesFilePath, testSitePropertiesFilePath);
         }
         return propertyService;
     }
@@ -99,19 +152,22 @@ public class PropertyService extends BaseService {
      */
     public static PropertyService getInstance() throws ServiceException {
         if (propertyService == null) {
-            throw new ServiceException(
-                "PropertyService.getInstance() - cannot call getInstance without parameters until" +
-                    " " + "property service has been created with either servlet context or " +
-                    "config file path.");
+            ServiceException se = new ServiceException("PropertyService.getInstance() - cannot "
+                + "call getInstance without parameters until property service has been created "
+                + "with either servlet context or config file path.");
+            se.fillInStackTrace();
+            throw se;
         }
         return propertyService;
     }
 
     /**
-     * Utility method to get a property value from the properties file
+     * Get a property value from the properties file.
      *
      * @param propertyName the name of the property requested
-     * @return the String value for the property
+     * @return the String value for the property, even if blank. Will never return null
+     * @throws PropertyNotFoundException if the passed <code>propertyName</code> key is not in the
+     *                                   properties at all
      */
     public static String getProperty(String propertyName) throws PropertyNotFoundException {
         return properties.getProperty(propertyName);
@@ -163,7 +219,7 @@ public class PropertyService extends BaseService {
      * Utility method to add a property value both in memory and to the properties file
      *
      * @param propertyName the name of the property to add
-     * @param value     the value for the property
+     * @param value        the value for the property
      */
     // TODO: MB - can we get rid of this? Default java.util.Properties behavior is to add a new
     //  entry if it doesn't already exist, when setProperty() is called; so addProperty() not needed
@@ -207,9 +263,8 @@ public class PropertyService extends BaseService {
 
     /**
      * Get the auth backup properties file. These are configurable properties that are stored
-     * outside
-     * the metacat install directories so the user does not need to re-enter all the configuration
-     * information every time they do an upgrade.
+     * outside the metacat install directories so the user does not need to re-enter all the
+     * configuration information every time they do an upgrade.
      *
      * @return a SortedProperties object with the backup properties
      */
@@ -254,18 +309,17 @@ public class PropertyService extends BaseService {
     /**
      * Reports whether properties are fully configured.
      *
-     * @return  returns true if all properties are configured, and false otherwise
+     * @return returns true if all properties are configured, and false otherwise
      */
     public static boolean arePropertiesConfigured() throws GeneralPropertyException {
         return properties.arePropertiesConfigured();
     }
 
     /**
-     * Determine if the system is able to bypass configuration. If so, the system will look
-     * for backup or "site-specific" configuration files at startup time and use those to
-     * configure metacat.
-     * The bypass options should only be set by developers. Production code should never bypass
-     * configuration.
+     * Determine if the system is able to bypass configuration. If so, the system will look for
+     * backup or "site-specific" configuration files at startup time and use those to configure
+     * metacat. The bypass options should only be set by developers. Production code should never
+     * bypass configuration.
      *
      * @return true if dev.runConfiguration is set to true in metacat.properties AND we have not
      * already checked for bypass; false otherwise.
@@ -287,16 +341,22 @@ public class PropertyService extends BaseService {
     /**
      * Take input from the user in an HTTP request about a property to be changed and update the
      * metacat property file with that new value if it has changed from the value that was
-     * originally
-     * set.
+     * originally set.
      *
      * @param request      that was generated by the user
      * @param propertyName the name of the property to be checked and set
      */
+    // TODO: MB - can we get rid of this? AFAICT, a simple "setProperty" call should suffice
+    @Deprecated
     public static void checkAndSetProperty(HttpServletRequest request, String propertyName)
         throws GeneralPropertyException {
-        properties.checkAndSetProperty(request, propertyName);
+        String value = getProperty(propertyName);
+        String newValue = propertyName == null ? null : request.getParameter(propertyName);
+        if (newValue != null && !newValue.trim().equals(value)) {
+            setPropertyNoPersist(propertyName, newValue.trim());
+        }
     }
+
 
     /**
      * Returns the recommended external base directory. This is populated during initialization time
@@ -311,16 +371,16 @@ public class PropertyService extends BaseService {
                 RECOMMENDED_EXTERNAL_DIR = SystemUtil.discoverExternalDir();
             } catch (MetacatUtilException e) {
                 logMetacat.error("Error calling SystemUtil.discoverExternalDir(): Not assigned: "
-                        + e.getMessage(),e);
+                    + e.getMessage(), e);
             }
         }
         return RECOMMENDED_EXTERNAL_DIR;
     }
 
     /**
-     * Sets the recommended external directory. This is populated during initialization time
-     * using the SystemUtil.discoverExternalDir() method. This directory will be used to suggest
-     * external user directories when the user configures metacat for the first time.
+     * Sets the recommended external directory. This is populated during initialization time using
+     * the SystemUtil.discoverExternalDir() method. This directory will be used to suggest external
+     * user directories when the user configures metacat for the first time.
      */
     public static void setRecommendedExternalDir(String extBaseDir) {
         RECOMMENDED_EXTERNAL_DIR = extBaseDir;
@@ -334,34 +394,45 @@ public class PropertyService extends BaseService {
     public static void syncToSettings() throws GeneralPropertyException {
         try {
             Settings.getConfiguration();
-            Settings.augmentConfiguration(CONFIG_FILE_PATH);
+            Settings.augmentConfiguration(properties.getDefaultPropertiesFilePath().toString());
+            Settings.augmentConfiguration(properties.getSitePropertiesFilePath().toString());
         } catch (ConfigurationException e) {
-            e.printStackTrace();
-            throw new GeneralPropertyException(e.getMessage());
+            GeneralPropertyException gpe = new GeneralPropertyException(e.getMessage());
+            gpe.fillInStackTrace();
+            throw gpe;
         }
     }
 
-    /**
-     * Initialize the singleton.
-     */
-    private void initialize() throws GeneralPropertyException {
-        logMetacat.debug("Initializing PropertyService");
-
-        properties = PropertiesWrapper.getInstance();
-        authPropertiesDelegate = AuthPropertiesDelegate.getInstance(properties);
-    }
     public boolean refreshable() {
         return true;
     }
 
     public void doRefresh() throws ServiceException {
         try {
-            initialize();
+            properties.doRefresh();
         } catch (GeneralPropertyException e) {
-            throw new ServiceException(e.getMessage());
+            ServiceException se = new ServiceException(e.getMessage());
+            se.fillInStackTrace();
+            throw se;
         }
     }
 
     public void stop() throws ServiceException {
+    }
+
+    /**
+     * Initialize the singleton.
+     */
+    private void initialize(Path defaultPropertiesFilePath, Path sitePropertiesFilePath)
+        throws GeneralPropertyException {
+
+        logMetacat.debug("Initializing PropertyService");
+        properties =
+            PropertiesWrapper.getNewInstance(defaultPropertiesFilePath, sitePropertiesFilePath);
+        authPropertiesDelegate = AuthPropertiesDelegate.getInstance(properties);
+
+        logMetacat.debug(
+            "\n* * * PropertyService.initialize() finished. Properties contents: * * *\n\n"
+                + properties.toString());
     }
 }

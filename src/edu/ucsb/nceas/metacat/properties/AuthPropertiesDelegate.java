@@ -41,7 +41,7 @@ public class AuthPropertiesDelegate {
             // will look like a smaller version of metacat.properties. It
             // is stored in the data storage directory outside the
             // application directories.
-            siteAuthPropsFilePath = propertiesWrapper.getSitePropertiesPath()
+            siteAuthPropsFilePath = propertiesWrapper.getSiteConfigDirPath().toString()
                 + FileUtil.getFS() + AUTH_BACKUP_FILE_NAME;
             authBackupProperties = new SortedProperties(siteAuthPropsFilePath);
             authBackupProperties.load();

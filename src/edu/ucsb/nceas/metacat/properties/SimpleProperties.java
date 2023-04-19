@@ -77,19 +77,24 @@ public class SimpleProperties extends BaseService implements PropertiesInterface
 	 * Initialize the singleton.
 	 */
 	private void initialize() throws ServiceException {
-		
-		logMetacat.debug("Initializing SimpleProperties");
-		
-		String mainConfigFilePath = 
-			PropertyService.CONFIG_FILE_PATH;
-		sortedProperties = new SortedProperties(mainConfigFilePath);
-		
-		try {
-			sortedProperties.load();
-		} catch (IOException ioe) {
-			throw new ServiceException("I/O problem while loading properties: "
-					+ ioe.getMessage());
-		} 
+
+		// TODO - MB: GET RID OF THIS CLASS ALTOGETHER
+		ServiceException exception = new ServiceException("DEPRECATED CLASS - DO NOT USE!!");
+		exception.fillInStackTrace();
+		throw exception;
+
+//		logMetacat.debug("Initializing SimpleProperties");
+//
+//		String mainConfigFilePath =
+//			PropertyService.CONFIG_FILE_PATH;
+//		sortedProperties = new SortedProperties(mainConfigFilePath);
+//
+//		try {
+//			sortedProperties.load();
+//		} catch (IOException ioe) {
+//			throw new ServiceException("I/O problem while loading properties: "
+//					+ ioe.getMessage());
+//		}
 	}
 
 	/**
