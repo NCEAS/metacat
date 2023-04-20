@@ -26,18 +26,16 @@
 
 package edu.ucsb.nceas.metacat.admin;
 
-import java.io.File;
 import java.io.StringReader;
+import java.nio.file.Paths;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.FileUtils;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.OrFileFilter;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -60,9 +58,10 @@ import edu.ucsb.nceas.utilities.UtilException;
  * processing of the configuration values.
  */
 public class PropertiesAdmin extends MetacatAdmin {
-    private static String BACKSLASH = "/";
-    private static String DEFAULTMETACATCONTEXT = "metacat";
-    private static String METACATPROPERTYAPPENDIX = "/WEB-INF/metacat.properties";
+    private static String SLASH = "/";
+    private static String DEFAULT_METACAT_CONTEXT = "metacat";
+    private static String DEFAULT_SITE_PROPS_DIR = "/var/metacat/settings";
+    private static String METACAT_PROPERTY_APPENDIX = "/WEB-INF/metacat.properties";
     private static PropertiesAdmin propertiesAdmin = null;
     private static Log logMetacat = LogFactory.getLog(PropertiesAdmin.class);
 
@@ -286,8 +285,8 @@ public class PropertiesAdmin extends MetacatAdmin {
                 if(isOldVersion) {
                     validationErrors.add("The solr home you chose exists with an old version of SOLR. Please choose a new SOLR home!");
                 }
-                
-                
+
+
                 String indexContext = PropertyService.getProperty("index.context");
                 //modify some params of the index context
                 this.modifyIndexContextParams(indexContext);
@@ -374,7 +373,8 @@ public class PropertiesAdmin extends MetacatAdmin {
             }
         }
     }
-    
+
+
     /**
      * In the web.xml of the Metacat-index context, there is a parameter:
      * <context-param>
@@ -383,35 +383,74 @@ public class PropertiesAdmin extends MetacatAdmin {
      * <description>The metacat.properties file for sibling metacat deployment. Note that the context can change</description>
      *  </context-param>
      *  It points to the default metacat context - knb. If we rename the context, we need to change the value of there.
+     *
+     *  There is also a parameter:
+     * <context-param>
+     * <param-name>site.properties.path</param-name>
+     * <param-value>/var/metacat/settings/metacat-site.properties</param-value>
+     * <description>The metacat-site.properties file for sibling metacat deployment.</description>
+     * </context-param>
+     * It points to the site-specific configured settings, that are overlaid on top of the
+     * defaults in metacat.properties. If we change the location of this properties file, we need
+     * to change this value.
      */
     private void modifyIndexContextParams(String indexContext) {
-        if(indexContext != null) {
+
+        if (indexContext != null) {
+            String indexConfigFile = null;
+            String metacatContext = null;
+            String sitePropsDir = null;
             try {
-                String metacatContext = PropertyService.getProperty("application.context");
-                //System.out.println("the metacat context is ========================="+metacatContext);
-                if(metacatContext != null && !metacatContext.equals(DEFAULTMETACATCONTEXT)) {
-                    String indexConfigFile = 
-                                    PropertyService.getProperty("application.deployDir")
-                                    + FileUtil.getFS()
-                                    + indexContext
-                                    + FileUtil.getFS() 
-                                    + "WEB-INF"
-                                    + FileUtil.getFS()
-                                    + "web.xml";
-                    //System.out.println("============================== the web.xml file is "+indexConfigFile);
-                    String configContents = FileUtil.readFileToString(indexConfigFile, "UTF-8");
-                    //System.out.println("============================== the content of web.xml file is "+configContents);
-                    configContents = configContents.replace(BACKSLASH+DEFAULTMETACATCONTEXT+METACATPROPERTYAPPENDIX, BACKSLASH+metacatContext+METACATPROPERTYAPPENDIX);
-                    FileUtil.writeFile(indexConfigFile, new StringReader(configContents), "UTF-8");
+                if (StringUtils.isNotBlank(indexContext)) {
+                    indexConfigFile =
+                        Paths.get(PropertyService.getProperty("application.deployDir"),
+                            indexContext, "WEB-INF", "web.xml").toString();
+                } else {
+                    throw new IllegalArgumentException(
+                        "Error - blank Index Context received - " + indexContext);
                 }
-                
-            } catch (Exception e) {
-                String errorMessage = "PropertiesAdmin.configureProperties - Problem getting/setting the \"metacat.properties.path\" in the web.xml of the index context : " + e.getMessage();
-                logMetacat.error(errorMessage);
+                metacatContext = PropertyService.getProperty("application.context");
+                sitePropsDir = PropertyService.getProperty("application.sitePropertiesDir");
+
+            } catch (IllegalArgumentException | PropertyNotFoundException e) {
+                String errorMessage = "PropertiesAdmin.modifyIndexWebXml - Problem getting/setting "
+                    + "the \"metacat.properties.path\" or the \"site.properties.path\" in the web"
+                    + ".xml"
+                    + " of the index context : " + e.getMessage();
+                logMetacat.error(errorMessage, e);
+            }
+
+            String webXmlContents = null;
+            try {
+                webXmlContents = FileUtil.readFileToString(indexConfigFile, "UTF-8");
+
+                logMetacat.debug("modifyIndexWebXml(): the web.xml file is: " + indexConfigFile);
+
+                if (metacatContext != null && !metacatContext.equals(DEFAULT_METACAT_CONTEXT)) {
+                    webXmlContents = webXmlContents.replace(
+                        SLASH + DEFAULT_METACAT_CONTEXT + METACAT_PROPERTY_APPENDIX,
+                        SLASH + metacatContext + METACAT_PROPERTY_APPENDIX);
+                }
+                if (sitePropsDir != null && !sitePropsDir.equals(DEFAULT_SITE_PROPS_DIR)) {
+                    webXmlContents = webXmlContents.replace(DEFAULT_SITE_PROPS_DIR, sitePropsDir);
+                }
+                logMetacat.debug("modifyIndexWebXml(): Web.xml contents AFTER modification: \n"
+                    + webXmlContents);
+
+                FileUtil.writeFile(indexConfigFile, new StringReader(webXmlContents), "UTF-8");
+
+            } catch (UtilException e) {
+                String errorMessage = "PropertiesAdmin.modifyIndexWebXml - Problem reading from or "
+                    + "writing to the web.xml file from path: " + indexConfigFile + ". Error was: "
+                    + e.getMessage();
+                logMetacat.error(errorMessage, e);
             }
         }
     }
-    
+
+
+
+
     /**
      * Changes the Hazelcast group name to match the current context
      * This ensures we do not share the same group if multiple Metacat 

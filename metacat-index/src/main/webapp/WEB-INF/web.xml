@@ -19,7 +19,11 @@
       <description>The metacat.properties file for sibling metacat deployment. Note that the context can change</description>
     </context-param>
 
-  
+    <context-param>
+      <param-name>site.properties.path</param-name>
+      <param-value>/var/metacat/settings/metacat-site.properties</param-value>
+      <description>The metacat-site.properties file for sibling metacat deployment.</description>
+    </context-param>
 
     <!--
     <servlet>
