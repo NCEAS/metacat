@@ -121,9 +121,18 @@ public class ApplicationController implements Runnable {
         try {
             Settings.getConfiguration();
             Settings.augmentConfiguration(metacatDefaultPropertiesFile);
-            Settings.augmentConfiguration(metacatSitePropertiesFile);
+            File metacatSiteProperties = new File(metacatSitePropertiesFile);
+            if (metacatSiteProperties.exists()) {
+                Settings.augmentConfiguration(metacatSitePropertiesFile);
+            } else {
+                log.error(
+                    "Could not find Metacat site properties at: " + metacatSitePropertiesFile);
+            }
         } catch (ConfigurationException e) {
-            log.error("Could not initialize shared Metacat properties. " + e.getMessage(), e);
+            log.error("Could not initialize shared Metacat properties. Tried with default "
+                + "properties file at: " + metacatDefaultPropertiesFile
+                + " and site properties file" + " at: " + metacatSitePropertiesFile
+                + e.getMessage(), e);
         }
         
         // make sure hazelcast configuration is defined so that

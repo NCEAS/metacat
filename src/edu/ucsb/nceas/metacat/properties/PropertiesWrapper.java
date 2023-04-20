@@ -11,7 +11,6 @@ import edu.ucsb.nceas.utilities.PropertiesMetaData;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
 import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
@@ -40,10 +39,15 @@ public class PropertiesWrapper {
     private static SortedProperties mainBackupProperties = null;
     private static boolean bypassAlreadyChecked = false;
     private static final Log logMetacat = LogFactory.getLog(PropertiesWrapper.class);
-    private Properties mainProperties = null;
     private String mainMetadataFilePath = null;
     private PropertiesMetaData mainMetaData = null;
     private String mainBackupFilePath = null;
+
+    // Composite of site-specific properties overlaid on top of default properties
+    private Properties mainProperties = null;
+
+    // default properties only; not including any site-specific properties
+    private Properties defaultProperties = null;
 
     // Full Path to the default properties file
     // Example: /var/lib/tomcat/webapps/WEB-INF/metacat.properties
@@ -53,9 +57,9 @@ public class PropertiesWrapper {
     // Example: /var/metacat/.metacat/metacat-site.properties
     private static Path sitePropertiesFilePath = null;
 
-    // Full Path to the DIRECTORY containing the site-specific configuration files (such as
-    // metacat-site.properties, metacat.properties.backup etc.). Example: /var/metacat/.metacat
-    private static Path siteConfigDirPath;
+    // Full Path to the DIRECTORY containing the configuration BACKUP files (such as
+    // metacat.properties.backup etc.). Example: /var/metacat/.metacat
+    private static Path backupDirPath;
 
 
     /**
@@ -99,7 +103,7 @@ public class PropertiesWrapper {
         PropertiesWrapper.defaultPropertiesFilePath = defaultPropertiesFilePath;
         PropertiesWrapper.sitePropertiesFilePath = sitePropertiesFilePath;
         if (sitePropertiesFilePath != null) {
-            siteConfigDirPath = sitePropertiesFilePath.getParent();
+            backupDirPath = sitePropertiesFilePath.getParent();
         }
         propertiesWrapper = new PropertiesWrapper();
         return propertiesWrapper;
@@ -118,12 +122,24 @@ public class PropertiesWrapper {
         if (mainProperties.getProperty(propertyName) != null) {
             returnVal = mainProperties.getProperty(propertyName);
         } else {
-            logMetacat.error("did not find the property with key " + propertyName);
+            logMetacat.info("did not find the property with key " + propertyName);
             throw new PropertyNotFoundException(
                 "PropertiesWrapper.getProperty(): Key/name does not exist in Properties: "
                     + propertyName);
         }
         return returnVal;
+    }
+
+    /**
+     * Get the DEFAULT property value from the default properties file. Ignore any overriding
+     * values in the site properties file
+     *
+     * @param propertyName the name of the DEFAULT property requested
+     * @return the String value for the DEFAULT property, even if blank, or null if the property key
+     * is not found
+     */
+    protected String getDefaultProperty(String propertyName) {
+        return defaultProperties.getProperty(propertyName);
     }
 
     /**
@@ -271,9 +287,9 @@ public class PropertiesWrapper {
             mainBackupProperties.load();
 
         } catch (TransformerException te) {
-            logAndThrow("Could not transform backup properties xml: " + te.getMessage());
+            logAndThrow("Could not transform backup properties xml: ", te);
         } catch (IOException ioe) {
-            logAndThrow("Could not backup configurable properties: " + ioe.getMessage());
+            logAndThrow("Could not backup configurable properties: ", ioe);
         }
     }
 
@@ -307,7 +323,11 @@ public class PropertiesWrapper {
             logMetacat.debug(
                 "canBypass(): 'dev.runConfiguration property' set to: " + strRunConfiguration);
             boolean runConfiguration = Boolean.parseBoolean(strRunConfiguration);
+
+            // MB: seems like this should be `bypassAlreadyChecked = true`, now we've checked it,
+            // but this was the original logic, so leaving as-is for now...
             bypassAlreadyChecked = runConfiguration;
+
             result = !runConfiguration;
         }
         return result;
@@ -319,7 +339,7 @@ public class PropertiesWrapper {
     protected void bypassConfiguration() {
         try {
             if (!canBypass()) {
-                logAndThrow("Attempting to do bypass when system is not configured for it.");
+                logAndThrow("Attempting to do bypass when system is not configured for it.", null);
             }
             // The system is bypassing the configuration utility. We need to
             // get the backup properties and replace existing properties with
@@ -355,61 +375,58 @@ public class PropertiesWrapper {
      * @return java.nio.Path representation of the directory path
      * @throws GeneralPropertyException if there are issues retrieving or persisting the value
      */
-    protected Path getSiteConfigDirPath() throws GeneralPropertyException {
+    protected Path getBackupDirPath() throws GeneralPropertyException {
 
-        if (isBlankPath(siteConfigDirPath)) {
-            if (!isBlankPath(sitePropertiesFilePath)) {
-                siteConfigDirPath = sitePropertiesFilePath.getParent();
-            }
+        if (isBlankPath(backupDirPath)) {
             try {
-                siteConfigDirPath = Paths.get(getProperty("application.backupDir"));
+                backupDirPath = Paths.get(getProperty("application.backupDir"));
             } catch (InvalidPathException | PropertyNotFoundException e) {
                 logMetacat.error(
                     "'getSitePropertiesPath(): application.backupDir' property not found: "
                         + e.getMessage());
             }
-            if (isBlankPath(siteConfigDirPath)) {
+            if (isBlankPath(backupDirPath)) {
                 try {
                     String storedBackupDir = SystemUtil.getStoredBackupDir();
                     if (storedBackupDir != null) {
-                        siteConfigDirPath = Paths.get(storedBackupDir);
+                        backupDirPath = Paths.get(storedBackupDir);
                     }
                 } catch (InvalidPathException | MetacatUtilException e) {
                     logMetacat.error(
                         "Problem calling SystemUtil.getStoredBackupDir(): " + e.getMessage(), e);
                 }
             }
-            if (isBlankPath(siteConfigDirPath)
+            if (isBlankPath(backupDirPath)
                 && PropertyService.getRecommendedExternalDir() != null) {
                 try {
-                    siteConfigDirPath = Paths.get(PropertyService.getRecommendedExternalDir(),
+                    backupDirPath = Paths.get(PropertyService.getRecommendedExternalDir(),
                         "." + ServiceService.getRealApplicationContext());
                 } catch (InvalidPathException | ServiceException e) {
                     logMetacat.error("Problem getting site properties path from call to "
                             + "ServiceService.getRealApplicationContext(): "+ e.getMessage(), e);
                 }
             }
-            if (!isBlankPath(siteConfigDirPath)) {
+            if (!isBlankPath(backupDirPath)) {
                 try {
                     setPropertyNoPersist("application.backupDir",
-                        siteConfigDirPath.toString());
-                    SystemUtil.writeStoredBackupFile(siteConfigDirPath.toString());
+                        backupDirPath.toString());
+                    SystemUtil.writeStoredBackupFile(backupDirPath.toString());
                 } catch (GeneralPropertyException e) {
                     logMetacat.error(
                         "Problem trying to set property: 'application.backupDir' to value: "
-                            + siteConfigDirPath, e);
+                            + backupDirPath, e);
                     throw e;
                 } catch (MetacatUtilException e) {
                     logAndThrow("Problem calling SystemUtil.writeStoredBackupFile() with "
-                        + "sitePropertiesPath: " + siteConfigDirPath + " -- Exception was: "
-                        + e.getMessage());
+                        + "sitePropertiesPath: " + backupDirPath,e);
                 }
             } else {
                 logAndThrow("CRITICAL: getSitePropertiesPath() Unable to find a suitable value "
-                    + "for path to 'sitePropertiesPath' - site-specific properties & backups");
+                    + "for path to 'sitePropertiesPath' - site-specific properties & backups",
+                    null);
             }
         }
-        return siteConfigDirPath;
+        return backupDirPath;
     }
 
     protected void doRefresh() throws GeneralPropertyException {
@@ -435,7 +452,7 @@ public class PropertiesWrapper {
                 if (!Files.exists(defaultPropertiesFilePath)) {
                     logAndThrow(
                         "PropertiesWrapper.initialize(): received non-existent Default Properties "
-                            + "File Path: " + defaultPropertiesFilePath);
+                            + "File Path: " + defaultPropertiesFilePath, null);
                 }
             } else {
                 defaultPropertiesFilePath =
@@ -448,33 +465,17 @@ public class PropertiesWrapper {
             PropertyService.setRecommendedExternalDir(recommendedExternalDir);
 
             // defaultProperties will hold the default configuration from metacat.properties
-            Properties defaultProperties = new Properties();
+            defaultProperties = new Properties();
             defaultProperties.load(Files.newBufferedReader(defaultPropertiesFilePath));
 
             logMetacat.debug("PropertiesWrapper.initialize(): finished "
                 + "loading metacat.properties into mainDefaultProperties");
 
-            // mainProperties is the aggregation of the default props from metacat.properties...
+            // mainProperties is (1) the aggregation of the default props from metacat.properties...
             mainProperties = new Properties(defaultProperties);
-            // ...overlaid with site-specific configurable properties from metacat-site.properties:
-            if (!isBlankPath(sitePropertiesFilePath)) {
-                if (!Files.exists(sitePropertiesFilePath)) {
-                    logAndThrow(
-                        "PropertiesWrapper.initialize(): non-existent Site Properties File Path: "
-                            + sitePropertiesFilePath);
-                }
-            } else {
-                sitePropertiesFilePath =
-                    Paths.get(getSiteConfigDirPath().toString(), "metacat-site.properties");
 
-                if (!Files.exists(sitePropertiesFilePath)) {
-                    Files.createFile(
-                        sitePropertiesFilePath); // performs atomic check-!exists-&-create
-                    logMetacat.info(
-                        "PropertiesWrapper.initialize(): no site properties file found; created: "
-                            + sitePropertiesFilePath);
-                }
-            }
+            // (2)...overlaid with site-specific properties from metacat-site.properties:
+            initSitePropertiesFilePath();
             mainProperties.load(Files.newBufferedReader(sitePropertiesFilePath));
             logMetacat.info("PropertiesWrapper.initialize(): populated mainProperties. Used "
                 + defaultPropertiesFilePath + " as defaults; overlaid with "
@@ -498,18 +499,9 @@ public class PropertiesWrapper {
             // from an xml metadata file
             mainMetaData = new PropertiesMetaData(mainMetadataFilePath);
 
-            String backupPath = getProperty("application.backupDir");
-            if (StringUtils.isBlank(backupPath)) {
-                backupPath = SystemUtil.getStoredBackupDir();
-            }
-            if (StringUtils.isBlank(backupPath) && recommendedExternalDir != null) {
-                backupPath = recommendedExternalDir + FileUtil.getFS() + "."
-                    + ServiceService.getRealApplicationContext();
-            }
+            if (Files.exists(getBackupDirPath())) {
 
-            if (StringUtils.isNotBlank(backupPath)) {
-                setProperty("application.backupDir", backupPath);
-                SystemUtil.writeStoredBackupFile(backupPath);
+                SystemUtil.writeStoredBackupFile(getBackupDirPath().toString());
 
                 // The mainBackupProperties hold properties that were backed up the last time the
                 // application was configured. On disk, the file will look like a smaller version of
@@ -517,28 +509,48 @@ public class PropertiesWrapper {
                 // application install directories.
                 String MAIN_BACKUP_FILE_NAME = "metacat.properties.backup";
                 mainBackupFilePath =
-                    Paths.get(getSiteConfigDirPath().toString(), MAIN_BACKUP_FILE_NAME).toString();
+                    Paths.get(getBackupDirPath().toString(), MAIN_BACKUP_FILE_NAME).toString();
 
                 mainBackupProperties = new SortedProperties(mainBackupFilePath);
                 mainBackupProperties.load();
             } else {
                 // if backupPath is still null, can't write the backup properties. The system will
                 // need to prompt the user for the properties and reconfigure
-                logMetacat.error("");
+                logMetacat.error("Backup Path not available; can't write the backup properties: "
+                    + getBackupDirPath());
             }
         } catch (TransformerException e) {
             logAndThrow("PropertiesWrapper.initialize(): problem loading PropertiesMetaData (from "
-                + mainMetadataFilePath + ") -- " + e.getMessage());
+                + mainMetadataFilePath + ")", e);
         } catch (IOException e) {
-            logAndThrow("PropertiesWrapper.initialize(): I/O problem while loading properties: "
-                + e.getMessage());
+            logAndThrow("PropertiesWrapper.initialize(): I/O problem while loading properties: ",
+                e);
         } catch (MetacatUtilException e) {
-            logAndThrow("PropertiesWrapper.initialize(): Problem finding or writing backup file: "
-                + e.getMessage());
-        } catch (ServiceException e) {
-            logAndThrow(
-                "PropertiesWrapper.initialize(): problem calling getRealApplicationContext() -- "
-                    + e.getMessage());
+            logAndThrow("PropertiesWrapper.initialize(): Problem finding or writing backup file: ",
+                e);
+        }
+    }
+
+    private void initSitePropertiesFilePath() throws GeneralPropertyException, IOException {
+        if (!isBlankPath(sitePropertiesFilePath)) {
+            if (!Files.exists(sitePropertiesFilePath)) {
+                logAndThrow(
+                    "PropertiesWrapper.initialize(): non-existent Site Properties File Path: "
+                        + sitePropertiesFilePath, null);
+            }
+        } else {
+            sitePropertiesFilePath =
+                Paths.get(getProperty("application.sitePropertiesDir"),
+                    "metacat-site.properties");
+
+            if (!Files.exists(sitePropertiesFilePath)) {
+                Files.createDirectories(
+                    sitePropertiesFilePath.getParent()); // no-op if already existing
+                Files.createFile(sitePropertiesFilePath); // performs atomic check-!exists-&-create
+                logMetacat.info(
+                    "PropertiesWrapper.initialize(): no site properties file found; created: "
+                        + sitePropertiesFilePath);
+            }
         }
     }
 
@@ -570,10 +582,11 @@ public class PropertiesWrapper {
         return sb.toString();
     }
 
-    private static void logAndThrow(String message) throws GeneralPropertyException {
-        logMetacat.error(message);
-        GeneralPropertyException gpe = new GeneralPropertyException(message);
+    private static void logAndThrow(String message, Exception e) throws GeneralPropertyException {
+        String excepMsg = (e == null) ? "" : " : " + e.getMessage();
+        GeneralPropertyException gpe = new GeneralPropertyException(message + " : " + excepMsg);
         gpe.fillInStackTrace();
+        logMetacat.error(message, (e == null) ? gpe : e);
         throw gpe;
     }
 
@@ -594,7 +607,7 @@ public class PropertiesWrapper {
         try (Writer output = new FileWriter(sitePropertiesFilePath.toFile())) {
             mainProperties.store(output, null);
         } catch (IOException e) {
-            logAndThrow("I/O exception trying to call mainProperties.store(): " + e.getMessage());
+            logAndThrow("I/O exception trying to call mainProperties.store(): ", e);
         }
     }
 }

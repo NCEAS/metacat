@@ -20,7 +20,7 @@ import static org.junit.Assert.fail;
 /**
  * Provides common setup and runtime functionality that is needed in multiple tests, but without
  * incorporating JUnit3-specific functionality (e.g. no "extends TestCase"), and importantly,
- * without requiring a running instance of metacat to allow testing. This class should therefore be
+ * WITHOUT REQUIRING A RUNNING INSTANCE OF METACAT to allow testing. This class should therefore be
  * most useful for fast-running Unit tests, or integration tests that do <em>not</em> rely on
  * querying metacat, solr, postgres, etc. Keep it lean, fast and lightweight! :-)
  */
@@ -48,7 +48,6 @@ public class LeanTestUtils {
         if (expectedProperties == null) {
             assertTrue("LeanTestUtils: properties files not found", doPropertiesFilesExist());
             try {
-
                 Properties metacatProps = new Properties();
                 metacatProps.load(Files.newBufferedReader(METACAT_PROPS_FILE_PATH));
                 expectedProperties = new Properties(metacatProps);
@@ -73,7 +72,7 @@ public class LeanTestUtils {
         if (doPropertiesFilesExist()) {
             try {
                 PropertyService propertyService =
-                    PropertyService.getTestInstance(METACAT_PROPS_FILE_PATH, TEST_PROPS_FILE_PATH);
+                    PropertyService.getInstanceForTesting(METACAT_PROPS_FILE_PATH, TEST_PROPS_FILE_PATH);
                 success = (propertyService != null);
             } catch (ServiceException e) {
                 debug("Unexpected problem initializing PropertyService" + e.getMessage());
@@ -122,7 +121,7 @@ public class LeanTestUtils {
      * A beneficial side effect is that there's no need to add it to the test excludes in build.xml
      */
     @Test
-    public void bogusTestToKeepAntHappy() {
+    public void verifyAllUtils() throws Exception {
         assertTrue(doPropertiesFilesExist());
         assertTrue(initializePropertyService());
         assertNotNull(getExpectedProperties());

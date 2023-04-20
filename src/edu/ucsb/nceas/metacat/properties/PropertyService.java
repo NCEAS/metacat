@@ -101,22 +101,6 @@ public class PropertyService extends BaseService {
     }
 
     /**
-     * Get the single instance of PropertyService for test purposes. In this case, we allow the
-     * configuration directory to be passed in.
-     *
-     * @return the single instance of PropertyService
-     */
-    public static PropertyService getTestInstance(Path defaultPropertiesFilePath,
-        Path sitePropertiesFilePath) throws ServiceException {
-        if (propertyService == null) {
-            CONFIG_FILE_DIR = defaultPropertiesFilePath.getParent().toString();
-            propertyService =
-                new PropertyService(defaultPropertiesFilePath, sitePropertiesFilePath);
-        }
-        return propertyService;
-    }
-
-    /**
      * Get the single instance of PropertyService for test purposes. In this case, we allow passing
      * in the paths (relative to the working directory) to both the default properties file (e.g.
      * lib/metacat.properties) and the site-specific (or in this case, the test-specific) properties
@@ -128,7 +112,7 @@ public class PropertyService extends BaseService {
      *                                      (relative to the working directory)
      * @return the single instance of PropertyService
      */
-    public static PropertyService getInstance(Path testDefaultPropertiesFilePath,
+    public static PropertyService getInstanceForTesting(Path testDefaultPropertiesFilePath,
         Path testSitePropertiesFilePath) throws ServiceException {
         if (propertyService == null) {
             CONFIG_FILE_DIR = testDefaultPropertiesFilePath.getParent().toString();
@@ -401,6 +385,18 @@ public class PropertyService extends BaseService {
             gpe.fillInStackTrace();
             throw gpe;
         }
+    }
+
+    /**
+     * Get the DEFAULT property value from the default properties file. Ignore any overriding
+     * values in the site properties file
+     *
+     * @param propertyName the name of the DEFAULT property requested
+     * @return the String value for the DEFAULT property, even if blank, or null if the property key
+     * is not found
+     */
+    public static String getDefaultProperty(String propertyName) {
+        return properties.getDefaultProperty(propertyName);
     }
 
     public boolean refreshable() {

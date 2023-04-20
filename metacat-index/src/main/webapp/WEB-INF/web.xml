@@ -21,7 +21,7 @@
 
     <context-param>
       <param-name>site.properties.path</param-name>
-      <param-value>/var/metacat/settings/metacat-site.properties</param-value>
+      <param-value>/var/metacat/config/metacat-site.properties</param-value>
       <description>The metacat-site.properties file for sibling metacat deployment.</description>
     </context-param>
 

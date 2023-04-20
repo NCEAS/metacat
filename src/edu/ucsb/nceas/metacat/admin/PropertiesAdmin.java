@@ -60,7 +60,6 @@ import edu.ucsb.nceas.utilities.UtilException;
 public class PropertiesAdmin extends MetacatAdmin {
     private static String SLASH = "/";
     private static String DEFAULT_METACAT_CONTEXT = "metacat";
-    private static String DEFAULT_SITE_PROPS_DIR = "/var/metacat/settings";
     private static String METACAT_PROPERTY_APPENDIX = "/WEB-INF/metacat.properties";
     private static PropertiesAdmin propertiesAdmin = null;
     private static Log logMetacat = LogFactory.getLog(PropertiesAdmin.class);
@@ -431,8 +430,10 @@ public class PropertiesAdmin extends MetacatAdmin {
                         SLASH + DEFAULT_METACAT_CONTEXT + METACAT_PROPERTY_APPENDIX,
                         SLASH + metacatContext + METACAT_PROPERTY_APPENDIX);
                 }
-                if (sitePropsDir != null && !sitePropsDir.equals(DEFAULT_SITE_PROPS_DIR)) {
-                    webXmlContents = webXmlContents.replace(DEFAULT_SITE_PROPS_DIR, sitePropsDir);
+                String defaultSitePropertiesDir =
+                    PropertyService.getDefaultProperty("application.sitePropertiesDir");
+                if (sitePropsDir != null && !sitePropsDir.equals(defaultSitePropertiesDir)) {
+                    webXmlContents = webXmlContents.replace(defaultSitePropertiesDir, sitePropsDir);
                 }
                 logMetacat.debug("modifyIndexWebXml(): Web.xml contents AFTER modification: \n"
                     + webXmlContents);

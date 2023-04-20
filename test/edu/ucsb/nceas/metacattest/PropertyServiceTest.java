@@ -35,7 +35,7 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         super();
         // need to instantiate PropertyService at least once
         try {
-            assertNotNull(PropertyService.getTestInstance(Paths.get("lib/metacat.properties"),
+            assertNotNull(PropertyService.getInstanceForTesting(Paths.get("lib/metacat.properties"),
                 Paths.get("test/test" + ".properties")));
         } catch (ServiceException e) {
             fail("PropertyServiceTest constructor failed to instantiate PropertyService: " + e);
