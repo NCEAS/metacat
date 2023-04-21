@@ -24,7 +24,7 @@ public class AuthPropertiesDelegate {
     protected static SortedProperties authBackupProperties = null;
     private static AuthPropertiesDelegate authPropertiesDelegate;
 
-    private AuthPropertiesDelegate(PropertiesWrapper propertiesWrapper)
+    private AuthPropertiesDelegate()
         throws GeneralPropertyException {
 
         authMetadataFilePath =
@@ -41,7 +41,7 @@ public class AuthPropertiesDelegate {
             // will look like a smaller version of metacat.properties. It
             // is stored in the data storage directory outside the
             // application directories.
-            siteAuthPropsFilePath = propertiesWrapper.getBackupDirPath().toString()
+            siteAuthPropsFilePath = PropertyService.getBackupDirPath().toString()
                 + FileUtil.getFS() + AUTH_BACKUP_FILE_NAME;
             authBackupProperties = new SortedProperties(siteAuthPropsFilePath);
             authBackupProperties.load();
@@ -53,10 +53,10 @@ public class AuthPropertiesDelegate {
         }
     }
 
-    protected static AuthPropertiesDelegate getInstance(PropertiesWrapper propertiesWrapper)
+    protected static AuthPropertiesDelegate getInstance()
         throws GeneralPropertyException {
         if (authPropertiesDelegate == null) {
-            authPropertiesDelegate = new AuthPropertiesDelegate(propertiesWrapper);
+            authPropertiesDelegate = new AuthPropertiesDelegate();
         }
         return authPropertiesDelegate;
     }

@@ -44,6 +44,7 @@ public class PropertyService extends BaseService {
     private static PropertyService propertyService = null;
     private static PropertiesWrapper properties = null;
     private static AuthPropertiesDelegate authPropertiesDelegate = null;
+    private static BackupPropertiesDelegate backupPropertiesDelegate = null;
     private static String RECOMMENDED_EXTERNAL_DIR = null;
 
     /**
@@ -242,7 +243,7 @@ public class PropertyService extends BaseService {
      * @return a SortedProperties object with the backup properties
      */
     public static SortedProperties getMainBackupProperties() throws GeneralPropertyException {
-        return properties.getMainBackupProperties();
+        return backupPropertiesDelegate.getMainBackupProperties();
     }
 
     /**
@@ -280,7 +281,7 @@ public class PropertyService extends BaseService {
      * Writes out backup configurable properties to a file.
      */
     public static void persistMainBackupProperties() throws GeneralPropertyException {
-        properties.persistMainBackupProperties();
+        backupPropertiesDelegate.persistMainBackupProperties();
     }
 
     /**
@@ -296,7 +297,7 @@ public class PropertyService extends BaseService {
      * @return returns true if all properties are configured, and false otherwise
      */
     public static boolean arePropertiesConfigured() throws GeneralPropertyException {
-        return properties.arePropertiesConfigured();
+        return backupPropertiesDelegate.arePropertiesConfigured();
     }
 
     /**
@@ -309,7 +310,7 @@ public class PropertyService extends BaseService {
      * already checked for bypass; false otherwise.
      */
     public static boolean doBypass() throws GeneralPropertyException {
-        return properties.canBypass();
+        return backupPropertiesDelegate.canBypass();
     }
 
     /**
@@ -317,7 +318,7 @@ public class PropertyService extends BaseService {
      */
     public static void bypassConfiguration() throws GeneralPropertyException {
         logMetacat.debug("bypassConfiguration(): setting main backup properties.");
-        properties.bypassConfiguration();
+        backupPropertiesDelegate.bypassConfiguration();
         logMetacat.debug("bypassConfiguration(): setting auth backup properties.");
         authPropertiesDelegate.bypassAuthConfiguration(properties);
     }
@@ -371,9 +372,9 @@ public class PropertyService extends BaseService {
     }
 
     /**
-     * The properties on the Setting class isn't synchronized with the change the Metacat properties
-     * file. This method synchronizes (reloads) the properties' change to the Setting class when the
-     * property file was modified.
+     * The properties on the dataONE Setting class isn't synchronized with changes to the Metacat
+     * properties files. This method synchronizes (reloads) the properties' changes to the Settings
+     * class, and shoudl be called whenever the property files are modified.
      */
     public static void syncToSettings() throws GeneralPropertyException {
         try {
@@ -397,6 +398,14 @@ public class PropertyService extends BaseService {
      */
     public static String getDefaultProperty(String propertyName) {
         return properties.getDefaultProperty(propertyName);
+    }
+
+    public static Path getMainMetadataFilePath() {
+        return properties.getMainMetadataFilePath();
+    }
+
+    public static Path getBackupDirPath() throws GeneralPropertyException {
+        return backupPropertiesDelegate.getBackupDirPath();
     }
 
     public boolean refreshable() {
@@ -425,7 +434,10 @@ public class PropertyService extends BaseService {
         logMetacat.debug("Initializing PropertyService");
         properties =
             PropertiesWrapper.getNewInstance(defaultPropertiesFilePath, sitePropertiesFilePath);
-        authPropertiesDelegate = AuthPropertiesDelegate.getInstance(properties);
+
+        backupPropertiesDelegate = BackupPropertiesDelegate.getInstance();
+
+        authPropertiesDelegate = AuthPropertiesDelegate.getInstance();
 
         logMetacat.debug(
             "\n* * * PropertyService.initialize() finished. Properties contents: * * *\n\n"
