@@ -534,7 +534,7 @@ The methods below will be included in the public API:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
-| store_object       | pid, data                    | hash_address (id,relpath...)     | Pending Review                              |
+| store_object*      | pid, data, ...               | hash_address (id,relpath...)     | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | store_sysmeta      | pid, sysmeta                 | string (s_cid/pid_hash)          | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
@@ -542,12 +542,14 @@ The methods below will be included in the public API:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | retrieve_sysmeta   | pid                          | string (sysmeta)                 | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| delete_object      | pid                          |                                  | Pending Review                              |
+| delete_object      | pid                          | boolean                          | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| delete_sysmeta     | pid                          |                                  | Pending Review                              |
+| delete_sysmeta     | pid                          | boolean                          | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| get_hex_digest     | pid, algorithm               | string (checksum)                | Pending Review                              |
+| get_hex_digest     | pid, algorithm               | string (hex_digest)              | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
+* store_object(pid, data, additional_algorithm, checksum, checksum_algorithm)
+
 
 The proposed public methods below require further discussion to determine their inclusion in the public API:
 
@@ -563,16 +565,23 @@ The following methods are to be made private and/or removed:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
-| _add_object        | data                         | array (list(alg, base64_cid))    | Pending Update                              |
+| _add_object        | pid, data, ...               | hash_address (id,relpath...)     | Private Method                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| _set_sysmeta       | pid, sysmeta, obj_cid        | string (s_cid)                   | Private Method                              |
+| _set_sysmeta       | pid, sysmeta                 | string (sysmeta_cid)             | Private Method                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| _get_sysmeta       | pid                          | string (s_content)               | Private Method                              |
+| _get_sysmeta       | pid                          | string (sysmeta_content)         | Private Method                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| _rel_path          | hash                         | string                           | Private Method                              |
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| _clean_algorithm   | string                       | string                           | Private Method                              |
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
+* _add_object(pid, data, additional_algorithm, checksum, checksum_algorithm
+
+.. figure:: images/hashstore_publicapi_mermaid_store_object_v2.png
+   :figclass: top
+   :align: center
+
+   Figure 2. Mermaid diagram illustrating store_object flow
+   
+   
+   
+   
 
 Virtual File Layout
 ~~~~~~~~~~~~~~~~~~~
