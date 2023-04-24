@@ -133,6 +133,12 @@ public class SystemMetadataManager {
                     }
                     lockedIds.add(pid.getValue());
                 }
+                //Check if the system metadata is based on the latest version
+                SystemMetadata currentStoredSysmeta = get(pid);
+                if (currentStoredSysmeta != null) {
+                    
+                }
+                
                 //Try to write the system metadata into db and remove the pid from the vector and wake up the waiting threads. 
                 DBConnection dbConn = null;
                 int serialNumber = -1;
@@ -234,23 +240,6 @@ public class SystemMetadataManager {
             }
         }
     }
-    
-    /**
-     * Lock the system metadata for the given id
-     * @param id  the identifier of the system metadata will be locked
-     */
-    public void lock(Identifier id) {
-        
-    }
-    
-    /**
-     * unlock the system metadata for the given id
-     * @param id  the identifier of the system metadata will be unlocked
-     */
-    public void unlock(Identifier id) {
-        
-    }
-
     
     /**
      * create the systemmetadata record

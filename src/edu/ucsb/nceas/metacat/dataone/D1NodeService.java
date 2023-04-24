@@ -281,11 +281,6 @@ public abstract class D1NodeService {
           logMetacat.warn("D1NodeService.delete - the object itself with the provided identifier "+pid.getValue()+" doesn't exist in the system. But we will continute to delete the system metadata of the object.");
           //Lock lock = null;
           try {
-              //lock = HazelcastService.getInstance().getLock(pid.getValue());
-              //lock.lock();
-              SystemMetadataManager.getInstance().lock(pid);
-              logMetacat.debug("Locked identifier " + pid.getValue());
-              //SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
               SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(pid);
               if ( sysMeta != null ) {
                 try {
@@ -310,9 +305,6 @@ public abstract class D1NodeService {
               throw new ServiceFailure("1350", "Couldn't delete " + pid.getValue() + 
                   ". The error message was: " + re.getMessage());
               
-          } finally {
-              SystemMetadataManager.getInstance().unlock(pid);
-              logMetacat.debug("Unlocked identifier " + pid.getValue());
           }
           return pid;
       } catch (SQLException e) {
@@ -1444,17 +1436,12 @@ public abstract class D1NodeService {
         throws ServiceFailure {
         logMetacat.debug("D1NodeService.updateSystemMetadata() called.");
         try {
-            //HazelcastService.getInstance().getSystemMetadataMap().lock(sysMeta.getIdentifier());
-            SystemMetadataManager.getInstance().lock(sysMeta.getIdentifier());
+            
             boolean needUpdateModificationDate = true;
             updateSystemMetadataWithoutLock(sysMeta, needUpdateModificationDate);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
-        } finally {
-            //HazelcastService.getInstance().getSystemMetadataMap().unlock(sysMeta.getIdentifier());
-            SystemMetadataManager.getInstance().unlock(sysMeta.getIdentifier());
-        }
-
+        } 
     }
     
     /**

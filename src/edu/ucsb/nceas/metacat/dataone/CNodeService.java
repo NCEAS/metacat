@@ -182,11 +182,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       
       SystemMetadata systemMetadata = null;
       try {
-          //lock = HazelcastService.getInstance().getLock(pid.getValue());
-          //lock.lock();
-          SystemMetadataManager.getInstance().lock(pid);
-          logMetacat.debug("Locked identifier " + pid.getValue());
-
           try {
               //if ( HazelcastService.getInstance().getSystemMetadataMap().containsKey(pid) ) {
               if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
@@ -246,11 +241,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       } catch (RuntimeException e) {
           throw new ServiceFailure("4882", e.getMessage());
           
-      } finally {
-          //lock.unlock();
-          SystemMetadataManager.getInstance().unlock(pid);
-          logMetacat.debug("Unlocked identifier " + pid.getValue());
-          
       }
     
       return true;
@@ -303,11 +293,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 		SystemMetadata systemMetadata = null;
 		try {
-			//lock = HazelcastService.getInstance().getLock(pid.getValue());
-			//lock.lock();
-		    SystemMetadataManager.getInstance().lock(pid);
-			logMetacat.debug("Locked identifier " + pid.getValue());
-
 			try {
 				//if (HazelcastService.getInstance().getSystemMetadataMap().containsKey(pid)) {
 			    if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
@@ -373,10 +358,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 		} catch (RuntimeException e) {
 			throw new ServiceFailure("4882", e.getMessage());
-		} finally {
-			//lock.unlock();
-		    SystemMetadataManager.getInstance().unlock(pid);
-			logMetacat.debug("Unlocked identifier " + pid.getValue());
 		}
 
 		return true;	  
@@ -450,11 +431,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
     	      // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
     	  
           try {
-              //lock = HazelcastService.getInstance().getLock(pid.getValue());
-              //lock.lock();
-              SystemMetadataManager.getInstance().lock(pid);
-              logMetacat.debug("Locked identifier " + pid.getValue());
-
               /*sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
 				sysMeta.setArchived(true);
 				sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
@@ -474,11 +450,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           } catch (RuntimeException re) {
               throw new ServiceFailure("4962", "Couldn't delete " + pid.getValue() + 
                       ". The error message was: " + re.getMessage());
-
-          } finally {
-              //lock.unlock();
-              SystemMetadataManager.getInstance().unlock(pid);
-              logMetacat.debug("Unlocked identifier " + pid.getValue());
 
           }
 
@@ -585,12 +556,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       }
 	  D1AuthHelper authDel = new D1AuthHelper(request,pid,notAuthorizedCode,serviceFailureCode);
 	  authDel.doIsAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION);
-	  
-	  
-      try {
-          //HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
-          SystemMetadataManager.getInstance().lock(pid);
-          logMetacat.debug("CNodeService.archive - lock the system metadata for "+pid.getValue());
 
           D1NodeVersionChecker checker = new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
           String version = checker.getVersion("MNRead");
@@ -606,11 +571,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           boolean needModifyDate = true;
           archiveCNObjectWithNotificationReplica(session, pid, sysmeta, needModifyDate);
       
-      } finally {
-          //HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
-          SystemMetadataManager.getInstance().unlock(pid);
-          logMetacat.debug("CNodeService.archive - unlock the system metadata for "+pid.getValue());
-      }
+     
 
 	  return pid;
       
@@ -707,11 +668,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 		SystemMetadata systemMetadata = null;
 		try {
-			//lock = HazelcastService.getInstance().getLock(pid.getValue());
-			//lock.lock();
-		    SystemMetadataManager.getInstance().lock(pid);
-			logMetacat.debug("Locked identifier " + pid.getValue());
-
 			try {
 				//if (HazelcastService.getInstance().getSystemMetadataMap().containsKey(pid)) {
 				if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
@@ -770,11 +726,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 		} catch (RuntimeException e) {
 			throw new ServiceFailure("4882", e.getMessage());
-		} finally {
-			//lock.unlock();
-		    SystemMetadataManager.getInstance().unlock(pid);
-			logMetacat.debug("Unlocked identifier " + pid.getValue());
-		}
+		} 
 
 		return true;
 	}
@@ -840,11 +792,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       SystemMetadata systemMetadata = null;
 
       try {
-          //lock = HazelcastService.getInstance().getLock(pid.getValue());
-          //lock.lock();
-          SystemMetadataManager.getInstance().lock(pid);
-          logMetacat.debug("Locked identifier " + pid.getValue());
-
           try {      
               //systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
               systemMetadata = SystemMetadataManager.getInstance().get(pid);
@@ -1025,12 +972,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
             pid.getValue();
         logMetacat.info(msg);
         
-    } finally {
-        //lock.unlock();
-        SystemMetadataManager.getInstance().unlock(pid);
-        logMetacat.debug("Unlocked identifier " + pid.getValue());
-        
-    }
+    } 
       
       return true;
   }
@@ -1407,10 +1349,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       }
 
       try {
-          //lock = HazelcastService.getInstance().getLock(sysmeta.getIdentifier().getValue());
-          //lock.lock();
-          SystemMetadataManager.getInstance().lock(sysmeta.getIdentifier());
-          logMetacat.debug("Locked identifier " + pid.getValue());
           logMetacat.debug("Checking if identifier exists...");
           // Check that the identifier does not already exist
           //if (HazelcastService.getInstance().getSystemMetadataMap().containsKey(pid)) {
@@ -1445,11 +1383,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       } catch (RuntimeException e) {
           throw new ServiceFailure("4862", "Error inserting system metadata: " + 
                   e.getClass() + ": " + e.getMessage());
-          
-      }  finally {
-          //lock.unlock();
-          SystemMetadataManager.getInstance().unlock(sysmeta.getIdentifier());
-          logMetacat.debug("Unlocked identifier " + pid.getValue());
           
       }
 
@@ -1590,11 +1523,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
 
       try {
-          //lock = HazelcastService.getInstance().getLock(pid.getValue());
-          //lock.lock();
-          SystemMetadataManager.getInstance().lock(pid);
-          logMetacat.debug("Locked identifier " + pid.getValue());
-
           try {
               // does the request have the most current system metadata?
               if ( systemMetadata.getSerialVersion().longValue() != serialVersion ) {
@@ -1643,11 +1571,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       } catch (RuntimeException e) {
           throw new ServiceFailure("4490", e.getMessage());
           
-      } finally {
-          //lock.unlock();
-          SystemMetadataManager.getInstance().unlock(pid);
-          logMetacat.debug("Unlocked identifier " + pid.getValue());
-      
       }
       
       return pid;
@@ -1830,9 +1753,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           isAllowed = true;
           // proceed if we're called by a CN
           if ( isAllowed ) {
-              //lock = HazelcastService.getInstance().getLock(pid.getValue());
-              //lock.lock();
-              SystemMetadataManager.getInstance().lock(pid);
               objectExists(pid);
               
               //check if the series id is legitimate. It uses the same rules of the method registerSystemMetadata
@@ -1880,12 +1800,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               pid.getValue() + ". There error message was: " + e.getMessage();
           throw new ServiceFailure("4893", msg);
           
-      } finally {
-          //if (lock != null) {
-              //lock.unlock();
-              SystemMetadataManager.getInstance().unlock(pid);
-              logMetacat.debug("Unlocked identifier " + pid.getValue());
-          //}
       }
     } finally {
         IOUtils.closeQuietly(object);
@@ -1941,11 +1855,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       //Lock lock = null;
       
       try {
-          //lock = HazelcastService.getInstance().getLock(pid.getValue());
-          //lock.lock();
-          SystemMetadataManager.getInstance().lock(pid);
-          logMetacat.debug("Locked identifier " + pid.getValue());
-
           try {
               //systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
               systemMetadata = SystemMetadataManager.getInstance().get(pid);
@@ -2001,12 +1910,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       } catch (RuntimeException e) {
           throw new ServiceFailure("4430", e.getMessage());
           
-      } finally {
-          //lock.unlock();
-          SystemMetadataManager.getInstance().unlock(pid);
-          logMetacat.debug("Unlocked identifier " + pid.getValue());
-        
-      }
+      } 
    
     // TODO: how do we know if the map was persisted?
     return true;
@@ -2046,11 +1950,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
  
       SystemMetadata systemMetadata = null;
       try {
-          //lock = HazelcastService.getInstance().getLock(pid.getValue());
-          //lock.lock();
-          SystemMetadataManager.getInstance().lock(pid);
-          logMetacat.debug("Locked identifier " + pid.getValue());
-
+          
           try {      
               //systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
               systemMetadata = SystemMetadataManager.getInstance().get(pid);
@@ -2123,11 +2023,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           logMetacat.info("Unknown RuntimeException thrown: " + e.getCause().getMessage());
           throw new ServiceFailure("4852", e.getMessage());
       
-      } finally {
-          //lock.unlock();
-          SystemMetadataManager.getInstance().unlock(pid);
-          logMetacat.debug("Unlocked identifier " + pid.getValue());
-          
       }
     
       return true;
@@ -2273,10 +2168,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
     //update the system metadata locally
     boolean success = false;
-    try {
-        //HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
-        SystemMetadataManager.getInstance().lock(pid);
-        //SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+    
         SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
        
         if(currentSysmeta == null) {
@@ -2290,10 +2182,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
         boolean needUpdateModificationDate = false;//cn doesn't need to change the modification date.
         boolean fromCN = true;
         success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
-    } finally {
-        //HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
-        SystemMetadataManager.getInstance().unlock(pid);
-    }
+    
     return success;
   }
   

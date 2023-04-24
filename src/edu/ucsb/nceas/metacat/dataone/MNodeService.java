@@ -1782,9 +1782,6 @@ public class MNodeService extends D1NodeService
         
         D1AuthHelper authDel = new D1AuthHelper(request, pid, "1331", serviceFailureCode);
         authDel.doCNOnlyAuthorization(session);
-        try {
-            //HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
-            SystemMetadataManager.getInstance().lock(pid);
             // compare what we have locally to what is sent in the change notification
             try {
                 //currentLocalSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
@@ -1923,10 +1920,6 @@ public class MNodeService extends D1NodeService
                 
                
             }
-        } finally {
-            //HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
-            SystemMetadataManager.getInstance().unlock(pid);
-        }
         
         if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
             // submit for indexing
@@ -2956,9 +2949,6 @@ public class MNodeService extends D1NodeService
 
 	      if (allowed) {
 	          try {
-	              //HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
-	              SystemMetadataManager.getInstance().lock(pid);
-	              logMetacat.debug("MNodeService.archive - lock the identifier "+pid.getValue()+" in the system metadata map.");
 	              //SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 	              SystemMetadata sysmeta = SystemMetadataManager.getInstance().get(pid);
 	              //check the if it has enough quota if th quota service is enabled
@@ -2971,11 +2961,7 @@ public class MNodeService extends D1NodeService
 	              throw new ServiceFailure("2912", "The user doesn't have enough quota to perform this request " + e.getMessage());
 	          } catch (InvalidRequest ee) {
                   throw new InvalidToken("2913", "The request is invalid - " + ee.getMessage());
-	          } finally {
-	              //HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
-	              SystemMetadataManager.getInstance().unlock(pid);
-	              logMetacat.debug("MNodeService.archive - unlock the identifier "+pid.getValue()+" in the system metadata map.");
-	          }
+	          } 
 
 
 	      } else {
@@ -3011,10 +2997,6 @@ public class MNodeService extends D1NodeService
 	      } 
 	      //update the system metadata locally
 	      boolean success = false;
-	      try {
-	          //HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
-	          SystemMetadataManager.getInstance().lock(pid);
-	          //SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 	          SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
 	          if(currentSysmeta == null) {
 	              throw  new InvalidRequest("4869", "We can't find the current system metadata on the member node for the id "+pid.getValue());
@@ -3064,10 +3046,6 @@ public class MNodeService extends D1NodeService
 	          boolean needUpdateModificationDate = true;
 	          boolean fromCN = false;
 	          success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
-	      } finally {
-	          //HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
-	          SystemMetadataManager.getInstance().unlock(pid);
-	      }
 	      
 	      if (success) {
 	          // attempt to re-register the identifier (it checks if it is a doi)
