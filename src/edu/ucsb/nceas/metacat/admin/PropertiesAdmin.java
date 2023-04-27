@@ -125,6 +125,8 @@ public class PropertiesAdmin extends MetacatAdmin {
                         SystemUtil.discoverServerSSLPort(request));
                 PropertyService.setPropertyNoPersist("application.deployDir",
                         SystemUtil.discoverDeployDir(request));
+                PropertyService.setPropertyNoPersist("application.sitePropertiesDir",
+                        externalDir + FileUtil.getFS() + "config");
                 PropertyService.setPropertyNoPersist("application.datafilepath",
                         externalDir + FileUtil.getFS() + "data");
                 PropertyService.setPropertyNoPersist("application.inlinedatafilepath",
@@ -201,7 +203,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 
                 //auto generate the dataone.mn.baseURL property
                 try {
-                    PropertyService.getInstance().setProperty("dataone.mn.baseURL", SystemUtil.getInternalContextURL()+"/"+
+                    PropertyService.setProperty("dataone.mn.baseURL", SystemUtil.getInternalContextURL()+"/"+
                             PropertyService.getProperty("dataone.serviceName")+"/" + PropertyService.getProperty("dataone.nodeType"));
                 } catch (Exception ue) {
                     String errorString = "PropertiesAdmin.configureProperties - Could not set the property  dataone.mn.baseURL: " +
@@ -386,7 +388,7 @@ public class PropertiesAdmin extends MetacatAdmin {
      *  There is also a parameter:
      * <context-param>
      * <param-name>site.properties.path</param-name>
-     * <param-value>/var/metacat/settings/metacat-site.properties</param-value>
+     * <param-value>/var/metacat/context/metacat-site.properties</param-value>
      * <description>The metacat-site.properties file for sibling metacat deployment.</description>
      * </context-param>
      * It points to the site-specific configured settings, that are overlaid on top of the
@@ -413,9 +415,8 @@ public class PropertiesAdmin extends MetacatAdmin {
 
             } catch (IllegalArgumentException | PropertyNotFoundException e) {
                 String errorMessage = "PropertiesAdmin.modifyIndexWebXml - Problem getting/setting "
-                    + "the \"metacat.properties.path\" or the \"site.properties.path\" in the web"
-                    + ".xml"
-                    + " of the index context : " + e.getMessage();
+                    + "the \"metacat.properties.path\" or the \"site.properties.path\" in the "
+                    + "web.xml of the index context : " + e.getMessage();
                 logMetacat.error(errorMessage, e);
             }
 
