@@ -263,8 +263,7 @@ public class BackupPropertiesDelegate {
                 }
             } else {
                 logAndThrow(
-                    "CRITICAL: getSitePropertiesPath() Unable to find a suitable value "
-                        + "for path to 'sitePropertiesPath' - site-specific properties & backups",
+                    "CRITICAL: getSitePropertiesPath() Unable to find a suitable backup directory",
                     null);
             }
         }

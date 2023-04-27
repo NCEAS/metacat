@@ -53,7 +53,7 @@ public class PropertyService extends BaseService {
      * @param defaultPropertiesFilePath (Can be null) Full path to the default properties file (e.g.
      *                                  /var/lib/tomcat/webapps/WEB-INF/metacat.properties)
      * @param sitePropertiesFilePath    (Can be null) Full path to the site properties file (e.g.
-     *                                  /var/metacat/.metacat/metacat-site.properties)
+     *                                  /var/metacat/config/metacat-site.properties)
      */
     private PropertyService(Path defaultPropertiesFilePath, Path sitePropertiesFilePath)
         throws ServiceException {
