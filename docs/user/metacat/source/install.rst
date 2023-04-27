@@ -486,7 +486,7 @@ Metacat only supports ``Solr 8.*``, ``NOT 9.*``. You may download the binary rel
 
 https://lucene.apache.org/solr/downloads.html
 
-1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assume the download file being solr-8.11.2.tgz):
+1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assuming the downloaded file being solr-8.11.2.tgz):
 
 ::
 
