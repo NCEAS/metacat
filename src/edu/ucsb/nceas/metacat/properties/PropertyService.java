@@ -33,6 +33,8 @@ public class PropertyService extends BaseService {
     // system has never been configured
     public static final String UNCONFIGURED = "false";
     public static final String BYPASSED = "bypassed";
+    public static final String SITE_PROPERTIES_FILENAME = "metacat-site.properties";
+    public static final String SITE_PROPERTIES_DIR_PATH_KEY = "application.sitePropertiesDir";
     private static final String DEFAULT_CONFIG_FILE_DIR = "WEB-INF";
     private static final Log logMetacat = LogFactory.getLog(PropertyService.class);
 
@@ -201,20 +203,6 @@ public class PropertyService extends BaseService {
     }
 
     /**
-     * Utility method to add a property value both in memory and to the properties file
-     *
-     * @param propertyName the name of the property to add
-     * @param value        the value for the property
-     */
-    // TODO: MB - can we get rid of this? Default java.util.Properties behavior is to add a new
-    //  entry if it doesn't already exist, when setProperty() is called; so addProperty() not needed
-    public static void addProperty(String propertyName, String value)
-        throws GeneralPropertyException {
-        properties.addProperty(propertyName, value);
-        properties.persistProperties();
-    }
-
-    /**
      * Utility method to set a property value in memory. This will NOT cause the property to be
      * written to disk. Use this method to set multiple properties in a row without causing
      * excessive I/O. You must call persistProperties() once you're done setting properties to have
@@ -374,7 +362,7 @@ public class PropertyService extends BaseService {
     /**
      * The properties on the dataONE Setting class isn't synchronized with changes to the Metacat
      * properties files. This method synchronizes (reloads) the properties' changes to the Settings
-     * class, and shoudl be called whenever the property files are modified.
+     * class, and should be called whenever the property files are modified.
      */
     public static void syncToSettings() throws GeneralPropertyException {
         try {
@@ -386,18 +374,6 @@ public class PropertyService extends BaseService {
             gpe.fillInStackTrace();
             throw gpe;
         }
-    }
-
-    /**
-     * Get the DEFAULT property value from the default properties file. Ignore any overriding
-     * values in the site properties file
-     *
-     * @param propertyName the name of the DEFAULT property requested
-     * @return the String value for the DEFAULT property, even if blank, or null if the property key
-     * is not found
-     */
-    public static String getDefaultProperty(String propertyName) {
-        return properties.getDefaultProperty(propertyName);
     }
 
     public static Path getMainMetadataFilePath() {

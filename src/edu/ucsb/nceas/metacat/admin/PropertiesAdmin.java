@@ -1,43 +1,5 @@
-/**
- *  '$RCSfile$'
- *    Purpose:  A Class that implements main property configuration methods
- *  Copyright: 2008 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Michael Daigle
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 
 package edu.ucsb.nceas.metacat.admin;
-
-import java.io.StringReader;
-import java.nio.file.Paths;
-import java.util.Vector;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.database.DBVersion;
@@ -50,19 +12,30 @@ import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertiesMetaData;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
 import edu.ucsb.nceas.utilities.UtilException;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.StringReader;
+import java.nio.file.Paths;
+import java.util.Vector;
 
 /**
  * Control the display of the main properties configuration page and the 
  * processing of the configuration values.
  */
 public class PropertiesAdmin extends MetacatAdmin {
-    private static String SLASH = "/";
-    private static String DEFAULT_METACAT_CONTEXT = "metacat";
-    private static String METACAT_PROPERTY_APPENDIX = "/WEB-INF/metacat.properties";
+    private static final String SLASH = "/";
+    private static final String DEFAULT_METACAT_CONTEXT = "metacat";
+    private static final String METACAT_PROPERTY_APPENDIX = "/WEB-INF/metacat.properties";
     private static PropertiesAdmin propertiesAdmin = null;
-    private static Log logMetacat = LogFactory.getLog(PropertiesAdmin.class);
+    private static final Log logMetacat = LogFactory.getLog(PropertiesAdmin.class);
 
     /**
      * private constructor since this is a singleton
@@ -71,7 +44,7 @@ public class PropertiesAdmin extends MetacatAdmin {
 
     /**
      * Get the single instance of the MetaCatConfig.
-     * 
+     *
      * @return the single instance of MetaCatConfig
      */
     public static PropertiesAdmin getInstance() {
@@ -80,10 +53,10 @@ public class PropertiesAdmin extends MetacatAdmin {
         }
         return propertiesAdmin;
     }
-    
+
     /**
      * Handle configuration of the main application properties
-     * 
+     *
      * @param request
      *            the http request object
      * @param response
@@ -107,12 +80,12 @@ public class PropertiesAdmin extends MetacatAdmin {
                 request.setAttribute("metadata", metadata);
 
                 String externalDir = PropertyService.getRecommendedExternalDir();
-                
+
                 if (externalDir == null) {
                     throw new AdminException("Could not initialize property configuration "
                                     + "page recommended application external directory was null");
                 }
-                
+
                 // Attempt to discover the following properties.  These will show
                 // up in the configuration fields if nothing else is provided.
                 PropertyService.setPropertyNoPersist("application.context",
@@ -124,9 +97,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 PropertyService.setPropertyNoPersist("server.httpSSLPort",
                         SystemUtil.discoverServerSSLPort(request));
                 PropertyService.setPropertyNoPersist("application.deployDir",
-                        SystemUtil.discoverDeployDir(request));
-                PropertyService.setPropertyNoPersist("application.sitePropertiesDir",
-                        externalDir + FileUtil.getFS() + "config");
+                    SystemUtil.discoverDeployDir(request));
                 PropertyService.setPropertyNoPersist("application.datafilepath",
                         externalDir + FileUtil.getFS() + "data");
                 PropertyService.setPropertyNoPersist("application.inlinedatafilepath",
@@ -155,7 +126,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 // upgrading. If this is a first time install, getBackupProperties 
                 // will return null.
                 SortedProperties backupProperties = null;
-                if ((backupProperties = 
+                if ((backupProperties =
                         PropertyService.getMainBackupProperties()) != null) {
                     Vector<String> backupKeys = backupProperties.getPropertyNames();
                     for (String key : backupKeys) {
@@ -171,7 +142,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                         "/admin/properties-configuration.jsp", null);
 
             } catch (GeneralPropertyException gpe) {
-                throw new AdminException("PropertiesAdmin.configureProperties - Problem getting or " + 
+                throw new AdminException("PropertiesAdmin.configureProperties - Problem getting or " +
                         "setting property while initializing system properties page: " + gpe.getMessage());
             } catch (MetacatUtilException mue) {
                 throw new AdminException("PropertiesAdmin.configureProperties - utility problem while initializing "
@@ -179,7 +150,7 @@ public class PropertiesAdmin extends MetacatAdmin {
             } catch (ServiceException se) {
                 throw new AdminException("PropertiesAdmin.configureProperties - Service problem while initializing "
                         + "system properties page:" + se.getMessage());
-            } 
+            }
         } else {
             // The configuration form is being submitted and needs to be
             // processed.
@@ -188,10 +159,10 @@ public class PropertiesAdmin extends MetacatAdmin {
             Vector<String> processingSuccess = new Vector<String>();
 
             MetacatVersion metacatVersion = null;
-            
+
             try {
                 metacatVersion = SystemUtil.getMetacatVersion();
-                
+
                 // For each property, check if it is changed and save it
                 Vector<String> propertyNames = PropertyService.getPropertyNames();
                 for (String name : propertyNames) {
@@ -200,7 +171,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 // we need to write the options from memory to the properties
                 // file
                 PropertyService.persistProperties();
-                
+
                 //auto generate the dataone.mn.baseURL property
                 try {
                     PropertyService.setProperty("dataone.mn.baseURL", SystemUtil.getInternalContextURL()+"/"+
@@ -217,7 +188,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 // there is no other easy way to go back to the configure form
                 // and preserve their entries.
                 validationErrors.addAll(validateOptions(request));
-                
+
                 // Try to create data directories if necessary.
                 String dataDir = PropertyService.getProperty("application.datafilepath");
                 try {
@@ -228,7 +199,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
                 }
-                
+
                 // Try to create inline-data directories if necessary.
                 String inlineDataDir = PropertyService.getProperty("application.inlinedatafilepath");
                 try {
@@ -239,40 +210,40 @@ public class PropertiesAdmin extends MetacatAdmin {
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
                 }
-                
+
                 // Try to create document directories if necessary.
                 String documentfilepath = PropertyService.getProperty("application.documentfilepath");
                 try {
                     FileUtil.createDirectory(documentfilepath);
-                } catch (UtilException ue) {    
+                } catch (UtilException ue) {
                     String errorString = "PropertiesAdmin.configureProperties - Could not create directory: " + documentfilepath +
                         " : " + ue.getMessage();
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
                 }
-                
+
                 // Try to create temporary directories if necessary.
                 String tempDir = PropertyService.getProperty("application.tempDir");
                 try {
                     FileUtil.createDirectory(tempDir);
-                } catch (UtilException ue) {        
+                } catch (UtilException ue) {
                     String errorString = "PropertiesAdmin.configureProperties - Could not create directory: " + tempDir +
                         " : " + ue.getMessage();
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
                 }
-                
+
                 // Try to create temporary directories if necessary.
                 String replLogDir = PropertyService.getProperty("replication.logdir");
                 try {
                     FileUtil.createDirectory(replLogDir);
-                } catch (UtilException ue) {        
+                } catch (UtilException ue) {
                     String errorString = "PropertiesAdmin.configureProperties - Could not create directory: " + replLogDir +
                         " : " + ue.getMessage();
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
                 }
-                
+
                 //make sure the solrHome is not old version of Lucene
                 String solrHomePath = PropertyService.getProperty("solr.homeDir");
                 boolean isOldVersion = false;
@@ -280,9 +251,9 @@ public class PropertiesAdmin extends MetacatAdmin {
                     SolrVersionChecker checker = new SolrVersionChecker();
                     isOldVersion = checker.isVersion_3_4(solrHomePath);
                 } catch (Exception e) {
-                    logMetacat.warn("PropertiesAdmin.confgureProperties - we can't determine if the given directory is a old version of solr  since "+e.getMessage()+". But we consider it is not an old version.");
+                    logMetacat.warn("PropertiesAdmin.configureProperties - we can't determine if the given directory is a old version of solr  since "+e.getMessage()+". But we consider it is not an old version.");
                 }
-                
+
                 if(isOldVersion) {
                     validationErrors.add("The solr home you chose exists with an old version of SOLR. Please choose a new SOLR home!");
                 }
@@ -291,18 +262,18 @@ public class PropertiesAdmin extends MetacatAdmin {
                 String indexContext = PropertyService.getProperty("index.context");
                 //modify some params of the index context
                 this.modifyIndexContextParams(indexContext);
-                
+
                 // make sure hazelcast.xml uses a unique group name
                 this.modifyHazelcastConfig();
-                
+
                 // set permissions on the registry cgi scripts, least on *nix systems
                 try {
-                    String cgiFiles = 
-                            PropertyService.getProperty("application.deployDir") 
-                            + FileUtil.getFS() 
-                            + PropertyService.getProperty("application.context") 
+                    String cgiFiles =
+                            PropertyService.getProperty("application.deployDir")
+                            + FileUtil.getFS()
+                            + PropertyService.getProperty("application.context")
                             + PropertyService.getProperty("application.cgiDir")
-                            + FileUtil.getFS() 
+                            + FileUtil.getFS()
                             + "*.cgi";
                     String [] command = {"sh", "-c", "chmod +x " + cgiFiles};
                     Runtime rt = Runtime.getRuntime();
@@ -315,7 +286,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                     /// just a warning
                     logMetacat.warn("Could not set permissions on the registry scripts: " + ignorable.getMessage(), ignorable);
                 }
-                
+
                 // write the backup properties to a location outside the 
                 // application directories so they will be available after
                 // the next upgrade
@@ -326,8 +297,8 @@ public class PropertiesAdmin extends MetacatAdmin {
                         + "processing system properties page: " + gpe.getMessage();
                 logMetacat.error(errorMessage);
                 processingErrors.add(errorMessage);
-            } 
-            
+            }
+
             try {
                 if (validationErrors.size() > 0 || processingErrors.size() > 0) {
                     RequestUtil.clearRequestMessages(request);
@@ -339,14 +310,14 @@ public class PropertiesAdmin extends MetacatAdmin {
                     // 'propertiesConfigured' option to 'true'
                     PropertyService.setProperty("configutil.propertiesConfigured",
                             PropertyService.CONFIGURED);
-                    
+
                     // if the db version is already the same as the metacat version,
                     // update metacat.properties. Have to do this after
                     // propertiesConfigured is set to CONFIGURED
                     DBVersion dbVersion = DBAdmin.getInstance().getDBVersion();
-                    if (dbVersion != null && metacatVersion != null && 
+                    if (dbVersion != null && metacatVersion != null &&
                             dbVersion.compareTo(metacatVersion) == 0) {
-                        PropertyService.setProperty("configutil.databaseConfigured", 
+                        PropertyService.setProperty("configutil.databaseConfigured",
                                 PropertyService.CONFIGURED);
                         //Also set the upgrade status to be success since the upgrade happened successfully at the previous upgrade
                         try {
@@ -357,12 +328,12 @@ public class PropertiesAdmin extends MetacatAdmin {
                             logMetacat.warn("PropertiesAdmin.configureProperties - couldn't update the status of the upgrading process since " + e.getMessage());
                         }
                     }
-                    
+
                     // Reload the main metacat configuration page
                     processingSuccess.add("Properties successfully configured");
                     RequestUtil.clearRequestMessages(request);
                     RequestUtil.setRequestSuccess(request, processingSuccess);
-                    RequestUtil.forwardRequest(request, response, 
+                    RequestUtil.forwardRequest(request, response,
                             "/admin?configureType=configure&processForm=false", null);
                 }
             } catch (MetacatUtilException mue) {
@@ -381,21 +352,23 @@ public class PropertiesAdmin extends MetacatAdmin {
      * <context-param>
      * <param-name>metacat.properties.path</param-name>
      * <param-value>/metacat/WEB-INF/metacat.properties</param-value>
-     * <description>The metacat.properties file for sibling metacat deployment. Note that the context can change</description>
+     * <description>The metacat.properties file for sibling metacat deployment. Note that the
+     * context can change</description>
      *  </context-param>
-     *  It points to the default metacat context - knb. If we rename the context, we need to change the value of there.
+     *  It points to the default metacat context - knb. If we rename the context, we need to
+     *  change the value of there.
      *
      *  There is also a parameter:
      * <context-param>
      * <param-name>site.properties.path</param-name>
-     * <param-value>/var/metacat/context/metacat-site.properties</param-value>
+     * <param-value>/var/metacat/config/metacat-site.properties</param-value>
      * <description>The metacat-site.properties file for sibling metacat deployment.</description>
      * </context-param>
      * It points to the site-specific configured settings, that are overlaid on top of the
      * defaults in metacat.properties. If we change the location of this properties file, we need
      * to change this value.
      */
-    private void modifyIndexContextParams(String indexContext) {
+    protected void modifyIndexContextParams(String indexContext) {
 
         if (indexContext != null) {
             String indexConfigFile = null;
@@ -411,40 +384,57 @@ public class PropertiesAdmin extends MetacatAdmin {
                         "Error - blank Index Context received - " + indexContext);
                 }
                 metacatContext = PropertyService.getProperty("application.context");
-                sitePropsDir = PropertyService.getProperty("application.sitePropertiesDir");
+                sitePropsDir =
+                    PropertyService.getProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY);
 
             } catch (IllegalArgumentException | PropertyNotFoundException e) {
-                String errorMessage = "PropertiesAdmin.modifyIndexWebXml - Problem getting/setting "
-                    + "the \"metacat.properties.path\" or the \"site.properties.path\" in the "
-                    + "web.xml of the index context : " + e.getMessage();
+                String errorMessage = "PropertiesAdmin.modifyIndexContextParams - Problem getting/"
+                    + "setting the \"metacat.properties.path\" or the \"site.properties.path\" in "
+                    + "the web.xml for the metacat-index context : " + e.getMessage();
                 logMetacat.error(errorMessage, e);
             }
 
-            String webXmlContents = null;
+            String webXmlContents;
             try {
                 webXmlContents = FileUtil.readFileToString(indexConfigFile, "UTF-8");
-
-                logMetacat.debug("modifyIndexWebXml(): the web.xml file is: " + indexConfigFile);
+                logMetacat.debug(
+                    "modifyIndexContextParams(): editing web.xml file: " + indexConfigFile);
 
                 if (metacatContext != null && !metacatContext.equals(DEFAULT_METACAT_CONTEXT)) {
                     webXmlContents = webXmlContents.replace(
                         SLASH + DEFAULT_METACAT_CONTEXT + METACAT_PROPERTY_APPENDIX,
                         SLASH + metacatContext + METACAT_PROPERTY_APPENDIX);
                 }
-                String defaultSitePropertiesDir =
-                    PropertyService.getDefaultProperty("application.sitePropertiesDir");
-                if (sitePropsDir != null && !sitePropsDir.equals(defaultSitePropertiesDir)) {
-                    webXmlContents = webXmlContents.replace(defaultSitePropertiesDir, sitePropsDir);
+                if (StringUtils.isNotBlank(sitePropsDir)) {
+                    if (sitePropsDir.length() > 1 && sitePropsDir.endsWith(SLASH)) {
+                        sitePropsDir = sitePropsDir.substring(0, sitePropsDir.length() - 1);
+                    }
+                    String regex =
+                        "site\\.properties\\.path</param-name>[ \t]*\n[ \t]*<param-value>[^<]*<";
+
+                    String replacement =
+                        "site.properties.path</param-name>\n      <param-value>" + sitePropsDir
+                            + SLASH + PropertyService.SITE_PROPERTIES_FILENAME + "<";
+
+                    webXmlContents = webXmlContents.replaceAll(regex, replacement);
+
+                    logMetacat.debug(
+                        "modifyIndexContextParams(): Web.xml contents AFTER updating sitePropsDir ("
+                            + sitePropsDir + ")\n\n" + webXmlContents + "\n\n");
+                } else {
+                    logMetacat.error(
+                        "modifyIndexContextParams(): sitePropsDir is null or blank! Check "
+                            + "configuration has been completed, and metacat.properties contains a"
+                            + " value for the key: "
+                            + PropertyService.SITE_PROPERTIES_DIR_PATH_KEY);
                 }
-                logMetacat.debug("modifyIndexWebXml(): Web.xml contents AFTER modification: \n"
-                    + webXmlContents);
 
                 FileUtil.writeFile(indexConfigFile, new StringReader(webXmlContents), "UTF-8");
 
             } catch (UtilException e) {
-                String errorMessage = "PropertiesAdmin.modifyIndexWebXml - Problem reading from or "
-                    + "writing to the web.xml file from path: " + indexConfigFile + ". Error was: "
-                    + e.getMessage();
+                String errorMessage = "PropertiesAdmin.modifyIndexContextParams - Problem reading "
+                    + "from or writing to the web.xml file from path: " + indexConfigFile
+                    + ". Error was: " + e.getMessage();
                 logMetacat.error(errorMessage, e);
             }
         }
@@ -455,7 +445,7 @@ public class PropertiesAdmin extends MetacatAdmin {
 
     /**
      * Changes the Hazelcast group name to match the current context
-     * This ensures we do not share the same group if multiple Metacat 
+     * This ensures we do not share the same group if multiple Metacat
      * instances are running in the same Tomcat container.
      */
     private void modifyHazelcastConfig() {
@@ -463,11 +453,11 @@ public class PropertiesAdmin extends MetacatAdmin {
             String metacatContext = PropertyService.getProperty("application.context");
             //System.out.println("the metacat context is ========================="+metacatContext);
             if (metacatContext != null) {
-                String hzConfigFile = 
+                String hzConfigFile =
                                 PropertyService.getProperty("application.deployDir")
                                 + FileUtil.getFS()
                                 + metacatContext
-                                + FileUtil.getFS() 
+                                + FileUtil.getFS()
                                 + "WEB-INF"
                                 + FileUtil.getFS()
                                 + "hazelcast.xml";
@@ -477,7 +467,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 configContents = configContents.replace("<name>metacat</name>", "<name>" + metacatContext + "</name>");
                 FileUtil.writeFile(hzConfigFile, new StringReader(configContents), "UTF-8");
             }
-            
+
         } catch (Exception e) {
             String errorMessage = "PropertiesAdmin.configureProperties - Problem setting groupName in hazelcast.xml: " + e.getMessage();
             logMetacat.error(errorMessage);
@@ -486,10 +476,10 @@ public class PropertiesAdmin extends MetacatAdmin {
 
     /**
      * Validate the most important configuration options submitted by the user.
-     * 
+     *
      * @param request
      *            the http request object
-     * 
+     *
      * @return a vector holding error message for any fields that fail
      *         validation.
      */
@@ -513,6 +503,6 @@ public class PropertiesAdmin extends MetacatAdmin {
 
         return errorVector;
     }
-    
+
 
 }
