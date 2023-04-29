@@ -54,6 +54,11 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
      */
     @After
     public void tearDown() {
+        try {
+            PropertyService.setProperty("test.testProperty", "");
+        } catch (GeneralPropertyException e) {
+            LeanTestUtils.debug("tearDown(): Unable to clean up test properties");
+        }
     }
 
 
@@ -71,17 +76,12 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
     }
 
 
-    @Test
-    public void readNonExistentProperty() {
+    @Test(expected = PropertyNotFoundException.class)
+    public void readNonExistentProperty() throws PropertyNotFoundException {
         //====2 read a single property from the main properties  that shouldn't exist
-        try {
-            String nonExistentUser = PropertyService.getProperty("test.this.doesn't.exist");
-            fail("Shouldn't have successfully read property: test.this.doesn't.exist : "
-                + nonExistentUser);
-        } catch (PropertyNotFoundException pnfe) {
-            LeanTestUtils.debug("EXPECTED failure reading property:'test.this.doesn't.exist' : "
-                + pnfe.getMessage());
-        }
+        String nonExistentUser = PropertyService.getProperty("test.this.doesn't.exist");
+        fail("Shouldn't have successfully read property: test.this.doesn't.exist : "
+            + nonExistentUser);
     }
 
     @Test
