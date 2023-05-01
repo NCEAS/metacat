@@ -69,8 +69,6 @@ public class MCTestCase
     protected static String password;
     protected static String anotheruser;
     protected static String anotherpassword;
-    private static String lteruser;
-    private static String lterpassword;
     protected static String referraluser;
     protected static String referralpassword;
     protected static String piscouser;
@@ -80,18 +78,19 @@ public class MCTestCase
 
     static {
         try {
-            LeanTestUtils.initializePropertyService();
-            String printDebugString = PropertyService.getProperty("test.printdebug");
-            printDebug = Boolean.parseBoolean(printDebugString);
+            LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
             metacatContextDir =
                 LeanTestUtils.getExpectedProperties().getProperty("metacat.contextDir");
+            String printDebugString =
+                LeanTestUtils.getExpectedProperties().getProperty("test" + ".printdebug");
+            printDebug = Boolean.parseBoolean(printDebugString);
             metacatUrl = SystemUtil.getServletURL();
             username = PropertyService.getProperty("test.mcUser");
             password = PropertyService.getProperty("test.mcPassword");
             anotheruser = PropertyService.getProperty("test.mcAnotherUser");
             anotherpassword = PropertyService.getProperty("test.mcAnotherPassword");
-            lteruser = PropertyService.getProperty("test.lterUser");
-            lterpassword = PropertyService.getProperty("test.lterPassword");
+            String lteruser = PropertyService.getProperty("test.lterUser");
+            String lterpassword = PropertyService.getProperty("test.lterPassword");
             referraluser = PropertyService.getProperty("test.referralUser");
             referralpassword = PropertyService.getProperty("test.referralPassword");
             piscouser = PropertyService.getProperty("test.piscoUser");
@@ -122,7 +121,7 @@ public class MCTestCase
                 try {
                     authFile.addUser(lteruser, groups, lterpassword, null, null, null, null, null);
                 } catch (Exception e) {
-                    System.out.println("Couldn't add the user "+lteruser+" to the password file: "+e.getMessage());
+                    System.out.println("Couldn't add the user "+ lteruser +" to the password file: "+e.getMessage());
                 }
                 try {
                     authFile.addUser(referraluser, groups, referralpassword, null, null, null, null, null);

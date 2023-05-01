@@ -2,7 +2,6 @@ package edu.ucsb.nceas.metacattest;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.junit.After;
@@ -11,7 +10,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
@@ -20,8 +18,8 @@ import java.util.Vector;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 
 /**
  * A JUnit test for testing Access Control in Metacat
@@ -32,14 +30,9 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
     private final Random random = new Random();
 
     public PropertyServiceTest() {
-        super();
         // need to instantiate PropertyService at least once
-        try {
-            assertNotNull(PropertyService.getInstanceForTesting(Paths.get("lib/metacat.properties"),
-                Paths.get("test/test" + ".properties")));
-        } catch (ServiceException e) {
-            fail("PropertyServiceTest constructor failed to instantiate PropertyService: " + e);
-        }
+        assertTrue("error trying to set up PropertiesService for unit testing",
+            LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST));
     }
 
     /**
@@ -151,34 +144,22 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         }
     }
 
-    @Test
-    public void setPropertyNonExistent() {
+    @Test(expected = GeneralPropertyException.class)
+    public void setPropertyNonExistent() throws GeneralPropertyException {
         // ====7 try to write property to main properties that doesn't exist
-        String testValue;
-        try {
-            testValue = "testing" + random.nextInt();
-            PropertyService.setProperty("test.property.nonexistent", testValue);
-            fail("Shouldn't have been able to set 'test.property.nonexistent' to " + testValue
-                + " since 'test.property.nonexistent' doesn't exist.");
-        } catch (GeneralPropertyException pnfe) {
-            LeanTestUtils.debug("EXPECTED failure writing to property:'test.property.nonexistent' "
-                + pnfe.getMessage());
-        }
+        String testValue = "testing" + random.nextInt();
+        PropertyService.setProperty("test.property.nonexistent", testValue);
+        fail("Shouldn't have been able to set 'test.property.nonexistent' to " + testValue
+            + " since 'test.property.nonexistent' doesn't exist.");
+
     }
 
-    @Test
-    public void setPropertyNoPersist() {
+    @Test(expected = GeneralPropertyException.class)
+    public void setPropertyNoPersist() throws GeneralPropertyException {
         // ====8 try to write property nonPersistent to main properties that doesn't exist
-        String testValue;
-        try {
-            testValue = "testing" + random.nextInt();
-            PropertyService.setPropertyNoPersist("test.property.nonexistent", testValue);
-            fail("Shouldn't have been able to set 'test.property.nonexistent' to " + testValue
-                + " since 'test.property.nonexistent' doesn't exist.");
-        } catch (GeneralPropertyException pnfe) {
-            LeanTestUtils.debug(
-                "EXPECTED failure writing to property:'test.property.nonexistent' : "
-                    + pnfe.getMessage());
-        }
+        String testValue = "testing" + random.nextInt();
+        PropertyService.setPropertyNoPersist("test.property.nonexistent", testValue);
+        fail("Shouldn't have been able to set 'test.property.nonexistent' to " + testValue
+            + " since 'test.property.nonexistent' doesn't exist.");
     }
 }
