@@ -368,7 +368,7 @@ public class PropertiesAdmin extends MetacatAdmin {
      * defaults in metacat.properties. If we change the location of this properties file, we need
      * to change this value.
      */
-    protected void modifyIndexContextParams(String indexContext) {
+    private void modifyIndexContextParams(String indexContext) {
 
         if (indexContext != null) {
             String indexConfigFile = null;
@@ -400,34 +400,8 @@ public class PropertiesAdmin extends MetacatAdmin {
                 logMetacat.debug(
                     "modifyIndexContextParams(): editing web.xml file: " + indexConfigFile);
 
-                if (metacatContext != null && !metacatContext.equals(DEFAULT_METACAT_CONTEXT)) {
-                    webXmlContents = webXmlContents.replace(
-                        SLASH + DEFAULT_METACAT_CONTEXT + METACAT_PROPERTY_APPENDIX,
-                        SLASH + metacatContext + METACAT_PROPERTY_APPENDIX);
-                }
-                if (StringUtils.isNotBlank(sitePropsDir)) {
-                    if (sitePropsDir.length() > 1 && sitePropsDir.endsWith(SLASH)) {
-                        sitePropsDir = sitePropsDir.substring(0, sitePropsDir.length() - 1);
-                    }
-                    String regex =
-                        "site\\.properties\\.path</param-name>[ \t]*\n[ \t]*<param-value>[^<]*<";
-
-                    String replacement =
-                        "site.properties.path</param-name>\n      <param-value>" + sitePropsDir
-                            + SLASH + PropertyService.SITE_PROPERTIES_FILENAME + "<";
-
-                    webXmlContents = webXmlContents.replaceAll(regex, replacement);
-
-                    logMetacat.debug(
-                        "modifyIndexContextParams(): Web.xml contents AFTER updating sitePropsDir ("
-                            + sitePropsDir + ")\n\n" + webXmlContents + "\n\n");
-                } else {
-                    logMetacat.error(
-                        "modifyIndexContextParams(): sitePropsDir is null or blank! Check "
-                            + "configuration has been completed, and metacat.properties contains a"
-                            + " value for the key: "
-                            + PropertyService.SITE_PROPERTIES_DIR_PATH_KEY);
-                }
+                webXmlContents = updateMetacatPropertiesPath(metacatContext, webXmlContents);
+                webXmlContents = updateSitePropertiesPath(sitePropsDir, webXmlContents);
 
                 FileUtil.writeFile(indexConfigFile, new StringReader(webXmlContents), "UTF-8");
 
@@ -440,7 +414,41 @@ public class PropertiesAdmin extends MetacatAdmin {
         }
     }
 
+    protected String updateMetacatPropertiesPath(String metacatContext, String webXmlContents) {
+        if (metacatContext != null && !metacatContext.equals(DEFAULT_METACAT_CONTEXT)) {
+            webXmlContents = webXmlContents.replace(
+                SLASH + DEFAULT_METACAT_CONTEXT + METACAT_PROPERTY_APPENDIX,
+                SLASH + metacatContext + METACAT_PROPERTY_APPENDIX);
+        }
+        return webXmlContents;
+    }
 
+    protected String updateSitePropertiesPath(String sitePropsDir, String webXmlContents) {
+        if (StringUtils.isNotBlank(sitePropsDir)) {
+            if (sitePropsDir.length() > 1 && sitePropsDir.endsWith(SLASH)) {
+                sitePropsDir = sitePropsDir.substring(0, sitePropsDir.length() - 1);
+            }
+            String regex =
+                "site\\.properties\\.path</param-name>[ \t]*\n[ \t]*<param-value>[^<]*<";
+
+            String replacement =
+                "site.properties.path</param-name>\n        <param-value>" + sitePropsDir
+                    + SLASH + PropertyService.SITE_PROPERTIES_FILENAME + "<";
+
+            webXmlContents = webXmlContents.replaceAll(regex, replacement);
+
+            logMetacat.debug(
+                "modifyIndexContextParams(): Web.xml contents AFTER updating sitePropsDir ("
+                    + sitePropsDir + ")\n\n" + webXmlContents + "\n\n");
+        } else {
+            logMetacat.error(
+                "modifyIndexContextParams(): sitePropsDir is null or blank! Check "
+                    + "configuration has been completed, and metacat.properties contains a"
+                    + " value for the key: "
+                    + PropertyService.SITE_PROPERTIES_DIR_PATH_KEY);
+        }
+        return webXmlContents;
+    }
 
 
     /**
