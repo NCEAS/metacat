@@ -1,7 +1,7 @@
 FROM tomcat:8.0-jre8
 
 # ARG default values that can be overridden at build-time
-ARG TAG=2.18.0
+ARG TAG=2.19.0
 ARG DEBUG=''
 
 # ENV default key=value env vars shared with container at runtime
@@ -13,7 +13,10 @@ ENV DEBUG=${DEBUG}
 
 ADD metacat-bin-${TAG}.tar.gz /tmp
 
-RUN apt-get update && apt-get install -y --no-install-recommends python-bcrypt    && \
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list && \
+    # above line necessary only because we're using an O-L-D image. Try to use a newer one when we no longer need jre8 \
+    # see https://unix.stackexchange.com/questions/743839/apt-get-update-failed-to-fetch-debian-amd64-packages-while-building-dockerfile-f
+    apt-get update && apt-get install -y --no-install-recommends python-bcrypt    && \
     bash -c "if [[ \"$DEBUG\" == \"TRUE\" ]]; then echo '* * * DEBUG BUILD * * *' && \
         apt-get install -y --no-install-recommends vim procps lsof telnet; fi"    && \
     rm -rf /var/lib/apt/lists/* && \

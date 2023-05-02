@@ -5,8 +5,8 @@ TAG=$1
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <tag>"
-    TAG="2.18.0"
-    echo "where <tag> is typically set to the metacat version. setting to default: ${TAG}"
+    TAG="2.19.0"
+    echo "where <tag> is typically set to the metacat version. Setting to default: ${TAG}"
 fi
 
 RELEASE="metacat-bin-${TAG}.tar.gz"
@@ -18,4 +18,4 @@ fi
 
 # Launch docker
 cp ../"${RELEASE}" .
-docker image build --tag metacat:"$TAG" --build-arg TAG="$TAG" .
+docker image build --no-cache --tag metacat:"$TAG" --build-arg TAG="$TAG" --build-arg DEBUG="TRUE" .
