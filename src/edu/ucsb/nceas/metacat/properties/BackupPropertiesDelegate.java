@@ -221,7 +221,7 @@ public class BackupPropertiesDelegate {
                 backupDirPath = Paths.get(PropertyService.getProperty("application.backupDir"));
             } catch (InvalidPathException | PropertyNotFoundException e) {
                 logMetacat.error(
-                    "'getSitePropertiesPath(): application.backupDir' property not found: "
+                    "'getBackupDirPath(): application.backupDir' property not found: "
                         + e.getMessage());
             }
             if (isBlankPath(backupDirPath)) {
@@ -263,7 +263,7 @@ public class BackupPropertiesDelegate {
                 }
             } else {
                 logAndThrow(
-                    "CRITICAL: getSitePropertiesPath() Unable to find a suitable backup directory",
+                    "CRITICAL: getBackupDirPath() Unable to find a suitable backup directory",
                     null);
             }
         }

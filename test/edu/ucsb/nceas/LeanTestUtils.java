@@ -95,7 +95,8 @@ public class LeanTestUtils {
      * @return true on successful completion; false otherwise
      */
     public static boolean initializePropertyService(PropertiesMode mode) {
-        Path defaultPropsFilePath = (mode == PropertiesMode.UNIT_TEST) ? DEFAULT_PROPS_FILE_PATH :
+        Path defaultPropsFilePath = (mode == PropertiesMode.UNIT_TEST) ?
+            DEFAULT_PROPS_FILE_PATH :
             getLiveDefaultPropsPath();
         Path sitePropsFilePath = (mode == PropertiesMode.UNIT_TEST) ?
             SITE_PROPS_FILE_PATH :
@@ -107,8 +108,9 @@ public class LeanTestUtils {
                 PropertyService.getInstanceForTesting(defaultPropsFilePath, sitePropsFilePath);
             success = (propertyService != null);
         } catch (ServiceException e) {
-            debug(
-                "LeanTestUtils: Unexpected problem initializing PropertyService" + e.getMessage());
+            debug("LeanTestUtils: Unexpected problem initializing PropertyService in " + mode
+                + " mode: " + e.getMessage() + " -- defaultPropsFilePath was: "
+                + defaultPropsFilePath + "and sitePropsFilePath was: " + sitePropsFilePath);
             e.printStackTrace();
             success = false;
         }
@@ -119,8 +121,8 @@ public class LeanTestUtils {
     }
 
     /**
-     * Test other methods are working OK, since they are static, so can't be tagged as @Test
-     * A beneficial side effect is that there's no need to add this class to the test excludes in
+     * Test other methods are working OK, since they are static, so can't be tagged as @Test. A
+     * beneficial side effect is that there's no need to add this class to the test excludes in
      * build.xml
      */
     @Test
@@ -133,8 +135,9 @@ public class LeanTestUtils {
         Path defaults = Paths.get(expectedProps.getProperty("metacat.contextDir"), "WEB-INF",
             "metacat.properties");
         assertEquals(defaults, getLiveDefaultPropsPath());
-        Path site = Paths.get(expectedProps.getProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY),
-            PropertyService.SITE_PROPERTIES_FILENAME);
+        Path site =
+            Paths.get(expectedProps.getProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY),
+                PropertyService.SITE_PROPERTIES_FILENAME);
         assertEquals(site, getLiveSitePropsPath(defaults));
     }
 
