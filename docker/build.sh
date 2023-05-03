@@ -18,4 +18,4 @@ fi
 
 # Launch docker
 cp ../"${RELEASE}" .
-docker image build --no-cache --tag metacat:"$TAG" --build-arg TAG="$TAG" --build-arg DEBUG="TRUE" .
+docker image build --no-cache --tag metacat:"$TAG" --build-arg TAG="$TAG" .

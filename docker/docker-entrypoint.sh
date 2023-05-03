@@ -48,7 +48,8 @@ if [ "$1" = 'catalina.sh' ]; then
         /var/metacat/inline-data \
         /var/metacat/documents \
         /var/metacat/temporary \
-        /var/metacat/logs
+        /var/metacat/logs \
+        /var/metacat/config
 
     # copy mounted read-only properties to (rw) location expected by metacat.
     # TODO MB: this will be changed when properties inheritance is added
