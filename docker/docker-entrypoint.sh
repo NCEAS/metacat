@@ -36,7 +36,7 @@ if [ "$1" = 'catalina.sh' ]; then
         echo "MetacatUI.AppConfig = {"
         echo "  theme: \"knb\","
         echo "  root: \"/metacatui\","
-        echo "  metacatContext: \"/metacat\","
+        echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
         echo "  baseUrl: \"http://localhost:8080\""
         echo "}"
     } > ${TC_HOME}/webapps/config/config.js
@@ -49,11 +49,17 @@ if [ "$1" = 'catalina.sh' ]; then
         /var/metacat/documents \
         /var/metacat/temporary \
         /var/metacat/logs \
-        /var/metacat/config
+        /var/metacat/config \
+        /var/metacat/.metacat
 
-    # copy mounted read-only properties to (rw) location expected by metacat.
-    # TODO MB: this will be changed when properties inheritance is added
-    cp -f /etc/metacat/metacat.app.properties ${TC_HOME}/webapps/metacat/WEB-INF/metacat.properties
+    # if DEBUG, set the root log level accordingly
+    if [[ "$DEBUG" == "TRUE" ]]; then
+      sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' ${TC_HOME}/webapps/metacat/WEB-INF/classes/log4j2.properties;
+      echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
+    fi
+
+    # copy mounted read-only metacat-site.properties to (rw) location expected by metacat
+    cp -f /etc/metacat/metacat-site.properties.readonly /var/metacat/config/metacat-site.properties
 
     # If env has an admin/password set, but it does not exist in the passwords file, then add it
     if [ -n "$ADMIN" ]; then

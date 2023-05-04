@@ -14,7 +14,8 @@ ENV DEBUG=${DEBUG}
 ADD metacat-bin-${TAG}.tar.gz /tmp
 
 RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list && \
-    # above line necessary only because we're using an O-L-D image. Try to use a newer one when we no longer need jre8 \
+    # TODO: Try to replace "tomcat:8.0-jre8" with a newer image when we no longer need jre8, and remove above line.
+    # Necessary because Debian 9/stretch moved to archive.debian.org - https://lists.debian.org/debian-devel-announce/2023/03/msg00006.html
     # see https://unix.stackexchange.com/questions/743839/apt-get-update-failed-to-fetch-debian-amd64-packages-while-building-dockerfile-f
     apt-get update && apt-get install -y --no-install-recommends python-bcrypt    && \
     bash -c "if [[ \"$DEBUG\" == \"TRUE\" ]]; then echo '* * * DEBUG BUILD * * *' && \

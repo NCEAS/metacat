@@ -53,8 +53,8 @@ spec:
             - name: ADMINPASS
               value: admin
           volumeMounts:
-            - mountPath: /etc/metacat/metacat.app.properties
-              subPath: metacat.properties
+            - mountPath: /etc/metacat/metacat-site.properties.readonly
+              subPath: metacat-site.properties
               name: {{ .Release.Name }}-config-volume
           livenessProbe:
             httpGet:

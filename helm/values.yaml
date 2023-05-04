@@ -101,13 +101,13 @@ affinity: {}
 
 metacat:
   administratorId: admin@localhost
+  applicationContext: metacat
+  databaseHostname: host.docker.internal
+  databaseName: metacat
+  # TODO - MB -- MOVE TO SECRETS!!
+  databasePassword: metacat
+  databaseUser: metacat
   serverHostName: metacat.example.com
   serverHttpPort: "8080"
   serverHttpSslPort: "8443"
-  applicationContext: metacat
   solrHostname: host.docker.internal
-  databaseHostname: host.docker.internal
-  databaseName: metacat
-  databaseUser: metacat
-  # TODO - MB -- MOVE TO SECRETS!!
-  databasePassword: metacat
