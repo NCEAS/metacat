@@ -1,0 +1,21 @@
+# For development use:
+# Create a persistent volume using the filesystem on the local machine.
+# Edit the "spec.hostpath.path" below, and then create by running the command:
+#     kubectl apply -f pv-hostpath.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: metacat-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    # ReadWriteOnce:
+    # the volume can be mounted as read-write by a single node. ReadWriteOnce access mode still
+    # can allow multiple pods to access the volume when the pods are running on the same node.
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    # path: /path/on/local/dev/filesystem
+    path: /var/metacat-pv

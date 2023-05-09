@@ -1,10 +1,23 @@
 # Default values for metacat.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-
-replicaCount: 1
+metacat:
+  administratorId: admin@localhost
+  # TODO - MB -- MOVE TO SECRETS!!
+  administratorPassword: admin
+  applicationContext: metacat
+  databaseHostname: host.docker.internal
+  databaseName: metacat
+  # TODO - MB -- MOVE TO SECRETS!!
+  databasePassword: metacat
+  databaseUser: metacat
+  serverHostName: metacat.example.com
+  serverHttpPort: "8080"
+  serverHttpSslPort: "8443"
+  solrHostname: host.docker.internal
 
 image:
+  #TODO pull from github container repo, e.g. see indexer: ghcr.io/dataoneorg/dataone-index-worker
   repository: metacat
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
@@ -14,7 +27,8 @@ image:
   fullnameOverride: ""
   
 global:
-  #TODO storageClass: csi-rbd-sc
+  #TODO
+  #storageClass: csi-rbd-sc
   #solrPort: &global-solr-port 8983
 
 serviceAccount:
@@ -41,6 +55,7 @@ securityContext: {}
   #   - ALL
 
 service:
+  # TODO: rethink this when dev finished
   type: LoadBalancer
   ports:
   - port: 8080
@@ -72,42 +87,7 @@ tolerations: []
 
 affinity: {}
 
-# persistence:
-#   claimName: metacat-pvc
-#   volumeName: metacat-pv
-#   mountPath: /var/metacat
-
-  #readinessProbe:
-  #    enabled: false
-  #customReadinessProbe:
-  #    failureThreshold: 6
-  #    initialDelaySeconds: 60
-  #    periodSeconds: 10
-  #    successThreshold: 1
-  #    timeoutSeconds: 15
-  #    initialDelaySeconds: 60
-  #    failureThreshold: 6
-  #    exec:
-  #      command:
-  #        - /bin/bash
-  #        - -ec
-  #        - |
-  #          curl --silent --connect-timeout 15000 --user ${SOLR_ADMIN_USERNAME}:${SOLR_ADMIN_PASSWORD} http://localhost:${SOLR_PORT_NUMBER}/api/node/health | grep --quiet  '\"status\":\"OK\"'
-  # lifecycleHooks:
-  #     postStart:
-  #       exec:
-          # #command: ["/bin/bash", "-c", "env > /tmp/lifecycle-env"]
-          # command: ["/bin/bash", "-c", "/solrconfig/config-solr.sh"]
-
-metacat:
-  administratorId: admin@localhost
-  applicationContext: metacat
-  databaseHostname: host.docker.internal
-  databaseName: metacat
-  # TODO - MB -- MOVE TO SECRETS!!
-  databasePassword: metacat
-  databaseUser: metacat
-  serverHostName: metacat.example.com
-  serverHttpPort: "8080"
-  serverHttpSslPort: "8443"
-  solrHostname: host.docker.internal
+persistence:
+  enabled: true
+  existingClaim: metacat-pvc
+  volumeName: metacat-volume

@@ -1,0 +1,19 @@
+# Create a persistent volume claim. This should be done only one time, separately from the helm install/upgrade cycle,
+# because deleting and re-creating the PersistentVolumeClaim would result in the claim being unable to re-bind to the
+# persistentVolume.
+#
+# NOTE: ensure that the metacat-pv PersistentVolume has already been created before creating the PersistentVolumeClaim!
+# see pv-hostpath.yaml for details
+#
+# Create by running the command:        kubectl apply -f pvclaim.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: metacat-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ""

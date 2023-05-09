@@ -5,9 +5,7 @@ metadata:
   labels:
     {{- include "metacat.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "metacat.selectorLabels" . | nindent 6 }}
@@ -44,18 +42,20 @@ spec:
               name: metacat-debug
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          env: 
-            # TODO - MB:
-            # ADMINPASS SHOULD BE IN SECRETS! Better still, how can we omit this step altogether? (Used only by 
-            # docker-entrypoint.sh to curl-login to metacat admin interface.)
-            - name: ADMIN
-              value: admin@localhost
-            - name: ADMINPASS
-              value: admin
           volumeMounts:
-            - mountPath: /etc/metacat/metacat-site.properties.readonly
+            - name: {{ .Release.Name }}-config-volume
+              mountPath: /etc/metacat/metacat-site.properties.readonly
               subPath: metacat-site.properties
-              name: {{ .Release.Name }}-config-volume
+            - name: {{ .Values.persistence.volumeName }}
+              mountPath: /var/metacat
+          env:
+            - name: ADMIN
+              value: {{ .Values.metacat.administratorId }}
+            # TODO - MB:
+            # ADMINPASS SHOULD BE IN SECRETS! Better still, how can we omit this step altogether? (Used only by
+            # docker-entrypoint.sh to curl-login to metacat admin interface.)
+            - name: ADMINPASS
+              value: {{ .Values.metacat.administratorPassword }}
           livenessProbe:
             httpGet:
               path: /
@@ -69,3 +69,6 @@ spec:
           configMap:
             name: {{ .Release.Name }}-configfiles
             defaultMode: 0644
+        - name: {{ .Values.persistence.volumeName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
