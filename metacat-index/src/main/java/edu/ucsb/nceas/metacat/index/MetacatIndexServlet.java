@@ -62,8 +62,6 @@ public class MetacatIndexServlet extends HttpServlet {
         File contextDeploymentDir = new File(config.getServletContext().getRealPath("/"));
         String fullMetacatDefaultPropertiesFilePath =
             contextDeploymentDir.getParent() + metacatPropertiesFilePath;
-        String fullMetacatSitePropertiesFilePath =
-            config.getServletContext().getInitParameter("site.properties.path");
         //System.out.println("the url is "+url);
         //System.out.println("the path is "+url.getPath());
         //System.out.println("the file is "+url.getPath());
@@ -74,7 +72,7 @@ public class MetacatIndexServlet extends HttpServlet {
             // .getFile(), fullMetacatPropertiesFilePath);
             ApplicationController controller =
                 new ApplicationController("/index-processor-context.xml",
-                    fullMetacatDefaultPropertiesFilePath, fullMetacatSitePropertiesFilePath);
+                    fullMetacatDefaultPropertiesFilePath);
             //Start the controller in other thread - SystemmetadataEventListener and to generate
             // indexes for those haven't been indexed in another thread
             Thread controllerThread = new Thread(controller);

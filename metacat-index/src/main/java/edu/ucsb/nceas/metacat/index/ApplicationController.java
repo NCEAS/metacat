@@ -20,6 +20,8 @@ package edu.ucsb.nceas.metacat.index;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -56,7 +58,6 @@ public class ApplicationController implements Runnable {
     private static ApplicationContext context = null;
     private String springConfigFileURL = "/index-processor-context.xml";
     private String metacatDefaultPropertiesFile;
-    private String metacatSitePropertiesFile;
     private static int waitingTime = IndexGeneratorTimerTask.WAITTIME;
     private static int maxAttempts = IndexGeneratorTimerTask.MAXWAITNUMBER;
     private static long period = DEFAULTINTERVAL;
@@ -70,18 +71,15 @@ public class ApplicationController implements Runnable {
      * Set the Spring configuration file url and metacat.properties file
      * @param springConfigFileURL  the path of the Spring configuration file
      * @param metacatDefaultPropertiesFile  the path of the metacat.properties file
-     * @param metacatSitePropertiesFile  the path of the metacat-site.properties file
      */
-    public ApplicationController(String springConfigFileURL, String metacatDefaultPropertiesFile,
-        String metacatSitePropertiesFile) {
+    public ApplicationController(String springConfigFileURL, String metacatDefaultPropertiesFile) {
         this.springConfigFileURL = springConfigFileURL;
         this.metacatDefaultPropertiesFile = metacatDefaultPropertiesFile;
-        this.metacatSitePropertiesFile = metacatSitePropertiesFile;
         //init();
     }
 
     public ApplicationController(String springConfigFileURL) {
-        this(springConfigFileURL, null, null);
+        this(springConfigFileURL, null);
     }
 
     /**
@@ -111,28 +109,33 @@ public class ApplicationController implements Runnable {
             times++;
             if (times >= maxAttempts) {
                 log.error(
-                    "ApplicationController.initialzeSharedConfiguration - MetacatIndex wait a "
+                    "ApplicationController.initializeSharedConfiguration - MetacatIndex wait a "
                         + "while and still can't find the metacat.properties file.");
                 break;//we still break the while loop and continue. But the properties in the
                 // metacat.properties can't be read.
             }
         }
         // metacatSitePropertiesFile is outside the tomcat webapps dir, so it should be available
+        Path metacatSitePropertiesFilePath = null;
         try {
             Settings.getConfiguration();
             Settings.augmentConfiguration(metacatDefaultPropertiesFile);
-            File metacatSiteProperties = new File(metacatSitePropertiesFile);
-            if (metacatSiteProperties.exists()) {
-                Settings.augmentConfiguration(metacatSitePropertiesFile);
+            metacatSitePropertiesFilePath = Paths.get(
+                Settings.getConfiguration().getString("application" + ".sitePropertiesDir"),
+                "metacat-site.properties");
+            if (metacatSitePropertiesFilePath.toFile().exists()) {
+                Settings.augmentConfiguration(metacatSitePropertiesFilePath.toString());
             } else {
-                log.error(
-                    "Could not find Metacat site properties at: " + metacatSitePropertiesFile);
+                String errorMsg =
+                    "Could not find Metacat site properties at: " + metacatSitePropertiesFilePath;
+                log.error(errorMsg);
+                throw new ConfigurationException(errorMsg);
             }
         } catch (ConfigurationException e) {
             log.error("Could not initialize shared Metacat properties. Tried with default "
                 + "properties file at: " + metacatDefaultPropertiesFile
-                + " and site properties file" + " at: " + metacatSitePropertiesFile
-                + e.getMessage(), e);
+                + " and site properties file" + " at: " + metacatSitePropertiesFilePath
+                + "; error was: " + e.getMessage(), e);
         }
         
         // make sure hazelcast configuration is defined so that
