@@ -15,7 +15,6 @@ public class PropertiesAdminTest {
 
     private final String MC_IDX_TEST_CONTEXT = "metacat-index-test-context";
     private final String TEST_DEPLOY_DIR = "test/resources/edu/ucsb/nceas/metacat/admin";
-    private final String SITE_PROPS_DIR_PATH = "/var/test/my/site/props";
     private String originalWebXml;
 
     @Before
@@ -46,63 +45,6 @@ public class PropertiesAdminTest {
             assertEquals("incorrect replacement of metacat.properties.path", mcExpectedXml,
                 PropertiesAdmin.getInstance()
                     .updateMetacatPropertiesPath(MC_IDX_TEST_CONTEXT, originalWebXml));
-
-        } catch (UtilException e) {
-            e.printStackTrace();
-            fail("unexpected exception: " + e.getMessage());
-        }
-    }
-
-    @Test
-    public void modifyIndexContextParams_SitePropsPathChanged_TrailingSlash() {
-
-        try {
-            //update only site.properties.path
-            String siteExpectedXml = FileUtil.readFileToString(
-                Paths.get(TEST_DEPLOY_DIR, MC_IDX_TEST_CONTEXT, "WEB-INF", "web-site-expected.xml")
-                    .toString(), "UTF-8");
-            assertEquals("incorrect replacement of site.properties.path", siteExpectedXml,
-                PropertiesAdmin.getInstance()
-                    .updateSitePropertiesPath(SITE_PROPS_DIR_PATH + "/", originalWebXml));
-
-        } catch (UtilException e) {
-            e.printStackTrace();
-            fail("unexpected exception: " + e.getMessage());
-        }
-    }
-
-    @Test
-    public void modifyIndexContextParams_SitePropsPathChanged() {
-
-        try {
-            //update only site.properties.path
-            String siteExpectedXml = FileUtil.readFileToString(
-                Paths.get(TEST_DEPLOY_DIR, MC_IDX_TEST_CONTEXT, "WEB-INF", "web-site-expected.xml")
-                    .toString(), "UTF-8");
-            assertEquals("incorrect replacement of site.properties.path", siteExpectedXml,
-                PropertiesAdmin.getInstance()
-                    .updateSitePropertiesPath(SITE_PROPS_DIR_PATH, originalWebXml));
-
-        } catch (UtilException e) {
-            e.printStackTrace();
-            fail("unexpected exception: " + e.getMessage());
-        }
-    }
-
-    @Test
-    public void modifyIndexContextParams_BothPropsPathsChanged() {
-
-        try {
-            //update both
-            String bothExpectedXml = FileUtil.readFileToString(
-                Paths.get(TEST_DEPLOY_DIR, MC_IDX_TEST_CONTEXT, "WEB-INF", "web-both-expected.xml")
-                    .toString(), "UTF-8");
-            String mcUpdated = PropertiesAdmin.getInstance()
-                .updateMetacatPropertiesPath(MC_IDX_TEST_CONTEXT, originalWebXml);
-            String bothUpdated = PropertiesAdmin.getInstance()
-                .updateSitePropertiesPath(SITE_PROPS_DIR_PATH, mcUpdated);
-            assertEquals("incorrect replacement of one or both paths", bothExpectedXml,
-                bothUpdated);
 
         } catch (UtilException e) {
             e.printStackTrace();
