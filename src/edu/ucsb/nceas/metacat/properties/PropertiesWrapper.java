@@ -14,6 +14,7 @@ import javax.xml.transform.TransformerException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -277,8 +278,7 @@ public class PropertiesWrapper {
                         PropertyService.SITE_PROPERTIES_FILENAME + ".OLD");
                     try {
                         Files.move(sitePropertiesFilePath, oldFilePath);
-                        logMetacat.info(
-                            "Old Site properties file renamed to: " + oldFilePath);
+                        logMetacat.info("Old Site properties file renamed to: " + oldFilePath);
                     } catch (IOException e) {
                         logMetacat.error("Problem renaming old Site Properties file from: "
                             + sitePropertiesFilePath + " to: " + oldFilePath);
@@ -355,8 +355,6 @@ public class PropertiesWrapper {
                 + sitePropertiesFilePath + " -- for a total of "
                 + mainProperties.stringPropertyNames().size() + " Property entries");
 
-            store(); //to persist new value of site properties path
-
             // include main metacat properties in d1 properties as overrides
             try {
                 Settings.getConfiguration();
@@ -385,7 +383,7 @@ public class PropertiesWrapper {
         }
     }
 
-    private void initSitePropertiesFilePath() throws GeneralPropertyException, IOException {
+    private void initSitePropertiesFilePath() throws GeneralPropertyException {
 
         if (isNotBlankPath(sitePropertiesFilePath)) {
             logMetacat.debug("PropertiesWrapper.initSitePropertiesFilePath(): already set: "
@@ -406,20 +404,47 @@ public class PropertiesWrapper {
 
             if (!Files.exists(sitePropertiesFilePath)) {
                 //EITHER:
-                // (1) it's the first run, so there are no site props, OR
+                // (1) it's the first run, so there are no site props,
+                // OR
                 // (2) the site props exists and has already been stored at a path different from
                 // the default, but this is a re-installation that has overwritten the changes in
                 // metacat.properties
+                //
+                // For both cases, create an empty file, since none exists at this path. User will
+                // need to reconfigure anyway, thus setting real path to site props for case (2)
+                try {
+                    Files.createDirectories(
+                        sitePropertiesFilePath.getParent()); // no-op if already existing
+                    Files.createFile(
+                        sitePropertiesFilePath); // does atomic recheck-not-exists-&-create
 
-                // For both cases, create an empty file, since none exists at this path:
-                Files.createDirectories(
-                    sitePropertiesFilePath.getParent()); // no-op if already existing
-                Files.createFile(sitePropertiesFilePath); // does atomic recheck-not-exists-&-create
+                } catch (FileAlreadyExistsException e) {
+                    logAndThrow("PropertiesWrapper.initSitePropertiesFilePath(): "
+                        + "problem creating directory hierarchy for site properties file at: "
+                        + sitePropertiesFilePath + "; one of these directories already exists, but"
+                        + " is not a directory (i.e. there's something else in the way!)", e);
+
+                } catch (UnsupportedOperationException e) {
+                    logAndThrow("PropertiesWrapper.initSitePropertiesFilePath(): "
+                        + "problem creating directory hierarchy for site properties file at: "
+                        + sitePropertiesFilePath + "; could not set attributes for one of these "
+                        + "directories", e);
+
+                } catch (SecurityException e) {
+                    logAndThrow("PropertiesWrapper.initSitePropertiesFilePath(): "
+                        + "a security manager is installed and has denied checkPropertyAccess "
+                        + "permission while creating directories or site properties file at: "
+                        + sitePropertiesFilePath, e);
+
+                } catch (IOException e) {
+                    logAndThrow("PropertiesWrapper.initSitePropertiesFilePath(): a general I/O "
+                        + "error occurred while trying to create directory hierarchy or actual "
+                        + "file for site properties at: " + sitePropertiesFilePath
+                        + "; see exception message for details", e);
+                }
                 logMetacat.info(
-                    "PropertiesWrapper.initialize(): no site properties file found; created: "
-                        + sitePropertiesFilePath);
-                // that takes care of both cases, since user will need to reconfigure anyway,
-                // which will set the real path to the site props for case (2)
+                    "PropertiesWrapper.initSitePropertiesFilePath(): no site properties file "
+                        + "found; new one created at: " + sitePropertiesFilePath);
             }
         }
     }
