@@ -44,13 +44,13 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: {{ .Release.Name }}-config-volume
-              mountPath: /etc/metacat/metacat-site.properties.readonly
+              mountPath: /var/metacat/config/metacat-site.properties
               subPath: metacat-site.properties
             - name: {{ .Values.persistence.volumeName }}
               mountPath: /var/metacat
           env:
             - name: ADMIN
-              value: {{ .Values.metacat.administratorId }}
+              value: {{ .Values.metacat.administratorUsername }}
             # TODO - MB:
             # ADMINPASS SHOULD BE IN SECRETS! Better still, how can we omit this step altogether? (Used only by
             # docker-entrypoint.sh to curl-login to metacat admin interface.)

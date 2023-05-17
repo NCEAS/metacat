@@ -58,9 +58,6 @@ if [ "$1" = 'catalina.sh' ]; then
       echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
     fi
 
-    # copy mounted read-only metacat-site.properties to (rw) location expected by metacat
-    cp -f /etc/metacat/metacat-site.properties.readonly /var/metacat/config/metacat-site.properties
-
     # If env has an admin/password set, but it does not exist in the passwords file, then add it
     if [ -n "$ADMIN" ]; then
         USER_PWFILE="/var/metacat/users/password.xml"

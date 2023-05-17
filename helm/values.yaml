@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 metacat:
-  administratorId: admin@localhost
+  administratorUsername: admin@localhost
   # TODO - MB -- MOVE TO SECRETS!!
   administratorPassword: admin
   applicationContext: metacat
@@ -10,7 +10,11 @@ metacat:
   databaseName: metacat
   # TODO - MB -- MOVE TO SECRETS!!
   databasePassword: metacat
-  databaseUser: metacat
+  databaseUsername: metacat
+  guidDoiEnabled: true
+  # TODO - MB -- MOVE TO SECRETS!!
+  guidDoiUsername: apitest
+  guidDoiPassword: apitest
   serverHostName: metacat.example.com
   serverHttpPort: "8080"
   serverHttpSslPort: "8443"
