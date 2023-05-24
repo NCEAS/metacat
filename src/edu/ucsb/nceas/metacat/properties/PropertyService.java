@@ -56,6 +56,7 @@ public class PropertyService extends BaseService {
      *                                  /var/lib/tomcat/webapps/WEB-INF/metacat.properties)
      * @param sitePropertiesFilePath    (Can be null) Full path to the site properties file (e.g.
      *                                  /var/metacat/config/metacat-site.properties)
+     * @throws ServiceException if initialization of Delegate objects fails
      */
     private PropertyService(Path defaultPropertiesFilePath, Path sitePropertiesFilePath)
         throws ServiceException {
@@ -74,6 +75,7 @@ public class PropertyService extends BaseService {
      *
      * @param context a reference to the ServletContext
      * @return the single instance of PropertyService
+     * @throws ServiceException if initialization of new instance fails
      */
     public static PropertyService getInstance(ServletContext context) throws ServiceException {
         if (propertyService == null) {
@@ -94,6 +96,7 @@ public class PropertyService extends BaseService {
      *
      * @param testConfigFileDir the test configuration directory we need to look in
      * @return the single instance of PropertyService
+     * @throws ServiceException if initialization of new instance fails
      */
     public static PropertyService getInstance(String testConfigFileDir) throws ServiceException {
         if (propertyService == null) {
@@ -114,6 +117,7 @@ public class PropertyService extends BaseService {
      * @param testSitePropertiesFilePath    the path to the site-specific properties overlay file
      *                                      (relative to the working directory)
      * @return the single instance of PropertyService
+     * @throws ServiceException if initialization of new instance fails
      */
     public static PropertyService getInstanceForTesting(Path testDefaultPropertiesFilePath,
         Path testSitePropertiesFilePath) throws ServiceException {
@@ -136,6 +140,9 @@ public class PropertyService extends BaseService {
      * servlet context or the config file path
      *
      * @return the single instance of PropertyService
+     * @throws ServiceException if there was an attempt to call getInstance() without parameters,
+     *                          before a PropertyService instance has first been created with either
+     *                          a servlet context or config file path.
      */
     public static PropertyService getInstance() throws ServiceException {
         if (propertyService == null) {
@@ -184,6 +191,8 @@ public class PropertyService extends BaseService {
      *
      * @param groupName the prefix of the keys to search for.
      * @return Map of property names
+     * @throws PropertyNotFoundException if the passed <code>groupName</code> key is not in the
+     *                                   properties at all
      */
     public static Map<String, String> getPropertiesByGroup(String groupName)
         throws PropertyNotFoundException {
@@ -195,6 +204,7 @@ public class PropertyService extends BaseService {
      *
      * @param propertyName the name of the property requested
      * @param newValue     the new value for the property
+     * @throws GeneralPropertyException if there are problems manipulating the required properties
      */
     public static void setProperty(String propertyName, String newValue)
         throws GeneralPropertyException {
@@ -210,6 +220,7 @@ public class PropertyService extends BaseService {
      *
      * @param propertyName the name of the property requested
      * @param newValue     the new value for the property
+     * @throws GeneralPropertyException if there are problems manipulating the required properties
      */
     public static void setPropertyNoPersist(String propertyName, String newValue)
         throws GeneralPropertyException {
@@ -218,6 +229,8 @@ public class PropertyService extends BaseService {
 
     /**
      * Save the properties to a properties file on disk.
+     *
+     * @throws GeneralPropertyException if there are problems manipulating the properties
      */
     public static void persistProperties() throws GeneralPropertyException {
         properties.persistProperties();
@@ -230,7 +243,7 @@ public class PropertyService extends BaseService {
      *
      * @return a SortedProperties object with the backup properties
      */
-    public static SortedProperties getMainBackupProperties() throws GeneralPropertyException {
+    public static SortedProperties getMainBackupProperties() {
         return backupPropertiesDelegate.getMainBackupProperties();
     }
 
@@ -241,7 +254,7 @@ public class PropertyService extends BaseService {
      *
      * @return a SortedProperties object with the backup properties
      */
-    public static SortedProperties getAuthBackupProperties() throws GeneralPropertyException {
+    public static SortedProperties getAuthBackupProperties() {
         return authPropertiesDelegate.getAuthBackupProperties();
     }
 
@@ -251,7 +264,7 @@ public class PropertyService extends BaseService {
      *
      * @return a PropertiesMetaData object with the main properties metadata
      */
-    public static PropertiesMetaData getMainMetaData() throws GeneralPropertyException {
+    public static PropertiesMetaData getMainMetaData() {
         return properties.getMainMetaData();
     }
 
@@ -261,19 +274,29 @@ public class PropertyService extends BaseService {
      *
      * @return a PropertiesMetaData object with the organization properties metadata
      */
-    public static PropertiesMetaData getAuthMetaData() throws GeneralPropertyException {
-        return authPropertiesDelegate.getAuthMetaData();
+    public static PropertiesMetaData getAuthMetaData() {
+        return authPropertiesDelegate.getAuthPropertiesMetadata();
     }
 
     /**
-     * Writes out backup configurable properties to a file.
+     * Writes out configurable properties to a backup file outside the metacat install directory,
+     * so they are not lost if metacat installation is overwritten during an upgrade. These backup
+     * properties are used by the admin page to populate defaults when the configuration is edited.
+     * (They are also used to overwrite the main properties if bypassConfiguration() is called)
+     *
+     * @throws GeneralPropertyException if there are problems manipulating the required properties
      */
     public static void persistMainBackupProperties() throws GeneralPropertyException {
         backupPropertiesDelegate.persistMainBackupProperties();
     }
 
     /**
-     * Writes out backup configurable properties to a file.
+     * Writes out configurable properties to a backup file outside the metacat install directory,
+     * so they are not lost if metacat installation is overwritten during an upgrade. These backup
+     * properties are used by the admin page to populate defaults when the configuration is edited.
+     * (They are also used to overwrite the main properties if bypassConfiguration() is called)
+     *
+     * @throws GeneralPropertyException if there are problems manipulating the required properties
      */
     public static void persistAuthBackupProperties() throws GeneralPropertyException {
         authPropertiesDelegate.persistAuthBackupProperties();
@@ -283,6 +306,7 @@ public class PropertyService extends BaseService {
      * Reports whether properties are fully configured.
      *
      * @return returns true if all properties are configured, and false otherwise
+     * @throws GeneralPropertyException if there are problems finding the required properties
      */
     public static boolean arePropertiesConfigured() throws GeneralPropertyException {
         return backupPropertiesDelegate.arePropertiesConfigured();
@@ -296,19 +320,21 @@ public class PropertyService extends BaseService {
      *
      * @return true if dev.runConfiguration is set to true in metacat.properties AND we have not
      * already checked for bypass; false otherwise.
+     * @throws GeneralPropertyException if there are problems manipulating the required properties
      */
     public static boolean doBypass() throws GeneralPropertyException {
         return backupPropertiesDelegate.canBypass();
     }
 
     /**
-     * Bypasses the metacat properties configuration utility (for dev use only).
+     * (for dev use only) Bypasses the properties configuration utility by using the backup
+     * properties to overwrite the main properties.
      */
-    public static void bypassConfiguration() throws GeneralPropertyException {
+    public static void bypassConfiguration() {
         logMetacat.debug("bypassConfiguration(): setting main backup properties.");
         backupPropertiesDelegate.bypassConfiguration();
         logMetacat.debug("bypassConfiguration(): setting auth backup properties.");
-        authPropertiesDelegate.bypassAuthConfiguration(properties);
+        authPropertiesDelegate.bypassAuthConfiguration();
     }
 
     /**
@@ -363,6 +389,7 @@ public class PropertyService extends BaseService {
      * The properties on the dataONE Setting class isn't synchronized with changes to the Metacat
      * properties files. This method synchronizes (reloads) the properties' changes to the Settings
      * class, and should be called whenever the property files are modified.
+     * @throws GeneralPropertyException if there's a problem calling Settings.augmentConfiguration()
      */
     public static void syncToSettings() throws GeneralPropertyException {
         try {
@@ -376,18 +403,32 @@ public class PropertyService extends BaseService {
         }
     }
 
+    /**
+     *  Get the path to the main Metadata file, which holds configuration information about main
+     *  properties. This is primarily used to display input fields on the configuration page. The
+     *  information is retrieved from an xml metadata file
+     */
     public static Path getMainMetadataFilePath() {
         return properties.getMainMetadataFilePath();
     }
 
+    /**
+     * Get the path to the directory where the backup properties are stored, and as a
+     * side effect, update the properties file to save this path as "application.backupDir"
+     *
+     * @return java.nio.Path representation of the directory path
+     * @throws GeneralPropertyException if there are issues retrieving or persisting the value
+     */
     public static Path getBackupDirPath() throws GeneralPropertyException {
         return backupPropertiesDelegate.getBackupDirPath();
     }
 
+    @Override
     public boolean refreshable() {
         return true;
     }
 
+    @Override
     public void doRefresh() throws ServiceException {
         try {
             properties.doRefresh();
@@ -398,6 +439,7 @@ public class PropertyService extends BaseService {
         }
     }
 
+    @Override
     public void stop() throws ServiceException {
     }
 

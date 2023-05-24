@@ -22,6 +22,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+/**
+ * BackupPropertiesDelegate handles functionality related to backing up the main properties for
+ * metacat configuration. Since it is a singleton class that has a private constructor, a shared
+ * instance of BackupPropertiesDelegate can be obtained by a call to the static method
+ * BackupPropertiesDelegate.getInstance().
+ * However, PropertyService should be the only class instantiating BackupPropertiesDelegate and
+ * calling its methods. When PropertyService receives Authentication-related method calls, they are
+ * simply "passed through" and delegated directly to the corresponding methods in
+ * BackupPropertiesDelegate. This pattern was used to improve encapsulation, separation of
+ * concerns, readability, and reasoning about how the codebase works.
+ *
+ * @see edu.ucsb.nceas.metacat.properties.PropertyService
+ */
 public class BackupPropertiesDelegate {
     static boolean bypassAlreadyChecked = false;
     // Full Path to the DIRECTORY containing the configuration BACKUP files (such as
@@ -31,11 +44,17 @@ public class BackupPropertiesDelegate {
 
     private static BackupPropertiesDelegate instance = null;
     String mainBackupFilePath = null;
-    private static final Log logMetacat = LogFactory.getLog(PropertiesWrapper.class);
+    private static final Log logMetacat = LogFactory.getLog(BackupPropertiesDelegate.class);
 
-
-    private BackupPropertiesDelegate()
-        throws GeneralPropertyException {
+    /**
+     * Private constructor, since this is a Singleton - so we only allow getting a shared
+     * instance through the static getInstance() method
+     *
+     * @throws GeneralPropertyException if there are problems discovering or saving the backup
+     *                                  properties file path, or if there is an IOException
+     *                                  loading the backup properties from the file.
+     */
+    private BackupPropertiesDelegate() throws GeneralPropertyException {
 
         if (Files.exists(getBackupDirPath())) {
             try {
@@ -68,8 +87,17 @@ public class BackupPropertiesDelegate {
         }
     }
 
-    protected static BackupPropertiesDelegate getInstance()
-        throws GeneralPropertyException {
+    /**
+     * Get a shared singleton BackupPropertiesDelegate instance by calling
+     * BackupPropertiesDelegate.getInstance(). If the instance does not already exist, it will be
+     * created on the first call. Subsequent calls will return this same instance.
+     *
+     * @return a shared singleton BackupPropertiesDelegate instance
+     * @throws GeneralPropertyException if there are problems discovering or saving the backup
+     *                                  properties file path, or if there is an IOException
+     *                                  loading the backup properties from the file.
+     */
+    protected static BackupPropertiesDelegate getInstance() throws GeneralPropertyException {
         if (instance == null) {
             instance = new BackupPropertiesDelegate();
         }
@@ -88,7 +116,10 @@ public class BackupPropertiesDelegate {
     }
 
     /**
-     * Writes out backup configurable properties to a file.
+     * Writes out configurable properties to a backup file outside the metacat install directory,
+     * so they are not lost if metacat installation is overwritten during an upgrade. These backup
+     * properties are used by the admin page to populate defaults when the configuration is edited.
+     * (They are also used to overwrite the main properties if bypassConfiguration() is called)
      */
     protected void persistMainBackupProperties() throws GeneralPropertyException {
 
@@ -126,11 +157,15 @@ public class BackupPropertiesDelegate {
     }
 
     /**
-     * Reports whether properties are fully configured.
+     * Reports whether properties are fully configured, by checking the value of the
+     * property "configutil.propertiesConfigured", which is set by PropertiesAdmin.
      *
      * @return a boolean that is true if properties are configured and false otherwise
+     * @throws PropertyNotFoundException if there are problems getting the
+     *                                   "configutil.propertiesConfigured" property
+     * @see edu.ucsb.nceas.metacat.admin.PropertiesAdmin
      */
-    protected boolean arePropertiesConfigured() throws GeneralPropertyException {
+    protected boolean arePropertiesConfigured() throws PropertyNotFoundException {
         String propertiesConfigured =
             PropertyService.getProperty("configutil.propertiesConfigured");
         return propertiesConfigured != null && !propertiesConfigured.equals("false");
@@ -143,6 +178,7 @@ public class BackupPropertiesDelegate {
      *
      * @return true if dev.runConfiguration is set to true in metacat.properties, and we have not
      * already checked for bypass; false otherwise.
+     * @throws PropertyNotFoundException if the "dev.runConfiguration" property cannot be found
      */
     protected boolean canBypass() throws PropertyNotFoundException {
         boolean result = false;
@@ -168,7 +204,8 @@ public class BackupPropertiesDelegate {
     }
 
     /**
-     * Bypasses the metacat properties configuration utility. (Dev use only)
+     * (for dev use only) Bypasses the properties configuration utility by using the backup
+     * properties to overwrite the main properties.
      */
     protected void bypassConfiguration() {
         try {
@@ -190,7 +227,6 @@ public class BackupPropertiesDelegate {
             logMetacat.debug(
                 "bypassConfiguration: setting configutil sections to true.");
             PropertyService.setPropertyNoPersist("configutil.propertiesConfigured", "true");
-            PropertyService.setPropertyNoPersist("configutil.authConfigured", "true");
             PropertyService.setPropertyNoPersist("configutil.skinsConfigured", "true");
             PropertyService.setPropertyNoPersist("configutil.databaseConfigured", "true");
             PropertyService.setPropertyNoPersist("configutil.geoserverConfigured", "bypassed");
@@ -200,16 +236,20 @@ public class BackupPropertiesDelegate {
         } catch (PropertyNotFoundException pnfe) {
             logMetacat.error(
                 "bypassConfiguration: Could not find property: " + pnfe.getMessage());
+            // no further action needed, since this is a dev-only action, and worst-case is that it
+            // results in the dev being prompted to configure metacat again
         } catch (GeneralPropertyException gpe) {
             logMetacat.error(
                 "bypassConfiguration: General property error: " + gpe.getMessage());
+            // no further action needed, since this is a dev-only action, and worst-case is that it
+            // results in the dev being prompted to configure metacat again
         }
         bypassAlreadyChecked = true;
     }
 
     /**
-     * Get the path to the directory where the site-specific properties (aka backup properties) are
-     * stored
+     * Get the path to the directory where the backup properties are stored, and as a
+     * side effect, update the properties file to save this path as "application.backupDir"
      *
      * @return java.nio.Path representation of the directory path
      * @throws GeneralPropertyException if there are issues retrieving or persisting the value
