@@ -174,6 +174,8 @@ public class PropertiesWrapper {
      *
      * @param groupName the prefix of the keys to search for.
      * @return Map of property names
+     * @throws PropertyNotFoundException if the passed <code>groupName</code> key is not in the
+     *                                   properties at all
      */
     protected Map<String, String> getPropertiesByGroup(String groupName)
         throws PropertyNotFoundException {
@@ -190,6 +192,7 @@ public class PropertiesWrapper {
      *
      * @param propertyName the name of the property requested
      * @param newValue     the new value for the property
+     * @throws GeneralPropertyException if there's a problem setting or storing the property
      */
     protected void setProperty(String propertyName, String newValue)
         throws GeneralPropertyException {
@@ -205,6 +208,9 @@ public class PropertiesWrapper {
      *
      * @param propertyName the name of the property requested
      * @param newValue     the new value for the property
+     * @throws GeneralPropertyException if the property wasn't found, or there's a problem
+     *                                  responding to a change in the property
+     *                                  "application.sitePropertiesDir"
      */
     protected void setPropertyNoPersist(String propertyName, String newValue)
         throws GeneralPropertyException {
@@ -223,7 +229,9 @@ public class PropertiesWrapper {
     }
 
     /**
-     * Save the properties to a properties file.
+     * Save the properties to the metacat-site.properties file.
+     *
+     * @throws GeneralPropertyException if an I/O Exception is encountered
      */
     protected void persistProperties() throws GeneralPropertyException {
         store();
@@ -239,18 +247,36 @@ public class PropertiesWrapper {
         return mainMetaData;
     }
 
+    /**
+     * implementation of abstract method in edu.ucsb.nceas.metacat.shared.BaseService, delegated
+     * to by PropertyService, which extends BaseService
+     *
+     * @throws GeneralPropertyException if there is a problem with initialization
+     */
     protected void doRefresh() throws GeneralPropertyException {
         initialize();
     }
 
+    /**
+     *  Get the path to the read-only, default properties in metacat.properties.
+     */
     protected Path getDefaultPropertiesFilePath() {
         return defaultPropertiesFilePath;
     }
 
+    /**
+     *  Get the path to the metacat-site.properties file, which holds configurable properties used
+     *  to override the defaults in metacat.properties.
+     */
     protected Path getSitePropertiesFilePath() {
         return sitePropertiesFilePath;
     }
 
+    /**
+     *  Get the path to the main Metadata file, which holds configuration information about main
+     *  properties. This is primarily used to display input fields on the configuration page. The
+     *  information is retrieved from an xml metadata file
+     */
     protected Path getMainMetadataFilePath() {
         return mainMetadataFilePath;
     }
@@ -465,6 +491,8 @@ public class PropertiesWrapper {
      * java.util.Properties javadoc</a>: "Properties from the defaults table of this Properties
      * table (if any) are not written out by this method." Also, Properties class is thread-safe -
      * no need to synchronize.
+     *
+     * @throws GeneralPropertyException if an I/O Exception is encountered
      */
     private void store() throws GeneralPropertyException {
         try (Writer output = new FileWriter(sitePropertiesFilePath.toFile())) {
