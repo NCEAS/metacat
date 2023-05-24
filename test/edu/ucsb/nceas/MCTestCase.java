@@ -203,7 +203,7 @@ public class MCTestCase
     /**
      * Returns an xml squery that searches for the doc id in the
      * title of documents. This function is for eml-2.0.1+ only. For
-     * other eml versions, this function might have to modified.
+     * other eml versions, this function might have to be modified.
      */
     protected String getTestEmlQuery(String titlePart, String emlVersion) {
 
@@ -236,7 +236,7 @@ public class MCTestCase
      * Then check if the testTitle exists in the doc.
      * @param titlePart the part of the title of the doc to look for
      * @param testTitle the title containing special characters
-      @param emlVersion the EML version - eg MCTestCase.EML2_1_1
+     * @param emlVersion the EML version - e.g. MCTestCase.EML2_1_1
      * @param result are we expecting SUCCESS or FAILURE
      */
     protected void queryDocWhichHasTitle(String titlePart, String testTitle,
@@ -268,8 +268,7 @@ public class MCTestCase
     }
 
     /*
-     * Retrus an access block base on params passed and the defaul perm order -
-     * allow first
+     * Returns an access block base on params passed and the default perm order - allow first
      */
     protected String getAccessBlock(String principal, boolean grantAccess, boolean read,
             boolean write, boolean changePermission, boolean all) {
@@ -314,7 +313,7 @@ public class MCTestCase
     }
 
     /*
-     * Generates a access rule for given parameter. Note this xml portion
+     * Generates an access rule for given parameter. Note this xml portion
      * doesn't include <access></access>
      */
     protected String generateOneAccessRule(String principal, boolean grantAccess,
