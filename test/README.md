@@ -31,14 +31,15 @@ document!
 ### test/test.properties
 This file contains configurable, test-specific properties that must be customized to your dev 
 environment. Hints:
-* `metacat.contextDir=`/your/context/directory/typically/tomcat/webapps/metacat
+* `metacat.contextDir=`/your/context/dir/typically/tomcat/webapps/metacat
 * `expected.internalURL=http\://localhost\:8080` - the hostname and port should match whatever 
   settings exist in `metacat.properties` for the keys `server.internalName` and 
   `server.internalPort`, respectively. This should already be true for a clean checkout.
 * **The following will be used to override the properties with the same keys in 
   `metacat.properties`:**
-  * `application.context=`metacat_or_whatever 
-  * `application.deployDir=`/your/deploy/directory/typically/tomcat/webapps
+  * `application.backupDir=`/your/backup/props/dir/typically/var/metacat/.metacat 
+  * `application.context=`metacat_or_whatever
+  * `application.deployDir=`/your/deploy/dir/typically/tomcat/webapps
   * `test.printdebug=true` (preferred, so you can see output)
   * `guid.doi.enabled=true` (needed for DOI tests to pass)
   * `guid.doi.password=apitest` (needed for DOI tests to pass)
