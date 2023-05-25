@@ -8,17 +8,23 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 
 /**
  * A JUnit test for testing Access Control in Metacat
@@ -163,15 +169,56 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
     }
 
     @Test
-    public void arePropertiesConfigured() {
-        try {
-            String propsConfiguredStr = LeanTestUtils.getExpectedProperties().getProperty(
-                    "configutil.propertiesConfigured");
-            assertEquals("getproperty(\"configutil.propertiesConfigured\") returned wrong value.",
-                    Boolean.parseBoolean(propsConfiguredStr),
-                    PropertyService.arePropertiesConfigured());
+    public void arePropertiesConfigured() throws Exception {
+        String key = "configutil.propertiesConfigured";
+        String errMsg = "PropertyService.arePropertiesConfigured() returned wrong value.";
+
+        try (MockedStatic<PropertyService> mock = Mockito.mockStatic(PropertyService.class)) {
+            mock.when(() -> PropertyService.getProperty(eq(key))).thenReturn("true");
+            mock.when(() -> PropertyService.getProperty(
+                    argThat((String s) -> !s.equals(key)))).thenCallRealMethod();
+            mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod();
+
+            assertTrue(errMsg, PropertyService.arePropertiesConfigured());
+
         } catch (GeneralPropertyException pnfe) {
-            fail("Problem calling PropertyService.arePropertiesConfigured(): " + pnfe.getMessage());
+            fail("Problem calling PropertyService: " + pnfe.getMessage());
+        }
+
+        try (MockedStatic<PropertyService> mock = Mockito.mockStatic(PropertyService.class)) {
+            mock.when(() -> PropertyService.getProperty(eq(key))).thenReturn("false");
+            mock.when(() -> PropertyService.getProperty(
+                    argThat((String s) -> !s.equals(key)))).thenCallRealMethod();
+            mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod();
+
+            assertFalse(errMsg, PropertyService.arePropertiesConfigured());
+
+        } catch (GeneralPropertyException pnfe) {
+            fail("Problem calling PropertyService: " + pnfe.getMessage());
+        }
+
+        try (MockedStatic<PropertyService> mock = Mockito.mockStatic(PropertyService.class)) {
+            mock.when(() -> PropertyService.getProperty(eq(key))).thenReturn("");
+            mock.when(() -> PropertyService.getProperty(
+                    argThat((String s) -> !s.equals(key)))).thenCallRealMethod();
+            mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod();
+
+            assertFalse(errMsg, PropertyService.arePropertiesConfigured());
+
+        } catch (GeneralPropertyException pnfe) {
+            fail("Problem calling PropertyService: " + pnfe.getMessage());
+        }
+
+        try (MockedStatic<PropertyService> mock = Mockito.mockStatic(PropertyService.class)) {
+            mock.when(() -> PropertyService.getProperty(eq(key))).thenReturn(null);
+            mock.when(() -> PropertyService.getProperty(
+                    argThat((String s) -> !s.equals(key)))).thenCallRealMethod();
+            mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod();
+
+            assertFalse(errMsg, PropertyService.arePropertiesConfigured());
+
+        } catch (GeneralPropertyException pnfe) {
+            fail("Problem calling PropertyService: " + pnfe.getMessage());
         }
     }
 }

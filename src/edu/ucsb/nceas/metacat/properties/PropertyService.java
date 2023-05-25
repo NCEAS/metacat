@@ -314,7 +314,7 @@ public class PropertyService extends BaseService {
     public static boolean arePropertiesConfigured() throws GeneralPropertyException {
         String propertiesConfigured =
                 PropertyService.getProperty("configutil.propertiesConfigured");
-        return propertiesConfigured != null && !propertiesConfigured.equals("false");
+        return propertiesConfigured != null && propertiesConfigured.equals("true");
     }
 
     /**
