@@ -303,13 +303,18 @@ public class PropertyService extends BaseService {
     }
 
     /**
-     * Reports whether properties are fully configured.
+     * Reports whether properties are fully configured, by checking the value of the
+     * property "configutil.propertiesConfigured", which is set from the Admin flow.
      *
-     * @return returns true if all properties are configured, and false otherwise
-     * @throws GeneralPropertyException if there are problems finding the required properties
+     * @return a boolean that is true if properties are configured and false otherwise
+     * @throws GeneralPropertyException if there are problems getting the
+     *                                  "configutil.propertiesConfigured" property
+     * @see edu.ucsb.nceas.metacat.admin.PropertiesAdmin
      */
     public static boolean arePropertiesConfigured() throws GeneralPropertyException {
-        return backupPropertiesDelegate.arePropertiesConfigured();
+        String propertiesConfigured =
+                PropertyService.getProperty("configutil.propertiesConfigured");
+        return propertiesConfigured != null && !propertiesConfigured.equals("false");
     }
 
     /**

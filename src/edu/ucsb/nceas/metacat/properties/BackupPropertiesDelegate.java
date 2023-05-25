@@ -157,21 +157,6 @@ public class BackupPropertiesDelegate {
     }
 
     /**
-     * Reports whether properties are fully configured, by checking the value of the
-     * property "configutil.propertiesConfigured", which is set by PropertiesAdmin.
-     *
-     * @return a boolean that is true if properties are configured and false otherwise
-     * @throws PropertyNotFoundException if there are problems getting the
-     *                                   "configutil.propertiesConfigured" property
-     * @see edu.ucsb.nceas.metacat.admin.PropertiesAdmin
-     */
-    protected boolean arePropertiesConfigured() throws PropertyNotFoundException {
-        String propertiesConfigured =
-            PropertyService.getProperty("configutil.propertiesConfigured");
-        return propertiesConfigured != null && !propertiesConfigured.equals("false");
-    }
-
-    /**
      * Determine if the system is able to bypass configuration. If so, the system will look for
      * backup configuration files at startup time and use those to configure metacat. The bypass
      * options should only be set by developers. Production code should never bypass configuration.

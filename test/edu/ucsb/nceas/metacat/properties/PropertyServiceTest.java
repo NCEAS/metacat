@@ -55,7 +55,7 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
 
 
     @Test
-    public void readOneProperty() {
+    public void getProperty() {
         //====1 read a single property from the properties file that should exist
         try {
             String userKey = "test.mcUser";
@@ -69,7 +69,7 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
 
 
     @Test(expected = PropertyNotFoundException.class)
-    public void readNonExistentProperty() throws PropertyNotFoundException {
+    public void getProperty_NonExistent() throws PropertyNotFoundException {
         //====2 read a single property from the main properties  that shouldn't exist
         String nonExistentUser = PropertyService.getProperty("test.this.doesn't.exist");
         fail("Shouldn't have successfully read property: test.this.doesn't.exist : "
@@ -160,5 +160,18 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         PropertyService.setPropertyNoPersist("test.property.nonexistent", testValue);
         fail("Shouldn't have been able to set 'test.property.nonexistent' to " + testValue
             + " since 'test.property.nonexistent' doesn't exist.");
+    }
+
+    @Test
+    public void arePropertiesConfigured() {
+        try {
+            String propsConfiguredStr = LeanTestUtils.getExpectedProperties().getProperty(
+                    "configutil.propertiesConfigured");
+            assertEquals("getproperty(\"configutil.propertiesConfigured\") returned wrong value.",
+                    Boolean.parseBoolean(propsConfiguredStr),
+                    PropertyService.arePropertiesConfigured());
+        } catch (GeneralPropertyException pnfe) {
+            fail("Problem calling PropertyService.arePropertiesConfigured(): " + pnfe.getMessage());
+        }
     }
 }
