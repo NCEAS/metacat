@@ -2,20 +2,27 @@ package edu.ucsb.nceas;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Properties;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 
 /**
  * Provides common setup and runtime functionality that is needed in multiple tests, but without
@@ -32,20 +39,16 @@ public class LeanTestUtils {
     private static boolean printDebug = false;
     private static Properties expectedProperties;
 
-    static {
-        new LeanTestUtils();
-    }
-
     public LeanTestUtils() {
         printDebug = Boolean.parseBoolean(getExpectedProperties().getProperty("test.printdebug"));
         debug("LeanTestUtils: 'test.printdebug' is TRUE");
     }
 
     /**
-     * prints the passed message to System.err if the property {"test.printdebug"} is true. No
-     * action otherwise
+     * Prints the passed message to <code>System.err</code> if the property {"test.printdebug"} is
+     * true. No action otherwise
      *
-     * @param debugMessage the message to be printed to System.err
+     * @param debugMessage the message to be printed to <code>System.err</code>
      */
     public static void debug(String debugMessage) {
         if (printDebug) {
@@ -94,6 +97,7 @@ public class LeanTestUtils {
      * @return true on successful completion; false otherwise
      */
     public static boolean initializePropertyService(PropertiesMode mode) {
+
         Path defaultPropsFilePath = (mode == PropertiesMode.UNIT_TEST) ?
             DEFAULT_PROPS_FILE_PATH :
             getLiveDefaultPropsPath();
@@ -120,12 +124,91 @@ public class LeanTestUtils {
     }
 
     /**
-     * Test other methods are working OK, since they are static, so can't be tagged as @Test. A
-     * beneficial side effect is that there's no need to add this class to the test excludes in
-     * build.xml
+     * Initialize a static, mocked version of the PropertyService to use in testing. The mock is
+     * initialized with the key=value pairs contained in the Properties object provided
+     * ('withProperties'), which must contain at least one key-value pair. If a getProperty()
+     * call is made with any key that is not included in `withProperties`, the result will be a
+     * call to the original, non-mocked PropertyService class.
+     *
+     * <p><em>IMPORTANT:</em> from the <a href=
+     * "https://javadoc.io/static/org.mockito/mockito-core/3.12.4/org/mockito/MockedStatic.html">
+     * org.mockito.MockedStatic Interface javadoc</a>: "The mocking only affects the thread on
+     * which this static mock was created, and it is not safe to use this object from another
+     * If this thread. The static mock is released when this object's ScopedMock.close() method
+     * is invoked. object is never closed, the static mock will remain active on the initiating
+     * thread. It is therefore recommended to create this object within a try-with-resources
+     * statement unless when managed explicitly, for example by using a JUnit rule or extension."
+     * </p><p>
+     * Therefore, the returned AutoCloseable instance should be used ONLY for cleanup by calling
+     * close() on it
+     * </p><p>
+     * Usage examples:
+     * </p><ol><li><p>
+     *     (cleanest) try-with-resources approach - automatically does cleanup on exiting block:
+     * </p><code>
+     *     Properties withProps = new Properties();
+     *     withProps.setProperty("server.name", "UpdateDOITestMock.edu");
+     *     try (AutoCloseable ignored = LeanTestUtils.initializeMockPropertyService(withProps)) {
+     *         // your test code here
+     *     }
+     * </code></li><li><p>
+     *     (more verbose) JUnit @Before/setUp() and @After/tearDown(), or within test method itself:
+     * </p><code>
+     *     //global variable:
+     *         AutoCloseable closeable
+     *     [...]
+     *     // include in a test method, or in a @Before/setUp() method:
+     *         Properties withProps = new Properties();
+     *         withProps.setProperty("server.name", "UpdateDOITestMock.edu");
+     *         closeable = LeanTestUtils.initializeMockPropertyService(withProps);
+     *
+     *     // include at the end of the same test method, or in an @After/tearDown() method:
+     *         try {
+     *             closeableMock.close();
+     *         } catch (Exception e) {
+     *             // probably no need to handle - just a housekeeping failure
+     *         }
+     * </code></li></ol>
+     *
+     * @param withProperties key-value pairs for the mock to return on receiving
+     *                       calls to getProperty(). Must contain at least one key-value pair,
+     *                       otherwise a test <code>fail</code> is triggered
+     * @return AutoCloseable object, allowing the caller to invoke close() (either explicitly, or
+     *         implicitly via try-with-resources) after testing is finished
+     */
+    public static AutoCloseable initializeMockPropertyService(Properties withProperties) {
+        if (withProperties == null || withProperties.keySet().isEmpty()) {
+            fail("LeanTestUtils.initializeMockPropertyService() received "
+                    + ((withProperties == null) ? "NULL" : "EMPTY") + " 'withProperties' object");
+        }
+        MockedStatic<PropertyService> closeableMock =
+                Mockito.mockStatic(PropertyService.class);
+
+        for (Object key : withProperties.keySet()) {
+            final String keyStr = (String) key;
+            closeableMock.when(() -> PropertyService.getProperty(eq(keyStr)))
+                    .thenReturn(withProperties.getProperty(keyStr));
+        }
+        // Ensure original PropertyService method called for any keys that are NOT included
+        // in the withProperties object
+        closeableMock.when(() -> PropertyService.getProperty(argThat(
+                (String s) -> !withProperties.containsKey(s)))).thenCallRealMethod();
+
+        debug("LeanTestUtils: Mock PropertyService initialized, using " + "provided "
+                + "properties: " + Arrays.toString(withProperties.keySet().toArray()));
+        return closeableMock;
+    }
+
+
+    /**
+     * Test other methods are working OK, since they are static, so can't be tagged as @Test.
+     * Beneficial side effects: (1) there's no need to add this class to the test excludes in
+     * build.xml; (2) provides examples of how to use the methods in this class
+     *
+     * <em>Please add verifications here for any future methods you add!</em>
      */
     @Test
-    public void verifyAllUtils() {
+    public void verifyAllUtils() throws Exception {
         assertTrue(doesPropertiesFileExist(DEFAULT_PROPS_FILE_PATH));
         assertTrue(doesPropertiesFileExist(SITE_PROPS_FILE_PATH));
         assertTrue(initializePropertyService(PropertiesMode.UNIT_TEST));
@@ -138,6 +221,17 @@ public class LeanTestUtils {
                 PropertyService.SITE_PROPERTIES_FILENAME);
         assertNotNull("Default Properties path shouldn't be null!", defaults);
         assertNotNull("Site Properties path shouldn't be null!", site);
+
+        String key = "server.name";
+        String value = "UpdateDOITestMock.edu";
+        Properties withProperties = new Properties();
+        withProperties.setProperty(key, value);
+        try (AutoCloseable ignored = LeanTestUtils.initializeMockPropertyService(withProperties)) {
+            assertEquals("Mock verification failed", value,
+                    PropertyService.getProperty(key));
+        } catch (GeneralPropertyException e) {
+            fail("verifyAllUtils() Problem calling PropertyService: " + e.getMessage());
+        }
     }
 
     private static Path getLiveDefaultPropsPath() {
