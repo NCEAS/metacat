@@ -338,10 +338,22 @@
 	</config>
 
 	<config>
+		<key>application.sitePropertiesDir</key>
+		<label>Site Properties Directory</label>
+		<group>4</group>
+		<index>5</index>
+		<description>
+			Where to store the metacat-site.properties file. This should be some location outside
+			the knb install directories.
+		</description>
+		<helpFile><!-- TODO MB: add helpfile link --></helpFile>
+	</config>
+
+	<config>
 		<key>application.datafilepath</key>
 		<label>Data File Path</label>
 		<group>4</group>
-		<index>5</index>
+		<index>6</index>
 		<description>
 			Where to store data. This should be some location outside
 			the knb install direcories.
@@ -353,7 +365,7 @@
 		<key>application.inlinedatafilepath</key>
 		<label>Inline Data File Path</label>
 		<group>4</group>
-		<index>6</index>
+		<index>7</index>
 		<description>
 			Where to store inline data. This should be some location
 			outside the knb install direcories.
@@ -365,7 +377,7 @@
 		<key>application.documentfilepath</key>
 		<label>Document File Path</label>
 		<group>4</group>
-		<index>7</index>
+		<index>8</index>
 		<description>
 			Where to store metadata documents. This should be some location
 			outside the knb install direcories.
@@ -377,7 +389,7 @@
 		<key>application.tempDir</key>
 		<label>Temporary File Path</label>
 		<group>4</group>
-		<index>8</index>
+		<index>9</index>
 		<description>
 			Where to store temporary documents. This is primarily used by
 			the data registry code. &lt;font color="red"&gt; Note: this must be 
@@ -391,7 +403,7 @@
 		<key>replication.logdir</key>
 		<label>Replication Log Directory</label>
 		<group>4</group>
-		<index>9</index>
+		<index>10</index>
 		<description>
 			The directory where replication log should be located.
 		</description>
@@ -402,7 +414,7 @@
 		<key>index.context</key>
 		<label>Index Context</label>
 		<group>4</group>
-		<index>10</index>
+		<index>11</index>
 		<description>
 			The context name for the deployed Metacat index webapp.
 		</description>
@@ -424,7 +436,7 @@
 		<key>ui.context</key>
 		<label>UI Context</label>
 		<group>4</group>
-		<index>11</index>
+		<index>12</index>
 		<description>
 			The context name for the deployed Metacat UI webapp.
 		</description>

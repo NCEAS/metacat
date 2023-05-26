@@ -29,8 +29,10 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.Vector;
 
+import edu.ucsb.nceas.LeanTestUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.service.types.v1.Identifier;
@@ -47,16 +49,11 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.junit.After;
 import org.junit.Before;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.argThat;
 
 public class UpdateDOITest extends D1NodeServiceTest {
     private static final String UPDATETIMEKEY = "_updated";
-    private MockedStatic<PropertyService> mockProperties;
-
+    AutoCloseable closeableMock;
     /**
      * Constructor
      * @param name
@@ -83,17 +80,18 @@ public class UpdateDOITest extends D1NodeServiceTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-
-        mockProperties = Mockito.mockStatic(PropertyService.class);
-        mockProperties.when(() -> PropertyService.getProperty(
-            eq("server.name"))).thenReturn("UpdateDOITestMock.edu");
-        mockProperties.when(() -> PropertyService.getProperty(
-                    argThat((String s) -> !s.equals("server.name")))).thenCallRealMethod();
+        Properties withProperties = new Properties();
+        withProperties.setProperty("server.name", "UpdateDOITestMock.edu");
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
     }
 
     @After
     public void tearDown() {
-        mockProperties.close();
+        try {
+            closeableMock.close();
+        } catch (Exception e) {
+            //no need to handle - just a housekeeping failure
+        }
         super.tearDown();
     }
 

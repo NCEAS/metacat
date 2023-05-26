@@ -91,6 +91,12 @@
         </sequential>
     </macrodef>
 
+    <!-- added to silence: "warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last;
+        set to false for repeatable builds" since ant 9. See https://ant.apache.org/manual/Tasks/javac.html -->
+    <presetdef name="javac">
+        <javac includeantruntime="false" />
+    </presetdef>
+
     <!-- get metacatUI project -->
     <target name="getMetacatUI" depends="init">
         <git-clone-pull repository="${metacatui.git.repository.url}" dest="${metacatui.build.dir}"
@@ -120,7 +126,6 @@
         Attempt to find and set the path to Maven
 
         Prefers, in this order:
-
          - The value set in build.properties. The reason is that this
           build file loads all properties from build.properties and properties are
           immutable, so it's easiest to just use the same precedence chain.
@@ -1161,6 +1166,7 @@
                     <exclude name="**/MockCNode.class"/>
                     <!--<exclude name="**/D1NodeServiceTest.class" />-->
                     <exclude name="**/D1NodeServiceTest$*.class"/>
+                    <exclude name="**/LeanTestUtils$*.class"/>
                     <exclude name="**/QueryRunner.class"/>
                     <exclude name="**/MockObjectPathMap.class"/>
                     <exclude name="**/HzObjectPathMapTest$1.class"/>

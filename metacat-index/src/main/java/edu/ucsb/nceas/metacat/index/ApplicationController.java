@@ -20,6 +20,8 @@ package edu.ucsb.nceas.metacat.index;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -31,7 +33,6 @@ import java.util.Timer;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
-import org.apache.log4j.PropertyConfigurator;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrClient;
 import org.dataone.configuration.Settings;
@@ -52,13 +53,11 @@ public class ApplicationController implements Runnable {
     
     private static long DEFAULTINTERVAL = 7200000;
     private static String SOLRINDEXES = "solrIndexes";
-    private static short FIRST = 0;
-
     private List<SolrIndex> solrIndexes = null;
     private List<Runnable> sysmetaListeners = new ArrayList<Runnable>();
     private static ApplicationContext context = null;
     private String springConfigFileURL = "/index-processor-context.xml";
-    private String metacatPropertiesFile = null;
+    private String metacatDefaultPropertiesFile;
     private static int waitingTime = IndexGeneratorTimerTask.WAITTIME;
     private static int maxAttempts = IndexGeneratorTimerTask.MAXWAITNUMBER;
     private static long period = DEFAULTINTERVAL;
@@ -66,63 +65,77 @@ public class ApplicationController implements Runnable {
     private static Date timeOfFirstRun = null;
     private static String queryIncludeArchivedParaName = null;
     private static String queryIncludeArchivedParaValue = null;
-    
-    
-    /**
-     * Constructor
-     */
-    /*public ApplicationController () throws Exception {
-        init();
-    }*/
+
     
     /**
      * Set the Spring configuration file url and metacat.properties file
-     * @param springConfigFile  the path of the Spring configuration file
-     * @param metacatPropertyFile  the path of the metacat.properties file
+     * @param springConfigFileURL  the path of the Spring configuration file
+     * @param metacatDefaultPropertiesFile  the path of the metacat.properties file
      */
-    public ApplicationController(String springConfigFileURL, String metacatPropertiesFile) throws Exception {
+    public ApplicationController(String springConfigFileURL, String metacatDefaultPropertiesFile) {
         this.springConfigFileURL = springConfigFileURL;
-        this.metacatPropertiesFile = metacatPropertiesFile;
+        this.metacatDefaultPropertiesFile = metacatDefaultPropertiesFile;
         //init();
     }
-    
+
+    public ApplicationController(String springConfigFileURL) {
+        this(springConfigFileURL, null);
+    }
+
     /**
-     * Loads the metacat.prioerties into D1 Settings utility
-     * this gives us access to all metacat properties as well as 
-     * overriding any properties as needed. 
-     * Note: in the junit test, we are using the test.properties rather than this properties file.
+     * Loads the default metacat.properties and the site-specific metacat-site.properties into D1
+     * Settings utility. This gives us access to all metacat properties as well as overriding any
+     * properties as needed.
+     * Note: in the junit test, we are using the test.properties rather than these properties files.
      * 
      * Makes sure shared Hazelcast configuration file location is set
      */
     private void initializeSharedConfiguration() {
         int times = 0;
         boolean foundProperty = false;
-        while(true) {
-            File metacatProperties = new File(metacatPropertiesFile);
-            if(metacatProperties.exists()) {
+        while (true) {
+            File metacatDefaultProperties = new File(metacatDefaultPropertiesFile);
+            if (metacatDefaultProperties.exists()) {
                 foundProperty = true;
                 break;
             } else {
                 try {
-                        Thread.sleep(waitingTime);
+                    Thread.sleep(waitingTime);
                 } catch (InterruptedException e) {
-                            // TODO Auto-generated catch block
-                        e.printStackTrace();
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
             }
             times++;
-            if(times >= maxAttempts) {
-                log.error("ApplicationController.initialzeSharedConfiguration - MetacatIndex wait a while and still can't find the metacat.properties file.");
-                break;//we still break the while loop and continue. But the properties in the metacat.properties can't be read.
+            if (times >= maxAttempts) {
+                log.error(
+                    "ApplicationController.initializeSharedConfiguration - MetacatIndex wait a "
+                        + "while and still can't find the metacat.properties file.");
+                break;//we still break the while loop and continue. But the properties in the
+                // metacat.properties can't be read.
             }
-                
         }
-        
+        // metacatSitePropertiesFile is outside the tomcat webapps dir, so it should be available
+        Path metacatSitePropertiesFilePath = null;
         try {
             Settings.getConfiguration();
-            Settings.augmentConfiguration(metacatPropertiesFile);
+            Settings.augmentConfiguration(metacatDefaultPropertiesFile);
+            metacatSitePropertiesFilePath = Paths.get(
+                Settings.getConfiguration().getString("application" + ".sitePropertiesDir"),
+                "metacat-site.properties");
+            if (metacatSitePropertiesFilePath.toFile().exists()) {
+                Settings.augmentConfiguration(metacatSitePropertiesFilePath.toString());
+            } else {
+                String errorMsg =
+                    "Could not find Metacat site properties at: " + metacatSitePropertiesFilePath;
+                log.error(errorMsg);
+                throw new ConfigurationException(errorMsg);
+            }
         } catch (ConfigurationException e) {
-            log.error("Could not initialize shared Metacat properties. " + e.getMessage(), e);
+            log.error("Could not initialize shared Metacat properties. Tried with default "
+                + "properties file at: " + metacatDefaultPropertiesFile
+                + " and site properties file" + " at: " + metacatSitePropertiesFilePath
+                + "; error was: " + e.getMessage(), e);
         }
         
         // make sure hazelcast configuration is defined so that
@@ -202,23 +215,23 @@ public class ApplicationController implements Runnable {
         solrIndexes = (List<SolrIndex>) context.getBean(SOLRINDEXES);
         
         // use factory to create the correct impl
-    	SolrClient solrServer = null;
-		try {
-			solrServer = SolrServerFactory.createSolrServer();
-		} catch (Exception e) {
-			log.error("Could not create SolrServer form factory", e);
-			throw e;
-		}
+        SolrClient solrServer = null;
+        try {
+            solrServer = SolrServerFactory.createSolrServer();
+        } catch (Exception e) {
+            log.error("Could not create SolrServer form factory", e);
+            throw e;
+        }
 
         // start the SystemMetadata listener[s] (only expect there to be one)
         for (SolrIndex solrIndex: solrIndexes) {
-        	// set the solr server to use
-			solrIndex.setSolrServer(solrServer);
-			
-			// start listening for events
-        	SystemMetadataEventListener smel = new SystemMetadataEventListener();
-        	smel.setSolrIndex(solrIndex);
-        	sysmetaListeners.add(smel);
+            // set the solr server to use
+            solrIndex.setSolrServer(solrServer);
+
+            // start listening for events
+            SystemMetadataEventListener smel = new SystemMetadataEventListener();
+            smel.setSolrIndex(solrIndex);
+            sysmetaListeners.add(smel);
         }
         
     }

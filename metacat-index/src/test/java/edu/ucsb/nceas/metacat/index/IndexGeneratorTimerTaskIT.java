@@ -21,8 +21,8 @@ public class IndexGeneratorTimerTaskIT {
     
     private SolrIndex generateSolrIndex() throws Exception {
         String springConfigFile = "/index-processor-context.xml";
-        String metacatPropertyFile = null; //in this test, we use the test.properties file rather than metacat.properties file. so set it to be null.
-        ApplicationController controller = new ApplicationController(springConfigFile, metacatPropertyFile);
+        //in this test, we use the test.properties file, don't pass the metacat properties files.
+        ApplicationController controller = new ApplicationController(springConfigFile);
         controller.initialize();
         List<SolrIndex> list = controller.getSolrIndexes();
         SolrIndex[] solrIndexesarray = list.toArray(new SolrIndex[list.size()]);

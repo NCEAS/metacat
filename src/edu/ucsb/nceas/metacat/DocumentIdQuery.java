@@ -124,7 +124,7 @@ public class DocumentIdQuery {
 		String CONFIG_DIR = "lib";
 		File dirPath = new File(CONFIG_DIR);
 		try {
-			PropertyService.getInstance(dirPath.getPath() + FileUtil.getFS() + "metacat.properties");
+			PropertyService.getInstance(dirPath.getPath());
 		} catch (ServiceException ioe) {
 			System.err.println("Error in loading properties: " + ioe.getMessage());
 		}
