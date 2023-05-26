@@ -173,10 +173,22 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         String key = "configutil.propertiesConfigured";
         String errMsg = "PropertyService.arePropertiesConfigured() returned wrong value.";
 
-        try (MockedStatic<PropertyService> mock = Mockito.mockStatic(PropertyService.class)) {
-            mock.when(() -> PropertyService.getProperty(eq(key))).thenReturn("true");
-            mock.when(() -> PropertyService.getProperty(
-                    argThat((String s) -> !s.equals(key)))).thenCallRealMethod();
+        Properties props = new Properties();
+
+        props.setProperty("bogusKey", "someValue");
+        try (MockedStatic<PropertyService> mock =
+                     LeanTestUtils.initializeMockPropertyService(props)) {
+            mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod();
+
+            assertFalse(errMsg, PropertyService.arePropertiesConfigured());
+
+        } catch (GeneralPropertyException pnfe) {
+            fail("Problem calling PropertyService: " + pnfe.getMessage());
+        }
+
+        props.setProperty(key, "true");
+        try (MockedStatic<PropertyService> mock =
+                     LeanTestUtils.initializeMockPropertyService(props)) {
             mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod();
 
             assertTrue(errMsg, PropertyService.arePropertiesConfigured());
@@ -185,10 +197,9 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
             fail("Problem calling PropertyService: " + pnfe.getMessage());
         }
 
-        try (MockedStatic<PropertyService> mock = Mockito.mockStatic(PropertyService.class)) {
-            mock.when(() -> PropertyService.getProperty(eq(key))).thenReturn("false");
-            mock.when(() -> PropertyService.getProperty(
-                    argThat((String s) -> !s.equals(key)))).thenCallRealMethod();
+        props.setProperty(key, "false");
+        try (MockedStatic<PropertyService> mock =
+                     LeanTestUtils.initializeMockPropertyService(props)) {
             mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod();
 
             assertFalse(errMsg, PropertyService.arePropertiesConfigured());
@@ -197,10 +208,9 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
             fail("Problem calling PropertyService: " + pnfe.getMessage());
         }
 
-        try (MockedStatic<PropertyService> mock = Mockito.mockStatic(PropertyService.class)) {
-            mock.when(() -> PropertyService.getProperty(eq(key))).thenReturn("");
-            mock.when(() -> PropertyService.getProperty(
-                    argThat((String s) -> !s.equals(key)))).thenCallRealMethod();
+        props.setProperty(key, "");
+        try (MockedStatic<PropertyService> mock =
+                     LeanTestUtils.initializeMockPropertyService(props)) {
             mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod();
 
             assertFalse(errMsg, PropertyService.arePropertiesConfigured());
@@ -209,10 +219,9 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
             fail("Problem calling PropertyService: " + pnfe.getMessage());
         }
 
-        try (MockedStatic<PropertyService> mock = Mockito.mockStatic(PropertyService.class)) {
-            mock.when(() -> PropertyService.getProperty(eq(key))).thenReturn(null);
-            mock.when(() -> PropertyService.getProperty(
-                    argThat((String s) -> !s.equals(key)))).thenCallRealMethod();
+        props.setProperty(key, "maybe");
+        try (MockedStatic<PropertyService> mock =
+                     LeanTestUtils.initializeMockPropertyService(props)) {
             mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod();
 
             assertFalse(errMsg, PropertyService.arePropertiesConfigured());

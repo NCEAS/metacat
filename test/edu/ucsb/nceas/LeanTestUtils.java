@@ -139,8 +139,8 @@ public class LeanTestUtils {
      * thread. It is therefore recommended to create this object within a try-with-resources
      * statement unless when managed explicitly, for example by using a JUnit rule or extension."
      * </p><p>
-     * Therefore, the returned AutoCloseable instance should be used ONLY for cleanup by calling
-     * close() on it
+     * <em>Therefore, close() should be called on the returned mock to clean up after testing</em>;
+     * see examples below:
      * </p><p>
      * Usage examples:
      * </p><ol><li><p>
@@ -148,23 +148,26 @@ public class LeanTestUtils {
      * </p><code>
      *     Properties withProps = new Properties();
      *     withProps.setProperty("server.name", "UpdateDOITestMock.edu");
-     *     try (AutoCloseable ignored = LeanTestUtils.initializeMockPropertyService(withProps)) {
+     *     try (MockedStatic<PropertyService> mock =
+     *             LeanTestUtils.initializeMockPropertyService(withProps)) {
+     *         mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod(); // for ex.
      *         // your test code here
      *     }
      * </code></li><li><p>
      *     (more verbose) JUnit @Before/setUp() and @After/tearDown(), or within test method itself:
      * </p><code>
      *     //global variable:
-     *         AutoCloseable closeable
+     *         MockedStatic<PropertyService> mock
      *     [...]
      *     // include in a test method, or in a @Before/setUp() method:
      *         Properties withProps = new Properties();
      *         withProps.setProperty("server.name", "UpdateDOITestMock.edu");
-     *         closeable = LeanTestUtils.initializeMockPropertyService(withProps);
+     *         mock = LeanTestUtils.initializeMockPropertyService(withProps);
+     *         mock.when(PropertyService::arePropertiesConfigured).thenCallRealMethod(); // for ex.
      *
      *     // include at the end of the same test method, or in an @After/tearDown() method:
      *         try {
-     *             closeableMock.close();
+     *             mock.close();
      *         } catch (Exception e) {
      *             // probably no need to handle - just a housekeeping failure
      *         }
@@ -176,27 +179,27 @@ public class LeanTestUtils {
      * @return AutoCloseable object, allowing the caller to invoke close() (either explicitly, or
      *         implicitly via try-with-resources) after testing is finished
      */
-    public static AutoCloseable initializeMockPropertyService(Properties withProperties) {
+    public static MockedStatic<PropertyService> initializeMockPropertyService(Properties withProperties) {
         if (withProperties == null || withProperties.keySet().isEmpty()) {
             fail("LeanTestUtils.initializeMockPropertyService() received "
                     + ((withProperties == null) ? "NULL" : "EMPTY") + " 'withProperties' object");
         }
-        MockedStatic<PropertyService> closeableMock =
+        MockedStatic<PropertyService> mock =
                 Mockito.mockStatic(PropertyService.class);
 
         for (Object key : withProperties.keySet()) {
             final String keyStr = (String) key;
-            closeableMock.when(() -> PropertyService.getProperty(eq(keyStr)))
+            mock.when(() -> PropertyService.getProperty(eq(keyStr)))
                     .thenReturn(withProperties.getProperty(keyStr));
         }
         // Ensure original PropertyService method called for any keys that are NOT included
         // in the withProperties object
-        closeableMock.when(() -> PropertyService.getProperty(argThat(
+        mock.when(() -> PropertyService.getProperty(argThat(
                 (String s) -> !withProperties.containsKey(s)))).thenCallRealMethod();
 
-        debug("LeanTestUtils: Mock PropertyService initialized, using " + "provided "
-                + "properties: " + Arrays.toString(withProperties.keySet().toArray()));
-        return closeableMock;
+        debug("LeanTestUtils: Mock PropertyService initialized, using provided properties: "
+                + Arrays.toString(withProperties.keySet().toArray()));
+        return mock;
     }
 
 
