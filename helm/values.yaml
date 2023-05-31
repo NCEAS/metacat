@@ -26,9 +26,8 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   #tag: ""
-  imagePullSecrets: []
-  nameOverride: ""
-  fullnameOverride: ""
+
+imagePullSecrets: []
   
 global:
   #TODO
@@ -59,8 +58,7 @@ securityContext: {}
   #   - ALL
 
 service:
-  # TODO: rethink this when dev finished
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - port: 8080
     name: metacat-web
@@ -68,8 +66,11 @@ service:
     name: apache-connect
   - port: 5701
     name: hazelcast
-  # - port: 5005
-  #   name: metacat-debug
+
+#  type: LoadBalancer
+#  # TODO: rethink this when dev finished
+# - port: 5005
+#   name: metacat-debug
 
 ingress:
   enabled: false
@@ -79,7 +80,7 @@ ingress:
  
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
+  # choice for the user. This also increases chances charts run on environments with limited
   # resources, such as Minikube.
 
 autoscaling:
@@ -92,6 +93,11 @@ tolerations: []
 affinity: {}
 
 persistence:
+  # Persistence should be set to 'enabled: true' for production deployments.
+  # Setting this to false will mean the data saved by metacat WILL BE LOST when the deployment is
+  # deleted (useful for development/testing)
   enabled: true
-  existingClaim: metacat-pvc
-  volumeName: metacat-volume
+  # only set a value for 'existingClaim' if you want to re-use a Persistent Volume Claim that has
+  # already been set up by a k8s admin ahead of time. Leaving it blank will cause a pvc to be
+  # created dynamically using volumeClaimTemplates
+  existingClaim: ""

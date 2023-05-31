@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "metacat.fullname" . }}
   labels:
     {{- include "metacat.labels" . | nindent 4 }}
 spec:
+  serviceName: {{ include "metacat.fullname" . }}-svc
   replicas: 1
   selector:
     matchLabels:
@@ -38,15 +39,13 @@ spec:
               name: apache-connect
             - containerPort: 5701
               name: hazelcast
-            - containerPort: 5005
-              name: metacat-debug
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: {{ .Release.Name }}-config-volume
               mountPath: /var/metacat/config/metacat-site.properties
               subPath: metacat-site.properties
-            - name: {{ .Values.persistence.volumeName }}
+            - name: metacat-volume
               mountPath: /var/metacat
           env:
             - name: ADMIN
@@ -69,6 +68,21 @@ spec:
           configMap:
             name: {{ .Release.Name }}-configfiles
             defaultMode: 0644
-        - name: {{ .Values.persistence.volumeName }}
+{{- if .Values.persistence.enabled -}}
+  {{- if .Values.persistence.existingClaim -}}
+        - name: {{ .Release.Name }}-volume
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.existingClaim }}
+  {{ else }}
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Release.Name }}-volume
+    spec:
+      resources:
+        requests:
+          storage : 1Gi
+      storageClassName: ""
+      accessModes:
+          - ReadWriteOnce
+  {{ end }}
+{{ end }}
