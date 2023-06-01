@@ -94,8 +94,9 @@ affinity: {}
 
 persistence:
   # Persistence should be set to 'enabled: true' for production deployments.
-  # Setting this to false will mean the data saved by metacat WILL BE LOST when the deployment is
-  # deleted (useful for development/testing)
+  # For development/testing ONLY: Setting this to false will result in the use of a temporary
+  # 'emptyDir' for saving metacat's data. This means the data saved by metacat WILL BE LOST when
+  # the deployment is deleted!
   enabled: true
   # only set a value for 'existingClaim' if you want to re-use a Persistent Volume Claim that has
   # already been set up by a k8s admin ahead of time. Leaving it blank will cause a pvc to be

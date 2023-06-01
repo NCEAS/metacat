@@ -64,15 +64,19 @@ spec:
               path: /
               port: metacat-web
       volumes:
-        - name: {{ .Release.Name }}-config-volume
-          configMap:
-            name: {{ .Release.Name }}-configfiles
-            defaultMode: 0644
-{{- if .Values.persistence.enabled -}}
-  {{- if .Values.persistence.existingClaim -}}
-        - name: {{ .Release.Name }}-volume
-          persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim }}
+      - name: {{ .Release.Name }}-config-volume
+        configMap:
+          name: {{ .Release.Name }}-configfiles
+          defaultMode: 0644
+{{- if not  (.Values.persistence.enabled) }}
+      - name: {{ .Release.Name }}-volume
+        emptyDir:
+          sizeLimit: 500Mi
+{{ else }}
+  {{- if .Values.persistence.existingClaim }}
+      - name: {{ .Release.Name }}-volume
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim }}
   {{ else }}
   volumeClaimTemplates:
   - metadata:
