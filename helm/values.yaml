@@ -2,9 +2,8 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 metacat:
-  administratorUsername: admin@localhost
   # TODO - MB -- MOVE TO SECRETS!!
-  administratorPassword: admin
+  administratorUsername: admin@localhost
   applicationContext: metacat
   databaseHostname: host.docker.internal
   databaseName: metacat
@@ -25,7 +24,7 @@ image:
   repository: metacat
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  #tag: ""
+  tag: ""
 
 imagePullSecrets: []
   
@@ -93,12 +92,21 @@ tolerations: []
 affinity: {}
 
 persistence:
-  # Persistence should be set to 'enabled: true' for production deployments.
-  # For development/testing ONLY: Setting this to false will result in the use of a temporary
-  # 'emptyDir' for saving metacat's data. This means the data saved by metacat WILL BE LOST when
-  # the deployment is deleted!
+  ## @param persistence.enabled Enable persistence using Persistent Volume Claims
+  ## Persistence should be set to 'enabled: true' for production deployments.
+  ## For development/testing ONLY: Setting this to false will result in the use of a temporary
+  ## 'emptyDir' for saving metacat's data. This means the data saved by metacat WILL BE LOST when
+  ## the pod is deleted!
   enabled: true
-  # only set a value for 'existingClaim' if you want to re-use a Persistent Volume Claim that has
-  # already been set up by a k8s admin ahead of time. Leaving it blank will cause a pvc to be
-  # created dynamically using volumeClaimTemplates
+  ## @param persistence.existingClaim
+  ## Set a value for 'existingClaim' only if you want to re-use a Persistent Volume Claim that has
+  ## already been set up by a k8s admin ahead of time. Leaving it blank will cause a pvc to be
+  ## created dynamically using volumeClaimTemplates.
   existingClaim: ""
+  ## @param persistence.storageClassName Storage class of backing PVC
+  ## If defined, storageClassName: <storageClassName>
+  ## If set to "", storageClassName: "", meaning can only be bound to PVs with no class (no
+  ## annotation or one set equal to "")
+  ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the
+  ## default provisioner.
+  ## storageClassName:

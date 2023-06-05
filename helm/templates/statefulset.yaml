@@ -45,16 +45,18 @@ spec:
             - name: {{ .Release.Name }}-config-volume
               mountPath: /var/metacat/config/metacat-site.properties
               subPath: metacat-site.properties
-            - name: metacat-volume
+              readOnly: true
+            - name: {{ .Release.Name }}-volume
               mountPath: /var/metacat
+              readOnly: false
           env:
-            - name: ADMIN
+            - name: METACAT_ADMINISTRATOR_USERNAME
               value: {{ .Values.metacat.administratorUsername }}
-            # TODO - MB:
-            # ADMINPASS SHOULD BE IN SECRETS! Better still, how can we omit this step altogether? (Used only by
-            # docker-entrypoint.sh to curl-login to metacat admin interface.)
-            - name: ADMINPASS
-              value: {{ .Values.metacat.administratorPassword }}
+            - name: METACAT_ADMINISTRATOR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: metacat.administratorPassword
           livenessProbe:
             httpGet:
               path: /
@@ -70,8 +72,7 @@ spec:
           defaultMode: 0644
 {{- if not  (.Values.persistence.enabled) }}
       - name: {{ .Release.Name }}-volume
-        emptyDir:
-          sizeLimit: 500Mi
+        emptyDir: {}
 {{ else }}
   {{- if .Values.persistence.existingClaim }}
       - name: {{ .Release.Name }}-volume
@@ -85,7 +86,9 @@ spec:
       resources:
         requests:
           storage : 1Gi
-      storageClassName: ""
+      {{ if .Values.persistence.storageClassName }}
+      storageClassName: {{ .Values.persistence.storageClassName }}
+      {{ end }}
       accessModes:
           - ReadWriteOnce
   {{ end }}

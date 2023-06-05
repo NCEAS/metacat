@@ -43,7 +43,6 @@ if [ "$1" = 'catalina.sh' ]; then
 
 
     # Make sure all default directories are available
-    # TODO MB: this will be replaced by a mount
     mkdir -p /var/metacat/data \
         /var/metacat/inline-data \
         /var/metacat/documents \
@@ -59,26 +58,21 @@ if [ "$1" = 'catalina.sh' ]; then
     fi
 
     # If env has an admin/password set, but it does not exist in the passwords file, then add it
-    if [ -n "$ADMIN" ]; then
+    if [ -n "$METACAT_ADMINISTRATOR_USERNAME" ]; then
         USER_PWFILE="/var/metacat/users/password.xml"
-        # Look for the password file
-        if [ -n "$ADMINPASS_FILE" ] && [ -s "$ADMINPASS_FILE" ]; then
-            ADMINPASS=$(cat "$ADMINPASS_FILE")
-        fi
 
-        if [ -z "$ADMINPASS" ]; then
-            echo "ERROR: The admin user (ADMIN) was set but no password value was set."
-            echo "       You may use ADMINPASS or ADMINPASS_FILE to set the administrator password"
+        if [ -z "$METACAT_ADMINISTRATOR_PASSWORD" ]; then
+            echo "ERROR: The admin user (METACAT_ADMINISTRATOR_USERNAME) was set but no password value was set."
+            echo "       You may use METACAT_ADMINISTRATOR_PASSWORD to set the administrator password"
             exit 2
         fi
-
         # look specifically for the user password file, as it is expected if the configuration is completed
-        if [ ! -s "$USER_PWFILE" ] || [ $(grep -c "$ADMIN" "$USER_PWFILE") -eq 0 ]; then
+        if [ ! -s "$USER_PWFILE" ] || [ $(grep -c "$METACAT_ADMINISTRATOR_USERNAME" "$USER_PWFILE") -eq 0 ]; then
             # Note: the Java bcrypt library only supports '2a' format hashes, so override the default python behavior
             # so that the hashes created start with '2a' rather than '2y'
             cd "${METACAT_DIR}"/WEB-INF/scripts/bash
-            PASS=$(python -c "import bcrypt; print bcrypt.hashpw('$ADMINPASS', bcrypt.gensalt(10,prefix='2a'))")
-            bash ./authFileManager.sh useradd -h "$PASS" -dn "$ADMIN"
+            PASS=$(python -c "import bcrypt; print bcrypt.hashpw('$METACAT_ADMINISTRATOR_PASSWORD', bcrypt.gensalt(10,prefix='2a'))")
+            bash ./authFileManager.sh useradd -h "$PASS" -dn "$METACAT_ADMINISTRATOR_USERNAME"
             cd $TC_HOME
             echo
             echo '*************************************'
@@ -98,23 +92,26 @@ if [ "$1" = 'catalina.sh' ]; then
     echo '**************************************'
     sleep 5
 
+#
+# TODO: MB - Replace DB config check with metacat code to check for "autoconfig" flag at startup
+#
     # Login to Metacat Admin and start a session (cookie.txt)
-    echo "doing  curl -X POST with password=${ADMINPASS}&username=${ADMIN} to localhost admin page"
+    echo "doing  curl -X POST with password=${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME} to localhost admin page"
     curl -X POST \
-        --data "loginAction=Login&configureType=login&processForm=true&password=${ADMINPASS}&username=${ADMIN}" \
-        --cookie-jar ./cookie.txt http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > login_result.txt 2>&1
+        --data "loginAction=Login&configureType=login&processForm=true&password=${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
+        --cookie-jar ./cookie.txt http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > /tmp/login_result.txt 2>&1
     echo
     echo '**************************************'
-    echo "admin login result from $TC_HOME/login_result.txt:"
-    grep 'You must log in' login_result.txt || true   # || true because grep exits script (-1) if no matches found
-    grep 'You are logged in' login_result.txt || true # || true because grep exits script (-1) if no matches found
+    echo "admin login result from /tmp/login_result.txt:"
+    grep 'You must log in' /tmp/login_result.txt || true   # || true because grep exits script (-1) if no matches found
+    grep 'You are logged in' /tmp/login_result.txt || true # || true because grep exits script (-1) if no matches found
     echo '**************************************'
     echo
     echo '**************************************'
     echo "Checking if Database is configured..."
 
     ## If the DB needs to be updated run the migration scripts
-    DB_CONFIGURED=$(grep -c "configureType=database" login_result.txt || true)
+    DB_CONFIGURED=$(grep -c "configureType=database" /tmp/login_result.txt || true)
     if [ $DB_CONFIGURED -ne 0 ]; then
         echo "Database needs configuring..."
         # Run the database initialization to create or upgrade tables
