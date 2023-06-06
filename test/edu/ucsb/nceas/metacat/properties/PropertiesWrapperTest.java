@@ -22,17 +22,19 @@ public class PropertiesWrapperTest {
     @Before
     public void setUp() throws Exception {
 
+        // These should be a subset of 'application.envSecretKeys' in metacat.properties
         final String[] secretEnvVarKeysList = {
+            "METACAT_AUTH_ADMINISTRATORS",
             "METACAT_DATABASE_USER",
             "METACAT_DATABASE_PASSWORD",
-            "METACAT_GUID_DOI_PASSWORD",
-            "METACAT_AUTH_ADMINISTRATORS"
+            "METACAT_GUID_DOI_PASSWORD"
         };
+        // These should be a subset of 'application.envSecretKeys' in metacat.properties
         final String[] secretPropsKeysList = {
+            "auth.administrators",
             "database.user",
             "database.password",
-            "guid.doi.password",
-            "auth.administrators"
+            "guid.doi.password"
         };
         assertEquals(secretEnvVarKeysList.length, secretPropsKeysList.length);
 
@@ -43,13 +45,14 @@ public class PropertiesWrapperTest {
             testEnvSecrets.put(envKey, value);
             expectedSecrets.setProperty(propKey, value);
         }
-        // expected env secrets but which haven't been set - no default values in props file
+        // Add a key for a bogus secret to env, with no value. No default values in props file
         testEnvSecrets.put("METACAT_NOT_SET", " ");
 
-        // empty env val, with fallback to existing property
+        // Add a key for a real secret to env, with no value. Should fall back to existing property
+        // guid.doi.username=METACAT_GUID_DOI_USERNAME; fallback is to guid.doi.username from props
+        // These should be included in 'application.envSecretKeys' in metacat.properties
         testEnvSecrets.put("METACAT_GUID_DOI_USERNAME", "");
-        expectedSecrets.setProperty(
-            "guid.doi.username",
+        expectedSecrets.setProperty("guid.doi.username",
             LeanTestUtils.getExpectedProperties().getProperty("guid.doi.username"));
 
         setEnv(testEnvSecrets);

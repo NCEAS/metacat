@@ -140,13 +140,15 @@ public class PropertiesWrapper {
 
         String returnVal = null;
         if (envSecretKeyMappings.containsKey(propertyName)) {
-            // returns null if not defined in env
             returnVal = System.getenv(envSecretKeyMappings.getProperty(propertyName));
         }
+        // System.getenv(key) returns null if key not present, or empty string if defined but empty
+        // in either case, we want to try fallback:
         if (returnVal == null || returnVal.trim().isEmpty()) {
             returnVal = mainProperties.getProperty(propertyName);
         }
-        if (returnVal == null || returnVal.trim().isEmpty()) {
+        // getProperty() returning an empty value is valid, so only disallow null:
+        if (returnVal == null) {
             logMetacat.info("did not find the property with key " + propertyName);
             throw new PropertyNotFoundException(
                 "PropertiesWrapper.getProperty(): Key/name does not exist in Properties: "
@@ -227,6 +229,11 @@ public class PropertiesWrapper {
      */
     protected void setPropertyNoPersist(String propertyName, String newValue)
         throws GeneralPropertyException {
+        if (null == propertyName || null == newValue) {
+            throw new GeneralPropertyException(
+                "Illegal argument - at least one of params was NULL! key = " + propertyName
+                    + "; value = " + newValue);
+        }
         if (null == mainProperties.getProperty(propertyName)) {
             // TODO: MB - can we get rid of this? Default java.util.Properties behavior is
             //  to add a new entry if it doesn't already exist, when setProperty() is called
