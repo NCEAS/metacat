@@ -12,10 +12,8 @@ import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertiesMetaData;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.configuration.Settings;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -397,15 +395,7 @@ public class PropertyService extends BaseService {
      * @throws GeneralPropertyException if there's a problem calling Settings.augmentConfiguration()
      */
     public static void syncToSettings() throws GeneralPropertyException {
-        try {
-            Settings.getConfiguration();
-            Settings.augmentConfiguration(properties.getDefaultPropertiesFilePath().toString());
-            Settings.augmentConfiguration(properties.getSitePropertiesFilePath().toString());
-        } catch (ConfigurationException e) {
-            GeneralPropertyException gpe = new GeneralPropertyException(e.getMessage());
-            gpe.fillInStackTrace();
-            throw gpe;
-        }
+        properties.syncToSettings();
     }
 
     /**

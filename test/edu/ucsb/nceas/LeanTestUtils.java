@@ -72,8 +72,8 @@ public class LeanTestUtils {
                 doesPropertiesFileExist(DEFAULT_PROPS_FILE_PATH));
             assertTrue("LeanTestUtils.getExpectedProperties(): site properties files not found",
                 doesPropertiesFileExist(SITE_PROPS_FILE_PATH));
+            Properties metacatProps = new Properties();
             try {
-                Properties metacatProps = new Properties();
                 metacatProps.load(Files.newBufferedReader(DEFAULT_PROPS_FILE_PATH));
                 expectedProperties = new Properties(metacatProps);
                 expectedProperties.load(Files.newBufferedReader(SITE_PROPS_FILE_PATH));
@@ -81,7 +81,11 @@ public class LeanTestUtils {
                 fail("I/O exception trying to load properties from " + DEFAULT_PROPS_FILE_PATH
                     + " and " + SITE_PROPS_FILE_PATH);
             }
-            assertFalse("LeanTestUtils: properties are EMPTY", expectedProperties.isEmpty());
+            assertFalse("LeanTestUtils: expected properties EMPTY!", expectedProperties.isEmpty());
+            assertFalse("metacat.properties not loaded?",
+                expectedProperties.getProperty("application.metacatVersion").trim().isEmpty());
+            assertFalse("test.properties not loaded?",
+                        expectedProperties.getProperty("metacat.contextDir").trim().isEmpty());
         }
         return expectedProperties;
     }
@@ -271,12 +275,15 @@ public class LeanTestUtils {
     }
 
     private static boolean doesPropertiesFileExist(Path propsPath) {
-        boolean success;
+        boolean success = false;
         if (propsPath.toFile().exists()) {
-            success = true;
+            if (propsPath.toFile().canRead()) {
+                success = true;
+            } else {
+                debug("LeanTestUtils: Properties file exists but NOT READABLE at: " + propsPath);
+            }
         } else {
             debug("LeanTestUtils: Couldn't find properties file at: " + propsPath);
-            success = false;
         }
         return success;
     }
