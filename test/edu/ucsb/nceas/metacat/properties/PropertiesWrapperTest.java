@@ -25,16 +25,19 @@ public class PropertiesWrapperTest {
         // These should be a subset of 'application.envSecretKeys' in metacat.properties
         final String[] secretEnvVarKeysList = {
             "METACAT_AUTH_ADMINISTRATORS",
-            "METACAT_DATABASE_USER",
-            "METACAT_DATABASE_PASSWORD",
-            "METACAT_GUID_DOI_PASSWORD"
+            "POSTGRES_USER",
+            "POSTGRES_PASSWORD",
+            "METACAT_GUID_DOI_PASSWORD",
+            "METACAT_REPLICATION_PRIVATE_KEY_PASSWORD"
+
         };
         // These should be a subset of 'application.envSecretKeys' in metacat.properties
         final String[] secretPropsKeysList = {
             "auth.administrators",
             "database.user",
             "database.password",
-            "guid.doi.password"
+            "guid.doi.password",
+            "replication.privatekey.password"
         };
         assertEquals(secretEnvVarKeysList.length, secretPropsKeysList.length);
 

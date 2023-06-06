@@ -444,28 +444,28 @@ public class PropertiesWrapper {
     }
 
     /**
-     * From the property 'application.envSecretKeys', retrieve the comma-delimited mappings
+     * From the property 'application.envSecretKeys', retrieve the colon-delimited mappings
      * between: camelCase / period-delimited properties keys (as found elsewhere in the
      * properties files), and SCREAMING_SNAKE_CASE environment variable keys. Then use these to
      * populate the envSecretKeyMappings Properties, used elsewhere to check for overrides when
      * getProperty() is called.
      * The property file entry should be in the form:
      * <code>
-     *   application.secretKeys=\
-     *     some.CamelCase=METACAT_VAR_A,\
-     *     another.key=METACAT_VAR_B,\
+     *   application.secretKeys=         \
+     *     :some.CamelCase=METACAT_VAR_A \
+     *     :another.key=METACAT_VAR_B    \
      *     (...etc.)
      * </code>
      */
     private void initializeSecretsFromEnvVars() {
 
         String secretMappingsStr = mainProperties.getProperty("application.envSecretKeys");
-        final String COMMA = ",";
-        final String EQUALS = "=";
+        final String ENTRY_DELIMITER = ":";
+        final String KEY_VAL_DELIMITER = "=";
         if (secretMappingsStr != null && !secretMappingsStr.isEmpty()) {
-            String[] mappingList = secretMappingsStr.split(COMMA);
+            String[] mappingList = secretMappingsStr.split(ENTRY_DELIMITER);
             for (String eachMapping : mappingList) {
-                String[] keyValPair = eachMapping.split(EQUALS);
+                String[] keyValPair = eachMapping.split(KEY_VAL_DELIMITER);
                 String key = keyValPair[0].trim();
                 String value = keyValPair[1].trim();
                 if (key.isEmpty() || value.isEmpty()) {
