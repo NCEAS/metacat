@@ -154,7 +154,11 @@ public class PropertyService extends BaseService {
     }
 
     /**
-     * Get a property value from the properties file.
+     * Get a property value.
+     * 1. First check if the property has been overridden by an environment variable (override
+     *    mappings are defined in the properties files as: "application.envSecretKeys")
+     * 2. if no environment variable override is found, then return the regular value from the
+     *    properties files, if it has been set. Otherwise, throw a PropertyNotFoundException
      *
      * @param propertyName the name of the property requested
      * @return the String value for the property, even if blank. Will never return null

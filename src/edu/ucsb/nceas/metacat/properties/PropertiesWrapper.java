@@ -305,9 +305,12 @@ public class PropertiesWrapper {
      * The properties on the dataONE Setting class aren't synchronized with changes to the Metacat
      * properties files. This method synchronizes (reloads) the properties' changes to the Settings
      * class, and should be called whenever the property files are modified.
+     * NOTE that secrets passed as environment variables are accessible only by code that calls
+     *  PropertyService.getProperty(). Calling syncToSettings() does NOT make them accessible via
+     *  org.dataone.configuration.Settings
      * @throws GeneralPropertyException if there's a problem calling Settings.augmentConfiguration()
      */
-    public void syncToSettings() throws GeneralPropertyException {
+    protected void syncToSettings() throws GeneralPropertyException {
         try {
             Settings.getConfiguration();
             Settings.augmentConfiguration(this.getDefaultPropertiesFilePath().toString());
