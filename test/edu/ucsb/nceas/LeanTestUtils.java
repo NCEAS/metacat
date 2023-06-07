@@ -39,7 +39,7 @@ public class LeanTestUtils {
     private static boolean printDebug = false;
     private static Properties expectedProperties;
 
-    public LeanTestUtils() {
+    static {
         printDebug = Boolean.parseBoolean(getExpectedProperties().getProperty("test.printdebug"));
         debug("LeanTestUtils: 'test.printdebug' is TRUE");
     }
