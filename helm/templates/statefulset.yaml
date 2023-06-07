@@ -49,14 +49,9 @@ spec:
             - name: {{ .Release.Name }}-volume
               mountPath: /var/metacat
               readOnly: false
-          env:
-            - name: METACAT_ADMINISTRATOR_USERNAME
-              value: {{ .Values.metacat.administratorUsername }}
-            - name: METACAT_ADMINISTRATOR_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secrets
-                  key: metacat.administratorPassword
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-secrets
           livenessProbe:
             httpGet:
               path: /
