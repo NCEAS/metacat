@@ -305,9 +305,11 @@ public class PropertiesWrapper {
      * The properties on the dataONE Setting class aren't synchronized with changes to the Metacat
      * properties files. This method synchronizes (reloads) the properties' changes to the Settings
      * class, and should be called whenever the property files are modified.
+     *
      * NOTE that secrets passed as environment variables are accessible only by code that calls
      *  PropertyService.getProperty(). Calling syncToSettings() does NOT make them accessible via
-     *  org.dataone.configuration.Settings
+     *  org.dataone.configuration.Settings. (See inline code comment for suggestions on how to
+     *  implement, if this becomes necessary in future)
      * @throws GeneralPropertyException if there's a problem calling Settings.augmentConfiguration()
      */
     protected void syncToSettings() throws GeneralPropertyException {
@@ -315,6 +317,16 @@ public class PropertiesWrapper {
             Settings.getConfiguration();
             Settings.augmentConfiguration(this.getDefaultPropertiesFilePath().toString());
             Settings.augmentConfiguration(this.getSitePropertiesFilePath().toString());
+            // Calling syncToSettings() does NOT make secrets passed as environment variables
+            // accessible via org.dataone.configuration.Settings.
+            // If it becomes necessary to implement this in the future, see the getConfiguration()
+            // method in the Setting class (as called above). It returns the object configuration
+            // which holds the property values. We can call the method setProperty to add the new
+            // key/value pairs for the env secrets.
+            // However, it's not clear if setProperty will store the key/value pairs into a file
+            // (which is a security issue we're trying to avoid by using env vars) - so this
+            // needs more investigation. Here is the documentation for the method:
+            // https://commons.apache.org/proper/commons-configuration/apidocs/org/apache/commons/configuration2/AbstractConfiguration.html#setProperty(java.lang.String,java.lang.Object)
         } catch (ConfigurationException e) {
             logAndThrow("PropertiesWrapper.syncToSettings(): augmenting DataONE settings: ", e);
         }
@@ -469,21 +481,21 @@ public class PropertiesWrapper {
                 String key = keyValPair[0].trim();
                 String value = keyValPair[1].trim();
                 if (key.isEmpty() || value.isEmpty()) {
-                    logMetacat.debug(
+                    logMetacat.warn(
                         "PropertiesWrapper.initializeSecretsFromEnvVars(): badly-formed entry: ("
                             + key + ") = (" + value + ")");
                     continue;
                 }
-                logMetacat.debug(
+                logMetacat.warn(
                     "PropertiesWrapper.initializeSecretsFromEnvVars() Using a secret value for "
                         + key + " from Env Var: " + value);
                 envSecretKeyMappings.setProperty(key, value);
             }
         } else {
-            logMetacat.debug("PropertiesWrapper.initializeSecretsFromEnvVars(): "
+            logMetacat.warn("PropertiesWrapper.initializeSecretsFromEnvVars(): "
                                  + "No values found for 'application.envSecretKeys' in properties; "
                                  + "secrets will not be retrieved from env vars");
-            // no overrides specified, OK to ignore
+            // no overrides specified, OK to log a warning and then ignore
         }
     }
 
