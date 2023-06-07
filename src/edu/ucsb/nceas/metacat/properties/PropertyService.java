@@ -12,10 +12,8 @@ import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertiesMetaData;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.configuration.Settings;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -156,7 +154,11 @@ public class PropertyService extends BaseService {
     }
 
     /**
-     * Get a property value from the properties file.
+     * Get a property value.
+     * 1. First check if the property has been overridden by an environment variable (override
+     *    mappings are defined in the properties files as: "application.envSecretKeys")
+     * 2. if no environment variable override is found, then return the regular value from the
+     *    properties files, if it has been set. Otherwise, throw a PropertyNotFoundException
      *
      * @param propertyName the name of the property requested
      * @return the String value for the property, even if blank. Will never return null
@@ -397,15 +399,7 @@ public class PropertyService extends BaseService {
      * @throws GeneralPropertyException if there's a problem calling Settings.augmentConfiguration()
      */
     public static void syncToSettings() throws GeneralPropertyException {
-        try {
-            Settings.getConfiguration();
-            Settings.augmentConfiguration(properties.getDefaultPropertiesFilePath().toString());
-            Settings.augmentConfiguration(properties.getSitePropertiesFilePath().toString());
-        } catch (ConfigurationException e) {
-            GeneralPropertyException gpe = new GeneralPropertyException(e.getMessage());
-            gpe.fillInStackTrace();
-            throw gpe;
-        }
+        properties.syncToSettings();
     }
 
     /**

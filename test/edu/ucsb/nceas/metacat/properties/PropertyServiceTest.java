@@ -9,7 +9,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -23,13 +22,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 
 /**
  * A JUnit test for testing Access Control in Metacat
  */
-@RunWith(JUnit4.class)
 public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
 
     private final Random random = new Random();
@@ -62,7 +58,7 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
 
     @Test
     public void getProperty() {
-        //====1 read a single property from the properties file that should exist
+        //Read a single property from the properties file that should exist
         try {
             String userKey = "test.mcUser";
             assertEquals("Reading property 'test.mcUser' returned wrong value.",
@@ -73,6 +69,24 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         }
     }
 
+    @Test
+    public void getProperty_existsEmpty() {
+        //read a property whose key exists, but has no associated value
+        String testProperty = "test.testProperty";
+        String expected = "";
+        try {
+            PropertyService.setProperty(testProperty, expected);
+
+            assertEquals("Should have read a blank value for property: \"test.testProperty\"",
+                         expected, PropertyService.getProperty(testProperty));
+        } catch (PropertyNotFoundException e) {
+            fail("Unexpected error calling PropertyService.getProperty(\""
+                     + testProperty + "\") -- " + e.getMessage());
+        } catch (GeneralPropertyException e) {
+            fail("Unexpected error calling PropertyService.setProperty(\""
+                     + testProperty + "\", \"" + expected + "\") -- " + e.getMessage());
+        }
+    }
 
     @Test(expected = PropertyNotFoundException.class)
     public void getProperty_NonExistent() throws PropertyNotFoundException {
@@ -123,7 +137,7 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
 
     @Test
     public void setProperty() {
-        // ====5 write property to main properties
+        // Write property to main properties
         try {
             String testValue = "testing" + random.nextInt();
             PropertyService.setProperty("test.testProperty", testValue);
@@ -133,6 +147,16 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         } catch (GeneralPropertyException pnfe) {
             fail("Could not set property 'test.testProperty' : " + pnfe.getMessage());
         }
+    }
+
+    @Test(expected = GeneralPropertyException.class)
+    public void setProperty_nullKey() throws GeneralPropertyException {
+        PropertyService.setProperty(null, "testing");
+    }
+
+    @Test(expected = GeneralPropertyException.class)
+    public void setProperty_nullValue() throws GeneralPropertyException {
+        PropertyService.setProperty("test.key", null);
     }
 
     @Test
@@ -151,17 +175,16 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
 
     @Test(expected = GeneralPropertyException.class)
     public void setPropertyNonExistent() throws GeneralPropertyException {
-        // ====7 try to write property to main properties that doesn't exist
+        // Try to write to a property that doesn't exist in main properties
         String testValue = "testing" + random.nextInt();
         PropertyService.setProperty("test.property.nonexistent", testValue);
         fail("Shouldn't have been able to set 'test.property.nonexistent' to " + testValue
             + " since 'test.property.nonexistent' doesn't exist.");
-
     }
 
     @Test(expected = GeneralPropertyException.class)
     public void setPropertyNoPersist() throws GeneralPropertyException {
-        // ====8 try to write property nonPersistent to main properties that doesn't exist
+        // Try to do  nonPersistent write to a property that doesn't exist in main properties
         String testValue = "testing" + random.nextInt();
         PropertyService.setPropertyNoPersist("test.property.nonexistent", testValue);
         fail("Shouldn't have been able to set 'test.property.nonexistent' to " + testValue
@@ -169,7 +192,7 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
     }
 
     @Test
-    public void arePropertiesConfigured() throws Exception {
+    public void arePropertiesConfigured() {
         String key = "configutil.propertiesConfigured";
         String errMsg = "PropertyService.arePropertiesConfigured() returned wrong value.";
 

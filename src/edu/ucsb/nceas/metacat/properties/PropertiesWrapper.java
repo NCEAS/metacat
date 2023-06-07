@@ -48,6 +48,10 @@ public class PropertiesWrapper {
     // default properties only; not including any site-specific properties
     private Properties defaultProperties = null;
 
+    // Contains mappings of properties.key=METACAT_ENV_KEY, used to retrieve secret credentials
+    // from environment variables
+    private final Properties envSecretKeyMappings = new Properties();
+
 
     /**
      * private constructor since this is a singleton
@@ -122,18 +126,29 @@ public class PropertiesWrapper {
     }
 
     /**
-     * Get a property value from the properties file.
-     *
+     * Get a property value.
+     * 1. First check if the property has been overridden by an environment variable (override
+     *    mappings are defined in the properties files as: "application.envSecretKeys")
+     * 2. if no environment variable override is found, then return the regular value from the
+     *    properties files, if it has been set. Otherwise, throw a PropertyNotFoundException
      * @param propertyName the name of the property requested
      * @return the String value for the property, even if blank. Will never return null
      * @throws PropertyNotFoundException if the passed <code>propertyName</code> key is not in the
      *                                   properties at all
      */
     protected String getProperty(String propertyName) throws PropertyNotFoundException {
-        String returnVal;
-        if (mainProperties.getProperty(propertyName) != null) {
+
+        String returnVal = null;
+        if (envSecretKeyMappings.containsKey(propertyName)) {
+            returnVal = System.getenv(envSecretKeyMappings.getProperty(propertyName));
+        }
+        // System.getenv(key) returns null if key not present, or empty string if defined but empty
+        // in either case, we want to try fallback:
+        if (returnVal == null || returnVal.trim().isEmpty()) {
             returnVal = mainProperties.getProperty(propertyName);
-        } else {
+        }
+        // getProperty() returning an empty value is valid, so only disallow null:
+        if (returnVal == null) {
             logMetacat.info("did not find the property with key " + propertyName);
             throw new PropertyNotFoundException(
                 "PropertiesWrapper.getProperty(): Key/name does not exist in Properties: "
@@ -214,6 +229,11 @@ public class PropertiesWrapper {
      */
     protected void setPropertyNoPersist(String propertyName, String newValue)
         throws GeneralPropertyException {
+        if (null == propertyName || null == newValue) {
+            throw new GeneralPropertyException(
+                "Illegal argument - at least one of params was NULL! key = " + propertyName
+                    + "; value = " + newValue);
+        }
         if (null == mainProperties.getProperty(propertyName)) {
             // TODO: MB - can we get rid of this? Default java.util.Properties behavior is
             //  to add a new entry if it doesn't already exist, when setProperty() is called
@@ -279,6 +299,37 @@ public class PropertiesWrapper {
      */
     protected Path getMainMetadataFilePath() {
         return mainMetadataFilePath;
+    }
+
+    /**
+     * The properties on the dataONE Setting class aren't synchronized with changes to the Metacat
+     * properties files. This method synchronizes (reloads) the properties' changes to the Settings
+     * class, and should be called whenever the property files are modified.
+     *
+     * NOTE that secrets passed as environment variables are accessible only by code that calls
+     *  PropertyService.getProperty(). Calling syncToSettings() does NOT make them accessible via
+     *  org.dataone.configuration.Settings. (See inline code comment for suggestions on how to
+     *  implement, if this becomes necessary in future)
+     * @throws GeneralPropertyException if there's a problem calling Settings.augmentConfiguration()
+     */
+    protected void syncToSettings() throws GeneralPropertyException {
+        try {
+            Settings.getConfiguration();
+            Settings.augmentConfiguration(this.getDefaultPropertiesFilePath().toString());
+            Settings.augmentConfiguration(this.getSitePropertiesFilePath().toString());
+            // Calling syncToSettings() does NOT make secrets passed as environment variables
+            // accessible via org.dataone.configuration.Settings.
+            // If it becomes necessary to implement this in the future, see the getConfiguration()
+            // method in the Setting class (as called above). It returns the object configuration
+            // which holds the property values. We can call the method setProperty to add the new
+            // key/value pairs for the env secrets.
+            // However, it's not clear if setProperty will store the key/value pairs into a file
+            // (which is a security issue we're trying to avoid by using env vars) - so this
+            // needs more investigation. Here is the documentation for the method:
+            // https://commons.apache.org/proper/commons-configuration/apidocs/org/apache/commons/configuration2/AbstractConfiguration.html#setProperty(java.lang.String,java.lang.Object)
+        } catch (ConfigurationException e) {
+            logAndThrow("PropertiesWrapper.syncToSettings(): augmenting DataONE settings: ", e);
+        }
     }
 
     private void changeSitePropsPath(String newDir) throws GeneralPropertyException {
@@ -381,15 +432,10 @@ public class PropertiesWrapper {
                 + sitePropertiesFilePath + " -- for a total of "
                 + mainProperties.stringPropertyNames().size() + " Property entries");
 
+            initializeSecretsFromEnvVars();
+
             // include main metacat properties in d1 properties as overrides
-            try {
-                Settings.getConfiguration();
-                //augment with BOTH properties files:
-                Settings.augmentConfiguration(defaultPropertiesFilePath.toString());
-                Settings.augmentConfiguration(sitePropertiesFilePath.toString());
-            } catch (ConfigurationException e) {
-                logMetacat.error("Could not augment DataONE properties. " + e.getMessage(), e);
-            }
+            syncToSettings();
 
             // mainMetaData holds configuration information about main properties. This is primarily
             // used to display input fields on the configuration page. The information is retrieved
@@ -406,6 +452,50 @@ public class PropertiesWrapper {
                 e);
         } catch (MetacatUtilException e) {
             logAndThrow("PropertiesWrapper.initialize(): SystemUtil.discoverExternalDir()", e);
+        }
+    }
+
+    /**
+     * From the property 'application.envSecretKeys', retrieve the colon-delimited mappings
+     * between: camelCase / period-delimited properties keys (as found elsewhere in the
+     * properties files), and SCREAMING_SNAKE_CASE environment variable keys. Then use these to
+     * populate the envSecretKeyMappings Properties, used elsewhere to check for overrides when
+     * getProperty() is called.
+     * The property file entry should be in the form:
+     * <code>
+     *   application.secretKeys=         \
+     *     :some.CamelCase=METACAT_VAR_A \
+     *     :another.key=METACAT_VAR_B    \
+     *     (...etc.)
+     * </code>
+     */
+    private void initializeSecretsFromEnvVars() {
+
+        String secretMappingsStr = mainProperties.getProperty("application.envSecretKeys");
+        final String ENTRY_DELIMITER = ":";
+        final String KEY_VAL_DELIMITER = "=";
+        if (secretMappingsStr != null && !secretMappingsStr.isEmpty()) {
+            String[] mappingList = secretMappingsStr.split(ENTRY_DELIMITER);
+            for (String eachMapping : mappingList) {
+                String[] keyValPair = eachMapping.split(KEY_VAL_DELIMITER);
+                String key = keyValPair[0].trim();
+                String value = keyValPair[1].trim();
+                if (key.isEmpty() || value.isEmpty()) {
+                    logMetacat.warn(
+                        "PropertiesWrapper.initializeSecretsFromEnvVars(): badly-formed entry: ("
+                            + key + ") = (" + value + ")");
+                    continue;
+                }
+                logMetacat.warn(
+                    "PropertiesWrapper.initializeSecretsFromEnvVars() Using a secret value for "
+                        + key + " from Env Var: " + value);
+                envSecretKeyMappings.setProperty(key, value);
+            }
+        } else {
+            logMetacat.warn("PropertiesWrapper.initializeSecretsFromEnvVars(): "
+                                 + "No values found for 'application.envSecretKeys' in properties; "
+                                 + "secrets will not be retrieved from env vars");
+            // no overrides specified, OK to log a warning and then ignore
         }
     }
 
