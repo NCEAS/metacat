@@ -12,8 +12,8 @@ ENV PATH=${USRBINDIR}:$PATH
 ENV DEBUG=${DEBUG}
 
 # ADDITIONAL ENV VAR CREDENTIALS NEEDED AT RUNTIME BY docker-entrypoint.sh:
-# $METACAT_ADMINISTRATOR_USERNAME
-# $METACAT_ADMINISTRATOR_PASSWORD
+# METACAT_ADMINISTRATOR_USERNAME
+# METACAT_ADMINISTRATOR_PASSWORD
 
 # Add a user with name 'metacat'
 RUN useradd metacat
@@ -25,7 +25,7 @@ RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.
     # TODO: Try to replace "tomcat:8.0-jre8" with a newer image when we no longer need jre8, and remove above line.
     # Necessary because Debian 9/stretch moved to archive.debian.org - https://lists.debian.org/debian-devel-announce/2023/03/msg00006.html
     # see https://unix.stackexchange.com/questions/743839/apt-get-update-failed-to-fetch-debian-amd64-packages-while-building-dockerfile-f
-    apt-get update && apt-get install -y --no-install-recommends python-bcrypt        && \
+    apt-get update && apt-get install -y --no-install-recommends python-bcrypt netcat && \
     bash -c "if [[ \"$DEBUG\" == \"TRUE\" ]]; then echo '* * * DEBUG BUILD * * *'     && \
         apt-get install -y --no-install-recommends vim procps lsof telnet; fi"        && \
     rm -rf /var/lib/apt/lists/*                                                       && \
