@@ -65,7 +65,7 @@ spec:
         configMap:
           name: {{ .Release.Name }}-configfiles
           defaultMode: 0644
-{{- if not  (.Values.persistence.enabled) }}
+{{- if not (.Values.persistence.enabled) }}
       - name: {{ .Release.Name }}-volume
         emptyDir: {}
 {{ else }}
@@ -78,13 +78,20 @@ spec:
   - metadata:
       name: {{ .Release.Name }}-volume
     spec:
+      accessModes:
+        - ReadWriteOnce
+        - ReadOnlyMany
+      volumeMode: Filesystem
       resources:
         requests:
-          storage : 1Gi
-      {{ if .Values.persistence.storageClassName }}
-      storageClassName: {{ .Values.persistence.storageClassName }}
-      {{ end }}
-      accessModes:
-          - ReadWriteOnce
+          storage: {{ .Values.persistence.size }}
+    {{ $storageClass := .Values.persistence.storageClass -}}
+    {{- if $storageClass -}}
+      {{- if (eq "-" $storageClass) -}}
+      storageClassName: ""
+      {{- else }}
+      storageClassName: {{ $storageClass }}
+      {{- end }}
+    {{ end }}
   {{ end }}
 {{ end }}

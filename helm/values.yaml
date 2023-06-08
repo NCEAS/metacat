@@ -81,21 +81,35 @@ tolerations: []
 affinity: {}
 
 persistence:
-  ## @param persistence.enabled Enable persistence using Persistent Volume Claims
-  ## Persistence should be set to 'enabled: true' for production deployments.
-  ## For development/testing ONLY: Setting this to false will result in the use of a temporary
+  ## @param persistence.enabled
+  ## Enable metacat data persistence using Persistent Volume Claims
+  ##
+  ## Always set to 'enabled: true' for production deployments.
+  ##
+  ## For development/testing ONLY: Setting 'enabled: false' will result in the use of a temporary
   ## 'emptyDir' for saving metacat's data. This means the data saved by metacat WILL BE LOST when
   ## the pod is deleted!
+  ##
   enabled: true
+  ## @param persistence.storageClass Storage class of backing PVC
+  ##
+  ## If <storageClass> is defined -- storageClassName: <storageClass>
+  ##
+  ## If <storageClass> set to "-"  -- storageClassName: "" -- which disables dynamic PV provisioning
+  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
+  ##   no class (no annotation, or one set equal to "")
+  ##
+  ## If commented out/undefined (the default) or set to null, no storageClassName spec is set,
+  ##   which is equivalent to choosing the default provisioner for dynamic provisioning of the
+  ##   underlying PV.
+  ##
+  storageClass:
   ## @param persistence.existingClaim
   ## Set a value for 'existingClaim' only if you want to re-use a Persistent Volume Claim that has
-  ## already been set up by a k8s admin ahead of time. Leaving it blank will cause a pvc to be
-  ## created dynamically using volumeClaimTemplates.
+  ## already been set up by a k8s admin ahead of time.
+  ## Leaving it blank will cause a pvc to be created dynamically using volumeClaimTemplates.
+  ##
   existingClaim: ""
-  ## @param persistence.storageClassName Storage class of backing PVC
-  ## If defined, storageClassName: <storageClassName>
-  ## If set to "", storageClassName: "", meaning can only be bound to PVs with no class (no
-  ## annotation or one set equal to "")
-  ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the
-  ## default provisioner.
-  storageClassName: ""
+  ## @param primary.persistence.size PVC Storage Request for metacat volume
+  ##
+  size: 1Gi
