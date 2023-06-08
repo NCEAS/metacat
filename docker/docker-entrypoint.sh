@@ -2,6 +2,18 @@
 set -e
 
 if [ "$1" = 'catalina.sh' ]; then
+
+    if [ -z "$METACAT_AUTH_ADMINISTRATORS" ] ||
+        [ $(echo "$METACAT_AUTH_ADMINISTRATORS" | grep -c ":") -ne 0 ]; then
+        echo "ERROR: The admin user ($METACAT_AUTH_ADMINISTRATORS) environment variable was either"
+        echo "       not set, or it included a colon (:). It should contain a single username or"
+        echo "       LDAP-style Distinguished Name, not a colon-delimited list of administrators"
+        echo "       (despite its name indicating otherwise - sorry! :-)"
+        exit 2
+    else
+        METACAT_ADMINISTRATOR_USERNAME="$METACAT_AUTH_ADMINISTRATORS"
+    fi
+
     # Expand the metacat-index.war
     if [ ! -d webapps/metacat-index ]; then
         unzip webapps/metacat-index.war -d webapps/metacat-index
@@ -53,7 +65,8 @@ if [ "$1" = 'catalina.sh' ]; then
 
     # if DEBUG, set the root log level accordingly
     if [[ "$DEBUG" == "TRUE" ]]; then
-      sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' "${TC_HOME}"/webapps/metacat/WEB-INF/classes/log4j2.properties;
+      sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' \
+      "${TC_HOME}"/webapps/metacat/WEB-INF/classes/log4j2.properties;
       echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
     fi
 
@@ -69,14 +82,14 @@ if [ "$1" = 'catalina.sh' ]; then
             echo "        set the administrator password"
             exit 2
         fi
-        # look specifically for the user password file, as it is expected if the configuration is completed
-        # shellcheck disable=SC2046
+        # look for the user password file, as it is expected if the configuration is completed
         if [ ! -s "$USER_PWFILE" ] ||
             [ $(grep -c "$METACAT_ADMINISTRATOR_USERNAME" "$USER_PWFILE") -eq 0 ]; then
-            # Note: the Java bcrypt library only supports '2a' format hashes, so override the default python behavior
-            # so that the hashes created start with '2a' rather than '2y'
+            # Note: the Java bcrypt library only supports '2a' format hashes, so override the
+            # default python behavior so that the hashes created start with '2a' rather than '2y'
             cd "${METACAT_DIR}"/WEB-INF/scripts/bash
-            PASS=$(python -c "import bcrypt; print bcrypt.hashpw('$METACAT_ADMINISTRATOR_PASSWORD', bcrypt.gensalt(10,prefix='2a'))")
+            PASS=$(python -c "import bcrypt; print bcrypt.hashpw('$METACAT_ADMINISTRATOR_PASSWORD',\
+                  bcrypt.gensalt(10,prefix='2a'))")
             bash ./authFileManager.sh useradd -h "$PASS" -dn "$METACAT_ADMINISTRATOR_USERNAME"
             cd "$TC_HOME"
             echo
@@ -110,14 +123,16 @@ if [ "$1" = 'catalina.sh' ]; then
         echo "using password=${METACAT_ADMINISTRATOR_PASSWORD}\
           & username=${METACAT_ADMINISTRATOR_USERNAME}"
     fi
-    curl -X POST \
-        --data "loginAction=Login&configureType=login&processForm=true&password=${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
-        --cookie-jar ./cookie.txt http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > /tmp/login_result.txt 2>&1
+    curl -X POST --data  "loginAction=Login&configureType=login&processForm=true&password=\
+${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
+         --cookie-jar ./cookie.txt http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin >\
+         /tmp/login_result.txt 2>&1
     echo
     echo '**************************************'
     echo "admin login result from /tmp/login_result.txt:"
-    grep 'You must log in' /tmp/login_result.txt || true   # || true because grep exits script (-1) if no matches found
-    grep 'You are logged in' /tmp/login_result.txt || true # || true because grep exits script (-1) if no matches found
+    # following lines use "|| true" because grep exits script (-1) if no matches found
+    grep 'You must log in' /tmp/login_result.txt || true
+    grep 'You are logged in' /tmp/login_result.txt || true
     echo '**************************************'
     echo
     echo '**************************************'
@@ -128,7 +143,8 @@ if [ "$1" = 'catalina.sh' ]; then
     if [ "$DB_CONFIGURED" -ne 0 ]; then
         echo "Database needs configuring..."
         # Run the database initialization to create or upgrade tables
-        # /${METACAT_APP_CONTEXT}/admin?configureType=database must have an authenticated session, then run
+        # /${METACAT_APP_CONTEXT}/admin?configureType=database must have an
+        # authenticated session, then run:
         curl -X POST --cookie ./cookie.txt \
             --data "configureType=database&processForm=true" \
             http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > /dev/null 2>&1
