@@ -99,11 +99,14 @@ persistence:
   ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
   ##   no class (no annotation, or one set equal to "")
   ##
-  ## If commented out/undefined (the default) or set to null, no storageClassName spec is set,
-  ##   which is equivalent to choosing the default provisioner for dynamic provisioning of the
-  ##   underlying PV.
+  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
+  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
+  ## Instead, inspect your cluster to see what stoprageClass is set as default:
+  ##    $  kubectl get storageclass
+  ## ...and then explicitly set storageClass to match the name of the default storageclass
+  ## (e.g. for Rancher Desktop -- storageclass: local-path
   ##
-  storageClass:
+  storageClass: local-path
   ## @param persistence.existingClaim
   ## Set a value for 'existingClaim' only if you want to re-use a Persistent Volume Claim that has
   ## already been set up by a k8s admin ahead of time.

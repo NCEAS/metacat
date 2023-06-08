@@ -6,18 +6,26 @@ effectively use data sets they manage or that have been created by
 others. For more details, see https://github.com/NCEAS/metacat
 
 ## TL;DR
-Starting in root directory of metacat repo:
+For now, you need to have existing instances of **postgres** and **solr** running and configured for 
+metacat. Starting in root directory of the metacat repo:
 ```console  
-# 1. build the docker image
+# 1. build metacat's binary distribution
+$  ant distbin
+
+# 2. build the docker image
 $ pushd docker ; ./build.sh ; popd
 
-# 2. First time only: add your credentials to helm/admin/secrets.yaml, and add to cluster using: 
-$ vim helm/admin/secrets.yaml
-$ kubectl apply helm/admin/secrets.yaml  
- 
-# 3. deploy and enjoy!
+# 3. First time only: add your credentials to helm/admin/secrets.yaml, and add to cluster. 
+$ vim helm/admin/secrets.yaml    ## follow the instructions in this file
+
+# 4. deploy and enjoy! Assuming yoru release name is "my-release":
 $ helm install my-release ./helm
 ```
+This `helm install` command will also print out instructions on how to access the application 
+via a url!
+Note you should not need to edit anything in [values.yaml](./values.yaml), if your dev setup is 
+fairly standard, but it's worth checking, particularly the values in the `metacat` section
+
 
 ## Introduction
 
@@ -83,4 +91,7 @@ remember to NEVER ADD SECRETS TO GITHUB!
 ## Persistence
 
 The Metacat image stores the Metacat data and configurations at the `/var/metacat` path of the 
-container. Persistent Volume Claims are used to keep the data across deployments.
+container. Persistent Volume Claims are used to keep the data across deployments. With the 
+default setup in values.yaml, a persistent volume will be auto-provisioned automatically. If you 
+want to have the application use a specific directory on the host machine, for example, see the 
+documentation in the [admin/pv-hostpath.yaml](./admin/pv-hostpath.yaml) file
