@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "metacat.labels" . | nindent 4 }}
 spec:
-  serviceName: {{ include "metacat.fullname" . }}-svc
+  serviceName: {{ include "metacat.fullname" . }}-headless-svc
   replicas: 1
   selector:
     matchLabels:

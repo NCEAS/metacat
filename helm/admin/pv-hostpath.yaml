@@ -19,3 +19,11 @@ spec:
   hostPath:
     # path: /path/on/local/dev/filesystem
     path: /var/metacat-pv
+    # Note: if using Rancher Desktop on a Mac, k8s runs inside a virtual machine, so the directory
+    # /var/metacat-pv used by the persistent volume mount is not the same as the /var/metacat-pv on
+    # the mac's hard drive. However, the directories in the user's home directory ARE share with
+    # the VM, so you can target a directory there if you want to access the contents. You can
+    # gain access to the vm filesystem using the command:
+    # LIMA_HOME="$HOME/Library/Application Support/rancher-desktop/lima" \
+    #     "/Applications/Rancher Desktop.app/Contents/Resources/resources/darwin/lima/bin/limactl" \
+    #     shell 0

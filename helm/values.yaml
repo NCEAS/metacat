@@ -3,13 +3,13 @@
 # Declare variables to be passed into your templates.
 metacat:
   applicationContext: metacat
-  databaseHostname: host.docker.internal
+  databaseHostname: host.docker.internal    # host.docker.internal is equivalent to "localhost"
   databaseName: metacat
   guidDoiEnabled: true
   serverHostName: metacat.example.com
   serverHttpPort: "8080"
   serverHttpSslPort: "8443"
-  solrHostname: host.docker.internal
+  solrHostname: host.docker.internal        # host.docker.internal is equivalent to "localhost"
 
 image:
   #TODO pull from github container repo, e.g. see indexer: ghcr.io/dataoneorg/dataone-index-worker
@@ -40,6 +40,7 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext: {}
+#TODO
 #  fsGroup: metacat
 #  runAsUser: metacat
 #  capabilities:
@@ -49,7 +50,7 @@ securityContext: {}
   #   - ALL
 
 service:
-  type: ClusterIP
+  type: ClusterIP     # Headless ClusterIP required for StatefulSet
   ports:
   - port: 8080
     name: metacat-web
@@ -58,12 +59,8 @@ service:
   - port: 5701
     name: hazelcast
 
-#  type: LoadBalancer
-#  # TODO: rethink this when dev finished
-# - port: 5005
-#   name: metacat-debug
-
 ingress:
+  #TODO
   enabled: false
   className: ""
   annotations: {}
@@ -101,4 +98,4 @@ persistence:
   ## annotation or one set equal to "")
   ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the
   ## default provisioner.
-  ## storageClassName:
+  storageClassName: ""
