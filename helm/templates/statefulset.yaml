@@ -79,7 +79,9 @@ spec:
       name: {{ .Release.Name }}-volume
     spec:
       accessModes:
-        - ReadWriteOnce
+      {{- range .Values.persistence.accessModes }}
+        - {{ . | quote }}
+      {{- end }}
       volumeMode: Filesystem
       resources:
         requests:
