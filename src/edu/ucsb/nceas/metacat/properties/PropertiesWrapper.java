@@ -140,16 +140,21 @@ public class PropertiesWrapper {
 
         String returnVal = null;
         if (envSecretKeyMappings.containsKey(propertyName)) {
-            returnVal = System.getenv(envSecretKeyMappings.getProperty(propertyName));
+            String envKey = envSecretKeyMappings.getProperty(propertyName);
+            returnVal = System.getenv(envKey);
+            if (returnVal == null || returnVal.trim().isEmpty()) {
+                logMetacat.warn("Didn't find env secret: " + envKey
+                                    + "; falling back to property: " + propertyName);
+            } else {
+                logMetacat.info(
+                    "Using env var secret: " + envKey + " to override property: " + propertyName);
+            }
         }
-        // System.getenv(key) returns null if key not present, or empty string if defined but empty
-        // in either case, we want to try fallback:
         if (returnVal == null || returnVal.trim().isEmpty()) {
             returnVal = mainProperties.getProperty(propertyName);
         }
-        // getProperty() returning an empty value is valid, so only disallow null:
-        if (returnVal == null) {
-            logMetacat.info("did not find the property with key " + propertyName);
+        if (returnVal == null) {  // getProperty() returning an empty string is valid
+            logMetacat.error("did not find the property with key " + propertyName);
             throw new PropertyNotFoundException(
                 "PropertiesWrapper.getProperty(): Key/name does not exist in Properties: "
                     + propertyName);
@@ -481,21 +486,19 @@ public class PropertiesWrapper {
                 String key = keyValPair[0].trim();
                 String value = keyValPair[1].trim();
                 if (key.isEmpty() || value.isEmpty()) {
-                    logMetacat.warn(
-                        "PropertiesWrapper.initializeSecretsFromEnvVars(): badly-formed entry: ("
-                            + key + ") = (" + value + ")");
+                    logMetacat.error(
+                        "Badly-formed entry in 'application.envSecretKeys' property: ("
+                            + key + ") = (" + value + "); skipping");
                     continue;
                 }
-                logMetacat.warn(
-                    "envSecretKeyMappings: If env var: " + value
+                logMetacat.info("envSecretKeyMappings: If env var: " + value
                         + " is found later, its secret will be assigned to property: " + key);
                 envSecretKeyMappings.setProperty(key, value);
             }
         } else {
-            logMetacat.warn("PropertiesWrapper.initializeSecretsFromEnvVars(): "
-                                 + "No values found for 'application.envSecretKeys' in properties; "
-                                 + "secrets will not be retrieved from env vars");
-            // no overrides specified, OK to log a warning and then ignore
+            logMetacat.warn("No values found for 'application.envSecretKeys' in properties; "
+                                 + "secrets will NOT be retrieved from environment variables");
+            // no overrides specified, OK to log a warning and then ignore, since overrides optional
         }
     }
 
