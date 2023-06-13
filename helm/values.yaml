@@ -38,7 +38,7 @@ metacat:
   solr.baseURL: http://host.docker.internal:8983/solr
   ##
   ## @param metacat.replication.logdir
-  replication.logdir=/var/metacat/logs:
+  replication.logdir: /var/metacat/logs
 
 image:
   #TODO pull from github container repo, e.g. see indexer: ghcr.io/dataoneorg/dataone-index-worker
@@ -46,6 +46,12 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
+  ## @param image.debug Specify if debug values should be set
+  ## Set to true if you would like to see extra information in metacat/tomcat logs.
+  ## (Sets the Log4J rootLogger level to "DEBUG")
+  ## * * WARNING - FOR TESTING ONLY! * * May result in secrets being printed to logs in plain text.
+  ##
+  debug: false
 
 imagePullSecrets: []
   

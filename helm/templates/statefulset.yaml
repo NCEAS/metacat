@@ -49,6 +49,9 @@ spec:
             - name: {{ .Release.Name }}-volume
               mountPath: /var/metacat
               readOnly: false
+          env:
+            - name: METACAT_DEBUG
+              value: {{ ternary "true" "false" .Values.image.debug | quote }}
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-secrets

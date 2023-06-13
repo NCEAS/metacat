@@ -63,8 +63,8 @@ if [ "$1" = 'catalina.sh' ]; then
         /var/metacat/config \
         /var/metacat/.metacat
 
-    # if DEBUG, set the root log level accordingly
-    if [[ "$DEBUG" == "TRUE" ]]; then
+    # if METACAT_DEBUG, set the root log level accordingly
+    if [[ "$METACAT_DEBUG" == "true" ]]; then
       sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' \
       "${TC_HOME}"/webapps/metacat/WEB-INF/classes/log4j2.properties;
       echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
@@ -119,7 +119,7 @@ if [ "$1" = 'catalina.sh' ]; then
     #
     # Login to Metacat Admin and start a session (cookie.txt)
     echo "doing  curl -X POST to localhost admin page"
-    if [[ "$DEBUG" == "TRUE" ]]; then
+    if [[ "$METACAT_DEBUG" == "true" ]]; then
         echo "using password=${METACAT_ADMINISTRATOR_PASSWORD}\
           & username=${METACAT_ADMINISTRATOR_USERNAME}"
     fi
@@ -159,8 +159,8 @@ ${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
     echo '**************************************'
 fi
 
-if [[ "$DEBUG" == "TRUE" ]]; then
-    echo "Debug mode -- starting infinite loop -- ctrl-c to interrupt..."
+if [[ "$DEVTOOLS" == "true" ]]; then
+    echo "Container dev tools mode -- starting infinite loop -- ctrl-c to interrupt..."
     sh -c 'trap "exit" TERM; while true; do sleep 1; done'
 else
     echo "tailing logs in: $TC_HOME/logs/*"
