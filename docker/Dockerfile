@@ -10,7 +10,6 @@ ENV TC_HOME=/usr/local/tomcat
 ENV USRBINDIR=/usr/local/bin
 ENV PATH=${USRBINDIR}:$PATH
 ENV DEVTOOLS=${DEVTOOLS}
-}
 
 # ADDITIONAL USER-SPECIFIC ENV VAR CREDENTIALS NEEDED AT RUNTIME BY docker-entrypoint.sh:
 #
@@ -31,7 +30,7 @@ RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.
     # Necessary because Debian 9/stretch moved to archive.debian.org - https://lists.debian.org/debian-devel-announce/2023/03/msg00006.html
     # see https://unix.stackexchange.com/questions/743839/apt-get-update-failed-to-fetch-debian-amd64-packages-while-building-dockerfile-f
     apt-get update && apt-get install -y --no-install-recommends python-bcrypt netcat && \
-    bash -c "if [[ \"$DEVTOOLS\" == \"TRUE\" ]]; then echo '* * INSECURE! DEV TOOLS BUILD * *' && \
+    bash -c "if [[ \"$DEVTOOLS\" == \"true\" ]]; then echo '* * INSECURE! DEV TOOLS BUILD * *' && \
         apt-get install -y --no-install-recommends vim procps lsof telnet; fi"        && \
     rm -rf /var/lib/apt/lists/*                                                       && \
     cp /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war ${TC_HOME}/webapps  && \
