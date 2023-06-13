@@ -487,8 +487,8 @@ public class PropertiesWrapper {
                     continue;
                 }
                 logMetacat.warn(
-                    "PropertiesWrapper.initializeSecretsFromEnvVars() Using a secret value for "
-                        + key + " from Env Var: " + value);
+                    "envSecretKeyMappings: If env var: " + value
+                        + " is found later, its secret will be assigned to property: " + key);
                 envSecretKeyMappings.setProperty(key, value);
             }
         } else {
