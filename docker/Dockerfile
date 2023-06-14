@@ -1,4 +1,5 @@
-FROM tomcat:8.0-jre8
+FROM tomcat:8.5.90-jre8-temurin-jammy
+# TODO: update to tomcat:9.0.76-jre8-temurin-jammy
 
 # ARG default values that can be overridden at build-time
 ARG TAG=2.19.0
@@ -25,11 +26,7 @@ RUN useradd metacat
 ## ADD auto-inflates the .tar.gz
 ADD metacat-bin-${TAG}.tar.gz /tmp
 
-RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list  && \
-    # TODO: Try to replace "tomcat:8.0-jre8" with a newer image when we no longer need jre8, and remove above line.
-    # Necessary because Debian 9/stretch moved to archive.debian.org - https://lists.debian.org/debian-devel-announce/2023/03/msg00006.html
-    # see https://unix.stackexchange.com/questions/743839/apt-get-update-failed-to-fetch-debian-amd64-packages-while-building-dockerfile-f
-    apt-get update && apt-get install -y --no-install-recommends python-bcrypt netcat && \
+RUN apt-get update && apt-get install -y --no-install-recommends netcat python3-bcrypt unzip   && \
     bash -c "if [[ \"$DEVTOOLS\" == \"true\" ]]; then echo '* * INSECURE! DEV TOOLS BUILD * *' && \
         apt-get install -y --no-install-recommends vim procps lsof telnet; fi"        && \
     rm -rf /var/lib/apt/lists/*                                                       && \

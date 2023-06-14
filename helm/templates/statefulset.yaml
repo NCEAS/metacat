@@ -57,11 +57,11 @@ spec:
                 name: {{ .Release.Name }}-secrets
           livenessProbe:
             httpGet:
-              path: /
+              path: /{{ index .Values.metacat "application.context" }}/
               port: metacat-web
           readinessProbe:
             httpGet:
-              path: /
+              path: /{{ index .Values.metacat "application.context" }}/
               port: metacat-web
       volumes:
       - name: {{ .Release.Name }}-config-volume

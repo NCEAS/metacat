@@ -88,7 +88,7 @@ if [ "$1" = 'catalina.sh' ]; then
             # Note: the Java bcrypt library only supports '2a' format hashes, so override the
             # default python behavior so that the hashes created start with '2a' rather than '2y'
             cd "${METACAT_DIR}"/WEB-INF/scripts/bash
-            PASS=$(python -c "import bcrypt; print bcrypt.hashpw('$METACAT_ADMINISTRATOR_PASSWORD',\
+            PASS=$(python3 -c "import bcrypt;print bcrypt.hashpw('$METACAT_ADMINISTRATOR_PASSWORD',\
                   bcrypt.gensalt(10,prefix='2a'))")
             bash ./authFileManager.sh useradd -h "$PASS" -dn "$METACAT_ADMINISTRATOR_USERNAME"
             cd "$TC_HOME"

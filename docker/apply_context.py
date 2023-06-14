@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import absolute_import, division, print_function
 '''
     File name: apply_context.py
@@ -62,6 +62,3 @@ if __name__ == "__main__":
 
     # Overwrite the web xml file
     tree.write(metacat_index_web_xml)
-
-
-

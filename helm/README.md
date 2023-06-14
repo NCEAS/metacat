@@ -48,7 +48,13 @@ To install the chart with the release name `my-release`:
 helm install my-release ./helm
 ```
 
-The command deploys Metacat on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
+The command deploys Metacat on the Kubernetes cluster in the default configuration. The
+[Parameters](#parameters) section lists the parameters that can be configured during
+installation. Parameters may be provided on the command line to override those in values.yaml; e.g.
+
+```console
+helm install my-release ./helm --set image.debug=true
+```
 
 > **Tip**: List all releases using `helm list`
 

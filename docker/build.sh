@@ -18,8 +18,10 @@ if [ -z "$1" ] || [[ "$1" == "-devtools" ]]; then
 fi
 
 DEVTOOLS="false"
+DEVBUILDOPTS=""
 if [[ "$1" == "-devtools" ]] || [[ "$2" == "-devtools" ]]; then
     DEVTOOLS="true"
+    DEVBUILDOPTS="--no-cache --progress=plain"
 fi
 echo "Building with \"DEVTOOLS\" set to: ${DEVTOOLS}"
 echo
@@ -35,5 +37,5 @@ fi
 
 cp ../"${RELEASE}" .
 
-docker image build --no-cache --tag metacat:"$TAG" \
---build-arg TAG="$TAG" --build-arg DEVTOOLS="$DEVTOOLS" .
+docker image build \
+    $DEVBUILDOPTS --tag metacat:"$TAG" --build-arg TAG="$TAG" --build-arg DEVTOOLS="$DEVTOOLS" .
