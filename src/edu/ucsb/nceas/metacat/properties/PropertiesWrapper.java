@@ -143,7 +143,7 @@ public class PropertiesWrapper {
             String envKey = envSecretKeyMappings.getProperty(propertyName);
             returnVal = System.getenv(envKey);
             if (returnVal == null || returnVal.trim().isEmpty()) {
-                logMetacat.warn("Didn't find env secret: " + envKey
+                logMetacat.info("Didn't find env secret: " + envKey
                                     + "; falling back to property: " + propertyName);
             } else {
                 logMetacat.info(
