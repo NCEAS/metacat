@@ -56,75 +56,76 @@ public class MetacatAdminTest {
         assertFalse(incompletePropsList.containsAll(names));
     }
 
-  /**
-   * Test the method of updateUpgradeStatus. Full list as of June 2023:
-   * <code>
-   * configutil.upgrade.status=
-   * configutil.upgrade.database.status=
-   * configutil.upgrade.java.status=
-   * configutil.upgrade.solr.status=
-   * </code>
-   * Possible status values are "success", "failure" and "in_progress".
-   * 'configutil.upgrade.status' is the overall indicator that the other statuses are all "success"
-   * so:
-   *   - If status for database, java & solr all == "success", overall status == "success"
-   *   - If status for any of database, java & solr all != "success", then overall status should be
-   *   either "failure" or "in_progress", depending which one was updated most recently
-   */
-  @Test
-  public void testUpdateUpgradeStatus() throws Exception {
+    /**
+     * Test the method of updateUpgradeStatus. Full list as of June 2023:
+     * <code>
+     *   configutil.upgrade.status=
+     *   configutil.upgrade.database.status=
+     *   configutil.upgrade.java.status=
+     *   configutil.upgrade.solr.status=
+     * </code>
+     * Possible status values are "success", "failure" and "in_progress".
+     * 'configutil.upgrade.status' is the overall indicator that the other statuses are all
+     * "success" so:
+     * - If status for database, java & solr all == "success", overall status == "success"
+     * - If status for any of database, java & solr all != "success", then overall status
+     *   should be either "failure" or "in_progress", depending on which was updated most recently
+     */
+    @Test
+    public void testUpdateUpgradeStatus() throws Exception {
 
-      // 0. ensure starting conditions: all props (db, java, solr, overall) are NOT SET (i.e. == "")
-      assertStatuses_db_java_solr_all(NOT_SET, NOT_SET, NOT_SET, NOT_SET);
-      // (STATUS SUMMARY AT THIS POINT: db="", java="", solr="", overall="")
+        // 0. ensure starting conditions: all props (db, java, solr, overall) are NOT SET (i.e.
+        // == "")
+        assertStatuses_db_java_solr_all(NOT_SET, NOT_SET, NOT_SET, NOT_SET);
+        // (STATUS SUMMARY AT THIS POINT: db="", java="", solr="", overall="")
 
-      // 1. set db to "in progress"; overall should update to "in_progress" too
-      MetacatAdmin.updateUpgradeStatus(DB_PROP, MetacatAdmin.IN_PROGRESS, DO_NOT_PERSIST);
+        // 1. set db to "in progress"; overall should update to "in_progress" too
+        MetacatAdmin.updateUpgradeStatus(DB_PROP, MetacatAdmin.IN_PROGRESS, DO_NOT_PERSIST);
 
-      //    (STATUS SUMMARY AT THIS POINT: db=ip, java="", solr="", overall=ip)
-      assertStatuses_db_java_solr_all(
-          MetacatAdmin.IN_PROGRESS, NOT_SET, NOT_SET, MetacatAdmin.IN_PROGRESS);
-
-
-      // 2. set same one (db) to "failure"; overall should update to "failure" too
-      MetacatAdmin.updateUpgradeStatus(DB_PROP, MetacatAdmin.FAILURE, DO_NOT_PERSIST);
-      //    (STATUS SUMMARY AT THIS POINT: db=f, java="", solr="", overall=f)
-
-      assertStatuses_db_java_solr_all(
-          MetacatAdmin.FAILURE, NOT_SET, NOT_SET, MetacatAdmin.FAILURE);
+        //    (STATUS SUMMARY AT THIS POINT: db=ip, java="", solr="", overall=ip)
+        assertStatuses_db_java_solr_all(
+            MetacatAdmin.IN_PROGRESS, NOT_SET, NOT_SET, MetacatAdmin.IN_PROGRESS);
 
 
-      // 3. set a different one (java) to "success"; overall should stay as "failure"
-      MetacatAdmin.updateUpgradeStatus(JAVA_PROP, MetacatAdmin.SUCCESS, DO_NOT_PERSIST);
+        // 2. set same one (db) to "failure"; overall should update to "failure" too
+        MetacatAdmin.updateUpgradeStatus(DB_PROP, MetacatAdmin.FAILURE, DO_NOT_PERSIST);
+        //    (STATUS SUMMARY AT THIS POINT: db=f, java="", solr="", overall=f)
 
-      //    (STATUS SUMMARY AT THIS POINT: db=f, java=s, solr="", overall=f)
-      assertStatuses_db_java_solr_all(
-          MetacatAdmin.FAILURE, MetacatAdmin.SUCCESS, NOT_SET, MetacatAdmin.FAILURE);
-
-
-      // 4. set a db to "success"; overall should stay as "failure"
-      MetacatAdmin.updateUpgradeStatus(DB_PROP, MetacatAdmin.SUCCESS, DO_NOT_PERSIST);
-
-      //    (STATUS SUMMARY AT THIS POINT: db=s, java=s, solr="", overall=f)
-      assertStatuses_db_java_solr_all(
-          MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS, NOT_SET, MetacatAdmin.FAILURE);
+        assertStatuses_db_java_solr_all(
+            MetacatAdmin.FAILURE, NOT_SET, NOT_SET, MetacatAdmin.FAILURE);
 
 
-      // 5. set solr to "in progress"; overall should update to "in_progress" too
-      MetacatAdmin.updateUpgradeStatus(SOLR_PROP, MetacatAdmin.IN_PROGRESS, DO_NOT_PERSIST);
+        // 3. set a different one (java) to "success"; overall should stay as "failure"
+        MetacatAdmin.updateUpgradeStatus(JAVA_PROP, MetacatAdmin.SUCCESS, DO_NOT_PERSIST);
 
-      //    (STATUS SUMMARY AT THIS POINT: db=s, java=s, solr=ip, overall=ip)
-      assertStatuses_db_java_solr_all(MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS,
-                                      MetacatAdmin.IN_PROGRESS, MetacatAdmin.IN_PROGRESS);
+        //    (STATUS SUMMARY AT THIS POINT: db=f, java=s, solr="", overall=f)
+        assertStatuses_db_java_solr_all(
+            MetacatAdmin.FAILURE, MetacatAdmin.SUCCESS, NOT_SET, MetacatAdmin.FAILURE);
 
 
-      // 6. finally, set solr to "success"; overall should update to "success" too
-      MetacatAdmin.updateUpgradeStatus(SOLR_PROP, MetacatAdmin.SUCCESS, DO_NOT_PERSIST);
+        // 4. set a db to "success"; overall should stay as "failure"
+        MetacatAdmin.updateUpgradeStatus(DB_PROP, MetacatAdmin.SUCCESS, DO_NOT_PERSIST);
 
-      //    (STATUS SUMMARY AT THIS POINT: db=s, java=s, solr=s, overall=s)
-      assertStatuses_db_java_solr_all(
-          MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS);
-  }
+        //    (STATUS SUMMARY AT THIS POINT: db=s, java=s, solr="", overall=f)
+        assertStatuses_db_java_solr_all(
+            MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS, NOT_SET, MetacatAdmin.FAILURE);
+
+
+        // 5. set solr to "in progress"; overall should update to "in_progress" too
+        MetacatAdmin.updateUpgradeStatus(SOLR_PROP, MetacatAdmin.IN_PROGRESS, DO_NOT_PERSIST);
+
+        //    (STATUS SUMMARY AT THIS POINT: db=s, java=s, solr=ip, overall=ip)
+        assertStatuses_db_java_solr_all(MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS,
+                                        MetacatAdmin.IN_PROGRESS, MetacatAdmin.IN_PROGRESS);
+
+
+        // 6. finally, set solr to "success"; overall should update to "success" too
+        MetacatAdmin.updateUpgradeStatus(SOLR_PROP, MetacatAdmin.SUCCESS, DO_NOT_PERSIST);
+
+        //    (STATUS SUMMARY AT THIS POINT: db=s, java=s, solr=s, overall=s)
+        assertStatuses_db_java_solr_all(
+            MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS, MetacatAdmin.SUCCESS);
+    }
 
     private void assertStatuses_db_java_solr_all(
         String db, String java, String solr, String overall) {
