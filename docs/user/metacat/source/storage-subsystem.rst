@@ -403,9 +403,8 @@ An example file layout for three objects would be::
                └── d77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
 
 Note how the full hash value is obtained by appending the directory names with
-the file name (e.g.,
-`15525dda7121013bc3eba2e2d237a5ae70b291a461ca539053de75f33c9ac44c` for the first
-object).
+the file name (e.g., `7f5cc18f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6`
+for the first object).
 
 **Storing metadata** With this layout, knowing the hash value for a PID allows
 us to retrieve it. But it does not provide a mechanism to store metadata about
@@ -414,10 +413,10 @@ might want to include. So, in addition to data objects, the system supports stor
 for metadata documents that are associated with particular data objects. These metadata
 files are stored as delimited files with a header and body section. The header contains
 the `formatId` of the metadata format for the metadata in the file and then a NULL (`\x00`).
-This header is then followed by the content of the metadata document in UTF-8 encoding
-(see example below). This metadata file is named using the SHA-256 hash of the persistent
-identifier (PID) + the `formatId`, and is stored in the metadata directory parallel to
-objects, and structured analogously. Context can be found here (https://github.com/DataONEorg/hashstore/issues/35).
+This header is then followed by the content of the metadata document in UTF-8 encoding.
+This metadata file is named using the SHA-256 hash of the persistent identifier (PID) + the `formatId`,
+and is stored in the metadata directory parallel to objects, and structured analogously.
+Context can be found here (https://github.com/DataONEorg/hashstore/issues/35).
 
 For example, given the PID 'jtao.1700.1' and formatId 'http://ns.dataone.org/service/types/v2.0',
 one can calculate the location of its metadata document using::
@@ -425,8 +424,8 @@ one can calculate the location of its metadata document using::
    $ echo -n "jtao.1700.1http://ns.dataone.org/service/types/v2.0" | shasum -a 256
    ddf07952ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689
 
-So, the system metadata file would be stored at
-`metadata/dd/f0/79/52ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689` using the
+So, the system metadata file would be stored in the metadata directory, with the address
+'/dd/f0/79/52ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689' using the
 file format described above. Extending our diagram from above, we now see the three 
 hashes that represent data files, along with three that represent system metadata files 
 named with the hash of the PID they describe::
