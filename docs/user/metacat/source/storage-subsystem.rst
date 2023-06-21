@@ -478,7 +478,7 @@ metadata files that can be used for describing individual data objects. This
 might include package relationships and other annotations that we wish to
 include for each data file.
 
-To pre-emptively accomodate this need, we have revised HashStore to store 'metadata', not only
+To pre-emptively accommodate this need, we have revised HashStore to store 'metadata', not only
 'sysmeta'. All metadata files will be stored in the metadata directory, with the
 permanent address being the SHA-256 hash of the 'pid+formatId' and broken up
 into directory depths and widths as defined by a configuration file 'hashstore.yaml'.
