@@ -428,7 +428,7 @@ So, the system metadata file would be stored in the metadata directory, with the
 '/dd/f0/79/52ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689' using the
 file format described above. Extending our diagram from above, we now see the three 
 hashes that represent data files, along with three that represent system metadata files 
-named with the hash of the PID they describe::
+named with the hash of the `PID+formatId`::
 
    /var/metacat
    ├── objects
