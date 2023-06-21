@@ -397,10 +397,10 @@ An example file layout for three objects would be::
    │   └── 24
    │       └── 19
    │           └── 25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
-   └── f6
-       └── fa
-           └── c7
-               └── b713ca66b61ff1c3c8259a8b98f6ceab30b906e42a24fa447db66fa8ba
+   └── 0d
+       └── 55
+           └── 5e
+               └── d77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
 
 Note how the full hash value is obtained by appending the directory names with
 the file name (e.g.,
@@ -416,16 +416,17 @@ files are stored as delimited files with a header and body section. The header c
 the `formatId` of the metadata format for the metadata in the file and then a NULL (`\x00`).
 This header is then followed by the content of the metadata document in UTF-8 encoding
 (see example below). This metadata file is named using the SHA-256 hash of the persistent
-identifier (PID) of the object that it describes (same as how the object is named), but stored
-in a `sysmeta` directory parallel to the one described above, and structured analogously.
+identifier (PID) + the `formatId`, and is stored in the metadata directory parallel to
+objects, and structured analogously. Context can be found here (https://github.com/DataONEorg/hashstore/issues/35).
 
-For example, given the PID `jtao.1700.1`, one can calculate the SHA-256 of that PID using::
+For example, given the PID 'jtao.1700.1' and formatId 'http://ns.dataone.org/service/types/v2.0',
+one can calculate the location of its metadata document using::
 
-   $ echo -n "jtao.1700.1" | shasum -a 256
-   a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+   $ echo -n "jtao.1700.1http://ns.dataone.org/service/types/v2.0" | shasum -a 256
+   ddf07952ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689
 
 So, the system metadata file would be stored at
-`sysmeta/a8/24/19/25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf` using the
+`metadata/dd/f0/79/52ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689` using the
 file format described above. Extending our diagram from above, we now see the three 
 hashes that represent data files, along with three that represent system metadata files 
 named with the hash of the PID they describe::
@@ -435,38 +436,39 @@ named with the hash of the PID they describe::
    │   ├── 7f
    │   │   └── 5c
    │   │       └── c1
-   │   │           └── 8f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
+   │   │           └── 555ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
    │   ├── a8
    │   │   └── 24
    │   │       └── 19
    │   │           └── 25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
-   │   └── f6
-   │       └── fa
-   │           └── c7
-   │               └── b713ca66b61ff1c3c8259a8b98f6ceab30b906e42a24fa447db66fa8ba
-   └── sysmeta
-      ├── 7f
-      │   └── 5c
-      │       └── c1
-      │           └── 8f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
-      ├── a8
-      │   └── 24
-      │       └── 19
-      │           └── 25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
-      └── f6
-          └── fa
-              └── c7
-                  └── b713ca66b61ff1c3c8259a8b98f6ceab30b906e42a24fa447db66fa8ba
+   │   └── 0d
+   │       └── 55
+   │           └── 5e
+   │               └── d77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
+   └── metadata
+      ├── 9a
+      │   └── 2e
+      │       └── 08
+      │           └── c666b728e6cbd04d247b9e556df3de5b2ca49f7c5a24868eb27cddbff2
+      ├── dd
+      │   └── f0
+      │       └── 79
+      │           └── 52ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689
+      └── 32
+          └── 3e
+              └── 07
+                  └── 99524cec4c7e14d31289cefd884b563b5c052f154a066de5ec1e477da7
 
 **PID-based access**:  Given a PID, we can discover and access both the system
 metadata for an object and the bytes of the object itself without any further
-store of information. The procedure for this is as follows:
+store of information (if no `formatId` is supplied, we will default to the `formatId`
+found in the configuration file `hashstore.yaml`. The procedure for this is as follows:
 
    1) Given the PID, calculate the SHA-256 hash, and base64-encode it to find the `pid hash` for both `objects` and `metadata`.
 
    2) Use the `pid hash` to locate and read the metadata file from the `sysmeta` tree
-      - parse the header to extract the `formatId`
-      - read the remaining body of the document to obtain the `sysmeta`, which includes format information about the data object
+      - parse the header to extract the 'formatId'
+      - read the remaining body of the document to obtain the 'sysmeta', which includes format information about the data object
 
    3) With the `pid hash`, open and read the data from the `objects` tree
 
@@ -474,14 +476,14 @@ store of information. The procedure for this is as follows:
 metadata for each object, in the future we envision potentially including other
 metadata files that can be used for describing individual data objects. This
 might include package relationships and other annotations that we wish to
-include for each data file. To accomodate this, we could add another metadata
-directory (e.g., `annotations`) as a sibling to the `objects` directory, and include
-an additional metadata file using the same PID-based annotation approach described
-above for system metadata. This enables the storage system to be used to store
-arbitrary additional metadata in a structured and predictable way but that does not
-require external database access to predict its location and type. Alternatively, we
-could use mime-multipart or a similar multipart file encoding to include multiple
-metadata files in the PID-encoded metadata file.
+include for each data file.
+
+To pre-emptively accomodate this need, we have revised HashStore to store 'metadata', not only
+'sysmeta'. All metadata files will be stored in the metadata directory, with the
+permanent address being the SHA-256 hash of the 'pid+formatId' and broken up
+into directory depths and widths as defined by a configuration file 'hashstore.yaml'.
+This configuration file is written by HashStore upon successful verification that
+a HashStore does not exist. 
 
 **Aside: Merkle trees** While we plan to hash whole objects as described above,
 there also can be benefits of chunking data into smaller blocks and arranging
@@ -534,44 +536,22 @@ The methods below will be included in the public API:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
-| store_object*      | pid, data, ...               | hash_address (id,relpath...)     | Pending Review                              |
+| store_object*      | pid, data, ...               | hash_address (object_cid, ...)   | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| store_sysmeta      | pid, sysmeta                 | string (s_cid/pid_hash)          | Pending Review                              |
+| store_metadata     | pid, sysmeta, format_id      | metadata_cid                     | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | retrieve_object    | pid                          | io.BufferedIOBase                | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| retrieve_sysmeta   | pid                          | string (sysmeta)                 | Pending Review                              |
+| retrieve_metadata  | pid, format_id               | string (metadata)                | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | delete_object      | pid                          | boolean                          | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| delete_sysmeta     | pid                          | boolean                          | Pending Review                              |
+| delete_metadata    | pid, format_id               | boolean                          | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | get_hex_digest     | pid, algorithm               | string (hex_digest)              | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 * store_object(pid, data, additional_algorithm, checksum, checksum_algorithm)
 
-
-The proposed public methods below require further discussion to determine their inclusion in the public API:
-
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
-|     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
-+====================+==============================+==================================+=============================================+
-| n/a                | n/a.                         | n/a                              | n/a                                         |
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
-
-
-The following methods are to be made private and/or removed:
-
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
-|     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
-+====================+==============================+==================================+=============================================+
-| _add_object        | pid, data, ...               | hash_address (id,relpath...)     | Private Method                              |
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| _set_sysmeta       | pid, sysmeta                 | string (sysmeta_cid)             | Private Method                              |
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| _get_sysmeta       | pid                          | string (sysmeta_content)         | Private Method                              |
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
-* _add_object(pid, data, additional_algorithm, checksum, checksum_algorithm
 
 .. figure:: images/hashstore_publicapi_mermaid_store_object_v2.png
    :figclass: top
