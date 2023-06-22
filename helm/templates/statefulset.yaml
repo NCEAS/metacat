@@ -35,8 +35,6 @@ spec:
           ports:
             - containerPort: 8080
               name: metacat-web
-            - containerPort: 8009
-              name: apache-connect
             - containerPort: 5701
               name: hazelcast
           resources:
@@ -50,21 +48,28 @@ spec:
               mountPath: /var/metacat
               readOnly: false
           env:
+            - name: METACAT_IS_RUNNING_IN_A_CONTAINER
+              value: "true"
             - name: METACAT_DEBUG
               value: {{ ternary "true" "false" .Values.image.debug | quote }}
             - name: METACAT_ADMINISTRATOR_USERNAME
               value: {{ index .Values.metacat "administrator.username" }}
+            - name: METACAT_EXTERNAL_HOSTNAME
+              value: {{ .Values.global.externalHostname }}
+            - name: METACAT_EXTERNAL_PORT
+              {{- $metacatHttpPort := index .Values.metacat "server.httpPort" }}
+              value: {{ ternary "80" $metacatHttpPort ( .Values.ingress.enabled ) | quote }}
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-secrets
           livenessProbe:
             httpGet:
-              path: /{{ index .Values.metacat "application.context" }}/
-              port: metacat-web
+              path: {{ .Values.livenessProbe.httpGet.path }}
+              port: {{ .Values.livenessProbe.httpGet.port | quote }}
           readinessProbe:
             httpGet:
-              path: /{{ index .Values.metacat "application.context" }}/
-              port: metacat-web
+              path: {{ .Values.readinessProbe.httpGet.path }}
+              port: {{ .Values.readinessProbe.httpGet.port | quote }}
       volumes:
       - name: {{ .Release.Name }}-config-volume
         configMap:
