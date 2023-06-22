@@ -32,6 +32,12 @@ import java.util.Set;
  * malfunction), as was previously the case. 2. Clear and useful error messages and instructions are
  * logged to (tomcat logs) 'catalina .out' and 'hostname.(date).log' files
  * </p><p>
+ * If the environment variable named METACAT_IS_RUNNING_IN_A_CONTAINER is set to "true", it is
+ * assumed that the current metacat instance is running in a container (eg in a Kubernetes cluster).
+ * In these cases, checks may need to be tailored to the environment. For example, the site
+ * properties file is expected to be a read-only configMap in kubernetes, so the create/write
+ * checks should be skipped.
+ * </p><p>
  * TODO: Add more test cases - this initial implementation is minimum viable solution for
  *  /var/metacat not being writeable when metacat-site.properties is not available.
  *  This case should be supplemented with checks for other essential components - e.g:
@@ -48,6 +54,8 @@ import java.util.Set;
 @WebListener
 public class StartupRequirementsListener implements ServletContextListener {
 
+    protected boolean RUNNING_IN_CONTAINER =
+        Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
     private static final Log logMetacat = LogFactory.getLog(StartupRequirementsListener.class);
 
     @Override
@@ -61,7 +69,6 @@ public class StartupRequirementsListener implements ServletContextListener {
         // Next, check we can load properties from 'metacat-site.properties', or can create a new
         // one if it doesn't already exist
         validateSiteProperties(sitePropsFilePath);
-
     }
 
     //
@@ -152,7 +159,18 @@ public class StartupRequirementsListener implements ServletContextListener {
             if (sitePropsFilePath.toFile().exists()) {
                 validateSitePropertiesFileRwAccess(sitePropsFilePath);
             } else {
-                validateSitePropertiesPathCreatable(sitePropsFilePath);
+                if (RUNNING_IN_CONTAINER) { //we expect site props always to be available in k8s
+                    abort(
+                        "Can't find metacat-site.properties: " + sitePropsFilePath + "\n"
+                            + "and metacat is running in a container (eg docker, kubernetes).\n"
+                            + "Ensure that:\n"
+                            + "  1. this path is correct, and\n"
+                            + "  2. 'metacat-site.properties' is readable by the user\n"
+                            + "     running tomcat/metacat in the container",
+                        new IOException("metacat-site.properties not found"));
+                } else {
+                    validateSitePropertiesPathCreatable(sitePropsFilePath);
+                }
             }
         } catch (SecurityException e) {
                 abort(
@@ -182,24 +200,34 @@ public class StartupRequirementsListener implements ServletContextListener {
      */
     protected void abort(String message, Exception e) throws RuntimeException {
         String abortMsg =
-            "\n\n"
+            "\n\n\n\n"
+                + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
                 + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
                 + "* * * * * * * *    FATAL ERROR  --  STARTUP ABORTED!    * * * * * * *\n"
+                + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
                 + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
                 + "\n"
                 + message
                 + "\n\n"
                 + "Exception Details: " + e.getMessage()
                 + "\n\n"
+                + "Checks assumed Metacat is " + (RUNNING_IN_CONTAINER ? "" : "NOT ")
+                + " running in a container!"
+                + "\n\n"
                 + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
                 + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
-                + "\n\n";
+                + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
+                + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
+                + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
+                + "\n\n\n\n";
         logMetacat.fatal(abortMsg, e);
         throw new RuntimeException(abortMsg);
     }
 
     /**
-     * Check if we can load properties from, and write properties to, 'metacat-site.properties'
+     * Check if we can load properties from, and write properties to, 'metacat-site.properties'.
+     * If running in a container (eg in a Kubernetes cluster), then we expect the site properties
+     * file to be read-only, so skip the write check
      *
      * @param sitePropsFilePath the full path to the 'metacat-site.properties' file
      * @throws RuntimeException if any unrecoverable problems are found that should cause startup
@@ -211,7 +239,9 @@ public class StartupRequirementsListener implements ServletContextListener {
         Properties siteProperties = new Properties();
         try {
             siteProperties.load(Files.newBufferedReader(sitePropsFilePath));
-            siteProperties.store(Files.newBufferedWriter(sitePropsFilePath), "");
+            if (!RUNNING_IN_CONTAINER) {
+                siteProperties.store(Files.newBufferedWriter(sitePropsFilePath), "");
+            }
         } catch (MalformedInputException | ClassCastException e) {
             abort(
                 "'metacat-site.properties' file (" + sitePropsFilePath + ") contains keys or\n"
@@ -220,7 +250,7 @@ public class StartupRequirementsListener implements ServletContextListener {
                 e);
         } catch (IOException e) {
             abort(
-                "Can't read or write default metacat properties: " + sitePropsFilePath + "\n"
+                "Can't read or write metacat-site.properties: " + sitePropsFilePath + "\n"
                     + "Check that:\n"
                     + "  1. this path is correct, and\n"
                     + "  2. 'metacat-site.properties' is readable and writeable by the user\n"
