@@ -6,6 +6,12 @@
 ## in this section comprise the minimum set of values needed to run the app and the test suite on
 ## a development machine.
 ##
+## NOTE that certain credentials must also be provided, via Kubernetes Secrets, in order for
+## metacat to function correctly. These credentials are listed in ./admin/secrets.yaml, in the
+## form of environment variables expected by metacat at runtime. Also see the mappings in the
+## `application.envSecretKeys` property in `metacat.properties`, to determine which metacat
+## property corresponds to each of these environment variables
+##
 metacat:
   ## @param metacat.application.context
   ## the application context to use - for example, if your application is hosted at
@@ -13,13 +19,31 @@ metacat:
   ## application will be https://mydomain.org/metacat/
   ##
   application.context: metacat
+  ## @param auth.admin.setupUsername
+  ## The primary admin username that will be used to authenticate with the new metacat instance
+  ## and apply any necessary setup steps, database upgrades etc. upon first run.
+  ## NOTES:
+  ## 1. The corresponding password must be set as a Secret (see ./admin/secrets.yaml), with the
+  ##    key METACAT_ADMINISTRATOR_PASSWORD
+  ## 2. This account will be created if it doesn't already exist in the `passwords.xml` file on
+  ##    metacat's mounted PersistentVolume (see .Values.persistence)
+  ## 3. This username MUST appear on the list of authorized administrators, otherwise
+  ##    container startup will fail (see @param auth.administrators)
+  ##
+  administrator.username: admin@localhost
+  ## METACAT_AUTH_ADMINISTRATORS is a colon-separated list of admin usernames or LDAP-style
+  ## Distinguished Names denoting the users who may log into metacat with administrator
+  ## privileges.
+  ##
+  auth.administrators: admin@localhost:uid=jones,o=NCEAS,dc=ecoinformatics,dc=org
   ## @param database.connectionURI
   ## connection URI for the postgres database, in the form: jdbc:postgresql://hostname/database-name
   ## host.docker.internal is equivalent to "localhost"
   ##
   database.connectionURI: jdbc:postgresql://host.docker.internal/metacat
   ## Allow users to publish Digital Object Identifiers for the data in this metacat instance?
-  ## (see doi.org). If true, you will also need to define guid.doi.username $ guid.doi.password, 
+  ## (see doi.org).
+  ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secrets.yaml)
   ## and either override or use the defaults in metacat.properties for all the entries that begin
   ## with: "guid.doi."
   ##
@@ -128,9 +152,9 @@ persistence:
   enabled: true
   ## @param persistence.storageClass Storage class of backing PVC
   ##
-  ## If <storageClass> is defined -- storageClassName: <storageClass>
+  ## If <storageClass> is defined,  storageClassName: <storageClass>
   ##
-  ## If <storageClass> set to "-"  -- storageClassName: "" -- which disables dynamic PV provisioning
+  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
   ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
   ##   no class (no annotation, or one set equal to "")
   ##
@@ -139,7 +163,7 @@ persistence:
   ## Instead, inspect your cluster to see what stoprageClass is set as default:
   ##    $  kubectl get storageclass
   ## ...and then explicitly set storageClass to match the name of the default storageclass
-  ## (e.g. for Rancher Desktop -- storageclass: local-path
+  ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
   ##
   storageClass: local-path
   ## @param persistence.existingClaim

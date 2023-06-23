@@ -1,18 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-if [ "$1" = 'catalina.sh' ]; then
-
-    if [ -z "$METACAT_AUTH_ADMINISTRATORS" ] ||
-        [ $(echo "$METACAT_AUTH_ADMINISTRATORS" | grep -c ":") -ne 0 ]; then
-        echo "ERROR: The admin user ($METACAT_AUTH_ADMINISTRATORS) environment variable was either"
-        echo "       not set, or it included a colon (:). It should contain a single username or"
-        echo "       LDAP-style Distinguished Name, not a colon-delimited list of administrators"
-        echo "       (despite its name indicating otherwise - sorry! :-)"
-        exit 2
-    else
-        METACAT_ADMINISTRATOR_USERNAME="$METACAT_AUTH_ADMINISTRATORS"
-    fi
+if [[ $1 = "catalina.sh" ]]; then
 
     # Expand the metacat-index.war
     if [ ! -d webapps/metacat-index ]; then
@@ -64,7 +53,7 @@ if [ "$1" = 'catalina.sh' ]; then
         /var/metacat/.metacat
 
     # if METACAT_DEBUG, set the root log level accordingly
-    if [[ "$METACAT_DEBUG" == "true" ]]; then
+    if [[ $METACAT_DEBUG == "true" ]]; then
       sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' \
       "${TC_HOME}"/webapps/metacat/WEB-INF/classes/log4j2.properties;
       echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
@@ -72,24 +61,28 @@ if [ "$1" = 'catalina.sh' ]; then
 
     # TODO: need a more-elegant way to handle this, without manipulating files
     # If env has an admin/password set, but it does not exist in the passwords file, then add it
-    if [ -n "$METACAT_ADMINISTRATOR_USERNAME" ]; then
-        USER_PWFILE="/var/metacat/users/password.xml"
-
-        if [ -z "$METACAT_ADMINISTRATOR_PASSWORD" ]; then
+    if [[ -z $METACAT_ADMINISTRATOR_USERNAME ]]; then
+        echo "ERROR: Admin user env variable (METACAT_ADMINISTRATOR_USERNAME) not set!"
+        exit 1
+    else
+       if [[ -z $METACAT_ADMINISTRATOR_PASSWORD ]]; then
             echo "ERROR:  The admin user (METACAT_ADMINISTRATOR_USERNAME) environment variable was"
             echo "        set, but no password value was set."
-            echo "        You may use the METACAT_ADMINISTRATOR_PASSWORD environment variable to"
+            echo "        You must use the METACAT_ADMINISTRATOR_PASSWORD environment variable to"
             echo "        set the administrator password"
             exit 2
         fi
-        # look for the user password file, as it is expected if the configuration is completed
-        if [ ! -s "$USER_PWFILE" ] ||
-            [ $(grep -c "$METACAT_ADMINISTRATOR_USERNAME" "$USER_PWFILE") -eq 0 ]; then
+        USER_PWFILE="/var/metacat/users/password.xml"
+
+         # look for the user password file, as it is expected if the configuration is completed
+        if [[ ! -s $USER_PWFILE ]] ||
+            [[ $(grep -c "$METACAT_ADMINISTRATOR_USERNAME" $USER_PWFILE) -eq 0 ]]; then
             # Note: the Java bcrypt library only supports '2a' format hashes, so override the
             # default python behavior so that the hashes created start with '2a' rather than '2y'
             cd "${METACAT_DIR}"/WEB-INF/scripts/bash
-            PASS=$(python3 -c "import bcrypt;print bcrypt.hashpw('$METACAT_ADMINISTRATOR_PASSWORD',\
-                  bcrypt.gensalt(10,prefix='2a'))")
+            PASS=$(python3 -c "import bcrypt; print(bcrypt.hashpw(\
+                '$METACAT_ADMINISTRATOR_PASSWORD'.encode('utf-8'),\
+                bcrypt.gensalt(10,prefix=b'2a')).decode('utf-8'))")
             bash ./authFileManager.sh useradd -h "$PASS" -dn "$METACAT_ADMINISTRATOR_USERNAME"
             cd "$TC_HOME"
             echo
@@ -159,7 +152,7 @@ ${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
     echo '**************************************'
 fi
 
-if [[ "$DEVTOOLS" == "true" ]]; then
+if [[ $DEVTOOLS == "true" ]]; then
     echo "Container dev tools mode -- starting infinite loop -- ctrl-c to interrupt..."
     sh -c 'trap "exit" TERM; while true; do sleep 1; done'
 else
