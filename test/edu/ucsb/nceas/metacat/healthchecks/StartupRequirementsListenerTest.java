@@ -192,7 +192,26 @@ public class StartupRequirementsListenerTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void validateSiteProperties_existingRo() {
+    public void validateSiteProperties_existingRoNonContainerized() {
+
+        LeanTestUtils.debug("validateSiteProperties_existingRoNonContainerized()");
+        try {
+            assertNotNull(Files.createDirectories(sitePropsFilePath.getParent()));
+            FileAttribute<Set<PosixFilePermission>> roAttr =
+                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("r-xr-xr--"));
+            Path dummyProps = Files.createFile(sitePropsFilePath, roAttr);
+            assertTrue(Files.exists(dummyProps));
+            assertTrue(Files.isRegularFile(dummyProps));
+            assertTrue(Files.isReadable(dummyProps));
+            assertFalse(Files.isWritable(dummyProps));
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+        startupRequirementsListener.validateSiteProperties(sitePropsFilePath);
+    }
+
+    @Test
+    public void validateSiteProperties_existingRoContainerized() {
 
         LeanTestUtils.debug("validateSiteProperties_existingRo()");
         try {
@@ -207,6 +226,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
+        startupRequirementsListener.RUNNING_IN_CONTAINER = true;
         startupRequirementsListener.validateSiteProperties(sitePropsFilePath);
     }
 
@@ -245,7 +265,7 @@ public class StartupRequirementsListenerTest {
         startupRequirementsListener.validateSiteProperties(sitePropsFilePath);
     }
 
-    public void createTestProperties_nonStringProps(Path pathToPropsFile) {
+    private void createTestProperties_nonStringProps(Path pathToPropsFile) {
         try {
             assertNotNull(Files.createDirectories(pathToPropsFile.getParent()));
             if (!Files.exists(pathToPropsFile)) {
