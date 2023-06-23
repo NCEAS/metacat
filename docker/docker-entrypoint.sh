@@ -31,14 +31,13 @@ if [[ $1 = "catalina.sh" ]]; then
     apply_context.py "$METACAT_DIR"/WEB-INF/web.xml metacat "${METACAT_APP_CONTEXT}"
 
     # Show KNB skin if nothing else configured.
-    # TODO: deploy metacatui separately, or make this work with props config later
     mkdir "${TC_HOME}"/webapps/config
     {
         echo "MetacatUI.AppConfig = {"
         echo "  theme: \"knb\","
         echo "  root: \"/metacatui\","
         echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
-        echo "  baseUrl: \"http://localhost:8080\""
+        echo "  baseUrl: \"http://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\""
         echo "}"
     } > "${TC_HOME}"/webapps/config/config.js
 

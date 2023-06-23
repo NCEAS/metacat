@@ -1,6 +1,11 @@
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "metacat.fullname" . -}}
-{{- $svcPort := .Values.service.port -}}
+{{- $svcPort := 0 -}}
+{{- range .Values.service.ports }}
+  {{- if eq .name "metacat-svc-web" }}
+    {{- $svcPort = .port }}
+  {{- end }}
+{{- end }}
 {{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
   {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
@@ -49,11 +54,11 @@ spec:
             backend:
               {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
               service:
-                name: {{ $fullName }}
+                name: {{ $fullName }}-headless-svc
                 port:
                   number: {{ $svcPort }}
               {{- else }}
-              serviceName: {{ $fullName }}
+              serviceName: {{ $fullName }}-headless-svc
               servicePort: {{ $svcPort }}
               {{- end }}
           {{- end }}

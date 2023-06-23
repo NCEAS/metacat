@@ -1,6 +1,11 @@
 ## Default values for metacat.
 ## This is a YAML-formatted file.
 ##
+global:
+  #storageClass: csi-rbd-sc
+  #solrPort: &global-solr-port 8983
+  externalHostname: &global-external-hostname localhost
+
 ## The metacat section can contain any properties that will override those in
 ## metacat-site.properties and metacat.properties. The properties that have been pre-populated
 ## in this section comprise the minimum set of values needed to run the app and the test suite on
@@ -56,7 +61,7 @@ metacat:
   server.httpSSLPort: 8443
   ## @param metacat.server.name
   ##
-  server.name: metacat.example.com
+  server.name: *global-external-hostname
   ## @param metacat.solr.baseURL
   # host.docker.internal is equivalent to "localhost"
   solr.baseURL: http://host.docker.internal:8983/solr
@@ -78,11 +83,6 @@ image:
   debug: false
 
 imagePullSecrets: []
-  
-global:
-  #TODO
-  #storageClass: csi-rbd-sc
-  #solrPort: &global-solr-port 8983
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -108,27 +108,82 @@ securityContext: {}
   #   drop:
   #   - ALL
 
+livenessProbe:
+  httpGet:
+    path: /metacat/
+    port: metacat-web
+readinessProbe:
+  httpGet:
+    path: /metacat/  # d1/mn/v2/query/solr/q=id:*
+    port: metacat-web
+
 service:
   type: ClusterIP     # Headless ClusterIP required for StatefulSet
   ports:
   - port: 8080
-    name: metacat-web
-  - port: 8009
-    name: apache-connect
+    # the ingress will direct metacat traffic to the port named "metacat-svc-web"
+    name: metacat-svc-web
   - port: 5701
     name: hazelcast
 
 ingress:
-  #TODO
-  enabled: false
-  className: ""
-  annotations: {}
+  enabled: true
+  ## @param className
+  ## (e.g. className: "nginx") - depends on the available classes in your cluster; inspect using:
+  ##     $ kc get ingressclasses
+  ## For Rancher Desktop,  className: "traefik"
+  ##
+  className: "traefik"
+  ## @param hosts
+  ## For each `- host:` entry, provide the hostname that is mapped via DNS to point to the IP
+  ## address of this ingress, and mappings for the paths on that host. For example:
+  ##   hosts:
+  ##     - host: api.test.dataone.org
+  ##       paths:
+  ##         - path: "/quality"
+  ##           pathType: Prefix
+  ##
+  ##     where `pathType` determines the interpretation of the Path matching:
+  ##         Exact: Matches the URL path exactly.
+  ##         Prefix: Requires URL to begin with the pattern, not including substrings
+  ##                 (e.g. /foo/bar matches /foo/bar/baz, but does not match /foo/barbaz).
+  ##
+  ## NOTE:   All paths will be mapped to the .service.ports entry that has `name: metacat-svc-web`
+  ##
+  hosts:
+    - host: *global-external-hostname
+      paths:  ## TODO
+        - path: "/metacat"
+          pathType: Prefix
+        - path: "/metacat/admin"
+          pathType: Prefix
+        - path: "/metacat/d1"
+          pathType: Prefix
+        # uncomment the following if you want metacatui to be exposed (default knb skin), and
+        # access via /metacatui/  (note we need "/" exposed for access to the config.js file)
+#        - path: "/metacatui"
+#          pathType: Prefix
+        - path: "/"
+          pathType: Prefix
+## example
+#  annotations:
+#    nginx.ingress.kubernetes.io/enable-cors: "true"
+#    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
+#    nginx.ingress.kubernetes.io/cors-allow-origin: '$http_origin'
+#    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+#    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  annotations: { }
+## example
+#  tls:
+#    - hosts:
+#        - api.test.dataone.org
+#      secretName: ingress-nginx-tls-cert
   tls: []
- 
+
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with limited
+# resources, such as Minikube.
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with limited
-  # resources, such as Minikube.
 
 autoscaling:
   enabled: false
