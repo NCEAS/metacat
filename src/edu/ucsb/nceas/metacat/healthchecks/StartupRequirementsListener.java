@@ -38,12 +38,14 @@ import java.util.Set;
  * properties file is expected to be a read-only configMap in kubernetes, so the create/write
  * checks should be skipped.
  * </p><p>
- * TODO: Add more test cases - this initial implementation is minimum viable solution for
- *  /var/metacat not being writeable when metacat-site.properties is not available.
+ * TODO: Add more test cases - this initial implementation is minimum viable solution to check
+ *  metacat has the correct read-write permissions for config files and their locations (as
+ *  appropriate for legacy or containerized deployments).
  *  This case should be supplemented with checks for other essential components - e.g:
- *  - SOLR is running, right version, port is accessible (at least for k8s - see note below)
+ *  - SOLR is running, correct version, port is accessible (at least for k8s - see note below)
  *  - database is running and accessible (at least for k8s - see note below)
- *  - /var/metacat exists and is writable by the web user
+ *  - metacat's file location (typically /var/metacat, but configurable) exists and is writable by
+ *    the web user
  *  - properties file exists or directory is writable
  *  NOTE: be careful what we add here! Sometimes, we want to allow Metacat to start with
  *  incomplete dependencies, since these are configured later through the admin interface
