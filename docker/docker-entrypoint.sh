@@ -1,14 +1,55 @@
 #!/usr/bin/env bash
+
+# Required env variables (see values.yaml):
+# METACAT_APP_CONTEXT       (see .Values.metacat.application.context)
+# METACAT_EXTERNAL_HOSTNAME (see .Values.global.externalHostname)
+# METACAT_EXTERNAL_PORT     (see .Values.metacat.server.httpPort)
+#
+# Defined in Dockerfile:
+# TC_HOME       (tomcat home directory in container; typically /usr/local/tomcat)
+#
+# Optional:
+# DEVTOOLS      ("true" to run infinite loop and NOT start tomcat automatically)
+# METACAT_DEBUG ("true" to set log4j level to DEBUG. Will output sensitive info while initializing!)
+#
+
 set -e
 
-if [[ $1 = "catalina.sh" ]]; then
+if [[ $DEVTOOLS == "true" ]]; then
+    echo '* * * Container "-devtools" mode'
+    echo '* * * NOTE Tomcat does NOT get started in devtools mode!'
+    echo '* * * See commands in /usr/local/bin/docker-entrypoint.sh to start manually'
+    echo '* * *'
+    echo '* * * starting infinite loop -- ctrl-c to interrupt...'
+    sh -c 'trap "exit" TERM; while true; do sleep 1; done'
+
+elif [[ $1 = "catalina.sh" ]]; then
 
     # Expand the metacat-index.war
-    if [ ! -d webapps/metacat-index ]; then
-        unzip webapps/metacat-index.war -d webapps/metacat-index
+    if [ ! -d "${TC_HOME}"/webapps/metacat-index ]; then
+        unzip "${TC_HOME}"/webapps/metacat-index.war -d "${TC_HOME}"/webapps/metacat-index
     fi
 
-    # set the env vars. Note that TC_HOME and METACAT_APP_CONTEXT are set in Dockerfile
+    # Expand the metacatui.war
+    if [ ! -d "${TC_HOME}"/webapps/metacatui ]; then
+        unzip "${TC_HOME}"/webapps/metacatui.war -d "${TC_HOME}"/webapps/metacatui
+    fi
+
+    # show KNB skin if nothing else configured.
+    # 1. Overwrite config.js
+    {
+        echo "MetacatUI.AppConfig = {"
+        echo "  theme: \"knb\","
+        echo "  root: \"/metacatui\","
+        echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
+        echo "  baseUrl: \"http://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\""
+        echo "}"
+    } > "${TC_HOME}"/webapps/metacatui/config/config.js
+
+    # 2. edit index.html to point to it
+    sed -i 's|"/config/config.js"|"./config/config.js"|g' "${TC_HOME}"/webapps/metacatui/index.html
+
+    # set the env vars for metacat location. Note that TC_HOME is set in the Dockerfile
     METACAT_DEFAULT_WAR=${TC_HOME}/webapps/metacat.war
     METACAT_DIR=${TC_HOME}/webapps/${METACAT_APP_CONTEXT}
     METACAT_WAR=${METACAT_DIR}.war
@@ -30,18 +71,6 @@ if [[ $1 = "catalina.sh" ]]; then
     # change the context in the web.xml file
     apply_context.py "$METACAT_DIR"/WEB-INF/web.xml metacat "${METACAT_APP_CONTEXT}"
 
-    # Show KNB skin if nothing else configured.
-    mkdir "${TC_HOME}"/webapps/config
-    {
-        echo "MetacatUI.AppConfig = {"
-        echo "  theme: \"knb\","
-        echo "  root: \"/metacatui\","
-        echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
-        echo "  baseUrl: \"http://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\""
-        echo "}"
-    } > "${TC_HOME}"/webapps/config/config.js
-
-
     # Make sure all default directories are available
     mkdir -p /var/metacat/data \
         /var/metacat/inline-data \
@@ -51,11 +80,13 @@ if [[ $1 = "catalina.sh" ]]; then
         /var/metacat/config \
         /var/metacat/.metacat
 
-    # if METACAT_DEBUG, set the root log level accordingly
+    # if METACAT_DEBUG, set the root log level to "DEBUG"
     if [[ $METACAT_DEBUG == "true" ]]; then
-      sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' \
-      "${TC_HOME}"/webapps/metacat/WEB-INF/classes/log4j2.properties;
-      echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
+          sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' \
+              "${TC_HOME}"/webapps/metacat/WEB-INF/classes/log4j2.properties;
+          echo
+          echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
+          echo
     fi
 
     # TODO: need a more-elegant way to handle this, without manipulating files
@@ -122,39 +153,45 @@ ${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
     echo
     echo '**************************************'
     echo "admin login result from /tmp/login_result.txt:"
-    # following lines use "|| true" because grep exits script (-1) if no matches found
-    grep 'You must log in' /tmp/login_result.txt || true
-    grep 'You are logged in' /tmp/login_result.txt || true
-    echo '**************************************'
-    echo
-    echo '**************************************'
-    echo "Checking if Database is configured..."
 
-    ## If the DB needs to be updated run the migration scripts
-    DB_CONFIGURED=$(grep -c "configureType=database" /tmp/login_result.txt || true)
-    if [ "$DB_CONFIGURED" -ne 0 ]; then
-        echo "Database needs configuring..."
-        # Run the database initialization to create or upgrade tables
-        # /${METACAT_APP_CONTEXT}/admin?configureType=database must have an
-        # authenticated session, then run:
-        curl -X POST --cookie ./cookie.txt \
-            --data "configureType=database&processForm=true" \
-            http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > /dev/null 2>&1
+    ADMIN_LOGGED_IN=$(grep -c "You are logged in" /tmp/login_result.txt || true)
 
-        # Validate the database should be configured
-        curl -X POST --cookie ./cookie.txt \
-            --data "configureType=configure&processForm=false" \
-            http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > /dev/null 2>&1
+    if [[ $ADMIN_LOGGED_IN -eq 0 ]]; then
+          echo 'FAILED - unable to log index as admin'
+          echo '**************************************'
+          echo 'Exiting...'
+          exit 3
     else
-        echo "Database is already configured"
+        echo 'SUCCESS - You are logged in as admin'
+        echo '**************************************'
+
+        echo '**************************************'
+        echo "Checking if Database is configured..."
+
+        ## If the DB needs to be updated run the migration scripts
+        DB_CONFIGURED=$(grep -c "configureType=database" /tmp/login_result.txt || true)
+        if [ "$DB_CONFIGURED" -ne 0 ]; then
+            echo "Database needs configuring..."
+            # Run the database initialization to create or upgrade tables
+            # /${METACAT_APP_CONTEXT}/admin?configureType=database must have an
+            # authenticated session, then run:
+            curl -X POST --cookie ./cookie.txt \
+                --data "configureType=database&processForm=true" \
+                http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > /dev/null 2>&1
+
+            # Validate the database should be configured
+            curl -X POST --cookie ./cookie.txt \
+                --data "configureType=configure&processForm=false" \
+                http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > /dev/null 2>&1
+        else
+            echo "Database is already configured"
+        fi
     fi
     echo '**************************************'
-fi
-
-if [[ $DEVTOOLS == "true" ]]; then
-    echo "Container dev tools mode -- starting infinite loop -- ctrl-c to interrupt..."
-    sh -c 'trap "exit" TERM; while true; do sleep 1; done'
-else
     echo "tailing logs in: $TC_HOME/logs/*"
-    exec tail -f "$TC_HOME"/logs/*
+    exec tail -n +0 -f "$TC_HOME"/logs/*
+else
+  echo "* * *  DEVTOOLS = $DEVTOOLS and ARGS = $@ "
+  echo "* * *  NO VALID STARTUP OPTIONS RECEIVED; EXITING  * * *"
+  exit 4
 fi
