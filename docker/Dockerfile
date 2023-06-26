@@ -2,11 +2,10 @@ FROM tomcat:8.5.90-jre8-temurin-jammy
 # TODO: update to tomcat:9.0.76-jre8-temurin-jammy
 
 # ARG default values that can be overridden at build-time
-ARG TAG=2.19.0
+ARG DISTBIN=2.19.0
 ARG DEVTOOLS=''
 
 # ENV default key=value env vars shared with container at runtime
-ENV METACAT_APP_CONTEXT=metacat
 ENV TC_HOME=/usr/local/tomcat
 ENV USRBINDIR=/usr/local/bin
 ENV PATH=${USRBINDIR}:$PATH
@@ -24,14 +23,13 @@ ENV DEVTOOLS=${DEVTOOLS}
 RUN useradd metacat
 
 ## ADD auto-inflates the .tar.gz
-ADD metacat-bin-${TAG}.tar.gz /tmp
+ADD "$DISTBIN" /tmp
 
-RUN apt-get update && apt-get install -y --no-install-recommends netcat python3-bcrypt unzip   && \
-    bash -c "if [[ \"$DEVTOOLS\" == \"true\" ]]; then echo '* * INSECURE! DEV TOOLS BUILD * *' && \
-        apt-get install -y --no-install-recommends vim procps lsof telnet; fi"        && \
+RUN apt-get update && apt-get install -y --no-install-recommends                         \
+        lsof netcat procps python3-bcrypt telnet unzip vim                            && \
     rm -rf /var/lib/apt/lists/*                                                       && \
-    cp /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war ${TC_HOME}/webapps  && \
-    chown -R metacat ${TC_HOME}/webapps                                               && \
+    mv /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war ${TC_HOME}/webapps  && \
+    chown -R metacat ${TC_HOME}                                                       && \
     # Tomcat Mods - TODO MB - remove after Tomcat9 upgrade
     cp  ${TC_HOME}/conf/server.xml  ${TC_HOME}/conf/server.xml.original               && \
     sed -i 's/port="8080"/relaxedPathChars="\[\]\|" \
@@ -44,9 +42,10 @@ COPY --chown=metacat docker-entrypoint.sh ${USRBINDIR}/
 #Run Container as 'metacat'
 USER metacat
 
+#Set working directory to tomcat's bin dir, to match legacy metacat relative paths
+WORKDIR "$TC_HOME"/bin
+
 EXPOSE 8080
-EXPOSE 8009
-EXPOSE 8443
 EXPOSE 5701
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

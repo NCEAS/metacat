@@ -59,6 +59,8 @@ spec:
             - name: METACAT_EXTERNAL_PORT
               {{- $metacatHttpPort := index .Values.metacat "server.httpPort" }}
               value: {{ ternary "80" $metacatHttpPort ( .Values.ingress.enabled ) | quote }}
+            - name: METACAT_APP_CONTEXT
+              value: {{ index .Values.metacat "application.context" }}
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-secrets

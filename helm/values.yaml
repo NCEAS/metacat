@@ -1,4 +1,4 @@
-## Default values for metacat.
+../helm/values.yaml## Default values for metacat.
 ## This is a YAML-formatted file.
 ##
 global:
@@ -74,7 +74,8 @@ image:
   repository: metacat
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: "DEVELOP"
+#  tag: ""
   ## @param image.debug Specify if debug values should be set
   ## Set to true if you would like to see extra information in metacat/tomcat logs.
   ## (Sets the Log4J rootLogger level to "DEBUG")
@@ -108,13 +109,13 @@ securityContext: {}
   #   drop:
   #   - ALL
 
-livenessProbe:
+livenessProbe:        # if this fails, pod will be killed and restarted
   httpGet:
     path: /metacat/
     port: metacat-web
-readinessProbe:
+readinessProbe:       # if this fails, pod will not be killed, but traffic won't be sent to it
   httpGet:
-    path: /metacat/  # d1/mn/v2/query/solr/q=id:*
+    path: /metacat/   # d1/mn/v2/query/solr/q=id:*
     port: metacat-web
 
 service:
@@ -155,15 +156,9 @@ ingress:
       paths:  ## TODO
         - path: "/metacat"
           pathType: Prefix
-        - path: "/metacat/admin"
-          pathType: Prefix
-        - path: "/metacat/d1"
-          pathType: Prefix
         # uncomment the following if you want metacatui to be exposed (default knb skin), and
         # access via /metacatui/  (note we need "/" exposed for access to the config.js file)
-#        - path: "/metacatui"
-#          pathType: Prefix
-        - path: "/"
+        - path: "/metacatui"
           pathType: Prefix
 ## example
 #  annotations:
