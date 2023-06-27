@@ -18,7 +18,9 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
@@ -46,12 +48,41 @@ public class PropertiesWrapper {
     private Properties mainProperties = null;
 
     // default properties only; not including any site-specific properties
-    private Properties defaultProperties = null;
+    protected Properties defaultProperties = null;
 
     // Contains mappings of properties.key=METACAT_ENV_KEY, used to retrieve secret credentials
     // from environment variables
     private final Properties envSecretKeyMappings = new Properties();
 
+    /**
+     * TODO: Eliminate the need for this list! It is here for legacy reasons;
+     *       See GitHub Issue #1638: https://github.com/NCEAS/metacat/issues/1638
+     * Whenever setPropertyNoPersist() is called, the code checks to see if the passed propertyName
+     * parameter is listed in 'writeableDefaults'. If so, the property is added directly to
+     * 'defaultProperties' instead of to 'mainProperties'. It will therefore end up being written
+     * to the 'metacat.properties' file instead of the 'metacat-site.properties' file.
+     * This breaks the design intent of the Properties setup, and has been done as a temporary
+     * workaround preceding incremental improvements.
+     * DO NOT ADD ANY MORE KEYS TO THIS LIST! - IT WILL BE DELETED when the code is refactored to
+     * to handle upgrades across deployments for k8s and legacy installations. Basically, the
+     * metacat.properties file should never need to be writeable. If you find yourself wanting to
+     * write to it, there must be a better solution.
+     */
+    protected static final List<String> WRITEABLE_DEFAULTS = Arrays.asList(
+        PropertyService.SITE_PROPERTIES_DIR_PATH_KEY,
+        "configutil.propertiesConfigured",
+        "configutil.authConfigured",
+        "configutil.skinsConfigured",
+        "configutil.databaseConfigured",
+        "configutil.solrserverConfigured",
+        "configutil.dataoneConfigured",
+        "configutil.ezidConfigured",
+        "configutil.quotaConfigured",
+        "configutil.upgrade.status",
+        "configutil.upgrade.database.status",
+        "configutil.upgrade.java.status",
+        "configutil.upgrade.solr.status"
+    );
 
     /**
      * private constructor since this is a singleton
@@ -140,16 +171,21 @@ public class PropertiesWrapper {
 
         String returnVal = null;
         if (envSecretKeyMappings.containsKey(propertyName)) {
-            returnVal = System.getenv(envSecretKeyMappings.getProperty(propertyName));
+            String envKey = envSecretKeyMappings.getProperty(propertyName);
+            returnVal = System.getenv(envKey);
+            if (returnVal == null || returnVal.trim().isEmpty()) {
+                logMetacat.info("Didn't find env secret: " + envKey
+                                    + "; falling back to property: " + propertyName);
+            } else {
+                logMetacat.info(
+                    "Using env var secret: " + envKey + " to override property: " + propertyName);
+            }
         }
-        // System.getenv(key) returns null if key not present, or empty string if defined but empty
-        // in either case, we want to try fallback:
         if (returnVal == null || returnVal.trim().isEmpty()) {
             returnVal = mainProperties.getProperty(propertyName);
         }
-        // getProperty() returning an empty value is valid, so only disallow null:
-        if (returnVal == null) {
-            logMetacat.info("did not find the property with key " + propertyName);
+        if (returnVal == null) {  // getProperty() returning an empty string is valid
+            logMetacat.error("did not find the property with key " + propertyName);
             throw new PropertyNotFoundException(
                 "PropertiesWrapper.getProperty(): Key/name does not exist in Properties: "
                     + propertyName);
@@ -234,6 +270,7 @@ public class PropertiesWrapper {
                 "Illegal argument - at least one of params was NULL! key = " + propertyName
                     + "; value = " + newValue);
         }
+        propertyName = propertyName.trim();
         if (null == mainProperties.getProperty(propertyName)) {
             // TODO: MB - can we get rid of this? Default java.util.Properties behavior is
             //  to add a new entry if it doesn't already exist, when setProperty() is called
@@ -241,8 +278,16 @@ public class PropertiesWrapper {
                 "Property: " + propertyName + " could not be updated to: " + newValue
                     + " because it does not already exist in properties.");
         }
-        if (propertyName.trim().equals(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY)) {
-            changeSitePropsPath(newValue);
+        if (WRITEABLE_DEFAULTS.contains(propertyName)) {
+            // TODO: Eliminate the need for setting default props! This is here for legacy reasons;
+            //       See GitHub Issue #1638: https://github.com/NCEAS/metacat/issues/1638
+            //       and see comment for WRITEABLE_DEFAULTS constant
+            if (propertyName.equals(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY)) {
+                changeSitePropsPath(newValue);
+            }
+            defaultProperties.setProperty(propertyName, newValue);
+            // Don't re-use/copy the above code - it needs to go away. The default properties
+            // (i.e. those in the metacat.properties file) should never need to be set explicitly.
         } else {
             mainProperties.setProperty(propertyName, newValue);
         }
@@ -375,21 +420,12 @@ public class PropertiesWrapper {
                         + " to " + newSitePropsPath, e);
                 }
             }
+            sitePropertiesFilePath = newSitePropsPath;
 
-            defaultProperties.setProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY, newDir);
-
-            try (Writer output = new FileWriter(defaultPropertiesFilePath.toFile())) {
-                defaultProperties.store(output, null);
-            } catch (IOException e) {
-                logAndThrow("I/O exception trying to store default properties to: "
-                    + defaultPropertiesFilePath, e);
-            }
             logMetacat.debug(
                 "updated sitePropertiesFilePath from " + sitePropertiesFilePath + " to "
-                    + newSitePropsPath + " and wrote new directory location to DEFAULT properties: "
-                    + newDir);
-            sitePropertiesFilePath = newSitePropsPath;
-            PropertyService.syncToSettings();
+                    + newSitePropsPath
+                    + " and added new directory location to in-memory DEFAULT properties: " + newDir);
         }
     }
 
@@ -419,7 +455,7 @@ public class PropertiesWrapper {
             defaultProperties.load(Files.newBufferedReader(defaultPropertiesFilePath));
 
             logMetacat.debug("PropertiesWrapper.initialize(): finished "
-                + "loading metacat.properties into mainDefaultProperties");
+                + "loading metacat.properties into defaultProperties");
 
             // mainProperties comprises (1) the default properties loaded from metacat.properties...
             mainProperties = new Properties(defaultProperties);
@@ -481,21 +517,19 @@ public class PropertiesWrapper {
                 String key = keyValPair[0].trim();
                 String value = keyValPair[1].trim();
                 if (key.isEmpty() || value.isEmpty()) {
-                    logMetacat.warn(
-                        "PropertiesWrapper.initializeSecretsFromEnvVars(): badly-formed entry: ("
-                            + key + ") = (" + value + ")");
+                    logMetacat.error(
+                        "Badly-formed entry in 'application.envSecretKeys' property: ("
+                            + key + ") = (" + value + "); skipping");
                     continue;
                 }
-                logMetacat.warn(
-                    "PropertiesWrapper.initializeSecretsFromEnvVars() Using a secret value for "
-                        + key + " from Env Var: " + value);
+                logMetacat.info("envSecretKeyMappings: If env var: " + value
+                        + " is found later, its secret will be assigned to property: " + key);
                 envSecretKeyMappings.setProperty(key, value);
             }
         } else {
-            logMetacat.warn("PropertiesWrapper.initializeSecretsFromEnvVars(): "
-                                 + "No values found for 'application.envSecretKeys' in properties; "
-                                 + "secrets will not be retrieved from env vars");
-            // no overrides specified, OK to log a warning and then ignore
+            logMetacat.warn("No values found for 'application.envSecretKeys' in properties; "
+                                 + "secrets will NOT be retrieved from environment variables");
+            // no overrides specified, OK to log a warning and then ignore, since overrides optional
         }
     }
 
@@ -574,13 +608,18 @@ public class PropertiesWrapper {
     }
 
     /**
-     * store the properties to file. NOTE that this will persist only the properties that are: (a)
-     * not included in mainDefaultProperties, or (b) have changed from the values in
-     * mainDefaultProperties. From the <a
-     * href="https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html">
+     * Store the properties to file. NOTE that this will persist only the properties that are:
+     * (a) not included in defaultProperties, or (b) have changed from the values in
+     * defaultProperties, by writing them to the metacat-site.properties file.
+     * From the <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html">
      * java.util.Properties javadoc</a>: "Properties from the defaults table of this Properties
      * table (if any) are not written out by this method." Also, Properties class is thread-safe -
      * no need to synchronize.
+     *
+     * As a side effect, the metacat.properties file is also written back to disk. This is needed
+     * for legacy reasons, and will be removed when the relevant code is refactored.
+     * See GitHub Issue #1638: https://github.com/NCEAS/metacat/issues/1638 and also
+     * @see PropertiesWrapper.WRITEABLE_DEFAULTS
      *
      * @throws GeneralPropertyException if an I/O Exception is encountered
      */
@@ -590,6 +629,16 @@ public class PropertiesWrapper {
         } catch (IOException e) {
             logAndThrow("I/O exception trying to call mainProperties.store(): ", e);
         }
+        // TODO: Eliminate the need for storing default props! It is here for legacy reasons;
+        //       See GitHub Issue #1638: https://github.com/NCEAS/metacat/issues/1638
+        //       and see comment for WRITEABLE_DEFAULTS constant
+        try (Writer output = new FileWriter(defaultPropertiesFilePath.toFile())) {
+            defaultProperties.store(output, null);
+        } catch (IOException e) {
+            logAndThrow("I/O exception trying to call defaultProperties.store(): ", e);
+        }
+        // Don't re-use/copy the above code - it needs to go away. The metacat.properties file
+        // should never need to be written to.
     }
 
     private boolean isNotBlankPath(Path path) {

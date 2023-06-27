@@ -1,0 +1,240 @@
+## Default values for metacat.
+## This is a YAML-formatted file.
+##
+global:
+  #storageClass: csi-rbd-sc
+  #solrPort: &global-solr-port 8983
+  externalHostname: &global-external-hostname localhost
+
+## The metacat section can contain any properties that will override those in
+## metacat-site.properties and metacat.properties. The properties that have been pre-populated
+## in this section comprise the minimum set of values needed to run the app and the test suite on
+## a development machine.
+##
+## NOTE that certain credentials must also be provided, via Kubernetes Secrets, in order for
+## metacat to function correctly. These credentials are listed in ./admin/secrets.yaml, in the
+## form of environment variables expected by metacat at runtime. Also see the mappings in the
+## `application.envSecretKeys` property in `metacat.properties`, to determine which metacat
+## property corresponds to each of these environment variables
+##
+metacat:
+  ## @param metacat.application.context
+  ## the application context to use - for example, if your application is hosted at
+  ## https://mydomain.org, and you define the context to be "metacat", then the url to access the
+  ## application will be https://mydomain.org/metacat/
+  ##
+  application.context: metacat
+  ## @param auth.admin.setupUsername
+  ## The primary admin username that will be used to authenticate with the new metacat instance
+  ## and apply any necessary setup steps, database upgrades etc. upon first run.
+  ## NOTES:
+  ## 1. The corresponding password must be set as a Secret (see ./admin/secrets.yaml), with the
+  ##    key METACAT_ADMINISTRATOR_PASSWORD
+  ## 2. This account will be created if it doesn't already exist in the `passwords.xml` file on
+  ##    metacat's mounted PersistentVolume (see .Values.persistence)
+  ## 3. This username MUST appear on the list of authorized administrators, otherwise
+  ##    container startup will fail (see @param auth.administrators)
+  ##
+  administrator.username: admin@localhost
+  ## METACAT_AUTH_ADMINISTRATORS is a colon-separated list of admin usernames or LDAP-style
+  ## Distinguished Names denoting the users who may log into metacat with administrator
+  ## privileges.
+  ##
+  auth.administrators: admin@localhost:uid=jones,o=NCEAS,dc=ecoinformatics,dc=org
+  ## @param database.connectionURI
+  ## connection URI for the postgres database, in the form: jdbc:postgresql://hostname/database-name
+  ## host.docker.internal is equivalent to "localhost"
+  ##
+  database.connectionURI: jdbc:postgresql://host.docker.internal/metacat
+  ## Allow users to publish Digital Object Identifiers for the data in this metacat instance?
+  ## (see doi.org).
+  ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secrets.yaml)
+  ## and either override or use the defaults in metacat.properties for all the entries that begin
+  ## with: "guid.doi."
+  ##
+  guid.doi.enabled: true
+  ## @param metacat.server.httpPort
+  ## 
+  server.httpPort: 8080
+  ## @param metacat.server.httpSSLPort
+  ##
+  server.httpSSLPort: 8443
+  ## @param metacat.server.name
+  ##
+  server.name: *global-external-hostname
+  ## @param metacat.solr.baseURL
+  # host.docker.internal is equivalent to "localhost"
+  solr.baseURL: http://host.docker.internal:8983/solr
+  ##
+  ## @param metacat.replication.logdir
+  replication.logdir: /var/metacat/logs
+
+image:
+  #TODO pull from github container repo, e.g. see indexer: ghcr.io/dataoneorg/dataone-index-worker
+  repository: metacat
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "DEVELOP"
+#  tag: ""
+  ## @param image.debug Specify if debug values should be set
+  ## Set to true if you would like to see extra information in metacat/tomcat logs.
+  ## (Sets the Log4J rootLogger level to "DEBUG")
+  ## * * WARNING - FOR TESTING ONLY! * * May result in secrets being printed to logs in plain text.
+  ##
+  debug: false
+
+imagePullSecrets: []
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+#TODO
+#  fsGroup: metacat
+#  runAsUser: metacat
+#  capabilities:
+#    readOnlyRootFilesystem: true
+#    runAsNonRoot: true
+  #   drop:
+  #   - ALL
+
+livenessProbe:        # if this fails, pod will be killed and restarted
+  httpGet:
+    path: /metacat/
+    port: metacat-web
+readinessProbe:       # if this fails, pod will not be killed, but traffic won't be sent to it
+  httpGet:
+    path: /metacat/   # d1/mn/v2/query/solr/q=id:*
+    port: metacat-web
+
+service:
+  type: ClusterIP     # Headless ClusterIP required for StatefulSet
+  ports:
+  - port: 8080
+    # the ingress will direct metacat traffic to the port named "metacat-svc-web"
+    name: metacat-svc-web
+  - port: 5701
+    name: hazelcast
+
+ingress:
+  enabled: true
+  ## @param className
+  ## (e.g. className: "nginx") - depends on the available classes in your cluster; inspect using:
+  ##     $ kc get ingressclasses
+  ## For Rancher Desktop,  className: "traefik"
+  ##
+  className: "traefik"
+  ## @param hosts
+  ## For each `- host:` entry, provide the hostname that is mapped via DNS to point to the IP
+  ## address of this ingress, and mappings for the paths on that host. For example:
+  ##   hosts:
+  ##     - host: api.test.dataone.org
+  ##       paths:
+  ##         - path: "/quality"
+  ##           pathType: Prefix
+  ##
+  ##     where `pathType` determines the interpretation of the Path matching:
+  ##         Exact: Matches the URL path exactly.
+  ##         Prefix: Requires URL to begin with the pattern, not including substrings
+  ##                 (e.g. /foo/bar matches /foo/bar/baz, but does not match /foo/barbaz).
+  ##
+  ## NOTE:   All paths will be mapped to the .service.ports entry that has `name: metacat-svc-web`
+  ##
+  hosts:
+    - host: *global-external-hostname
+      paths:  ## TODO
+        - path: "/metacat"
+          pathType: Prefix
+        # uncomment the following if you want metacatui to be exposed (default knb skin), and
+        # access via /metacatui/  (note we need "/" exposed for access to the config.js file)
+        - path: "/metacatui"
+          pathType: Prefix
+## example
+#  annotations:
+#    nginx.ingress.kubernetes.io/enable-cors: "true"
+#    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
+#    nginx.ingress.kubernetes.io/cors-allow-origin: '$http_origin'
+#    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+#    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  annotations: { }
+## example
+#  tls:
+#    - hosts:
+#        - api.test.dataone.org
+#      secretName: ingress-nginx-tls-cert
+  tls: []
+
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with limited
+# resources, such as Minikube.
+resources: {}
+
+autoscaling:
+  enabled: false
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+persistence:
+  ## @param persistence.enabled
+  ## Enable metacat data persistence using Persistent Volume Claims
+  ##
+  ## Always set to 'enabled: true' for production deployments.
+  ##
+  ## For development/testing ONLY: Setting 'enabled: false' will result in the use of a temporary
+  ## 'emptyDir' for saving metacat's data. This means the data saved by metacat WILL BE LOST when
+  ## the pod is deleted!
+  ##
+  enabled: true
+  ## @param persistence.storageClass Storage class of backing PVC
+  ##
+  ## If <storageClass> is defined,  storageClassName: <storageClass>
+  ##
+  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
+  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
+  ##   no class (no annotation, or one set equal to "")
+  ##
+  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
+  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
+  ## Instead, inspect your cluster to see what stoprageClass is set as default:
+  ##    $  kubectl get storageclass
+  ## ...and then explicitly set storageClass to match the name of the default storageclass
+  ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
+  ##
+  storageClass: local-path
+  ## @param persistence.existingClaim
+  ## Set a value for 'existingClaim' only if you want to re-use a Persistent Volume Claim that has
+  ## already been set up by a k8s admin ahead of time.
+  ## Leaving it blank will cause a pvc to be created dynamically using volumeClaimTemplates.
+  ##
+  existingClaim: ""
+  ## @param persistence.accessModes PVC Access Mode for metacat volume
+  ## Example:
+  ##    accessModes:
+  ##    - ReadWriteOnce   # allow only one node to mount in read/write mode
+  ##    - ReadOnlyMany    # allow many nodes to mount in read-only mode
+  ## ReadWriteOnce  is always required by metacat. ReadOnlyMany is useful for giving other
+  ## services (e.g. metadig) read-only access to metacat data.
+  ## Note that the underlying PersistentVolume (or pv auto-provisioner) must be able to provide
+  ## these modes, in order for the PVC to bind successfully. (For Rancher Desktop, this means
+  ## setting only ReadWriteOnce, not ReadOnlyMany)
+  ##
+  accessModes:
+    - ReadWriteOnce
+  ## @param primary.persistence.size PVC Storage Request for metacat volume
+  ##
+  size: 1Gi

@@ -1,0 +1,57 @@
+# For development use:
+# Create a persistent volume using the filesystem on the local machine.
+#
+# 1.  Edit this file to set the "spec.hostpath.path" parameter below
+
+# 2.  Then install in your cluster by one of the following methods. Assuming your release name is
+#     "my-release": (NOTE THE RELEASE NAME MUST MATCH THE ONE YOU USE WITH HELM!)
+#
+#     a. Define the release name on the command line:
+#       $ RELEASE_NAME=my-release  envsubst < pv-hostpath.yaml | kubectl apply -n <mynamespace> -f -
+#
+#       If this results in "command not found: envsubst", you can install envsubst; e.g. on Mac OS:
+#           $  brew install gettext && brew link --force gettext
+#
+#     b.  Alternatively, you can simply replace "${RELEASE_NAME}" in the file below and do:
+#           $  kubectl apply -n <mynamespace> -f pv-hostpath.yaml
+#
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ${RELEASE_NAME}-pv
+spec:
+  storageClassName: local-path
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    # ReadWriteOnce:
+    # the volume can be mounted as read-write by a single node. ReadWriteOnce access mode still
+    # can allow multiple pods to access the volume when the pods are running on the same node.
+    #
+    - ReadWriteOnce
+    # ReadOnlyMany:
+    # the volume can be mounted as read-only by multiple nodes.
+    #
+    - ReadOnlyMany
+  # persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its
+  # claim. Valid options are:
+  #   Retain --   after the PersistentVolumeClaim is released, keep this PersistentVolume and its
+  #               contents (default for manually created PVs)
+  #   Delete --   after the PersistentVolumeClaim is released, delete this PersistentVolume and
+  #               delete the underlying storage (default for dynamically provisioned PVs)
+  #   Recycle --  (DEPRECATED) after the PersistentVolumeClaim is released, delete the contents of
+  #               this PersistentVolume and make it available for another claim. "Recycle" must be
+  #               supported by the volume plugin underlying this PV
+  #
+  persistentVolumeReclaimPolicy: Retain
+  # hostPath.path hostPath represents a directory on the host. Provisioned by a developer or tester.
+  # This is useful for single-node development and testing only! On-host storage is not supported
+  #  in any way and WILL NOT WORK in a multi-node cluster.
+  # Note: if using Rancher Desktop on a Mac, k8s runs inside a virtual machine, so the directory
+  #  used by the persistent volume mount is generally not shared with the corresponding location on
+  #  the mac's hard drive. However the user's home directory IS shared with the VM, so use a path
+  #  within /Users/yourname/... if you need access outside of k8s. It may be necessary to chmod 777
+  # so the metacat user can write to it - so be careful! Again, this is for testing/dev only!
+  hostPath:
+    path: /Users/yourname/your-pv-directory

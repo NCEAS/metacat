@@ -36,7 +36,7 @@ public class LeanTestUtils {
 
     private static final Path DEFAULT_PROPS_FILE_PATH = Paths.get("lib/metacat.properties");
     private static final Path SITE_PROPS_FILE_PATH = Paths.get("test/test.properties");
-    private static boolean printDebug = false;
+    private static final boolean printDebug;
     private static Properties expectedProperties;
 
     static {
@@ -68,26 +68,51 @@ public class LeanTestUtils {
     public static Properties getExpectedProperties() {
 
         if (expectedProperties == null) {
-            assertTrue("LeanTestUtils.getExpectedProperties(): default properties files not found",
-                doesPropertiesFileExist(DEFAULT_PROPS_FILE_PATH));
-            assertTrue("LeanTestUtils.getExpectedProperties(): site properties files not found",
-                doesPropertiesFileExist(SITE_PROPS_FILE_PATH));
-            Properties metacatProps = new Properties();
-            try {
-                metacatProps.load(Files.newBufferedReader(DEFAULT_PROPS_FILE_PATH));
-                expectedProperties = new Properties(metacatProps);
-                expectedProperties.load(Files.newBufferedReader(SITE_PROPS_FILE_PATH));
-            } catch (IOException e) {
-                fail("I/O exception trying to load properties from " + DEFAULT_PROPS_FILE_PATH
-                    + " and " + SITE_PROPS_FILE_PATH);
-            }
-            assertFalse("LeanTestUtils: expected properties EMPTY!", expectedProperties.isEmpty());
-            assertFalse("metacat.properties not loaded?",
-                expectedProperties.getProperty("application.metacatVersion").trim().isEmpty());
-            assertFalse("test.properties not loaded?",
-                        expectedProperties.getProperty("metacat.contextDir").trim().isEmpty());
+            expectedProperties = getLatestPropertiesFromDisk();
         }
         return expectedProperties;
+    }
+
+    /**
+     * Get a Properties object containing the default properties from lib/metacat.properties,
+     * overlaid with the test properties from test/test.properties, that have been freshly loaded
+     * from the files on disk. These will therefore reflect any changes that have been persisted
+     * back to the properties during a test run, whereas a call to getExpectedProperties() will
+     * always return the same starting properties that were in effect the first time that method
+     * was called.
+     * These can therefore be used to test persistence of properties, or can be  used to retrieve
+     * test-specific properties such as the debug flag ("test.printdebug") or the metacat deployment
+     * location ("metacat.contextDir")
+     *
+     * @return  java.util.Properties object containing a freshly-loaded copy of the default
+     *          properties from lib/metacat.properties, overlaid with the test properties from
+     *          test/test.properties
+     */
+    public static Properties getLatestPropertiesFromDisk() {
+
+        Properties latestProperties = new Properties();
+        assertTrue(
+            "LeanTestUtils.getLatestPropertiesFromDisk(): default properties files not found",
+            doesPropertiesFileExist(DEFAULT_PROPS_FILE_PATH));
+        assertTrue(
+            "LeanTestUtils.getLatestPropertiesFromDisk(): site properties files not found",
+            doesPropertiesFileExist(SITE_PROPS_FILE_PATH));
+        Properties metacatProps = new Properties();
+        try {
+            metacatProps.load(Files.newBufferedReader(DEFAULT_PROPS_FILE_PATH));
+            latestProperties = new Properties(metacatProps);
+            latestProperties.load(Files.newBufferedReader(SITE_PROPS_FILE_PATH));
+        } catch (IOException e) {
+            fail("I/O exception trying to load properties from " + DEFAULT_PROPS_FILE_PATH + " and "
+                     + SITE_PROPS_FILE_PATH);
+        }
+        assertFalse("LeanTestUtils: latestProperties EMPTY!", latestProperties.isEmpty());
+        assertFalse("metacat.properties not loaded?",
+            latestProperties.getProperty("application.metacatVersion").trim().isEmpty());
+        assertFalse("test.properties not loaded?",
+            latestProperties.getProperty("metacat.contextDir").trim().isEmpty());
+
+        return latestProperties;
     }
 
     /**
