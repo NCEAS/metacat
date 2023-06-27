@@ -68,5 +68,5 @@ fi
 
 cp ../"${DISTBIN}" .
 
-docker image build "$DEV_BUILD_OPTS" \
+docker image build $DEV_BUILD_OPTS \
     --tag metacat:"$TAG" --build-arg DISTBIN="$DISTBIN" --build-arg DEVTOOLS="$DEVTOOLS" .
