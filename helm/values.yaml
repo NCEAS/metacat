@@ -1,4 +1,4 @@
-../helm/values.yaml## Default values for metacat.
+## Default values for metacat.
 ## This is a YAML-formatted file.
 ##
 global:
