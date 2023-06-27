@@ -21,33 +21,40 @@ echo "                  Consequently, you need to COMMENT OUT livenessProbe and 
 echo "                   values.yaml, otherwise k8s WILL KEEP TRYING TO RESTART THE CONTAINER!"
 echo "                  -devtools installs additional command-line tools in the container (see"
 echo "                   Dockerfile for complete list), thus REDUCING ITS SECURITY!"
-echo "                  -devtools overrides the METACAT_DEBUG environment variable, setting it to"
-echo "                   'true', which enables debug output during container startup, and sets"
-echo "                   the Log4J rootLogger.level to 'DEBUG' -- THUS EXPOSING SENSITIVE INFO!!"
 echo
-
+echo "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
+echo "* * *"
 if [ -z "$1" ] || [[ "$1" == "-devtools" ]]; then
     TAG=$DEFAULT_TAG
     MC_VERSION=$DEFAULT_VERSION
-    echo "* * * * * *  Setting image tag to $TAG and the Metacat release version to $MC_VERSION"
+    echo "* * *  Setting image tag to $TAG and the Metacat release version to $MC_VERSION"
 
 elif [[ -n "$1" ]]; then
     TAG="$1"
     MC_VERSION="$TAG"
-    echo "* * * * * *  Setting both the image tag and the Metacat release version to ${TAG})"
+    echo "* * *  Setting both the image tag and the Metacat release version to ${TAG})"
 fi
-echo "* * * * * *      (Remember to set 'image.tag' in values.yaml to match tag: $TAG!!)"
+echo "* * *      (Remember to set 'image.tag' in values.yaml to match tag: $TAG!!)"
+echo "* * *"
 
 DEVTOOLS="false"
 DEV_BUILD_OPTS=""
 if [[ "$1" == "-devtools" ]] || [[ "$2" == "-devtools" ]]; then
     DEVTOOLS="true"
     DEV_BUILD_OPTS="--no-cache --progress=plain"
-    echo "* * * * * *  Setting build flags to: ${DEV_BUILD_OPTS}"
-    echo "* * * * * *      (Remember to disable the livenessProbe in values.yaml, otherwise the"
-    echo "* * * * * *       pod will keep restarting!!)"
+    echo "* * *  Setting build flags to: ${DEV_BUILD_OPTS}"
+    echo "* * *"
+    echo "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
+    echo "* * *"
+    echo "* * *      (Remember to disable the livenessProbe in values.yaml, otherwise the"
+    echo "* * *       pod will keep restarting!!)"
+    echo "* * *"
+    echo "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
+    echo "* * *"
 fi
-echo "* * * * * *  Building with \"DEVTOOLS\" set to: ${DEVTOOLS}"
+echo "* * *  Building with \"DEVTOOLS\" set to: ${DEVTOOLS}"
+echo "* * *"
+echo "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
 echo
 
 DISTBIN="metacat-bin-${MC_VERSION}.tar.gz"
@@ -61,5 +68,5 @@ fi
 
 cp ../"${DISTBIN}" .
 
-docker image build $DEV_BUILD_OPTS \
+docker image build "$DEV_BUILD_OPTS" \
     --tag metacat:"$TAG" --build-arg DISTBIN="$DISTBIN" --build-arg DEVTOOLS="$DEVTOOLS" .
