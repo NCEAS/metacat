@@ -6,25 +6,6 @@ global:
   #solrPort: &global-solr-port 8983
   externalHostname: &global-external-hostname localhost
 
-  ## settings for postgresql sub-chart, also used by metacat to authenticate.
-  postgresql:
-    ## @param global.postgresql.enabled
-    ## set to false if you want to connect to your own existing postgresql deployment (and ensure
-    ## metacat.database.connectionURI is set accordingly). Once the postgres container is running,
-    ## test using:  $  kubectl exec -it <postgresql-pod-name> -- psql -U <username> -d <database>
-    ## (or from a different host: psql -U <username> -W -h <hostname> <database>)
-    ##
-    enabled: true
-    auth:
-      username: metacat
-      database: metacat
-      existingSecret: mc-secrets
-      secretKeys:
-        userPasswordKey: POSTGRES_PASSWORD
-        # adminPasswordKey: dummy value - we're not using this, but bitnami expects
-        # to find it in our "existingSecret:" secrets location
-        adminPasswordKey: POSTGRES_PASSWORD
-
 ## The metacat section can contain any properties that metacat would expect to find in its
 ## configuration. These will be mounted in the container as metacat-site.properties,
 ## and will override the corresponding values in metacat.properties.
@@ -69,6 +50,7 @@ metacat:
 
   ## @param metacat.database.connectionURI
   ## connection URI for the postgres database, in the form: jdbc:postgresql://hostname/database-name
+  ## NOTE: ensure the `database-name` matches the value of `postgresql.auth.database`
   ## If you are connecting to a dev instance running on localhost, use:
   ##     database.connectionURI: jdbc:postgresql://host.docker.internal/metacat
   ## To connect to another k8s instance, use the format: <servicename>.<namespace>.svc.cluster.local
@@ -166,7 +148,7 @@ livenessProbe:
 ##
 readinessProbe:
   httpGet:
-    path: /metacat/d1/mn/v2/query/solr/q=id:*
+    path: /metacat/
     port: metacat-web
   initialDelaySeconds: 5
   periodSeconds: 5
@@ -184,7 +166,8 @@ ingress:
   ## @param ingress.className
   ## (e.g. className: "nginx") - depends on the available classes in your cluster; inspect using:
   ##     $ kc get ingressclasses
-  ## For Rancher Desktop,  className: "traefik"
+  ## For Rancher Desktop,  className: "traefik" (provided you have traefik enabled: 'preferences'->
+  ## 'kubernetes'->'enable traefik')
   ##
   className: "traefik"
 
@@ -266,7 +249,7 @@ persistence:
   ##
   ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
   ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
-  ## Instead, inspect your cluster to see what stoprageClass is set as default:
+  ## Instead, inspect your cluster to see what storageClass is set as default:
   ##    $  kubectl get storageclass
   ## ...and then explicitly set storageClass to match the name of the default storageclass
   ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
@@ -297,3 +280,64 @@ persistence:
   ## @param persistence.size PVC Storage Request for metacat volume
   ##
   size: 1Gi
+
+## settings for postgresql sub-chart
+postgresql:
+  ## @param postgresql.enabled
+  ## set to false if you want to connect to your own existing postgresql deployment (and ensure
+  ## metacat.database.connectionURI is set accordingly).
+  ## Once the postgres container is running, test using:
+  ##   $  kubectl exec -it <postgresql-pod-name> -- psql  -U <username>  -d <databasename>
+  ## (or from a shell in metacat container: psql  -U <username>  -h <pghostname> <databasename>)
+  ##
+  enabled: true
+
+  auth:
+    ## @param postgresql.auth.username
+    ## Username for accessing the database used by metacat
+    ## For the corresponding password, see POSTGRES_PASSWORD in secrets.yaml
+    ## (These values are also used by metacat to authenticate)
+    ##
+    username: metacat
+
+    ## @param postgresql.auth.database
+    ## The name of the database used by metacat. Make sure metacat.database.connectionURI is
+    ## using this value
+    ##
+    database: metacat
+
+    ## @param postgresql.auth.existingSecret
+    ## Find the password in metacat's existing secrets
+    ## TODO: NEED TO MAKE RELEASE NAME (mc-) DYNAMIC!
+    ##
+    existingSecret: mc-secrets
+
+    secretKeys:
+      ## @param postgresql.auth.secretKeys.userPasswordKey
+      ## The key that identifies the metacat db's account password within metacat's existing secrets
+      ##
+      userPasswordKey: POSTGRES_PASSWORD
+
+      ## adminPasswordKey: dummy value - we're not using this, but bitnami expects
+      ## to find it in our "existingSecret:" secrets location
+      ##
+      adminPasswordKey: POSTGRES_PASSWORD
+
+  ## @param postgresql.persistence
+  ## For explanatory notes, see top-level `persistence` section
+  persistence:
+    enabled: true
+    storageClass: ""
+    existingClaim: ""
+
+    ## @param persistence.size PVC Storage Request for postgresql volume
+    ##
+    size: 1Gi
+
+  primary:
+    ## override the default pf_hba.conf with our own, to allow password auth, since this is the
+    ## only method metacat currently supports (as of June 2023)
+    pgHbaConfiguration: |
+      host        metacat       metacat       0.0.0.0/0       password
+      host        metacat       metacat       ::0/0           password
+      local       all           all                           md5
