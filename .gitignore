@@ -42,3 +42,5 @@ src/perl/Metacat/Makefile
 src/perl/Metacat/Makefile.old
 src/perl/Metacat/blib/
 src/perl/Metacat/pm_to_blib
+helm/charts
+helm/Chart.lock
