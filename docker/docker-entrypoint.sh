@@ -157,10 +157,14 @@ ${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
     ADMIN_LOGGED_IN=$(grep -c "You are logged in" /tmp/login_result.txt || true)
 
     if [[ $ADMIN_LOGGED_IN -eq 0 ]]; then
-          echo 'FAILED - unable to log index as admin'
-          echo '**************************************'
+        echo 'FAILED - unable to log in as admin'
+        echo '**************************************'
+        if [[ "$METACAT_DEBUG" != "true" ]]; then
           echo 'Exiting...'
           exit 3
+        else
+          echo 'IN DEBUG MODE, SO NOT EXITING, BUT NOTE THAT * * * SOMETHING IS WRONG!!! * * *'
+        fi
     else
         echo 'SUCCESS - You are logged in as admin'
         echo '**************************************'
