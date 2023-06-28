@@ -25,12 +25,8 @@ icon: https://camo.githubusercontent.com/a41e704e6cbd198afed0a892f2dccfc43aef29f
 appVersion: "2.19.0"
 
 # Chart dependencies
-# dependencies:
-#   - name: postgres
-#     repository: https://charts.bitnami.com/bitnami
-#     version: 14.6.0
-#     condition: postgres.enabled, global.postgres.enabled
-#   - name: solr
-#     repository: https://charts.bitnami.com/bitnami
-#     version: 6.2.3
-#     condition: solr.enabled, global.solr.enabled
+dependencies:
+  - name: postgresql
+    repository: https://charts.bitnami.com/bitnami
+    version: 11    # chart v 11.9.13 deploys postgres v 14.5.0
+    condition: postgresql.enabled, global.postgresql.enabled

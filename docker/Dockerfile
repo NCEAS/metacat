@@ -25,8 +25,8 @@ RUN useradd metacat
 ## ADD auto-inflates the .tar.gz
 ADD "$DISTBIN" /tmp
 
-RUN apt-get update && apt-get install -y --no-install-recommends                         \
-        lsof netcat procps python3-bcrypt telnet unzip vim                            && \
+RUN apt-get update && apt-get install -y --no-install-recommends  iputils-ping lsof      \
+        netcat postgresql-client procps python3-bcrypt telnet unzip vim               && \
     rm -rf /var/lib/apt/lists/*                                                       && \
     mv /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war ${TC_HOME}/webapps  && \
     chown -R metacat ${TC_HOME}                                                       && \
