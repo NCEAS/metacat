@@ -28,5 +28,8 @@ appVersion: "2.19.0"
 dependencies:
   - name: postgresql
     repository: https://charts.bitnami.com/bitnami
-    version: 11    # chart v 11.9.13 deploys postgres v 14.5.0
+    # @param version  --  the bitnami postgresql CHART version, NOT the database version
+    # get full list using:  $  helm search repo bitnami/postgresql --versions
+    #
+    version: 11.9.13    # postgres version 14.5.0 is deployed by chart version 11.9.13
     condition: postgresql.enabled, global.postgresql.enabled
