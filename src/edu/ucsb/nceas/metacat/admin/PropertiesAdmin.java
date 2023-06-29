@@ -88,33 +88,121 @@ public class PropertiesAdmin extends MetacatAdmin {
 
                 // Attempt to discover the following properties.  These will show
                 // up in the configuration fields if nothing else is provided.
-                PropertyService.setPropertyNoPersist("application.context",
-                        ServiceService.getRealApplicationContext());
-                PropertyService.setPropertyNoPersist("server.name", SystemUtil
-                        .discoverServerName(request));
-                PropertyService.setPropertyNoPersist("server.httpPort", SystemUtil
-                        .discoverServerPort(request));
-                PropertyService.setPropertyNoPersist("server.httpSSLPort",
-                        SystemUtil.discoverServerSSLPort(request));
-                PropertyService.setPropertyNoPersist("application.deployDir",
-                    SystemUtil.discoverDeployDir(request));
-                PropertyService.setPropertyNoPersist("application.datafilepath",
-                        externalDir + FileUtil.getFS() + "data");
-                PropertyService.setPropertyNoPersist("application.inlinedatafilepath",
-                        externalDir + FileUtil.getFS() + "inline-data");
-                PropertyService.setPropertyNoPersist("application.documentfilepath",
-                        externalDir + FileUtil.getFS() + "documents");
-                PropertyService.setPropertyNoPersist("application.tempDir",
-                        externalDir + FileUtil.getFS() + "temporary");
-                PropertyService.setPropertyNoPersist("replication.logdir",
-                        externalDir + FileUtil.getFS() + "logs");
-                PropertyService.setPropertyNoPersist("solr.homeDir",
-                        externalDir + FileUtil.getFS() + "solr-home");
+                String applicationContext = null;
+                try {
+                    applicationContext = PropertyService.getProperty("application.context");
+                } catch (PropertyNotFoundException ee) {
+                    applicationContext = null;
+                }
+                if (applicationContext == null || applicationContext.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("application.context",
+                            ServiceService.getRealApplicationContext());
+                }
+                String serverName = null;
+                try {
+                    serverName = PropertyService.getProperty("server.name");
+                } catch (PropertyNotFoundException ee) {
+                    serverName = null;
+                }
+                if (serverName == null || serverName.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("server.name", SystemUtil
+                            .discoverServerName(request));                    
+                }
+                String serverHttpPort = null;
+                try {
+                    serverHttpPort = PropertyService.getProperty("server.httpPort");
+                } catch (PropertyNotFoundException ee) {
+                    serverHttpPort = null;
+                }
+                if (serverHttpPort == null || serverHttpPort.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("server.httpPort", SystemUtil
+                            .discoverServerPort(request));                    
+                }
+                String serverHttpSSLPort = null;
+                try {
+                    serverHttpSSLPort = PropertyService.getProperty("server.httpSSLPort");
+                } catch (PropertyNotFoundException ee) {
+                    serverHttpSSLPort = null;
+                }
+                if (serverHttpSSLPort == null || serverHttpSSLPort.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("server.httpSSLPort",
+                            SystemUtil.discoverServerSSLPort(request));                    
+                }
+                String applicationDeployDir = null;
+                try {
+                    applicationDeployDir = PropertyService.getProperty("application.deployDir");
+                } catch (PropertyNotFoundException ee) {
+                    applicationDeployDir = null;
+                }
+                if (applicationDeployDir == null || applicationDeployDir.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("application.deployDir",
+                            SystemUtil.discoverDeployDir(request));
+                }
+                String applicationDataPath = null;
+                try {
+                    applicationDataPath = PropertyService.getProperty("application.datafilepath");
+                } catch (PropertyNotFoundException ee) {
+                    applicationDataPath = null;
+                }
+                if (applicationDataPath == null || applicationDataPath.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("application.datafilepath",
+                            externalDir + FileUtil.getFS() + "data");
+                }
+                String applicationInlineDataPath = null;
+                try {
+                    applicationInlineDataPath = PropertyService.getProperty("application.inlinedatafilepath");
+                } catch (PropertyNotFoundException ee) {
+                    applicationInlineDataPath = null;
+                }
+                if (applicationInlineDataPath == null || applicationInlineDataPath.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("application.inlinedatafilepath",
+                            externalDir + FileUtil.getFS() + "inline-data");
+                }
+                String applicationDocPath = null;
+                try {
+                    applicationDocPath = PropertyService.getProperty("application.documentfilepath");
+                } catch (PropertyNotFoundException ee) {
+                    applicationDocPath = null;
+                }
+                if (applicationDocPath == null || applicationDocPath.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("application.documentfilepath",
+                            externalDir + FileUtil.getFS() + "documents");                    
+                }
+                String applicationTempDir = null;
+                try {
+                    applicationTempDir = PropertyService.getProperty("application.tempDir");
+                } catch (PropertyNotFoundException ee) {
+                    applicationTempDir = null;
+                }
+                if (applicationTempDir == null || applicationTempDir.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("application.tempDir",
+                            externalDir + FileUtil.getFS() + "temporary");
+                }
+                String replicationLogDir = null;
+                try {
+                    replicationLogDir = PropertyService.getProperty("replication.logdir");
+                } catch (PropertyNotFoundException ee) {
+                    replicationLogDir = null;
+                }
+                if (replicationLogDir == null || replicationLogDir.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("replication.logdir",
+                            externalDir + FileUtil.getFS() + "logs");
+                }
+                String solrHomeDir = null;
+                try {
+                    solrHomeDir = PropertyService.getProperty("solr.homeDir");
+                } catch (PropertyNotFoundException ee) {
+                    solrHomeDir = null;
+                }
+                if (solrHomeDir == null || solrHomeDir.trim().equals("")) {
+                    PropertyService.setPropertyNoPersist("solr.homeDir",
+                            externalDir + FileUtil.getFS() + "solr-home");
+                } 
                 
                 //This section is to handle the cancel or error scenarios. 
-                //So we don't need to persist properties
-                //PropertyService.persistProperties();
-                //PropertyService.syncToSettings();
+                //So we don't need to persist properties (?)
+                PropertyService.persistProperties();
+                PropertyService.syncToSettings();
 
                 // Add the list of properties from metacat.properties to the request
                 Vector<String> propertyNames = PropertyService.getPropertyNames();
@@ -196,7 +284,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 try {
                     FileUtil.createDirectory(dataDir);
                 } catch (UtilException ue) {
-                    String errorString = "PropertiesAdmin.configureProperties - Could not create directory: " + dataDir +
+                    String errorString = "PropertiesAdmin.configureProperties - Could not create the Metacat data directory: " + dataDir +
                     " : " + ue.getMessage();
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
@@ -207,7 +295,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 try {
                     FileUtil.createDirectory(inlineDataDir);
                 } catch (UtilException ue) {
-                    String errorString = "PropertiesAdmin.configureProperties - Could not create directory: " + inlineDataDir +
+                    String errorString = "PropertiesAdmin.configureProperties - Could not create the Metacat inline data directory: " + inlineDataDir +
                         " : " + ue.getMessage();
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
@@ -218,7 +306,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 try {
                     FileUtil.createDirectory(documentfilepath);
                 } catch (UtilException ue) {
-                    String errorString = "PropertiesAdmin.configureProperties - Could not create directory: " + documentfilepath +
+                    String errorString = "PropertiesAdmin.configureProperties - Could not create the Metacat document directory: " + documentfilepath +
                         " : " + ue.getMessage();
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
@@ -229,7 +317,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 try {
                     FileUtil.createDirectory(tempDir);
                 } catch (UtilException ue) {
-                    String errorString = "PropertiesAdmin.configureProperties - Could not create directory: " + tempDir +
+                    String errorString = "PropertiesAdmin.configureProperties - Could not create the Metacat temporary directory: " + tempDir +
                         " : " + ue.getMessage();
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
@@ -240,7 +328,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 try {
                     FileUtil.createDirectory(replLogDir);
                 } catch (UtilException ue) {
-                    String errorString = "PropertiesAdmin.configureProperties - Could not create directory: " + replLogDir +
+                    String errorString = "PropertiesAdmin.configureProperties - Could not create the Metacat replication log directory: " + replLogDir +
                         " : " + ue.getMessage();
                     logMetacat.error(errorString);
                     validationErrors.add(errorString);
@@ -253,7 +341,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                     SolrVersionChecker checker = new SolrVersionChecker();
                     isOldVersion = checker.isVersion_3_4(solrHomePath);
                 } catch (Exception e) {
-                    logMetacat.warn("PropertiesAdmin.configureProperties - we can't determine if the given directory is a old version of solr  since "+e.getMessage()+". But we consider it is not an old version.");
+                    logMetacat.warn("PropertiesAdmin.configureProperties - we can't determine if the given solr home directory is a old version of solr  since "+e.getMessage()+". But we consider it is not an old version.");
                 }
 
                 if(isOldVersion) {
