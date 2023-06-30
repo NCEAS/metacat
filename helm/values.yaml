@@ -49,11 +49,13 @@ metacat:
   ## NOTE: ensure the `database-name` matches the value of `postgresql.auth.database`
   ## If you are connecting to a dev instance running on localhost, use:
   ##     database.connectionURI: jdbc:postgresql://host.docker.internal/metacat
-  ## To connect to another k8s instance, use the format: <servicename>.<namespace>.svc.cluster.local
+  ## To connect to another k8s instance, use:
+  ##     <servicename>.<namespace>.svc.cluster.local
+  ## To connect to the instance deployed by the sub-chart, we simply use the name of the database
+  ## k8s service (without the <namespace>.svc.cluster.local, since this is specified in the 'search'
+  ## list in /etc/resolv.conf)
   ##
-  ## TODO: NEED TO MAKE RELEASE NAME (mc-) DYNAMIC!
-  ##
-  database.connectionURI: jdbc:postgresql://mc-postgresql.default.svc.cluster.local/metacat
+  database.connectionURI: jdbc:postgresql://mc-postgresql/metacat
 
   ## @param metacat.guid.doi.enabled Allow users to publish Digital Object Identifiers at doi.org?
   ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secrets.yaml)
@@ -235,7 +237,7 @@ ingress:
   ##
   hosts:
     - host: *external-hostname
-      paths:  ## TODO
+      paths:
         - path: "/metacat"
           pathType: Prefix
         # remove the following if you do NOT want metacatui to be exposed & accessed via /metacatui
@@ -295,7 +297,7 @@ service:
 ##        livenessProbe.successThreshold Success threshold for livenessProbe
 ##
 ##
-livenessProbe:
+livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
   httpGet:
     path: /metacat/
@@ -318,7 +320,7 @@ livenessProbe:
 ##        readinessProbe.failureThreshold Failure threshold for readinessProbe
 ##        readinessProbe.successThreshold Success threshold for readinessProbe
 ##
-readinessProbe:
+readinessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
   httpGet:
     path: /metacat/admin
@@ -339,6 +341,7 @@ postgresql:
     ## @param postgresql.auth.username Username for accessing the database used by metacat
     ## For the corresponding password, see POSTGRES_PASSWORD in secrets.yaml
     ## (These values are also used by metacat to authenticate)
+    ## NOTE: config in postgresql.primary.pgHbaConfiguration must allow the username defined here!
     ##
     username: metacat
 
@@ -348,7 +351,6 @@ postgresql:
     database: metacat
 
     ## @param postgresql.auth.existingSecret Find the password in metacat's existing secrets
-    ## TODO: NEED TO MAKE RELEASE NAME (mc-) DYNAMIC!
     ##
     existingSecret: mc-secrets
 
@@ -363,22 +365,6 @@ postgresql:
       ##
       adminPasswordKey: POSTGRES_PASSWORD
 
-  ## Postgresql persistence
-  ## For explanatory notes, see top-level `persistence` section
-  ## @param postgresql.persistence.enabled Enable data persistence using Persistent Volume Claim
-  ## @param postgresql.persistence.existingClaim Existing Persistent Volume Claim to re-use
-  ## @param postgresql.persistence.storageClass Storage class of backing PV
-  ## @param postgresql.persistence.size PVC Storage Request for postgres volume
-  ##
-  persistence:
-    enabled: true
-    storageClass: ""
-    existingClaim: ""
-
-    ## @param postgresql.persistence.size PVC Storage Request for postgresql volume
-    ##
-    size: 1Gi
-
   ## @param postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
   ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
   ##
@@ -388,4 +374,17 @@ postgresql:
     pgHbaConfiguration: |
       host        metacat       metacat       0.0.0.0/0       password
       host        metacat       metacat       ::0/0           password
-      local       all           all                           md5
+      local       all           all                           trust
+
+    ## Postgresql persistence
+    ## For explanatory notes, see top-level `persistence` section
+    ## @param postgresql.primary.persistence.enabled Enable data persistence using PVC
+    ## @param postgresql.primary.persistence.existingClaim Existing PVC to re-use
+    ## @param postgresql.primary.persistence.storageClass Storage class of backing PV
+    ## @param postgresql.primary.persistence.size PVC Storage Request for postgres volume
+    ##
+    persistence:
+      enabled: true
+      storageClass: ""
+      existingClaim: ""
+      size: 1Gi
