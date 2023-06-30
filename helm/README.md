@@ -89,22 +89,22 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 
 ### Metacat Application-Specific Properties
 
-| Name                             | Description                                                   | Value                                                               |
-|----------------------------------|---------------------------------------------------------------|---------------------------------------------------------------------|
-| `metacat.application.context`    | The application context to use                                | `metacat`                                                           |
-| `metacat.administrator.username` | The admin username that will be used to authenticate          | `admin@localhost`                                                   |
-| `metacat.auth.administrators`    | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,o=NCEAS,dc=ecoinformatics,dc=org`        |
-| `metacat.database.connectionURI` | Connection URI for the postgres database                      | `jdbc:postgresql://mc-postgresql.default.svc.cluster.local/metacat` |
-| `metacat.guid.doi.enabled`       | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                              |
-| `metacat.server.httpPort`        | The http port exposed internally by the metacat container     | `8080`                                                              |
-| `metacat.server.name`            | The hostname for the server, as exposed by the ingress        | `localhost`                                                         |
-| `metacat.solr.baseURL`           | The url to access solr                                        | `http://host.docker.internal:8983/solr`                             |
-| `metacat.replication.logdir`     | Location for the replication logs                             | `/var/metacat/logs`                                                 |
+| Name                             | Description                                                   | Value                                                        |
+| -------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
+| `metacat.application.context`    | The application context to use                                | `metacat`                                                    |
+| `metacat.administrator.username` | The admin username that will be used to authenticate          | `admin@localhost`                                            |
+| `metacat.auth.administrators`    | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,o=NCEAS,dc=ecoinformatics,dc=org` |
+| `metacat.database.connectionURI` | Connection URI for the postgres database                      | `jdbc:postgresql://mc-postgresql/metacat`                    |
+| `metacat.guid.doi.enabled`       | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                       |
+| `metacat.server.httpPort`        | The http port exposed internally by the metacat container     | `8080`                                                       |
+| `metacat.server.name`            | The hostname for the server, as exposed by the ingress        | `localhost`                                                  |
+| `metacat.solr.baseURL`           | The url to access solr                                        | `http://host.docker.internal:8983/solr`                      |
+| `metacat.replication.logdir`     | Location for the replication logs                             | `/var/metacat/logs`                                          |
 
 ### Metacat Image, Container & Pod Parameters
 
 | Name                         | Description                                                                  | Value          |
-|------------------------------|------------------------------------------------------------------------------|----------------|
+| ---------------------------- | ---------------------------------------------------------------------------- | -------------- |
 | `image.repository`           | Metacat image repository                                                     | `metacat`      |
 | `image.tag`                  | Metacat image tag (immutable tags are recommended)                           | `DEVELOP`      |
 | `image.pullPolicy`           | Metacat image pull policy                                                    | `IfNotPresent` |
@@ -124,7 +124,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Metacat Persistence
 
 | Name                        | Description                                                    | Value               |
-|-----------------------------|----------------------------------------------------------------|---------------------|
+| --------------------------- | -------------------------------------------------------------- | ------------------- |
 | `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims | `true`              |
 | `persistence.storageClass`  | Storage class of backing PV                                    | `local-path`        |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use          | `""`                |
@@ -134,7 +134,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Networking & Monitoring
 
 | Name                          | Description                                                   | Value            |
-|-------------------------------|---------------------------------------------------------------|------------------|
+| ----------------------------- | ------------------------------------------------------------- | ---------------- |
 | `ingress.enabled`             | Enable or disable the ingress                                 | `true`           |
 | `ingress.className`           | ClassName of the ingress provider in your cluster             | `traefik`        |
 | `ingress.hosts`               | A collection of rules mapping different hosts to the backend. | `[]`             |
@@ -151,20 +151,19 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 
 ### Postgresql Sub-Chart
 
-| Name                                          | Description                                           | Value                        |
-|-----------------------------------------------|-------------------------------------------------------|------------------------------|
-| `postgresql.enabled`                          | enable the postgresql sub-chart                       | `true`                       |
-| `postgresql.auth.username`                    | Username for accessing the database used by metacat   | `metacat`                    |
-| `postgresql.auth.database`                    | The name of the database used by metacat.             | `metacat`                    |
-| `postgresql.auth.existingSecret`              | Find the password in metacat's existing secrets       | `mc-secrets`                 |
-| `postgresql.auth.secretKeys.userPasswordKey`  | Identifies metacat db's account password              | `POSTGRES_PASSWORD`          |
-| `postgresql.auth.secretKeys.adminPasswordKey` | Dummy value - not used (see notes):                   | `POSTGRES_PASSWORD`          |
-| `postgresql.persistence.enabled`              | Enable data persistence using Persistent Volume Claim | `true`                       |
-| `postgresql.persistence.existingClaim`        | Existing Persistent Volume Claim to re-use            | `""`                         |
-| `postgresql.persistence.storageClass`         | Storage class of backing PV                           | `""`                         |
-| `postgresql.persistence.size`                 | PVC Storage Request for postgres volume               | `1Gi`                        |
-| `postgresql.persistence.size`                 | PVC Storage Request for postgresql volume             | `1Gi`                        |
-| `postgresql.primary.pgHbaConfiguration`       | PostgreSQL Primary client authentication              | pg_hba.conf: see values.yaml |
+| Name                                           | Description                                         | Value               |
+| ---------------------------------------------- | --------------------------------------------------- |---------------------|
+| `postgresql.enabled`                           | enable the postgresql sub-chart                     | `true`              |
+| `postgresql.auth.username`                     | Username for accessing the database used by metacat | `metacat`           |
+| `postgresql.auth.database`                     | The name of the database used by metacat.           | `metacat`           |
+| `postgresql.auth.existingSecret`               | Find the password in metacat's existing secrets     | `mc-secrets`        |
+| `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password            | `POSTGRES_PASSWORD` |
+| `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD` |
+| `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication            | (See values.yaml)   |
+| `postgresql.primary.persistence.enabled`       | Enable data persistence using PVC                   | `true`              |
+| `postgresql.primary.persistence.existingClaim` | Existing PVC to re-use                              | `""`                |
+| `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                         | `""`                |
+| `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume             | `1Gi`               |
 
 
 Specify non-secret parameters in the default [values.yaml](values.yaml), which will be used
