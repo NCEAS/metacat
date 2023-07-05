@@ -133,7 +133,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                     PropertyService.setPropertyNoPersist(applicationTempDir,
                             externalDir + FileUtil.getFS() + "temporary");
                 }
-                String replicationLogDir = "replication.logdir";
+                final String replicationLogDir = "replication.logdir";
                 if (isNotSet(replicationLogDir)) {
                     PropertyService.setPropertyNoPersist(replicationLogDir,
                             externalDir + FileUtil.getFS() + "logs");
