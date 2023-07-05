@@ -352,13 +352,13 @@ PID for an object. This approach focuses on using the hash identifier of an auth
 identifier such as a PID or SID for naming objects (rather than the content identifier).
 The possibility that duplicate objects may be stored is accepted in favour of reducing the
 complexity and overhead involved in the object deduplication process.
-   The alternative approach of using the raw bytes of each object (content identifier) is discussed in: appendix/storage-subsystem-cid-file-layout.rst
+   The alternative approach of using the raw bytes of each object (content identifier)
+   is discussed in: appendix/storage-subsystem-cid-file-layout.rst
 
 **Raw File Storage**: The raw bytes of each object (data, metadata, or resource
-map) are saved in a file that is named using an authority-based identifier (PID) for that
-set of bytes. This authority-based identifier is created using a hashing algorithm to
-produce a checksum (hex_digest) of a given PID. That checksum value is then used to name the file.
-Note, in this approach, a file can be uploaded multiple times under different checksums (PID hashes).
+map) are saved in a file that is named using the hash of an authority-based identifier (PID) for that
+set of bytes. The resulting identifier (checksum value) is then used to name the file. Note, in this approach,
+a file can be uploaded multiple times under different checksums (PID hashes).
 
 **Checksum algorithm and encoding**
 
@@ -383,7 +383,7 @@ To reduce the number of files in a given directory, we use the first several
 characters of the hash to create a directory hierarchy and divide the files up to
 make the tree simpler to explore and less likely to exceed operating system
 limits on files. We store all objects in an `objects` directory, with three
-levels of depth and a 'width' of 2 digits (https://github.com/DataONEorg/hashstore/issues/3).
+levels of 'depth' and a 'width' of 2 digits (https://github.com/DataONEorg/hashstore/issues/3).
 Because each digit in the hash can contain 16 values, the directory structure can
 contain 16,777,216 subdirectories (256^3).
 An example file layout for three objects would be::
@@ -410,13 +410,9 @@ for the first object).
 us to retrieve it. But it does not provide a mechanism to store metadata about
 the object, other system metadata for the object, or extended metadata that we
 might want to include. So, in addition to data objects, the system supports storage
-for metadata documents that are associated with particular data objects. These metadata
-files are stored as delimited files with a header and body section. The header contains
-the `formatId` of the metadata format for the metadata in the file and then a NULL (`\x00`).
-This header is then followed by the content of the metadata document in UTF-8 encoding.
-This metadata file is named using the SHA-256 hash of the persistent identifier (PID) + the `formatId`,
-and is stored in the metadata directory parallel to objects, and structured analogously.
-Context can be found here (https://github.com/DataONEorg/hashstore/issues/35).
+for metadata documents that are associated with any desired data object.
+These metadata files are stored in the metadata directory parallel to objects,
+and structured analogously. Additional context can be found here (https://github.com/DataONEorg/hashstore/issues/35).
 
 For example, given the PID 'jtao.1700.1' and formatId 'http://ns.dataone.org/service/types/v2.0',
 one can calculate the location of its metadata document using::
@@ -458,18 +454,18 @@ named with the hash of the `PID+formatId`::
               └── 07
                   └── 99524cec4c7e14d31289cefd884b563b5c052f154a066de5ec1e477da7
 
-**PID-based access**:  Given a PID, we can discover and access both the system
+**PID-based access**:  Given a PID and a `formatId`, we can discover and access both the system
 metadata for an object and the bytes of the object itself without any further
-store of information (if no `formatId` is supplied, we will default to the `formatId`
-found in the configuration file `hashstore.yaml`. The procedure for this is as follows:
+store of information (if no `formatId` is supplied, we will default to the agreed upon `formatId`
+for Hashstore (i.e. "http://ns.dataone.org/service/types/v2.0").
 
-   1) Given the PID, calculate the SHA-256 hash, and base64-encode it to find the `pid hash` for both `objects` and `metadata`.
+The procedure for this is as follows:
 
-   2) Use the `pid hash` to locate and read the metadata file from the `sysmeta` tree
-      - parse the header to extract the 'formatId'
-      - read the remaining body of the document to obtain the 'sysmeta', which includes format information about the data object
+   1) Given the `PID`, calculate the SHA-256 hash, and base64-encode it to find `pid hash` of the data object.
 
-   3) With the `pid hash`, open and read the data from the `objects` tree
+   2) Use the SHA-256 hash of the `PID` + `formatId` to locate and find the metadata object from the `metadata` tree
+
+   3) With the `pid hash`, open and read the data from the `objects` tree. With the hash of the `PID` + `formatId`, open and read data from the `metadata` tree.
 
 **Other metadata types**: While we currently only have a need to access system
 metadata for each object, in the future we envision potentially including other
@@ -479,7 +475,7 @@ include for each data file.
 
 To pre-emptively accommodate this need, we have revised HashStore to store 'metadata', not only
 'sysmeta'. All metadata files will be stored in the metadata directory, with the
-permanent address being the SHA-256 hash of the 'pid+formatId' and broken up
+permanent address being the SHA-256 hash of the `pid+formatId` and broken up
 into directory depths and widths as defined by a configuration file 'hashstore.yaml'.
 This configuration file is written by HashStore upon successful verification that
 a HashStore does not exist. 
@@ -527,7 +523,10 @@ This approach is the core for distributed systems like BitTorrent and IPFS.
 Public API
 ~~~~~~~~~~~~~~~~~~~
 
-While Metacat will primarily handle read/write operations, other services like MetaDig and DataONE MNs may interact with the hashstore directly. Below are the public methods proposed and are in the process of being or have been completed.
+While Metacat will primarily handle read/write operations, other services like MetaDig and DataONE MNs may interact with the hashstore directly. Below are the public methods implemented in the Python implementation and Java implementation of HashStore. These are pending review and integration into Metacat.
+
+   - (Python) https://github.com/DataONEorg/hashstore
+   - (Java) https://github.com/DataONEorg/hashstore-java
 
 
 The methods below will be included in the public API:
