@@ -10,7 +10,7 @@ For now, you need to have an existing instance of
 [configured for metacat](https://knb.ecoinformatics.org/knb/docs/install.html#solr-server).
 Starting in the root directory of the `metacat` repo:
 
-```console  
+```console
 # 1. build metacat's binary distribution
 $  ant distbin
 
@@ -20,13 +20,15 @@ $ pushd docker ; ./build.sh ; popd
 # 3. FIRST TIME ONLY: add your credentials to helm/admin/secrets.yaml, and add to cluster
 $ vim helm/admin/secrets.yaml    ## follow the instructions in this file
 
-# 4. deploy and enjoy! Assuming your release name is "my-release":
-$ helm install my-release ./helm
+# 4. deploy and enjoy! Assuming your release name is "mc" (see Note below):
+$ helm install mc ./helm
 ```
 
-You should then be able to access the application via http://localhost/metacat! Note you should
-not need to edit anything in [values.yaml](./values.yaml), if your dev setup is fairly standard,
-but it's worth checking, particularly the values in the `metacat` section, such as `solr.baseURL`
+You should then be able to access the application via http://localhost/metacat! **Note** you should
+not need to edit anything in [values.yaml](./values.yaml), if you have used the release name
+"mc" and your dev setup is fairly standard. If things don't work as expected, check the value of
+`postgres.auth.existingSecret` (which should include the release name) and also check the
+properties in the `metacat` section, such as `solr.baseURL`.
 
 ## Introduction
 
@@ -52,15 +54,18 @@ To install the chart with the release name `my-release`:
 helm install my-release ./helm
 ```
 
-The command deploys Metacat on the Kubernetes cluster in the default configuration. The
+This command deploys Metacat on the Kubernetes cluster in the default configuration. The
 [Parameters](#parameters) section lists the parameters that can be configured during
-installation. Parameters may be provided on the command line to override those in values.yaml; e.g.
+installation.
+
+> **Tip**: Some settings in [values.yaml](./values.yaml) depend upon the release name. See the
+> [Parameters](#parameters) section for Descriptions that include "RELEASE PREFIX"
+
+Parameters may be provided on the command line to override those in values.yaml; e.g.
 
 ```console
-helm install my-release ./helm --set image.debug=true
+helm install my-release ./helm  --set postgres.auth.existingSecret=my-release-secrets
 ```
-
-> **Tip**: List all releases using `helm list`
 
 ## Uninstalling the Chart
 
@@ -74,7 +79,7 @@ The `helm delete` command removes all the Kubernetes components associated with 
 exception of Secrets, PVCs and PVs) and deletes the release.
 
 There are two PVCs associated with `my-release`; one for Metacat data files, and the other for
-the PostgreSQL database. To delete:
+the PostgreSQL database (if the postgres sub-chart is enabled). To delete:
 
 ```console
 kubectl delete pvc <myMetacatPVCName> (or <myPostgresPVCName>)   ## deletes named PVC
@@ -89,22 +94,22 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 
 ### Metacat Application-Specific Properties
 
-| Name                             | Description                                                   | Value                                                        |
-| -------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
-| `metacat.application.context`    | The application context to use                                | `metacat`                                                    |
-| `metacat.administrator.username` | The admin username that will be used to authenticate          | `admin@localhost`                                            |
-| `metacat.auth.administrators`    | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,o=NCEAS,dc=ecoinformatics,dc=org` |
-| `metacat.database.connectionURI` | Connection URI for the postgres database                      | `jdbc:postgresql://mc-postgresql/metacat`                    |
-| `metacat.guid.doi.enabled`       | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                       |
-| `metacat.server.httpPort`        | The http port exposed internally by the metacat container     | `8080`                                                       |
-| `metacat.server.name`            | The hostname for the server, as exposed by the ingress        | `localhost`                                                  |
-| `metacat.solr.baseURL`           | The url to access solr                                        | `http://host.docker.internal:8983/solr`                      |
-| `metacat.replication.logdir`     | Location for the replication logs                             | `/var/metacat/logs`                                          |
+| Name                             | Description                                                   | Value                                                           |
+|----------------------------------|---------------------------------------------------------------|-----------------------------------------------------------------|
+| `metacat.application.context`    | The application context to use                                | `metacat`                                                       |
+| `metacat.administrator.username` | The admin username that will be used to authenticate          | `admin@localhost`                                               |
+| `metacat.auth.administrators`    | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,ou=Account,dc=ecoinformatics,dc=org` |
+| `metacat.database.connectionURI` | postgres DB URI (RELEASE PREFIX, or blank for sub-chart)      | `jdbc:postgresql://mc-postgresql/metacat`                       |
+| `metacat.guid.doi.enabled`       | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                          |
+| `metacat.server.httpPort`        | The http port exposed internally by the metacat container     | `8080`                                                          |
+| `metacat.server.name`            | The hostname for the server, as exposed by the ingress        | `localhost`                                                     |
+| `metacat.solr.baseURL`           | The url to access solr                                        | `http://host.docker.internal:8983/solr`                         |
+| `metacat.replication.logdir`     | Location for the replication logs                             | `/var/metacat/logs`                                             |
 
 ### Metacat Image, Container & Pod Parameters
 
 | Name                         | Description                                                                  | Value          |
-| ---------------------------- | ---------------------------------------------------------------------------- | -------------- |
+|------------------------------|------------------------------------------------------------------------------|----------------|
 | `image.repository`           | Metacat image repository                                                     | `metacat`      |
 | `image.tag`                  | Metacat image tag (immutable tags are recommended)                           | `DEVELOP`      |
 | `image.pullPolicy`           | Metacat image pull policy                                                    | `IfNotPresent` |
@@ -124,7 +129,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Metacat Persistence
 
 | Name                        | Description                                                    | Value               |
-| --------------------------- | -------------------------------------------------------------- | ------------------- |
+|-----------------------------|----------------------------------------------------------------|---------------------|
 | `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims | `true`              |
 | `persistence.storageClass`  | Storage class of backing PV                                    | `local-path`        |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use          | `""`                |
@@ -134,7 +139,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Networking & Monitoring
 
 | Name                          | Description                                                   | Value            |
-| ----------------------------- | ------------------------------------------------------------- | ---------------- |
+|-------------------------------|---------------------------------------------------------------|------------------|
 | `ingress.enabled`             | Enable or disable the ingress                                 | `true`           |
 | `ingress.className`           | ClassName of the ingress provider in your cluster             | `traefik`        |
 | `ingress.hosts`               | A collection of rules mapping different hosts to the backend. | `[]`             |
@@ -151,37 +156,38 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 
 ### Postgresql Sub-Chart
 
-| Name                                           | Description                                         | Value               |
-| ---------------------------------------------- | --------------------------------------------------- |---------------------|
-| `postgresql.enabled`                           | enable the postgresql sub-chart                     | `true`              |
-| `postgresql.auth.username`                     | Username for accessing the database used by metacat | `metacat`           |
-| `postgresql.auth.database`                     | The name of the database used by metacat.           | `metacat`           |
-| `postgresql.auth.existingSecret`               | Find the password in metacat's existing secrets     | `mc-secrets`        |
-| `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password            | `POSTGRES_PASSWORD` |
-| `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD` |
-| `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication            | (See values.yaml)   |
-| `postgresql.primary.persistence.enabled`       | Enable data persistence using PVC                   | `true`              |
-| `postgresql.primary.persistence.existingClaim` | Existing PVC to re-use                              | `""`                |
-| `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                         | `""`                |
-| `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume             | `1Gi`               |
+| Name                                           | Description                                             | Value                              |
+|------------------------------------------------|---------------------------------------------------------|------------------------------------|
+| `postgresql.enabled`                           | enable the postgresql sub-chart                         | `true`                             |
+| `postgresql.auth.username`                     | Username for accessing the database used by metacat     | `metacat`                          |
+| `postgresql.auth.database`                     | The name of the database used by metacat.               | `metacat`                          |
+| `postgresql.auth.existingSecret`               | Secrets location for postgres password (RELEASE PREFIX) | `mc-secrets`                       |
+| `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password                | `POSTGRES_PASSWORD`                |
+| `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                     | `POSTGRES_PASSWORD`                |
+| `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication                | (See [values.yaml](./values.yaml)) |
+| `postgresql.primary.persistence.enabled`       | Enable data persistence using PVC                       | `true`                             |
+| `postgresql.primary.persistence.existingClaim` | Existing PVC to re-use                                  | `""`                               |
+| `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                             | `""`                               |
+| `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume                 | `1Gi`                              |
 
 
-Specify non-secret parameters in the default [values.yaml](values.yaml), which will be used
+Specify non-secret parameters in the default [values.yaml](./values.yaml), which will be used
 automatically each time you deploy.
 
-> NOTE: Once the chart is deployed, it is not possible to change the postgreSQL access
+> **NOTE**: Once the chart is deployed, it is not possible to change the postgreSQL access
 > credentials, such as usernames or passwords, nor is it possible to change the
 > Metacat primary administrator password, using Helm. To change these application
 > credentials after deployment, delete any persistent volumes (PVs) used by the relevant
 > application (Metacat or PostgreSQL) and re-deploy.
-> 
+>
 > **Warning**: Setting a password will be ignored on new installations in cases when a previous
-> Posgresql release was deleted through the helm command. In that case, the old PVC will have an
+> PosgreSQL release was deleted through the helm command. In that case, the old PVC will have an
 > old password, and setting it through helm won't take effect. Deleting persistent volumes (PVs)
 > will solve the issue. Refer to [issue 2061](https://github.com/bitnami/charts/issues/2061) for
 > more details
 
-Parameters may be provided on the command line to override those in values.yaml; e.g.
+Parameters may be provided on the command line to override those in [values.yaml](./values.yaml);
+for example:
 
 ```console
 helm install my-release ./helm  --set metacat.solr.baseURL=http://mysolrhost:8983/solr
@@ -194,7 +200,7 @@ while installing the chart. For example:
 helm install my-release -f myValues.yaml ./helm
 ```
 
-> **Tip**: You can use the default [values.yaml](values.yaml)
+> **Tip**: You can also edit and use the default [values.yaml](./values.yaml)
 
 ## Configuration and installation details
 
@@ -213,17 +219,28 @@ kubernetes Secrets in the cluster. The file [admin/secrets.yaml](./admin/secrets
 template that you can complete and apply using `kubectl` - see file comments for details. Please
 remember to NEVER ADD SECRETS TO GITHUB!
 
+> **Important**:
+> 1. The deployed Secrets name includes the release name as a prefix, (e.g. `my-release-secrets`)
+> so it's important to ensure that the secrets name matches the release name referenced whenever
+> you use `helm` commands.
+> 2. The parameter `postgresql.auth.existingSecret` in [values.yaml](./values.yaml) must be set to
+> match the name of these installed secrets (which will change if the release name is changed).
+
 ## Persistence
 
-The Metacat image stores the Metacat data and configurations at the `/var/metacat` path in the
-container. The PostgreSQL image stores the database data at the `/bitbami/pgdata` path in its
-container  Persistent Volume Claims are used to keep the data across deployments. See the Parameters
-section to configure the PVCs or to disable persistence for either application.
+Persistent Volume Claims are used to keep the data across deployments. See the
+[Parameters](#parameters) section to configure the PVCs or to disable persistence for either
+application.
 
-With the default setup in values.yaml, two persistent volumes will be provisioned automatically (one
-for Metacat, and one for PostgreSQL) with a PVC bound to each. If you want to have the application
-use a specific directory on the host machine, for example, see the documentation in the
-[admin/pv-hostpath.yaml](./admin/pv-hostpath.yaml) file.
+With the default setup in [values.yaml](./values.yaml), two persistent volumes will be provisioned
+automatically (one for Metacat, and one for PostgreSQL) with a PVC bound to each. If you want to
+have the application use a specific directory on the host machine, for example, see the
+documentation in the [admin/pv-hostpath.yaml](./admin/pv-hostpath.yaml) file.
+
+The Metacat image stores the Metacat data and configurations on a PVC mounted at the `/var/metacat`
+path in the metacat container.
+
+The PostgreSQL image stores the database data at the `/bitbami/pgdata` path in its own container.
 
 ## Networking
 
