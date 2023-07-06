@@ -42,20 +42,34 @@ metacat:
   ## (Distinguished Names) denoting the users who may log into metacat with administrator
   ## privileges.
   ##
-  auth.administrators: admin@localhost:uid=jones,o=NCEAS,dc=ecoinformatics,dc=org
+  auth.administrators: admin@localhost:uid=jones,ou=Account,dc=ecoinformatics,dc=org
 
-  ## @param metacat.database.connectionURI Connection URI for the postgres database
-  ## in the form: jdbc:postgresql://hostname/database-name
-  ## NOTE: ensure the `database-name` matches the value of `postgresql.auth.database`
-  ## If you are connecting to a dev instance running on localhost, use:
-  ##     database.connectionURI: jdbc:postgresql://host.docker.internal/metacat
-  ## To connect to another k8s instance, use:
-  ##     <servicename>.<namespace>.svc.cluster.local
-  ## To connect to the instance deployed by the sub-chart, we simply use the name of the database
-  ## k8s service (without the <namespace>.svc.cluster.local, since this is specified in the 'search'
-  ## list in /etc/resolv.conf)
+  ## @param metacat.database.connectionURI postgres DB URI (RELEASE PREFIX, or blank for sub-chart)
   ##
-  database.connectionURI: jdbc:postgresql://mc-postgresql/metacat
+  ## Format:    jdbc:postgresql://<postgres-hostname>/<database-name>
+  ##
+  ## NOTES:
+  ## 1. If you are NOT using the included postgresql sub-chart (i.e. `postgresql.enabled: false`),
+  ##    then ensure `<database-name>` is set correctly, and use the following values for
+  ##    `<postgres-hostname>`:
+  ##    *  The fully qualified domain name, for an existing postgresql instance hosted outside the
+  ##       current k8s cluster
+  ##    *  `<servicename>.<namespace>.svc.cluster.local` for an existing postgresql instance within
+  ##       the same k8s cluster (hence "RELEASE PREFIX" warning above; <servicename> likely is
+  ##       prepended by the release name)
+  ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
+  ##
+  ## 2. If you ARE using the included postgresql sub-chart (i.e. `postgresql.enabled: true`),
+  ##    leave this value unset (`database.connectionURI: ""`). It will then be automatically
+  ##    populated as follows:
+  ##    `<postgres-hostname>` will be set to to the current value of `.Release.Name`, prepended to
+  ##                         `-postgresql-hl` (the name of the k8s headless service for the
+  ##                         postgresql statefulset)
+  ##    `<database-name>` will be set to the value of `postgresql.auth.database`
+  ##    (Note: If you are using the postrgesql sub-chart but have changed the default name for the
+  ##    headless service, then specify the full database.connectionURI as outlined in (1), above)
+  ##
+  database.connectionURI: ""
 
   ## @param metacat.guid.doi.enabled Allow users to publish Digital Object Identifiers at doi.org?
   ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secrets.yaml)
@@ -350,7 +364,9 @@ postgresql:
     ##
     database: metacat
 
-    ## @param postgresql.auth.existingSecret Find the password in metacat's existing secrets
+    ## @param postgresql.auth.existingSecret Secrets location for postgres password (RELEASE PREFIX)
+    ## For example, if the release name is 'myrelease', secret name would be 'myrelease-secrets'
+    ## Typically the existing secrets also used by metacat - see ./admin/secrets.yaml
     ##
     existingSecret: mc-secrets
 
@@ -377,7 +393,8 @@ postgresql:
       local       all           all                           trust
 
     ## Postgresql persistence
-    ## For explanatory notes, see top-level `persistence` section
+    ## For explanatory notes, see top-level `persistence` section for metacat, and the bitnami
+    ## postgresql README at https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md
     ## @param postgresql.primary.persistence.enabled Enable data persistence using PVC
     ## @param postgresql.primary.persistence.existingClaim Existing PVC to re-use
     ## @param postgresql.primary.persistence.storageClass Storage class of backing PV
