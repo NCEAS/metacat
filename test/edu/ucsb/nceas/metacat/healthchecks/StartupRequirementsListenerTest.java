@@ -78,7 +78,7 @@ public class StartupRequirementsListenerTest {
     @Test
     public void contextInitialized() throws IOException {
 
-        mockSolrSetup(200);
+        mockSolrSetup(HttpURLConnection.HTTP_OK);
         startupRequirementsListener.contextInitialized(getMockServletContextEvent());
     }
 
@@ -270,14 +270,14 @@ public class StartupRequirementsListenerTest {
 
         LeanTestUtils.debug("validateSiteProperties_existingNonStringProps()");
         createTestProperties_nonStringProps(sitePropsFilePath);
-        mockSolrSetup(200);
+        mockSolrSetup(HttpURLConnection.HTTP_OK);
         startupRequirementsListener.validateSiteProperties(defaultProperties);
     }
 
     @Test
     public void validateSolrAvailable_valid() throws IOException {
 
-        mockSolrSetup(200);
+        mockSolrSetup(HttpURLConnection.HTTP_OK);
         startupRequirementsListener.runtimeProperties = this.defaultProperties;
         startupRequirementsListener.validateSolrAvailable();
     }
@@ -301,7 +301,7 @@ public class StartupRequirementsListenerTest {
     @Test(expected = RuntimeException.class)
     public void validateSolrAvailable_httpError() throws IOException {
 
-        mockSolrSetup(500);
+        mockSolrSetup(HttpURLConnection.HTTP_NOT_FOUND);
         startupRequirementsListener.validateSolrAvailable();
     }
 

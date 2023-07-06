@@ -244,7 +244,7 @@ public class StartupRequirementsListener implements ServletContextListener {
             abort("An error occurred while attempting a connection to the solr service at:\n"
                       + solrUrlStr + solrConfigErrorMsg, null);
         }
-        if (responseCode != 200) {
+        if (responseCode != HttpURLConnection.HTTP_OK) {
             abort("The solr service was contacted successfully at: " + solrUrlStr + "\n"
                       + ", but it returned an unexpected response. Expected: HTTP 200 OK;\n"
                       + "received: HTTP " + responseCode + solrConfigErrorMsg, null);
