@@ -4,6 +4,9 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.MalformedInputException;
 
 import javax.servlet.ServletContextEvent;
@@ -59,21 +62,29 @@ public class StartupRequirementsListener implements ServletContextListener {
     protected boolean RUNNING_IN_CONTAINER =
         Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
     private static final Log logMetacat = LogFactory.getLog(StartupRequirementsListener.class);
+    protected Properties runtimeProperties;
+
+    // Used only for testing, as a way of injecting the mock
+    protected URL mockSolrTestUrl = null;
+
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         //call all validation methods here. If there's an unrecoverable problem, call abort()
 
-        // Check we can load properties from, and store properties to, 'metacat.properties', and
-        // get the path to 'metacat-site.properties' for subsequent check:
-        Path sitePropsFilePath = validateDefaultProperties(sce);
+        // Check we can load properties from, and write to, 'metacat.properties'
+        Properties defaultProperties = validateDefaultProperties(sce);
 
         // Next, check we can load properties from 'metacat-site.properties', or can create a new
-        // one if it doesn't already exist
-        validateSiteProperties(sitePropsFilePath);
+        // one if it doesn't already exist.
+        // Also initializes global variable, so we can access runtime properties for subsequent
+        // checks
+        validateSiteProperties(defaultProperties);
+
+        // Verify that there is a solr instance available
+        validateSolrAvailable();
     }
 
-    //
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
         // no cleanup needed
@@ -85,24 +96,28 @@ public class StartupRequirementsListener implements ServletContextListener {
      *
      * (protected to allow test access)
      * @param sce the ServletContextEvent passed by the container on startup
-     * @return Path object pointing to 'metacat-site.properties'. Will never be null
+     * @return a Properties object initialized from the 'metacat.properties' file
      * @throws RuntimeException if any unrecoverable problems are found that should cause startup
      *                          to be aborted
      */
-    protected Path validateDefaultProperties(ServletContextEvent sce) throws RuntimeException {
+    protected Properties validateDefaultProperties(@NotNull ServletContextEvent sce)
+        throws RuntimeException {
 
         Path defaultPropsFilePath =
             Paths.get(sce.getServletContext().getRealPath("/WEB-INF"), "metacat.properties");
-        Properties metacatProperties = new Properties();
-        Path sitePropsFilePath = null;
+        Properties defaultProperties = new Properties();
         try {
-            metacatProperties.load(Files.newBufferedReader(defaultPropsFilePath));
-            metacatProperties.store(Files.newBufferedWriter(defaultPropsFilePath), "");
-
-            sitePropsFilePath = Paths.get(
-                metacatProperties.getProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY),
-                PropertyService.SITE_PROPERTIES_FILENAME);
-
+            // can read?
+            defaultProperties.load(Files.newBufferedReader(defaultPropsFilePath));
+            // can write? Use isWriteable() so we don't mess up props file formatting for Jing :-)
+            if (!Files.isWritable(defaultPropsFilePath)) {
+                abort(
+                    "Can't WRITE to default metacat properties: " + defaultPropsFilePath + "\n"
+                        + "Check that:\n"
+                        + "  1. this path is correct, and\n"
+                        + "  2. 'metacat.properties' is writeable by the user running tomcat",
+                    null);
+            }
         } catch (IOException e) {
             abort(
                 "Can't read or write default metacat properties: " + defaultPropsFilePath + "\n"
@@ -129,20 +144,7 @@ public class StartupRequirementsListener implements ServletContextListener {
                     + "java.nio.file.Files.newBufferedReader() and .newBufferedWriter()",
                 e);
         }
-
-        if (sitePropsFilePath == null) {
-            abort(
-                "'metacat.properties' file (" + defaultPropsFilePath + ") does not contain\n"
-                    + "a required property: 'application.sitePropertiesDir'. Add this property,\n"
-                    + "setting the value to either:\n"
-                    + "  1. the full path for the parent directory where\n"
-                    + "     'metacat-site.properties' is located, or"
-                    + "  2. if this is a new installation, the default location\n"
-                    + "     '/var/metacat/config', if that is readable/writeable by the\n"
-                    + "     tomcat user ",
-                new NullPointerException("application.sitePropertiesDir property is null"));
-        }
-        return sitePropsFilePath;
+        return defaultProperties;
     }
 
     /**
@@ -150,28 +152,44 @@ public class StartupRequirementsListener implements ServletContextListener {
      * can create a new one if it doesn't already exist
      *
      * (protected to allow test access)
-     * @param sitePropsFilePath the full path to the 'metacat-site.properties' file
+     * @param defaultProperties the Properties loaded from the 'metacat.properties' file
      * @throws RuntimeException if any unrecoverable problems are found that should cause startup
      *                          to be aborted
      */
-    protected void validateSiteProperties(@NotNull Path sitePropsFilePath)
+    protected void validateSiteProperties(@NotNull Properties defaultProperties)
         throws RuntimeException {
 
+        String sitePropsDir =
+            defaultProperties.getProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY);
+
+        if (sitePropsDir == null) {
+            abort("'metacat.properties' file does not contain a required property:\n"
+                    + "'application.sitePropertiesDir'. Add this property, setting the value\n"
+                    + "to either:\n"
+                    + "  1. the full path for the parent directory where\n"
+                    + "     'metacat-site.properties' is located, or\n"
+                    + "  2. if this is a new installation, the default location\n"
+                    + "     '/var/metacat/config', if that is readable/writeable by the\n"
+                    + "     tomcat user ", null);
+        }
+
+        Path sitePropsFilePath =
+            Paths.get(sitePropsDir, PropertyService.SITE_PROPERTIES_FILENAME);
         try {
             if (sitePropsFilePath.toFile().exists()) {
-                validateSitePropertiesFileRwAccess(sitePropsFilePath);
+                validateSitePropertiesFileRwAccess(sitePropsFilePath, defaultProperties);
             } else {
                 if (RUNNING_IN_CONTAINER) { //we expect site props always to be available in k8s
                     abort(
                         "Can't find metacat-site.properties: " + sitePropsFilePath + "\n"
-                            + "and metacat is running in a container (eg docker, kubernetes).\n"
-                            + "Ensure that:\n"
-                            + "  1. this path is correct, and\n"
+                            + "and metacat is running in a container (e.g. docker, kubernetes).\n"
+                            + "Ensure that:\n" + "  1. this path is correct, and\n"
                             + "  2. 'metacat-site.properties' is readable by the user\n"
                             + "     running tomcat/metacat in the container",
                         new IOException("metacat-site.properties not found"));
                 } else {
                     validateSitePropertiesPathCreatable(sitePropsFilePath);
+                    runtimeProperties = defaultProperties;
                 }
             }
         } catch (SecurityException e) {
@@ -180,7 +198,57 @@ public class StartupRequirementsListener implements ServletContextListener {
                         + "directories (" + sitePropsFilePath + "). See javadoc for\n"
                         + "java.nio.file.Files.newBufferedReader() and .newBufferedWriter()",
                     e);
+        }
+    }
+
+    /**
+     * Ensure we get an HTTP 200 OK response from the solr service that is configured in the
+     * properties file
+     *
+     * @throws RuntimeException if any unrecoverable problems are found that should cause startup
+     *                          to be aborted
+     */
+    protected void validateSolrAvailable() throws RuntimeException {
+
+        final String solrConfigErrorMsg =
+            "\nPlease ensure that the 'solr.baseURL' property points to a running solr instance,\n"
+                + "which has been properly configured for use with metacat. It should be a URL of\n"
+                + "the form: solr.baseURL=http://myhostname:8983/solr.\n"
+                + "See the Metacat Administrator's Guide for further details:"
+                + "    https://knb.ecoinformatics.org/knb/docs/install.html#solr-server";
+
+        String solrUrlStr = runtimeProperties.getProperty("solr.baseURL");
+
+        if (solrUrlStr == null || solrUrlStr.isEmpty()) {
+            abort("Unable to find required property: 'solr.baseURL'" + solrConfigErrorMsg,null);
+        }
+
+        URL solrUrl = null;
+        if (mockSolrTestUrl == null) {
+            try {
+                solrUrl = new URL(solrUrlStr);
+            } catch (MalformedURLException e) {
+                abort("Unable to parse a URL from the 'solr.baseURL' property: " + solrUrlStr + solrConfigErrorMsg, null);
             }
+        } else {
+            solrUrl = mockSolrTestUrl;
+        }
+        int responseCode = 418;    // look it up ;-)
+        try {
+            HttpURLConnection connection = (HttpURLConnection) solrUrl.openConnection();
+            connection.setRequestMethod("GET");
+            connection.connect();
+
+            responseCode = connection.getResponseCode();
+        } catch (IOException e) {
+            abort("An error occurred while attempting a connection to the solr service at:\n"
+                      + solrUrlStr + solrConfigErrorMsg, null);
+        }
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            abort("The solr service was contacted successfully at: " + solrUrlStr + "\n"
+                      + ", but it returned an unexpected response. Expected: HTTP 200 OK;\n"
+                      + "received: HTTP " + responseCode + solrConfigErrorMsg, null);
+        }
     }
 
     /**
@@ -201,6 +269,8 @@ public class StartupRequirementsListener implements ServletContextListener {
      * @throws RuntimeException to abort startup as requested
      */
     protected void abort(String message, Exception e) throws RuntimeException {
+
+        String exception_details = (e == null)?  "" : "\n\nException Details: " + e.getMessage();
         String abortMsg =
             "\n\n\n\n"
                 + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
@@ -210,11 +280,10 @@ public class StartupRequirementsListener implements ServletContextListener {
                 + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
                 + "\n"
                 + message
-                + "\n\n"
-                + "Exception Details: " + e.getMessage()
+                + exception_details
                 + "\n\n"
                 + "Checks assumed Metacat is " + (RUNNING_IN_CONTAINER ? "" : "NOT ")
-                + " running in a container!"
+                + "running in a container!"
                 + "\n\n"
                 + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
                 + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
@@ -228,21 +297,23 @@ public class StartupRequirementsListener implements ServletContextListener {
 
     /**
      * Check if we can load properties from, and write properties to, 'metacat-site.properties'.
-     * If running in a container (eg in a Kubernetes cluster), then we expect the site properties
-     * file to be read-only, so skip the write check
+     * If running in a container (e.g. in a Kubernetes cluster), then we expect the site properties
+     * file to be read-only, so we skip the write check in that environment.
      *
-     * @param sitePropsFilePath the full path to the 'metacat-site.properties' file
+     * @param sitePropsFilePath the full Path to the 'metacat-site.properties' file
+     * @param defaultProperties a Properties object initialized from the 'metacat.properties' file
      * @throws RuntimeException if any unrecoverable problems are found that should cause startup
      *                          to be aborted
      */
-    private void validateSitePropertiesFileRwAccess(Path sitePropsFilePath)
-        throws RuntimeException {
+    private void validateSitePropertiesFileRwAccess(
+        Path sitePropsFilePath, Properties defaultProperties) throws RuntimeException {
 
-        Properties siteProperties = new Properties();
+        runtimeProperties = new Properties(defaultProperties);
         try {
-            siteProperties.load(Files.newBufferedReader(sitePropsFilePath));
+            runtimeProperties.load(Files.newBufferedReader(sitePropsFilePath));
+
             if (!RUNNING_IN_CONTAINER) {
-                siteProperties.store(Files.newBufferedWriter(sitePropsFilePath), "");
+                runtimeProperties.store(Files.newBufferedWriter(sitePropsFilePath), "");
             }
         } catch (MalformedInputException | ClassCastException e) {
             abort(
@@ -274,9 +345,10 @@ public class StartupRequirementsListener implements ServletContextListener {
     }
 
     /**
-     * Check if we can create a new 'metacat-site.properties' if it doesn't already exist
+     * Check if we can create a new 'metacat-site.properties' if it doesn't already exist, by
+     * checking file permissions on its parent directory
      *
-     * @param sitePropsFilePath the full path to the 'metacat-site.properties' file
+     * @param sitePropsFilePath the full Path to the 'metacat-site.properties' file
      * @throws RuntimeException if any unrecoverable problems are found that should cause startup
      *                          to be aborted
      */
