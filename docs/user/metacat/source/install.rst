@@ -87,7 +87,7 @@ the installer (described in the next section) is the simplest way to get
 started. 
 
 Download the Metacat Installer (Highly Recommended)
-..............................
+...................................................
 Downloading the Metacat Installer is the simplest way to get started with the
 application. To download the installer: 
 
@@ -136,7 +136,7 @@ build-file has an "install" target that will build and deploy the WAR for you.
 
 
 Check Out Metacat Source Code from GitHub (for Developers)
-.......................................................
+..........................................................
 
 .. sidebar:: Installing an Git Client:
 
@@ -480,13 +480,14 @@ Solr Server
 From version 2.13.0, Metacat uses the external Solr HTTP server as the 
 search engine. Unfortunately the Solr Debian packages that come with the Ubuntu operating 
 system are obsoleted and you have to install the binary packages by yourself. This section 
-provides guidance on how to setup Solr to run in production on *nix platforms, such as Ubuntu.
+provides guidance on how to setup Solr to run in production on \*nix platforms, such as Ubuntu.
 
 Metacat only supports ``Solr 8.*``, ``NOT 9.*``. You may download the binary releases from:
 
 https://solr.apache.org/downloads.html#solr-8112
 
-1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assuming the downloaded file is solr-8.11.2.tgz):
+1. Go to the directory which contains the Solr release file and extract the installation script
+   file by typing (assuming the downloaded file is solr-8.11.2.tgz):
 
 ::
 
