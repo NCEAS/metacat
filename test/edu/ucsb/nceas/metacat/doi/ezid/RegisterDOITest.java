@@ -43,7 +43,6 @@ import junit.framework.TestSuite;
 
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
-import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotAuthorized;
@@ -67,12 +66,16 @@ import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
-import edu.ucsb.nceas.metacat.dataone.MockCNode;
 import edu.ucsb.nceas.metacat.doi.DOIService;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryTest;
-import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 
 /**
  * A JUnit test to exercise the DOI registration for content added
@@ -94,6 +97,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
     private String ezidServiceBaseUrl = null;
     private EZIDService ezid = null;
     private DOIService doiService = null;
+	private MockedStatic<PropertyService> mockProperties;
+
 	/**
 	 * Set up the test fixtures
 	 * 
@@ -109,6 +114,15 @@ public class RegisterDOITest extends D1NodeServiceTest {
         ezid = new EZIDService(ezidServiceBaseUrl);
         doiService = DOIServiceFactory.getDOIService();
         serverName = PropertyService.getProperty("server.name");
+		//        serverName = PropertyService.getProperty("server.name");
+		serverName = "RegisterDOITest.edu";
+		mockProperties = Mockito.mockStatic(PropertyService.class);
+		mockProperties.when(() -> PropertyService.getProperty(
+			eq("server.name"))).thenReturn(serverName);
+		mockProperties.when(() -> PropertyService.getProperty(
+			argThat((String s) -> !s.equals("server.name")))).thenCallRealMethod();
+		mockProperties.when(() -> PropertyService.setPropertyNoPersist(
+			anyString(), anyString())).thenCallRealMethod();
 	}
 
 	/**
@@ -116,6 +130,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	 */
 	@After
 	public void tearDown() {
+		mockProperties.close();
+		super.tearDown();
 	}
 
 	/**
@@ -985,7 +1001,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
     public void testPublishIdentifierProcessWithAutoPublishOn() throws Exception {
         printTestHeader("testPublishIdentifierProcessWithAutoPublishOn");
         try {
-            PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "true");
+            PropertyService.setPropertyNoPersist("guid.doi.autoPublish", "true");
             doiService.refreshStatus();
             ezid.login(ezidUsername, ezidPassword);
             // Mint a DOI
@@ -1090,7 +1106,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
     public void testPublishIdentifierProcessWithAutoPublishOff() throws Exception {
         printTestHeader("testPublishIdentifierProcessWithAutoPublishOff");
         try {
-            PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "false");
+            PropertyService.setPropertyNoPersist("guid.doi.autoPublish", "false");
             doiService.refreshStatus();
             ezid.login(ezidUsername, ezidPassword);
             // Mint a DOI
@@ -1205,7 +1221,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         Session publicSession = new Session();
         publicSession.setSubject(publicSub);
         
-        PropertyService.getInstance().setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "true");
+        PropertyService.setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "true");
         boolean enforcePublicEntirePackageInPublish = new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
         
@@ -1355,7 +1371,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         Session publicSession = new Session();
         publicSession.setSubject(publicSub);
         
-        PropertyService.getInstance().setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "false");
+        PropertyService.setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "false");
         boolean enforcePublicEntirePackageInPublish = new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
         

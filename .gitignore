@@ -29,6 +29,7 @@ hs_err_pid*
 # Build artifacts
 build
 lib/dtd
+lib/maven
 lib/schema/eml-*
 lib/style/common/eml-2*
 lib/style/common/emlb6toeml2
@@ -42,3 +43,5 @@ src/perl/Metacat/Makefile.old
 src/perl/Metacat/blib/
 src/perl/Metacat/pm_to_blib
 docs/user/metacat/source/_build
+helm/charts
+helm/Chart.lock

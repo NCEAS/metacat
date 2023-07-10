@@ -482,27 +482,27 @@ search engine. Unfortunately the Solr Debian packages that come with the Ubuntu 
 system are obsoleted and you have to install the binary packages by yourself. This section 
 provides guidance on how to setup Solr to run in production on *nix platforms, such as Ubuntu.
 
-Metacat supports Solr 8.8.2 and newer versions. You may download the binary releases from:
+Metacat only supports ``Solr 8.*``, ``NOT 9.*``. You may download the binary releases from:
 
-https://lucene.apache.org/solr/downloads.html
+https://solr.apache.org/downloads.html#solr-8112
 
-1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assume the download file being solr-8.8.2.tgz):
+1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assuming the downloaded file is solr-8.11.2.tgz):
 
 ::
 
-  tar xzf solr-8.8.2.tgz solr-8.8.2/bin/install_solr_service.sh --strip-components=2
+  tar xzf solr-8.11.2.tgz solr-8.11.2/bin/install_solr_service.sh --strip-components=2
 
 2. Install Solr as the root user:
 
 ::
 
-  sudo bash ./install_solr_service.sh solr-8.8.2.tgz
+  sudo bash ./install_solr_service.sh solr-8.11.2.tgz
   
-If you upgrade Solr from an old 8.* version to 8.8.2, you may run this command instead:
+If you upgrade Solr from an old 8.* version to 8.11.2, you may run this command instead:
   
 ::
 
-  sudo bash ./install_solr_service.sh solr-8.8.2.tgz -f
+  sudo bash ./install_solr_service.sh solr-8.11.2.tgz -f
 
 3. Ensure the Solr defaults file is group writable:
 

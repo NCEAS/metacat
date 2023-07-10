@@ -1,1611 +1,1590 @@
 <?xml version="1.0"?>
 <!--
-	*   '$RCSfile$'
-	*     Authors: Matt Jones, Chad Berkley, Jivka Bojilova
-	*   Copyright: 2000 Regents of the University of California and the
-	*              National Center for Ecological Analysis and Synthesis
-	* For Details: http://www.nceas.ucsb.edu/
-	*
-	*    '$Author$'
-	*    '$Date$'
-	*    '$Revision$'
-	*
-	* Build file for the Ant cross-platform build system for metacat
-	* See http://jakarta.apache.org for details on Ant
-	*
-	* usage: ant [compile|jar|install|documentation]
-	*
-	* This program is free software; you can redistribute it and/or modify
-	* it under the terms of the GNU General Public License as published by
-	* the Free Software Foundation; either version 2 of the License, or
-	* (at your option) any later version.
-	*
-	* This program is distributed in the hope that it will be useful,
-	* but WITHOUT ANY WARRANTY; without even the implied warranty of
-	* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	* GNU General Public License for more details.
-	*
-	* You should have received a copy of the GNU General Public License
-	* along with this program; if not, write to the Free Software
-	* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    *     Authors: Matt Jones, Chad Berkley, Jivka Bojilova
+    *   Copyright: 2000 Regents of the University of California and the
+    *              National Center for Ecological Analysis and Synthesis
+    * For Details: http://www.nceas.ucsb.edu/
+    *
+    * Build file for the Ant cross-platform build system for metacat
+    * See http://jakarta.apache.org for details on Ant
+    *
+    * usage: ant [compile|jar|install|documentation]
+    *
+    * This program is free software; you can redistribute it and/or modify
+    * it under the terms of the GNU General Public License as published by
+    * the Free Software Foundation; either version 2 of the License, or
+    * (at your option) any later version.
+    *
+    * This program is distributed in the hope that it will be useful,
+    * but WITHOUT ANY WARRANTY; without even the implied warranty of
+    * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    * GNU General Public License for more details.
+    *
+    * You should have received a copy of the GNU General Public License
+    * along with this program; if not, write to the Free Software
+    * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -->
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
-	
-	<property name="metacatui-tag" value="2.20.0" />
-    <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
-	
-	<property environment="env" />
-	<property file="build.properties" /><!-- USER SPECIFIC PROPS -->
-	<property name="java.target.version" value="1.8" /> <!-- the target version for java compilation-->
-	<property name="java.source.version" value="1.8" /> <!-- the source code version for java compilation-->
+
+    <property name="metacatui-tag" value="2.23.0"/>
+    <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2"/>
+
+    <property environment="env"/>
+    <property file="build.properties"/><!-- USER SPECIFIC PROPS -->
+    <property name="java.target.version" value="1.8"/> <!-- the target version for java compilation-->
+    <property name="java.source.version" value="1.8"/> <!-- the source code version for java compilation-->
 
     <!-- Configure the maven2 ant tasks -->
-    <path id="maven-ant-tasks.classpath" path="lib/maven-ant-tasks-2.1.0.jar" />
+    <path id="maven-ant-tasks.classpath" path="lib/maven-ant-tasks-2.1.0.jar"/>
     <typedef resource="org/apache/maven/artifact/ant/antlib.xml"
              uri="antlib:org.apache.maven.artifact.ant"
-             classpathref="maven-ant-tasks.classpath" />
-	
-	<!--  Don't run setMavenHome target if maven.home is already set -->
-	<condition property="maven.home.isset">
-		<isset property="maven.home" />
-	</condition>
+             classpathref="maven-ant-tasks.classpath"/>
 
-	<!-- defining the axis tasks -->
-	<path id="axis.ant.classpath">
-		<fileset dir="lib/lsid_lib">
-			<include name="*.jar" />
-		</fileset>
-	</path>
-	
-	<!-- Allow integration with Git projects -->
-	<macrodef name = "git">
-	    <attribute name = "command" />
-	    <attribute name = "dir" default = "" />
-	    <element name = "args" optional = "true" />
-	    <sequential>
-	        <echo message = "git @{command}" />
-	        <exec executable = "git" dir = "@{dir}">
-	            <arg value = "@{command}" />
-	            <args/>
-	        </exec>
-	    </sequential>
-	</macrodef>
-	<macrodef name = "git-clone-pull">
-	    <attribute name = "repository" />
-	    <attribute name = "dest" />
-	    <attribute name = "refname" />
-	    <sequential>
-	        <git command = "clone">
-	            <args>
-	                <arg value = "@{repository}" />
-	                <arg value = "@{dest}" />
-	            </args>
-	        </git>
-	        <git command = "checkout" dir = "@{dest}">
-	        	<args>
-	                <arg value = "@{refname}" />
-	            </args>
-	        </git>
-	    	<git command = "pull" dir = "@{dest}" >
-	        	<args>
-	                <arg value = "@{repository}" />
-	                <arg value = "@{refname}" />
-	            </args>
-	        </git>
-	    </sequential>
-	</macrodef>
-	
-	<!-- get metacatUI project -->
-	<target name="getMetacatUI" depends="init">
-		<git-clone-pull repository="${metacatui.git.repository.url}" dest="${metacatui.build.dir}" refname="${metacatui.git.repository.refname}" />
-	</target>
-	
-	<target name="build-metacat-ui" description="Calls the Maven build for metacatUI war" depends="getMetacatUI" unless="build-metacat-ui-called">
-		<war destfile="${dist.dir}/${metacatui.war.name}" needxmlfile="false">
-			  <fileset dir="${metacatui.war.resources.dir}" />
-		 </war>
-		<property name="build-metacat-ui-called" value="true"/>
-	</target>
-    	
-	<taskdef resource="axis-tasks.properties"
-		classpathref="axis.ant.classpath" />
+    <!--  Don't run setMavenHome target if maven.home is already set -->
+    <condition property="maven.home.isset">
+        <isset property="maven.home"/>
+    </condition>
 
-	<!-- Determine if perl should be built-->
-	<condition property="build.perl">
-		<equals arg1="${make.perl.code}" arg2="true" />
-	</condition>
+    <!-- defining the axis tasks -->
+    <path id="axis.ant.classpath">
+        <fileset dir="lib/lsid_lib">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
 
-	<available file="${build.tomcat.dir}/common/lib/servlet-api.jar" 
-			property="tomcat.common.exists" />
+    <!-- Allow integration with Git projects -->
+    <macrodef name="git">
+        <attribute name="command"/>
+        <attribute name="dir" default=""/>
+        <element name="args" optional="true"/>
+        <sequential>
+            <echo message="git @{command}"/>
+            <exec executable="git" dir="@{dir}">
+                <arg value="@{command}"/>
+                <args/>
+            </exec>
+        </sequential>
+    </macrodef>
+    <macrodef name="git-clone-pull">
+        <attribute name="repository"/>
+        <attribute name="dest"/>
+        <attribute name="refname"/>
+        <sequential>
+            <git command="clone">
+                <args>
+                    <arg value="@{repository}"/>
+                    <arg value="@{dest}"/>
+                </args>
+            </git>
+            <git command="checkout" dir="@{dest}">
+                <args>
+                    <arg value="@{refname}"/>
+                </args>
+            </git>
+            <git command="pull" dir="@{dest}">
+                <args>
+                    <arg value="@{repository}"/>
+                    <arg value="@{refname}"/>
+                </args>
+            </git>
+        </sequential>
+    </macrodef>
 
-	<!-- 
-		Attempt to find and set the path to Maven
+    <!-- added to silence: "warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last;
+        set to false for repeatable builds" since ant 9. See https://ant.apache.org/manual/Tasks/javac.html -->
+    <presetdef name="javac">
+        <javac includeantruntime="false" />
+    </presetdef>
 
-		Prefers, in this order:
+    <!-- get metacatUI project -->
+    <target name="getMetacatUI" depends="init">
+        <git-clone-pull repository="${metacatui.git.repository.url}" dest="${metacatui.build.dir}"
+                        refname="${metacatui.git.repository.refname}"/>
+    </target>
 
-	 	- The value set in build.properties. The reason for this is because this
-		  build file loads all properties from build.properties and properties are
-		  immutable so it's easiest to just use the same precedence chain.
-		- The value set in the $MAVEN_HOME environmental variable.
-		- The value found via the shell magic in the <exex> below.
-	-->
-	<target name="setMavenHome" unless="${maven.home.isset}">
-		<exec executable="sh" resultproperty="which.mvn" failifexecutionfails="false">
-			<arg value="-c"/>
-			<arg value="which mvn"/>
-			<redirector outputproperty="which.mvn.output" />
-		</exec>
+    <target name="build-metacat-ui" description="Calls the Maven build for metacatUI war" depends="getMetacatUI"
+            unless="build-metacat-ui-called">
+        <war destfile="${dist.dir}/${metacatui.war.name}" needxmlfile="false">
+            <fileset dir="${metacatui.war.resources.dir}"/>
+        </war>
+        <property name="build-metacat-ui-called" value="true"/>
+    </target>
 
-		<exec executable="sh" resultproperty="which.mvn3" failifexecutionfails="false">
-			<arg value="-c"/>
-			<arg value="which mvn3"/>
-			<redirector outputproperty="which.mvn3.output" />
-		</exec>
+    <taskdef resource="axis-tasks.properties"
+             classpathref="axis.ant.classpath"/>
 
-		<exec executable="sh" resultproperty="exec.mvn.status" failifexecutionfails="false">
-			<arg value="-c"/>
-			<arg value="mvn --version | grep 'Maven home' | cut -d' ' -f3"/>
-			<redirector outputproperty="found.maven.home" />
-		</exec>
-		
-		<exec executable="sh" resultproperty="exec.mvn3.status" failifexecutionfails="false">
-			<arg value="-c"/>
-			<arg value="mvn3 --version | grep 'Maven home' | cut -d' ' -f3"/>
-			<redirector outputproperty="found.maven3.home" />
-		</exec>
+    <!-- Determine if perl should be built-->
+    <condition property="build.perl">
+        <equals arg1="${make.perl.code}" arg2="true"/>
+    </condition>
 
-		<exec executable="sh" resultproperty="exec.mvn2.status" failifexecutionfails="false">
-			<arg value="-c"/>
-			<arg value="dpkg-query -L maven2 | grep '/boot$' | cut -d'/' -f1-4" />
-			<redirector outputproperty="found.maven2.home" />
-		</exec>
+    <available file="${build.tomcat.dir}/common/lib/servlet-api.jar"
+               property="tomcat.common.exists"/>
 
-		<!-- Use value set in $MAVEN_HOME if maven.home isn't already set -->
-		<condition property="isset.env.MAVEN_HOME">
-			<isset property="env.MAVEN_HOME"/>
-		</condition>
+    <!--
+        Attempt to find and set the path to Maven
 
-		<condition property="maven.home" value="${env.MAVEN_HOME}">
-    		<and>
-				<not>
-					<isset property="maven.home" />
-				</not>
-				<isset property="isset.env.MAVEN_HOME" />
-			</and>
-		</condition>
+        Prefers, in this order:
+         - The value set in build.properties. The reason is that this
+          build file loads all properties from build.properties and properties are
+          immutable, so it's easiest to just use the same precedence chain.
+        - The value set in the $MAVEN_HOME environmental variable.
+        - The value found via the shell magic in the <exex> below.
+    -->
+    <target name="setMavenHome" unless="${maven.home.isset}">
+        <exec executable="sh" resultproperty="which.mvn" failifexecutionfails="false">
+            <arg value="-c"/>
+            <arg value="which mvn"/>
+            <redirector outputproperty="which.mvn.output"/>
+        </exec>
 
-		<!-- Fall back to the found value via the above <exex> for mvn3 -->
-		<condition property="maven.home" value="${found.maven3.home}">
-    		<and>
-				<not>
-					<isset property="maven.home" />
-				</not>
-				<equals arg1="${which.mvn3}" arg2="0" />
-			</and>
-		</condition>
+        <exec executable="sh" resultproperty="which.mvn3" failifexecutionfails="false">
+            <arg value="-c"/>
+            <arg value="which mvn3"/>
+            <redirector outputproperty="which.mvn3.output"/>
+        </exec>
 
-		<!-- Fall back to the found value via the above <exex> mvn -->
-		<condition property="maven.home" value="${found.maven.home}">
-    		<and>
-				<not>
-					<isset property="maven.home" />
-				</not>
-				<not>
-					<!-- Helps this condition fall through to find maven 2, below -->
-					<equals arg1="${found.maven.home}" arg2="" />
-				</not>
-				<equals arg1="${which.mvn}" arg2="0" />
-			</and>
-		</condition>
+        <exec executable="sh" resultproperty="exec.mvn.status" failifexecutionfails="false">
+            <arg value="-c"/>
+            <arg value="mvn --version | grep 'Maven home' | cut -d' ' -f3"/>
+            <redirector outputproperty="found.maven.home"/>
+        </exec>
 
-		<!-- Fall back to the found value via the above <exex> mvn when version 2 is installed -->
-		<condition property="maven.home" value="${found.maven2.home}">
-    		<and>
-				<not>
-					<isset property="maven.home" />
-				</not>
-				<equals arg1="${which.mvn}" arg2="0" />
-			</and>
-		</condition>
+        <exec executable="sh" resultproperty="exec.mvn3.status" failifexecutionfails="false">
+            <arg value="-c"/>
+            <arg value="mvn3 --version | grep 'Maven home' | cut -d' ' -f3"/>
+            <redirector outputproperty="found.maven3.home"/>
+        </exec>
 
-		<!-- Fail the task if maven.home never got set -->
-		<condition property="maven.home.is.set">
-			<isset property="maven.home" />
-		</condition>
-		
-		<fail message="Couldn't find Maven home. Either: (1) Set maven.home in build.properties, (2) set $MAVEN_HOME, or (3) put mvn in your $PATH." unless="maven.home.is.set"/>
-		<echo message="Setting Maven home (maven.home) to '${maven.home}'." />
-	</target>
+        <exec executable="sh" resultproperty="exec.mvn2.status" failifexecutionfails="false">
+            <arg value="-c"/>
+            <arg value="dpkg-query -L maven2 | grep '/boot$' | cut -d'/' -f1-4"/>
+            <redirector outputproperty="found.maven2.home"/>
+        </exec>
 
-	<target name="config" depends="setMavenHome,setTomcatCommon, setTomcatNoCommon">
-		<!-- usr for client testing, generally you don't need change-->
-		<property name="mcuser"
-			value="uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org" />
-		<property name="mcpassword" value="kepler" />
-		<property name="mcanotheruser"
-			value="uid=tao,o=NCEAS,dc=ecoinformatics,dc=org" />
-		<property name="mcanotherpassword" value="yourpass" />
-		<property name="piscouser"
-			value="uid=tao,o=PISCO,dc=ecoinformatics,dc=org" />
-		<property name="piscopassword" value="yourpass" />
-		<property name="lteruser"
-			value="uid=jtao,o=LTER,dc=ecoinformatics,dc=org" />
-		<property name="lterpassword" value="yourpass" />
+        <!-- Use value set in $MAVEN_HOME if maven.home isn't already set -->
+        <condition property="isset.env.MAVEN_HOME">
+            <isset property="env.MAVEN_HOME"/>
+        </condition>
 
-		<property name="debug" value="on" />
-		<property name="morphosourcedir" value="../morpho" />
-		<property name="installdir"
-			value="${app.deploy.dir}/${metacat.context}" />
+        <condition property="maven.home" value="${env.MAVEN_HOME}">
+            <and>
+                <not>
+                    <isset property="maven.home"/>
+                </not>
+                <isset property="isset.env.MAVEN_HOME"/>
+            </and>
+        </condition>
 
-		<echo>*********** set jsdk to ${jsdk}</echo>
-	</target>
-	
-	<target name="setTomcatCommon" if="tomcat.common.exists" >
-		<property name="jsdk"
-			value="${build.tomcat.dir}/common/lib/servlet-api.jar" />
-	</target>
-	
-	<target name="setTomcatNoCommon" unless="tomcat.common.exists" >
-		<property name="jsdk"
-			value="${build.tomcat.dir}/lib/servlet-api.jar" />
-	</target>
-	
-	<target name="init" depends="config, build-metacat-common" unless="init.called">
-		
-	    <property name="libdir.mvn" value="lib/maven" />
-		<delete dir="${libdir.mvn}"></delete>
-		<mkdir dir="${libdir.mvn}"/>
-		
-		<path id="base.classpath">
-			<pathelement location="${jsdk}" />
-            <pathelement location="lib" />
-			
-			<fileset dir="lib">
-				<include name="*.jar" />
-			</fileset>
-			
-			<fileset dir="lib/lsid_lib">
-				<include name="*.jar" />
-			</fileset>
+        <!-- Fall back to the found value via the above <exex> for mvn3 -->
+        <condition property="maven.home" value="${found.maven3.home}">
+            <and>
+                <not>
+                    <isset property="maven.home"/>
+                </not>
+                <equals arg1="${which.mvn3}" arg2="0"/>
+            </and>
+        </condition>
 
-			<!-- Include everything from maven -->
-			<fileset dir="${libdir.mvn}">
-				<include name="*.jar" />
-			</fileset>
+        <!-- Fall back to the found value via the above <exex> mvn -->
+        <condition property="maven.home" value="${found.maven.home}">
+            <and>
+                <not>
+                    <isset property="maven.home"/>
+                </not>
+                <not>
+                    <!-- Helps this condition fall through to find maven 2, below -->
+                    <equals arg1="${found.maven.home}" arg2=""/>
+                </not>
+                <equals arg1="${which.mvn}" arg2="0"/>
+            </and>
+        </condition>
 
-		</path>
-		
-		<path id="test.classpath">
-			<pathelement location="${jsdk}" />
-			<pathelement location="lib" />
-			<fileset dir="lib">
-				<include name="*.jar" />
-				<exclude name="maven-ant-tasks-2.1.0.jar" />
-			</fileset>
-			<fileset dir="lib/lsid_lib">
-				<include name="*.jar" />
-			</fileset>
-			<!-- Include maven -->
-			<fileset dir="${libdir.mvn}">
-				<include name="*.jar" />
-			</fileset>
-		</path>
-		
-		<!-- define the maven tasks -->
-		<taskdef uri="antlib:org.apache.maven.artifact.ant"
-			       resource="org/apache/maven/artifact/ant/antlib.xml"
-			       classpathref="base.classpath" />
-<echo>getting to resolve maven dependencies</echo> 
-	   	<!-- Resolve maven dependencies -->
-		<artifact:pom id="metacatPom" file="pom.xml" />
-<echo> done with pom </echo>
-		<artifact:dependencies filesetId="dependency.fileset" pomrefid="metacatPom" usescope="runtime"/>
-<echo> done with filesetId </echo>
-		<artifact:dependencies pathId="dependency.classpath" pomrefid="metacatPom"/>
-<echo>done with resolving  maven dependencies</echo> 
-	   	<!-- combine base and dependencies for the classpath -->
-	   	<path id="compile.classpath">
-	   		<path refid="base.classpath" />	
-	   		<path refid="dependency.classpath" />	
-		</path>
+        <!-- Fall back to the found value via the above <exex> mvn when version 2 is installed -->
+        <condition property="maven.home" value="${found.maven2.home}">
+            <and>
+                <not>
+                    <isset property="maven.home"/>
+                </not>
+                <equals arg1="${which.mvn}" arg2="0"/>
+            </and>
+        </condition>
 
-		<!-- It is less likely you'll need to make any changes from here down,
-			but customization is possible -->
-		<property name="name" value="metacat" />
-		<property name="Name" value="MetaCat" />
-		<property name="debugprefix" value="${Name}:" />
-		<property name="release" value="${metacat.version}" />
-		<tstamp>
-		    <format property="copyrightyear" pattern="yyyy" locale="en,US"/>
-		</tstamp>
-		<property name="copyright" value="${copyrightyear} Regents of the University of California" />
-		<property name="style-common-relpath" value="/style/common" />
-		<property name="style-shared-relpath" value="/style/shared" />
-		<property name="schema-relpath" value="/schema" />
-		<property name="style-common-cvsrelpath"
-			value="lib${style-common-relpath}" />
-		<property name="schema-cvsrelpath" value="lib${schema-relpath}" />
-		<property name="style-skins-relpath" value="/style/skins" />
-		<property name="eml.git.repository.url" value="https://github.com/NCEAS/eml.git" />
-		<property name="eml-module" value="eml" />
-		<property name="eml-version" value="2.0.0beta6" />
-		<property name="eml-beta4-version"   value="2.0.0beta4" />
-		<property name="eml-beta-tag"        value="BRANCH_EML_2_0_0_BETA_6_FOR_METACAT" />
-		<property name="eml-beta4-tag"       value="RELEASE_EML_2_BETA_4" />
-		<property name="eml2_0_0-schema-tag" value="RELEASE_EML_2_0_0_UPDATE_1" />
-		<property name="eml2_0_1-schema-tag" value="RELEASE_EML_2_0_1" />
-		<property name="eml2_1_0-schema-tag" value="RELEASE_EML_2_1_0" />
-		<property name="eml2_1_1-schema-tag" value="RELEASE_EML_2_1_1" />
-		<property name="eml2_2_0-schema-tag" value="RELEASE_EML_2_2_0" />
-		<!--<property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_0_7" />-->
-		
+        <!-- Fail the task if maven.home never got set -->
+        <condition property="maven.home.is.set">
+            <isset property="maven.home"/>
+        </condition>
 
-		<property name="eml2_0_0namespace"
-			value="eml://ecoinformatics.org/eml-2.0.0" />
-		<property name="eml2_0_1namespace"
-			value="eml://ecoinformatics.org/eml-2.0.1" />
-		<property name="eml2_1_0namespace"
-			value="eml://ecoinformatics.org/eml-2.1.0" />
-		<property name="eml2_1_1namespace"
-			value="eml://ecoinformatics.org/eml-2.1.1" />
-		<property name="eml2_2_0namespace"
-			value="https://eml.ecoinformatics.org/eml-2.2.0" />
-		<property name="stmmlnamespace"
-			value="http://www.xml-cml.org/schema/stmml" />
-		<property name="stmml11namespace"
-			value="http://www.xml-cml.org/schema/stmml-1.1" />
-		<property name="collections1_0_0namespace"
-					value="https://purl.dataone.org/collections-1.0.0" />
-		<property name="portals1_0_0namespace"
-					value="https://purl.dataone.org/portals-1.0.0" />
-		<property name="eml-css" value="eml_xsl.css" />
-		<property name="eml-module.default.css" value="default.css" />
-		<property name="systemidserver" value="" />
-		<property name="html-path" value="" />
-		<property name ="metacat-properties-file" value="build/war/WEB-INF/metacat.properties"/>
+        <fail message="Couldn't find Maven home. Either: (1) Set maven.home in build.properties, (2) set $MAVEN_HOME, or (3) put mvn in your $PATH."
+              unless="maven.home.is.set"/>
+        <echo message="Setting Maven home (maven.home) to '${maven.home}'."/>
+    </target>
 
+    <target name="config" depends="setMavenHome,setTomcatCommon, setTomcatNoCommon">
+        <!-- usr for client testing, generally you don't need change-->
+        <property name="mcuser"
+                  value="uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org"/>
+        <property name="mcpassword" value="kepler"/>
+        <property name="mcanotheruser"
+                  value="uid=tao,o=NCEAS,dc=ecoinformatics,dc=org"/>
+        <property name="mcanotherpassword" value="yourpass"/>
+        <property name="piscouser"
+                  value="uid=tao,o=PISCO,dc=ecoinformatics,dc=org"/>
+        <property name="piscopassword" value="yourpass"/>
+        <property name="lteruser"
+                  value="uid=jtao,o=LTER,dc=ecoinformatics,dc=org"/>
+        <property name="lterpassword" value="yourpass"/>
 
-		<!-- Config for registry variables -->
-		<!-- TODO: SCW remove these, covered in metacat.properties or in skin.properties -->
-		<property name="scope" value="obfs" />
-		<property name="responseForm" value="genericResponse.tmpl" />
-		<property name="entryForm" value="entryForm.tmpl" />
-		<property name="guide" value="genericGuide.tmpl" />
-		<property name="loginForm" value="loginForm.tmpl" />
-		<property name="confirmData" value="confirmData.tmpl" />
-		<property name="deleteData" value="deleteData.tmpl" />
-		<property name="genericHeader" value="genericHeader.tmpl" />
-		<property name="genericFooter" value="genericFooter.tmpl" />
+        <property name="debug" value="on"/>
+        <property name="morphosourcedir" value="../morpho"/>
+        <property name="installdir"
+                  value="${app.deploy.dir}/${metacat.context}"/>
 
-		<filter token="scope" value="${scope}" />
-		<filter token="responseForm" value="${responseForm}" />
-		<filter token="entryForm" value="${entryForm}" />
-		<filter token="guide" value="${guide}" />
-		<filter token="loginForm" value="${loginForm}" />
-		<filter token="confirmData" value="${confirmData}" />
-		<filter token="deleteData" value="${deleteData}" />
-		<filter token="genericHeader" value="${genericHeader}" />
-		<filter token="genericFooter" value="${genericFooter}" />
-		<filter token="adminname" value="${adminname}" />
-		<filter token="recipient" value="${recipient}" />
-		<filter token="metacatVersion" value="${metacat.version}" />
-		<filter token="metacatRC" value="${metacat.releaseCandidate}" />
-		<filter token="build.context" value="${metacat.context}" />
+        <echo>*********** set jsdk to ${jsdk}</echo>
+    </target>
 
-		<filter token="docrooturl" value="./" />
-		<filter token="mcuser" value="${mcuser}" />
-		<filter token="mcpassword" value="${mcpassword}" />
-		<filter token="mcanotheruser" value="${mcanotheruser}" />
-		<filter token="mcanotherpassword" value="${mcanotherpassword}" />
-		<filter token="eml-css" value="${eml-css}" />
-		<filter token="style-skins-relpath"
-			value="${style-skins-relpath}" />
-		<filter token="style-common-relpath"
-			value="${style-common-relpath}" />
+    <target name="setTomcatCommon" if="tomcat.common.exists">
+        <property name="jsdk"
+                  value="${build.tomcat.dir}/common/lib/servlet-api.jar"/>
+    </target>
 
-		<filter token="eml-version" value="${eml-version}" />
-		<filter token="eml-beta4-version" value="${eml-beta4-version}" />
-		<filter token="eml2_0_0namespace" value="${eml2_0_0namespace}" />
-		<filter token="eml2_0_1namespace" value="${eml2_0_1namespace}" />
-		<filter token="eml2_1_0namespace" value="${eml2_1_0namespace}" />
-		<filter token="eml2_1_1namespace" value="${eml2_1_1namespace}" />
-		<filter token="eml2_2_0namespace" value="${eml2_2_0namespace}" />
-		<filter token="stmmlnamespace" value="${stmmlnamespace}" />
-		<filter token="stmml11namespace" value="${stmml11namespace}" />
-		<filter token="collections1_0_0namespace" value="${collections1_0_0namespace}" />
-		<filter token="portals1_0_0namespace" value="${portals1_0_0namespace}" />
-		<filter token="debugprefix" value="${debugprefix}" />
+    <target name="setTomcatNoCommon" unless="tomcat.common.exists">
+        <property name="jsdk"
+                  value="${build.tomcat.dir}/lib/servlet-api.jar"/>
+    </target>
 
-		<filter token="defaultStage" value="${defaultStage}" />
-		<filter token="defaultHeader" value="${defaultHeader}" />
-		<filter token="defaultFooter" value="${defaultFooter}" />
-		<filter token="defaultChangePass" value="${defaultChangePass}" />
-		<filter token="defaultResetPass" value="${defaultResetPass}" />
-		<filter token="changePassSuccess" value="${changePassSuccess}" />
-		<filter token="resetPassSuccess" value="${resetPassSuccess}" />
-		<filter token="registerFailed" value="${registerFailed}" />
-		<filter token="registerLter" value="${registerLter}" />
-		<filter token="registerMatch" value="${registerMatch}" />
-		<filter token="registerSuccess" value="${registerSuccess}" />
-		<filter token="register" value="${register}" />
-		<filter token="searchResults" value="${searchResults}" />
-		<filter token="ldapMainServerFailure"
-			value="${ldapMainServerFailure}" />
-		<filter token="lter-user" value="${lteruser}" />
-		<filter token="lter-pass" value="${lterpassword}" />
-		<filter token="pisco-user" value="${piscouser}" />
-		<filter token="pisco-pass" value="${piscopassword}" />
+    <target name="init" depends="config, build-metacat-common" unless="init.called">
+
+        <property name="libdir.mvn" value="lib/maven"/>
+        <delete dir="${libdir.mvn}"></delete>
+        <mkdir dir="${libdir.mvn}"/>
+
+        <path id="base.classpath">
+            <pathelement location="${jsdk}"/>
+            <pathelement location="lib"/>
+
+            <fileset dir="lib">
+                <include name="*.jar"/>
+            </fileset>
+
+            <fileset dir="lib/lsid_lib">
+                <include name="*.jar"/>
+            </fileset>
+
+            <!-- Include everything from maven -->
+            <fileset dir="${libdir.mvn}">
+                <include name="*.jar"/>
+            </fileset>
+        </path>
+
+        <path id="test.classpath">
+            <pathelement location="${jsdk}"/>
+            <pathelement location="lib"/>
+            <fileset dir="lib">
+                <include name="*.jar"/>
+                <exclude name="maven-ant-tasks-2.1.0.jar"/>
+            </fileset>
+            <fileset dir="lib/lsid_lib">
+                <include name="*.jar"/>
+            </fileset>
+            <!-- Include maven -->
+            <fileset dir="${libdir.mvn}">
+                <include name="*.jar"/>
+            </fileset>
+        </path>
+
+        <!-- define the maven tasks -->
+        <taskdef uri="antlib:org.apache.maven.artifact.ant"
+                 resource="org/apache/maven/artifact/ant/antlib.xml"
+                 classpathref="base.classpath"/>
+        <echo>getting to resolve maven dependencies</echo>
+        <!-- Resolve maven dependencies -->
+        <artifact:pom id="metacatPom" file="pom.xml"/>
+        <echo>done with pom</echo>
+        <artifact:dependencies filesetId="dependency.fileset" pomrefid="metacatPom" usescope="runtime"/>
+        <echo>done with filesetId</echo>
+        <artifact:dependencies pathId="dependency.classpath" pomrefid="metacatPom"/>
+        <echo>done with resolving maven dependencies</echo>
+        <!-- combine base and dependencies for the classpath -->
+        <path id="compile.classpath">
+            <path refid="base.classpath"/>
+            <path refid="dependency.classpath"/>
+        </path>
+
+        <!-- It is less likely you'll need to make any changes from here down,
+            but customization is possible -->
+        <property name="name" value="metacat"/>
+        <property name="Name" value="MetaCat"/>
+        <property name="debugprefix" value="${Name}:"/>
+        <property name="release" value="${metacat.version}"/>
+        <tstamp>
+            <format property="copyrightyear" pattern="yyyy" locale="en,US"/>
+        </tstamp>
+        <property name="copyright" value="${copyrightyear} Regents of the University of California"/>
+        <property name="style-common-relpath" value="/style/common"/>
+        <property name="style-shared-relpath" value="/style/shared"/>
+        <property name="schema-relpath" value="/schema"/>
+        <property name="style-common-cvsrelpath"
+                  value="lib${style-common-relpath}"/>
+        <property name="schema-cvsrelpath" value="lib${schema-relpath}"/>
+        <property name="style-skins-relpath" value="/style/skins"/>
+        <property name="eml.git.repository.url" value="https://github.com/NCEAS/eml.git"/>
+        <property name="eml-module" value="eml"/>
+        <property name="eml-version" value="2.0.0beta6"/>
+        <property name="eml-beta4-version" value="2.0.0beta4"/>
+        <property name="eml-beta-tag" value="BRANCH_EML_2_0_0_BETA_6_FOR_METACAT"/>
+        <property name="eml-beta4-tag" value="RELEASE_EML_2_BETA_4"/>
+        <property name="eml2_0_0-schema-tag" value="RELEASE_EML_2_0_0_UPDATE_1"/>
+        <property name="eml2_0_1-schema-tag" value="RELEASE_EML_2_0_1"/>
+        <property name="eml2_1_0-schema-tag" value="RELEASE_EML_2_1_0"/>
+        <property name="eml2_1_1-schema-tag" value="RELEASE_EML_2_1_1"/>
+        <property name="eml2_2_0-schema-tag" value="RELEASE_EML_2_2_0"/>
+        <property name="eml2_0_0namespace"
+                  value="eml://ecoinformatics.org/eml-2.0.0"/>
+        <property name="eml2_0_1namespace"
+                  value="eml://ecoinformatics.org/eml-2.0.1"/>
+        <property name="eml2_1_0namespace"
+                  value="eml://ecoinformatics.org/eml-2.1.0"/>
+        <property name="eml2_1_1namespace"
+                  value="eml://ecoinformatics.org/eml-2.1.1"/>
+        <property name="eml2_2_0namespace"
+                  value="https://eml.ecoinformatics.org/eml-2.2.0"/>
+        <property name="stmmlnamespace"
+                  value="http://www.xml-cml.org/schema/stmml"/>
+        <property name="stmml11namespace"
+                  value="http://www.xml-cml.org/schema/stmml-1.1"/>
+        <property name="collections1_0_0namespace"
+                  value="https://purl.dataone.org/collections-1.0.0"/>
+        <property name="portals1_0_0namespace"
+                  value="https://purl.dataone.org/portals-1.0.0"/>
+        <property name="eml-css" value="eml_xsl.css"/>
+        <property name="eml-module.default.css" value="default.css"/>
+        <property name="systemidserver" value=""/>
+        <property name="html-path" value=""/>
+        <property name="metacat-properties-file" value="build/war/WEB-INF/metacat.properties"/>
 
 
-		<!-- MCD BYE filter token="timedreplication"     value="${timedreplication}" / -->
-		<!-- MCD BYE filter token="firsttimedreplication" value="${firsttimedreplication}" / -->
-		<!-- MCD BYE filter token="timedreplicationinterval" value="${timedreplicationinterval}" / -->
+        <!-- Config for registry variables -->
+        <!-- TODO: SCW remove these, covered in metacat.properties or in skin.properties -->
+        <property name="scope" value="obfs"/>
+        <property name="responseForm" value="genericResponse.tmpl"/>
+        <property name="entryForm" value="entryForm.tmpl"/>
+        <property name="guide" value="genericGuide.tmpl"/>
+        <property name="loginForm" value="loginForm.tmpl"/>
+        <property name="confirmData" value="confirmData.tmpl"/>
+        <property name="deleteData" value="deleteData.tmpl"/>
+        <property name="genericHeader" value="genericHeader.tmpl"/>
+        <property name="genericFooter" value="genericFooter.tmpl"/>
 
-		<property name="srcdir" value="./src" />
-		<property name="lib.dir" value="./lib" />
-		<property name="docdir" value="./docs" />
-		<property name="cgidir" value="./cgi-bin" />
-		<property name="testdir" value="./test" />
-		<property name="testtorun" value="MNodeServiceTest" />
-		<property name="junittestsdir"
-			value="./test/edu/ucsb/nceas/metacattest" />
-		<property name="junitnettestsdir"
-			value="./test/edu/ucsb/nceas/metacatnettest" />
-		<property name="classtorun" value="edu.ucsb.nceas.metacat.admin.upgrade.dataone.GenerateSystemMetadata" />
-		<property name="build.dir" value="./build" />
-		<property name="build.src" value="${build.dir}/src" />
-		<property name="build.dest" value="${build.dir}/classes" />
-		<property name="build.samples" value="${build.dir}/samples" />
-		<property name="build.tests" value="${build.dir}/tests" />
-		<property name="build.tmp" value="${build.dir}/tmp" />
-		<property name="build.metacattest"
-			value="${build.tests}/metacattest" />
-		<property name="build.metacatnettest"
-			value="${build.tests}/metacatnettest" />
-		<property name="build.data" value="${build.dir}/data" />
-		<property name="build.docs" value="${build.dir}/docs" />
-		<property name="build.javadocs" value="${build.docs}/api" />
-		<property name="build.war" value="${build.dir}/war" />
-		<property name="dist.dir" value="dist" />
-		<property name="ver.dir" value="${dist.dir}/${name}-${release}" />
-		<property name="ver.src" value="${ver.dir}/src" />
-		<property name="test.dir" value="${dist.dir}/test" />
-		<!-- directories for creating a Harvest List Editor distribution -->
-		<property name="dist.dir.hle" value="disthle" />
-		<property name="ver.dir.hle"
-			value="${dist.dir.hle}/harvest-list-editor-${release}" />
-		<property name="pkg.dir" value="./package" />
-		<property name="deb.pkg.dir" value="${pkg.dir}/debian" />
+        <filter token="scope" value="${scope}"/>
+        <filter token="responseForm" value="${responseForm}"/>
+        <filter token="entryForm" value="${entryForm}"/>
+        <filter token="guide" value="${guide}"/>
+        <filter token="loginForm" value="${loginForm}"/>
+        <filter token="confirmData" value="${confirmData}"/>
+        <filter token="deleteData" value="${deleteData}"/>
+        <filter token="genericHeader" value="${genericHeader}"/>
+        <filter token="genericFooter" value="${genericFooter}"/>
+        <filter token="adminname" value="${adminname}"/>
+        <filter token="recipient" value="${recipient}"/>
+        <filter token="metacatVersion" value="${metacat.version}"/>
+        <filter token="metacatRC" value="${metacat.releaseCandidate}"/>
+        <filter token="build.context" value="${metacat.context}"/>
 
-		<property name="package.home" value="edu/ucsb/nceas/metacat" />
+        <filter token="docrooturl" value="./"/>
+        <filter token="mcuser" value="${mcuser}"/>
+        <filter token="mcpassword" value="${mcpassword}"/>
+        <filter token="mcanotheruser" value="${mcanotheruser}"/>
+        <filter token="mcanotherpassword" value="${mcanotherpassword}"/>
+        <filter token="eml-css" value="${eml-css}"/>
+        <filter token="style-skins-relpath"
+                value="${style-skins-relpath}"/>
+        <filter token="style-common-relpath"
+                value="${style-common-relpath}"/>
 
-		<!-- set up svn -->
-		<property name="svnant.lib" value="lib" />
-		<property name="svnant.jar" value="${svnant.lib}/svnant.jar" />
-		<property name="svnClientAdapter.jar"
-			value="${svnant.lib}/svnClientAdapter.jar" />
-		<property name="svnjavahl.jar"
-			value="${svnant.lib}/svnjavahl.jar" />
-		
-		<!-- the git repo for metacatUI-->
-		<property name="metacatui.git.repository.url"
-					value="https://github.com/NCEAS/metacatui.git" />
-		<property name="metacatui.git.repository.refname"
-							value="${metacatui-tag}" />
-		<!--<property name="metacatui.git.repository.refname"
-									value="master" />-->
-		<property name="metacatui.build.dir"
-					value="${build.dir}/metacatui_build" />
-		<property name="metacatui.war.name"
-		                    value="metacatui.war" />
-		<property name="metacatui.war.resources.dir"
-					value="${metacatui.build.dir}/src" />
-		
-		<!-- load the svn task -->
-		<path id="svn.classpath">
-			<pathelement location="${svnjavahl.jar}" />
-			<pathelement location="${svnant.jar}" />
-			<pathelement location="${svnClientAdapter.jar}" />
-		</path>
-		<taskdef resource="svntask.properties"
-			classpathref="svn.classpath" />
+        <filter token="eml-version" value="${eml-version}"/>
+        <filter token="eml-beta4-version" value="${eml-beta4-version}"/>
+        <filter token="eml2_0_0namespace" value="${eml2_0_0namespace}"/>
+        <filter token="eml2_0_1namespace" value="${eml2_0_1namespace}"/>
+        <filter token="eml2_1_0namespace" value="${eml2_1_0namespace}"/>
+        <filter token="eml2_1_1namespace" value="${eml2_1_1namespace}"/>
+        <filter token="eml2_2_0namespace" value="${eml2_2_0namespace}"/>
+        <filter token="stmmlnamespace" value="${stmmlnamespace}"/>
+        <filter token="stmml11namespace" value="${stmml11namespace}"/>
+        <filter token="collections1_0_0namespace" value="${collections1_0_0namespace}"/>
+        <filter token="portals1_0_0namespace" value="${portals1_0_0namespace}"/>
+        <filter token="debugprefix" value="${debugprefix}"/>
 
-		<condition property="eml.required">
-			<or>
-				<not>
-					<available file="lib/schema/eml-2.1.1/eml.xsd" />
-				</not>
-				<not>
-					<available file="lib/schema/eml-2.1.0/eml.xsd" />
-				</not>
-				<not>
-					<available file="lib/schema/eml-2.0.1/eml.xsd" />
-				</not>
-				<not>
-					<available file="lib/schema/eml-2.0.0/eml.xsd" />
-				</not>
-				<not>
-					<available
-						file="lib/dtd/eml-dataset-2.0.0beta6.dtd" />
-				</not>
-			</or>
-		</condition>
-		
-		<property name="init.called" value="true" />
+        <filter token="defaultStage" value="${defaultStage}"/>
+        <filter token="defaultHeader" value="${defaultHeader}"/>
+        <filter token="defaultFooter" value="${defaultFooter}"/>
+        <filter token="defaultChangePass" value="${defaultChangePass}"/>
+        <filter token="defaultResetPass" value="${defaultResetPass}"/>
+        <filter token="changePassSuccess" value="${changePassSuccess}"/>
+        <filter token="resetPassSuccess" value="${resetPassSuccess}"/>
+        <filter token="registerFailed" value="${registerFailed}"/>
+        <filter token="registerLter" value="${registerLter}"/>
+        <filter token="registerMatch" value="${registerMatch}"/>
+        <filter token="registerSuccess" value="${registerSuccess}"/>
+        <filter token="register" value="${register}"/>
+        <filter token="searchResults" value="${searchResults}"/>
+        <filter token="ldapMainServerFailure"
+                value="${ldapMainServerFailure}"/>
+        <filter token="lter-user" value="${lteruser}"/>
+        <filter token="lter-pass" value="${lterpassword}"/>
+        <filter token="pisco-user" value="${piscouser}"/>
+        <filter token="pisco-pass" value="${piscopassword}"/>
 
-	</target>
-	
-	<target name="resolveDependencies" depends="init" description="retrieve dependencies with maven">
-			<echo>Moving Maven dependencies (${dependency.fileset}) to ${libdir.mvn} </echo>
-			<!-- Clear out mvn dir -->
-			<delete dir="${libdir.mvn}"></delete>
-			<!-- Copy all dependencies to the correct location. -->
-			<copy todir="${libdir.mvn}">
-				<fileset refid="dependency.fileset" />
-				<!-- This mapper strips off all leading directory information -->
-				<mapper type="flatten" />
-			</copy>
-		</target>
+        <property name="srcdir" value="./src"/>
+        <property name="lib.dir" value="./lib"/>
+        <property name="docdir" value="./docs"/>
+        <property name="cgidir" value="./cgi-bin"/>
+        <property name="testdir" value="./test"/>
+        <property name="testtorun" value="MNodeServiceTest"/>
+        <property name="junittestsdir"
+                  value="./test/edu/ucsb/nceas/metacattest"/>
+        <property name="junitnettestsdir"
+                  value="./test/edu/ucsb/nceas/metacatnettest"/>
+        <property name="classtorun" value="edu.ucsb.nceas.metacat.admin.upgrade.dataone.GenerateSystemMetadata"/>
+        <property name="build.dir" value="./build"/>
+        <property name="build.src" value="${build.dir}/src"/>
+        <property name="build.dest" value="${build.dir}/classes"/>
+        <property name="build.samples" value="${build.dir}/samples"/>
+        <property name="build.tests" value="${build.dir}/tests"/>
+        <property name="build.tmp" value="${build.dir}/tmp"/>
+        <property name="build.metacattest"
+                  value="${build.tests}/metacattest"/>
+        <property name="build.metacatnettest"
+                  value="${build.tests}/metacatnettest"/>
+        <property name="build.data" value="${build.dir}/data"/>
+        <property name="build.docs" value="${build.dir}/docs"/>
+        <property name="build.javadocs" value="${build.docs}/api"/>
+        <property name="build.war" value="${build.dir}/war"/>
+        <property name="dist.dir" value="dist"/>
+        <property name="ver.dir" value="${dist.dir}/${name}-${release}"/>
+        <property name="ver.src" value="${ver.dir}/src"/>
+        <property name="test.dir" value="${dist.dir}/test"/>
+        <!-- directories for creating a Harvest List Editor distribution -->
+        <property name="dist.dir.hle" value="disthle"/>
+        <property name="ver.dir.hle"
+                  value="${dist.dir.hle}/harvest-list-editor-${release}"/>
+        <property name="pkg.dir" value="./package"/>
+        <property name="deb.pkg.dir" value="${pkg.dir}/debian"/>
 
-	<target name="prepare" depends="init, resolveDependencies">
-		<mkdir dir="${build.dir}" />
-		<mkdir dir="${build.src}" />
-		<mkdir dir="${build.dest}" />
-		<mkdir dir="${build.docs}" />
-		<mkdir dir="${build.javadocs}" />
-		<mkdir dir="${build.tmp}" />
+        <property name="package.home" value="edu/ucsb/nceas/metacat"/>
 
-		<copy todir="${build.src}" filtering="yes">
-			<fileset dir="${srcdir}">
-				<include name="edu/**" />
-				<include name="com/**" />
-				<include name="org/**" />
-				<!-- include name="java/**" / -->
-				<include name="**/*.sql" />
-				<exclude name="**/CVS*" />
-				<exclude name="**/.#*" />
-				<exclude name="edu/ucsb/nceas/workflowscheduler/**" />
-			</fileset>
-		</copy>
-		<available file="lib/style/common/emlb6toeml2" type="dir"
-			property="styles.not.needed" />
-	</target>
+        <!-- set up svn -->
+        <property name="svnant.lib" value="lib"/>
+        <property name="svnant.jar" value="${svnant.lib}/svnant.jar"/>
+        <property name="svnClientAdapter.jar"
+                  value="${svnant.lib}/svnClientAdapter.jar"/>
+        <property name="svnjavahl.jar"
+                  value="${svnant.lib}/svnjavahl.jar"/>
 
-	<target name="compile" depends="prepare"
-		description="Compiles java code to build dir, and copies metacat props files there">
+        <!-- the git repo for metacatUI-->
+        <property name="metacatui.git.repository.url"
+                  value="https://github.com/NCEAS/metacatui.git"/>
+        <property name="metacatui.git.repository.refname"
+                  value="${metacatui-tag}"/>
+        <property name="metacatui.build.dir"
+                  value="${build.dir}/metacatui_build"/>
+        <property name="metacatui.war.name"
+                  value="metacatui.war"/>
+        <property name="metacatui.war.resources.dir"
+                  value="${metacatui.build.dir}/src"/>
 
-		<javac srcdir="${build.src}" destdir="${build.dest}"
-			target="${java.target.version}"
-			source="${java.source.version}"
-			debug="${debug}"
-			excludes="**/*.sql **/client/*.java **/harvesterClient/*.java">
-			<classpath>
-				<path refid="compile.classpath" />
-			</classpath>
-		</javac>
-	</target>
+        <!-- load the svn task -->
+        <path id="svn.classpath">
+            <pathelement location="${svnjavahl.jar}"/>
+            <pathelement location="${svnant.jar}"/>
+            <pathelement location="${svnClientAdapter.jar}"/>
+        </path>
+        <taskdef resource="svntask.properties"
+                 classpathref="svn.classpath"/>
 
-	<target name="jar" depends="compile,geteml"
-		description="Compiles and jars metacat java code to metacat.jar in build dir ">
+        <condition property="eml.required">
+            <or>
+                <not>
+                    <available file="lib/schema/eml-2.1.1/eml.xsd"/>
+                </not>
+                <not>
+                    <available file="lib/schema/eml-2.1.0/eml.xsd"/>
+                </not>
+                <not>
+                    <available file="lib/schema/eml-2.0.1/eml.xsd"/>
+                </not>
+                <not>
+                    <available file="lib/schema/eml-2.0.0/eml.xsd"/>
+                </not>
+                <not>
+                    <available
+                            file="lib/dtd/eml-dataset-2.0.0beta6.dtd"/>
+                </not>
+            </or>
+        </condition>
 
-		<delete file="${build.dir}/${name}.jar" />
-		<jar jarfile="${build.dir}/${name}.jar" basedir="${build.dest}"
-			excludes="**/protocols/ **/harvesterClient/" />
-	</target>
+        <property name="init.called" value="true"/>
 
-	<target name="protocol" depends="compile"
-		description="Compiles and jars protocol java code to protocol.jar in build dir">
-		<delete file="${build.dir}/protocol.jar" />
-		<jar jarfile="${build.dir}/protocol.jar" basedir="${build.dest}"
-			includes="**/protocols/" />
-	</target>
+    </target>
+
+    <target name="resolveDependencies" depends="init" description="retrieve dependencies with maven">
+        <echo>Moving Maven dependencies (${dependency.fileset}) to ${libdir.mvn}</echo>
+        <!-- Clear out mvn dir -->
+        <delete dir="${libdir.mvn}"></delete>
+        <!-- Copy all dependencies to the correct location. -->
+        <copy todir="${libdir.mvn}">
+            <fileset refid="dependency.fileset"/>
+            <!-- This mapper strips off all leading directory information -->
+            <mapper type="flatten"/>
+        </copy>
+    </target>
+
+    <target name="prepare" depends="init, resolveDependencies">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.src}"/>
+        <mkdir dir="${build.dest}"/>
+        <mkdir dir="${build.docs}"/>
+        <mkdir dir="${build.javadocs}"/>
+        <mkdir dir="${build.tmp}"/>
+
+        <copy todir="${build.src}" filtering="yes">
+            <fileset dir="${srcdir}">
+                <include name="edu/**"/>
+                <include name="com/**"/>
+                <include name="org/**"/>
+                <!-- include name="java/**" / -->
+                <include name="**/*.sql"/>
+                <exclude name="**/CVS*"/>
+                <exclude name="**/.#*"/>
+                <exclude name="edu/ucsb/nceas/workflowscheduler/**"/>
+            </fileset>
+        </copy>
+        <available file="lib/style/common/emlb6toeml2" type="dir"
+                   property="styles.not.needed"/>
+    </target>
+
+    <target name="compile" depends="prepare"
+            description="Compiles java code to build dir, and copies metacat props files there">
+
+        <javac srcdir="${build.src}" destdir="${build.dest}"
+               target="${java.target.version}"
+               source="${java.source.version}"
+               debug="${debug}"
+               excludes="**/*.sql **/client/*.java **/harvesterClient/*.java">
+            <classpath>
+                <path refid="compile.classpath"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile,geteml"
+            description="Compiles and jars metacat java code to metacat.jar in build dir ">
+
+        <delete file="${build.dir}/${name}.jar"/>
+        <jar jarfile="${build.dir}/${name}.jar" basedir="${build.dest}"
+             excludes="**/protocols/ **/harvesterClient/"/>
+    </target>
+
+    <target name="protocol" depends="compile"
+            description="Compiles and jars protocol java code to protocol.jar in build dir">
+        <delete file="${build.dir}/protocol.jar"/>
+        <jar jarfile="${build.dir}/protocol.jar" basedir="${build.dest}"
+             includes="**/protocols/"/>
+    </target>
 
 
-	<target name="client" depends="prepare"
-		description="Compiles metacat-client java code to build dir">
-		<javac srcdir="${build.src}" destdir="${build.dest}"
-			target="${java.target.version}"
-			source="${java.source.version}"
-			includes="edu/ucsb/nceas/metacat/client/*">
-			<classpath>
-				<path refid="compile.classpath" />
-			</classpath>
-		</javac>
-	</target>
+    <target name="client" depends="prepare"
+            description="Compiles metacat-client java code to build dir">
+        <javac srcdir="${build.src}" destdir="${build.dest}"
+               target="${java.target.version}"
+               source="${java.source.version}"
+               includes="edu/ucsb/nceas/metacat/client/*">
+            <classpath>
+                <path refid="compile.classpath"/>
+            </classpath>
+        </javac>
+    </target>
 
-	<target name="clientjar" depends="client"
-		description="Compiles and jars metacat-client java code to metacat-client.jar in build dir">
-		<delete file="${build.dir}/${name}-client.jar" />
-		<jar jarfile="${build.dir}/${name}-client.jar"
-			basedir="${build.dest}" includes="**/metacat/client/" />
-	</target>
+    <target name="clientjar" depends="client"
+            description="Compiles and jars metacat-client java code to metacat-client.jar in build dir">
+        <delete file="${build.dir}/${name}-client.jar"/>
+        <jar jarfile="${build.dir}/${name}-client.jar"
+             basedir="${build.dest}" includes="**/metacat/client/"/>
+    </target>
 
-	<target name="advancedsearchjar" depends="compile"
-		description="Compiles and jars advanced search Java code to advancedsearch.jar in build dir">
-		<delete file="${build.dir}/advancedsearch.jar" />
-		<jar jarfile="${build.dir}/advancedsearch.jar"
-			basedir="${build.dest}" includes="**/metacat/advancedsearch/" />
-	</target>
+    <target name="advancedsearchjar" depends="compile"
+            description="Compiles and jars advanced search Java code to advancedsearch.jar in build dir">
+        <delete file="${build.dir}/advancedsearch.jar"/>
+        <jar jarfile="${build.dir}/advancedsearch.jar"
+             basedir="${build.dest}" includes="**/metacat/advancedsearch/"/>
+    </target>
 
-	<target name="harvester" depends="client"
-		description="Compiles harvester java code to build dir">
-		<javac srcdir="${build.src}" destdir="${build.dest}"
-			target="${java.target.version}"
-			source="${java.source.version}"
-			includes="edu/ucsb/nceas/metacat/harvesterClient/*">
-			<classpath>
-				<path refid="compile.classpath" />
-			</classpath>
-		</javac>
-	</target>
-		
-	<target name="harvesterjar" depends="harvester"
-		description="Compiles and jars harvester java code to harvester.jar in build dir">
-		<delete file="${build.dir}/harvester.jar" />
-		<jar jarfile="${build.dir}/harvester.jar"
-			basedir="${build.dest}" includes="**/metacat/harvesterClient/" />
-	</target>
+    <target name="harvester" depends="client"
+            description="Compiles harvester java code to build dir">
+        <javac srcdir="${build.src}" destdir="${build.dest}"
+               target="${java.target.version}"
+               source="${java.source.version}"
+               includes="edu/ucsb/nceas/metacat/harvesterClient/*">
+            <classpath>
+                <path refid="compile.classpath"/>
+            </classpath>
+        </javac>
+    </target>
 
-	<target name="harvestListEditorDist" depends="harvesterjar"
-		description="Prepares a distribution of the Harvest List Editor tool">
-		<mkdir dir="${dist.dir.hle}" />
-		<delete dir="${ver.dir.hle}" />
-		<mkdir dir="${ver.dir.hle}" />
-		<copy todir="${ver.dir.hle}" file="${build.dir}/harvester.jar" />
-		<copy todir="${ver.dir.hle}" file="lib/xercesImpl.jar" />
-		<copy todir="${ver.dir.hle}"
-			file="lib/harvester/harvestList.xsd" />
-		<copy todir="${ver.dir.hle}"
-			file="lib/harvester/harvestListEditor.bat" />
-		<copy todir="${ver.dir.hle}"
-			file="lib/harvester/harvestListEditor.sh" />
-		<delete file="./harvest-list-editor-${release}.zip" />
-		<zip zipfile="./harvest-list-editor-${release}.zip"
-			basedir="${ver.dir.hle}" />
-		<delete file="./harvest-list-editor-${release}.tar.gz" />
-		<tar tarfile="./harvest-list-editor-${release}.tar"
-			basedir="${ver.dir.hle}" />
-		<gzip zipfile="./harvest-list-editor-${release}.tar.gz"
-			src="./harvest-list-editor-${release}.tar" />
-		<delete file="./harvest-list-editor-${release}.tar" />
-	</target>
+    <target name="harvesterjar" depends="harvester"
+            description="Compiles and jars harvester java code to harvester.jar in build dir">
+        <delete file="${build.dir}/harvester.jar"/>
+        <jar jarfile="${build.dir}/harvester.jar"
+             basedir="${build.dest}" includes="**/metacat/harvesterClient/"/>
+    </target>
 
-	<target name="geteml" depends="getemlpre2,getemlpre2beta4,geteml2+,getConversionXSL"
-		if="eml.required" description="Calls getemlpre2 and geteml2+ targets" />
+    <target name="harvestListEditorDist" depends="harvesterjar"
+            description="Prepares a distribution of the Harvest List Editor tool">
+        <mkdir dir="${dist.dir.hle}"/>
+        <delete dir="${ver.dir.hle}"/>
+        <mkdir dir="${ver.dir.hle}"/>
+        <copy todir="${ver.dir.hle}" file="${build.dir}/harvester.jar"/>
+        <copy todir="${ver.dir.hle}" file="lib/xercesImpl.jar"/>
+        <copy todir="${ver.dir.hle}"
+              file="lib/harvester/harvestList.xsd"/>
+        <copy todir="${ver.dir.hle}"
+              file="lib/harvester/harvestListEditor.bat"/>
+        <copy todir="${ver.dir.hle}"
+              file="lib/harvester/harvestListEditor.sh"/>
+        <delete file="./harvest-list-editor-${release}.zip"/>
+        <zip zipfile="./harvest-list-editor-${release}.zip"
+             basedir="${ver.dir.hle}"/>
+        <delete file="./harvest-list-editor-${release}.tar.gz"/>
+        <tar tarfile="./harvest-list-editor-${release}.tar"
+             basedir="${ver.dir.hle}"/>
+        <gzip zipfile="./harvest-list-editor-${release}.tar.gz"
+              src="./harvest-list-editor-${release}.tar"/>
+        <delete file="./harvest-list-editor-${release}.tar"/>
+    </target>
 
-	<target name="getemlpre2" depends="prepare,giteml" if="eml.required"
-		description="Checks EML-beta6 out of svn and copies dtds and xsl to your metacat sandbox">
-		<mkdir dir="lib/dtd" />
-		<copy todir="lib/dtd" filtering="yes">
-			<fileset
-				dir="${build.tmp}/eml_${eml-beta-tag}">
-				<include name="*.dtd" />
-			</fileset>
-			<mapper type="glob" from="eml-*.dtd"
-				to="eml-*-${eml-version}.dtd" />
-		</copy>
+    <target name="geteml" depends="getemlpre2,getemlpre2beta4,geteml2+,getConversionXSL"
+            if="eml.required" description="Calls getemlpre2 and geteml2+ targets"/>
 
-		<copy todir="${style-common-cvsrelpath}" filtering="yes">
-			<fileset
-				dir="${build.tmp}/eml_${eml-beta-tag}/style">
-				<include name="**/*.xsl" />
-			</fileset>
-		</copy>
-	</target>
-	
-	<target name="getemlpre2beta4" depends="prepare" if="eml.required"
-			description="Checks EML-beta4 out of svn and copies dtds to your metacat sandbox">
-			<mkdir dir="lib/dtd" />
-			<copy todir="lib/dtd" filtering="yes">
-				<fileset
-					dir="${build.tmp}/eml_${eml-beta4-tag}">
-					<include name="*.dtd" />
-				</fileset>
-				<mapper type="glob" from="eml-*.dtd"
-					to="eml-*-${eml-beta4-version}.dtd" />
-			</copy>
-	</target>
+    <target name="getemlpre2" depends="prepare,giteml" if="eml.required"
+            description="Checks EML-beta6 out of svn and copies dtds and xsl to your metacat sandbox">
+        <mkdir dir="lib/dtd"/>
+        <copy todir="lib/dtd" filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${eml-beta-tag}">
+                <include name="*.dtd"/>
+            </fileset>
+            <mapper type="glob" from="eml-*.dtd"
+                    to="eml-*-${eml-version}.dtd"/>
+        </copy>
+
+        <copy todir="${style-common-cvsrelpath}" filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${eml-beta-tag}/style">
+                <include name="**/*.xsl"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="getemlpre2beta4" depends="prepare" if="eml.required"
+            description="Checks EML-beta4 out of svn and copies dtds to your metacat sandbox">
+        <mkdir dir="lib/dtd"/>
+        <copy todir="lib/dtd" filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${eml-beta4-tag}">
+                <include name="*.dtd"/>
+            </fileset>
+            <mapper type="glob" from="eml-*.dtd"
+                    to="eml-*-${eml-beta4-version}.dtd"/>
+        </copy>
+    </target>
 
     <target name="giteml" depends="prepare" if="eml.required"
             description="Git clone EML code from various tagged releases of the EML git repository">
-        <git-clone-pull repository="${eml.git.repository.url}" 
-                        dest="${build.tmp}/eml_${eml-beta4-tag}" refname="${eml-beta4-tag}" />
-        <git-clone-pull repository="${eml.git.repository.url}" 
-                        dest="${build.tmp}/eml_${eml-beta-tag}" refname="${eml-beta-tag}" />
-        <git-clone-pull repository="${eml.git.repository.url}" 
-                        dest="${build.tmp}/eml_${eml2_0_0-schema-tag}" refname="${eml2_0_0-schema-tag}" />
-        <git-clone-pull repository="${eml.git.repository.url}" 
-                        dest="${build.tmp}/eml_${eml2_0_1-schema-tag}" refname="${eml2_0_1-schema-tag}" />
-        <git-clone-pull repository="${eml.git.repository.url}" 
-                        dest="${build.tmp}/eml_${eml2_1_0-schema-tag}" refname="${eml2_1_0-schema-tag}" />
-        <git-clone-pull repository="${eml.git.repository.url}" 
-                        dest="${build.tmp}/eml_${eml2_1_1-schema-tag}" refname="${eml2_1_1-schema-tag}" />
-        <git-clone-pull repository="${eml.git.repository.url}" 
-                        dest="${build.tmp}/eml_${eml2-style-tag}" refname="${eml2-style-tag}" />
-        <git-clone-pull repository="${eml.git.repository.url}" 
-    	                        dest="${build.tmp}/eml_${eml2_2_0-schema-tag}" refname="${eml2_2_0-schema-tag}" />
+        <git-clone-pull repository="${eml.git.repository.url}"
+                        dest="${build.tmp}/eml_${eml-beta4-tag}" refname="${eml-beta4-tag}"/>
+        <git-clone-pull repository="${eml.git.repository.url}"
+                        dest="${build.tmp}/eml_${eml-beta-tag}" refname="${eml-beta-tag}"/>
+        <git-clone-pull repository="${eml.git.repository.url}"
+                        dest="${build.tmp}/eml_${eml2_0_0-schema-tag}" refname="${eml2_0_0-schema-tag}"/>
+        <git-clone-pull repository="${eml.git.repository.url}"
+                        dest="${build.tmp}/eml_${eml2_0_1-schema-tag}" refname="${eml2_0_1-schema-tag}"/>
+        <git-clone-pull repository="${eml.git.repository.url}"
+                        dest="${build.tmp}/eml_${eml2_1_0-schema-tag}" refname="${eml2_1_0-schema-tag}"/>
+        <git-clone-pull repository="${eml.git.repository.url}"
+                        dest="${build.tmp}/eml_${eml2_1_1-schema-tag}" refname="${eml2_1_1-schema-tag}"/>
+        <git-clone-pull repository="${eml.git.repository.url}"
+                        dest="${build.tmp}/eml_${eml2-style-tag}" refname="${eml2-style-tag}"/>
+        <git-clone-pull repository="${eml.git.repository.url}"
+                        dest="${build.tmp}/eml_${eml2_2_0-schema-tag}" refname="${eml2_2_0-schema-tag}"/>
     </target>
 
-	<target name="geteml2+" depends="prepare,giteml" if="eml.required"
-		description="Checks eml-2 out of svn and copies schema and xsl to your metacat sandbox">
-		<!-- Checkout eml200 for given schema tag-->
-		<mkdir dir="lib/schema/eml-2.0.0" />
-		<copy todir="lib/schema/eml-2.0.0" filtering="yes">
-			<fileset
-				dir="${build.tmp}/eml_${eml2_0_0-schema-tag}">
-				<include name="*.xsd" />
-			</fileset>
+    <target name="geteml2+" depends="prepare,giteml" if="eml.required"
+            description="Checks eml-2 out of svn and copies schema and xsl to your metacat sandbox">
+        <!-- Checkout eml200 for given schema tag-->
+        <mkdir dir="lib/schema/eml-2.0.0"/>
+        <copy todir="lib/schema/eml-2.0.0" filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${eml2_0_0-schema-tag}">
+                <include name="*.xsd"/>
+            </fileset>
+            <!-- shouldn't we have a mapper here like this??
+                <mapper type="glob" from="eml-*.xsd" to="eml-*-${eml-version}.xsd" />
 
-			<!-- shouldn't we have a mapper here like this??
-				<mapper type="glob" from="eml-*.xsd" to="eml-*-${eml-version}.xsd" />
-				
-				Jing's code didn't have one - does it need to be added?
-				NOTE that eml-version is set to beta 6, so this would need changing -->
+                Jing's code didn't have one - does it need to be added?
+                NOTE that eml-version is set to beta 6, so this would need changing -->
+        </copy>
 
-		</copy>
+        <!-- Checkout eml201 for given schema tag-->
+        <mkdir dir="lib/schema/eml-2.0.1"/>
+        <copy todir="lib/schema/eml-2.0.1" filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${eml2_0_1-schema-tag}">
+                <include name="*.xsd"/>
+            </fileset>
+        </copy>
 
-		<!-- Checkout eml201 for given schema tag-->
-		<mkdir dir="lib/schema/eml-2.0.1" />
-		<copy todir="lib/schema/eml-2.0.1" filtering="yes">
-			<fileset
-				dir="${build.tmp}/eml_${eml2_0_1-schema-tag}">
-				<include name="*.xsd" />
-			</fileset>
-		</copy>
+        <!-- Checkout eml210 for given schema tag-->
+        <mkdir dir="lib/schema/eml-2.1.0"/>
+        <copy todir="lib/schema/eml-2.1.0" filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${eml2_1_0-schema-tag}">
+                <include name="*.xsd"/>
+            </fileset>
+        </copy>
 
-		<!-- Checkout eml210 for given schema tag-->
-		<mkdir dir="lib/schema/eml-2.1.0" />
-		<copy todir="lib/schema/eml-2.1.0" filtering="yes">
-			<fileset
-				dir="${build.tmp}/eml_${eml2_1_0-schema-tag}">
-				<include name="*.xsd" />
-			</fileset>
-		</copy>
+        <!-- Checkout eml210 for given style sheet tag-->
+        <antcall target="copyxsl">
+            <param name="cvs.tagname" value="${eml2-style-tag}"/>
+            <!-- param name="dirname" value="eml-2.1.0" / -->
+            <param name="dirname" value="eml-2"/>
+        </antcall>
 
-		<!-- Checkout eml210 for given style sheet tag-->
-		<antcall target="copyxsl">
-			<param name="cvs.tagname" value="${eml2-style-tag}" />
-			<!-- param name="dirname" value="eml-2.1.0" / -->
-			<param name="dirname" value="eml-2" />
-		</antcall>
-		
-		<!-- Checkout eml211 for given schema tag-->
-		<mkdir dir="lib/schema/eml-2.1.1" />
-		<copy todir="lib/schema/eml-2.1.1" filtering="yes">
-			<fileset
-				dir="${build.tmp}/eml_${eml2_1_1-schema-tag}">
-				<include name="*.xsd" />
-			</fileset>
-		</copy>
-		
-		<!-- Checkout eml220 for the given schema tag-->
-		<mkdir dir="lib/schema/eml-2.2.0" />
-		<copy todir="lib/schema/eml-2.2.0" filtering="yes">
-		   <fileset
-		        dir="${build.tmp}/eml_${eml2_2_0-schema-tag}/xsd">
-		        <include name="*.xsd" />
-		    </fileset>
-		</copy>
-	</target>
+        <!-- Checkout eml211 for given schema tag-->
+        <mkdir dir="lib/schema/eml-2.1.1"/>
+        <copy todir="lib/schema/eml-2.1.1" filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${eml2_1_1-schema-tag}">
+                <include name="*.xsd"/>
+            </fileset>
+        </copy>
 
-	<target name="copyxsl"
-		description="Copies xsl stylesheets from checkout in build/tmp to your metacat sandbox">
-
-		<delete file="${style-common-cvsrelpath}/${eml-css}" />
-
-		<copy todir="${style-common-cvsrelpath}/${dirname}"
-			filtering="yes">
-			<fileset
-				dir="${build.tmp}/eml_${cvs.tagname}/style/eml">
-				<include name="**/*.xsl" />
-			</fileset>
-		</copy>
-
-
-		<!-- now copy default css from eml module and put it in style-common-path
-			dir with a new name, so other skin-specific css can import it if reqd -->
-		<copy
-			file="${build.tmp}/eml_${cvs.tagname}/${eml-module.default.css}"
-			tofile="${style-common-cvsrelpath}/${eml-css}" />
-
-	</target>
-
-	<target name="correctEML201Docs" depends="jar"
-		description="Uses the ant  task to run a JAVA patch class to correct invalide eml201 documents which were generated by wrong schema">
-		<copy todir="${build.dir}" file="lib/metacat.properties"
-			filtering="yes" />
-		<java
-			classname="edu.ucsb.nceas.metacat.EML201DocumentCorrector">
-			<classpath>
-				<path refid="compile.classpath" />
-				<fileset dir="${build.dir}">
-					<include name="${name}.jar" />
-				</fileset>
-			</classpath>
-		</java>
-	</target>
-
-	<target name="install" depends="build-metacat"
-		description="* Install Metacat For Development *">
-		<copy file="${dist.dir}/${metacat.context}.war"
-			todir="${app.deploy.dir}" />
-		<delete dir="${app.deploy.dir}/${metacat.context}" />
-		<copy file="${dist.dir}/metacat-index.war"
-					todir="${app.deploy.dir}" />
-		<delete dir="${app.deploy.dir}/metacat-index" />
-		<copy file="${dist.dir}/${metacatui.war.name}"
-					todir="${app.deploy.dir}" />
-		<delete dir="${app.deploy.dir}/metacatui" />
-		<tstamp>
-			<format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa" />
-		</tstamp>
-		<echo>Dev install completed at ${NOW}</echo>
-	</target>
-
-	<target name="build-metacat" depends="war, dist-metacat-index, build-metacat-ui"
-		description="Build Metacat">
-	</target>
-
-	<target name="install-skin" depends="init"
-		description="Install a Skin">
-
-		<input message="Please enter name of the skin"
-			addproperty="skin-name" />
-
-		<mkdir dir="${installdir}/style/skins/${skin-name}" />
-		<copy todir="${installdir}/style/skins/${skin-name}"
-			filtering="yes">
-			<fileset dir="lib/style/skins/${skin-name}">
-				<exclude name="**/*.png" />
-				<exclude name="**/*.gif" />
-				<exclude name="**/*.jpg" />
-				<exclude name="**/CVS*" />
-				<exclude name="**/.#*" />
-			</fileset>
-		</copy>
-		<copy todir="${installdir}/style/skins/${skin-name}"
-			filtering="no">
-			<fileset dir="lib/style/skins/${skin-name}">
-				<include name="**/*.png" />
-				<include name="**/*.gif" />
-				<include name="**/*.jpg" />
-				<exclude name="**/CVS*" />
-				<exclude name="**/.#*" />
-			</fileset>
-		</copy>
-		<copy todir="${installdir}/style/common" filtering="yes">
-			<fileset dir="lib/style/common">
-				<include name="*.js" />
-				<include name="*.jsp" />
-				<include name="*.css" />
-				<exclude name="*.png" />
-				<exclude name="*.gif" />
-				<exclude name="*.jpg" />
-				<exclude name="**/CVS*" />
-				<exclude name="**/.#*" />
-			</fileset>
-		</copy>
-		<!--
-			<mkdir dir="${installdir}/style/skins/${skin-name}/images" />
-			<copy todir="${installdir}/style/skins/${skin-name}/images" filtering="no">
-			<fileset dir="lib/style/skins/${skin-name}/images">
-			<include name="*.png"/>
-			<include name="*.gif"/>
-			<include name="*.jpg"/>
-			</fileset>
-			</copy>
-		-->
-
-		<echo message="Install Skin completed." />
-	</target>
-
-	<target name="war" depends="warPrepare"
-		description="Create a web archive (WAR) for servlet deployment">
-		<mkdir dir="${dist.dir}" />
-		<war destfile="${dist.dir}/${metacat.context}.war"
-			webxml="${build.war}/web.xml">
-			<fileset dir="${war.context}" />
-			<lib dir="${war.lib}" />
-			<classes dir="${war.classes}">
-				<exclude name="log4j.properties"/>
-		    </classes>
-			<webinf dir="${war.webinf}" />
-		</war>
-	</target>
-
-	<target name="warPrepare"
-		depends="cgiPrepare,jar,clientjar,harvesterjar,testPrepare,documentation"
-		description="Prepare files for creating a web archive (WAR)">
-
-		<property name="war.lib" value="${build.war}/lib" />
-		<property name="war.classes" value="${build.war}/classes" />
-		<property name="war.webinf" value="${build.war}/WEB-INF" />
-		<property name="war.context"
-			value="${build.war}/${metacat.context}" />
-		<property name="war.webinf.sql" value="${war.webinf}/sql" />
-		<property name="war.webinf.scripts"
-			value="${war.webinf}/scripts" />
-		<property name="war.context.cgi" value="${war.context}/cgi-bin" />
-		<property name="war.context.docs" value="${war.context}/docs" />
-		<property name="war.context.temp" value="${war.context}/temp" />
-		<property name="war.context.templates"
-			value="${war.context}${style-common-relpath}/templates" />
-		<mkdir dir="${war.lib}" />
-		<mkdir dir="${war.classes}" />
-		<mkdir dir="${war.webinf}" />
-		<mkdir dir="${war.context}" />
-		<mkdir dir="${war.webinf.sql}" />
-		<mkdir dir="${war.context.cgi}" />
-		<mkdir dir="${war.context.docs}" />
-		<mkdir dir="${war.context.temp}" />
-		<mkdir dir="${war.context.templates}" />
-
-		<!--copy file="${lib.dir}/${jdbc.lib.postgres}" todir="${war.lib}" / -->
-		<!--copy file="${lib.dir}/${jdbc.lib.sqlserver1}" todir="${war.lib}" / -->
-		<!--copy file="${lib.dir}/${jdbc.lib.sqlserver2}" todir="${war.lib}" / -->
-		<!--copy file="${lib.dir}/${jdbc.lib.sqlserver3}" todir="${war.lib}" / -->
-		<copy file="${build.dir}/${name}.jar" todir="${war.lib}" />
-		<copy file="${build.dir}/${name}-client.jar" todir="${war.lib}" />
-		<copy file="${build.dir}/harvester.jar" todir="${war.lib}" />
-		<copy todir="${war.lib}" filtering="no">
-			<fileset dir="lib">
-				<include name="*.jar" />
-				<exclude name="maven-ant-tasks*.jar" />
-			</fileset>
-			<fileset dir="${libdir.mvn}" />			
-		</copy>
-		<!-- MCD copy file="lib/web.xml.${tomcatversion}"
-			tofile="${build.war}/web.xml" / -->
-		<!-- MCD added next - Remove the tomcat5 reference-->
-		<copy file="lib/web.xml.tomcat6" tofile="${build.war}/web.xml" />
-		<copy file="lib/metacat.properties" todir="${war.webinf}"
-			filtering="yes" />
-		<copy todir="${war.webinf}" filtering="yes">
-		    <fileset dir="lib/account-web-info">
-		       <exclude name="web.xml" />
-		    </fileset>
-		</copy>
-		<copy file="lib/solrQueryFieldDescriptions.properties" todir="${war.webinf}"/>
-		<copy file="lib/metacat.properties.metadata.xml"
-			todir="${war.webinf}" filtering="no" />
-		<copy file="lib/org.properties.metadata.xml"
-			todir="${war.webinf}" filtering="no" />
-		<copy file="lib/auth.properties.metadata.xml"
-			todir="${war.webinf}" filtering="no" />
-		<copy todir="${war.webinf}" filtering="yes">
-			<fileset dir="lib">
-				<include name="skin.configs/**" />
-			</fileset>
-		</copy>
-		<copy todir="${war.classes}" filtering="yes">
-		            <fileset dir="metacat-common/src/main/resources/solr-home/conf">
-		                <exclude name="schema.xml" />
-		            	    <exclude name="solrconfig.xml" />
-		            </fileset>
-		        </copy>
-		<copy file="lib/log4j2.properties" todir="${war.classes}"
-			filtering="yes" /> 
-		<copy file="lib/hazelcast.xml" todir="${war.webinf}"
-			filtering="yes" />
-		<!--<copy file="lib/oa4mp_client.xml" todir="${war.webinf}"
-			filtering="yes" /> -->
-		<copy todir="${war.context}" filtering="no">
-			<fileset dir="lib">
-				<include name="**/*.jpg" />
-				<include name="**/*.png" />
-				<include name="**/*.gif" />
-				<include name="LiveMap_30/**" />
-				<include name="oaipmh/**" />
-			</fileset>
-		</copy>
-		<copy todir="${war.context}" filtering="yes">
-			<fileset dir="lib">
-				<exclude name="*.jar" />
-				<exclude name="*.properties" />
-				<exclude name="*.metadata.xml" />
-				<exclude name="web.xml" />
-				<exclude name="**/*.jpg" />
-				<exclude name="**/*.png" />
-				<exclude name="**/*.gif" />
-				<exclude name="lsid_lib/**" />
-				<exclude name="lsid_conf/**" />
-				<exclude name="LiveMap_30/**" />
-				<exclude name="oaipmh/**" />
-				<exclude name="maven/**" />
-				<exclude name="skin.configs/**" />
-				<exclude name="spatial/geoserver/**" />
-			</fileset>
-		</copy>
-		<copy todir="${war.context.docs}" filtering="no">
-			<fileset dir="${build.docs}" />
-		</copy>
-		<copy todir="${war.webinf.sql}" filtering="yes">
-			<fileset dir="src">
-				<include name="**/*.sql" />
-			</fileset>
-		</copy>
-		<copy todir="${war.webinf.scripts}" filtering="yes">
-			<fileset dir="src/scripts" />
-		</copy>
-		<copy todir="${war.webinf.scripts}"
-			file="src/perl/Metacat/blib/lib/auto/Metacat/autosplit.ix"
-			failonerror="false" />
-
-		<copy file="src/perl/register-dataset.cgi"
-			todir="${war.context.cgi}" />
-		<copy file="src/perl/ldapweb.cgi" todir="${war.context.cgi}" />
-		<copy file="src/perl/Metacat/Metacat.pm" todir="${war.lib}" />
-
-		<!-- registry cgi section -->
-		<!-- TODO SCW: use relative paths to grab these instead of copying to tmp,
-			used in readDocumentFromMetacat -->
-		<!-- TODO MCD copy temp files to actual location using config util?? -->
-		<copy todir="${war.context.temp}" filtering="yes">
-			<fileset dir="lib/style/common/emlb6toeml2">
-				<include name="*.xsl" />
-				<include name="*.xml" />
-			</fileset>
-		</copy>
-		<available file="lib/style/common/emlb6toeml2" type="dir"
-			property="styles.not.needed" />
-
-		<!-- ldap cgi section -->
-		<copy todir="${war.context.templates}">
-			<fileset dir="lib/style/common/templates">
-				<!-- SCW: Copy all files -->
-			</fileset>
-		</copy>
-	</target>
-
-	<target name="cgiPrepare" if="build.perl">
-		<exec dir="src/perl/Metacat/" executable="make">
-			<arg value="clean" />
-		</exec>
-		<exec dir="src/perl/Metacat/" executable="perl">
-			<arg value="Makefile.PL" />
-		</exec>
-		<exec dir="src/perl/Metacat/" executable="make" />
-	</target>
-
-	<target name="testPrepare"
-		description="Copies test files into the war directories">
-		<echo>in testPrepare</echo>
-		<property name="war.context.test"
-			value="${build.war}/${metacat.context}/test" />
-		<mkdir dir="${war.context.test}" />
-		<copy todir="${war.context.test}" filtering="yes">
-			<fileset dir="test/servertestfiles">
-				<include name="*/**" />
-			</fileset>
-		</copy>
-	</target>
-
-	<target name="getConversionXSL" depends="prepare,giteml"
-		unless="styles.not.needed"
-		description="Gets the conversion stylesheets for eml2 beta 6 to eml 2.0.0">
-
-		<mkdir dir="lib/style/common/emlb6toeml2" />
-		<copy todir="lib/style/common/emlb6toeml2" filtering="yes">
-			<fileset
-				dir="${build.tmp}/eml_${eml2-style-tag}/lib/beta6toeml2/xsl">
-				<include name="*.xsl" />
-				<include name="*.xml" />
-			</fileset>
-		</copy>
-	</target>
-
-	<target name="testprep" depends="jar,clientjar,harvesterjar">
-		<mkdir dir="${build.tests}" />
-		<copy todir="${build.tests}" encoding="UTF-8">
-			<fileset dir="${testdir}">
-				<include name="edu/**" />
-			</fileset>
-		</copy>
-		<copy todir="${build.tests}" file="${testdir}/test.properties" />
-
-		<path id="test.classpath">
-			<path refid="compile.classpath" />
-			<fileset dir="${build.dir}">
-				<include name="${name}.jar" />
-				<include name="${name}-client.jar" />
-				<include name="harvester.jar" />
-			</fileset>
-		</path>
-		
-		<pathconvert pathsep="${line.separator}|  |--" 
-		             property="echo.test.classpath"
-		             refid="test.classpath">
-		</pathconvert>
-		<echo message="|--test classpath" />
-		<echo message="|  |" />
-		<echo message="|  |-- ${echo.test.classpath}" />
-		
-		<!-- copy and compile the tests into a jar file -->
-		<javac srcdir="${build.tests}" destdir="${build.tests}"
-			debug="on" includes="**/*.java" encoding="UTF-8">
-			<classpath refid="test.classpath" />
-		</javac>
-
-		<jar jarfile="${build.dir}/${name}-junittests.jar"
-			basedir="${build.tests}" >
-			<include name="**/*.class"/>
-			<include name="**/*.xml"/>
-		</jar>	
-		
-	</target>
-
-	<target name="runoneclass" depends="testprep"
-		description="Uses the ant to run a class">
-		
-		<java classname="${classtorun}" fork="true">
-			<arg line="${args}" />
-			<jvmarg value="-Dfile.encoding=UTF-8"/>
-			<classpath>
-				<path refid="test.classpath" />
-				<fileset dir="${build.dir}">
-					<include name="${name}.jar" />
-					<include name="${name}-client.jar" />
-					<include name="harvester.jar" />
-					<include name="${name}-junittests.jar" />
-				</fileset>
-			</classpath>
-		</java>
-	</target>
-	
-	<target name="test" depends="testprep"
-		description="Uses the ant junit task to run all JUnit tests">
-
-		<!-- use the ant "junit" task to run JUnit tests. -->
-		<junit printsummary="yes" haltonfailure="no" fork="yes"
-			haltonerror="no">
-			<jvmarg value="-Dfile.encoding=UTF-8"/>
-			<classpath>
-				<path refid="test.classpath" />
-				<fileset dir="${build.dir}">
-					<include name="${name}.jar" />
-					<include name="${name}-client.jar" />
-					<include name="harvester.jar" />
-					<include name="${name}-junittests.jar" />
-				</fileset>
-				<pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
-			</classpath>
-
-			<formatter type="plain" />
-
-			<batchtest fork="yes" todir="${build.dir}">
-				<fileset dir="${build.tests}">
-					<include name="**/*.class" />
-					<exclude name="**/MockReplicationMNode.class" />
-					<exclude name="**/MCTestCase.class" />
-					<exclude name="**/ClientViewHelperTest.class" />
-					<!-- these are not test cases -->
-					<exclude name="**/MockCNode.class" />
-					<!--<exclude name="**/D1NodeServiceTest.class" />-->
-					<exclude name="**/D1NodeServiceTest$*.class" />
-					<exclude name="**/QueryRunner.class" />
-					<exclude name="**/MockObjectPathMap.class" />
-					<exclude name="**/HzObjectPathMapTest$1.class" />
-					<exclude name="**/HzObjectPathMapTest$2.class" />
-					<exclude name="**/MultiThreadClientIT.class" />
-					<exclude name="**/MultiThreadClientIT$1.class" />
-					<exclude name="**/AuthUtilIT.class" />
-          <exclude name="**/WrappingServletInputStream.class" />
-				</fileset>
-			</batchtest>
-		</junit>
-    <tstamp>
-      <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa" />
-    </tstamp>
-    <echo>Tests completed at ${NOW}</echo>
-	</target>
-
-	<target name="runonetest" depends="testprep"
-		description="Uses the ant junit task to run a single JUnit test, defined by the ${testtorun} property">
-
-		<echo>testtorun: ${testtorun}</echo>
-
-		<!-- use the ant "junit" task to run JUnit tests. -->
-		<junit printsummary="yes" haltonfailure="no" fork="yes"
-			haltonerror="no" showoutput="yes">
-			<jvmarg value="-Dfile.encoding=UTF-8"/>
-			<classpath>
-				<path refid="test.classpath" />
-				<fileset dir="${build.dir}">
-					<include name="${name}.jar" />
-					<include name="${name}-client.jar" />
-					<include name="harvester.jar" />
-					<include name="${name}-junittests.jar" />
-				</fileset>
-				<pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
-			</classpath>
-
-			<formatter type="plain" />
-
-			<batchtest fork="yes" todir="${build.dir}">
-				<fileset dir="${build.tests}">
-					<include name="**/${testtorun}.class" />
-				</fileset>
-			</batchtest>
-		</junit>
-	</target>
-	
-	<target name="run" depends="testprep"
-			description="Uses the ant junit task to run a single JUnit test, defined by the ${testtorun} property">
-
-			<echo>testtorun: ${testtorun}</echo>
-
-			<!-- use the ant "junit" task to run JUnit tests. -->
-			<junit printsummary="yes" haltonfailure="no" fork="yes"
-				haltonerror="no" showoutput="yes">
-				<jvmarg value="-Dfile.encoding=UTF-8"/>
-				<classpath>
-					<path refid="test.classpath" />
-					<fileset dir="${build.dir}">
-						<include name="${name}.jar" />
-						<include name="${name}-client.jar" />
-						<include name="harvester.jar" />
-						<include name="${name}-junittests.jar" />
-					</fileset>
-				</classpath>
-
-				<formatter type="plain" />
-
-				<batchtest fork="yes" todir="${build.dir}">
-					<fileset dir="${build.tests}">
-						<include name="**/${testtorun}.class" />
-					</fileset>
-				</batchtest>
-			</junit>
-		</target>
-
-	<target name="testharvester" depends="testprep"
-		description="Uses the ant junit task to test only the Harvester code">
-		<junit printsummary="yes" haltonfailure="off" fork="yes"
-			haltonerror="off">
-			<classpath>
-				<path refid="compile.classpath" />
-				<fileset dir="${build.dir}">
-					<include name="${name}.jar" />
-					<include name="${name}-client.jar" />
-					<include name="harvester.jar" />
-					<include name="${name}-junittests.jar" />
-				</fileset>
-			</classpath>
-			<formatter type="plain" />
-			<batchtest fork="yes" todir="${build.dir}">
-				<fileset dir="${build.tests}">
-					<include name="**/harvesterClient/*.class" />
-				</fileset>
-			</batchtest>
-		</junit>
-	</target>
-
-	<!-- run this target, we need to check out a another morpho souce dir was checked out. -->
-	<target name="nettest" depends="install"
-		description="compiles and runs the metacatnettest code">
-
-		<echo>
-			*********************************** Please run ant
-			gethttpclient first! ***********************************
-		</echo>
-		<!-- copy and compile the tests into a jar file -->
-		<mkdir dir="${build.metacatnettest}" />
-		<javac srcdir="${junitnettestsdir}"
-			destdir="${build.metacatnettest}" includes="**/*.java">
-			<classpath>
-				<path refid="compile.classpath" />
-				<fileset dir="${build.dir}">
-					<include name="${name}.jar" />
-				</fileset>
-			</classpath>
-		</javac>
-
-		<jar jarfile="${build.dir}/${name}-junitnettests.jar"
-			basedir="${build.metacatnettest}" includes="**/*.class" />
-
-		<!-- use the ant "junit" task to run JUnit tests. -->
-		<junit printsummary="yes" haltonfailure="no" fork="yes"
-			haltonerror="no">
-			<jvmarg value="-Djava.protocol.handler.pkgs=HTTPClient" />
-			<classpath>
-				<path refid="compile.classpath" />
-				<fileset dir="${build.dir}">
-					<include name="${name}.jar" />
-					<include name="${name}-junitnettests.jar" />
-				</fileset>
-			</classpath>
-
-			<formatter type="plain" />
-
-			<batchtest fork="yes" todir="${build.dir}">
-				<fileset dir="${build.metacatnettest}">
-					<include name="**/*.class" />
-				</fileset>
-			</batchtest>
-		</junit>
-	</target>
-
-	<target name="cleanweb" depends="clean"
-		description="deletes tomcat web context dir and all its contents">
-		<delete dir="${installdir}" />
-	</target>
-
-
-	<target name="clean" depends="init"
-		description="deletes build dir and files that can be regenerated form the release">
-		<delete dir="${build.dir}" />
-		<delete dir="${dist.dir}" />
-		<delete dir="${metacatui.build.dir}" />
-	</target>
-
-	<target name="fullclean" depends="clean"
-		description="deletes code and eml">
-		<delete includeEmptyDirs="true" failonerror="false">
-			<fileset dir="${style-common-cvsrelpath}">
-				<include name="${eml-css}" />
-				<include name="eml-*/*.xsl" />
-				<include name="eml-*" />
-			</fileset>
-			<fileset dir="${schema-cvsrelpath}">
-				<include name="eml-*/*.xsd" />
-			</fileset>
-			<fileset dir="lib/style/common/emlb6toeml2"/>
-			<fileset dir="lib/dtd"/>
-			<fileset dir="${libdir.mvn}"/>
-		</delete>
-		<!-- remove the entire directory -->
-		<delete includeemptydirs="true" dir="${metacatui.build.dir}" />
-		<!-- clean up the distribution files if they exist-->
-		<delete file="./${name}-bin-${release}.tar.gz" />
-		<delete file="./${name}-src-${release}.tar.gz" />
-		<delete file="./${name}-bin-${release}.zip" />
-		<delete file="./${name}-src-${release}.zip" />
-	</target>
-	
-	<target name="documentation" depends="javadoc,admindoc"
-	    description="generates Javadoc API documentation and Admin Guide">
-    </target>
-	
-	<target name="admindoc" depends="prepare">
-		<!-- Build the administrator's guide, which is a Sphinx RST project
-		     For this to succeed, you must have Sphinx installed on your machine
-		     See: http://sphinx.pocoo.org/ for details
-		     And you must also have the 'make' build tool installed
-		-->
-		<exec dir="${docdir}/user/metacat" executable="make"> 
-		        <arg value="plantuml"/> 
-		</exec>
-		
-		<exec dir="${docdir}/user/metacat" executable="make"> 
-		        <arg value="html"/> 
-		</exec>
-		
+        <!-- Checkout eml220 for the given schema tag-->
+        <mkdir dir="lib/schema/eml-2.2.0"/>
+        <copy todir="lib/schema/eml-2.2.0" filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${eml2_2_0-schema-tag}/xsd">
+                <include name="*.xsd"/>
+            </fileset>
+        </copy>
     </target>
 
-	<target name="javadoc" depends="prepare"
-		description="generates Javadoc API documentation">
-		<javadoc packagenames="edu.ucsb.nceas.*"
-			sourcepath="${build.src}" destdir="${build.javadocs}" author="true"
-			version="true" use="true" windowtitle="${Name} API"
-			doctitle="&lt;h1&gt;${Name}&lt;/h1&gt;"
-			bottom="&lt;i&gt;Copyright &#169; ${copyright}. All Rights Reserved.&lt;/i&gt;">
-			<classpath>
-				<path refid="compile.classpath" />
-			</classpath>
-		</javadoc>
-	</target>
+    <target name="copyxsl"
+            description="Copies xsl stylesheets from checkout in build/tmp to your metacat sandbox">
 
-	<target name="dist"
-		depends="geteml,jar,protocol,documentation,getConversionXSL"
-		description="prepares a full release distribution">
-		<mkdir dir="${dist.dir}" />
-		<delete dir="${ver.dir}" />
-		<mkdir dir="${ver.dir}" />
-		<copy todir="${ver.dir}">
-			<fileset dir="."
-				excludes="**/CVS* **/.#* src/** test/** build/** docs/** ${dist.dir}/** ${dist.dir.hle}/** metacat*.tar.gz metacat*.tar metacat*.zip" />
-		</copy>
-		<copy todir="${ver.dir}" file="build.xml" />
-		<copy todir="${ver.dir}" file="build.properties" />
+        <delete file="${style-common-cvsrelpath}/${eml-css}"/>
 
-		<copy todir="${ver.dir}/docs" filtering="yes">
-			<fileset dir="docs" excludes="**/*gif **/*jpg **/*png" />
-		</copy>
-		<copy todir="${ver.dir}/docs" filtering="no">
-			<fileset dir="docs" includes="**/*gif **/*jpg **/*png" />
-		</copy>
-		<copy todir="${ver.dir}/docs/dev">
-			<fileset dir="${build.dir}/docs" />
-		</copy>
-		<copy todir="${ver.dir}/src">
-			<fileset dir="${build.dir}/src" />
-		</copy>
+        <copy todir="${style-common-cvsrelpath}/${dirname}"
+              filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${cvs.tagname}/style/eml">
+                <include name="**/*.xsl"/>
+            </fileset>
+        </copy>
 
-		<mkdir dir="${ver.dir}/tests/servertestfiles" />
-		<copy todir="${ver.dir}/test/servertestfiles">
-			<fileset dir="./test/servertestfiles" />
-		</copy>
-	</target>
 
-	<target name="fulldist" depends="distbin, distsrc"
-			description="full distribution - source and bin"/>
-		
-	<target name="distbin" depends="build-metacat"
-		description="prepares a binary distribution">
-		<copy todir="${dist.dir}">
-			<fileset dir="./src/scripts" />
-		</copy>
-		<delete file="./${name}-bin-${release}.zip" />
-		<zip zipfile="./${name}-bin-${release}.zip"
-			basedir="${dist.dir}" />
-		<delete file="./${name}-bin-${release}.tar.gz" />
-		<tar tarfile="./${name}-bin-${release}.tar"
-			basedir="${dist.dir}" />
-		<gzip zipfile="./${name}-bin-${release}.tar.gz"
-			src="./${name}-bin-${release}.tar" />
-		<delete file="./${name}-bin-${release}.tar" />
-	</target>
+        <!-- now copy default css from eml module and put it in style-common-path
+            dir with a new name, so other skin-specific css can import it if reqd -->
+        <copy
+                file="${build.tmp}/eml_${cvs.tagname}/${eml-module.default.css}"
+                tofile="${style-common-cvsrelpath}/${eml-css}"/>
 
-	<target name="distsrc" depends="dist"
-		description="prepares a source distribution">
-		<mkdir dir="${ver.src}" />
-		<copy todir="${ver.src}">
-			<fileset dir="./src" />
-		</copy>
-		<delete file="./${name}-src-${release}.zip" />
-		<zip zipfile="./${name}-src-${release}.zip"
-			basedir="${dist.dir}" excludes="metacat*.tar.gz,metacat*.zip" />
-		<delete file="./${name}-src-${release}.tar.gz" />
-		<tar tarfile="./${name}-src-${release}.tar"
-			basedir="${dist.dir}" excludes="metacat*.tar.gz,metacat*.zip" />
-		<gzip zipfile="./${name}-src-${release}.tar.gz"
-			src="./${name}-src-${release}.tar" />
-		<delete file="./${name}-src-${release}.tar" />
-		<!--delete dir="${dist.dir}"/ -->
-	</target>
+    </target>
 
-	<target name="deb-package" depends="distbin"
-		description="create a debian installation package">
-		<delete dir="${deb.pkg.dir}" />
-		<mkdir dir="${deb.pkg.dir}/DEBIAN" />
-		<copy todir="${deb.pkg.dir}/DEBIAN" filtering="yes">
-			<fileset dir="./src/scripts/debian"
-				includes="control postinst" />
-		</copy>
+    <target name="correctEML201Docs" depends="jar"
+            description="Uses the ant  task to run a JAVA patch class to correct invalide eml201 documents which were generated by wrong schema">
+        <copy todir="${build.dir}" file="lib/metacat.properties"
+              filtering="yes"/>
+        <java
+                classname="edu.ucsb.nceas.metacat.EML201DocumentCorrector">
+            <classpath>
+                <path refid="compile.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                </fileset>
+            </classpath>
+        </java>
+    </target>
 
-		<mkdir
-			dir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}" />
-		<copy
-			todir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}"
-			filtering="yes">
-			<fileset dir="./src/scripts/debian"
-				excludes="control postinst" />
-		</copy>
-		<chmod file="${deb.pkg.dir}/DEBIAN/postinst" perm="755" />
+    <target name="install-dev" depends="warNoDocs, dist-metacat-index, build-metacat-ui,deploy"
+            description="* * * Install Metacat For Development. Lightweight install: does not include docs * * *">
+        <echo>Dev install completed at ${NOW}</echo>
+    </target>
 
-		<copy file="${dist.dir}/${metacat.context}.war"
-			todir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}" />
-		<copy file="./metacat-bin-${metacat.version}.tar.gz"
-			tofile="${deb.pkg.dir}/metacat_${metacat.version}.orig.tar.gz" />
+    <target name="install" depends="build-metacat,deploy"
+            description="Full installation of Metacat For Development, including documentation">
+        <echo>Full install completed at ${NOW}</echo>
+    </target>
 
-		<exec dir="${pkg.dir}" executable="dpkg" os="Linux, Unix"
-			failonerror="true">
-			<arg line="--build debian" />
-		</exec>
+    <target name="deploy">
+        <copy file="${dist.dir}/${metacat.context}.war"
+              todir="${app.deploy.dir}"/>
+        <delete dir="${app.deploy.dir}/${metacat.context}"/>
+        <copy file="${dist.dir}/metacat-index.war"
+              todir="${app.deploy.dir}"/>
+        <delete dir="${app.deploy.dir}/metacat-index"/>
+        <copy file="${dist.dir}/${metacatui.war.name}"
+              todir="${app.deploy.dir}"/>
+        <delete dir="${app.deploy.dir}/metacatui"/>
+        <tstamp>
+            <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa"/>
+        </tstamp>
+    </target>
+    
+    <target name="build-metacat" depends="war, dist-metacat-index, build-metacat-ui"
+            description="Build Metacat">
+    </target>
 
-		<move file="${pkg.dir}/debian.deb"
-			tofile="${pkg.dir}/metacat_${metacat.version}${metacat.releaseCandidate}_all.deb" />
-	</target>
+    <target name="install-skin" depends="init"
+            description="Install a Skin">
 
-	<target name="stylesheettest">
-		<xslt in="${input}" out="eml.html"
-			style="${style-common-cvsrelpath}/eml-2.0.0/eml-2.0.0.xsl">
-			<param name="displaymodule" expression="${displaymodule}" />
-			<param name="docid" expression="${input}" />
-			<param name="entitytype" expression="${entitytype}" />
-			<param name="entityindex" expression="${entityindex}" />
-			<outputproperty name="method" value="html" />
-			<outputproperty name="standalone" value="yes" />
-			<outputproperty name="encoding" value="iso8859_1" />
-			<outputproperty name="indent" value="yes" />
-		</xslt>
-	</target>
+        <input message="Please enter name of the skin"
+               addproperty="skin-name"/>
 
-	<!-- LSID Authority support -->
-	<patternset id="lsid.jars">
-		<include name="axis.jar" />
-		<include name="commons-discovery-0.2.jar" />
-		<include name="jaxrpc.jar" />
-		<include name="lsid-client-1.1.1.jar" />
-		<include name="lsid-server-1.1.1.jar" />
-		<include name="saaj.jar" />
-		<include name="wsdl4j-1.5.1.jar" />
-		<include name="activation.jar" />
-		<include name="castor-0.9.5.jar" />
-		<include name="dnsjava-1.3.2.jar" />
-		<include name="mail.jar" />
-		<include name="commons-logging-1.0.4.jar" />
-		<!-- These jars may be needed but seem to not actually be,
-			so leaving them out for now
-			<include name="axis-ant.jar" />
-		-->
-		<!--<include name="GenCastor.class" />-->
-	</patternset>
-	<patternset id="lib.jars">
-		<include name="log4j-1.2.12.jar" />
-		<include name="utilities-*.jar" />
-		<include name="xerces*.jar" />
-		<include name="xalan*.jar" />
-		<include name="xml-apis*.jar" />
-	</patternset>
+        <mkdir dir="${installdir}/style/skins/${skin-name}"/>
+        <copy todir="${installdir}/style/skins/${skin-name}"
+              filtering="yes">
+            <fileset dir="lib/style/skins/${skin-name}">
+                <exclude name="**/*.png"/>
+                <exclude name="**/*.gif"/>
+                <exclude name="**/*.jpg"/>
+                <exclude name="**/CVS*"/>
+                <exclude name="**/.#*"/>
+            </fileset>
+        </copy>
+        <copy todir="${installdir}/style/skins/${skin-name}"
+              filtering="no">
+            <fileset dir="lib/style/skins/${skin-name}">
+                <include name="**/*.png"/>
+                <include name="**/*.gif"/>
+                <include name="**/*.jpg"/>
+                <exclude name="**/CVS*"/>
+                <exclude name="**/.#*"/>
+            </fileset>
+        </copy>
+        <copy todir="${installdir}/style/common" filtering="yes">
+            <fileset dir="lib/style/common">
+                <include name="*.js"/>
+                <include name="*.jsp"/>
+                <include name="*.css"/>
+                <exclude name="*.png"/>
+                <exclude name="*.gif"/>
+                <exclude name="*.jpg"/>
+                <exclude name="**/CVS*"/>
+                <exclude name="**/.#*"/>
+            </fileset>
+        </copy>
+        <echo message="Install Skin completed."/>
+    </target>
 
-	<path id="lsid.classpath">
-		<fileset dir="${lsid.lib.dir}">
-			<patternset refid="lsid.jars" />
-		</fileset>
-		<fileset dir="${lib.dir}">
-			<patternset refid="lib.jars" />
-		</fileset>
-		<fileset dir="${build.dir}">
-			<include name="metacat-client.jar" />
-			<include name="metacat.jar" />
-		</fileset>
-	</path>
+    <target name="war" depends="warPrepare,createWar"
+            description="Create a web archive (WAR) for servlet deployment"/>
 
-	
-	<!-- build metacat-common jar -->
-	<target name="build-metacat-common" depends="setMavenHome" description="Calls the Maven build for metacat-common jar" unless="build-metacat-common-called" >
-		<artifact:mvn pom="metacat-common/pom.xml" mavenhome="${maven.home}" fork="true">
-			        <jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
-		            <arg value="clean"/>
-		</artifact:mvn>
-		<artifact:mvn pom="metacat-common/pom.xml" mavenhome="${maven.home}" fork="true">
-			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
-		   <arg value="install"/>
-		</artifact:mvn>
-		<property name="build-metacat-common-called" value="true"/>
-	</target>
+    <!-- Generate a lightweight war file for dev purposes. Does not include documentation -->
+    <target name="warNoDocs" depends="warPrepareNoDocs,createWar"/>
 
-	<!-- build metacat-index war -->
-	<target name="build-metacat-index" depends="setMavenHome" description="Calls the Maven build for metacat-index.war" >
-		<artifact:mvn pom="metacat-index/pom.xml" mavenhome="${maven.home}" fork="true">
-			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
-			<arg value="clean"/>
-		</artifact:mvn>
-		<artifact:mvn pom="metacat-index/pom.xml" mavenhome="${maven.home}" fork="true">
-			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
-			<arg value="package"/>
-			<!--<arg value="-Dmaven.test.skip=true"/>-->
-		</artifact:mvn>
-	</target>
-	
-	<target name="dist-metacat-index" depends="init, build-metacat-index" description="Copy metacat-index.war to dist folder" >		
-		<copy tofile="${dist.dir}/metacat-index.war" >
-			<fileset dir="metacat-index/target" includes="metacat-index*.war"></fileset>
-		</copy>	
-	</target>
-	
-	<target name="install-metacat-index" depends="dist-metacat-index" description="Copy metacat-index.war to deploy folder" >		
-		<copy todir="${app.deploy.dir}" file="${dist.dir}/metacat-index.war" />
-	</target>
-	
-	<!-- Generate a light war file which only is used to manage the ldap user accounts - register a new user, reset and change the password -->
-	<target name="war-identity" depends="warPrepare" description="Generate a light war file which only is used to manage the ldap user accounts - register a new user, reset and change the password">
-		  <property name="war-name" value="identity" />
-		  <mkdir dir="${dist.dir}" />
-		     <war destfile="${dist.dir}/${war-name}.war"
-		            webxml="lib/account-web-info/web.xml">
-		      <webinf dir="${war.webinf}">
-		        <include name="metacat.properties"/>
-		        <include name="gd_intermediate_bundle_nceas_ldap.crt"/>
-		      </webinf>
-		      <fileset dir="${war.context}">
-		        <include name="cgi-bin/**"/>
-		      	<include name="style/**"/>  
-		      </fileset>
-		      
-		   </war>
-	</target>
-	
+    <!-- Utility target to enerate a war from prepared files -->
+    <target name="createWar">
+        <mkdir dir="${dist.dir}"/>
+        <war destfile="${dist.dir}/${metacat.context}.war"
+             webxml="${build.war}/web.xml">
+            <fileset dir="${war.context}"/>
+            <lib dir="${war.lib}"/>
+            <classes dir="${war.classes}">
+                <exclude name="log4j.properties"/>
+            </classes>
+            <webinf dir="${war.webinf}"/>
+        </war>
+    </target>
+    
+    <target name="warPrepare" depends="documentation,warPrepareNoDocs" />
+    
+    <target name="warPrepareNoDocs" depends="cgiPrepare,jar,clientjar,harvesterjar,testPrepare">
+        <property name="war.lib" value="${build.war}/lib"/>
+        <property name="war.classes" value="${build.war}/classes"/>
+        <property name="war.webinf" value="${build.war}/WEB-INF"/>
+        <property name="war.context"
+                  value="${build.war}/${metacat.context}"/>
+        <property name="war.webinf.sql" value="${war.webinf}/sql"/>
+        <property name="war.webinf.scripts"
+                  value="${war.webinf}/scripts"/>
+        <property name="war.context.cgi" value="${war.context}/cgi-bin"/>
+        <property name="war.context.docs" value="${war.context}/docs"/>
+        <property name="war.context.temp" value="${war.context}/temp"/>
+        <property name="war.context.templates"
+                  value="${war.context}${style-common-relpath}/templates"/>
+        <mkdir dir="${war.lib}"/>
+        <mkdir dir="${war.classes}"/>
+        <mkdir dir="${war.webinf}"/>
+        <mkdir dir="${war.context}"/>
+        <mkdir dir="${war.webinf.sql}"/>
+        <mkdir dir="${war.context.cgi}"/>
+        <mkdir dir="${war.context.docs}"/>
+        <mkdir dir="${war.context.temp}"/>
+        <mkdir dir="${war.context.templates}"/>
+
+        <copy file="${build.dir}/${name}.jar" todir="${war.lib}"/>
+        <copy file="${build.dir}/${name}-client.jar" todir="${war.lib}"/>
+        <copy file="${build.dir}/harvester.jar" todir="${war.lib}"/>
+        <copy todir="${war.lib}" filtering="no">
+            <fileset dir="lib">
+                <include name="*.jar"/>
+                <exclude name="maven-ant-tasks*.jar"/>
+            </fileset>
+            <fileset dir="${libdir.mvn}"/>
+        </copy>
+        <copy file="lib/web.xml.tomcat6" tofile="${build.war}/web.xml"/>
+        <copy file="lib/metacat.properties" todir="${war.webinf}"
+              filtering="yes"/>
+        <copy todir="${war.webinf}" filtering="yes">
+            <fileset dir="lib/account-web-info">
+                <exclude name="web.xml"/>
+            </fileset>
+        </copy>
+        <copy file="lib/solrQueryFieldDescriptions.properties" todir="${war.webinf}"/>
+        <copy file="lib/metacat.properties.metadata.xml"
+              todir="${war.webinf}" filtering="no"/>
+        <copy file="lib/org.properties.metadata.xml"
+              todir="${war.webinf}" filtering="no"/>
+        <copy file="lib/auth.properties.metadata.xml"
+              todir="${war.webinf}" filtering="no"/>
+        <copy todir="${war.webinf}" filtering="yes">
+            <fileset dir="lib">
+                <include name="skin.configs/**"/>
+            </fileset>
+        </copy>
+        <copy todir="${war.classes}" filtering="yes">
+            <fileset dir="metacat-common/src/main/resources/solr-home/conf">
+                <exclude name="schema.xml"/>
+                <exclude name="solrconfig.xml"/>
+            </fileset>
+        </copy>
+        <copy file="lib/log4j2.properties" todir="${war.classes}"
+              filtering="yes"/>
+        <copy file="lib/hazelcast.xml" todir="${war.webinf}"
+              filtering="yes"/>
+        <copy todir="${war.context}" filtering="no">
+            <fileset dir="lib">
+                <include name="**/*.jpg"/>
+                <include name="**/*.png"/>
+                <include name="**/*.gif"/>
+                <include name="LiveMap_30/**"/>
+                <include name="oaipmh/**"/>
+            </fileset>
+        </copy>
+        <copy todir="${war.context}" filtering="yes">
+            <fileset dir="lib">
+                <exclude name="*.jar"/>
+                <exclude name="*.properties"/>
+                <exclude name="*.metadata.xml"/>
+                <exclude name="web.xml"/>
+                <exclude name="**/*.jpg"/>
+                <exclude name="**/*.png"/>
+                <exclude name="**/*.gif"/>
+                <exclude name="lsid_lib/**"/>
+                <exclude name="lsid_conf/**"/>
+                <exclude name="LiveMap_30/**"/>
+                <exclude name="oaipmh/**"/>
+                <exclude name="maven/**"/>
+                <exclude name="skin.configs/**"/>
+                <exclude name="spatial/geoserver/**"/>
+            </fileset>
+        </copy>
+        <copy todir="${war.context.docs}" filtering="no">
+            <fileset dir="${build.docs}"/>
+        </copy>
+        <copy todir="${war.webinf.sql}" filtering="yes">
+            <fileset dir="src">
+                <include name="**/*.sql"/>
+            </fileset>
+        </copy>
+        <copy todir="${war.webinf.scripts}" filtering="yes">
+            <fileset dir="src/scripts"/>
+        </copy>
+        <copy todir="${war.webinf.scripts}"
+              file="src/perl/Metacat/blib/lib/auto/Metacat/autosplit.ix"
+              failonerror="false"/>
+
+        <copy file="src/perl/register-dataset.cgi"
+              todir="${war.context.cgi}"/>
+        <copy file="src/perl/ldapweb.cgi" todir="${war.context.cgi}"/>
+        <copy file="src/perl/Metacat/Metacat.pm" todir="${war.lib}"/>
+
+        <!-- registry cgi section -->
+        <!-- TODO SCW: use relative paths to grab these instead of copying to tmp,
+            used in readDocumentFromMetacat -->
+        <!-- TODO MCD copy temp files to actual location using config util?? -->
+        <copy todir="${war.context.temp}" filtering="yes">
+            <fileset dir="lib/style/common/emlb6toeml2">
+                <include name="*.xsl"/>
+                <include name="*.xml"/>
+            </fileset>
+        </copy>
+        <available file="lib/style/common/emlb6toeml2" type="dir"
+                   property="styles.not.needed"/>
+
+        <!-- ldap cgi section -->
+        <copy todir="${war.context.templates}">
+            <fileset dir="lib/style/common/templates">
+                <!-- SCW: Copy all files -->
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="cgiPrepare" if="build.perl">
+        <exec dir="src/perl/Metacat/" executable="make">
+            <arg value="clean"/>
+        </exec>
+        <exec dir="src/perl/Metacat/" executable="perl">
+            <arg value="Makefile.PL"/>
+        </exec>
+        <exec dir="src/perl/Metacat/" executable="make"/>
+    </target>
+
+    <target name="testPrepare"
+            description="Copies test files into the war directories">
+        <echo>in testPrepare</echo>
+        <property name="war.context.test"
+                  value="${build.war}/${metacat.context}/test"/>
+        <mkdir dir="${war.context.test}"/>
+        <copy todir="${war.context.test}" filtering="yes">
+            <fileset dir="test/servertestfiles">
+                <include name="*/**"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="getConversionXSL" depends="prepare,giteml"
+            unless="styles.not.needed"
+            description="Gets the conversion stylesheets for eml2 beta 6 to eml 2.0.0">
+
+        <mkdir dir="lib/style/common/emlb6toeml2"/>
+        <copy todir="lib/style/common/emlb6toeml2" filtering="yes">
+            <fileset
+                    dir="${build.tmp}/eml_${eml2-style-tag}/lib/beta6toeml2/xsl">
+                <include name="*.xsl"/>
+                <include name="*.xml"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="testprep" depends="jar,clientjar,harvesterjar">
+        <mkdir dir="${build.tests}"/>
+        <copy todir="${build.tests}" encoding="UTF-8">
+            <fileset dir="${testdir}">
+                <include name="edu/**"/>
+            </fileset>
+        </copy>
+        <copy todir="${build.tests}" file="${testdir}/test.properties"/>
+
+        <path id="test.classpath">
+            <path refid="compile.classpath"/>
+            <fileset dir="${build.dir}">
+                <include name="${name}.jar"/>
+                <include name="${name}-client.jar"/>
+                <include name="harvester.jar"/>
+            </fileset>
+        </path>
+
+        <pathconvert pathsep="${line.separator}|  |--"
+                     property="echo.test.classpath"
+                     refid="test.classpath">
+        </pathconvert>
+        <echo message="|--test classpath"/>
+        <echo message="|  |"/>
+        <echo message="|  |-- ${echo.test.classpath}"/>
+
+        <!-- copy and compile the tests into a jar file -->
+        <javac srcdir="${build.tests}" destdir="${build.tests}"
+               debug="on" includes="**/*.java" encoding="UTF-8">
+            <classpath refid="test.classpath"/>
+        </javac>
+
+        <jar jarfile="${build.dir}/${name}-junittests.jar"
+             basedir="${build.tests}">
+            <include name="**/*.class"/>
+            <include name="**/*.xml"/>
+        </jar>
+
+    </target>
+
+    <target name="runoneclass" depends="testprep"
+            description="Uses ant to run a class">
+
+        <java classname="${classtorun}" fork="true">
+            <arg line="${args}"/>
+            <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <classpath>
+                <path refid="test.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-client.jar"/>
+                    <include name="harvester.jar"/>
+                    <include name="${name}-junittests.jar"/>
+                </fileset>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="test" depends="testprep"
+            description="Uses the ant junit task to run all JUnit tests">
+
+        <!-- use the ant "junit" task to run JUnit tests. -->
+        <junit printsummary="yes" haltonfailure="no" fork="yes"
+               haltonerror="no">
+            <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <classpath>
+                <path refid="test.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-client.jar"/>
+                    <include name="harvester.jar"/>
+                    <include name="${name}-junittests.jar"/>
+                </fileset>
+                <pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
+            </classpath>
+
+            <formatter type="plain"/>
+
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${build.tests}">
+                    <include name="**/*.class"/>
+                    <exclude name="**/MockReplicationMNode.class"/>
+                    <exclude name="**/MCTestCase.class"/>
+                    <exclude name="**/ClientViewHelperTest.class"/>
+                    <!-- these are not test cases -->
+                    <exclude name="**/MockCNode.class"/>
+                    <!--<exclude name="**/D1NodeServiceTest.class" />-->
+                    <exclude name="**/D1NodeServiceTest$*.class"/>
+                    <exclude name="**/LeanTestUtils$*.class"/>
+                    <exclude name="**/QueryRunner.class"/>
+                    <exclude name="**/MockObjectPathMap.class"/>
+                    <exclude name="**/HzObjectPathMapTest$1.class"/>
+                    <exclude name="**/HzObjectPathMapTest$2.class"/>
+                    <exclude name="**/MultiThreadClientIT.class"/>
+                    <exclude name="**/MultiThreadClientIT$1.class"/>
+                    <exclude name="**/AuthUtilIT.class"/>
+                    <exclude name="**/WrappingServletInputStream.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <tstamp>
+            <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa"/>
+        </tstamp>
+        <echo>Tests completed at ${NOW}</echo>
+    </target>
+
+    <target name="runonetest" depends="testprep"
+            description="Uses the ant junit task to run a single JUnit test, defined by the ${testtorun} property">
+
+        <echo>testtorun: ${testtorun}</echo>
+
+        <!-- use the ant "junit" task to run JUnit tests. -->
+        <junit printsummary="yes" haltonfailure="no" fork="yes"
+               haltonerror="no" showoutput="yes">
+            <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <classpath>
+                <path refid="test.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-client.jar"/>
+                    <include name="harvester.jar"/>
+                    <include name="${name}-junittests.jar"/>
+                </fileset>
+                <pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
+            </classpath>
+
+            <formatter type="plain"/>
+
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${build.tests}">
+                    <include name="**/${testtorun}.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="run" depends="testprep"
+            description="Uses the ant junit task to run a single JUnit test, defined by the ${testtorun} property">
+
+        <echo>testtorun: ${testtorun}</echo>
+
+        <!-- use the ant "junit" task to run JUnit tests. -->
+        <junit printsummary="yes" haltonfailure="no" fork="yes"
+               haltonerror="no" showoutput="yes">
+            <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <classpath>
+                <path refid="test.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-client.jar"/>
+                    <include name="harvester.jar"/>
+                    <include name="${name}-junittests.jar"/>
+                </fileset>
+            </classpath>
+
+            <formatter type="plain"/>
+
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${build.tests}">
+                    <include name="**/${testtorun}.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="testharvester" depends="testprep"
+            description="Uses the ant junit task to test only the Harvester code">
+        <junit printsummary="yes" haltonfailure="off" fork="yes"
+               haltonerror="off">
+            <classpath>
+                <path refid="compile.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-client.jar"/>
+                    <include name="harvester.jar"/>
+                    <include name="${name}-junittests.jar"/>
+                </fileset>
+            </classpath>
+            <formatter type="plain"/>
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${build.tests}">
+                    <include name="**/harvesterClient/*.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <!-- run this target, we need to ensure another morpho source dir was already checked out. -->
+    <target name="nettest" depends="install"
+            description="compiles and runs the metacatnettest code">
+
+        <echo>
+            *********************************** Please run ant
+            gethttpclient first! ***********************************
+        </echo>
+        <!-- copy and compile the tests into a jar file -->
+        <mkdir dir="${build.metacatnettest}"/>
+        <javac srcdir="${junitnettestsdir}"
+               destdir="${build.metacatnettest}" includes="**/*.java">
+            <classpath>
+                <path refid="compile.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                </fileset>
+            </classpath>
+        </javac>
+
+        <jar jarfile="${build.dir}/${name}-junitnettests.jar"
+             basedir="${build.metacatnettest}" includes="**/*.class"/>
+
+        <!-- use the ant "junit" task to run JUnit tests. -->
+        <junit printsummary="yes" haltonfailure="no" fork="yes"
+               haltonerror="no">
+            <jvmarg value="-Djava.protocol.handler.pkgs=HTTPClient"/>
+            <classpath>
+                <path refid="compile.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-junitnettests.jar"/>
+                </fileset>
+            </classpath>
+
+            <formatter type="plain"/>
+
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${build.metacatnettest}">
+                    <include name="**/*.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="cleanweb" depends="clean"
+            description="deletes tomcat web context dir and all its contents">
+        <delete dir="${installdir}"/>
+    </target>
+
+
+    <target name="clean" depends="init"
+            description="deletes build dir and files that can be regenerated form the release">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+        <delete dir="${metacatui.build.dir}"/>
+    </target>
+
+    <target name="fullclean" depends="clean"
+            description="deletes code and eml">
+        <delete includeEmptyDirs="true" failonerror="false">
+            <fileset dir="${style-common-cvsrelpath}">
+                <include name="${eml-css}"/>
+                <include name="eml-*/*.xsl"/>
+                <include name="eml-*"/>
+            </fileset>
+            <fileset dir="${schema-cvsrelpath}">
+                <include name="eml-*/*.xsd"/>
+            </fileset>
+            <fileset dir="lib/style/common/emlb6toeml2"/>
+            <fileset dir="lib/dtd"/>
+            <fileset dir="${libdir.mvn}"/>
+        </delete>
+        <!-- remove the entire directory -->
+        <delete includeemptydirs="true" dir="${metacatui.build.dir}"/>
+        <!-- clean up the distribution files if they exist-->
+        <delete file="./${name}-bin-${release}.tar.gz"/>
+        <delete file="./${name}-src-${release}.tar.gz"/>
+        <delete file="./${name}-bin-${release}.zip"/>
+        <delete file="./${name}-src-${release}.zip"/>
+    </target>
+
+    <target name="documentation" depends="javadoc,admindoc"
+            description="generates Javadoc API documentation and Admin Guide">
+    </target>
+
+    <target name="admindoc" depends="prepare">
+        <!-- Build the administrator's guide, which is a Sphinx RST project
+             For this to succeed, you must have Sphinx installed on your machine
+             See: http://sphinx.pocoo.org/ for details
+             And you must also have the 'make' build tool installed
+        -->
+        <exec dir="${docdir}/user/metacat" executable="make">
+            <arg value="plantuml"/>
+        </exec>
+
+        <exec dir="${docdir}/user/metacat" executable="make">
+            <arg value="html"/>
+        </exec>
+
+    </target>
+
+    <target name="javadoc" depends="prepare"
+            description="generates Javadoc API documentation">
+        <javadoc packagenames="edu.ucsb.nceas.*"
+                 sourcepath="${build.src}" destdir="${build.javadocs}" author="true"
+                 version="true" use="true" windowtitle="${Name} API"
+                 doctitle="&lt;h1&gt;${Name}&lt;/h1&gt;"
+                 bottom="&lt;i&gt;Copyright &#169; ${copyright}. All Rights Reserved.&lt;/i&gt;">
+            <classpath>
+                <path refid="compile.classpath"/>
+            </classpath>
+        </javadoc>
+    </target>
+
+    <target name="dist"
+            depends="geteml,jar,protocol,documentation,getConversionXSL"
+            description="prepares a full release distribution">
+        <mkdir dir="${dist.dir}"/>
+        <delete dir="${ver.dir}"/>
+        <mkdir dir="${ver.dir}"/>
+        <copy todir="${ver.dir}">
+            <fileset dir="."
+                     excludes="**/CVS* **/.#* src/** test/** build/** docs/** ${dist.dir}/** ${dist.dir.hle}/** metacat*.tar.gz metacat*.tar metacat*.zip"/>
+        </copy>
+        <copy todir="${ver.dir}" file="build.xml"/>
+        <copy todir="${ver.dir}" file="build.properties"/>
+
+        <copy todir="${ver.dir}/docs" filtering="yes">
+            <fileset dir="docs" excludes="**/*gif **/*jpg **/*png"/>
+        </copy>
+        <copy todir="${ver.dir}/docs" filtering="no">
+            <fileset dir="docs" includes="**/*gif **/*jpg **/*png"/>
+        </copy>
+        <copy todir="${ver.dir}/docs/dev">
+            <fileset dir="${build.dir}/docs"/>
+        </copy>
+        <copy todir="${ver.dir}/src">
+            <fileset dir="${build.dir}/src"/>
+        </copy>
+
+        <mkdir dir="${ver.dir}/tests/servertestfiles"/>
+        <copy todir="${ver.dir}/test/servertestfiles">
+            <fileset dir="./test/servertestfiles"/>
+        </copy>
+    </target>
+
+    <target name="fulldist" depends="distbin, distsrc"
+            description="full distribution - source and bin"/>
+
+    <target name="distbin" depends="build-metacat"
+            description="prepares a binary distribution">
+        <copy todir="${dist.dir}">
+            <fileset dir="./src/scripts"/>
+        </copy>
+        <delete file="./${name}-bin-${release}.zip"/>
+        <zip zipfile="./${name}-bin-${release}.zip"
+             basedir="${dist.dir}"/>
+        <delete file="./${name}-bin-${release}.tar.gz"/>
+        <tar tarfile="./${name}-bin-${release}.tar"
+             basedir="${dist.dir}"/>
+        <gzip zipfile="./${name}-bin-${release}.tar.gz"
+              src="./${name}-bin-${release}.tar"/>
+        <delete file="./${name}-bin-${release}.tar"/>
+    </target>
+
+    <target name="distsrc" depends="dist"
+            description="prepares a source distribution">
+        <mkdir dir="${ver.src}"/>
+        <copy todir="${ver.src}">
+            <fileset dir="./src"/>
+        </copy>
+        <delete file="./${name}-src-${release}.zip"/>
+        <zip zipfile="./${name}-src-${release}.zip"
+             basedir="${dist.dir}" excludes="metacat*.tar.gz,metacat*.zip"/>
+        <delete file="./${name}-src-${release}.tar.gz"/>
+        <tar tarfile="./${name}-src-${release}.tar"
+             basedir="${dist.dir}" excludes="metacat*.tar.gz,metacat*.zip"/>
+        <gzip zipfile="./${name}-src-${release}.tar.gz"
+              src="./${name}-src-${release}.tar"/>
+        <delete file="./${name}-src-${release}.tar"/>
+    </target>
+
+    <target name="deb-package" depends="distbin"
+            description="create a debian installation package">
+        <delete dir="${deb.pkg.dir}"/>
+        <mkdir dir="${deb.pkg.dir}/DEBIAN"/>
+        <copy todir="${deb.pkg.dir}/DEBIAN" filtering="yes">
+            <fileset dir="./src/scripts/debian"
+                     includes="control postinst"/>
+        </copy>
+
+        <mkdir
+                dir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}"/>
+        <copy
+                todir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}"
+                filtering="yes">
+            <fileset dir="./src/scripts/debian"
+                     excludes="control postinst"/>
+        </copy>
+        <chmod file="${deb.pkg.dir}/DEBIAN/postinst" perm="755"/>
+
+        <copy file="${dist.dir}/${metacat.context}.war"
+              todir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}"/>
+        <copy file="./metacat-bin-${metacat.version}.tar.gz"
+              tofile="${deb.pkg.dir}/metacat_${metacat.version}.orig.tar.gz"/>
+
+        <exec dir="${pkg.dir}" executable="dpkg" os="Linux, Unix"
+              failonerror="true">
+            <arg line="--build debian"/>
+        </exec>
+
+        <move file="${pkg.dir}/debian.deb"
+              tofile="${pkg.dir}/metacat_${metacat.version}${metacat.releaseCandidate}_all.deb"/>
+    </target>
+
+    <target name="stylesheettest">
+        <xslt in="${input}" out="eml.html"
+              style="${style-common-cvsrelpath}/eml-2.0.0/eml-2.0.0.xsl">
+            <param name="displaymodule" expression="${displaymodule}"/>
+            <param name="docid" expression="${input}"/>
+            <param name="entitytype" expression="${entitytype}"/>
+            <param name="entityindex" expression="${entityindex}"/>
+            <outputproperty name="method" value="html"/>
+            <outputproperty name="standalone" value="yes"/>
+            <outputproperty name="encoding" value="iso8859_1"/>
+            <outputproperty name="indent" value="yes"/>
+        </xslt>
+    </target>
+
+    <!-- LSID Authority support -->
+    <patternset id="lsid.jars">
+        <include name="axis.jar"/>
+        <include name="commons-discovery-0.2.jar"/>
+        <include name="jaxrpc.jar"/>
+        <include name="lsid-client-1.1.1.jar"/>
+        <include name="lsid-server-1.1.1.jar"/>
+        <include name="saaj.jar"/>
+        <include name="wsdl4j-1.5.1.jar"/>
+        <include name="activation.jar"/>
+        <include name="castor-0.9.5.jar"/>
+        <include name="dnsjava-1.3.2.jar"/>
+        <include name="mail.jar"/>
+        <include name="commons-logging-1.0.4.jar"/>
+    </patternset>
+    <patternset id="lib.jars">
+        <include name="log4j-1.2.12.jar"/>
+        <include name="utilities-*.jar"/>
+        <include name="xerces*.jar"/>
+        <include name="xalan*.jar"/>
+        <include name="xml-apis*.jar"/>
+    </patternset>
+
+    <path id="lsid.classpath">
+        <fileset dir="${lsid.lib.dir}">
+            <patternset refid="lsid.jars"/>
+        </fileset>
+        <fileset dir="${lib.dir}">
+            <patternset refid="lib.jars"/>
+        </fileset>
+        <fileset dir="${build.dir}">
+            <include name="metacat-client.jar"/>
+            <include name="metacat.jar"/>
+        </fileset>
+    </path>
+
+    <!-- build metacat-common jar -->
+    <target name="build-metacat-common" depends="setMavenHome"
+            description="Calls the Maven build for metacat-common jar" unless="build-metacat-common-called">
+        <artifact:mvn pom="metacat-common/pom.xml" mavenhome="${maven.home}" fork="true">
+            <jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}"/>
+            <arg value="clean"/>
+        </artifact:mvn>
+        <artifact:mvn pom="metacat-common/pom.xml" mavenhome="${maven.home}" fork="true">
+            <jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}"/>
+            <arg value="install"/>
+        </artifact:mvn>
+        <property name="build-metacat-common-called" value="true"/>
+    </target>
+
+    <!-- build metacat-index war -->
+    <target name="build-metacat-index" depends="setMavenHome" description="Calls the Maven build for metacat-index.war">
+        <artifact:mvn pom="metacat-index/pom.xml" mavenhome="${maven.home}" fork="true">
+            <jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}"/>
+            <arg value="clean"/>
+        </artifact:mvn>
+        <artifact:mvn pom="metacat-index/pom.xml" mavenhome="${maven.home}" fork="true">
+            <jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}"/>
+            <arg value="package"/>
+            <!--<arg value="-Dmaven.test.skip=true"/>-->
+        </artifact:mvn>
+    </target>
+
+    <target name="dist-metacat-index" depends="init, build-metacat-index"
+            description="Copy metacat-index.war to dist folder">
+        <copy tofile="${dist.dir}/metacat-index.war">
+            <fileset dir="metacat-index/target" includes="metacat-index*.war"></fileset>
+        </copy>
+    </target>
+
+    <target name="install-metacat-index" depends="dist-metacat-index"
+            description="Copy metacat-index.war to deploy folder">
+        <copy todir="${app.deploy.dir}" file="${dist.dir}/metacat-index.war"/>
+    </target>
+
+    <!-- Generate a light war file which only is used to manage the ldap user accounts - register a new user, reset and change the password -->
+    <target name="war-identity" depends="warPrepare"
+            description="Generate a light war file which only is used to manage the ldap user accounts - register a new user, reset and change the password">
+        <property name="war-name" value="identity"/>
+        <mkdir dir="${dist.dir}"/>
+        <war destfile="${dist.dir}/${war-name}.war"
+             webxml="lib/account-web-info/web.xml">
+            <webinf dir="${war.webinf}">
+                <include name="metacat.properties"/>
+                <include name="gd_intermediate_bundle_nceas_ldap.crt"/>
+            </webinf>
+            <fileset dir="${war.context}">
+                <include name="cgi-bin/**"/>
+                <include name="style/**"/>
+            </fileset>
+        </war>
+    </target>
 </project>

@@ -210,8 +210,7 @@ public class AuthAdmin extends MetacatAdmin {
 				// persisted by the BackupAdmin when the backup directory is specified.
 				String backupDir = PropertyService.getProperty("application.backupDir");
 				if (backupDir != null) {
-					PropertyService.persistAuthBackupProperties(request.getSession()
-						.getServletContext());
+					PropertyService.persistAuthBackupProperties();
 				}
 			
 			} catch (GeneralPropertyException gpe) {
