@@ -29,8 +29,10 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.Vector;
 
+import edu.ucsb.nceas.LeanTestUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.service.types.v1.Identifier;
@@ -45,10 +47,13 @@ import edu.ucsb.nceas.metacat.doi.ezid.RegisterDOITest;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.junit.After;
+import org.junit.Before;
+
 
 public class UpdateDOITest extends D1NodeServiceTest {
     private static final String UPDATETIMEKEY = "_updated";
-    
+    AutoCloseable closeableMock;
     /**
      * Constructor
      * @param name
@@ -71,7 +76,26 @@ public class UpdateDOITest extends D1NodeServiceTest {
         assertTrue(1 == 1);
 
     }
-    
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        Properties withProperties = new Properties();
+        withProperties.setProperty("server.name", "UpdateDOITestMock.edu");
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+    }
+
+    @After
+    public void tearDown() {
+        try {
+            closeableMock.close();
+        } catch (Exception e) {
+            //no need to handle - just a housekeeping failure
+        }
+        super.tearDown();
+    }
+
+
     /*
      * Test the update of a pid and sid
      */
@@ -80,7 +104,7 @@ public class UpdateDOITest extends D1NodeServiceTest {
         String ezidUsername = PropertyService.getProperty("guid.doi.username");
         String ezidPassword = PropertyService.getProperty("guid.doi.password");
         String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
-        Session session = getTestSession();   
+        Session session = getTestSession();
         String emlFile = "test/eml-multiple-creators.xml";
         InputStream content = null;
         //Test the case that the identifier is a doi but no sid.
@@ -132,7 +156,7 @@ public class UpdateDOITest extends D1NodeServiceTest {
             IOUtils.closeQuietly(content);
         }
 
-        //Test the case that the identifier is non-doi but the sid is an doi 
+        //Test the case that the identifier is non-doi but the sid is an doi
         try {
             Identifier guid = new Identifier();
             guid.setValue("tesCreateDOIinSid." + System.currentTimeMillis());
@@ -157,7 +181,7 @@ public class UpdateDOITest extends D1NodeServiceTest {
                 Thread.sleep(2000);
                 count++;
             } while ((metadata == null || metadata.get(EzidDOIService.DATACITE) == null) && count < 30);
-            
+
             assertNotNull(metadata);
             String result = metadata.get(EzidDOIService.DATACITE);
             //System.out.println("the result is \n"+result);
@@ -179,7 +203,7 @@ public class UpdateDOITest extends D1NodeServiceTest {
         } finally {
             IOUtils.closeQuietly(content);
         }
-        
+
         //update the datacite metadata by ids.
         Vector<String> ids = new Vector<String>();
         ids.add(publishedSIDStr);
@@ -200,12 +224,12 @@ public class UpdateDOITest extends D1NodeServiceTest {
             pidUpdate1 = (new Long(updateTime)).longValue();
             Thread.sleep(2000);
             count++;
-        } while (pidUpdate1 ==  PIDUpdateTime && count < 30); 
+        } while (pidUpdate1 ==  PIDUpdateTime && count < 30);
         assertNotNull(metadata);
         updateTime = metadata.get(UPDATETIMEKEY);
         pidUpdate1 = (new Long(updateTime)).longValue();
         assertTrue(pidUpdate1 > PIDUpdateTime);
-        
+
         long sidUpdate1 = -1;
         do {
             metadata = ezid.getMetadata(publishedSIDStr);
@@ -213,9 +237,8 @@ public class UpdateDOITest extends D1NodeServiceTest {
             sidUpdate1 = (new Long(updateTime)).longValue();
             Thread.sleep(2000);
             count++;
-        } while ((sidUpdate1 == SIDUpdateTime) && count < 30); 
+        } while ((sidUpdate1 == SIDUpdateTime) && count < 30);
         assertNotNull(metadata);
         assertTrue(sidUpdate1 > SIDUpdateTime);
     }
-
 }
