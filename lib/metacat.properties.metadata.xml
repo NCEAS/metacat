@@ -343,8 +343,8 @@
 		<group>4</group>
 		<index>5</index>
 		<description>
-			Where to store the metacat-site.properties file. This should be some location outside
-			the knb install directories.
+			Where to store the metacat-site.properties file. This should be somewhere outside the
+			'Deploy Location'
 		</description>
 		<helpFile><!-- TODO MB: add helpfile link --></helpFile>
 	</config>
@@ -355,8 +355,7 @@
 		<group>4</group>
 		<index>6</index>
 		<description>
-			Where to store data. This should be some location outside
-			the knb install direcories.
+			Where to store data. This should be somewhere outside the 'Deploy Location'
 		</description>
 		<helpFile>docs/metacat-properties.html#application-datafilepath</helpFile>
 	</config>
@@ -367,8 +366,7 @@
 		<group>4</group>
 		<index>7</index>
 		<description>
-			Where to store inline data. This should be some location
-			outside the knb install direcories.
+			Where to store inline data. This should be somewhere outside the 'Deploy Location'.
 		</description>
 		<helpFile>docs/metacat-properties.html#application-inlinedatafilepath</helpFile>
 	</config>
@@ -379,8 +377,8 @@
 		<group>4</group>
 		<index>8</index>
 		<description>
-			Where to store metadata documents. This should be some location
-			outside the knb install direcories.
+			Where to store metadata documents. This should be This should be somewhere outside
+			the 'Deploy Location'
 		</description>
 		<helpFile>docs/metacat-properties.html#application-documentfilepath</helpFile>
 	</config>
