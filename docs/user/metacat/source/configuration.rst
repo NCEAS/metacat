@@ -134,11 +134,10 @@ To edit the authentication configuration file:
    default location for this file is in /var/metacat/config/, but this path is configurable,
    so it may be elsewhere.
 
-      Tip::
-
-         If you cannot find the **metacat-site.properties** file, its location is stored in a property
-         named ``application.sitePropertiesDir`` inside the **metacat.properties** file, which can be
-         found in:
+      .. Tip::
+         If you cannot find the **metacat-site.properties** file, its location is stored in a
+         property named ``application.sitePropertiesDir`` inside the **metacat.properties** file, which
+         can be found in:
          ``<tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties``
          (where the <context_dir> is the application context, usually named "metacat".)
 
@@ -301,11 +300,11 @@ custom themes, see the section called :doc:`themes`.
 Skins
 ................
 .. deprecated:2.2.0
-   Use themes instead
-   
-If your Metacat has a customized skin, it will appear as a choice in the 
-Skins Configuration settings (see below screenshot). Select the checkbox next 
-to your customized skin or and click the ``Make <skin_name> default`` radio button. 
+Use themes instead
+
+If your Metacat has a customized skin, it will appear as a choice in the
+Skins Configuration settings (see below screenshot). Select the checkbox next
+to your customized skin or and click the ``Make <skin_name> default`` radio button.
 If you do not have a custom skin, select the ``default`` skin. 
 
 Once you have selected a skin, Metacat will open a list of options that apply to the Registry 
@@ -520,13 +519,12 @@ The default location for the ``metacat-site.properties file`` is::
 but note that this location is configurable and can be changed using the Metacat Configuration
 utility.
 
-   Tip::
-
-   The site properties location is one of the few settings that is actually written to the
-   metacat.properties file directly (to avoid the dilemma of saving the site properties file
-   location in the site properties file itself) - so if you can't locate the file, you can always
-   find its location from the property named ``application.sitePropertiesDir`` in the
-   ``metacat.properties`` file.
+   .. Tip::
+      The site properties location is one of the few settings that is actually written to the
+      metacat.properties file directly (to avoid the dilemma of saving the site properties file
+      location in the site properties file itself) - so if you can't locate the file, you can always
+      find its location from the property named ``application.sitePropertiesDir`` in the
+      ``metacat.properties`` file.
 
 Note that all the above path values depend upon how your system was set up during installation.
 
