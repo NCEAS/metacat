@@ -48,17 +48,18 @@ does not know where this external directory is, Metacat uses a discovery
 algorithm to locate it. If Metacat cannot identify a backup directory, you will 
 see the Backup Directory Configuration screen.
 
-.. Note:: 
-  
-  If the metacat.properties file has many custom settings, it should be manually 
-  backed up before any Metacat upgrade as deploying a new Metacat war file will overwrite
-  the existing file.
-
 .. figure:: images/screenshots/image011.png
    :align: center
 
    Configuring the Backup Directory.
-   
+
+.. Note::
+
+   For Metacat version 3.0 or later, metacat.properties no longer contains any custom settings that
+   need to be backed up before a Metacat upgrade. Instead, custom settings are now saved to a file
+   named ``metacat-site.properties`` that is located outside of the tomcat webapps directory, and so
+   is not overwritten by deploying a new Metacat war file.
+
 Authentication Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Whether you are installing or upgrading the Metacat servlet, you will 
@@ -129,24 +130,29 @@ server will be able to change the administrator accounts.
 
 To edit the authentication configuration file:
 
-1. Stop Tomcat and edit the Metacat properties (``metacat.properties``) file in the
-   Metacat context directory inside the Tomcat application directory. The 
-   Metacat context directory is the name of the application (usually metacat):
+1. Stop Tomcat and edit the Metacat site properties (*metacat-site.properties*) file. The
+   default location for this file is in /var/metacat/config/, but this path is configurable,
+   so it may be elsewhere.
+
+      Tip::
+
+         If you cannot find the **metacat-site.properties** file, its location is stored in a property
+         named ``application.sitePropertiesDir`` inside the **metacat.properties** file, which can be
+         found in:
+         ``<tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties``
+         (where the <context_dir> is the application context, usually named "metacat".)
+
+2. Once you have located **metacat-site.properties**, change the following properties appropriately
+   (or add them if they do not already exist)
 
   ::
   
-    <tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties
+    auth.administrators  - a colon separated list of administrators
+    auth.url             - the authentication server URL
+    auth.surl            - the authentication secure server URL
+    auth.file.path       - the authentication password file path
 
-2. Change the following properties appropriately:
-
-  ::
-  
-    auth.administrators - a colon separated list of administrators 
-    auth.url - the authentication server URL 
-    auth.surl - the authentication secure server URL
-    auth.file.path  - the authentication password file path
-
-3. Save the ``metacat.properties`` file and start Tomcat.
+3. Save the **metacat-site.properties** file and start Tomcat.
 
 
 Logging in to Metacat
@@ -206,10 +212,9 @@ All settings must be in a configured or bypassed state in order to run Metacat.
 For new installations or upgrades, click the "go to metacat" link that appears 
 after configuration is complete to go directly to Metacat. Note that Metacat 
 indexes at start-up time, so the initial start-up may take some time depending 
-on the amount of data in your database and wheter or not you have opted to regenerate the spatial cache. 
-If you are reconfiguring a running 
-version of Metacat, you must restart the Tomcat server for the changes to 
-take effect.
+on the amount of data in your database and whether or not you have opted to regenerate the spatial
+cache. If you are reconfiguring a running version of Metacat, you must restart the Tomcat server
+for the changes to take effect.
    
 .. figure:: images/screenshots/image019.png
    :align: center
@@ -237,17 +242,19 @@ The first time you install Metacat, the system attempts to automatically detect
 the values for a number of settings (see table). It is important to ensure that 
 these values are correct.
 
-================  ============================================================
-Property          Description
-================  ============================================================
-Metacat Context   The name of the deployed Metacat WAR file (minus the .war 
-                  extension). E.g., "metacat"
-Server Name       The DNS name of the server hosting Metacat, not including 
-                  port numbers or the protocol ("http://"). 
-HTTP Port         The non-secure port where Metacat will be available.
-HTTP SSL Port     The secure port where Metacat will be available. 
-Deploy Location   The directory where the application is deployed. 
-================  ============================================================
+=========================  =============================================================
+Property                   Description
+=========================  =============================================================
+Metacat Context            The name of the deployed Metacat WAR file (minus the .war
+                           extension). E.g., "metacat"
+Server Name                The DNS name of the server hosting Metacat, not including
+                           port numbers or the protocol ("http://").
+HTTP Port                  The non-secure port where Metacat will be available.
+HTTP SSL Port              The secure port where Metacat will be available.
+Deploy Location            The directory where the application is deployed.
+Site Properties Directory  Directory in which to store the metacat-site.properties file.
+=========================  =============================================================
+
 
 .. Note:: 
 
@@ -471,35 +478,61 @@ More information about each property is also included in the :doc:`metacat-prope
 
 Additional Configuration
 ------------------------
-The most dynamic Metacat properties are managed and modified with the 
+The most-dynamic Metacat properties are managed and modified with the
 form-based Metacat Configuration utility. These configuration properties can 
-also be accessed directly (along with additional static properties) via 
-Metacat's property files: ``metacat.properties`` (which contains global 
-properties, e.g., authorization and database values) and 
+also be set directly (along with additional static properties) via
+Metacat's editable property files: ``metacat-site.properties`` (which contains
+global properties, e.g., authorization and database values) and
 ``<SKIN_NAME>.properties`` (which contains skin-specific properties). Each of 
 these property files is discussed in more depth in this section.
 
-The ``metacat.properties`` file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Metacat's ``metacat.properties`` file contains all of Metacat's global 
-properties, both the dynamic properties, which are managed with the 
-Configuration utility, as well as the more static properties, which can only 
-be modified manually in this file. The ``metacat.properties`` file also contains 
-optional properties that are only relevant when optional Metacat features 
-(such as the harvester or replication) are enabled. The `
-`metacat.properties file`` is found here::
+The **metacat-site.properties** file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Metacat's Properties system comprises two files: one large, non-editable file
+(``metacat.properties``) containing the default values for every single property recognized by
+Metacat, and one smaller, editable file (``metacat-site.properties``), containing only the values
+that need to be changed to override the defaults.
+
+The more-dynamic properties (which are managed with the Configuration utility) are saved to
+``metacat-site.properties`` if they are changed from their default values.
+
+If it is necessary to modify the more-static properties, which are not editable via the
+Configuration utility, this should also be done in the ``metacat-site.properties`` file, either by
+editing existing properties, or by adding them there if they do not already exist.
+``metacat.properties`` should never be edited directly, but may be used as a handy reference to
+determine what properties are available to be overridden (including optional properties that are
+only relevant when optional Metacat features -- such as the harvester or replication -- are
+enabled.)
+
+The ``metacat.properties file`` is found here::
 
   <CONTEXT_DIR>/WEB_INF/metacat.properties
 
 Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application code 
-lives (e.g., ``/var/lib/tomcat7/webapps/metacat``). The path is a combination 
-of the Web application directory (e.g., ``/var/lib/tomcat7/webapps/``) and 
-the Metacat context directory (e.g., ``metacat``). Both values depend upon how your 
-system was set up during installation.
+lives (e.g., ``/var/lib/tomcat/webapps/metacat``). The path is a combination
+of the Web application directory (e.g., ``/var/lib/tomcat/webapps/``) and
+the Metacat context directory (e.g., ``metacat``).
+
+The default location for the ``metacat-site.properties file`` is::
+
+  /var/metacat/config/metacat-site.properties
+
+but note that this location is configurable and can be changed using the Metacat Configuration
+utility.
+
+   Tip::
+
+   The site properties location is one of the few settings that is actually written to the
+   metacat.properties file directly (to avoid the dilemma of saving the site properties file
+   location in the site properties file itself) - so if you can't locate the file, you can always
+   find its location from the property named ``application.sitePropertiesDir`` in the
+   ``metacat.properties`` file.
+
+Note that all the above path values depend upon how your system was set up during installation.
 
 For information about each property and default or example settings, please 
 see the :doc:`metacat-properties`. Properties that can only be edited manually 
-in the metacat.properties file are highlighted in the appendix.
+in the metacat-site.properties file are highlighted in the appendix.
 
 <SKIN_NAME>.properties
 ~~~~~~~~~~~~~~~~~~~~~~
