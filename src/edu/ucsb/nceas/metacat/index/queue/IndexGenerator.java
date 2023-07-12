@@ -98,7 +98,7 @@ public class IndexGenerator extends BaseService {
         try {
           init();
         } catch (ServiceException se) {
-          logMetacat.error("IndexGenerato.constructor - There was a problem creating the IndexGenerator. " +
+          logMetacat.error("IndexGenerator.constructor - There was a problem creating the IndexGenerator. " +
                            "The error message was: " + se.getMessage());
           throw se;
         }
