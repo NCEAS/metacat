@@ -447,64 +447,18 @@ More information about each property is also included in the :doc:`metacat-prope
 
 Additional Configuration
 ------------------------
-The most-dynamic Metacat properties are managed and modified with the
-form-based Metacat Configuration utility. These configuration properties can 
-also be set directly (along with additional static properties) via
-Metacat's editable property files: ``metacat-site.properties`` (which contains
-global properties, e.g., authorization and database values) and
-``<SKIN_NAME>.properties`` (which contains skin-specific properties). Each of 
-these property files is discussed in more depth in this section.
+Metacat's application properties are managed and modified either through use of the form-based
+Metacat Configuration utility, or by being set directly via Metacat's editable properties file
+(**metacat-site.properties**). More-detailed information is given in the following section.
 
-The **metacat-site.properties** file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Metacat's Properties system comprises two files: one large, non-editable file
-(``metacat.properties``) containing the default values for every single property recognized by
-Metacat, and one smaller, editable file (``metacat-site.properties``), containing only the values
-that need to be changed to override the defaults.
-
-The more-dynamic properties (which are managed with the Configuration utility) are saved to
-``metacat-site.properties`` if they are changed from their default values.
-
-If it is necessary to modify the more-static properties, which are not editable via the
-Configuration utility, this should also be done in the ``metacat-site.properties`` file, either by
-editing existing properties, or by adding them there if they do not already exist.
-``metacat.properties`` should never be edited directly, but may be used as a handy reference to
-determine what properties are available to be overridden (including optional properties that are
-only relevant when optional Metacat features -- such as the harvester or replication -- are
-enabled.)
-
-The ``metacat.properties file`` is found here::
-
-  <CONTEXT_DIR>/WEB_INF/metacat.properties
-
-Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application code 
-lives (e.g., ``/var/lib/tomcat/webapps/metacat``). The path is a combination
-of the Web application directory (e.g., ``/var/lib/tomcat/webapps/``) and
-the Metacat context directory (e.g., ``metacat``).
-
-The default location for the ``metacat-site.properties file`` is::
-
-  /var/metacat/config/metacat-site.properties
-
-but note that this location is configurable and can be changed using the Metacat Configuration
-utility.
-
-   .. Tip::
-      The site properties location is one of the few settings that is actually written to the
-      metacat.properties file directly (to avoid the dilemma of saving the site properties file
-      location in the site properties file itself) - so if you can't locate the file, you can always
-      find its location from the property named ``application.sitePropertiesDir`` in the
-      ``metacat.properties`` file.
-
-Note that all the above path values depend upon how your system was set up during installation.
-
-For information about each property and default or example settings, please 
-see the :doc:`metacat-properties`. Properties that can only be edited manually 
-in the metacat-site.properties file are highlighted in the appendix.
+.. include:: ./properties-overview.rst
 
 <SKIN_NAME>.properties
 ~~~~~~~~~~~~~~~~~~~~~~
-The ``<SKIN_NAME>.properties`` file contains skin-specific properties 
+.. deprecated:: 2.2.0
+   Use ``themes`` instead; see :doc:`themes`
+
+The ``<SKIN_NAME>.properties`` file contains skin-specific properties
 (e.g., template information). For each skin, the skin-specific properties are 
 found here::
 
