@@ -21,8 +21,8 @@ package edu.ucsb.nceas.metacat.index;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -32,9 +32,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.client.v2.formats.ObjectFormatCache;
 
 import org.dataone.cn.indexer.IndexWorker;
+import org.dataone.configuration.Settings;
 
 
 /**
@@ -60,6 +60,19 @@ public class MetacatIndexServlet extends HttpServlet {
             File contextDeploymentDir = new File(config.getServletContext().getRealPath("/"));
             String fullMetacatPropertiesFilePath = contextDeploymentDir.getParent()  + metacatPropertiesFilePath;
             IndexWorker.loadExternalPropertiesFile(fullMetacatPropertiesFilePath);
+            //load the site property file
+            // metacatSitePropertiesFile is outside the tomcat webapps dir, so it should be available
+            Path metacatSitePropertiesFilePath =
+                metacatSitePropertiesFilePath = Paths.get(
+                Settings.getConfiguration().getString("application" + ".sitePropertiesDir"),
+                "metacat-site.properties");
+            if (!metacatSitePropertiesFilePath.toFile().exists()) {
+                String errorMsg =
+                    "Could not find Metacat site properties at: " + metacatSitePropertiesFilePath;
+                log.error(errorMsg);
+                throw new IOException(errorMsg);
+            }
+            IndexWorker.loadAdditionalPropertyFile(metacatSitePropertiesFilePath.toString());
             IndexWorker worker = new IndexWorker();
             worker.start();
         } catch (Exception e) {
