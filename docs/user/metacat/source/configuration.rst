@@ -275,7 +275,7 @@ Skins Configuration
 ~~~~~~~~~~~~~~~~~~~   
 Customizing the look and feel of Metacat's web interface is done via skins or
 MetacatUI themes, however as of Version 2.2.0, skins have been deprecated. 
-Use MetacatUI themes instead. Themes can be deployed separately from the 
+Use MetacatUI themes instead - see :doc:`themes`. Themes can be deployed separately from the
 Metacat server allowing easier independent user interface customization.
 
 MetacatUI Themes
@@ -294,13 +294,18 @@ custom themes, see the section called :doc:`themes`.
 
 .. figure:: images/screenshots/image070.png
    :align: center
+   :width: 1100px
 
    Configuring Metacat themes.
 
 Skins
-................
-.. deprecated:2.2.0
-Use themes instead
+.....
+
+.. deprecated:: 2.2.0
+   Use ``themes`` instead; see :doc:`themes`
+
+   To use MetacatUI themes, select ``metacatui`` as the default skin during skin configuration
+   in the administration interface.
 
 If your Metacat has a customized skin, it will appear as a choice in the
 Skins Configuration settings (see below screenshot). Select the checkbox next
@@ -313,6 +318,7 @@ section in :doc:`themes`.
 
 .. figure:: images/screenshots/image023.png
    :align: center
+   :width: 1100px
 
    Configuring Metacat skins.
    
@@ -385,6 +391,7 @@ or upgrades it if necessary (and with your permission).
 
 .. figure:: images/screenshots/image073.png
    :align: center
+   :width: 1200px
 
 .. Note:: 
 
@@ -402,44 +409,6 @@ the solr user doesn't have the write permission to the Solr Home directory. You 
 to add the solr user to the tomcat group, restart Solr server and Tomcat, log in again
 and continue to configure Metacat. The instructions for adding users to groups can be found in the
 Tomcat And Solr User Management part of the `Solr installation page`_.
-
-Geoserver Configuration
-~~~~~~~~~~~~~~~~~~~~~~~
-.. sidebar:: Manual Geoserver Update
-
-  Alternatively, you can change the Geoserver username and password manually by 
-  directly logging in to the Geoserver. To configure the credentials manually: 
-
-  1. Go to the Geoserver admin page: http://<your_context_url>/geoserver/ 
-  2. Log in using the default username and password ( admin / geoserver ) 
-  3. Navigate to the Password Change Page.  Enter a new user and password and click Submit. 
-  4. Click Apply then Save to save your new password. 
-  
-Metacat comes bundled with a Web Mapping Service called Geoserver, which 
-converts spatial data into Web-deliverable map images. Geoserver installs with 
-a default administrative username and password. *We highly recommend that you 
-change the default credentials so that only local administrators can make 
-changes to your Geoserver.* For more information about Geoserver, 
-see :doc:`geoserver`.
-
-When you choose the Geoserver Configuration link from the main configuration 
-screen, Metacat will prompt you for a few important details about your Geoserver 
-installation. The data directory and context settings allow Geoserver and 
-Metacat to share the same spatial data store and render maps within Metacat skins. 
-The security configuration prompts for a new admin password. After you enter 
-the new settings, Metacat writes the information to the Geoserver deployment.
-
-The default settings are typically appropriate for most Metacat deployments, 
-but if you wish to skip the Geoserver configuration, click the Bypass button. 
-Geoserver (if deployed) will remain with a default configuration and the main 
-Metacat configuration screen will display the "bypassed" status beside the 
-Geoserver settings. You will be able to run Metacat, but maps will not be 
-rendered.
-
-.. figure:: images/screenshots/image031.png
-   :align: center
-
-   Configuring Geoserver.
 
 DataONE Configuration
 ~~~~~~~~~~~~~~~~~~~~~
@@ -472,6 +441,7 @@ More information about each property is also included in the :doc:`metacat-prope
 
 .. figure:: images/screenshots/image072.png
    :align: center
+   :width: 900px
 
    Configuring EZID service.
 
@@ -554,3 +524,5 @@ In order to fix the issue, modify <Catalina_HOME>/conf/context.xml
   <Context useHttpOnly="false">
 
 Then restart Tomcat 7.
+
+.. include:: ./readonly.rst

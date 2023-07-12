@@ -91,7 +91,7 @@ Contents
 ========
 .. toctree::
    :numbered:
-   :maxdepth: 2
+   :maxdepth: 3
 
    intro
    contributors
@@ -103,7 +103,6 @@ Contents
    query-index
    themes
    authinterface
-   geoserver
    replication
    harvester
    oaipmh
@@ -118,4 +117,3 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`search`
-
