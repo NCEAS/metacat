@@ -177,7 +177,7 @@ others are managed with the properties configuration utility.
 | solr.baseURL                         | The URL of the Solr server which Metacat can access.                        | http://localhost:8983/solr    |
 |                                      |                                                                             |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _solr-homeDir       :             |                                                                             |                               |
+| .. _solr-homeDir:                    |                                                                             |                               |
 |                                      |                                                                             |                               |
 | solr.homeDir                         | The Solr home directory (not to be confused with the Solr installation      | /var/metacat/solr-home2       |
 |                                      | directory) is where Solr manages core directories with index files.         |                               |
@@ -544,9 +544,9 @@ The EML Data Manager is also included for extended data-query operations. Note t
 |                                   |                                                                               |                                               |
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 
- .. _ezid_properties:
+
 EZID Properties
-------------------------
+---------------
 The EZID service assigning Digital Object Identifiers (DOIs) is included in the Metacat service. 
 
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
@@ -622,4 +622,3 @@ Additional configuration properties are described below, though there are many m
 |                       |                                                                  |                                                   |
 |                       | Default Value: blank                                             |                                                   |
 +-----------------------+------------------------------------------------------------------+---------------------------------------------------+
-

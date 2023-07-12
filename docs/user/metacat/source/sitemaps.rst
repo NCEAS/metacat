@@ -66,7 +66,7 @@ Verify that your sitemap files are available to the Web by browsing to::
   (e.g., https://example.org/metacat/sitemaps/sitemap1.xml)
 
 Serving Your Sitemaps
-------------------
+---------------------
 
 In most scenarios, you'll want to take extra steps to make sure your sitemaps
 are served correctly so they're available and indexable by Google. Because
