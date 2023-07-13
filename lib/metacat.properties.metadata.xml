@@ -338,18 +338,6 @@
 	</config>
 
 	<config>
-		<key>application.knbSiteURL</key>
-		<label>KNB Site URL</label>
-		<group>4</group>
-		<index>4</index>
-		<description>
-			Location of KNB website. Usually left as
-			http://knb.ecoinformatics.org
-		</description>
-		<helpFile>docs/metacat-properties.html#application-knbsiteurl</helpFile>
-	</config>
-
-	<config>
 		<key>application.sitePropertiesDir</key>
 		<label>Site Properties Directory</label>
 		<group>4</group>

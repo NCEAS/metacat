@@ -7,23 +7,23 @@ Appendix: Metacat Properties
 
 In summary:
 
-    Metacat's configuration settings are located in two files:
+    1. Metacat's configuration settings are located in two files:
 
-     * **metacat.properties:** a large, **non-editable** file, containing the **default** values 
-       for every single property recognized by Metacat, and
+        * **metacat.properties:** a large, **non-editable** file, containing the **default** values
+          for every single property recognized by Metacat, and
 
-     * **metacat-site.properties:** a smaller, **editable** file, containing only the values that
-       need to be changed to override the defaults.
+        * **metacat-site.properties:** a smaller, **editable** file, containing only the values that
+          need to be changed to override the defaults.
 
-    More-dynamic settings (such as authorization and database connection values) are
-    managed with the Metacat Configuration utility (see :doc:`configuration`). Whenever these 
-    settings are changed from their defaults, the new values are automatically saved to 
-    **metacat-site.properties**.
+    2. More-dynamic settings (such as authorization and database connection values) are
+       managed with the Metacat Configuration utility (see :doc:`configuration`). Whenever these
+       settings are changed from their defaults, the new values are automatically saved to
+       **metacat-site.properties**.
 
-    More-static settings, which cannot be set via the Configuration utility, may also be
-    changed in the **metacat-site.properties** file, either by editing existing property entries,
-    or by adding them there if they do not already exist. 
-    **metacat.properties:** should **not** be edited.
+    3. More-static settings, which cannot be set via the Configuration utility, may also be
+       changed in the **metacat-site.properties** file, either by editing existing property entries,
+       or by adding them there if they do not already exist.
+       **metacat.properties:** should **not** be edited.
 
 
 .. contents:: The properties themselves are detailed below
@@ -116,7 +116,7 @@ others are managed with the properties configuration utility.
 | application.context                  | The name of the Metacat application directory in                            | knb                           |
 |                                      | the deployment directory. This corresponds to the first part of the         |                               |
 |                                      | WAR file name (the part before .war). Most commonly, this                   |                               |
-|                                      | is "knb", but it can be changed to other things.                            |                               |
+|                                      | is "metacat", but it can be changed to other things.                        |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _index.context:                   |                                                                             |                               |
 |                                      |                                                                             |                               |
@@ -135,12 +135,6 @@ others are managed with the properties configuration utility.
 | application.default-style            | A custom Metacat Web skin usually associated with                           | default                       |
 |                                      | an organizational theme. If your organization has no                        |                               |
 |                                      | custom skin, leave the value as "default".                                  |                               |
-+--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.knbSiteURL:          |                                                                             |                               |
-|                                      |                                                                             |                               |
-| application.knbSiteURL               | The main KNB website.                                                       | http://knb.ecoinformatics.org |
-|                                      |                                                                             |                               |
-|                                      | Default Value: http://knb.ecoinformatics.org                                |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _application.sitePropertiesDir:   |                                                                             |                               |
 |                                      |                                                                             |                               |
