@@ -69,7 +69,6 @@ public class SystemMetadataValidatorTest extends D1NodeServiceTest {
         id.setValue(guid);
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
         SystemMetadata sysmeta = createSystemMetadata(id, session.getSubject(), object);
-        Date modifiedDate = sysmeta.getDateSysMetadataModified();
         BigInteger serialVersion = new BigInteger("4");
         sysmeta.setSerialVersion(serialVersion);
         SystemMetadataValidator validator = new SystemMetadataValidator();
@@ -116,6 +115,8 @@ public class SystemMetadataValidatorTest extends D1NodeServiceTest {
         }
         
         //set back the modification date will succeed
+        SystemMetadata sysmetaReadFromStroe = im.getSystemMetadata(guid);
+        Date modifiedDate = sysmetaReadFromStroe.getDateSysMetadataModified();
         sysmeta.setDateSysMetadataModified(modifiedDate);
         hasLatestVersion = validator.hasLatestVersion(sysmeta);
         assertTrue(hasLatestVersion == true);
