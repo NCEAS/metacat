@@ -7,9 +7,8 @@ Metacat Administrator's Guide
     .. image:: themes/metacatui/static/metacat-logo-darkgray.png
        :height: 130pt
 
-    Send feedback and bugs to: 
-        * metacat-dev@ecoinformatics.org
-        * http://bugzilla.ecoinformatics.org
+    Feedback and bugs - please create a GitHub Issue:
+        * https://github.com/NCEAS/metacat/issues/new
 
     License: GPL
     
