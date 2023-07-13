@@ -19,8 +19,9 @@ take effect.
 Configuration
 -------------
 
-Metacat's sitemaps functionality is controlled by four properties in
-metacat.properties.
+Metacat's sitemaps functionality is controlled by four properties in Metacat's
+configuration settings. (For more details on changing Metacat's configuration, see
+:ref:`configuration-properties-overview`):
 
 - ``sitemap.enabled``: Controls whether sitemaps are automatically generated
   while Metacat is running. Defaults to true.

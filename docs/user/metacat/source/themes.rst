@@ -270,8 +270,11 @@ are included below:
     default.properties.metadata.xml
     default.xml
 
-3. In the metacat.properties file(``<CONTEXT_DIR>/WEB_INF/metacat.properties``),
-   add ``[yourSkin]`` to the value of the skin.names property.
+3. Copy the entire default ``skin.names=`` property from the **metacat.properties** file, into the
+   **metacat-site.properties** file (see :ref:`configuration-properties-overview` for file locations
+   and details). Then append ``[yourSkin]`` to the end of this comma-separated list of
+   ``skin.names`` you have added to **metacat-site.properties**. (Do **not** edit
+   metacat.properties!).
 
 4. Restart Tomcat. Log in as the user that runs your Tomcat server (often "tomcat") and type::
 

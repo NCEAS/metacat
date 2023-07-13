@@ -55,10 +55,10 @@ see the Backup Directory Configuration screen.
 
 .. Note::
 
-   For Metacat version 3.0 or later, metacat.properties no longer contains any custom settings that
-   need to be backed up before a Metacat upgrade. Instead, custom settings are now saved to a file
-   named ``metacat-site.properties`` that is located outside of the tomcat webapps directory, and so
-   is not overwritten by deploying a new Metacat war file.
+   For Metacat version 3.0.0 or later, **metacat.properties** no longer contains any custom settings
+   that need to be backed up before a Metacat upgrade. Instead, custom settings are now saved to a
+   file named ``metacat-site.properties`` that is located outside of the tomcat webapps directory,
+   and so is not overwritten by deploying a new Metacat war file.
 
 Authentication Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -136,10 +136,11 @@ To edit the authentication configuration file:
 
       .. Tip::
          If you cannot find the **metacat-site.properties** file, its location is stored in a
-         property named ``application.sitePropertiesDir`` inside the **metacat.properties** file, which
-         can be found in:
+         property named ``application.sitePropertiesDir`` inside the **metacat.properties** file,
+         which can be found in:
          ``<tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties``
          (where the <context_dir> is the application context, usually named "metacat".)
+         See :ref:`configuration-properties-overview` for details
 
 2. Once you have located **metacat-site.properties**, change the following properties appropriately
    (or add them if they do not already exist)

@@ -23,7 +23,7 @@ In summary:
     More-static settings, which cannot be set via the Configuration utility, may also be
     changed in the **metacat-site.properties** file, either by editing existing property entries,
     or by adding them there if they do not already exist. 
-    **metacat.properties:** should not be edited.
+    **metacat.properties:** should **not** be edited.
 
 
 .. contents:: The properties themselves are detailed below

@@ -245,9 +245,10 @@ To import a certificate into Java keystore (for self-signed certificates)
 Update Metacat properties
 .........................
 Metacat needs to be configured with the path to both the server certificate and the private key.
-1. Edit metacat.properties, modifying these properties to match your specific deployment.
 
-   ::
+1. Edit **metacat-site.properties**  (**not** metacat.properties! See
+   :ref:`configuration-properties-overview`), adding or modifying these properties to match your
+   specific deployment::
    
      replication.certificate.file=/etc/ssl/certs/<hostname>-apache.crt
      replication.privatekey.file=/etc/ssl/private/<hostname>-apache.key

@@ -23,22 +23,23 @@ documents that should be harvested.
 Configuring Harvester
 ---------------------
 Before you can use the Harvester to retrieve documents, you must configure the 
-feature using the settings in the metacat.properties file. Note that you must 
+feature using the settings in the **metacat-site.properties** file. Note that you must
 also configure each site that the Harvester will connect to and retrieve 
 documents from (see section 7.2 for details). 
 
-The Harvester configuration information is managed in the metacat.properties 
-file, which is located at:: 
+The default values for the Harvester configuration information can be viewed in the (non-editable)
+**metacat.properties** file. If you wish to override any of these defaults, the new values may be
+added to the **metacat-site.properties** file. (For more detail on changing Metacat's configurable
+properties, see :ref:`configuration-properties-overview`)
 
-  <CONTEXT_DIR>/WEB_INF/metacat.properties
-
-The Harvester properties are grouped together and begin after the comment line:: 
+In the **metacat.properties** file, the default Harvester properties are grouped together and begin
+after the comment line::
 
   # Harvester properties
 
-To configure Harvester, edit the metacat.properties and set appropriate values 
-for the harvesterAdministrator and smtpServer property. You may also wish to 
-customize the other Harvester paramaters, each discussed in the table below. 
+To configure Harvester, edit **metacat-site.properties** (**not**  metacat.properties!), and
+set appropriate values for the ``harvesterAdministrator`` and ``smtpServer`` properties. You may
+also wish to customize the other Harvester parameters, each discussed in the table below.
 
 Harvester Properties and their Functions
 ----------------------------------------
@@ -194,7 +195,7 @@ Table: Information that must be included in the Harvest List about each EML file
 |              |                                                                                                 |
 |              | ``scope`` The document group to which the document belongs                                      |
 |              | ``identifier``  A number that uniquely identifies the document within the scope.                |
-|              | ``revision`` Anumber that indicates the current revision.                                       |
+|              | ``revision`` A number that indicates the current revision.                                      |
 |              |                                                                                                 |
 |              | For example, a valid docid could be: demoDocument.1.5, where demoDocument represents            |
 |              | the scope, 1 the identifier, and 5 the revision number.                                         |
@@ -328,7 +329,7 @@ Harvest List Editor Configuration Properties
 |                     | Example:   xyz_dataset                                                                       |
 |                     | Default:    dataset                                                                          |
 +---------------------+----------------------------------------------------------------------------------------------+
-| defaultIdentifer    | The value pasted into the Editor's Identifier field when the                                 |
+| defaultIdentifier   | The value pasted into the Editor's Identifier field when the                                 |
 |                     | Paste Defaults button is clicked. The Scope field should contain                             |
 |                     | a numeric value indicating the identifier for this particular EML document within the Scope. |
 +---------------------+----------------------------------------------------------------------------------------------+
@@ -382,7 +383,7 @@ XML Schema for Harvest Lists
             <xs:sequence>
               <xs:element name="docid">
                 <xs:annotation>
-                  <xs:documentation>The complete document identifier to be used by metacat.  The docid is a compound element that gives a scope for the identifier, an integer local identifer that is unique within that scope, and a revision.  Each revision is assumed to specify a unique, non-changing document, so once a particular revision is harvested, there is no need for it to be harvested again.  To trigger a harvest of a document that has been updated, increment the revision number for that identifier.</xs:documentation>
+                  <xs:documentation>The complete document identifier to be used by metacat.  The docid is a compound element that gives a scope for the identifier, an integer local identifier that is unique within that scope, and a revision.  Each revision is assumed to specify a unique, non-changing document, so once a particular revision is harvested, there is no need for it to be harvested again.  To trigger a harvest of a document that has been updated, increment the revision number for that identifier.</xs:documentation>
                 </xs:annotation>
                 <xs:complexType>
                   <xs:sequence>
@@ -486,7 +487,7 @@ Running Harvester as a Servlet
 To run Harvester as a servlet:
 
 1. Remove the comment symbols around the HarvesterServlet entry in the
-	 deployed Metacat web.xml ($TOMCAT_HOME/webapps/<context>/WEB-INF). 
+   deployed Metacat web.xml ($TOMCAT_HOME/webapps/<context>/WEB-INF).
 
    ::
    
@@ -506,12 +507,13 @@ To run Harvester as a servlet:
      </servlet>
      -->
 
-2. Save the edited file. 
+2. Save the edited file.
+
 3. Restart Tomcat.
 
 About thirty seconds after you restart Tomcat, the Harvester servlet will 
 start executing. The first harvest will occur after the number of hours 
-specified in the metacat.properties file. The servlet will continue running 
+specified in metacat's configured properties. The servlet will continue running
 new harvests until the maximum number of harvests have been completed, or until 
 Tomcat shuts down (harvest frequency and maximum number of harvests are also 
 set in the Harvester properties). 
@@ -542,8 +544,8 @@ To run Harvester in a Command Window:
      sh runHarvester.sh $METACAT_HOME
 
 The Harvester application will start executing. The first harvest will occur 
-after the number of hours specified in the ``metacat.properties file``. The 
-servlet will continue running new harvests until the maximum number of harvests 
+after the number of hours specified in the configured properties (see `Configuring Harvester`_).
+The servlet will continue running new harvests until the maximum number of harvests
 have been completed, or until you interrupt the process by hitting CTRL/C in 
 the command window (harvest frequency and maximum number of harvests are also 
 set in the Harvester properties). 
@@ -571,4 +573,3 @@ resolution. Common causes of errors include:
 Errors that are independent of a particular site may indicate a problem with 
 Harvester itself, Metacat, or the database connection. Refer to the error 
 message to determine the source of the error and its resolution. 
-
