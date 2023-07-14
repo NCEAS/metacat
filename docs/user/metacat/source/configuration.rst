@@ -452,9 +452,22 @@ Metacat's properties are managed and modified either through use of the form-bas
 Metacat Configuration utility, or by being set directly via Metacat's editable properties file
 (**metacat-site.properties**). More-detailed information is given in the following section.
 
-.. _configuration-properties-overview:
-
+Metacat Properties Overview
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Properties Files
+................
 .. include:: ./properties-overview.rst
+
+Secret Properties
+.................
+
+Some properties hold sensitive information such as secret passwords. When these are entered via the
+Metacat Configuration Utility, they are saved as plain text in the **metacat-site.properties** file.
+If this causes security concerns, note that secrets may instead be passed to Metacat via
+environment variables.
+
+Full details on how to set these values and how they are used by Metacat can be found in the
+Appendix, under: :ref:`secret-properties`.
 
 <SKIN_NAME>.properties
 ~~~~~~~~~~~~~~~~~~~~~~
