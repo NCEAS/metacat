@@ -458,9 +458,12 @@ Properties Files
 ................
 .. include:: ./properties-overview.rst
 
+For information about each property, and default or example settings, please see the
+:doc:`metacat-properties`. Properties that can only be edited manually in the
+**metacat-site.properties** file are highlighted in the appendix.
+
 Secret Properties
 .................
-
 Some properties hold sensitive information such as secret passwords. When these are entered via the
 Metacat Configuration Utility, they are saved as plain text in the **metacat-site.properties** file.
 If this causes security concerns, note that secrets may instead be passed to Metacat via
