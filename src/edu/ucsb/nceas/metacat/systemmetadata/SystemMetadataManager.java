@@ -1,11 +1,6 @@
 /**
- *  '$RCSfile$'
  *  Copyright: 2023 Regents of the University of California and the
  *              National Center for Ecological Analysis and Synthesis
- *
- *   '$Author:  $'
- *     '$Date:  $'
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -26,6 +21,8 @@ import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
@@ -108,15 +105,29 @@ public class SystemMetadataManager {
         }
         return sm;
     }
+    
+    /**
+     * Store a system metadata record into the store 
+     * The modification time will be changed during the process
+     * @param sysmeta  the new system metadata will be inserted
+     * @throws InvalidRequest
+     * @throws ServiceFailure
+     */
+    public void store(SystemMetadata sysmeta) 
+                                        throws InvalidRequest, ServiceFailure{
+        boolean changeModifyTime = true;
+        store(sysmeta, changeModifyTime);
+    }
    
     
     /**
      * Store a system metadata record into the store
      * @param sysmeta  the new system metadata will be inserted
+     * @param changeModifyTIme  if we need to change the modify time
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
-    public void store(SystemMetadata sysmeta) throws InvalidRequest, ServiceFailure {
+    public void store(SystemMetadata sysmeta, boolean changeModifyTime) throws InvalidRequest, ServiceFailure {
         if (sysmeta != null) {
             Identifier pid = sysmeta.getIdentifier();
             if (pid != null && pid.getValue() != null & !pid.getValue().trim().equals("")) {
@@ -137,6 +148,11 @@ public class SystemMetadataManager {
                 SystemMetadata currentStoredSysmeta = get(pid);
                 if (currentStoredSysmeta != null) {
                     
+                }
+                
+                if (changeModifyTime) {
+                    Date now = Calendar.getInstance().getTime();
+                    sysmeta.setDateSysMetadataModified(now);
                 }
                 
                 //Try to write the system metadata into db and remove the pid from the vector and wake up the waiting threads. 
