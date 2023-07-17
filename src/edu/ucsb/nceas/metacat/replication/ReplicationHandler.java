@@ -428,7 +428,8 @@ public class ReplicationHandler extends TimerTask
       	  // save the system metadata
     	  logReplication.debug("Saving SystemMetadata to shared map: " + sysMeta.getIdentifier().getValue());
       	  //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-    	  SystemMetadataManager.getInstance().store(sysMeta);
+    	  boolean changeModifyTime = false;
+    	  SystemMetadataManager.getInstance().store(sysMeta, changeModifyTime);
       }
    	  
       docinfoParser.parse(new InputSource(new StringReader(docInfoStr)));
@@ -649,7 +650,8 @@ public class ReplicationHandler extends TimerTask
     	  }
     	  // save the system metadata
     	  //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-    	  SystemMetadataManager.getInstance().store(sysMeta);
+    	  boolean changeModifyTime = false;
+    	  SystemMetadataManager.getInstance().store(sysMeta, changeModifyTime);
     	  // submit for indexing
           MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 
@@ -952,7 +954,8 @@ public class ReplicationHandler extends TimerTask
 								new ByteArrayInputStream(systemMetadataXML
 										.getBytes("UTF-8")));
 				//HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-				SystemMetadataManager.getInstance().store(sysMeta);
+				boolean changeModifyTime = false;
+				SystemMetadataManager.getInstance().store(sysMeta, changeModifyTime);
 				// submit for indexing
                 MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 			}

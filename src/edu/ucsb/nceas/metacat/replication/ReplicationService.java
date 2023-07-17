@@ -705,7 +705,8 @@ public class ReplicationService extends BaseService {
 		      	}
 				// save the system metadata
 				//HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-		      	SystemMetadataManager.getInstance().store(sysMeta);
+		      	boolean changeModifyTime = false;
+		      	SystemMetadataManager.getInstance().store(sysMeta, changeModifyTime);
 			}
       
 			// dates
@@ -1053,7 +1054,8 @@ public class ReplicationService extends BaseService {
 	      	  }
 	      	  // save the system metadata
 	      	  //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-	      	  SystemMetadataManager.getInstance().store(sysMeta);
+	      	boolean changeModifyTime = false;
+	      	  SystemMetadataManager.getInstance().store(sysMeta, changeModifyTime);
 	      	  // submit for indexing
               MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 	        }
@@ -1326,7 +1328,8 @@ public class ReplicationService extends BaseService {
 							SystemMetadata.class,
 							new ByteArrayInputStream(systemMetadataXML.getBytes("UTF-8")));
 				//HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-				SystemMetadataManager.getInstance().store(sysMeta);
+				boolean changeModifyTime = false;
+				SystemMetadataManager.getInstance().store(sysMeta, changeModifyTime);
 				// submit for indexing
                 MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 			}
