@@ -145,9 +145,13 @@ public class SystemMetadataManager {
                     lockedIds.add(pid.getValue());
                 }
                 //Check if the system metadata is based on the latest version
-                SystemMetadata currentStoredSysmeta = get(pid);
-                if (currentStoredSysmeta != null) {
-                    
+                try {
+                    SystemMetadataValidator.hasLatestVersion(sysmeta);
+                } catch (edu.ucsb.nceas.metacat.systemmetadata.InvalidSystemMetadata e) {
+                    String error ="SystemMetadataManager.store - can't store the system metadata for pid " 
+                            + pid.getValue() + " since " + e.getMessage();
+                    logMetacat.error(error);
+                    throw new InvalidRequest("0000", error);
                 }
                 
                 if (changeModifyTime) {

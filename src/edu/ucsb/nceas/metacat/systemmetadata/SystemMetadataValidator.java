@@ -46,7 +46,7 @@ public class SystemMetadataValidator {
      * @throws InvalidSystemMetadata
      * @throws ServiceFailure 
      */
-    public boolean hasLatestVersion(SystemMetadata sysmeta) 
+    public static boolean hasLatestVersion(SystemMetadata sysmeta) 
                                 throws InvalidSystemMetadata, ServiceFailure {
         boolean hasLatestVersion = false;
         if (sysmeta == null) {
