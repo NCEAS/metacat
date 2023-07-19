@@ -7,9 +7,8 @@ Metacat Administrator's Guide
     .. image:: themes/metacatui/static/metacat-logo-darkgray.png
        :height: 130pt
 
-    Send feedback and bugs to: 
-        * metacat-dev@ecoinformatics.org
-        * http://bugzilla.ecoinformatics.org
+    Feedback and bugs - please create a GitHub Issue:
+        * https://github.com/NCEAS/metacat/issues/new
 
     License: GPL
     
@@ -91,7 +90,7 @@ Contents
 ========
 .. toctree::
    :numbered:
-   :maxdepth: 2
+   :maxdepth: 3
 
    intro
    contributors
@@ -103,7 +102,6 @@ Contents
    query-index
    themes
    authinterface
-   geoserver
    replication
    harvester
    oaipmh
@@ -118,4 +116,3 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`search`
-

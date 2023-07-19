@@ -48,17 +48,18 @@ does not know where this external directory is, Metacat uses a discovery
 algorithm to locate it. If Metacat cannot identify a backup directory, you will 
 see the Backup Directory Configuration screen.
 
-.. Note:: 
-  
-  If the metacat.properties file has many custom settings, it should be manually 
-  backed up before any Metacat upgrade as deploying a new Metacat war file will overwrite
-  the existing file.
-
 .. figure:: images/screenshots/image011.png
    :align: center
 
    Configuring the Backup Directory.
-   
+
+.. Note::
+
+   For Metacat version 3.0.0 or later, **metacat.properties** no longer contains any custom settings
+   that need to be backed up before a Metacat upgrade. Instead, custom settings are now saved to a
+   file named ``metacat-site.properties`` that is located outside of the tomcat webapps directory,
+   and so is not overwritten by deploying a new Metacat war file.
+
 Authentication Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Whether you are installing or upgrading the Metacat servlet, you will 
@@ -129,24 +130,29 @@ server will be able to change the administrator accounts.
 
 To edit the authentication configuration file:
 
-1. Stop Tomcat and edit the Metacat properties (``metacat.properties``) file in the
-   Metacat context directory inside the Tomcat application directory. The 
-   Metacat context directory is the name of the application (usually metacat):
+1. Stop Tomcat and edit the Metacat site properties (*metacat-site.properties*) file. The
+   default location for this file is in /var/metacat/config/, but this path is configurable,
+   so it may be elsewhere.
+
+      .. Tip::
+         If you cannot find the **metacat-site.properties** file, its location is stored in a
+         property named ``application.sitePropertiesDir`` inside the **metacat.properties** file,
+         which can be found in:
+         ``<tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties``
+         (where the <context_dir> is the application context, usually named "metacat".)
+         See :ref:`configuration-properties-overview` for details
+
+2. Once you have located **metacat-site.properties**, change the following properties appropriately
+   (or add them if they do not already exist)
 
   ::
   
-    <tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties
+    auth.administrators  - a colon separated list of administrators
+    auth.url             - the authentication server URL
+    auth.surl            - the authentication secure server URL
+    auth.file.path       - the authentication password file path
 
-2. Change the following properties appropriately:
-
-  ::
-  
-    auth.administrators - a colon separated list of administrators 
-    auth.url - the authentication server URL 
-    auth.surl - the authentication secure server URL
-    auth.file.path  - the authentication password file path
-
-3. Save the ``metacat.properties`` file and start Tomcat.
+3. Save the **metacat-site.properties** file and start Tomcat.
 
 
 Logging in to Metacat
@@ -206,10 +212,9 @@ All settings must be in a configured or bypassed state in order to run Metacat.
 For new installations or upgrades, click the "go to metacat" link that appears 
 after configuration is complete to go directly to Metacat. Note that Metacat 
 indexes at start-up time, so the initial start-up may take some time depending 
-on the amount of data in your database and wheter or not you have opted to regenerate the spatial cache. 
-If you are reconfiguring a running 
-version of Metacat, you must restart the Tomcat server for the changes to 
-take effect.
+on the amount of data in your database and whether or not you have opted to regenerate the spatial
+cache. If you are reconfiguring a running version of Metacat, you must restart the Tomcat server
+for the changes to take effect.
    
 .. figure:: images/screenshots/image019.png
    :align: center
@@ -237,17 +242,19 @@ The first time you install Metacat, the system attempts to automatically detect
 the values for a number of settings (see table). It is important to ensure that 
 these values are correct.
 
-================  ============================================================
-Property          Description
-================  ============================================================
-Metacat Context   The name of the deployed Metacat WAR file (minus the .war 
-                  extension). E.g., "metacat"
-Server Name       The DNS name of the server hosting Metacat, not including 
-                  port numbers or the protocol ("http://"). 
-HTTP Port         The non-secure port where Metacat will be available.
-HTTP SSL Port     The secure port where Metacat will be available. 
-Deploy Location   The directory where the application is deployed. 
-================  ============================================================
+=========================  =============================================================
+Property                   Description
+=========================  =============================================================
+Metacat Context            The name of the deployed Metacat WAR file (minus the .war
+                           extension). E.g., "metacat"
+Server Name                The DNS name of the server hosting Metacat, not including
+                           port numbers or the protocol ("http://").
+HTTP Port                  The non-secure port where Metacat will be available.
+HTTP SSL Port              The secure port where Metacat will be available.
+Deploy Location            The directory where the application is deployed.
+Site Properties Directory  Directory in which to store the metacat-site.properties file.
+=========================  =============================================================
+
 
 .. Note:: 
 
@@ -269,7 +276,7 @@ Skins Configuration
 ~~~~~~~~~~~~~~~~~~~   
 Customizing the look and feel of Metacat's web interface is done via skins or
 MetacatUI themes, however as of Version 2.2.0, skins have been deprecated. 
-Use MetacatUI themes instead. Themes can be deployed separately from the 
+Use MetacatUI themes instead - see :doc:`themes`. Themes can be deployed separately from the
 Metacat server allowing easier independent user interface customization.
 
 MetacatUI Themes
@@ -288,17 +295,22 @@ custom themes, see the section called :doc:`themes`.
 
 .. figure:: images/screenshots/image070.png
    :align: center
+   :width: 1100px
 
    Configuring Metacat themes.
 
 Skins
-................
-.. deprecated:2.2.0
-   Use themes instead
-   
-If your Metacat has a customized skin, it will appear as a choice in the 
-Skins Configuration settings (see below screenshot). Select the checkbox next 
-to your customized skin or and click the ``Make <skin_name> default`` radio button. 
+.....
+
+.. deprecated:: 2.2.0
+   Use ``themes`` instead; see :doc:`themes`
+
+   To use MetacatUI themes, select ``metacatui`` as the default skin during skin configuration
+   in the administration interface.
+
+If your Metacat has a customized skin, it will appear as a choice in the
+Skins Configuration settings (see below screenshot). Select the checkbox next
+to your customized skin or and click the ``Make <skin_name> default`` radio button.
 If you do not have a custom skin, select the ``default`` skin. 
 
 Once you have selected a skin, Metacat will open a list of options that apply to the Registry 
@@ -307,6 +319,7 @@ section in :doc:`themes`.
 
 .. figure:: images/screenshots/image023.png
    :align: center
+   :width: 1100px
 
    Configuring Metacat skins.
    
@@ -379,6 +392,7 @@ or upgrades it if necessary (and with your permission).
 
 .. figure:: images/screenshots/image073.png
    :align: center
+   :width: 1200px
 
 .. Note:: 
 
@@ -396,44 +410,6 @@ the solr user doesn't have the write permission to the Solr Home directory. You 
 to add the solr user to the tomcat group, restart Solr server and Tomcat, log in again
 and continue to configure Metacat. The instructions for adding users to groups can be found in the
 Tomcat And Solr User Management part of the `Solr installation page`_.
-
-Geoserver Configuration
-~~~~~~~~~~~~~~~~~~~~~~~
-.. sidebar:: Manual Geoserver Update
-
-  Alternatively, you can change the Geoserver username and password manually by 
-  directly logging in to the Geoserver. To configure the credentials manually: 
-
-  1. Go to the Geoserver admin page: http://<your_context_url>/geoserver/ 
-  2. Log in using the default username and password ( admin / geoserver ) 
-  3. Navigate to the Password Change Page.  Enter a new user and password and click Submit. 
-  4. Click Apply then Save to save your new password. 
-  
-Metacat comes bundled with a Web Mapping Service called Geoserver, which 
-converts spatial data into Web-deliverable map images. Geoserver installs with 
-a default administrative username and password. *We highly recommend that you 
-change the default credentials so that only local administrators can make 
-changes to your Geoserver.* For more information about Geoserver, 
-see :doc:`geoserver`.
-
-When you choose the Geoserver Configuration link from the main configuration 
-screen, Metacat will prompt you for a few important details about your Geoserver 
-installation. The data directory and context settings allow Geoserver and 
-Metacat to share the same spatial data store and render maps within Metacat skins. 
-The security configuration prompts for a new admin password. After you enter 
-the new settings, Metacat writes the information to the Geoserver deployment.
-
-The default settings are typically appropriate for most Metacat deployments, 
-but if you wish to skip the Geoserver configuration, click the Bypass button. 
-Geoserver (if deployed) will remain with a default configuration and the main 
-Metacat configuration screen will display the "bypassed" status beside the 
-Geoserver settings. You will be able to run Metacat, but maps will not be 
-rendered.
-
-.. figure:: images/screenshots/image031.png
-   :align: center
-
-   Configuring Geoserver.
 
 DataONE Configuration
 ~~~~~~~~~~~~~~~~~~~~~
@@ -459,51 +435,49 @@ the replication system and how to configure Metacat to replicate with another no
   release in favor of using the DataONE replication approach. 
 
 EZID Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 Metacat can be configured to assign Digital Object Identifiers (DOIs) to metadata/data objects
 through a EZID service. Click a blue question-mark icon beside any setting for detailed instructions.
 More information about each property is also included in the :doc:`metacat-properties`.
 
 .. figure:: images/screenshots/image072.png
    :align: center
+   :width: 900px
 
    Configuring EZID service.
 
 Additional Configuration
 ------------------------
-The most dynamic Metacat properties are managed and modified with the 
-form-based Metacat Configuration utility. These configuration properties can 
-also be accessed directly (along with additional static properties) via 
-Metacat's property files: ``metacat.properties`` (which contains global 
-properties, e.g., authorization and database values) and 
-``<SKIN_NAME>.properties`` (which contains skin-specific properties). Each of 
-these property files is discussed in more depth in this section.
+Metacat's properties are managed and modified either through use of the form-based
+Metacat Configuration utility, or by being set directly via Metacat's editable properties file
+(**metacat-site.properties**). More-detailed information is given in the following section.
 
-The ``metacat.properties`` file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Metacat's ``metacat.properties`` file contains all of Metacat's global 
-properties, both the dynamic properties, which are managed with the 
-Configuration utility, as well as the more static properties, which can only 
-be modified manually in this file. The ``metacat.properties`` file also contains 
-optional properties that are only relevant when optional Metacat features 
-(such as the harvester or replication) are enabled. The `
-`metacat.properties file`` is found here::
+Metacat Properties Overview
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Properties Files
+................
+.. include:: ./properties-overview.rst
 
-  <CONTEXT_DIR>/WEB_INF/metacat.properties
+For information about each property, and default or example settings, please see the
+:doc:`metacat-properties`. Properties that can only be edited manually in the
+**metacat-site.properties** file are highlighted in the appendix.
 
-Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application code 
-lives (e.g., ``/var/lib/tomcat7/webapps/metacat``). The path is a combination 
-of the Web application directory (e.g., ``/var/lib/tomcat7/webapps/``) and 
-the Metacat context directory (e.g., ``metacat``). Both values depend upon how your 
-system was set up during installation.
+Secret Properties
+.................
+Some properties hold sensitive information such as secret passwords. When these are entered via the
+Metacat Configuration Utility, they are saved as plain text in the **metacat-site.properties** file.
+If this causes security concerns, note that secrets may instead be passed to Metacat via
+environment variables.
 
-For information about each property and default or example settings, please 
-see the :doc:`metacat-properties`. Properties that can only be edited manually 
-in the metacat.properties file are highlighted in the appendix.
+Full details on how to set these values and how they are used by Metacat can be found in the
+Appendix, under: :ref:`secret-properties`.
 
 <SKIN_NAME>.properties
 ~~~~~~~~~~~~~~~~~~~~~~
-The ``<SKIN_NAME>.properties`` file contains skin-specific properties 
+.. deprecated:: 2.2.0
+   Use ``themes`` instead; see :doc:`themes`
+
+The ``<SKIN_NAME>.properties`` file contains skin-specific properties
 (e.g., template information). For each skin, the skin-specific properties are 
 found here::
 
@@ -523,3 +497,5 @@ In order to fix the issue, modify <Catalina_HOME>/conf/context.xml
   <Context useHttpOnly="false">
 
 Then restart Tomcat 7.
+
+.. include:: ./readonly.rst
