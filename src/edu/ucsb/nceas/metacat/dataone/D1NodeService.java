@@ -1452,15 +1452,10 @@ public abstract class D1NodeService {
      */
     private void updateSystemMetadataWithoutLock(SystemMetadata sysMeta, boolean needUpdateModificationDate) throws ServiceFailure {
         logMetacat.debug("D1NodeService.updateSystemMetadataWithoutLock() called.");
-        if(needUpdateModificationDate) {
-            logMetacat.debug("D1NodeService.updateSystemMetadataWithoutLock() - update the modification date.");
-            sysMeta.setDateSysMetadataModified(new Date());
-        }
-        
         // submit for indexing
         try {
             //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-            SystemMetadataManager.getInstance().store(sysMeta);
+            SystemMetadataManager.getInstance().store(sysMeta, needUpdateModificationDate);
             boolean isSysmetaChangeOnly = true;
             MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, isSysmetaChangeOnly, false);
         } catch (Exception e) {
