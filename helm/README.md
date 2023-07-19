@@ -145,7 +145,9 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `ingress.hosts`               | A collection of rules mapping different hosts to the backend. | `[]`             |
 | `ingress.annotations`         | Annotations for the ingress                                   | `{}`             |
 | `ingress.tls`                 | The TLS configuration                                         | `[]`             |
-| `service.type`                | Kubernetes Service type                                       | `ClusterIP`      |
+| `service.enabled`             | Enable another optional service in addition to headless svc   | `false`          |
+| `service.type`                | Kubernetes Service type. Defaults to ClusterIP if not set     | `LoadBalancer`   |
+| `service.clusterIP`           | IP address of the service. Auto-generated if not set          | `""`             |
 | `service.ports`               | The port(s) to be exposed                                     | `[]`             |
 | `livenessProbe.enabled`       | Enable livenessProbe for Metacat container                    | `true`           |
 | `livenessProbe.httpGet.path`  | The url path to probe.                                        | `/metacat/`      |
