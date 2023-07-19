@@ -111,10 +111,12 @@ public class RegisterDOITest extends D1NodeServiceTest {
         ezidUsername = PropertyService.getProperty("guid.doi.username");
         ezidPassword = PropertyService.getProperty("guid.doi.password");
         ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
+        assertFalse("ezidUsername is empty!", ezidUsername.trim().equals(""));
+        assertFalse("ezidPassword is empty!", ezidPassword.trim().equals(""));
+        assertFalse("ezidServiceBaseUrl is empty!", ezidServiceBaseUrl.trim().equals(""));
+
         ezid = new EZIDService(ezidServiceBaseUrl);
         doiService = DOIServiceFactory.getDOIService();
-        serverName = PropertyService.getProperty("server.name");
-		//        serverName = PropertyService.getProperty("server.name");
 		serverName = "RegisterDOITest.edu";
 		mockProperties = Mockito.mockStatic(PropertyService.class);
 		mockProperties.when(() -> PropertyService.getProperty(
@@ -945,7 +947,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     result = metadata.get(EzidDOIService.DATACITE);
                 }
             } catch (Exception e) {
-                
+
             }
             count++;
         } while (result == null && count < MAX_TIMES);

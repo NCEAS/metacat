@@ -119,7 +119,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
         String resultId  = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testPublicReadable method, the query result should have the id "+id.getValue()+ " rather than "+resultId, resultId.equals(id.getValue()));
+        assertEquals("testPublicReadable: query result ID is incorrect", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
         Session querySession2 = getSession(QUERYUSER, null);
@@ -161,7 +161,8 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         input = query(querySession2, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testOnlyUserReadable method, the query result for the user "+QUERYUSER+" should have the id "+id.getValue()+" rather than "+resultId, resultId.equals(id.getValue()));
+        assertEquals("testOnlyUserReadable: query result for the user " + QUERYUSER + " has the "
+                         + "wrong ID", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
         archive(session, id);
@@ -194,7 +195,10 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         input = query(querySession3, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testGroupReadable method, the query result for the user "+QUERYUSER+" which belong to the group should have the id "+id.getValue(), resultId.equals(id.getValue()));
+
+        assertEquals("testGroupReadable: query result for the user " + QUERYUSER
+                         + " which belong to the group has the wrong ID ",
+                     id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
         archive(session, id);
@@ -233,7 +237,8 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         input = query(querySession4, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testOnlyRightHolderReadable method, the query result for the creator "+CREATEUSER+" should be "+id.getValue(), id.getValue().equals(resultId));
+        assertEquals("testOnlyRightHolderReadable: query result for the creator "
+                       + CREATEUSER + " is incorrect ", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
         archive(session, id);
@@ -259,7 +264,8 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
         String resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testDistrustCertificate method, the query result id should be "+id.getValue(), id.getValue().equals(resultId));
+        assertEquals("testDistrustCertificate: query result for the creator "
+                         + CREATEUSER + " is incorrect ", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
         
