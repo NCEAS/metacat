@@ -159,6 +159,12 @@ ${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
     if [[ $ADMIN_LOGGED_IN -eq 0 ]]; then
         echo 'FAILED - unable to log in as admin'
         echo '**************************************'
+        echo "grepping log $TC_HOME/logs/localhost*.$(date +%Y-%m-%d).log for startup conditions..."
+        exec grep -B7 -A20 "FATAL" "$TC_HOME"/logs/*
+        echo
+        echo '**************************************'
+        echo
+        echo
         if [[ "$METACAT_DEBUG" != "true" ]]; then
           echo 'Exiting...'
           exit 3
