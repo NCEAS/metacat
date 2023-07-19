@@ -2039,11 +2039,11 @@ public abstract class D1NodeService {
               // archive it
               sysMeta.setArchived(true);
               if(needModifyDate) {
-                  sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                  //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                   sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
               }
               //HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
-              SystemMetadataManager.getInstance().store(sysMeta);
+              SystemMetadataManager.getInstance().store(sysMeta, needModifyDate);
               
               // submit for indexing
               // DocumentImpl call above should do this.
