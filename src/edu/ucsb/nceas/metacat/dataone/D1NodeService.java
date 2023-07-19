@@ -615,7 +615,7 @@ public abstract class D1NodeService {
   protected void removeSolrIndex(SystemMetadata sysMeta) {
       sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
       sysMeta.setArchived(true);
-      sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+      //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
       try {
           //MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, false);
           MetacatSolrIndex.getInstance().submitDeleteTask(sysMeta.getIdentifier(), sysMeta);
@@ -1364,9 +1364,9 @@ public abstract class D1NodeService {
       throws ServiceFailure {
       
   	  logMetacat.debug("Starting to insert SystemMetadata...");
-      sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-      logMetacat.debug("Inserting new system metadata with modified date " + 
-          sysmeta.getDateSysMetadataModified());
+      //sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+      //logMetacat.debug("Inserting new system metadata with modified date " + 
+          //sysmeta.getDateSysMetadataModified());
       
       //insert the system metadata
       try {
@@ -2063,12 +2063,12 @@ public abstract class D1NodeService {
                       // archive it
                       sysMeta.setArchived(true);
                       if(needModifyDate) {
-                          sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                          //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                           sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
                       }
                       //HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
                       try {
-                          SystemMetadataManager.getInstance().store(sysMeta);
+                          SystemMetadataManager.getInstance().store(sysMeta, needModifyDate);
                       } catch (InvalidRequest ee) {
                           throw new InvalidToken("1340", "Can't archive the identifier "+ pid.getValue()+" since " + ee.getMessage());
                       }
@@ -2130,11 +2130,11 @@ public abstract class D1NodeService {
                     sysMeta.setArchived(true);
                     if (needModifyDate) {
                         sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-                        sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                        //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                     }
                     //HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
                     try {
-                        SystemMetadataManager.getInstance().store(sysMeta);  
+                        SystemMetadataManager.getInstance().store(sysMeta, needModifyDate);  
                     } catch (InvalidRequest ee) {
                         throw new InvalidToken("4972", "Couldn't archive the object " + pid.getValue() +
                                 ". Couldn't obtain the system metadata record.");
