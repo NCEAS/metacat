@@ -87,27 +87,27 @@ import static org.mockito.ArgumentMatchers.eq;
 public class RegisterDOITest extends D1NodeServiceTest {
     public static final int MAX_TIMES = 20;
     public static final int SLEEP_TIME = 1000;
-	public static final String EMLFILEPATH = "test/tao.14563.1.xml";
-	public static final String creatorsStr = "<creators><creator><creatorName>onlySurName</creatorName></creator><creator><creatorName>National Center for Ecological Analysis and Synthesis</creatorName></creator><creator><creatorName>Smith, John</creatorName></creator><creator><creatorName>King, Wendy</creatorName></creator><creator><creatorName>University of California Santa Barbara</creatorName></creator></creators>";
-	
-	private static String serverName = null;
-	// get ezid config properties
+    public static final String EMLFILEPATH = "test/tao.14563.1.xml";
+    public static final String creatorsStr = "<creators><creator><creatorName>onlySurName</creatorName></creator><creator><creatorName>National Center for Ecological Analysis and Synthesis</creatorName></creator><creator><creatorName>Smith, John</creatorName></creator><creator><creatorName>King, Wendy</creatorName></creator><creator><creatorName>University of California Santa Barbara</creatorName></creator></creators>";
+    
+    private static String serverName = null;
+    // get ezid config properties
     private String ezidUsername = null;
     private String ezidPassword =  null;
     private String ezidServiceBaseUrl = null;
     private EZIDService ezid = null;
     private DOIService doiService = null;
-	private MockedStatic<PropertyService> mockProperties;
+    private MockedStatic<PropertyService> mockProperties;
 
-	/**
-	 * Set up the test fixtures
-	 * 
-	 * @throws Exception
-	 */
-	@Before
-	public void setUp() throws Exception {
-		super.setUp();
-		// get ezid config properties
+    /**
+     * Set up the test fixtures
+     * 
+     * @throws Exception
+     */
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        // get ezid config properties
         ezidUsername = PropertyService.getProperty("guid.doi.username");
         ezidPassword = PropertyService.getProperty("guid.doi.password");
         ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
@@ -117,323 +117,323 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
         ezid = new EZIDService(ezidServiceBaseUrl);
         doiService = DOIServiceFactory.getDOIService();
-		serverName = "RegisterDOITest.edu";
-		mockProperties = Mockito.mockStatic(PropertyService.class);
-		mockProperties.when(() -> PropertyService.getProperty(
-			eq("server.name"))).thenReturn(serverName);
-		mockProperties.when(() -> PropertyService.getProperty(
-			argThat((String s) -> !s.equals("server.name")))).thenCallRealMethod();
-		mockProperties.when(() -> PropertyService.setPropertyNoPersist(
-			anyString(), anyString())).thenCallRealMethod();
-	}
+        serverName = "RegisterDOITest.edu";
+        mockProperties = Mockito.mockStatic(PropertyService.class);
+        mockProperties.when(() -> PropertyService.getProperty(
+            eq("server.name"))).thenReturn(serverName);
+        mockProperties.when(() -> PropertyService.getProperty(
+            argThat((String s) -> !s.equals("server.name")))).thenCallRealMethod();
+        mockProperties.when(() -> PropertyService.setPropertyNoPersist(
+            anyString(), anyString())).thenCallRealMethod();
+    }
 
-	/**
-	 * Remove the test fixtures
-	 */
-	@After
-	public void tearDown() {
-		mockProperties.close();
-		super.tearDown();
-	}
+    /**
+     * Remove the test fixtures
+     */
+    @After
+    public void tearDown() {
+        mockProperties.close();
+        super.tearDown();
+    }
 
-	/**
-	 * Build the test suite
-	 * 
-	 * @return
-	 */
-	public static Test suite() {
+    /**
+     * Build the test suite
+     * 
+     * @return
+     */
+    public static Test suite() {
 
-		TestSuite suite = new TestSuite();
-		// DOI registration test
-		suite.addTest(new RegisterDOITest("testCreateDOI"));
-		suite.addTest(new RegisterDOITest("testMintAndCreateDOI"));
-		suite.addTest(new RegisterDOITest("testMintAndCreateForEML"));
-		// publish
-		suite.addTest(new RegisterDOITest("testPublishDOI"));
-		// test DOIs in the create method
-		suite.addTest(new RegisterDOITest("tesCreateDOIinSid"));
-		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnDOIObject"));
-		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnPrivateDOIObject"));
-		suite.addTest(new RegisterDOITest("testPublishEML220"));
-		suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOn"));
-		suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOff"));
-		suite.addTest(new RegisterDOITest("testPublishPrivatePackageToPublic"));
-		suite.addTest(new RegisterDOITest("testPublishPrivatePackageToPartialPublic"));
-		return suite;
+        TestSuite suite = new TestSuite();
+        // DOI registration test
+        suite.addTest(new RegisterDOITest("testCreateDOI"));
+        suite.addTest(new RegisterDOITest("testMintAndCreateDOI"));
+        suite.addTest(new RegisterDOITest("testMintAndCreateForEML"));
+        // publish
+        suite.addTest(new RegisterDOITest("testPublishDOI"));
+        // test DOIs in the create method
+        suite.addTest(new RegisterDOITest("tesCreateDOIinSid"));
+        suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnDOIObject"));
+        suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnPrivateDOIObject"));
+        suite.addTest(new RegisterDOITest("testPublishEML220"));
+        suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOn"));
+        suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOff"));
+        suite.addTest(new RegisterDOITest("testPublishPrivatePackageToPublic"));
+        suite.addTest(new RegisterDOITest("testPublishPrivatePackageToPartialPublic"));
+        return suite;
 
-	}
+    }
 
-	/**
-	 * Constructor for the tests
-	 * 
-	 * @param name
-	 *            - the name of the test
-	 */
-	public RegisterDOITest(String name) {
-		super(name);
+    /**
+     * Constructor for the tests
+     * 
+     * @param name
+     *            - the name of the test
+     */
+    public RegisterDOITest(String name) {
+        super(name);
 
-	}
+    }
 
-	/**
-	 * Initial blank test
-	 */
-	public void initialize() {
-		assertTrue(1 == 1);
+    /**
+     * Initial blank test
+     */
+    public void initialize() {
+        assertTrue(1 == 1);
 
-	}
-	
-	/**
-	 * constructs a "fake" session with a test subject
-	 * @return
-	 */
-	@Override
-	public Session getTestSession() throws Exception {
-		Session session = new Session();
+    }
+    
+    /**
+     * constructs a "fake" session with a test subject
+     * @return
+     */
+    @Override
+    public Session getTestSession() throws Exception {
+        Session session = new Session();
         Subject subject = new Subject();
         subject.setValue("CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org");
         session.setSubject(subject);
         return session;
-	}
+    }
   
-	public void testMintAndCreateDOI() {
-		printTestHeader("testMintAndCreateDOI");
-		testMintAndCreateDOI(null);
-	}
-  	
-	public void testMintAndCreateForEML() {
-		printTestHeader("testMintAndCreateForEML");
-		String emlFile = EMLFILEPATH;
-		InputStream content = null;
-		try {
-		    content = new FileInputStream(emlFile);
-		    testMintAndCreateDOI(content);
-		    content.close(); 
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		} catch (IOException e) {
-		    e.printStackTrace();
+    public void testMintAndCreateDOI() {
+        printTestHeader("testMintAndCreateDOI");
+        testMintAndCreateDOI(null);
+    }
+      
+    public void testMintAndCreateForEML() {
+        printTestHeader("testMintAndCreateForEML");
+        String emlFile = EMLFILEPATH;
+        InputStream content = null;
+        try {
+            content = new FileInputStream(emlFile);
+            testMintAndCreateDOI(content);
+            content.close(); 
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
             fail(e.getMessage());
-	    } finally {
-		    IOUtils.closeQuietly(content);
-		}
-	}
-	
-	/**
-	 * Test object creation
-	 */
-	private void testMintAndCreateDOI(InputStream inputStream) {
-		printTestHeader("testMintAndCreateDOI - common");
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        } finally {
+            IOUtils.closeQuietly(content);
+        }
+    }
+    
+    /**
+     * Test object creation
+     */
+    private void testMintAndCreateDOI(InputStream inputStream) {
+        printTestHeader("testMintAndCreateDOI - common");
 
-		try {
-			ezid.login(ezidUsername, ezidPassword);
-			// Mint a DOI
-			Session session = getTestSession();
-			Identifier guid = MNodeService.getInstance(request).generateIdentifier(session, "DOI", null);
-			
-			// check that EZID knows about it
-			HashMap<String, String> metadata = null;
-			int count = 0;
-			do {
-				try {
-				    Thread.sleep(SLEEP_TIME);
-					metadata = ezid.getMetadata(guid.getValue());
-				} catch (Exception e) {
-					
-				}
-				count++;
-			} while (metadata == null && count < MAX_TIMES);
-			assertNotNull(metadata);
+        try {
+            ezid.login(ezidUsername, ezidPassword);
+            // Mint a DOI
+            Session session = getTestSession();
+            Identifier guid = MNodeService.getInstance(request).generateIdentifier(session, "DOI", null);
+            
+            // check that EZID knows about it
+            HashMap<String, String> metadata = null;
+            int count = 0;
+            do {
+                try {
+                    Thread.sleep(SLEEP_TIME);
+                    metadata = ezid.getMetadata(guid.getValue());
+                } catch (Exception e) {
+                    
+                }
+                count++;
+            } while (metadata == null && count < MAX_TIMES);
+            assertNotNull(metadata);
 
-			// add the actual object for the newly-minted DOI
-			SystemMetadata sysmeta = null;
-			InputStream object = null;
-			boolean isMetadata = false;
-			if (inputStream != null) {
-				sysmeta = createSystemMetadata(guid, session.getSubject(), inputStream);
-				inputStream.close();
-				object = new FileInputStream(EMLFILEPATH);
-		        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
-		        isMetadata = true;
-			} else {
-				object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-				sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-				object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-			}
+            // add the actual object for the newly-minted DOI
+            SystemMetadata sysmeta = null;
+            InputStream object = null;
+            boolean isMetadata = false;
+            if (inputStream != null) {
+                sysmeta = createSystemMetadata(guid, session.getSubject(), inputStream);
+                inputStream.close();
+                object = new FileInputStream(EMLFILEPATH);
+                sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+                isMetadata = true;
+            } else {
+                object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+                sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+                object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            }
 
-			Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-			assertEquals(guid.getValue(), pid.getValue());
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            assertEquals(guid.getValue(), pid.getValue());
 
-			// check for the metadata for title element
-			count = 0;
-			metadata = null;
-			do {
-				try {
-				    Thread.sleep(SLEEP_TIME);
-					metadata = ezid.getMetadata(pid.getValue());
-					// check if the update thread finished yet, otherwise try again
-					if (metadata != null && isMetadata) {
-						String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-						if (!registeredTarget.contains(serverName)) {
-							// try fetching it again
-							metadata = null;
-						}
-					}
-				} catch (Exception e) {
-					
-				}
-				count++;
-			} while (metadata == null && count < MAX_TIMES);
-			assertNotNull(metadata);
-			assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
-			
-			// check that the target URI was updated
-			if (isMetadata) {
-				String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-				assertTrue(registeredTarget.contains(serverName));
-			}
-			if (isMetadata) {
-				String creator = metadata.get(DataCiteProfile.CREATOR.toString());
-				//assertTrue(creator.equals("John Doe;NCEAS"));				
-			}
-			
-			System.out.println("tested with DOI: " + pid.getValue());
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Unexpected error: " + e.getMessage());
-		}
-	}
-	
-	/**
-	 * Test object creation
-	 */
-	public void testCreateDOI() {
-		printTestHeader("testCreateDOI");
+            // check for the metadata for title element
+            count = 0;
+            metadata = null;
+            do {
+                try {
+                    Thread.sleep(SLEEP_TIME);
+                    metadata = ezid.getMetadata(pid.getValue());
+                    // check if the update thread finished yet, otherwise try again
+                    if (metadata != null && isMetadata) {
+                        String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+                        if (!registeredTarget.contains(serverName)) {
+                            // try fetching it again
+                            metadata = null;
+                        }
+                    }
+                } catch (Exception e) {
+                    
+                }
+                count++;
+            } while (metadata == null && count < MAX_TIMES);
+            assertNotNull(metadata);
+            assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
+            
+            // check that the target URI was updated
+            if (isMetadata) {
+                String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+                assertTrue(registeredTarget.contains(serverName));
+            }
+            if (isMetadata) {
+                String creator = metadata.get(DataCiteProfile.CREATOR.toString());
+                //assertTrue(creator.equals("John Doe;NCEAS"));                
+            }
+            
+            System.out.println("tested with DOI: " + pid.getValue());
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Test object creation
+     */
+    public void testCreateDOI() {
+        printTestHeader("testCreateDOI");
 
-		try {
-			// get ezid config properties
-			String shoulder = PropertyService.getProperty("guid.doi.doishoulder.1");
-			
-			Session session = getTestSession();
-			Identifier guid = new Identifier();
-			guid.setValue(shoulder + "/testCreateDOI." + System.currentTimeMillis());
-			InputStream object = new ByteArrayInputStream( "test".getBytes("UTF-8"));
-			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-			Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-			assertEquals(guid.getValue(), pid.getValue());
+        try {
+            // get ezid config properties
+            String shoulder = PropertyService.getProperty("guid.doi.doishoulder.1");
+            
+            Session session = getTestSession();
+            Identifier guid = new Identifier();
+            guid.setValue(shoulder + "/testCreateDOI." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream( "test".getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            assertEquals(guid.getValue(), pid.getValue());
 
-			// check for the metadata explicitly, using ezid service
-			ezid.login(ezidUsername, ezidPassword);
-			int count = 0;
-			HashMap<String, String> metadata = null;
-			do {
-				try {
-				    Thread.sleep(SLEEP_TIME);
-					metadata = ezid.getMetadata(pid.getValue());
-				} catch (Exception e) {
-					
-				}
-				count++;
-			} while (metadata == null && count < MAX_TIMES);
-			
-			assertNotNull(metadata);
-			assertTrue(metadata.containsKey(EzidDOIService.DATACITE));
-			String datacite = metadata.get(EzidDOIService.DATACITE);
-			System.out.println(""+datacite);
-			assertTrue(datacite.contains("CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org"));
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Unexpected error: " + e.getMessage());
-		}
-	}
-	
-	/**
-	 * Test object publishing
-	 */
-	public void testPublishDOI() {
-		printTestHeader("testPublishDOI");
+            // check for the metadata explicitly, using ezid service
+            ezid.login(ezidUsername, ezidPassword);
+            int count = 0;
+            HashMap<String, String> metadata = null;
+            do {
+                try {
+                    Thread.sleep(SLEEP_TIME);
+                    metadata = ezid.getMetadata(pid.getValue());
+                } catch (Exception e) {
+                    
+                }
+                count++;
+            } while (metadata == null && count < MAX_TIMES);
+            
+            assertNotNull(metadata);
+            assertTrue(metadata.containsKey(EzidDOIService.DATACITE));
+            String datacite = metadata.get(EzidDOIService.DATACITE);
+            System.out.println(""+datacite);
+            assertTrue(datacite.contains("CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Test object publishing
+     */
+    public void testPublishDOI() {
+        printTestHeader("testPublishDOI");
 
-		try {
-			Session session = getTestSession();
-			Identifier guid = new Identifier();
-			guid.setValue("testPublishDOI." + System.currentTimeMillis());
-			
-			// use EML to test
-			// TODO: include an ORE to really exercise it
-			String emlFile = "test/eml-datacite.xml";
-			InputStream content = null;
-			try {
-				content = new FileInputStream(emlFile);
-	            
-	            // create the initial version without DOI
-	            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), content);
-	            content.close();
-	            sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.0.1").getFormatId());
-	            content = new FileInputStream(emlFile);
-	            Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
-	            content.close();
-	            assertEquals(guid.getValue(), pid.getValue());
-	            Thread.sleep(5000);
+        try {
+            Session session = getTestSession();
+            Identifier guid = new Identifier();
+            guid.setValue("testPublishDOI." + System.currentTimeMillis());
+            
+            // use EML to test
+            // TODO: include an ORE to really exercise it
+            String emlFile = "test/eml-datacite.xml";
+            InputStream content = null;
+            try {
+                content = new FileInputStream(emlFile);
+                
+                // create the initial version without DOI
+                SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), content);
+                content.close();
+                sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.0.1").getFormatId());
+                content = new FileInputStream(emlFile);
+                Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+                content.close();
+                assertEquals(guid.getValue(), pid.getValue());
+                Thread.sleep(5000);
 
-	            // now publish it
-	            Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
-	            
-	            //check if the package id was updated
-	            InputStream emlObj = MNodeService.getInstance(request).get(session, publishedIdentifier);
-	            String emlStr = IOUtils.toString(emlObj, "UTF-8");
-	            assertTrue(emlStr.contains("packageId=\"" + publishedIdentifier.getValue() + "\""));
-	            
-	            // check for the metadata explicitly, using ezid service
-	            ezid.login(ezidUsername, ezidPassword);
-	            int count = 0;
-				HashMap<String, String> metadata = null;
-				String result = null;
-				do {
-					try {
-					    Thread.sleep(SLEEP_TIME);
-						metadata = ezid.getMetadata(publishedIdentifier.getValue());
-						if (metadata != null) {
-						    result = metadata.get(EzidDOIService.DATACITE);
-						}
-					} catch (Exception e) {
-						
-					}
-					count++;
-				} while (result == null && count < MAX_TIMES);
-	            assertNotNull(metadata);
-	            result = metadata.get(EzidDOIService.DATACITE);
-	            System.out.println("result is\n"+result);
-	            Node node = MNodeService.getInstance(null).getCapabilities();
-	            String nodeName = node.getName();
-	            String id = publishedIdentifier.getValue();
-	            id = id.replaceFirst("doi:", "");
-	            //assertTrue(result.contains(EML2DataCiteFactoryTest.section));
-	            System.out.println(id+EML2DataCiteFactoryTest.section1);
-	            assertTrue(result.contains(id+EML2DataCiteFactoryTest.section1));
-	            assertTrue(result.contains(EML2DataCiteFactoryTest.section2));
-	            assertTrue(result.contains(EML2DataCiteFactoryTest.section3));
-	            assertTrue(result.contains(EML2DataCiteFactoryTest.section4 + EML2DataCiteFactoryTest.section41));
-	            assertTrue(result.contains(EML2DataCiteFactoryTest.section5));
-	            assertTrue(result.contains(EML2DataCiteFactoryTest.section6));
-	            assertTrue(result.contains(EML2DataCiteFactoryTest.section7));
-	            content.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-				fail(e.getMessage());
-			} finally {
-			    IOUtils.closeQuietly(content);
-			}
+                // now publish it
+                Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
+                
+                //check if the package id was updated
+                InputStream emlObj = MNodeService.getInstance(request).get(session, publishedIdentifier);
+                String emlStr = IOUtils.toString(emlObj, "UTF-8");
+                assertTrue(emlStr.contains("packageId=\"" + publishedIdentifier.getValue() + "\""));
+                
+                // check for the metadata explicitly, using ezid service
+                ezid.login(ezidUsername, ezidPassword);
+                int count = 0;
+                HashMap<String, String> metadata = null;
+                String result = null;
+                do {
+                    try {
+                        Thread.sleep(SLEEP_TIME);
+                        metadata = ezid.getMetadata(publishedIdentifier.getValue());
+                        if (metadata != null) {
+                            result = metadata.get(EzidDOIService.DATACITE);
+                        }
+                    } catch (Exception e) {
+                        
+                    }
+                    count++;
+                } while (result == null && count < MAX_TIMES);
+                assertNotNull(metadata);
+                result = metadata.get(EzidDOIService.DATACITE);
+                System.out.println("result is\n"+result);
+                Node node = MNodeService.getInstance(null).getCapabilities();
+                String nodeName = node.getName();
+                String id = publishedIdentifier.getValue();
+                id = id.replaceFirst("doi:", "");
+                //assertTrue(result.contains(EML2DataCiteFactoryTest.section));
+                System.out.println(id+EML2DataCiteFactoryTest.section1);
+                assertTrue(result.contains(id+EML2DataCiteFactoryTest.section1));
+                assertTrue(result.contains(EML2DataCiteFactoryTest.section2));
+                assertTrue(result.contains(EML2DataCiteFactoryTest.section3));
+                assertTrue(result.contains(EML2DataCiteFactoryTest.section4 + EML2DataCiteFactoryTest.section41));
+                assertTrue(result.contains(EML2DataCiteFactoryTest.section5));
+                assertTrue(result.contains(EML2DataCiteFactoryTest.section6));
+                assertTrue(result.contains(EML2DataCiteFactoryTest.section7));
+                content.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                fail(e.getMessage());
+            } finally {
+                IOUtils.closeQuietly(content);
+            }
 
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Unexpected error: " + e.getMessage());
-		}
-	}
-	
-	
-	/**
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
+    }
+    
+    
+    /**
      * Test the cases that an DOI is in the SID field.
      */
     public void tesCreateDOIinSid() {

@@ -275,10 +275,10 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         String baseURL = node.getBaseURL();
         System.out.println("================The base url is "+baseURL);
         if (baseURL.contains("https://localhost")) {
-        	// force localhost to skip https - most common for devs
-        	baseURL = baseURL.replace("https", "http");
-        	baseURL = baseURL.replace("8443", "8080");
-        	baseURL = baseURL.replace("443", "80");
+            // force localhost to skip https - most common for devs
+            baseURL = baseURL.replace("https", "http");
+            baseURL = baseURL.replace("8443", "8080");
+            baseURL = baseURL.replace("443", "80");
         }
         System.out.println("================The MODIFIED base url is "+baseURL);
         MNode mnNode = D1Client.getMN(baseURL);
