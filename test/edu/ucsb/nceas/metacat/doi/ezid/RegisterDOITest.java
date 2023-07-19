@@ -94,7 +94,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
     // get ezid config properties
     private String ezidUsername = null;
     private String ezidPassword =  null;
-    private String ezidServiceBaseUrl = null;
     private EZIDService ezid = null;
     private DOIService doiService = null;
     private MockedStatic<PropertyService> mockProperties;
@@ -110,7 +109,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         // get ezid config properties
         ezidUsername = PropertyService.getProperty("guid.doi.username");
         ezidPassword = PropertyService.getProperty("guid.doi.password");
-        ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
+        String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
         assertFalse("ezidUsername is empty!", ezidUsername.trim().equals(""));
         assertFalse("ezidPassword is empty!", ezidPassword.trim().equals(""));
         assertFalse("ezidServiceBaseUrl is empty!", ezidServiceBaseUrl.trim().equals(""));
@@ -494,7 +493,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             }
             
             
-            //Test the case that the identifier is non-doi but the sid is an doi 
+            //Test the case that the identifier is non-doi but the sid is a doi
             try {
                 Identifier guid = new Identifier();
                 guid.setValue("tesCreateDOIinSid." + System.currentTimeMillis());
@@ -660,7 +659,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     } catch (Exception e) {
                         
                     }
-                    count = count + 4; //since it will null so we don't need run to many times.
+                    count = count + 4; // it will be null, so we don't need to run too many times.
                 } while (metadata == null && count < MAX_TIMES);
                 System.out.println("the metadata is "+metadata);
                 assertNull(metadata);
@@ -671,7 +670,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     } catch (Exception e) {
                         
                     }
-                    count = count + 4; //since it will null so we don't need run to many times.
+                    count = count + 4; // it will be null, so we don't need to run too many times.
                 } while (metadata == null && count < MAX_TIMES);
                 assertNull(metadata);
                 content.close();
@@ -997,7 +996,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
     
     /**
      * When the autoPublish is true, to test the whole process:
-     * Reserve a doi, create an object use the doi and publisIdentifier this doi.
+     * Reserve a doi, create an object use the doi and publishIdentifier this doi.
      * @throws Exception
      */
     public void testPublishIdentifierProcessWithAutoPublishOn() throws Exception {
@@ -1102,7 +1101,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
     
     /**
      * When the autoPublish is false, to test the whole process:
-     * Reserve a doi, create an object use the doi and publisIdentifier this doi.
+     * Reserve a doi, create an object use the doi and publishIdentifier this doi.
      * @throws Exception
      */
     public void testPublishIdentifierProcessWithAutoPublishOff() throws Exception {

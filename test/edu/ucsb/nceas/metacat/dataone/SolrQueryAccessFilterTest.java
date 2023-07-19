@@ -1,29 +1,11 @@
 package edu.ucsb.nceas.metacat.dataone;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
-
-import org.apache.http.HttpResponse;
-import org.dataone.client.v2.itk.D1Client;
+import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.formats.ObjectFormatCache;
-import org.dataone.client.rest.RestClient;
-import org.dataone.client.auth.CertificateManager;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
@@ -41,6 +23,18 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -249,7 +243,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testDistrustCertificate() throws Exception {
-        //create a object only be readable by the USERWITHCERT
+        //create an object only be readable by the USERWITHCERT
         Session session = getSession(CREATEUSER, null);
         Identifier id = generateIdentifier();
         String[] allowUsers = {USERWITHCERT};
@@ -269,7 +263,8 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
         
-        //Use the libclient without the session, the user shouldn't query the document since its certificate is distrusted and it will be considered as the public.
+        // Use the libclient without the session: the user shouldn't query the document since its
+        // certificate is distrusted, and it will be considered public.
         org.dataone.service.types.v2.Node node = MNodeService.getInstance(request).getCapabilities();
         CertificateManager.getInstance().setCertificateLocation(INTRUSTCERTFILE);
         String baseURL = node.getBaseURL();
