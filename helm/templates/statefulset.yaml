@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "metacat.labels" . | nindent 4 }}
 spec:
-  serviceName: {{ include "metacat.fullname" . }}-headless-svc
+  serviceName: {{ include "metacat.fullname" . }}-hl
   replicas: 1
   selector:
     matchLabels:
@@ -35,6 +35,12 @@ spec:
           ports:
             - containerPort: 8080
               name: metacat-web
+            - containerPort: 5701
+              name: hazelcast-port1
+            - containerPort: 5702
+              name: hazelcast-port2
+            - containerPort: 5703
+              name: hazelcast-port3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:

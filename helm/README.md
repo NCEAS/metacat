@@ -101,7 +101,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `metacat.auth.administrators`    | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,ou=Account,dc=ecoinformatics,dc=org` |
 | `metacat.database.connectionURI` | postgres DB URI (RELEASE PREFIX, or blank for sub-chart)      | `jdbc:postgresql://mc-postgresql/metacat`                       |
 | `metacat.guid.doi.enabled`       | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                          |
-| `metacat.server.httpPort`        | The http port exposed internally by the metacat container     | `8080`                                                          |
+| `metacat.server.httpPort`        | The http port exposed externally by the Ingress or Service    | `80`                                                            |
 | `metacat.server.name`            | The hostname for the server, as exposed by the ingress        | `localhost`                                                     |
 | `metacat.solr.baseURL`           | The url to access solr                                        | `http://host.docker.internal:8983/solr`                         |
 | `metacat.replication.logdir`     | Location for the replication logs                             | `/var/metacat/logs`                                             |
@@ -145,7 +145,9 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `ingress.hosts`               | A collection of rules mapping different hosts to the backend. | `[]`             |
 | `ingress.annotations`         | Annotations for the ingress                                   | `{}`             |
 | `ingress.tls`                 | The TLS configuration                                         | `[]`             |
-| `service.type`                | Kubernetes Service type                                       | `ClusterIP`      |
+| `service.enabled`             | Enable another optional service in addition to headless svc   | `false`          |
+| `service.type`                | Kubernetes Service type. Defaults to ClusterIP if not set     | `LoadBalancer`   |
+| `service.clusterIP`           | IP address of the service. Auto-generated if not set          | `""`             |
 | `service.ports`               | The port(s) to be exposed                                     | `[]`             |
 | `livenessProbe.enabled`       | Enable livenessProbe for Metacat container                    | `true`           |
 | `livenessProbe.httpGet.path`  | The url path to probe.                                        | `/metacat/`      |
