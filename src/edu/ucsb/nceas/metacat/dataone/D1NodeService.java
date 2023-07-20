@@ -398,7 +398,7 @@ public abstract class D1NodeService {
    * @throws InvalidRequest
    */
   public Identifier create(Session session, Identifier pid, InputStream object,
-    SystemMetadata sysmeta) 
+    SystemMetadata sysmeta, boolean changeModificationDate) 
     throws InvalidToken, ServiceFailure, NotAuthorized, IdentifierNotUnique, 
     UnsupportedType, InsufficientResources, InvalidSystemMetadata, 
     NotImplemented, InvalidRequest {
@@ -444,7 +444,7 @@ public abstract class D1NodeService {
     try {
         // lock and unlock of the pid happens in the subclass
         //HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
-        SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate);
     } catch (Exception e) {
         logMetacat.error("D1Node.create - There was problem to save the system metadata: " + pid.getValue(), e);
         throw new ServiceFailure("1190", "There was problem to save the system metadata: " + pid.getValue()+" since "+e.getMessage());

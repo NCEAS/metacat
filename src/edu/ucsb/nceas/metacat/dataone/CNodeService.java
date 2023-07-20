@@ -1770,8 +1770,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               //for the object whose authoritative mn is v2. we just accept the modification date.
               D1NodeVersionChecker checker = new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
               String version = checker.getVersion("MNRead");
+              boolean changeModificationDate  = false;
               if(version != null && version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
-                  sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                  //sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                  changeModificationDate = true;
               }
               //sysmeta.setArchived(false); // this is a create op, not update
               
@@ -1785,7 +1787,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                       "Both the origin and authoritative member node identifiers need to be set.");
                   
               }
-              pid = super.create(session, pid, object, sysmeta);
+              pid = super.create(session, pid, object, sysmeta, changeModificationDate);
 
           } else {
               String msg = "The subject listed as " + session.getSubject().getValue() + 

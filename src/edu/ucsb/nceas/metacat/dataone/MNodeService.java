@@ -878,7 +878,8 @@ public class MNodeService extends D1NodeService
             throw new InvalidRequest("1102", "Can't find the resource " + e.getMessage());
         }
         // call the shared impl
-        Identifier resultPid = super.create(session, pid, object, sysmeta);
+        boolean changeModificationDate = true;
+        Identifier resultPid = super.create(session, pid, object, sysmeta, changeModificationDate);
 
         // attempt to register the identifier - it checks if it is a doi
         try {
@@ -1147,7 +1148,8 @@ public class MNodeService extends D1NodeService
                     // TODO: this will fail if we already "know" about the identifier
                     // FIXME: see https://redmine.dataone.org/issues/2572
                     objectExists(pid);
-                    retPid = super.create(session, pid, object, sysmeta);
+                    boolean changedModificationDate = false;
+                    retPid = super.create(session, pid, object, sysmeta, changedModificationDate);
                     result = (retPid.getValue().equals(pid.getValue()));
                 }
 
