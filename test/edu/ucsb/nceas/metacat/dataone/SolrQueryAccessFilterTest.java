@@ -39,15 +39,17 @@ import java.util.List;
 
 /**
  * A test class to test the access filter mechanism for the solr query
- * @author tao
  *
+ * @author tao
  */
 public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
-    
+
     private static final String SOLR = "solr";
     private static final String EML201NAMESPACE = "eml://ecoinformatics.org/eml-2.0.1";
-    private static final String CREATEUSER = "CN=Christopher Jones A583,O=Google,C=US,DC=cilogon,DC=org";
-    private static final String QUERYUSER = "CN=ben leinfelder A756,O=Google,C=US,DC=cilogon,DC=org";
+    private static final String CREATEUSER =
+        "CN=Christopher Jones A583,O=Google,C=US,DC=cilogon,DC=org";
+    private static final String QUERYUSER =
+        "CN=ben leinfelder A756,O=Google,C=US,DC=cilogon,DC=org";
     private static final String GROUP1 = "CN=PISCO-data-managers,DC=cilogon,DC=org";
     private static final String GROUP2 = "CN=dataone-coredev,DC=cilogon,DC=org";
     private static final String USERWITHCERT = "CN=Jing Tao,OU=NCEAS,O=UCSB,ST=California,C=US";
@@ -55,49 +57,51 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
     private static final String INTRUSTCERTFILE = "test/test-credentials/test-user.pem";
     private static final String IDXPATH = "//response/result/doc/str[@name='id']/text()";
     private static final String TITLEPATH = "//response/result/doc/str[@name='title']/text()";
-    private static final String TITLE = "Mollusc population abundance monitoring: Fall 2000 mid-marsh and creekbank infaunal and epifaunal mollusc abundance based on collections from GCE marsh, monitoring sites 1-10";
-    
+    private static final String TITLE =
+        "Mollusc population abundance monitoring: Fall 2000 mid-marsh and creekbank infaunal and "
+            + "epifaunal mollusc abundance based on collections from GCE marsh, monitoring sites "
+            + "1-10";
+
+    /**
+     * Constructor for the tests
+     *
+     * @param name - the name of the test
+     */
+    public SolrQueryAccessFilterTest(String name) {
+        super(name);
+
+    }
+
     /**
      * Build the test suite
+     *
      * @return
      */
     public static Test suite() {
-      
-      TestSuite suite = new TestSuite();
-      suite.addTest(new SolrQueryAccessFilterTest("testPublicReadable"));
-      suite.addTest(new SolrQueryAccessFilterTest("testOnlyUserReadable"));
-      suite.addTest(new SolrQueryAccessFilterTest("testGroupReadable"));
-      suite.addTest(new SolrQueryAccessFilterTest("testOnlyRightHolderReadable"));
-      suite.addTest(new SolrQueryAccessFilterTest("testDistrustCertificate"));
-      
-      return suite;
-      
+
+        TestSuite suite = new TestSuite();
+        suite.addTest(new SolrQueryAccessFilterTest("testPublicReadable"));
+        suite.addTest(new SolrQueryAccessFilterTest("testOnlyUserReadable"));
+        suite.addTest(new SolrQueryAccessFilterTest("testGroupReadable"));
+        suite.addTest(new SolrQueryAccessFilterTest("testOnlyRightHolderReadable"));
+        suite.addTest(new SolrQueryAccessFilterTest("testDistrustCertificate"));
+
+        return suite;
+
     }
-    
+
     /**
      * Set up the test fixtures
-     * 
+     *
      * @throws Exception
      */
     @Before
     public void setUp() throws Exception {
-      super.setUp();
-      // set up the configuration for d1client
-      Settings.getConfiguration().setProperty("D1Client.cnClassName", MockCNode.class.getName());
+        super.setUp();
+        // set up the configuration for d1client
+        Settings.getConfiguration().setProperty("D1Client.cnClassName", MockCNode.class.getName());
     }
-    
-    /**
-     * Constructor for the tests
-     * 
-     * @param name - the name of the test
-     */
-    public SolrQueryAccessFilterTest(String name) {
-      super(name);
-      
-    }
-    
-   
-    
+
     /**
      * Test to query a public readable document
      */
@@ -106,13 +110,14 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         Identifier id = generateIdentifier();
         String[] allowUsers = {Constants.SUBJECT_PUBLIC};
         File object = new File(EMLFILE);
-        SystemMetadata sysmeta = generateSystemMetadata(id, session.getSubject(), object , allowUsers);
+        SystemMetadata sysmeta =
+            generateSystemMetadata(id, session.getSubject(), object, allowUsers);
         createObject(session, id, object, sysmeta);
         Thread.sleep(10000);
         Session querySession = getSession(Constants.SUBJECT_PUBLIC, null);
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
-        String resultId  = extractElementValue(doc, IDXPATH);
+        String resultId = extractElementValue(doc, IDXPATH);
         assertEquals("testPublicReadable: query result ID is incorrect", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
@@ -120,19 +125,24 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         input = query(querySession2, id);
         doc = generateDoc(input);
         String resultId2 = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testPublicReadable method, the query result should have the id "+id.getValue()+ " rather than "+resultId2, resultId2.equals(id.getValue()));
+        assertTrue(
+            "In the testPublicReadable method, the query result should have the id " + id.getValue()
+                + " rather than " + resultId2, resultId2.equals(id.getValue()));
         title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
-        
+
         archive(session, id);
         Thread.sleep(3000);
         input = query(querySession2, id);
         doc = generateDoc(input);
         String resultId3 = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testPublicReadable method, the query result should be null since the document was archived. ", resultId3 == null);
+        assertTrue(
+            "In the testPublicReadable method, the query result should be null since the document"
+                + " was archived. ",
+            resultId3 == null);
     }
-    
-    
+
+
     /**
      * Test to query a document which can only be read by a specified user
      */
@@ -142,15 +152,19 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         Identifier id = generateIdentifier();
         String[] allowUsers = {QUERYUSER};
         File object = new File(EMLFILE);
-        SystemMetadata sysmeta = generateSystemMetadata(id, session.getSubject(), object , allowUsers);
+        SystemMetadata sysmeta =
+            generateSystemMetadata(id, session.getSubject(), object, allowUsers);
         createObject(session, id, object, sysmeta);
-        
+
         Thread.sleep(10000);
         Session querySession = getSession(Constants.SUBJECT_PUBLIC, null);
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
         String resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testOnlyUserReadable method, the query result id should be null for the public rather than "+resultId, resultId == null);
+        assertTrue(
+            "In the testOnlyUserReadable method, the query result id should be null for the "
+                + "public rather than "
+                + resultId, resultId == null);
         Session querySession2 = getSession(QUERYUSER, null);
         input = query(querySession2, id);
         doc = generateDoc(input);
@@ -161,7 +175,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         assertTrue(title.equals(TITLE));
         archive(session, id);
     }
-    
+
     /**
      * Test to query a document which can be read by a specified group
      */
@@ -171,34 +185,37 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         Identifier id = generateIdentifier();
         String[] allowUsers = {GROUP1, GROUP2};
         File object = new File(EMLFILE);
-        SystemMetadata sysmeta = generateSystemMetadata(id, session.getSubject(), object , allowUsers);
+        SystemMetadata sysmeta =
+            generateSystemMetadata(id, session.getSubject(), object, allowUsers);
         createObject(session, id, object, sysmeta);
         Thread.sleep(10000);
         Session querySession = getSession(Constants.SUBJECT_PUBLIC, null);
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
         String resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testGroupReadable method, the query result id should be null for the public ", resultId == null);
+        assertTrue(
+            "In the testGroupReadable method, the query result id should be null for the public ",
+            resultId == null);
         Session querySession2 = getSession(QUERYUSER, null);
         input = query(querySession2, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testGroupReadable method, the query result for the user "+QUERYUSER+" which doesn't belong to the group should be null ", resultId == null);
-        String[]groups = {GROUP1};
+        assertTrue("In the testGroupReadable method, the query result for the user " + QUERYUSER
+                       + " which doesn't belong to the group should be null ", resultId == null);
+        String[] groups = {GROUP1};
         Session querySession3 = getSession(QUERYUSER, groups);
         input = query(querySession3, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
 
         assertEquals("testGroupReadable: query result for the user " + QUERYUSER
-                         + " which belong to the group has the wrong ID ",
-                     id.getValue(), resultId);
+                         + " which belong to the group has the wrong ID ", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
         archive(session, id);
     }
-    
-    
+
+
     /**
      * Test to query a document which only can be read by the rightHolder
      */
@@ -208,38 +225,47 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         Identifier id = generateIdentifier();
         String[] allowUsers = null;
         File object = new File(EMLFILE);
-        SystemMetadata sysmeta = generateSystemMetadata(id, session.getSubject(), object , allowUsers);
+        SystemMetadata sysmeta =
+            generateSystemMetadata(id, session.getSubject(), object, allowUsers);
         createObject(session, id, object, sysmeta);
         Thread.sleep(10000);
         Session querySession = getSession(Constants.SUBJECT_PUBLIC, null);
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
         String resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testOnlyRightHolderReadable method, the query result id should be null for the public ", resultId == null);
+        assertTrue(
+            "In the testOnlyRightHolderReadable method, the query result id should be null for "
+                + "the public ",
+            resultId == null);
         Session querySession2 = getSession(QUERYUSER, null);
         input = query(querySession2, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testOnlyRightHolderReadable method, the query result for the user "+QUERYUSER+" which doesn't belong to the group should be null.", resultId == null);
-        String[]groups = {GROUP1};
+        assertTrue(
+            "In the testOnlyRightHolderReadable method, the query result for the user " + QUERYUSER
+                + " which doesn't belong to the group should be null.", resultId == null);
+        String[] groups = {GROUP1};
         Session querySession3 = getSession(QUERYUSER, groups);
         input = query(querySession3, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testOnlyRightHolderReadable method, the query result for the user "+QUERYUSER+" which belong to the group should be null.", resultId == null);
+        assertTrue(
+            "In the testOnlyRightHolderReadable method, the query result for the user " + QUERYUSER
+                + " which belong to the group should be null.", resultId == null);
         Session querySession4 = getSession(CREATEUSER, groups);
         input = query(querySession4, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertEquals("testOnlyRightHolderReadable: query result for the creator "
-                       + CREATEUSER + " is incorrect ", id.getValue(), resultId);
+        assertEquals("testOnlyRightHolderReadable: query result for the creator " + CREATEUSER
+                         + " is incorrect ", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
         archive(session, id);
     }
-    
+
     /**
      * Test a user with a distrusted certificate.
+     *
      * @throws Exception
      */
     public void testDistrustCertificate() throws Exception {
@@ -248,67 +274,71 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         Identifier id = generateIdentifier();
         String[] allowUsers = {USERWITHCERT};
         File object = new File(EMLFILE);
-        SystemMetadata sysmeta = generateSystemMetadata(id, session.getSubject(), object , allowUsers);
+        SystemMetadata sysmeta =
+            generateSystemMetadata(id, session.getSubject(), object, allowUsers);
         createObject(session, id, object, sysmeta);
         Thread.sleep(10000);
-        
+
         //use faking session, the user can query the document
         Session querySession = getSession(USERWITHCERT, null);
-        
+
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
         String resultId = extractElementValue(doc, IDXPATH);
-        assertEquals("testDistrustCertificate: query result for the creator "
-                         + CREATEUSER + " is incorrect ", id.getValue(), resultId);
+        assertEquals("testDistrustCertificate: query result for the creator " + CREATEUSER
+                         + " is incorrect ", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
         assertTrue(title.equals(TITLE));
-        
+
         // Use the libclient without the session: the user shouldn't query the document since its
         // certificate is distrusted, and it will be considered public.
-        org.dataone.service.types.v2.Node node = MNodeService.getInstance(request).getCapabilities();
+        org.dataone.service.types.v2.Node node =
+            MNodeService.getInstance(request).getCapabilities();
         CertificateManager.getInstance().setCertificateLocation(INTRUSTCERTFILE);
         String baseURL = node.getBaseURL();
-        System.out.println("================The base url is "+baseURL);
+        System.out.println("================The base url is " + baseURL);
         if (baseURL.contains("https://localhost")) {
             // force localhost to skip https - most common for devs
             baseURL = baseURL.replace("https", "http");
             baseURL = baseURL.replace("8443", "8080");
             baseURL = baseURL.replace("443", "80");
         }
-        System.out.println("================The MODIFIED base url is "+baseURL);
+        System.out.println("================The MODIFIED base url is " + baseURL);
         MNode mnNode = D1Client.getMN(baseURL);
         try {
             input = mnNode.query(querySession, SOLR, generateQuery(id.getValue()));
             fail("Can't reach here since it is an untrusted certificate");
         } catch (Exception e) {
-            System.out.println("The exception is "+e.getMessage());
-            System.out.println("the exception class is "+e.getClass().getCanonicalName());
+            System.out.println("The exception is " + e.getMessage());
+            System.out.println("the exception class is " + e.getClass().getCanonicalName());
             assertTrue(e instanceof ServiceFailure);
         }
-        
+
         //doc = generateDoc(input);
         //String resultId2 = extractElementValue(doc, IDXPATH);
-        //assertTrue("In the testDistrustCertificate method, the query result id should be null", resultId2==null);
+        //assertTrue("In the testDistrustCertificate method, the query result id should be null",
+        // resultId2==null);
         archive(session, id);
-        
+
     }
-    
+
     /*
      * constructs a "fake" session with the specified subject and groups.
-     * If groups is not null, the session will have a subjectinfo which contains the person with the subject and is the member of the groups.
+     * If groups is not null, the session will have a subjectinfo which contains the person with
+     * the subject and is the member of the groups.
      * @return
      */
-    private Session getSession(String subjectValue, String[]groups) throws Exception {
+    private Session getSession(String subjectValue, String[] groups) throws Exception {
         Session session = new Session();
         Subject subject = new Subject();
         subject.setValue(subjectValue);
         session.setSubject(subject);
-        if(groups != null) {
+        if (groups != null) {
             Person person = new Person();
             person.setSubject(subject);
             person.setVerified(new Boolean(true));
-            List<Subject>groupSubjects = new ArrayList<Subject>();
-            for(String group: groups) {
+            List<Subject> groupSubjects = new ArrayList<Subject>();
+            for (String group : groups) {
                 Subject groupSub = new Subject();
                 groupSub.setValue(group);
                 groupSubjects.add(groupSub);
@@ -320,67 +350,69 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         }
         return session;
     }
-    
+
     /*
-     * Create a data object in the dataone server. 
+     * Create a data object in the dataone server.
      * Return the identifier of the created object
      */
-    private void createObject(Session session, Identifier id, File object, SystemMetadata sysmeta) throws Exception {
+    private void createObject(Session session, Identifier id, File object, SystemMetadata sysmeta)
+        throws Exception {
         MNodeService.getInstance(request).create(session, id, new FileInputStream(object), sysmeta);
-        
+
     }
-    
+
     private Identifier generateIdentifier() {
         Identifier guid = new Identifier();
-        long random = Math.round(Math.random()*10000);
-        guid.setValue("test." + System.currentTimeMillis()+(new Long(random)).toString());
+        long random = Math.round(Math.random() * 10000);
+        guid.setValue("test." + System.currentTimeMillis() + (new Long(random)).toString());
         return guid;
     }
-    
+
     /*
      * Archive the given id.
      */
     private void archive(Session session, Identifier id) throws Exception {
         MNodeService.getInstance(request).archive(session, id);
     }
-    
-    
-    
+
+
     /*
      * Generate system metadata for the file
      */
-    private SystemMetadata generateSystemMetadata(Identifier id, Subject owner, File objectFile, String[] allowedSubjects) throws Exception{
+    private SystemMetadata generateSystemMetadata(
+        Identifier id, Subject owner, File objectFile, String[] allowedSubjects) throws Exception {
         SystemMetadata sysmeta = createSystemMetadata(id, owner, new FileInputStream(objectFile));
         AccessPolicy accessPolicy = null;
-        if(allowedSubjects != null && allowedSubjects.length >0) {
+        if (allowedSubjects != null && allowedSubjects.length > 0) {
             accessPolicy = new AccessPolicy();
-            for(int i=0; i<allowedSubjects.length; i++) {
+            for (int i = 0; i < allowedSubjects.length; i++) {
                 AccessRule allow = new AccessRule();
                 allow.addPermission(Permission.READ);
-                Subject subject =  new Subject();
+                Subject subject = new Subject();
                 subject.setValue(allowedSubjects[i]);
                 allow.addSubject(subject);
                 accessPolicy.addAllow(allow);
             }
         }
         sysmeta.setAccessPolicy(accessPolicy);
-        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat(EML201NAMESPACE).getFormatId());
+        sysmeta.setFormatId(
+            ObjectFormatCache.getInstance().getFormat(EML201NAMESPACE).getFormatId());
         return sysmeta;
     }
-    
+
     /*
      * Query the server to find the doc which matches the specified id
      */
-    private InputStream query(Session session, Identifier id) throws Exception{
+    private InputStream query(Session session, Identifier id) throws Exception {
         String query = generateQuery(id.getValue());
         MNodeService service = MNodeService.getInstance(request);
         service.setSession(session);
         InputStream input = service.query(session, SOLR, query);
         return input;
     }
-    
+
     /*
-     * 
+     *
      */
     private Document generateDoc(InputStream input) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -388,7 +420,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         Document doc = builder.parse(new InputSource(input));
         return doc;
     }
-    
+
     /*
      * Extract the return id from the query result input stream
      */
@@ -398,34 +430,33 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         XPath xpath = xPathfactory.newXPath();
         XPathExpression expr = xpath.compile(path);
         Object result = expr.evaluate(doc, XPathConstants.NODESET);
-        System.out.println("================ result is "+result);
-        if(result != null) {
+        System.out.println("================ result is " + result);
+        if (result != null) {
             NodeList nodes = (NodeList) result;
-            if(nodes != null) {
-                System.out.println("the length of nodes is "+nodes.getLength());
+            if (nodes != null) {
+                System.out.println("the length of nodes is " + nodes.getLength());
                 Node node = nodes.item(0);
-                if(node != null) {
+                if (node != null) {
                     id = node.getNodeValue();
                 }
-                
+
             }
-            
+
         }
-       
-        System.out.println("the value of the element " + path+ " is ====== "+id);
+
+        System.out.println("the value of the element " + path + " is ====== " + id);
         return id;
 
-    
     }
+
     /*
      * Make a query string which will query "id= the specified id".
      * @param id
      * @return
      */
     private String generateQuery(String id) {
-        String query = "q=id:"+id+"&fl=id,title";
+        String query = "q=id:" + id + "&fl=id,title";
         return query;
     }
-    
-  
+
 }
