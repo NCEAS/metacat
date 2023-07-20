@@ -205,12 +205,15 @@ you will need public and private keys for the reCaptcha widget.
 1. Get private and public recaptcha keys from Google using your Google account:
 https://www.google.com/recaptcha/admin/create
 
-2. Configure Metacat to use those keys in the metacat.properties file:
+2. Configure Metacat to use those keys in the metacat-site.properties file:
 
   ::
   
 	ldap.recaptcha.publickey=<your public key>
 	ldap.recaptcha.privatekey=<your private key>
+
+(For more detail on changing Metacat's configurable properties, see
+:ref:`configuration-properties-overview`)
 
 3. Restart Tomcat
 
@@ -1001,4 +1004,3 @@ from Metacat using the Java client API.
 +----------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
 | upload               | ``public String publicupload(String docid, String fileName, InputStream fileData, int size) throws InsufficientKarmaException, MetacatException, IOException, MetacatInaccessibleException;``               | Upload a data document into the repository.                                                                                               |
 +----------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
-  
