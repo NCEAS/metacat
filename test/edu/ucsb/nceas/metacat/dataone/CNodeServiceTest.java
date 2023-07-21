@@ -88,6 +88,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 
 /**
  * A JUnit test for testing the dataone CNCore implementation
@@ -223,8 +224,12 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			guid.setValue("testCreate." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+			Date originalModificationDate = sysmeta.getDateSysMetadataModified();
+			Thread.sleep(1000);
 			Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
 			assertEquals(guid, pid);
+			SystemMetadata readSysmeta = SystemMetadataManager.getInstance().get(pid);
+			assertTrue(originalModificationDate.getTime() == readSysmeta.getDateSysMetadataModified().getTime());
         } catch(Exception e) {
         	e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
