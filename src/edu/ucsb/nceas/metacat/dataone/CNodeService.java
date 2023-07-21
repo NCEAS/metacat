@@ -228,7 +228,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           // update the metadata
           try {
               systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
-              systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
+              //systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               //HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
               SystemMetadataManager.getInstance().store(systemMetadata);
               notifyReplicaNodes(systemMetadata);
@@ -349,7 +349,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 				//we don't need to update the modification date.
 				//systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				//HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
-				SystemMetadataManager.getInstance().store(systemMetadata);
+				boolean changeModificationDate = false;
+				SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate);
 			} catch (RuntimeException e) {
 				throw new ServiceFailure("4882", e.getMessage());
 			} catch (InvalidRequest e) {
@@ -717,7 +718,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 			// update the metadata
 			try {
 				systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
-				systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
+				//systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				//HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
 				SystemMetadataManager.getInstance().store(systemMetadata);
 			} catch (RuntimeException e) {
@@ -936,7 +937,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               // update the modified date for changes to the replica list
               //systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               //HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
-              SystemMetadataManager.getInstance().store(systemMetadata);
+              boolean changeModificationDate = false;
+              SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate);
               if ( !status.equals(ReplicationStatus.QUEUED) && 
             	   !status.equals(ReplicationStatus.REQUESTED)) {
                   
@@ -1368,11 +1370,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               //d1-sync already set the serial version. so we don't need do again.
               D1NodeVersionChecker checker = new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
               String version = checker.getVersion("MNRead");
+              boolean changeModificationDate = false;
               if(version != null && version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
-                  sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                  //sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                  changeModificationDate = true;
               }
               //HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
-              SystemMetadataManager.getInstance().store(sysmeta);
+              SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate);
           } catch (RuntimeException e) {
             logMetacat.error("Problem registering system metadata: " + pid.getValue(), e);
               throw new ServiceFailure("4862", "Error inserting system metadata: " + 
@@ -1558,7 +1562,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           // update the metadata
           try {
               systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
-              systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
+              //systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               //HazelcastService.getInstance().getSystemMetadataMap().put(pid, systemMetadata);
               SystemMetadataManager.getInstance().store(systemMetadata);
               notifyReplicaNodes(systemMetadata);
@@ -1898,7 +1902,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           // update the system metadata
           try {
               systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
-              systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
+              //systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               //HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
               SystemMetadataManager.getInstance().store(systemMetadata);
               notifyReplicaNodes(systemMetadata);
@@ -2010,7 +2014,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               // update the modified date for changes to the replica list
               //systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               //HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
-              SystemMetadataManager.getInstance().store(systemMetadata);
+              boolean changeModificationDate = false;
+              SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate);
               // inform replica nodes of the change if the status is complete
               if ( replicaStatus.equals(ReplicationStatus.COMPLETED) ) {
                   notifyReplicaNodes(systemMetadata);      	  
