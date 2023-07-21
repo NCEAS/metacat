@@ -603,6 +603,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			guid.setValue("testReplicationStatus." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            Date originalModificationDate = sysmeta.getDateSysMetadataModified();
 			Replica replica = new Replica();
 			NodeReference replicaMemberNode = new NodeReference();
 			replicaMemberNode.setValue(MockCNode.getTestMN().getIdentifier().getValue());
@@ -689,6 +690,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
             assertNotNull(sysmeta);
             // check it
             assertEquals(status, sysmeta.getReplica(0).getReplicationStatus());
+            assertTrue(originalModificationDate.getTime() == sysmeta.getDateSysMetadataModified().getTime());
 			
         } catch(Exception e) {
             fail("Unexpected error: " + e.getMessage());
