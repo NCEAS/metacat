@@ -69,6 +69,7 @@ public class SystemMetadataValidatorTest extends D1NodeServiceTest {
         id.setValue(guid);
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
         SystemMetadata sysmeta = createSystemMetadata(id, session.getSubject(), object);
+        Date originalDate = sysmeta.getDateSysMetadataModified();
         BigInteger serialVersion = new BigInteger("4");
         sysmeta.setSerialVersion(serialVersion);
         SystemMetadataValidator validator = new SystemMetadataValidator();
@@ -76,51 +77,62 @@ public class SystemMetadataValidatorTest extends D1NodeServiceTest {
         assertTrue(hasLatestVersion == true);
         SystemMetadataManager.getInstance().store(sysmeta);
         
-        //test a new serial version which is less than current one - 4
-        BigInteger serialVersion1 = new BigInteger("3");
-        sysmeta.setSerialVersion(serialVersion1);
+        //The originalDate was set by the client. However, base on the definition,
+        //the modification should be set by MN. So there is slight difference
+        sysmeta.setDateSysMetadataModified(originalDate);
+        assertTrue(hasLatestVersion == true);
         try {
             hasLatestVersion = validator.hasLatestVersion(sysmeta);
+            fail("we shouldn't get there since the system metadata shouldn't have the same modification as the one set by client");
+        } catch (InvalidSystemMetadata e) {
+            
+        }
+        
+        SystemMetadata readSysmeta = SystemMetadataManager.getInstance().get(id);
+        
+        //the system metadata read from store should be fine
+        hasLatestVersion = validator.hasLatestVersion(readSysmeta);
+        assertTrue(hasLatestVersion == true);
+        
+        //serial version 5 should be fine
+        BigInteger serialVersion2 = new BigInteger("5");
+        readSysmeta.setSerialVersion(serialVersion2);
+        hasLatestVersion = validator.hasLatestVersion(readSysmeta);
+        assertTrue(hasLatestVersion == true);
+        
+        //test a new serial version which is less than current one - 4
+        BigInteger serialVersion1 = new BigInteger("3");
+        readSysmeta.setSerialVersion(serialVersion1);
+        try {
+            hasLatestVersion = validator.hasLatestVersion(readSysmeta);
             fail("we shouldn't get there since the serial version is less than 4");
         } catch (InvalidSystemMetadata e) {
             
         }
-        //serial version 5 should be fine
-        BigInteger serialVersion2 = new BigInteger("5");
-        sysmeta.setSerialVersion(serialVersion2);
-        hasLatestVersion = validator.hasLatestVersion(sysmeta);
-        assertTrue(hasLatestVersion == true);
         
         //serial version 4 should be fine
-        sysmeta.setSerialVersion(serialVersion);
-        hasLatestVersion = validator.hasLatestVersion(sysmeta);
+        readSysmeta.setSerialVersion(serialVersion);
+        hasLatestVersion = validator.hasLatestVersion(readSysmeta);
         assertTrue(hasLatestVersion == true);
         
         //setting an earlier time to the modification date will fail
-        sysmeta.setDateSysMetadataModified(oldTime);
+        readSysmeta.setDateSysMetadataModified(oldTime);
         try {
-            hasLatestVersion = validator.hasLatestVersion(sysmeta);
+            hasLatestVersion = validator.hasLatestVersion(readSysmeta);
             fail("we shouldn't get there since the ealier time doesn't match the modification date");
         } catch (InvalidSystemMetadata e) {
             
         }
         //setting a later time to the modification date will fail
         Date newTime = new Date();
-        sysmeta.setDateSysMetadataModified(newTime);
+        readSysmeta.setDateSysMetadataModified(newTime);
         try {
-            hasLatestVersion = validator.hasLatestVersion(sysmeta);
+            hasLatestVersion = validator.hasLatestVersion(readSysmeta);
             fail("we shouldn't get there since the later time doesn't match the modification date");
         } catch (InvalidSystemMetadata e) {
             
         }
-        
-        //set back the modification date will succeed
-        SystemMetadata sysmetaReadFromStroe = im.getSystemMetadata(guid);
-        Date modifiedDate = sysmetaReadFromStroe.getDateSysMetadataModified();
-        sysmeta.setDateSysMetadataModified(modifiedDate);
-        hasLatestVersion = validator.hasLatestVersion(sysmeta);
-        assertTrue(hasLatestVersion == true);
-        
+
         //remove the system metadata
         im.deleteSystemMetadata(guid);
         //remove the mapping
