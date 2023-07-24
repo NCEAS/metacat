@@ -2129,7 +2129,7 @@ public abstract class D1NodeService {
                   if ( sysMeta != null ) {
                     sysMeta.setArchived(true);
                     if (needModifyDate) {
-                        sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+                        //sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
                         //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                     }
                     //HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);

@@ -1453,7 +1453,8 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           //update system metadata sucessfully
           SystemMetadata sysmeta1c = new SystemMetadata();
           BeanUtils.copyProperties(sysmeta1c, sysmeta1);
-          sysmeta1c.setDateSysMetadataModified(date);
+          Date newDate1 = sysmeta1.getDateSysMetadataModified();
+          //sysmeta1c.setDateSysMetadataModified(date);
           CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta1c);
           SystemMetadata metadata2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           assertTrue(metadata2.getIdentifier().equals(guid));
@@ -1461,7 +1462,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           //assertTrue(metadata2.getArchived().equals(true));
           assertTrue(metadata2.getAccessPolicy().getAllowList().size() == 2);
           assertTrue(metadata2.getChecksum().getValue().equals(metadata.getChecksum().getValue()));
-          assertTrue(metadata2.getDateSysMetadataModified().getTime() == date.getTime());
+          assertTrue(metadata2.getDateSysMetadataModified().getTime() == newDate1.getTime());
           
           SystemMetadata sysmeta2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           version = sysmeta2.getSerialVersion();
@@ -1579,6 +1580,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           CNodeService.getInstance(request).updateSystemMetadata(session, id, sysmeta11);
           SystemMetadata result2 = CNodeService.getInstance(request).getSystemMetadata(session, id);
           assertTrue(result2.getIdentifier().equals(id));
+          System.out.println("the +++++ version is " +result2.getSerialVersion().intValue());
           assertTrue(result2.getSerialVersion().intValue() == 1);
           List<Replica> list2 = result.getReplicaList();
           assertTrue(list2.size()==2);
