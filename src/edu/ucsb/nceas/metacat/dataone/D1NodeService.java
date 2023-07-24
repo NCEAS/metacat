@@ -2035,15 +2035,15 @@ public abstract class D1NodeService {
                    }
               }
              
-              
+              //DocumentImpl.delete method already archive it. So we don't need to do again.
               // archive it
-              sysMeta.setArchived(true);
+              /*sysMeta.setArchived(true);
               if(needModifyDate) {
                   //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                   sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
               }
               //HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
-              SystemMetadataManager.getInstance().store(sysMeta, needModifyDate);
+              SystemMetadataManager.getInstance().store(sysMeta, needModifyDate);*/
               
               // submit for indexing
               // DocumentImpl call above should do this.

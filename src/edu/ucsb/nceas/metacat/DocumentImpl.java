@@ -3693,7 +3693,7 @@ public class DocumentImpl
             if (sysMeta != null) {
     				sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
     				sysMeta.setArchived(true);
-                	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                	//sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                 	if(!removeAll) {
                 		//HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
                 		SystemMetadataManager.getInstance().store(sysMeta);
