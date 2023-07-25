@@ -327,7 +327,7 @@ public class SystemMetadataFactory {
 			}
 			if (obsoletedBySysMeta != null) {
 				obsoletedBySysMeta.setObsoletes(identifier);
-				obsoletedBySysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+				//obsoletedBySysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				//HazelcastService.getInstance().getSystemMetadataMap().put(obsoletedBy, obsoletedBySysMeta);
 				SystemMetadataManager.getInstance().store(obsoletedBySysMeta);
 			}
@@ -344,7 +344,7 @@ public class SystemMetadataFactory {
 				obsoletesSysMeta.setObsoletedBy(identifier);
 				// DO NOT set archived to true -- it will have unintended consequences if the CN sees this.
 				//obsoletesSysMeta.setArchived(true);
-				obsoletesSysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+				//obsoletesSysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				//HazelcastService.getInstance().getSystemMetadataMap().put(obsoletes, obsoletesSysMeta);
 				SystemMetadataManager.getInstance().store(obsoletesSysMeta);
 			}
