@@ -35,12 +35,9 @@ spec:
           ports:
             - containerPort: 8080
               name: metacat-web
-            - containerPort: 5701
-              name: hazelcast-port1
-            - containerPort: 5702
-              name: hazelcast-port2
-            - containerPort: 5703
-              name: hazelcast-port3
+              {{- if .Values.container.ports }}
+                {{- toYaml .Values.container.ports | nindent 12 }}
+              {{ end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
