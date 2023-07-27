@@ -116,6 +116,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `image.tag`                  | Overrides the image tag. Will default to the chart appVersion if set to ""   | `DEVELOP`      |
 | `image.debug`                | Specify if container debugging should be enabled (sets log level to "DEBUG") | `false`        |
 | `imagePullSecrets`           | Optional list of references to secrets in the same namespace                 | `[]`           |
+| `container.ports`            | Optional list of additional container ports to expose within the cluster     | `[]`           |
 | `serviceAccount.create`      | Should a service account be created to run Metacat?                          | `false`        |
 | `serviceAccount.annotations` | Annotations to add to the service account                                    | `{}`           |
 | `serviceAccount.name`        | The name to use for the service account.                                     | `""`           |

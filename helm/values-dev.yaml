@@ -1,0 +1,59 @@
+## override values.yaml with values to use for running tests on local machine
+##
+## example:
+##    helm install my-release ./helm -f ./helm/values-test.yaml
+##
+
+metacat:
+  dataone.certificate.fromHttpHeader.enabled: true
+  server.name: metacat.com
+
+image:
+  debug: true
+
+# probes will kill remote debugger
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
+ingress:
+  annotations:
+    #    nginx.org/location-snippet: |
+    #      add_header X-Proxy-Key "topSecret-data1CertFromHttpHeaderProxyKey!";
+    #      add_header X-Proxy-Key $(METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY);
+    # Enable client certificate authentication
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional_no_ca"
+    # Create the secret containing the trusted ca certificates
+    # nginx.ingress.kubernetes.io/auth-tls-secret: "{{ .Release.Namespace }}/<secretsFileName>"
+    nginx.ingress.kubernetes.io/auth-tls-secret: "default/ca-secret"
+    # Specify the verification depth in the client certificates chain
+    nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
+    # Specify if certificates are passed to upstream server
+    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+  hosts:
+    - host: metacat.com
+      paths:
+        - path: "/metacat"
+          pathType: Prefix
+        # remove the following if you do NOT want metacatui to be exposed & accessed via /metacatui
+        # (default knb skin)
+        - path: "/metacatui"
+          pathType: Prefix
+
+service:
+  enabled: true
+  type: LoadBalancer
+  clusterIP: ""
+  ports:
+    - name: http-port
+      port: 8080
+      targetPort: metacat-web
+    - name: debug-port
+      port: 5005
+      targetPort: tc-remote-debug
+
+container:
+  ports:
+    - containerPort: 5005
+      name: tc-remote-debug
