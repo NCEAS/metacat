@@ -27,7 +27,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
-    <property name="metacatui-tag" value="2.23.0"/>
+    <property name="metacatui-tag" value="2.25.0"/>
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2"/>
 
     <property environment="env"/>
@@ -1353,9 +1353,11 @@
 
     <target name="admindoc" depends="prepare">
         <!-- Build the administrator's guide, which is a Sphinx RST project
-             For this to succeed, you must have Sphinx installed on your machine
-             See: http://sphinx.pocoo.org/ for details
-             And you must also have the 'make' build tool installed
+             For this to succeed, you must have sphinx-build version 6.2.1 installed on your
+             machine, eg: `python -m pip install -Iv sphinx==6.2.1`
+             (Later versions currently don't work, since the `style` key was removed in v7.0.0)
+             See: https://www.sphinx-doc.org/en/master/usage/installation.html for details.
+             You must also have the 'make' build tool installed
         -->
         <exec dir="${docdir}/user/metacat" executable="make">
             <arg value="plantuml"/>
