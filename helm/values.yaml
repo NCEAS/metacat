@@ -78,9 +78,12 @@ metacat:
   ##
   guid.doi.enabled: true
 
-  ## @param metacat.server.httpPort The http port exposed internally by the metacat container
-  ## 
-  server.httpPort: 8080
+  ## @param metacat.server.httpPort The http port exposed externally by the Ingress or Service
+  ## being used to allow connections from outside the k8s cluster.
+  ## Must be defined here, even if unchanged from the default value in metacat.properties, since it
+  ## is needed by the entrypoint script to populate metacatui's config.
+  ##
+  server.httpPort: 80
 
   ## @param metacat.server.name The hostname for the server, as exposed by the ingress
   ## and seen by end users outside the cluster
@@ -278,20 +281,31 @@ ingress:
   ##      secretName: ingress-nginx-tls-cert
   tls: []
 
-## Headless ClusterIP required for StatefulSet
+## Optional service in addition to the Headless ClusterIP that is required for StatefulSet
 service:
-  ## @param service.type Kubernetes Service type
+  ## @param service.enabled Enable another optional service in addition to headless svc
+  enabled: false
+
+  ## @param service.type Kubernetes Service type. Defaults to ClusterIP if not set
+  type: LoadBalancer
+
+  ## @param service.clusterIP IP address of the service. Auto-generated if not set
+  ## Valid values are "None", empty string (""), or a valid IP address. Setting this to "None"
+  ## makes a "headless service" (no virtual IP). Using empty string ("") will auto-generate an IP
   ##
-  type: ClusterIP
+  clusterIP: ""
 
   ## @param service.ports [array] The port(s) to be exposed
   ##        service.ports.port The port to expose
   ##        service.ports.name A unique name to identify this port.
-  ##        Note that the ingress will direct metacat traffic to the port named "metacat-svc-web"
   ##
   ports:
-    - port: 8080
-      name: metacat-svc-web
+    - name: http-port
+      port: 8080
+      targetPort: metacat-web
+    - name: hazelcast-test1
+      port: 5701
+      targetPort: 5701
 
 ## LivenessProbe
 ## Periodic probe of container liveness. Container will be restarted if the probe fails.

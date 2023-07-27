@@ -47,6 +47,8 @@ WORKDIR "$TC_HOME"/bin
 
 EXPOSE 8080
 EXPOSE 5701
+EXPOSE 5702
+EXPOSE 5703
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
