@@ -24,7 +24,7 @@ import static org.junit.Assert.*;
 
 @RunWith(Suite.class)
 // Add new inner classes for tests grouped by functionality, to help with clarity, and so we
-// don't have to share @Before setup code where it's not needed. Each new inner classname should
+// don't have to share @Before setup code where it's not needed. Each new inner class name should
 // be added the @Suite.SuiteClasses test suite definition, below
 @Suite.SuiteClasses({
     PropertiesWrapperTest.EnvironmentVariablesTestSuite.class,
@@ -174,7 +174,7 @@ public class PropertiesWrapperTest {
     }
 
     /**
-     * Tests that exercise the ability to override secret credential properties by settign the
+     * Tests that exercise the ability to override secret credential properties by setting the
      * values as environment variables
      */
     public static class EnvironmentVariablesTestSuite {
@@ -190,15 +190,16 @@ public class PropertiesWrapperTest {
                 "POSTGRES_USER",
                 "POSTGRES_PASSWORD",
                 "METACAT_GUID_DOI_PASSWORD",
-                "METACAT_REPLICATION_PRIVATE_KEY_PASSWORD"
-
+                "METACAT_REPLICATION_PRIVATE_KEY_PASSWORD",
+                "METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY"
             };
             // These should be a subset of 'application.envSecretKeys' in metacat.properties
             final String[] secretPropsKeysList = {
                 "database.user",
                 "database.password",
                 "guid.doi.password",
-                "replication.privatekey.password"
+                "replication.privatekey.password",
+                "dataone.certificate.fromHttpHeader.proxyKey"
             };
             assertEquals(secretEnvVarKeysList.length, secretPropsKeysList.length);
 
