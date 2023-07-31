@@ -58,8 +58,7 @@ spec:
             - name: METACAT_EXTERNAL_HOSTNAME
               value: {{ index .Values.metacat "server.name" }}
             - name: METACAT_EXTERNAL_PORT
-              {{- $metacatHttpPort := index .Values.metacat "server.httpPort" }}
-              value: {{ ternary "80" $metacatHttpPort ( .Values.ingress.enabled ) | quote }}
+              value: {{ include "metacat.httpPort" . }}
             - name: METACAT_APP_CONTEXT
               value: {{ index .Values.metacat "application.context" }}
             - name: POSTGRES_USER
