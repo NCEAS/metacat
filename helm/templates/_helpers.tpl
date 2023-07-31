@@ -60,3 +60,22 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Metacat setup quirk - will not use https unless server.httpPort AND httpSSLPort are BOTH set
+to 443. Automating this here, so operator doesn't need to mess with this confusing config:
+* If .Values.metacat.server.httpPort is set explicitly, use it.
+Otherwise:
+* If using the ingress, set server.httpPort correctly to 80 or 443, depending if TLS is set up
+*/}}
+{{- define "metacat.httpPort" -}}
+{{- $metacatHttpPort := (index .Values.metacat "server.httpPort") -}}
+{{- if not $metacatHttpPort -}}
+{{- if .Values.ingress.enabled -}}
+    {{- $metacatHttpPort = ternary "80" "443" ( eq (len .Values.ingress.tls) 0 ) -}}
+{{- else -}}
+    {{- $metacatHttpPort = "80" -}}
+{{- end -}}
+{{- end -}}
+{{- $metacatHttpPort | quote }}
+{{- end }}
