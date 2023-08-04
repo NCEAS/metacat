@@ -79,3 +79,20 @@ Otherwise:
 {{- end -}}
 {{- $metacatHttpPort | quote }}
 {{- end }}
+
+{{/*
+For DataONE mutual authentication with x509 certificates, add the following annotations to the
+nginx ingress. Note these certificates are NOT the same as the one used for TLS ("SSL") access
+via https
+*/}}
+{{- define "dataone.mutual.auth.annotations" -}}
+{{- $caSecretName := .Values.ingress.d1CaCertSecretName -}}
+# Enable client certificate authentication
+nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional_no_ca"
+# The secret containing the trusted ca certificate and private key
+nginx.ingress.kubernetes.io/auth-tls-secret: "{{ .Release.Namespace }}/{{ $caSecretName }}"
+# Specify the verification depth in the client certificates chain
+nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
+# Specify if certificates are passed to upstream server
+nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+{{- end }}

@@ -11,9 +11,15 @@ metadata:
   name: {{ $fullName }}
   labels:
     {{- include "metacat.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+  {{- $mutualAuth := index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" -}}
+  {{- if (or $mutualAuth .Values.ingress.annotations) }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+    {{- with .Values.ingress.annotations }}
+      {{- toYaml . | nindent 4 }}
+    {{- end -}}
+    {{- if $mutualAuth -}}
+      {{- include "dataone.mutual.auth.annotations" . | nindent 4 }}
+    {{- end }}
   {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}

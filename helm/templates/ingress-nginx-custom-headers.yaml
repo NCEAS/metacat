@@ -1,6 +1,4 @@
-{{- $verify :=
-    index .Values.ingress.annotations "nginx.ingress.kubernetes.io/auth-tls-verify-client" }}
-{{- if and $verify (not (eq "off" $verify)) -}}
+{{- if (index .Values.metacat "dataone.certificate.fromHttpHeader.enabled") }}
 ## This template populates a custom header ("X-Proxy-Key") with a shared secret. The nginx ingress
 ## then includes this header with any incoming requests that include x509 client certs. Upon
 ## receiving this secret, metacat can then trust that incoming client-cert-authorized requests

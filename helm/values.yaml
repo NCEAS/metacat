@@ -99,6 +99,12 @@ metacat:
   ##
   replication.logdir: /var/metacat/logs
 
+  ## @param metacat.dataone.certificate.fromHttpHeader.enabled Enable mutual auth with client certs
+  ## For DataONE Replication -- mutual authentication with x509 client-side certs
+  ## Also see `ingress.d1CaCertSecretName`
+  ##
+  dataone.certificate.fromHttpHeader.enabled: false
+
 ## @section Metacat Image, Container & Pod Parameters
 ##
 
@@ -289,13 +295,15 @@ ingress:
           pathType: Prefix
 
   ## @param ingress.annotations Annotations for the ingress
-  ####  example: ####
-  ##  annotations:
-  ##    nginx.ingress.kubernetes.io/enable-cors: "true"
-  ##    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
-  ##    nginx.ingress.kubernetes.io/cors-allow-origin: '$http_origin'
-  ##    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-  ##    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  ##
+  ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
+  ## client-side certs, provided:
+  ## 1. you are using the Kubernetes open source community version of the nginx ingress
+  ##    (see https://github.com/kubernetes/ingress-nginx )
+  ## 2. you have set ingress.clasName to nginx, and
+  ## 3. you have set up ingress.tls correctly for https access, and
+  ## 4. you have set the correct parameters in the metacat section
+  ##    (see `metacat.dataone.certificate.fromHttpHeader.enabled`, above, for more details)
   ##
   annotations: {}
 
@@ -303,9 +311,14 @@ ingress:
   #### example ###
   ##  tls:
   ##    - hosts:
-  ##        - api.test.dataone.org
-  ##      secretName: ingress-nginx-tls-cert
+  ##        - *external-hostname
+  ##      secretName: tls-secret
   tls: []
+
+  ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate
+  ## For DataONE Replication -- mutual authentication with x509 client-side certs.
+  ## Also see `metacat.dataone.certificate.fromHttpHeader.enabled`
+  d1CaCertSecretName: ca-secret
 
 ## Optional service in addition to the Headless ClusterIP that is required for StatefulSet
 service:
