@@ -30,6 +30,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends  iputils-ping l
     rm -rf /var/lib/apt/lists/*                                                       && \
     mv /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war ${TC_HOME}/webapps  && \
     chown -R metacat ${TC_HOME}                                                       && \
+    echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true" \
+                                               >> ${TC_HOME}/conf/catalina.properties && \
+    echo "org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true" \
+                                               >> ${TC_HOME}/conf/catalina.properties && \
     # Tomcat Mods - TODO MB - remove after Tomcat9 upgrade
     cp  ${TC_HOME}/conf/server.xml  ${TC_HOME}/conf/server.xml.original               && \
     sed -i 's/port="8080"/relaxedPathChars="\[\]\|" \
