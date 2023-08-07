@@ -46,9 +46,12 @@ USER metacat
 WORKDIR "$TC_HOME"/bin
 
 EXPOSE 8080
+EXPOSE 5005
 EXPOSE 5701
 EXPOSE 5702
 EXPOSE 5703
+
+LABEL org.opencontainers.image.source="https://github.com/NCEAS/metacat"
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 

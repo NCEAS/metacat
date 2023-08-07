@@ -15,12 +15,47 @@
 
 set -e
 
+enableRemoteDebugging() {
+    # Allow remote debugging via port 5005
+    # TODO: for JDK > 8, may need to change [...]address=5005 to [...]address=*:5005 --
+    #       see https://bugs.openjdk.org/browse/JDK-8175050
+    {
+        echo "# Allow remote debugging connections to the port listed as \"address=\" below:"
+        echo "export CATALINA_OPTS=\"${CATALINA_OPTS} \
+                            -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005\""
+    } > "${TC_HOME}"/bin/setenv.sh
+    echo
+    echo "* * * * * * Remote debugging connections enabled on port 5005 * * * * * *"
+    echo
+}
+
+configMetacatUi() {
+    # show default skin if nothing else configured.
+    # 1. Overwrite config.js
+    {
+        echo "MetacatUI.AppConfig = {"
+        echo "  theme: \"default\","
+        echo "  root: \"/metacatui\","
+        echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
+        S=""
+        if [ "$METACAT_EXTERNAL_PORT" == "443" ] || [ "$METACAT_EXTERNAL_PORT" == "8443" ]; then
+          S="s"
+        fi
+        echo "  baseUrl: \"http${S}://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\""
+        echo "}"
+    } > "${TC_HOME}"/webapps/metacatui/config/config.js
+
+    # 2. edit index.html to point to it
+    sed -i 's|"/config/config.js"|"./config/config.js"|g' "${TC_HOME}"/webapps/metacatui/index.html
+}
+
 if [[ $DEVTOOLS == "true" ]]; then
     echo '* * * Container "-devtools" mode'
     echo '* * * NOTE Tomcat does NOT get started in devtools mode!'
     echo '* * * See commands in /usr/local/bin/docker-entrypoint.sh to start manually'
     echo '* * *'
     echo '* * * starting infinite loop -- ctrl-c to interrupt...'
+    enableRemoteDebugging
     sh -c 'trap "exit" TERM; while true; do sleep 1; done'
 
 elif [[ $1 = "catalina.sh" ]]; then
@@ -35,19 +70,7 @@ elif [[ $1 = "catalina.sh" ]]; then
         unzip "${TC_HOME}"/webapps/metacatui.war -d "${TC_HOME}"/webapps/metacatui
     fi
 
-    # show KNB skin if nothing else configured.
-    # 1. Overwrite config.js
-    {
-        echo "MetacatUI.AppConfig = {"
-        echo "  theme: \"knb\","
-        echo "  root: \"/metacatui\","
-        echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
-        echo "  baseUrl: \"http://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\""
-        echo "}"
-    } > "${TC_HOME}"/webapps/metacatui/config/config.js
-
-    # 2. edit index.html to point to it
-    sed -i 's|"/config/config.js"|"./config/config.js"|g' "${TC_HOME}"/webapps/metacatui/index.html
+    configMetacatUi
 
     # set the env vars for metacat location. Note that TC_HOME is set in the Dockerfile
     METACAT_DEFAULT_WAR=${TC_HOME}/webapps/metacat.war
@@ -80,13 +103,15 @@ elif [[ $1 = "catalina.sh" ]]; then
         /var/metacat/config \
         /var/metacat/.metacat
 
-    # if METACAT_DEBUG, set the root log level to "DEBUG"
+    # if METACAT_DEBUG, set the root log level to "DEBUG" and enable
+    # remote debugging connections to tomcat
     if [[ $METACAT_DEBUG == "true" ]]; then
           sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' \
               "${TC_HOME}"/webapps/metacat/WEB-INF/classes/log4j2.properties;
           echo
           echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
           echo
+          enableRemoteDebugging
     fi
 
     # TODO: need a more-elegant way to handle this, without manipulating files
@@ -160,7 +185,7 @@ ${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
         echo 'FAILED - unable to log in as admin'
         echo '**************************************'
         echo "grepping log $TC_HOME/logs/localhost*.$(date +%Y-%m-%d).log for startup conditions..."
-        exec grep -B7 -A20 "FATAL" "$TC_HOME"/logs/*
+        grep -B7 -A20 "FATAL" "$TC_HOME"/logs/*
         echo
         echo '**************************************'
         echo

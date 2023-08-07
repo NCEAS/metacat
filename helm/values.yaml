@@ -78,12 +78,13 @@ metacat:
   ##
   guid.doi.enabled: true
 
-  ## @param metacat.server.httpPort The http port exposed externally by the Ingress or Service
-  ## being used to allow connections from outside the k8s cluster.
-  ## Must be defined here, even if unchanged from the default value in metacat.properties, since it
-  ## is needed by the entrypoint script to populate metacatui's config.
+  ## @param metacat.server.httpPort The http port exposed externally, if NOT using the ingress
+  ## to allow connections from outside the k8s cluster (e.g. if you're using a loadBalancer
+  ## service or kubectl proxy instead).
+  ## If you ARE using the ingress (i.e. `.Values.ingress.enabled` is `true`), then leave this unset,
+  ## and it will be auto-populated, depending whether or not you have TLS set up for the ingress
   ##
-  server.httpPort: 80
+  server.httpPort: ""
 
   ## @param metacat.server.name The hostname for the server, as exposed by the ingress
   ## and seen by end users outside the cluster
@@ -97,6 +98,12 @@ metacat:
   ## @param metacat.replication.logdir Location for the replication logs
   ##
   replication.logdir: /var/metacat/logs
+
+  ## @param metacat.dataone.certificate.fromHttpHeader.enabled Enable mutual auth with client certs
+  ## For DataONE Replication -- mutual authentication with x509 client-side certs
+  ## Also see `ingress.d1CaCertSecretName`
+  ##
+  dataone.certificate.fromHttpHeader.enabled: false
 
 ## @section Metacat Image, Container & Pod Parameters
 ##
@@ -122,6 +129,24 @@ image:
 ## @param imagePullSecrets [array] Optional list of references to secrets in the same namespace
 ## to use for pulling any of the images used by this chart
 imagePullSecrets: []
+
+## @param container.ports Optional list of additional container ports to expose within the cluster
+## This section allows ports to be opened for development, debugging and testing purposes, in
+## addition to the default metacat-web port 8080.
+## Examples:
+##     - containerPort: 5005
+##       name: tc-remote-debug
+##     - containerPort: 5701
+##       name: hazelcast-port1
+##     - containerPort: 5702
+##       name: hazelcast-port2
+##
+## NOTE that port 8080 should not be included here - it is already defined in statefulset.yaml as:
+##     - containerPort: 8080
+##       name: metacat-web
+##
+container:
+  ports: []
 
 ## ServiceAccount
 ## @param serviceAccount.create Should a service account be created to run Metacat?
@@ -233,9 +258,16 @@ ingress:
   enabled: true
 
   ## @param ingress.className ClassName of the ingress provider in your cluster
-  ##  Inspect available classes in your cluster using:    $ kc get ingressclasses
-  ## For Rancher Desktop,  className: "traefik" (provided you have traefik enabled: 'preferences'->
-  ## 'kubernetes'->'enable traefik')
+  ##  Inspect available classes in your cluster using:    $ kubectl get ingressclasses
+  ##
+  ## className: "traefik" -- For Rancher Desktop (provided you have traefik enabled:
+  ##     'preferences' -> 'kubernetes' -> 'enable traefik')
+  ## className: "nginx" -- For production, or to use certificates locally. Also:
+  ## - disable traefik ('preferences' -> 'kubernetes' -> uncheck 'enable traefik')
+  ## - install nginx:
+  ##   $  helm upgrade --install ingress-nginx ingress-nginx  \
+  ##        --repo https://kubernetes.github.io/ingress-nginx \
+  ##        --namespace ingress-nginx --create-namespace)
   ##
   className: "traefik"
 
@@ -250,7 +282,7 @@ ingress:
   ##                        Prefix: Requires URL to begin with the pattern, not including substrings
   ##                        (e.g. /foo/bar matches /foo/bar/baz, but does not match /foo/barbaz).
   ##
-  ## NOTE:   All paths will be mapped to the 'service.ports' entry with 'name: metacat-svc-web'
+  ## NOTE: All paths will be mapped to port 8080 of the `metacat-hl` headless service
   ##
   hosts:
     - host: *external-hostname
@@ -263,13 +295,15 @@ ingress:
           pathType: Prefix
 
   ## @param ingress.annotations Annotations for the ingress
-  ####  example: ####
-  ##  annotations:
-  ##    nginx.ingress.kubernetes.io/enable-cors: "true"
-  ##    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
-  ##    nginx.ingress.kubernetes.io/cors-allow-origin: '$http_origin'
-  ##    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-  ##    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  ##
+  ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
+  ## client-side certs, provided:
+  ## 1. you are using the Kubernetes open source community version of the nginx ingress
+  ##    (see https://github.com/kubernetes/ingress-nginx )
+  ## 2. you have set ingress.clasName to nginx, and
+  ## 3. you have set up ingress.tls correctly for https access, and
+  ## 4. you have set the correct parameters in the metacat section
+  ##    (see `metacat.dataone.certificate.fromHttpHeader.enabled`, above, for more details)
   ##
   annotations: {}
 
@@ -277,9 +311,14 @@ ingress:
   #### example ###
   ##  tls:
   ##    - hosts:
-  ##        - api.test.dataone.org
-  ##      secretName: ingress-nginx-tls-cert
+  ##        - *external-hostname
+  ##      secretName: tls-secret
   tls: []
+
+  ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate
+  ## For DataONE Replication -- mutual authentication with x509 client-side certs.
+  ## Also see `metacat.dataone.certificate.fromHttpHeader.enabled`
+  d1CaCertSecretName: ca-secret
 
 ## Optional service in addition to the Headless ClusterIP that is required for StatefulSet
 service:
@@ -298,6 +337,8 @@ service:
   ## @param service.ports [array] The port(s) to be exposed
   ##        service.ports.port The port to expose
   ##        service.ports.name A unique name to identify this port.
+  ##        service.ports.targetPort the name (preferred) or number of the container
+  ##                                 port where traffic will be sent.
   ##
   ports:
     - name: http-port
@@ -305,7 +346,7 @@ service:
       targetPort: metacat-web
     - name: hazelcast-test1
       port: 5701
-      targetPort: 5701
+      targetPort: hazelcast-port1
 
 ## LivenessProbe
 ## Periodic probe of container liveness. Container will be restarted if the probe fails.
