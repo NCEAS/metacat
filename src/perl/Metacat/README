@@ -26,7 +26,7 @@ Metacat.pm -- perl client to the Metacat XML database
 
 Version: 0.0 Alpha 1 Release
 
-Feedback and bugs to: knb-software@nceas.ucsb.edu
+Feedback and bugs - please create a GitHub Issue: https://github.com/NCEAS/metacat/issues/new
 
 Contributors: Matt Jones (jones@nceas.ucsb.edu)
               Chris Jones (cjones@lifesci.ucsb.edu)
@@ -67,6 +67,6 @@ details.
 
 This material is based upon work supported by the 
 National Science Foundation under Grant No. DEB99-80154 and DBI99-04777.
-Any opinions, findings and conclusions or recomendations expressed in this
+Any opinions, findings and conclusions or recommendations expressed in this
 material are those of the author(s) and do not necessarily reflect 
 the views of the National Science Foundation (NSF).

@@ -1,0 +1,15 @@
+{{- if .Values.service.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "metacat.fullname" . }}
+  labels:
+    {{- include "metacat.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
+  clusterIP: {{ .Values.service.clusterIP | default "" }}
+  ports:
+    {{- toYaml .Values.service.ports | nindent 4 }}
+  selector:
+    {{- include "metacat.selectorLabels" . | nindent 4 }}
+{{- end }}

@@ -51,7 +51,11 @@ Metacat-index will index all the existing Metacat content when the webapp next i
 Note: the configured solr-home directory should not exist before configuring Metacat with indexing for the first time, 
 otherwise the blank index will not be created for metacat-index to utilize.
 
-Additional advanced configuration options are available in the metacat.properties file (shared between Metacat and Metacat-index).
+Additional advanced configuration options may be set. The existing default values for these
+settings (shared between Metacat and Metacat-index) can be viewed in the (non-editable)
+**metacat.properties** file. If you wish to override any of these defaults, the new values may be
+added to the **metacat-site.properties** file. (For more details on locating these files
+and changing Metacat's configurable properties, see :ref:`configuration-properties-overview`).
 
 
 Adding additional document types and fields
