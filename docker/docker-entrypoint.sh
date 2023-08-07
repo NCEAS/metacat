@@ -95,13 +95,15 @@ elif [[ $1 = "catalina.sh" ]]; then
     apply_context.py "$METACAT_DIR"/WEB-INF/web.xml metacat "${METACAT_APP_CONTEXT}"
 
     # Make sure all default directories are available
-    mkdir -p /var/metacat/data \
+    mkdir -p \
+        /var/metacat/.metacat    \
+        /var/metacat/config      \
+        /var/metacat/data        \
+        /var/metacat/documents   \
         /var/metacat/inline-data \
-        /var/metacat/documents \
-        /var/metacat/temporary \
-        /var/metacat/logs \
-        /var/metacat/config \
-        /var/metacat/.metacat
+        /var/metacat/logs        \
+        /var/metacat/solr-home-legacy \
+        /var/metacat/temporary
 
     # if METACAT_DEBUG, set the root log level to "DEBUG" and enable
     # remote debugging connections to tomcat
