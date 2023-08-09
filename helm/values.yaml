@@ -460,3 +460,13 @@ postgresql:
       storageClass: ""
       existingClaim: ""
       size: 1Gi
+
+## @section Tomcat Configuration
+
+## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
+## @param tomcat.heapMemory.min maximum memory heap size for Tomcat (-Xmx JVM parameter)
+## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
+tomcat:
+  heapMemory:
+    min: 1G
+    max: 2G

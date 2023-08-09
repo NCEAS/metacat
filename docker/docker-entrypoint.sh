@@ -4,6 +4,8 @@
 # METACAT_APP_CONTEXT       (see .Values.metacat.application.context)
 # METACAT_EXTERNAL_HOSTNAME (see .Values.global.externalHostname)
 # METACAT_EXTERNAL_PORT     (see .Values.metacat.server.httpPort)
+# TOMCAT_MEM_MIN            (see .Values.tomcat.heapMemory.min)
+# TOMCAT_MEM_MAX            (see .Values.tomcat.heapMemory.max)
 #
 # Defined in Dockerfile:
 # TC_HOME       (tomcat home directory in container; typically /usr/local/tomcat)
@@ -15,10 +17,11 @@
 
 set -e
 
+####################################################################################################
+####   FUNCTION DEFINITIONS
+####################################################################################################
+
 TC_OPTS="${TC_HOME}"/bin/setenv.sh
-if [ ! -e "${TC_OPTS}" ]; then
-    touch "${TC_OPTS}"
-fi
 
 enableRemoteDebugging() {
     # Allow remote debugging via port 5005
@@ -32,6 +35,21 @@ enableRemoteDebugging() {
     echo
     echo "* * * * * * Remote debugging connections enabled on port 5005 * * * * * *"
     echo
+}
+
+setTomcatEnv() {
+    MEMORY=""
+    if [[ -z ${TOMCAT_MEM_MIN} ]] || [[ -z ${TOMCAT_MEM_MAX} ]]; then
+        echo "tomcat max or min memory size not found; skipping memory settings"
+    else
+        MEMORY=" -Xms${TOMCAT_MEM_MIN} -Xmx${TOMCAT_MEM_MAX}"
+        MEMORY="${MEMORY} -XX:PermSize=128m -XX:MaxPermSize=512m "
+    fi
+    # TODO - upgrade to log4j > 2.16 and remove `-Dlog4j2.formatMsgNoLookups=true` "safeguard",
+    #  since it's not secure, See: https://logging.apache.org/log4j/2.x/security.html#history
+    LOG4J="-Dlog4j2.formatMsgNoLookups=true"
+
+    echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -server ${MEMORY} ${LOG4J}\"" >> "${TC_OPTS}"
 }
 
 configMetacatUi() {
@@ -73,6 +91,11 @@ configMetacatUi() {
         echo "</web-app>"
     } > "${UI_HOME}"/WEB-INF/web.xml
 }
+
+
+####################################################################################################
+####   MAIN SCRIPT
+####################################################################################################
 
 if [[ $DEVTOOLS == "true" ]]; then
     echo '* * * Container "-devtools" mode'
@@ -130,10 +153,7 @@ elif [[ $1 = "catalina.sh" ]]; then
         /var/metacat/solr-home-legacy \
         /var/metacat/temporary
 
-    # log4j "safeguard" (not secure: https://logging.apache.org/log4j/2.x/security.html#history)
-    # TODO - upgrade to log4j > 2.16 and remove this!
-    echo "# log4j safeguard (insecure: https://logging.apache.org/log4j/2.x/security.html#history)"
-    echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Dlog4j2.formatMsgNoLookups=true\"" >> "${TC_OPTS}"
+    setTomcatEnv
 
     # if METACAT_DEBUG, set the root log level to "DEBUG" and enable
     # remote debugging connections to tomcat

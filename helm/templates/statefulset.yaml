@@ -62,6 +62,10 @@ spec:
               value: {{ include "metacat.httpPort" . }}
             - name: METACAT_APP_CONTEXT
               value: {{ index .Values.metacat "application.context" }}
+            - name: TOMCAT_MEM_MIN
+              value: {{ .Values.tomcat.heapMemory.min }}
+            - name: TOMCAT_MEM_MAX
+              value: {{ .Values.tomcat.heapMemory.max }}
             - name: POSTGRES_USER
               value: {{ .Values.postgresql.auth.username }}
           envFrom:
