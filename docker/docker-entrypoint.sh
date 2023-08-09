@@ -15,21 +15,28 @@
 
 set -e
 
+TC_OPTS="${TC_HOME}"/bin/setenv.sh
+if [ ! -e "${TC_OPTS}" ]; then
+    touch "${TC_OPTS}"
+fi
+
 enableRemoteDebugging() {
     # Allow remote debugging via port 5005
     # TODO: for JDK > 8, may need to change [...]address=5005 to [...]address=*:5005 --
     #       see https://bugs.openjdk.org/browse/JDK-8175050
     {
         echo "# Allow remote debugging connections to the port listed as \"address=\" below:"
-        echo "export CATALINA_OPTS=\"${CATALINA_OPTS} \
+        echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} \
                             -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005\""
-    } > "${TC_HOME}"/bin/setenv.sh
+    } >> "${TC_OPTS}"
     echo
     echo "* * * * * * Remote debugging connections enabled on port 5005 * * * * * *"
     echo
 }
 
 configMetacatUi() {
+    UI_HOME="${TC_HOME}"/webapps/metacatui
+
     # show default skin if nothing else configured.
     # 1. Overwrite config.js
     {
@@ -43,10 +50,28 @@ configMetacatUi() {
         fi
         echo "  baseUrl: \"http${S}://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\""
         echo "}"
-    } > "${TC_HOME}"/webapps/metacatui/config/config.js
+    } > "${UI_HOME}"/config/config.js
 
     # 2. edit index.html to point to it
-    sed -i 's|"/config/config.js"|"./config/config.js"|g' "${TC_HOME}"/webapps/metacatui/index.html
+    sed -i 's|"/config/config.js"|"/metacatui/config/config.js"|g' "${UI_HOME}"/index.html
+
+    # 3. add a custom error handler to make one-page app work, without apache
+    #    (see https://nceas.github.io/metacatui/install/apache)
+    mkdir "${UI_HOME}"/WEB-INF
+    {
+        echo '<?xml version="1.0" encoding="UTF-8"?>'
+        echo -n '<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                  http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+                  version="4.0">'
+        echo
+        echo "    <error-page>"
+        echo "          <error-code>404</error-code>"
+        echo "          <location>/index.html</location>"
+        echo "    </error-page>"
+        echo "</web-app>"
+    } > "${UI_HOME}"/WEB-INF/web.xml
 }
 
 if [[ $DEVTOOLS == "true" ]]; then
@@ -105,6 +130,11 @@ elif [[ $1 = "catalina.sh" ]]; then
         /var/metacat/solr-home-legacy \
         /var/metacat/temporary
 
+    # log4j "safeguard" (not secure: https://logging.apache.org/log4j/2.x/security.html#history)
+    # TODO - upgrade to log4j > 2.16 and remove this!
+    echo "# log4j safeguard (insecure: https://logging.apache.org/log4j/2.x/security.html#history)"
+    echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Dlog4j2.formatMsgNoLookups=true\"" >> "${TC_OPTS}"
+
     # if METACAT_DEBUG, set the root log level to "DEBUG" and enable
     # remote debugging connections to tomcat
     if [[ $METACAT_DEBUG == "true" ]]; then
@@ -159,7 +189,7 @@ elif [[ $1 = "catalina.sh" ]]; then
     echo "checking upgrade/initialization status"
     echo '**************************************'
     while ! nc -z localhost 8080; do
-        echo -n "."
+        echo "."
         sleep 1
     done
     echo
