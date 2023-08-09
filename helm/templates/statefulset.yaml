@@ -35,12 +35,9 @@ spec:
           ports:
             - containerPort: 8080
               name: metacat-web
-            - containerPort: 5701
-              name: hazelcast-port1
-            - containerPort: 5702
-              name: hazelcast-port2
-            - containerPort: 5703
-              name: hazelcast-port3
+              {{- if .Values.container.ports }}
+                {{- toYaml .Values.container.ports | nindent 12 }}
+              {{ end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
@@ -61,8 +58,7 @@ spec:
             - name: METACAT_EXTERNAL_HOSTNAME
               value: {{ index .Values.metacat "server.name" }}
             - name: METACAT_EXTERNAL_PORT
-              {{- $metacatHttpPort := index .Values.metacat "server.httpPort" }}
-              value: {{ ternary "80" $metacatHttpPort ( .Values.ingress.enabled ) | quote }}
+              value: {{ include "metacat.httpPort" . }}
             - name: METACAT_APP_CONTEXT
               value: {{ index .Values.metacat "application.context" }}
             - name: POSTGRES_USER

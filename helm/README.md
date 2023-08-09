@@ -10,7 +10,7 @@ For now, you need to have an existing instance of
 [configured for metacat](https://knb.ecoinformatics.org/knb/docs/install.html#solr-server).
 Starting in the root directory of the `metacat` repo:
 
-```console
+```shell
 # 1. build metacat's binary distribution
 $  ant distbin
 
@@ -50,7 +50,7 @@ metacat, and with its index
 
 To install the chart with the release name `my-release`:
 
-```console
+```shell
 helm install my-release ./helm
 ```
 
@@ -63,7 +63,7 @@ installation.
 
 Parameters may be provided on the command line to override those in values.yaml; e.g.
 
-```console
+```shell
 helm install my-release ./helm  --set postgres.auth.existingSecret=my-release-secrets
 ```
 
@@ -71,7 +71,7 @@ helm install my-release ./helm  --set postgres.auth.existingSecret=my-release-se
 
 To uninstall/delete the `my-release` deployment:
 
-```console
+```shell
 helm delete my-release
 ```
 
@@ -81,7 +81,7 @@ exception of Secrets, PVCs and PVs) and deletes the release.
 There are two PVCs associated with `my-release`; one for Metacat data files, and the other for
 the PostgreSQL database (if the postgres sub-chart is enabled). To delete:
 
-```console
+```shell
 kubectl delete pvc <myMetacatPVCName> (or <myPostgresPVCName>)   ## deletes named PVC
 or:
 kubectl delete pvc -l release=my-release                         ## deletes both
@@ -94,17 +94,18 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 
 ### Metacat Application-Specific Properties
 
-| Name                             | Description                                                   | Value                                                           |
-|----------------------------------|---------------------------------------------------------------|-----------------------------------------------------------------|
-| `metacat.application.context`    | The application context to use                                | `metacat`                                                       |
-| `metacat.administrator.username` | The admin username that will be used to authenticate          | `admin@localhost`                                               |
-| `metacat.auth.administrators`    | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,ou=Account,dc=ecoinformatics,dc=org` |
-| `metacat.database.connectionURI` | postgres DB URI (RELEASE PREFIX, or blank for sub-chart)      | `jdbc:postgresql://mc-postgresql/metacat`                       |
-| `metacat.guid.doi.enabled`       | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                          |
-| `metacat.server.httpPort`        | The http port exposed externally by the Ingress or Service    | `80`                                                            |
-| `metacat.server.name`            | The hostname for the server, as exposed by the ingress        | `localhost`                                                     |
-| `metacat.solr.baseURL`           | The url to access solr                                        | `http://host.docker.internal:8983/solr`                         |
-| `metacat.replication.logdir`     | Location for the replication logs                             | `/var/metacat/logs`                                             |
+| Name                                                 | Description                                                   | Value                                                           |
+|------------------------------------------------------|---------------------------------------------------------------|-----------------------------------------------------------------|
+| `metacat.application.context`                        | The application context to use                                | `metacat`                                                       |
+| `metacat.administrator.username`                     | The admin username that will be used to authenticate          | `admin@localhost`                                               |
+| `metacat.auth.administrators`                        | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,ou=Account,dc=ecoinformatics,dc=org` |
+| `metacat.database.connectionURI`                     | postgres DB URI (RELEASE PREFIX, or blank for sub-chart)      | `jdbc:postgresql://mc-postgresql/metacat`                       |
+| `metacat.guid.doi.enabled`                           | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                          |
+| `metacat.server.httpPort`                            | The http port exposed externally, if NOT using the ingress    | `""`                                                            |
+| `metacat.server.name`                                | The hostname for the server, as exposed by the ingress        | `localhost`                                                     |
+| `metacat.solr.baseURL`                               | The url to access solr                                        | `http://host.docker.internal:8983/solr`                         |
+| `metacat.replication.logdir`                         | Location for the replication logs                             | `/var/metacat/logs`                                             |
+| `metacat.dataone.certificate.fromHttpHeader.enabled` | Enable mutual auth with client certs                          | `false`                                                         |
 
 ### Metacat Image, Container & Pod Parameters
 
@@ -116,6 +117,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `image.tag`                  | Overrides the image tag. Will default to the chart appVersion if set to ""   | `DEVELOP`      |
 | `image.debug`                | Specify if container debugging should be enabled (sets log level to "DEBUG") | `false`        |
 | `imagePullSecrets`           | Optional list of references to secrets in the same namespace                 | `[]`           |
+| `container.ports`            | Optional list of additional container ports to expose within the cluster     | `[]`           |
 | `serviceAccount.create`      | Should a service account be created to run Metacat?                          | `false`        |
 | `serviceAccount.annotations` | Annotations to add to the service account                                    | `{}`           |
 | `serviceAccount.name`        | The name to use for the service account.                                     | `""`           |
@@ -145,6 +147,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `ingress.hosts`               | A collection of rules mapping different hosts to the backend. | `[]`             |
 | `ingress.annotations`         | Annotations for the ingress                                   | `{}`             |
 | `ingress.tls`                 | The TLS configuration                                         | `[]`             |
+| `ingress.d1CaCertSecretName`  | Name of Secret containing DataONE CA certificate              | `ca-secret`      |
 | `service.enabled`             | Enable another optional service in addition to headless svc   | `false`          |
 | `service.type`                | Kubernetes Service type. Defaults to ClusterIP if not set     | `LoadBalancer`   |
 | `service.clusterIP`           | IP address of the service. Auto-generated if not set          | `""`             |
@@ -191,14 +194,14 @@ automatically each time you deploy.
 Parameters may be provided on the command line to override those in [values.yaml](./values.yaml);
 for example:
 
-```console
+```shell
 helm install my-release ./helm  --set metacat.solr.baseURL=http://mysolrhost:8983/solr
 ```
 
 Alternatively, a YAML file that specifies the values for the parameters can be provided
 while installing the chart. For example:
 
-```console
+```shell
 helm install my-release -f myValues.yaml ./helm
 ```
 
@@ -244,10 +247,171 @@ path in the metacat container.
 
 The PostgreSQL image stores the database data at the `/bitbami/pgdata` path in its own container.
 
-## Networking
+## Networking and x.509 Certificates
 
 By default, the chart will install an
 [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) (see the `ingress.*`
 parameters under [Networking & Monitoring](#networking--monitoring)), which will expose HTTP
 and HTTPS routes from outside the cluster to the Metacat application within the cluster. Note that
 your cluster must have an Ingress controller in order for this to work.
+
+> **Tip**: You can inspect available Ingress classes in your cluster using:
+> `$ kubectl get ingressclasses`
+
+We recommend using the Kubernetes open source community version of
+[the nginx ingress](https://kubernetes.github.io/ingress-nginx/). You can install it as follows:
+
+```shell
+$  helm upgrade --install ingress-nginx ingress-nginx \
+                --repo https://kubernetes.github.io/ingress-nginx \
+                --namespace ingress-nginx --create-namespace
+```
+
+...and don't forget to set the `ingress.className` to `nginx` in your `values.yaml`.
+
+
+### Setting up a TLS Certificate(s) for HTTPS Traffic
+
+HTTPS traffic is served on port 443 (a.k.a. the "SSL" port), and requires the ingress to have
+access to a TLS certificate and private key. A certificate signed by a trusted Certificate
+Authority is needed for public servers, or you can create your own self-signed certificate for
+development purposes - see
+[Appendix 1](#appendix-1-self-signing-tls-certificates-for-https-traffic) below, for self-signing
+instructions.
+
+Once you have obtained the server certificate and private key, you can add them to the
+Kubernetes secrets, as follows (creates a Secret named `tls-secret`, assuming the server
+certificate and private key are named `server.crt` and `server.key`):
+
+```shell
+kubectl create secret tls tls-secret --key server.key --cert server.crt
+# (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
+```
+
+Then simply tell the ingress which secret to use:
+
+```yaml
+ingress:
+  tls:
+    - hosts:
+        # hostname is auto-populated from the value of
+        #     metacat:
+        #       server.name: &extHostname myHostName.com
+        - *extHostname
+      secretName: tls-secret
+```
+
+### Setting up Certificates for DataONE Replication
+
+DataONE Replication relies on mutual authentication with x509 client-side certs. For full details
+on becoming part of the DataONE network, see the
+[Metacat Administrator's Guide](https://knb.ecoinformatics.org/knb/docs/dataone.html) and
+[Authentication and Authorization in DataONE](https://releases.dataone.org/online/api-documentation-v2.0.1/design/AuthorizationAndAuthentication.html).
+To set up the certificates for each Metacat Member Node (MN) or Coordinating Node (CN):
+
+1. First make sure you have the Kubernetes version of the
+   [nginx ingress installed](#networking-and-x509-certificates)
+1. Ensure [HTTPS access is set up](#setting-up-a-tls-certificates-for-https-traffic) and
+   working correctly
+1. From the DataONE administrators, obtain:
+
+   1. a copy of the DataONE *Certificate Authority (CA) certificate*, in order to validate client
+      certificates signed by that authority.
+
+   1. a *client certificate*, that uniquely identifies your Metacat instance.
+
+1. Create the Kubernetes Secret (named `ca-secret`) to hold the ca cert (assuming it's in a file named
+   `DataONECAChain.crt`):
+
+    ```shell
+        kubectl create secret generic ca-secret --from-file=ca.crt=DataONECAChain.crt
+        # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
+    ```
+
+1. Set the correct parameters in `values.yaml`:
+
+    ```yaml
+    metacat:
+
+      dataone.certificate.fromHttpHeader.enabled: true
+
+
+    ingress:
+
+      className: "nginx"
+
+      d1CaCertSecretName: ca-secret
+    ```
+
+---
+
+## Appendices
+
+## Appendix 1: Self-Signing TLS Certificates for HTTPS Traffic
+
+Also see the [Kubernetes nginx documentation](https://kubernetes.github.
+io/ingress-nginx/user-guide/tls)
+
+> **NOTE: For development and testing purposes only!**
+
+You can create your own self-signed certificate as follows:
+
+```shell
+HOST=myHostName.com \
+&&  openssl req -x509 -nodes -days 365  \
+    -newkey rsa:2048 -keyout server.key \
+    -out server.crt                     \
+    -subj "/CN=${HOST}/O=${HOST}"       \
+    -addext "subjectAltName = DNS:${HOST}"
+```
+
+The output will be a server certificate file named `server.crt`, and a private key file named
+`server.key`. For the `${HOST}`, you can use `localhost`, or your machine's real hostname.
+
+Alternatively, you can use any other valid hostname, but you'll need to add an entry to your
+`/etc/hosts` file to map it to your localhost IP address (`127.0.0.1`) so that your browser can
+resolve it; e.g.:
+
+```shell
+# add entry in /etc/hosts
+127.0.0.1       myHostName.com
+```
+
+Whatever hostname you are using, don't forget to set the
+`metacat.server.name` accordingly, in `values.yaml`!
+
+## Appendix 2: Self-Signing Certificates for Testing Mutual Authentication
+
+Also see the
+[Kubernetes nginx documentation](https://kubernetes.github.io/ingress-nginx/examples/PREREQUISITES/#client-certificate-authentication)
+
+> **NOTE: For development and testing purposes only!**
+
+You can create your own self-signed certificate as follows:
+
+1. Generate the CA Key and Certificate:
+
+    ```shell
+    openssl req -x509 -sha256 -newkey rsa:4096 -keyout ca.key -out ca.crt -days 356 -nodes \
+            -subj '/CN=My Cert Authority'
+    ```
+
+1. Generate the Server Key, and Certificate and Sign with the CA Certificate:
+
+    ```shell
+    openssl req -new -newkey rsa:4096 -keyout server.key -out server.csr -nodes \
+            -subj '/CN=mydomain.com'
+
+    openssl x509 -req -sha256 -days 365 -in server.csr -CA ca.crt -CAkey ca.key \
+            -set_serial 01 -out server.crt
+    ```
+
+1. Generate the Client Key, and Certificate and Sign with the CA Certificate:
+
+    ```shell
+    openssl req -new -newkey rsa:4096 -keyout client.key -out client.csr -nodes \
+            -subj '/CN=My Client'
+
+    openssl x509 -req -sha256 -days 365 -in client.csr -CA ca.crt -CAkey ca.key \
+            -set_serial 02 -out client.crt
+    ```
