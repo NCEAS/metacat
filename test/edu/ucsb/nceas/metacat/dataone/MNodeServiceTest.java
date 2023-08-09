@@ -2009,7 +2009,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                     .getFormatId());
             Identifier pid =
                 MNodeService.getInstance(request).create(session, resourceMapId, object, sysmeta);
-
+            Thread.sleep(20000);
             // get the package we uploaded
             ObjectFormatIdentifier format = new ObjectFormatIdentifier();
             format.setValue("application/bagit-097");
