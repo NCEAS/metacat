@@ -62,7 +62,7 @@ metacat:
   ## 2. If you ARE using the included postgresql sub-chart (i.e. `postgresql.enabled: true`),
   ##    leave this value unset (`database.connectionURI: ""`). It will then be automatically
   ##    populated as follows:
-  ##    `<postgres-hostname>` will be set to to the current value of `.Release.Name`, prepended to
+  ##    `<postgres-hostname>` will be set to the current value of `.Release.Name`, prepended to
   ##                         `-postgresql-hl` (the name of the k8s headless service for the
   ##                         postgresql statefulset)
   ##    `<database-name>` will be set to the value of `postgresql.auth.database`
