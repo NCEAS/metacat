@@ -328,10 +328,9 @@ To set up the certificates for each Metacat Member Node (MN) or Coordinating Nod
         # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
     ```
 
-1. Run run the [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh).
+1. Run the [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh).
    This will configure your nginx ingress controller to add a shared secret header that Metacat
-   requires for added security. Restart the nginx ingress controller pod to ensure it has picked
-   up the new settings.
+   requires for added security. 
 
 1. Set the correct parameters in `values.yaml`:
 
@@ -349,6 +348,9 @@ To set up the certificates for each Metacat Member Node (MN) or Coordinating Nod
     ```
 
 1. re-install or upgrade to apply the changes
+
+See Appendix 3 for help with troubleshooting
+
 ---
 
 ## Appendices
@@ -388,8 +390,8 @@ Whatever hostname you are using, don't forget to set the
 
 ## Appendix 2: Self-Signing Certificates for Testing Mutual Authentication
 
-Also see the
-[Kubernetes nginx documentation](https://kubernetes.github.io/ingress-nginx/examples/PREREQUISITES/#client-certificate-authentication)
+Also see the [Kubernetes nginx documentation
+](https://kubernetes.github.io/ingress-nginx/examples/PREREQUISITES/#client-certificate-authentication)
 
 > **NOTE: For development and testing purposes only!**
 
@@ -421,3 +423,107 @@ You can create your own self-signed certificate as follows:
     openssl x509 -req -sha256 -days 365 -in client.csr -CA ca.crt -CAkey ca.key \
             -set_serial 02 -out client.crt
     ```
+
+## Appendix 3: Troubleshooting
+
+If you're having trouble getting Mutual Authentication working, you can run metacat in debug mode:
+
+```yaml
+# in values.yaml
+image:
+  debug: true
+```
+
+or via `--set image.debug=true` command-line flag.
+
+Then view the
+metacat logs using:
+
+```shell
+  kubectl logs -f -l app.kubernetes.io/name=metacat
+  # don't forget to include your namespace if necessary, using `-n myNameSpace`
+```
+
+If you see the message: `X-Proxy-Key is null or blank`, it means the nginx ingress has not been set
+up correctly (see [Setting up Certificates for DataONE Replication
+](#setting-up-certificates-for-dataone-replication)).
+
+You can check the configuration as follows:
+
+1. first check the ingress definition
+
+    ```shell
+    kubectl get ingress <yourReleaseName>-metacat -o yaml
+    ```
+
+    ...and ensure the output contains these lines:
+
+    ```yaml
+      metadata:
+        annotations:
+          # more lines above
+          nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+          nginx.ingress.kubernetes.io/auth-tls-secret: default/ca-secret
+          ## above may differ for you: <namespace>/<ingress.d1CaCertSecretName>
+          nginx.ingress.kubernetes.io/auth-tls-verify-client: optional_no_ca
+          nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
+    ```
+    If you don't see these, or they are incorrect, check values.yaml for:
+
+    ```yaml
+      metacat:
+        dataone.certificate.fromHttpHeader.enabled: #true for mutual auth
+
+      ingress:
+        tls: # needs to have been set up properly - see above
+
+        d1CaCertSecretName: # needs to match secret name holding your ca cert
+    ```
+
+1. then check the configmaps for the ingress controller:
+
+    ```shell
+    kc get -n ingress-nginx configmap ingress-nginx-controller -o yaml
+    # this is the ingress controller's namespace. Typically ingress-nginx
+    ```
+
+    and look for:
+
+    ```yaml
+      data:
+        allow-snippet-annotations: "true"
+        proxy-set-headers: default/ingress-nginx-custom-headers
+        ## above may differ for you: <namespace>/ingress-nginx-custom-headers
+    ```
+
+    If you don't see these, or they are incorrect, make sure you have run the
+    [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh) script
+    successfully, and you have provided it with the correct namespaces. (Run it with no additional
+    parameters to see usage notes)
+
+1. verifying the `ingress-nginx-custom-headers`:
+
+    ```shell
+    kc get configmaps ingress-nginx-custom-headers -n myNameSpace -o yaml
+    # this one's in your own namespace
+    ```
+
+    and look for:
+
+    ```yaml
+      data:
+        X-Proxy-Key: yourSecretProxyKey
+    ```
+
+    ...where yourSecretProxyKey is populated from the secret with the key
+    `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` - make sure you defined this in your Secrets
+    and applied them using [admin/secrets.yaml](./admin/secrets.yaml)
+
+1. You can also view the nginx ingress logs using:
+
+    ```shell
+      NS=ingress-nginx    # this is the ingress controller's namespace. Typically ingress-nginx
+      kubectl logs -n ${NS} -f $(kc get pods -n ${NS} | grep -v "NAME" | sed -e 's/\ [0-9].*//g')
+    ```
+
+    ...and look for entries like: `Error reading ConfigMap`
