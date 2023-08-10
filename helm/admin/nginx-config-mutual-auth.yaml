@@ -6,7 +6,7 @@
 ##
 ## IMPORTANT:
 ## This file contains placeholders that must be replaced by real values before use. The recommended
-## approach is to use the accompanying `configure-nginx.sh` script.
+## approach is to use the accompanying `configure-nginx-mutual-auth.sh` script.
 ## Alternatively, you can edit this file and replace:
 ##   ${METACAT_NAMESPACE} with the namespace where you're deploying Metacat, and
 ##   ${NGINX_NAMESPACE}   with the namespace where nginx ingress is deployed

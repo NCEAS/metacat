@@ -313,7 +313,7 @@ To set up the certificates for each Metacat Member Node (MN) or Coordinating Nod
    [nginx ingress installed](#networking-and-x509-certificates)
 1. Ensure [HTTPS access is set up](#setting-up-a-tls-certificates-for-https-traffic) and
    working correctly
-1. From the DataONE administrators, obtain:
+1. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain:
 
    1. a copy of the DataONE *Certificate Authority (CA) certificate*, in order to validate client
       certificates signed by that authority.
@@ -327,6 +327,11 @@ To set up the certificates for each Metacat Member Node (MN) or Coordinating Nod
         kubectl create secret generic ca-secret --from-file=ca.crt=DataONECAChain.crt
         # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
     ```
+
+1. Run run the [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh).
+   This will configure your nginx ingress controller to add a shared secret header that Metacat
+   requires for added security. Restart the nginx ingress controller pod to ensure it has picked
+   up the new settings.
 
 1. Set the correct parameters in `values.yaml`:
 
@@ -343,6 +348,7 @@ To set up the certificates for each Metacat Member Node (MN) or Coordinating Nod
       d1CaCertSecretName: ca-secret
     ```
 
+1. re-install or upgrade to apply the changes
 ---
 
 ## Appendices
