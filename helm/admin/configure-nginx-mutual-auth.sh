@@ -25,7 +25,7 @@ if [ "$#" -lt 2 ]; then
     client-cert requests have really been authorized by the ingress, and are not being spoofed.
 
             <release namespace>        is the namespace that will be used for the metacat
-                                       installation
+                                       installation (typically:  default, knb, etc)
             <nginx ingress namespace>  is the namespace where the nginx ingress is running
                                        (typically:  ingress-nginx)"
     exit
