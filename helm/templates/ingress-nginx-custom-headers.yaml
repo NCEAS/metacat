@@ -9,7 +9,8 @@
 ## the ingress maintained by NGINX, Inc.
 ## See:
 ## 1. ingress docs: https://kubernetes.github.io/ingress-nginx/examples/customization/custom-headers
-## 2. nginx ingress configuration in: ../admin/nginx-config.yaml  &  ../admin/configure-nginx.sh
+## 2. nginx ingress configuration in: ../admin/nginx-config-mutual-auth.yaml and
+##                                    ../admin/configure-nginx-mutual-auth.sh
 ##
 {{- $xProxyKey := "METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY" -}}
 {{- $secrets := (printf "%s-secrets" .Release.Name) -}}
