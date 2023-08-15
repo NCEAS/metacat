@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -187,7 +188,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
      * @throws OREParserException 
      */
     public void index(Date since, Date until) throws SolrServerException, InvalidRequest, 
-                                                InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, ClassNotFoundException, InstantiationException, IllegalAccessException, IndexEventLogException, XPathExpressionException, NotFound, UnsupportedType, IOException, SAXException, ParserConfigurationException, OREParserException {
+                                                InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, ClassNotFoundException, InstantiationException, IllegalAccessException, XPathExpressionException, NotFound, UnsupportedType, IOException, SAXException, ParserConfigurationException, OREParserException {
         Date processedDate = null;
         List<String> solrIds = null;
         List[] metacatIds = getMetacatIds(since, until);
@@ -237,7 +238,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
        
         //record the timed index.
         if(processedDate != null) {
-            EventlogFactory.createIndexEventLog().setLastProcessDate(processedDate);
+            LastReindexDateManager.getInstance().setLastProcessDate(processedDate);
         }
         
     }
@@ -251,7 +252,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
      * @throws ServiceFailure 
      * @throws FileNotFoundException 
      */
-    private void reIndexFailedTasks() throws ClassNotFoundException, InstantiationException, IllegalAccessException, IndexEventLogException, FileNotFoundException, ServiceFailure {
+    private void reIndexFailedTasks() throws ClassNotFoundException, InstantiationException, IllegalAccessException, FileNotFoundException, ServiceFailure {
         //add the failedPids 
         List<IndexEvent> failedEvents = EventlogFactory.createIndexEventLog().getEvents(null, null, null, null);
         //List<String> failedOtherIds = new ArrayList<String>();
@@ -354,7 +355,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
             }
             if(needReindexSinceLastProcessDate) {
                 log.info("IndexGenerator.run - start to index objects whose modified date is younger than the last process date--------------------------------");
-                Date since = EventlogFactory.createIndexEventLog().getLastProcessDate();
+                Date since = LastReindexDateManager.getInstance().getLastProcessDate();
                 index(since);
             }
         } catch (InvalidRequest e) {
@@ -391,9 +392,6 @@ public class IndexGeneratorTimerTask extends TimerTask {
         } catch (IllegalAccessException e) {
             // TODO Auto-generated catch block
             log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (IndexEventLogException e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
         } catch (XPathExpressionException e) {
             // TODO Auto-generated catch block
             log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
@@ -415,6 +413,8 @@ public class IndexGeneratorTimerTask extends TimerTask {
         } catch (OREParserException e) {
             // TODO Auto-generated catch block
             log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
+        } catch (ParseException e) {
+            
         }
     }
     
