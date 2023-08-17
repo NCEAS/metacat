@@ -303,25 +303,35 @@ ingress:
 
 ### Setting up Certificates for DataONE Replication
 
-DataONE Replication relies on mutual authentication with x509 client-side certs. For full details
-on becoming part of the DataONE network, see the
-[Metacat Administrator's Guide](https://knb.ecoinformatics.org/knb/docs/dataone.html) and
-[Authentication and Authorization in DataONE](https://releases.dataone.org/online/api-documentation-v2.0.1/design/AuthorizationAndAuthentication.html).
-To set up the certificates for each Metacat Member Node (MN) or Coordinating Node (CN):
+For full details on becoming part of the DataONE network, see the [Metacat Administrator's Guide
+](https://knb.ecoinformatics.org/knb/docs/dataone.html) and
+[Authentication and Authorization in DataONE
+](https://releases.dataone.org/online/api-documentation-v2.0.1/design/AuthorizationAndAuthentication.html)
+.
+
+DataONE Replication relies on mutual authentication with x509 client-side certs. As a DataONE
+Member Node (MN) or Coordinating Node (CN), your metacat instance will act as both a server and
+as a client, at different times during the replication process. It is therefore necessary to
+configure certificates and settings for both these roles.
+
+To set up the certificates for each:
 
 1. First make sure you have the Kubernetes version of the
    [nginx ingress installed](#networking-and-x509-certificates)
 1. Ensure [HTTPS access is set up](#setting-up-a-tls-certificates-for-https-traffic) and
-   working correctly
+   working correctly. This allows other nodes, acting as "clients" to verify your server's identity
+   during mutual authentication.
 1. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain:
 
-   1. a copy of the DataONE *Certificate Authority (CA) certificate*, in order to validate client
-      certificates signed by that authority.
+   1. a copy of the **DataONE Certificate Authority (CA) certificate chain**. This enables your node
+      (when acting as server) to validate other nodes' client certificates signed by that authority.
 
-   1. a *client certificate*, that uniquely identifies your Metacat instance.
+   1. a **Client Certificate**, that uniquely identifies your Metacat instance. This allows another
+      node (acting as server) to verify your node's identity (acting as "client") during mutual
+      authentication.
 
-1. Create the Kubernetes Secret (named `ca-secret`) to hold the ca cert (assuming it's in a file named
-   `DataONECAChain.crt`):
+1. Create the Kubernetes Secret (named `ca-secret`) to hold the ca chain (e.g. assuming it's in a
+   file named `DataONECAChain.crt`):
 
     ```shell
         kubectl create secret generic ca-secret --from-file=ca.crt=DataONECAChain.crt
@@ -330,26 +340,31 @@ To set up the certificates for each Metacat Member Node (MN) or Coordinating Nod
 
 1. Run the [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh).
    This will configure your nginx ingress controller to add a shared secret header that Metacat
-   requires for added security. 
+   requires for added security.
+
+1. Create the Kubernetes Secret (named `client-secret`) to hold the Client Certificate (e.g.
+   assuming it's in a file named `urn_node_TestMYNAME-1.crt`):
+
+    ```shell
+        kubectl create secret generic ca-secret --from-file=client.crt=urn_node_TestMYNAME-1.crt
+        # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
+    ```
 
 1. Set the correct parameters in `values.yaml`:
 
     ```yaml
     metacat:
-
       dataone.certificate.fromHttpHeader.enabled: true
 
 
     ingress:
-
       className: "nginx"
-
       d1CaCertSecretName: ca-secret
     ```
 
 1. re-install or upgrade to apply the changes
 
-See Appendix 3 for help with troubleshooting
+See [Appendix 3](#appendix-3-troubleshooting) for help with troubleshooting
 
 ---
 
@@ -357,10 +372,10 @@ See Appendix 3 for help with troubleshooting
 
 ## Appendix 1: Self-Signing TLS Certificates for HTTPS Traffic
 
-Also see the [Kubernetes nginx documentation](https://kubernetes.github.
-io/ingress-nginx/user-guide/tls)
-
 > **NOTE: For development and testing purposes only!**
+>
+> Also see the [Kubernetes nginx documentation](<https://kubernetes.github>.
+> io/ingress-nginx/user-guide/tls)
 
 You can create your own self-signed certificate as follows:
 
@@ -390,28 +405,21 @@ Whatever hostname you are using, don't forget to set the
 
 ## Appendix 2: Self-Signing Certificates for Testing Mutual Authentication
 
-Also see the [Kubernetes nginx documentation
-](https://kubernetes.github.io/ingress-nginx/examples/PREREQUISITES/#client-certificate-authentication)
-
 > **NOTE: For development and testing purposes only!**
+>
+> Also see the [Kubernetes nginx documentation
+> ](https://kubernetes.github.io/ingress-nginx/examples/PREREQUISITES/#client-certificate-authentication)
 
-You can create your own self-signed certificate as follows:
+Assuming you already have a [server certificate installed
+](#setting-up-a-tls-certificates-for-https-traffic) (either signed by a trusted CA or [self-signed
+](#appendix-1-self-signing-tls-certificates-for-https-traffic) for development & testing), you can
+create your own self-signed Mutual Auth Client certificate and CA certificate as follows:
 
 1. Generate the CA Key and Certificate:
 
     ```shell
     openssl req -x509 -sha256 -newkey rsa:4096 -keyout ca.key -out ca.crt -days 356 -nodes \
             -subj '/CN=My Cert Authority'
-    ```
-
-1. Generate the Server Key, and Certificate and Sign with the CA Certificate:
-
-    ```shell
-    openssl req -new -newkey rsa:4096 -keyout server.key -out server.csr -nodes \
-            -subj '/CN=mydomain.com'
-
-    openssl x509 -req -sha256 -days 365 -in server.csr -CA ca.crt -CAkey ca.key \
-            -set_serial 01 -out server.crt
     ```
 
 1. Generate the Client Key, and Certificate and Sign with the CA Certificate:
@@ -468,6 +476,7 @@ You can check the configuration as follows:
           nginx.ingress.kubernetes.io/auth-tls-verify-client: optional_no_ca
           nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
     ```
+
     If you don't see these, or they are incorrect, check values.yaml for:
 
     ```yaml
