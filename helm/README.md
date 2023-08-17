@@ -175,6 +175,13 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                             | `""`                               |
 | `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume                 | `1Gi`                              |
 
+### Tomcat Configuration
+
+| Name                    | Description                                              | Value |
+|-------------------------|----------------------------------------------------------|-------|
+| `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
+| `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
+
 
 Specify non-secret parameters in the default [values.yaml](./values.yaml), which will be used
 automatically each time you deploy.

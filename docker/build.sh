@@ -68,5 +68,7 @@ fi
 
 cp ../"${DISTBIN}" .
 
+echo "Starting docker image build: $(date)"
+
 docker image build $DEV_BUILD_OPTS \
     --tag metacat:"$TAG" --build-arg DISTBIN="$DISTBIN" --build-arg DEVTOOLS="$DEVTOOLS" .
