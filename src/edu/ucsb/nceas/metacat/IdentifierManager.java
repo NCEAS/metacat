@@ -2264,4 +2264,62 @@ public class IdentifierManager {
         logMetacat.info("IdentifierManager.existsInIdentifierTable - Does the guid "+pid.getValue()+ " exist in the xml_revision table? - "+exists);
         return exists;
     }
+    
+    /**
+     * Get the list of guids whose modification dates are in the range of 
+     * the given start and end times.
+     * @param start  the start time of the range
+     * @param end  the end time of the range
+     * @return  list of guids whose modification dates are in the range
+     */
+    public List<String> getGUIDsByTimeRange(Date start, Date end) {
+        Vector<String> guids = new Vector<String>();
+        String sql = "select guid from systemmetadata";
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            boolean hasStart = false;
+            boolean hasEnd = false;
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getAllGUIDs");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            if (start != null) {
+                sql = sql + " where date_modified >= ?";
+                hasStart = true;
+            }
+            
+            if (end != null) {
+                hasEnd = true;
+                if (!hasStart) {
+                    sql = sql + " where date_modified <= ?";
+                } else {
+                    sql = sql + " and date_modified <= ?";
+                }
+            }
+
+            PreparedStatement stmt = dbConn.prepareStatement(sql);
+            if (hasStart && hasEnd) {
+                stmt.setTimestamp(1, new Timestamp(start.getTime()));
+                stmt.setTimestamp(2, new Timestamp(end.getTime()));
+            } else if (hasStart && !hasEnd) {
+                stmt.setTimestamp(1, new Timestamp(start.getTime()));
+            } else if (!hasStart && hasEnd) {
+                stmt.setTimestamp(1, new Timestamp(end.getTime()));
+            }
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String guid = rs.getString(1);
+                guids.add(guid);
+            } 
+            stmt.close();
+        } catch (SQLException e) {
+            logMetacat.error("Error while retrieving the guid: " 
+                    + e.getMessage());
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        return guids;
+    }
 }

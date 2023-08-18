@@ -104,6 +104,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         //suite.addTest(new IdentifierManagerTest("testUpdateSystemmetadata"));
         suite.addTest(new IdentifierManagerTest("getGetGUIDs"));
         suite.addTest(new IdentifierManagerTest("textGetAllPidsInChain"));
+        suite.addTest(new IdentifierManagerTest("testGetGUIDsByTimeRange"));
         return suite;
     }
     /**
@@ -1871,5 +1872,44 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         assertTrue(pids.size() == 2);
         assertTrue(pids.contains(guid.getValue()));
         assertTrue(pids.contains(guid2.getValue()));
+    }
+    
+    /**
+     * Test the getGUIDsByTimeRange
+     * @throws Exception
+     */
+    public void testGetGUIDsByTimeRange() throws Exception {
+        String urnScheme = "urn:uuid:";
+        Session session = getTestSession();
+        UUID uuid = UUID.randomUUID();
+        String str1 = uuid.toString();
+        Identifier guid = new Identifier();
+        guid.setValue(urnScheme+str1); 
+        
+        Calendar cal = Calendar.getInstance();
+        cal.set(2000, Calendar.MARCH,04);
+        Date date2000 = cal.getTime();
+        Date date1 = new Date();
+        List<String> list = IdentifierManager.getInstance().getGUIDsByTimeRange(null, date1);
+        assertTrue(list.size() > 0);
+        assertTrue(!list.contains(urnScheme+str1));
+        
+        //create an object whose identifier is a uuid
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Thread.sleep(1000);
+        Date date2 = new Date();
+        List<String> list2 = IdentifierManager.getInstance().getGUIDsByTimeRange(date2000, date2);
+        assertTrue(list2.contains(urnScheme+str1));
+        List<String> list3 = IdentifierManager.getInstance().getGUIDsByTimeRange(date2000, null);
+        assertTrue(list3.contains(urnScheme+str1));
+        List<String> list4 = IdentifierManager.getInstance().getGUIDsByTimeRange(null, null);
+        assertTrue(list4.contains(urnScheme+str1));
+        List<String> list5 = IdentifierManager.getInstance().getGUIDsByTimeRange(date2, null);
+        if (list5 != null) {
+            assertTrue(!list5.contains(urnScheme+str1));
+        }
     }
 }
