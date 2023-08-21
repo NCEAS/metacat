@@ -49,6 +49,9 @@ spec:
             - name: {{ .Release.Name }}-volume
               mountPath: /var/metacat
               readOnly: false
+            - name: {{ .Release.Name }}-d1-cert-volume
+              mountPath: /var/metacat/certs/
+              readOnly: true
           env:
             - name: METACAT_IS_RUNNING_IN_A_CONTAINER
               value: "true"
@@ -84,6 +87,10 @@ spec:
         configMap:
           name: {{ .Release.Name }}-configfiles
           defaultMode: 0644
+      - name: {{ .Release.Name }}-d1-cert-volume
+        secret:
+          secretName: {{ .Release.Name }}-d1-client-secret
+          optional: true
 {{- if not (.Values.persistence.enabled) }}
       - name: {{ .Release.Name }}-volume
         emptyDir: {}
