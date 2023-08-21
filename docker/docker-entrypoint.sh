@@ -145,6 +145,7 @@ elif [[ $1 = "catalina.sh" ]]; then
     # Make sure all default directories are available
     mkdir -p \
         /var/metacat/.metacat    \
+        /var/metacat/certs       \
         /var/metacat/config      \
         /var/metacat/data        \
         /var/metacat/documents   \

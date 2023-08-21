@@ -321,8 +321,7 @@ Member Node (MN) or Coordinating Node (CN), your metacat instance will act as bo
 as a client, at different times during the replication process. It is therefore necessary to
 configure certificates and settings for both these roles.
 
-To set up the certificates for each:
-
+#### Prerequisites
 1. First make sure you have the Kubernetes version of the
    [nginx ingress installed](#networking-and-x509-certificates)
 1. Ensure [HTTPS access is set up](#setting-up-a-tls-certificates-for-https-traffic) and
@@ -332,44 +331,54 @@ To set up the certificates for each:
 
    1. a copy of the **DataONE Certificate Authority (CA) certificate chain**. This enables your node
       (when acting as server) to validate other nodes' client certificates signed by that authority.
-
    1. a **Client Certificate**, that uniquely identifies your Metacat instance. This allows another
       node (acting as server) to verify your node's identity (acting as "client") during mutual
       authentication.
 
-1. Create the Kubernetes Secret (named `ca-secret`) to hold the ca chain (e.g. assuming it's in a
-   file named `DataONECAChain.crt`):
+#### Install the CA Chain
+
+1. Create the Kubernetes Secret (named `ca-secret`) to hold the ca chain (e.g. assuming it's in
+    a file named `DataONECAChain.crt`):
 
     ```shell
-        kubectl create secret generic ca-secret --from-file=ca.crt=DataONECAChain.crt
-        # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
+    kubectl create secret generic ca-secret --from-file=ca.crt=DataONECAChain.crt
+    # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
     ```
 
 1. Run the [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh).
-   This will configure your nginx ingress controller to add a shared secret header that Metacat
-   requires for added security.
+  This will configure your nginx ingress controller to add a shared secret header that Metacat
+  requires for added security. Ensure you have already defined a value for this shared secret,
+  named `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY`, [in metacat Secrets](#secrets).
 
-1. Create the Kubernetes Secret (named `client-secret`) to hold the Client Certificate (e.g.
-   assuming it's in a file named `urn_node_TestMYNAME-1.crt`):
+#### Install the Client Certificate
 
-    ```shell
-        kubectl create secret generic ca-secret --from-file=client.crt=urn_node_TestMYNAME-1.crt
-        # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
-    ```
+   1. Create the Kubernetes Secret (named `<yourReleaseName>-d1-client-secret`) to hold the Client
+      Certificate (e.g. assuming it's in a file named `urn_node_TestNAME.pem`):
 
-1. Set the correct parameters in `values.yaml`:
+      ```shell
+      kubectl create secret generic <yourReleaseName>-d1-client-secret \
+                                    --from-file=d1client.crt=urn_node_TestNAME.pem
+      # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
+      ```
+
+#### Set the correct parameters in `values.yaml`
+
+1. Enable the shared secret header
 
     ```yaml
     metacat:
       dataone.certificate.fromHttpHeader.enabled: true
+    ```
 
+1. set the CA secret name
 
+    ```yaml
     ingress:
       className: "nginx"
       d1CaCertSecretName: ca-secret
     ```
 
-1. re-install or upgrade to apply the changes
+1. Finally, re-install or upgrade to apply the changes
 
 See [Appendix 3](#appendix-3-troubleshooting) for help with troubleshooting
 
@@ -429,12 +438,16 @@ create your own self-signed Mutual Auth Client certificate and CA certificate as
             -subj '/CN=My Cert Authority'
     ```
 
-1. Generate the Client Key, and Certificate and Sign with the CA Certificate:
+1. Generate the Client Key and Certificate Signing Request:
 
     ```shell
     openssl req -new -newkey rsa:4096 -keyout client.key -out client.csr -nodes \
             -subj '/CN=My Client'
+    ```
 
+1. Sign with the CA Key:
+
+    ```shell
     openssl x509 -req -sha256 -days 365 -in client.csr -CA ca.crt -CAkey ca.key \
             -set_serial 02 -out client.crt
     ```
@@ -479,7 +492,7 @@ You can check the configuration as follows:
           # more lines above
           nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
           nginx.ingress.kubernetes.io/auth-tls-secret: default/ca-secret
-          ## above may differ for you: <namespace>/<ingress.d1CaCertSecretName>
+          ## above may differ for you. Format is: <namespace>/<ingress.d1CaCertSecretName>
           nginx.ingress.kubernetes.io/auth-tls-verify-client: optional_no_ca
           nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
     ```
@@ -491,10 +504,12 @@ You can check the configuration as follows:
         dataone.certificate.fromHttpHeader.enabled: #true for mutual auth
 
       ingress:
-        tls: # needs to have been set up properly - see above
+        tls: # needs to have been set up properly [ref 1]
 
-        d1CaCertSecretName: # needs to match secret name holding your ca cert
+        d1CaCertSecretName: # needs to match secret name holding your ca cert chain [ref 2]
     ```
+    - *[[ref 1]](#setting-up-a-tls-certificates-for-https-traffic)*
+    - *[[ref 2]](#install-the-ca-chain)*
 
 1. then check the configmaps for the ingress controller:
 
