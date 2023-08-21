@@ -2296,7 +2296,7 @@ public class IdentifierManager {
                     sql = sql + " and date_modified <= ?";
                 }
             }
-
+            sql = sql + " ORDER BY date_modified asc";
             PreparedStatement stmt = dbConn.prepareStatement(sql);
             if (hasStart && hasEnd) {
                 stmt.setTimestamp(1, new Timestamp(start.getTime()));
@@ -2306,7 +2306,6 @@ public class IdentifierManager {
             } else if (!hasStart && hasEnd) {
                 stmt.setTimestamp(1, new Timestamp(end.getTime()));
             }
-            
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 String guid = rs.getString(1);

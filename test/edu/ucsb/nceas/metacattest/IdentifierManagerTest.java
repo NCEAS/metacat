@@ -1884,7 +1884,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         UUID uuid = UUID.randomUUID();
         String str1 = uuid.toString();
         Identifier guid = new Identifier();
-        guid.setValue(urnScheme+str1); 
+        guid.setValue(urnScheme + str1); 
         
         Calendar cal = Calendar.getInstance();
         cal.set(2000, Calendar.MARCH,04);
@@ -1892,7 +1892,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         Date date1 = new Date();
         List<String> list = IdentifierManager.getInstance().getGUIDsByTimeRange(null, date1);
         assertTrue(list.size() > 0);
-        assertTrue(!list.contains(urnScheme+str1));
+        assertTrue(!list.contains(urnScheme + str1));
         
         //create an object whose identifier is a uuid
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -1902,14 +1902,17 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         Thread.sleep(1000);
         Date date2 = new Date();
         List<String> list2 = IdentifierManager.getInstance().getGUIDsByTimeRange(date2000, date2);
-        assertTrue(list2.contains(urnScheme+str1));
+        assertTrue(list2.contains(urnScheme + str1));
+        assertTrue(list2.get(list2.size()-1).equals(urnScheme + str1));
         List<String> list3 = IdentifierManager.getInstance().getGUIDsByTimeRange(date2000, null);
-        assertTrue(list3.contains(urnScheme+str1));
+        assertTrue(list3.contains(urnScheme + str1));
+        assertTrue(list3.get(list3.size()-1).equals(urnScheme + str1));
         List<String> list4 = IdentifierManager.getInstance().getGUIDsByTimeRange(null, null);
-        assertTrue(list4.contains(urnScheme+str1));
+        assertTrue(list4.contains(urnScheme + str1));
+        assertTrue(list2.get(list2.size()-1).equals(urnScheme + str1));
         List<String> list5 = IdentifierManager.getInstance().getGUIDsByTimeRange(date2, null);
         if (list5 != null) {
-            assertTrue(!list5.contains(urnScheme+str1));
+            assertTrue(!list5.contains(urnScheme + str1));
         }
     }
 }
