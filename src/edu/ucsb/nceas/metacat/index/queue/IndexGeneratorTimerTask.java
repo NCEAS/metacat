@@ -51,6 +51,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.OREParserException;
 import org.xml.sax.SAXException;
 
+import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.common.index.IndexTask;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
@@ -254,7 +255,8 @@ public class IndexGeneratorTimerTask extends TimerTask {
      */
     private void reIndexFailedTasks() throws ClassNotFoundException, InstantiationException, IllegalAccessException, FileNotFoundException, ServiceFailure {
         //add the failedPids 
-        List<IndexEvent> failedEvents = EventlogFactory.createIndexEventLog().getEvents(null, null, null, null);
+        //List<IndexEvent> failedEvents = EventlogFactory.createIndexEventLog().getEvents(null, null, null, null);
+        List<IndexEvent> failedEvents = null;
         //List<String> failedOtherIds = new ArrayList<String>();
         List<String> failedResourceMapIds = new ArrayList<String>();
         if(failedEvents != null) {
@@ -438,71 +440,18 @@ public class IndexGeneratorTimerTask extends TimerTask {
         List[] ids = new List[2];
         ids[FIRST]= otherIds;
         ids[SECOND] = resourceMapIds;
-        //ids[THIRD]  = otherDeletedIds;
-        //ids[FOURTH] = resourceMapDeletedIds;
-        ISet<Identifier> metacatIds = DistributedMapsFactory.getIdentifiersSet();
-        Date otherPreviousDate = null;
-        Date otherDeletedPreviousDate = null;
-        Date resourceMapPreviousDate = null;
-        Date resourceMapDeletedPreviousDate = null;
+        List<String> metacatIds = IdentifierManager.getInstance().getGUIDsByTimeRange(since, until);
         if(metacatIds != null) {
-            for(Identifier identifier : metacatIds) {
-                if(identifier != null && identifier.getValue() != null && !identifier.getValue().equals("")) {
-                    List<String> idLog = new ArrayList<String>();
-                    idLog.add(identifier.getValue());
-                    //logFile(idLog, fileName);
-                    SystemMetadata sysmeta = getSystemMetadata(identifier.getValue());
+            for(String identifier : metacatIds) {
+                if(identifier != null && !identifier.trim().equals("")) {
+                    SystemMetadata sysmeta = getSystemMetadata(identifier);
                     if(sysmeta != null) {
                         ObjectFormatIdentifier formatId =sysmeta.getFormatId();
-                        //System.out.println("the object format id is "+formatId.getValue());
-                        //System.out.println("the ============ resourcMapNamespaces"+resourceMapNamespaces);
-                        boolean correctTimeRange = false;
-                        Date sysDate = sysmeta.getDateSysMetadataModified();
-                        if(since == null && until == null) {
-                            correctTimeRange = true;
-                        } else if (since != null && until == null) {
-                            if(sysDate.getTime() > since.getTime()) {
-                                correctTimeRange = true;
-                            }
-                        } else if (since == null && until != null) {
-                            if(sysDate.getTime() < until.getTime()) {
-                                correctTimeRange = true;
-                            }
-                        } else if (since != null && until != null) {
-                            if(sysDate.getTime() > since.getTime() && sysDate.getTime() < until.getTime()) {
-                                correctTimeRange = true;
-                            }
+                        if(formatId != null && formatId.getValue() != null && resourceMapNamespaces != null && isResourceMap(formatId)) {
+                            resourceMapIds.add(identifier);
+                        } else {
+                            otherIds.add(identifier);
                         }
-                        if(correctTimeRange && formatId != null && formatId.getValue() != null && resourceMapNamespaces != null && isResourceMap(formatId)) {
-                                if(!resourceMapIds.isEmpty()) {
-                                    if(sysDate.getTime() > resourceMapPreviousDate.getTime()) {
-                                        resourceMapIds.add(identifier.getValue());//append to the end of the list if current is later than the previous one
-                                        resourceMapPreviousDate = sysDate;//reset resourceMapPreviousDate to the bigger one
-                                    } else {
-                                        int size = resourceMapIds.size();//
-                                        resourceMapIds.add(size -1, identifier.getValue());//keep the previous one at the end of the list.
-                                    }
-                                } else {
-                                    resourceMapIds.add(identifier.getValue());
-                                    resourceMapPreviousDate = sysDate;//init resourcemapPreviousDate
-                                }
-                        } else if (correctTimeRange) {
-                                //for all ids
-                                if(!otherIds.isEmpty()) {
-                                    if(sysDate.getTime() > otherPreviousDate.getTime()) {
-                                        otherIds.add(identifier.getValue());
-                                        otherPreviousDate = sysDate;//reset otherPreviousDate to the bigger one
-                                    } else {
-                                        int size = otherIds.size();
-                                        otherIds.add(size-1, identifier.getValue());
-                                    }
-                                } else {
-                                    otherIds.add(identifier.getValue());
-                                    otherPreviousDate = sysDate;//init otherPreviousDate
-                                }
-                           
-                        }
-                        
                     }
                 }
             }
@@ -533,7 +482,6 @@ public class IndexGeneratorTimerTask extends TimerTask {
         }
         return metadata;
     }
-
     
     /**
      * Overwrite and do nothing
