@@ -1,5 +1,5 @@
-FROM tomcat:8.5.90-jre8-temurin-jammy
-# TODO: update to tomcat:9.0.76-jre8-temurin-jammy
+FROM tomcat:9.0.78-jre8-temurin-jammy
+#FROM tomcat:8.5.90-jre8-temurin-jammy
 
 # ARG default values that can be overridden at build-time
 ARG DISTBIN=2.19.0
@@ -30,15 +30,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends  iputils-ping l
     rm -rf /var/lib/apt/lists/*                                                       && \
     mv /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war ${TC_HOME}/webapps  && \
     chown -R metacat ${TC_HOME}                                                       && \
+    ## Tomcat Mods to Extend Allowed Character Set \
+    ## - Encoded forward slashes (%2f):
     echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true" \
                                                >> ${TC_HOME}/conf/catalina.properties && \
+    ## - Backslashes:
     echo "org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true" \
                                                >> ${TC_HOME}/conf/catalina.properties && \
-    # Tomcat Mods - TODO MB - remove after Tomcat9 upgrade
-    cp  ${TC_HOME}/conf/server.xml  ${TC_HOME}/conf/server.xml.original               && \
-    sed -i 's/port="8080"/relaxedPathChars="\[\]\|" \
-        relaxedQueryChars="\[\]\|\{\}\^\&\#x5c\;\&\#x60\;\&quot\;\&lt\;\&gt\;\&\#x2a\;\&\#x2c\;" port="8080"/g' \
-        $TC_HOME/conf/server.xml
+    ## - Other special characters:  [ ] | { } ^ " \:
+    ## which are the intersection between what Solr uses:  + - && || ! ( ) { } [ ] \ ^ " ~ * ? :
+    ## (see https://solr.apache.org/guide/solr/latest/query-guide/standard-query-parser.html)
+    ## ...and what Tomcat doesn't usually allow:  " < > [ \ ] ^ `{ | }
+    ## (see https://tomcat.apache.org/tomcat-9.0-doc/config/http.html) \
+    ## Note that backslash (&\#x5c\;) is also needed here, despite setting ALLOW_BACKSLASH=true
+    sed -i 's/port="8080"/port="8080" relaxedQueryChars="\[\]\|\{\}\^\&quot\;\&\#x5c\;"/g' \
+            $TC_HOME/conf/server.xml
 
 COPY --chown=metacat apply_context.py     ${USRBINDIR}/
 COPY --chown=metacat docker-entrypoint.sh ${USRBINDIR}/

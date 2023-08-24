@@ -62,7 +62,7 @@ metacat:
   ## 2. If you ARE using the included postgresql sub-chart (i.e. `postgresql.enabled: true`),
   ##    leave this value unset (`database.connectionURI: ""`). It will then be automatically
   ##    populated as follows:
-  ##    `<postgres-hostname>` will be set to to the current value of `.Release.Name`, prepended to
+  ##    `<postgres-hostname>` will be set to the current value of `.Release.Name`, prepended to
   ##                         `-postgresql-hl` (the name of the k8s headless service for the
   ##                         postgresql statefulset)
   ##    `<database-name>` will be set to the value of `postgresql.auth.database`
@@ -460,3 +460,13 @@ postgresql:
       storageClass: ""
       existingClaim: ""
       size: 1Gi
+
+## @section Tomcat Configuration
+
+## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
+## @param tomcat.heapMemory.min maximum memory heap size for Tomcat (-Xmx JVM parameter)
+## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
+tomcat:
+  heapMemory:
+    min: ""
+    max: ""

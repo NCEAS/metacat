@@ -4,6 +4,8 @@
 # METACAT_APP_CONTEXT       (see .Values.metacat.application.context)
 # METACAT_EXTERNAL_HOSTNAME (see .Values.global.externalHostname)
 # METACAT_EXTERNAL_PORT     (see .Values.metacat.server.httpPort)
+# TOMCAT_MEM_MIN            (see .Values.tomcat.heapMemory.min)
+# TOMCAT_MEM_MAX            (see .Values.tomcat.heapMemory.max)
 #
 # Defined in Dockerfile:
 # TC_HOME       (tomcat home directory in container; typically /usr/local/tomcat)
@@ -15,21 +17,44 @@
 
 set -e
 
+####################################################################################################
+####   FUNCTION DEFINITIONS
+####################################################################################################
+
+TC_OPTS="${TC_HOME}"/bin/setenv.sh
+
 enableRemoteDebugging() {
     # Allow remote debugging via port 5005
     # TODO: for JDK > 8, may need to change [...]address=5005 to [...]address=*:5005 --
     #       see https://bugs.openjdk.org/browse/JDK-8175050
     {
         echo "# Allow remote debugging connections to the port listed as \"address=\" below:"
-        echo "export CATALINA_OPTS=\"${CATALINA_OPTS} \
+        echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} \
                             -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005\""
-    } > "${TC_HOME}"/bin/setenv.sh
+    } >> "${TC_OPTS}"
     echo
     echo "* * * * * * Remote debugging connections enabled on port 5005 * * * * * *"
     echo
 }
 
+setTomcatEnv() {
+    MEMORY=""
+    if [[ -z ${TOMCAT_MEM_MIN} ]] || [[ -z ${TOMCAT_MEM_MAX} ]]; then
+        echo "tomcat max or min memory size not found; skipping memory settings"
+    else
+        MEMORY=" -Xms${TOMCAT_MEM_MIN} -Xmx${TOMCAT_MEM_MAX}"
+        MEMORY="${MEMORY} -XX:PermSize=128m -XX:MaxPermSize=512m "
+    fi
+    # TODO - upgrade to log4j > 2.16 and remove `-Dlog4j2.formatMsgNoLookups=true` "safeguard",
+    #  since it's not secure, See: https://logging.apache.org/log4j/2.x/security.html#history
+    LOG4J="-Dlog4j2.formatMsgNoLookups=true"
+
+    echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -server ${MEMORY} ${LOG4J}\"" >> "${TC_OPTS}"
+}
+
 configMetacatUi() {
+    UI_HOME="${TC_HOME}"/webapps/metacatui
+
     # show default skin if nothing else configured.
     # 1. Overwrite config.js
     {
@@ -43,11 +68,34 @@ configMetacatUi() {
         fi
         echo "  baseUrl: \"http${S}://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\""
         echo "}"
-    } > "${TC_HOME}"/webapps/metacatui/config/config.js
+    } > "${UI_HOME}"/config/config.js
 
     # 2. edit index.html to point to it
-    sed -i 's|"/config/config.js"|"./config/config.js"|g' "${TC_HOME}"/webapps/metacatui/index.html
+    sed -i 's|"/config/config.js"|"/metacatui/config/config.js"|g' "${UI_HOME}"/index.html
+
+    # 3. add a custom error handler to make one-page app work, without apache
+    #    (see https://nceas.github.io/metacatui/install/apache)
+    mkdir "${UI_HOME}"/WEB-INF
+    {
+        echo '<?xml version="1.0" encoding="UTF-8"?>'
+        echo -n '<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                  http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+                  version="4.0">'
+        echo
+        echo "    <error-page>"
+        echo "          <error-code>404</error-code>"
+        echo "          <location>/index.html</location>"
+        echo "    </error-page>"
+        echo "</web-app>"
+    } > "${UI_HOME}"/WEB-INF/web.xml
 }
+
+
+####################################################################################################
+####   MAIN SCRIPT
+####################################################################################################
 
 if [[ $DEVTOOLS == "true" ]]; then
     echo '* * * Container "-devtools" mode'
@@ -97,6 +145,7 @@ elif [[ $1 = "catalina.sh" ]]; then
     # Make sure all default directories are available
     mkdir -p \
         /var/metacat/.metacat    \
+        /var/metacat/certs       \
         /var/metacat/config      \
         /var/metacat/data        \
         /var/metacat/documents   \
@@ -104,6 +153,8 @@ elif [[ $1 = "catalina.sh" ]]; then
         /var/metacat/logs        \
         /var/metacat/solr-home-legacy \
         /var/metacat/temporary
+
+    setTomcatEnv
 
     # if METACAT_DEBUG, set the root log level to "DEBUG" and enable
     # remote debugging connections to tomcat
@@ -159,7 +210,7 @@ elif [[ $1 = "catalina.sh" ]]; then
     echo "checking upgrade/initialization status"
     echo '**************************************'
     while ! nc -z localhost 8080; do
-        echo -n "."
+        echo "."
         sleep 1
     done
     echo
