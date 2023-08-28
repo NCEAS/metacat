@@ -1,22 +1,5 @@
 package edu.ucsb.nceas.metacat.admin;
 
-import java.util.Vector;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.dataone.client.v2.CNode;
-import org.dataone.client.v2.itk.D1Client;
-import org.dataone.client.auth.CertificateManager;
-import org.dataone.configuration.Settings;
-import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.types.v2.Node;
-import org.dataone.service.types.v2.NodeList;
-import org.dataone.service.types.v1.NodeReference;
-import org.dataone.service.types.v1.Session;
-
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -25,6 +8,21 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.dataone.client.auth.CertificateManager;
+import org.dataone.client.v2.CNode;
+import org.dataone.client.v2.itk.D1Client;
+import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.BaseException;
+import org.dataone.service.types.v1.NodeReference;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.NodeList;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Vector;
 
 /**
  * Control the display of the database configuration page and the processing of the configuration
@@ -159,9 +157,8 @@ public class D1Admin extends MetacatAdmin {
 
                 // set the configuration state so we know how to render the UI page buttons
                 // if we have already configured once, we cannot skip this page
-                request.setAttribute(
-                    "configutil.dataoneConfigured",
-                    PropertyService.getProperty("configutil.dataoneConfigured"));
+                request.setAttribute("configutil.dataoneConfigured",
+                                     PropertyService.getProperty("configutil.dataoneConfigured"));
 
                 // do we know if this is an update, pending verification, or a new registration?
                 memberNodeId = (String) request.getAttribute("dataone.nodeId");
@@ -172,9 +169,8 @@ public class D1Admin extends MetacatAdmin {
                         "dataone.mn.registration.submitted"));
 
                 // enable the services?
-                request.setAttribute(
-                    "dataone.mn.services.enabled",
-                    PropertyService.getProperty("dataone.mn.services.enabled"));
+                request.setAttribute("dataone.mn.services.enabled",
+                                     PropertyService.getProperty("dataone.mn.services.enabled"));
 
                 // Forward the request to the JSP page
                 RequestUtil.forwardRequest(
@@ -368,7 +364,6 @@ public class D1Admin extends MetacatAdmin {
                     // it will be more controlled and deliberate that way -BRL
 
 
-
                     // write the backup properties to a location outside the
                     // application directories so they will be available after
                     // the next upgrade
@@ -410,8 +405,7 @@ public class D1Admin extends MetacatAdmin {
             } catch (MetacatUtilException mue) {
                 throw new AdminException(
                     "D1Admin.configureDataONE - utility problem while processing dataone "
-                        + "configuration: "
-                        + mue.getMessage());
+                        + "configuration: " + mue.getMessage());
             } catch (GeneralPropertyException gpe) {
                 throw new AdminException("D1Admin.configureDataONE - problem with properties while "
                                              + "processing geoservices configuration page: "
