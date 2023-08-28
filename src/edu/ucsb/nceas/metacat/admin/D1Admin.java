@@ -83,7 +83,7 @@ public class D1Admin extends MetacatAdmin {
                 String contactSubject = PropertyService.getProperty("dataone.contactSubject");
                 String certpath = PropertyService.getProperty("D1Client.certificate.file");
 
-                //the synch schedule
+                //the sync schedule
                 String year =
                     PropertyService.getProperty("dataone.nodeSynchronization.schedule.year");
                 String mon =
@@ -125,7 +125,7 @@ public class D1Admin extends MetacatAdmin {
                 request.setAttribute("dataone.contactSubject", contactSubject);
                 request.setAttribute("D1Client.certificate.file", certpath);
 
-                // synch schedule
+                // sync schedule
                 request.setAttribute("dataone.nodeSynchronization.schedule.year", year);
                 request.setAttribute("dataone.nodeSynchronization.schedule.mon", mon);
                 request.setAttribute("dataone.nodeSynchronization.schedule.mday", mday);
@@ -155,7 +155,7 @@ public class D1Admin extends MetacatAdmin {
                     }
                 }
 
-                // set the configuration state so we know how to render the UI page buttons
+                // set the configuration state, so we know how to render the UI page buttons
                 // if we have already configured once, we cannot skip this page
                 request.setAttribute("configutil.dataoneConfigured",
                                      PropertyService.getProperty("configutil.dataoneConfigured"));
@@ -248,7 +248,7 @@ public class D1Admin extends MetacatAdmin {
                 String contactSubject = (String) request.getParameter("dataone.contactSubject");
                 String certpath = (String) request.getParameter("D1Client.certificate.file");
 
-                // the synch schedule
+                // the sync schedule
                 String year =
                     (String) request.getParameter("dataone.nodeSynchronization.schedule.year");
                 String mon =
@@ -290,7 +290,7 @@ public class D1Admin extends MetacatAdmin {
                     servicesEnabled = Boolean.parseBoolean(servicesEnabledString);
                 }
 
-                // process the values, checking for nulls etc..
+                // process the values, checking for nulls etc.
                 if (nodeName == null) {
                     validationErrors.add("nodeName cannot be null");
                 } else {
@@ -306,7 +306,7 @@ public class D1Admin extends MetacatAdmin {
                     PropertyService.setPropertyNoPersist("dataone.contactSubject", contactSubject);
                     PropertyService.setPropertyNoPersist("D1Client.certificate.file", certpath);
 
-                    // the synch schedule
+                    // the sync schedule
                     PropertyService.setPropertyNoPersist(
                         "dataone.nodeSynchronization.schedule.year", year);
                     PropertyService.setPropertyNoPersist(
@@ -336,7 +336,7 @@ public class D1Admin extends MetacatAdmin {
                     PropertyService.setPropertyNoPersist(
                         "dataone.mn.services.enabled", Boolean.toString(servicesEnabled));
 
-                    // get the current node id so we know if we updated the value
+                    // get the current node id, so we know if we updated the value
                     String existingMemberNodeId = PropertyService.getProperty("dataone.nodeId");
 
                     // update the property value
@@ -365,7 +365,7 @@ public class D1Admin extends MetacatAdmin {
 
 
                     // write the backup properties to a location outside the
-                    // application directories so they will be available after
+                    // application directories, so they will be available after
                     // the next upgrade
                     PropertyService.persistMainBackupProperties();
 
