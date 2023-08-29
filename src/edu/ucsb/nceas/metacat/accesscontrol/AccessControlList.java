@@ -52,7 +52,6 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 import edu.ucsb.nceas.metacat.BasicNode;
 import edu.ucsb.nceas.metacat.DBEntityResolver;
-import edu.ucsb.nceas.metacat.DBSAXNode;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
