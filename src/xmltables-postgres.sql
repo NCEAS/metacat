@@ -582,7 +582,7 @@ CREATE TABLE quota_usage_events (
   node_id text, -- the id of the node which host the usage
   quota_subject text, -- the subject of the quota
   quota_type text, -- the type of the quota
-  requestor text, -- the requestor of the qutao usage
+  requestor text, -- the requester of the quota usage
    CONSTRAINT quota_usage_events_pk PRIMARY KEY (usage_local_id),
    CONSTRAINT quota_usage_events_uk1 UNIQUE (quota_id, instance_id, status),
    CONSTRAINT quota_usage_events_uk2 UNIQUE (quota_subject, quota_type, instance_id, status)
@@ -595,3 +595,16 @@ CREATE INDEX quota_usage_events_idx5 ON quota_usage_events (usage_remote_id);
 CREATE INDEX quota_usage_events_idx6 ON quota_usage_events (quota_subject);
 CREATE INDEX quota_usage_events_idx7 ON quota_usage_events (requestor);
 CREATE INDEX quota_usage_events_idx8 ON quota_usage_events (quota_type);
+
+/*
+ * Create the node_id_revisions table
+ */
+CREATE SEQUENCE node_id_revision_id_seq;
+CREATE TABLE node_id_revisions (
+  node_id_revision_id INTEGER default nextval ('node_id_revision_id_seq'), -- unique identifier for
+                                                                           -- this node_id revision
+  node_id           TEXT NOT NULL,      -- DataONE nodeId being persisted; eg: urn:node:TestBROOKE
+  is_most_recent    BOOLEAN,            -- TRUE if this is the most recent known value
+  date_created      TIMESTAMP NOT NULL, -- the datetime on which this node_id_revision was created
+  CONSTRAINT node_id_revisions_pk PRIMARY KEY (node_id_revision_id)
+);
