@@ -1,6 +1,8 @@
 package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.CNode;
@@ -15,14 +17,19 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.security.cert.X509Certificate;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.util.Properties;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
 /**
@@ -122,6 +129,7 @@ import static org.mockito.ArgumentMatchers.eq;
  */
 public class D1AdminTest {
 
+    private static final String PREVIOUS_NODE_ID = "urn:node:TestingPreviousNodeId";
     private D1Admin d1Admin;
 
     @Before
@@ -146,11 +154,12 @@ public class D1AdminTest {
             assertTrue(d1Admin.canChangeNodeId());
             setK8sEnv();
             runWithMockedClientCert(
-                "CN=urn:node:TestMemberNode", null,
+                "CN=urn:node:NewTestMemberNode", null,
                 () -> {
-                    Node mockMN3 = getMockNode("urn:node:TestMemberNode");
-                    runWithMockedUpdateCN(true,
-                                          () -> d1Admin.handleRegisteredUpdate(mockMN3));
+                    runWithMockedDataBaseConnection(() -> {
+                        Node mockMN3 = getMockNode("urn:node:NewTestMemberNode");
+                        runWithMockedUpdateCN(true, () -> d1Admin.handleRegisteredUpdate(mockMN3));
+                    });
                 });
         }
     }
@@ -201,15 +210,11 @@ public class D1AdminTest {
     }
 
     @Test
-    public void getMostRecentNodeId() {
-        String result = d1Admin.getMostRecentNodeId();
-        assertNotNull(result);
-        assertNotEquals("", result);
-
-        // TODO - set up mock DB for more tests
-        //   Example (works only if DB hasn't been initialized):
-        //     String propsNodeId = PropertyService.getProperty("dataone.nodeId");
-        //     assertEquals(propsNodeId, result);
+    public void getMostRecentNodeId() throws Exception {
+        runWithMockedDataBaseConnection(() -> {
+            String result = d1Admin.getMostRecentNodeId();
+            assertEquals(PREVIOUS_NODE_ID, result);
+        });
     }
 
     @Test
@@ -277,9 +282,9 @@ public class D1AdminTest {
 
     @Test
     public void updateCN() throws Exception {
-        // success case
         Node mockMN = getMockNode("myNode");
 
+        // success case
         runWithMockedUpdateCN(true, () -> assertTrue(d1Admin.updateCN(mockMN)));
 
         // unsuccessful update (cn.updateNodeCapabilities() returns false)
@@ -306,14 +311,6 @@ public class D1AdminTest {
         return mockMN;
     }
 
-    private static void getMockClientCert(String subjDN) {
-        CertificateManager mockCertMgr = Mockito.mock(CertificateManager.class);
-        Mockito.when(CertificateManager.getInstance()).thenReturn(mockCertMgr);
-        X509Certificate mockClientCert = Mockito.mock(X509Certificate.class);
-        Mockito.when(mockCertMgr.loadCertificate()).thenReturn(mockClientCert);
-        Mockito.when(mockCertMgr.getSubjectDN(any())).thenReturn(subjDN);
-    }
-
     private static void runWithMockedUpdateCN(boolean isUpdateSuccessful, TestCode testCode)
         throws Exception {
 
@@ -338,7 +335,6 @@ public class D1AdminTest {
             X509Certificate mockClientCert = Mockito.mock(X509Certificate.class);
             Mockito.when(mockCertMgr.loadCertificate()).thenReturn(mockClientCert);
             Mockito.when(mockCertMgr.getSubjectDN(any())).thenReturn(subjDN);
-            getMockClientCert(subjDN);
 
             testCode.execute();
         } catch (Exception expectedException) {
@@ -348,6 +344,35 @@ public class D1AdminTest {
                 "e.getMessage() didn't contain expected substring ('" + expectedExceptionSubstring
                     + "')", expectedException.getMessage().contains(expectedExceptionSubstring));
             throw expectedException;
+        }
+    }
+
+    private void runWithMockedDataBaseConnection(TestCode testCode) throws Exception {
+
+        try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                 Mockito.mockStatic(DBConnectionPool.class)) {
+
+            try (PreparedStatement mockPs = Mockito.mock(PreparedStatement.class)) {
+                try (ResultSet mockRs = Mockito.mock(ResultSet.class)) {
+
+                    // ResultSet
+                    Mockito.when(mockRs.next()).thenReturn(true);
+                    Mockito.when(mockRs.getString(1)).thenReturn(PREVIOUS_NODE_ID);
+
+                    // PreparedStatement
+                    Mockito.when(mockPs.executeUpdate()).thenReturn(0);
+                    Mockito.when(mockPs.executeQuery()).thenReturn(mockRs);
+
+                    // DBConnection
+                    DBConnection mockDbConn = Mockito.mock(DBConnection.class);
+                    Mockito.when(mockDbConn.prepareStatement(anyString())).thenReturn(mockPs);
+
+                    mockDbConnPool.when(() -> DBConnectionPool.getDBConnection(anyString()))
+                        .thenReturn(mockDbConn);
+
+                    testCode.execute();
+                }
+            }
         }
     }
 

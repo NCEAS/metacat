@@ -11,7 +11,6 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.math3.stat.correlation.KendallsCorrelation;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
@@ -490,8 +489,6 @@ public class D1Admin extends MetacatAdmin {
         CertificateManager.getInstance().setCertificateLocation(mnCertificatePath);
         logMetacat.debug("DataONE MN Client certificate set: " + mnCertificatePath);
 
-        CNode cn = D1Client.getCN(PropertyService.getProperty("D1Client.CN_URL"));
-
         // check if this is new or an update
         if (isNodeRegistered(node.getIdentifier().getValue())) {
             handleRegisteredUpdate(node);
@@ -569,8 +566,9 @@ public class D1Admin extends MetacatAdmin {
         logMetacat.debug("handleRegisteredUpdate(): SUCCESS: pushed an update of Node "
                              + "Capabilities to CN. Now updating DataBase with new nodeId ("
                              + nodeId + ")...");
-        updateAuthoritativeMemberNodeId(previousNodeId, nodeId);
-        logMetacat.debug("...updated authoritive_member_node in systemmetadata...");
+        int updatedRowCount = updateAuthoritativeMemberNodeId(previousNodeId, nodeId);
+        logMetacat.debug("...updated authoritive_member_node (" + updatedRowCount
+                             + "rows affected) in systemmetadata table...");
         saveMostRecentNodeId(nodeId);
         logMetacat.debug("...added node_id to node_id_revisions. REGISTERED UPDATE FINISHED");
     }
@@ -748,6 +746,13 @@ public class D1Admin extends MetacatAdmin {
             serialNumber = dbConn.getCheckOutSerialNumber();
             String query;
             PreparedStatement stmt;
+            query = "UPDATE node_id_revisions SET is_most_recent = ?";
+            stmt = dbConn.prepareStatement(query);
+            stmt.setBoolean(1, false);
+            stmt.execute();
+            stmt.close();
+            dbConn.increaseUsageCount(1);
+
             query = "INSERT INTO node_id_revisions (node_id, is_most_recent, date_created) "
                 + "VALUES (?, true, CURRENT_DATE)";
             stmt = dbConn.prepareStatement(query);
@@ -765,10 +770,11 @@ public class D1Admin extends MetacatAdmin {
         }
     }
 
-    private void updateAuthoritativeMemberNodeId(
+    private int updateAuthoritativeMemberNodeId(
         String existingMemberNodeId, String newMemberNodeId) throws AdminException {
         DBConnection dbConn = null;
         int serialNumber = -1;
+        int updatedRowCount = 0;
         PreparedStatement stmt = null;
         try {
             dbConn = DBConnectionPool.getDBConnection("D1Admin.updateAuthoritativeMemberNodeId");
@@ -778,7 +784,7 @@ public class D1Admin extends MetacatAdmin {
             stmt = dbConn.prepareStatement(query);
             stmt.setString(1, newMemberNodeId);
             stmt.setString(2, existingMemberNodeId);
-            stmt.executeUpdate();
+            updatedRowCount = stmt.executeUpdate();
             stmt.close();
         } catch (SQLException e) {
             String msg = "updateAuthoritativeMemberNodeId(): SQL error (" + e.getMessage()
@@ -788,6 +794,7 @@ public class D1Admin extends MetacatAdmin {
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
+        return updatedRowCount;
     }
 
     /**
