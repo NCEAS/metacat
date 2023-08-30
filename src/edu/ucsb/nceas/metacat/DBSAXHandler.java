@@ -63,7 +63,8 @@ import org.xml.sax.helpers.DefaultHandler;
 public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         DeclHandler
 {
-
+    public final static long NODE_ID =1;
+    
     protected boolean atFirstElement;
 
     protected boolean processingDTD;
@@ -78,10 +79,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     private boolean stackCreated = false;
 
-    protected Stack<DBSAXNode> nodeStack;
-
-    protected Vector<DBSAXNode> nodeIndex;
-
     protected DBConnection connection = null;
 
     protected DocumentImpl currentDocument;
@@ -90,7 +87,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     
     protected Date updateDate = null;
 
-    protected DBSAXNode rootNode;
 
     protected String action = null;
 
@@ -163,14 +159,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         this.processingDTD = false;
         this.createDate = createDate;
         this.updateDate = updateDate;
-
-        // Create the stack for keeping track of node context
-        // if it doesn't already exist
-        if (!stackCreated) {
-            nodeStack = new Stack<DBSAXNode>();
-            nodeIndex = new Vector<DBSAXNode>();
-            stackCreated = true;
-        }
     }
 
     /**
@@ -234,12 +222,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     public void startDocument() throws SAXException
     {
         logMetacat.trace("DBSaxHandler.startDocument - starting document");
-
-        // Create the document node representation as root
-        rootNode = new DBSAXNode(connection, this.docid);
-        // Add the node to the stack, so that any text data can be
-        // added as it is encountered
-        nodeStack.push(rootNode);
     }
 
     /** SAX Handler that receives notification of end of the document */
@@ -247,37 +229,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 		logMetacat.trace("DBSaxHandler.endDocument - ending document");
 		// Starting new thread for writing XML Index.
 		// It calls the run method of the thread.
-
-		try {
-			// if it is data package insert triple into relation table;
-			if (doctype != null
-					&& MetacatUtil.getOptionList(
-							PropertyService.getProperty("xml.packagedoctype")).contains(
-							doctype) && hasTriple && !isRevisionDoc) {
-
-				// initial handler and write into relation db only for
-				// xml-documents
-				if (!isRevisionDoc) {
-					RelationHandler handler = new RelationHandler(docid, doctype,
-							connection, tripleList);
-				}
-			}
-		} catch (Exception e) {
-			logMetacat.error("DBSaxHandler.endDocument - Failed to write triples into relation table"
-					+ e.getMessage());
-			throw new SAXException("Failed to write triples into relation table "
-					+ e.getMessage());
-		}
-		
-		// If we get here, the document and schema parsed okay.  If there are
-		// any schemas in the schema list, they are new and need to be registered.
-    	/*for (XMLSchema xmlSchema : schemaList) {
-    		String externalFileUri = xmlSchema.getExternalFileUri();
-    		String fileNamespace = xmlSchema.getFileNamespace();
-    		SchemaLocationResolver resolver = 
-    			new SchemaLocationResolver(fileNamespace, externalFileUri);
-    		resolver.resolveNameSpace();
-    	}*/
 	}
 
     /** SAX Handler that is called at the start of Namespace */
@@ -299,30 +250,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         logMetacat.trace("DBSaxHandler.startElement - Start ELEMENT(qName) " + qName);
         logMetacat.trace("DBSaxHandler.startElement - Start ELEMENT(localName) " + localName);
         logMetacat.trace("DBSaxHandler.startElement - Start ELEMENT(uri) " + uri);
-
-        DBSAXNode parentNode = null;
-        DBSAXNode currentNode = null;
-
-        // Get a reference to the parent node for the id
-        try {
-            
-            parentNode = (DBSAXNode) nodeStack.peek();
-        } catch (EmptyStackException e) {
-            parentNode = null;
-        }
-
-        // If hit a text node, we need write this text for current's parent
-        // node This will happen if the element is mixed
-        if (hitTextNode && parentNode != null) {
-            // write the textbuffer into db for parent node.
-            endNodeId = writeTextForDBSAXNode(endNodeId, textBuffer, parentNode);
-            // rest hitTextNode
-            hitTextNode = false;
-            // reset textbuffer
-            textBuffer = null;
-            textBuffer = new StringBuffer();
-           
-        }
         
         // Document representation that points to the root document node
         if (atFirstElement) {
@@ -347,8 +274,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
                 logMetacat.debug("DBSaxHandler.startElement - DOCTYPE-b: " + doctype);
             }
            
-            rootNode.writeNodename(docname);
-          
             try {
                 // for validated XML Documents store a reference to XML DB
                 // Catalog
@@ -393,8 +318,8 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
               
                 if (!isRevisionDoc)
                 {
-                  currentDocument = new DocumentImpl(connection, rootNode
-                        .getNodeID(), docname, doctype, docid, revision,
+                  currentDocument = new DocumentImpl(connection, NODE_ID, 
+                         docname, doctype, docid, revision,
                         action, user, this.pub, catalogid, this.serverCode, 
                         createDate, updateDate);
                 }               
@@ -406,10 +331,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
             }
         }
 
-        // Create the current node representation
-        currentNode = new DBSAXNode(connection, qName, localName,
-                parentNode, rootNode.getNodeID(), docid, doctype);
-
         // Add all of the namespaces
         String prefix;
         String nsuri;
@@ -417,7 +338,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         while (prefixes.hasMoreElements()) {
             prefix = (String) prefixes.nextElement();
             nsuri = (String) namespaces.get(prefix);
-            currentNode.setNamespace(prefix, nsuri, docid);
         }
         namespaces = null;
         namespaces = new Hashtable<String,String>();
@@ -426,9 +346,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         for (int i = 0; i < atts.getLength(); i++) {
             String attributeName = atts.getQName(i);
             String attributeValue = atts.getValue(i);
-            endNodeId = currentNode.setAttribute(attributeName, attributeValue,
-                    docid);
-
+            
             // To handle name space and schema location if the attribute name
             // is xsi:schemaLocation. If the name space is in not in catalog 
             // table it will be registered.
@@ -455,51 +373,13 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         		}
             }
         }
-
-        // Add the node to the stack, so that any text data can be
-		// added as it is encountered
-		nodeStack.push(currentNode);
-		// Add the node to the vector used by thread for writing XML Index
-		nodeIndex.addElement(currentNode);
-		// start parsing triple
-		try {
-			if (doctype != null
-					&& MetacatUtil.getOptionList(
-							PropertyService.getProperty("xml.packagedoctype")).contains(doctype)
-					&& localName.equals("triple")) {
-				startParseTriple = true;
-				hasTriple = true;
-				currentTriple = new Triple();
-			}
-		} catch (PropertyNotFoundException pnfe) {
-			pnfe.printStackTrace(System.out);
-			pnfe.printStackTrace(System.err);
-			throw (new SAXException("Error in DBSaxHandler.startElement for action " + action +
-			        " : " + pnfe.getMessage(), pnfe));
-		}
-	}               
+    }
     
 
     /** SAX Handler that is called for each XML text node */
     public void characters(char[] cbuf, int start, int len) throws SAXException
     {
         logMetacat.trace("DBSaxHandler.characters - starting characters");
-        // buffer all text nodes for same element. This is for if text was split
-        // into different nodes
-        textBuffer.append(new String(cbuf, start, len));
-        // set hittextnode true
-        hitTextNode = true;
-        // if text buffer .size is greater than max, write it to db.
-        // so we can save memory
-        if (textBuffer.length() > MAXDATACHARS) {
-            logMetacat.trace("DBSaxHandler.characters - Write text into DB in charaters"
-                    + " when text buffer size is greater than maxmum number");
-            DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
-            endNodeId = writeTextForDBSAXNode(endNodeId, textBuffer,
-                    currentNode);
-            textBuffer = null;
-            textBuffer = new StringBuffer();
-        }
     }
 
     /**
@@ -514,11 +394,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         // but through characters() callback
         logMetacat.trace("DBSaxHandler.ignorableWhitespace - in ignorableWhitespace");
 
-        DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
-
-            // Write the content of the node to the database
-            endNodeId = currentNode.writeChildNodeToDB("TEXT", null, new String(cbuf, start, len),
-                    docid);
     }
 
     /**
@@ -529,8 +404,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
             throws SAXException
     {
         logMetacat.trace("DBSaxHandler.processingInstruction - in processing instructions");
-        DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
-        endNodeId = currentNode.writeChildNodeToDB("PI", target, data, docid);
     }
 
     /** SAX Handler that is called at the end of each XML element */
@@ -538,52 +411,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
             throws SAXException
     {
         logMetacat.trace("DBSaxHandler.endElement - End element " + qName);
-
-        // write buffered text nodes into db (so no splited)
-        DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
-
-        // If before the end element, the parser hit text nodes and store them
-        // into the buffer, write the buffer to data base. The reason we put
-        // write database here is for xerces some time split text node
-        if (hitTextNode) {
-            logMetacat.trace("DBSaxHandler.endElement - Write text into DB in End Element");
-            endNodeId = writeTextForDBSAXNode(endNodeId, textBuffer,
-                    currentNode);
-
-            //if it is triple parsing process
-            if (startParseTriple) {
-
-                String content = textBuffer.toString().trim();
-                if (localName.equals("subject")) { //get the subject content
-                    currentTriple.setSubject(content);
-                } else if (localName.equals("relationship")) { //get the
-                                                               // relationship
-                                                               // content
-                    currentTriple.setRelationship(content);
-                } else if (localName.equals("object")) { //get the object
-                                                         // content
-                    currentTriple.setObject(content);
-                }
-            }
-
-        }//if
-
-        //set hitText false
-        hitTextNode = false;
-        // reset textbuff
-        textBuffer = null;
-        textBuffer = new StringBuffer();
-
-        // Get the node from the stack
-        currentNode = (DBSAXNode) nodeStack.pop();
-        //finishing parsing single triple
-        if (startParseTriple && localName.equals("triple")) {
-            // add trip to triple collection
-            tripleList.addTriple(currentTriple);
-            //rest variable
-            currentTriple = null;
-            startParseTriple = false;
-        }
     }
 
     //
@@ -599,11 +426,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         systemid = systemId;
 
         processingDTD = true;
-        DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
-        //create a DTD node and write docname,publicid and system id into db
-        // we don't put the dtd node into node stack
-        DBSAXNode dtdNode = new DBSAXNode(connection, name, publicId, systemId,
-                currentNode, currentNode.getRootNodeID(), docid);
         logMetacat.trace("DBSaxHandler.startDTD - Start DTD");
         logMetacat.trace("DBSaxHandler.startDTD - Setting processingDTD to true");
         logMetacat.trace("DBSaxHandler.startDTD - DOCNAME: " + docname);
@@ -628,11 +450,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     public void comment(char[] ch, int start, int length) throws SAXException
     {
         logMetacat.trace("DBSaxHandler.comment - starting comment");
-        if (!processingDTD) {
-            DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
-            endNodeId = currentNode.writeChildNodeToDB("COMMENT", null,
-                    new String(ch, start, length), docid);
-        }
     }
 
     /**
@@ -801,38 +618,10 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
 	}
-
-	/* Method to write a text buffer for DBSAXNode */
-    protected long writeTextForDBSAXNode(long previousEndNodeId,
-            StringBuffer strBuffer, DBSAXNode node) throws SAXException
-    {
-        long nodeId = previousEndNodeId;
-        // Check parameter
-        if (strBuffer == null || node == null) { return nodeId; }
-        boolean moredata = true;
-
-        String normalizedData = strBuffer.toString();
-        logMetacat.trace("DBSAXHandler.writeTextForDBSAXNode - Before normalize in write process: " + normalizedData);
-        String afterNormalize = MetacatUtil.normalize(normalizedData);
-        logMetacat.trace("DBSAXHandler.writeTextForDBSAXNode - After normalize in write process: " + afterNormalize);
-        strBuffer = new StringBuffer(afterNormalize);;
-
-        int bufferSize = strBuffer.length();
-        int start = 0;
-
-        // if there are some cotent in buffer, write it
-        if (bufferSize > 0) {
-            logMetacat.trace("DBSAXHandler.writeTextForDBSAXNode - Write text into DB");
-
-                // Write the content of the node to the database
-                nodeId = node.writeChildNodeToDB("TEXT", null, new String(strBuffer), docid);
-        }//if
-        return nodeId;
-    }
     
     public long getRootNodeId()
     {
-        return rootNode.getNodeID();
+        return NODE_ID;
     }
     
     public String getDocumentType()
