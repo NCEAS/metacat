@@ -1091,16 +1091,11 @@ public class DocumentImpl
 
 			if (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
 					|| FileUtil.getFileSize(documentPath) == 0) {
-				fos = new FileOutputStream(documentPath);
-				toXmlFromDb(fos, user, groups, true);
-				fos.close();
+			    throw new McdbException("Could not read file: " + documentPath + " : since it doesn't exist or the sieze is 0.");
 			}
 		} catch (PropertyNotFoundException pnfe) {
 			throw new McdbException("Could not write file: " + documentPath + " : "
 					+ pnfe.getMessage());
-		} catch (IOException ioe) {
-			throw new McdbException("Could not write file: " + documentPath + " : "
-					+ ioe.getMessage());
         } finally {
             IOUtils.closeQuietly(fos);
         }
@@ -1112,310 +1107,6 @@ public class DocumentImpl
 		return readFromFileSystem(out, user, groups, documentPath);
 	}
     
-    /**
-	 * Print a text representation of the XML document to a Writer
-	 * 
-	 * @param pw
-	 *            the Writer to which we print the document Now we decide no
-	 *            matter withinInlineData's value, the document will
-	 * 
-	 */
-    public void toXmlFromDb(OutputStream outputStream, String user, String[] groups,
-            boolean withInLineData) throws McdbException, IOException
-    {
-        // flag for process eml2
-        boolean proccessEml2 = false;
-        boolean storedDTD = false;//flag to inidate publicid or system
-        // id stored in db or not
-        boolean firstElement = true;
-        String dbDocName = null;
-        String dbPublicID = null;
-        String dbSystemID = null;
-
-        if (doctype != null
-                && (doctype.equals(EML2_0_0NAMESPACE)
-                        || doctype.equals(EML2_0_1NAMESPACE) 
-                        || doctype.equals(EML2_1_0NAMESPACE)
-                		|| doctype.equals(EML2_1_1NAMESPACE) || doctype.equals(EML2_2_0NAMESPACE) )) {
-            proccessEml2 = true;
-        }
-        // flag for process inline data
-        boolean processInlineData = false;
-
-        TreeSet<NodeRecord> nodeRecordLists = null;
-        
-        // Note: we haven't stored the encoding, so we use the default for XML
-        String encoding = "UTF-8";
-        Writer out = new OutputStreamWriter(outputStream, encoding);
-       
-        // Here add code to handle subtree access control
-        /*
-         * PermissionController control = new PermissionController(docid);
-         * Hashtable unaccessableSubTree =control.hasUnaccessableSubTree(user,
-         * groups, AccessControlInterface.READSTRING);
-         *
-         * if (!unaccessableSubTree.isEmpty()) {
-         *
-         * nodeRecordLists = getPartNodeRecordList(rootnodeid,
-         * unaccessableSubTree);
-         *  } else { nodeRecordLists = getNodeRecordList(rootnodeid); }
-         */
-        
-        if(this.nodeRecordList == null){
-            nodeRecordLists = getNodeRecordList(rootnodeid);
-        } else {
-        	nodeRecordLists = this.nodeRecordList;
-        }
-        Stack<NodeRecord> openElements = new Stack<NodeRecord>();
-        boolean atRootElement = true;
-        boolean previousNodeWasElement = false;
-
-        // Step through all of the node records we were given
-
-        Iterator<NodeRecord> it = nodeRecordLists.iterator();
-
-        while (it.hasNext()) {
-
-            NodeRecord currentNode = it.next();
-            logMetacat.debug("[Got Node ID: " + currentNode.getNodeId() + " ("
-                    + currentNode.getParentNodeId() + ", " + currentNode.getNodeIndex()
-                    + ", " + currentNode.getNodeType() + ", " + currentNode.getNodeName()
-                    + ", " + currentNode.getNodeData() + ")]");
-            // Print the end tag for the previous node if needed
-            //
-            // This is determined by inspecting the parent nodeid for the
-            // currentNode. If it is the same as the nodeid of the last element
-            // that was pushed onto the stack, then we are still in that
-            // previous
-            // parent element, and we do nothing. However, if it differs, then
-            // we
-            // have returned to a level above the previous parent, so we go into
-            // a loop and pop off nodes and print out their end tags until we
-            // get
-            // the node on the stack to match the currentNode parentnodeid
-            //
-            // So, this of course means that we rely on the list of elements
-            // having been sorted in a depth first traversal of the nodes, which
-            // is handled by the NodeComparator class used by the TreeSet
-            if (!atRootElement) {
-                NodeRecord currentElement = openElements.peek();
-                if (currentNode.getParentNodeId() != currentElement.getNodeId()) {
-                    while (currentNode.getParentNodeId() != currentElement.getNodeId()) {
-                        currentElement = (NodeRecord) openElements.pop();
-                        logMetacat.debug("\n POPPED: "
-                                + currentElement.getNodeName());
-                        if (previousNodeWasElement) {
-                            out.write(">");
-                            previousNodeWasElement = false;
-                        }
-                        if (currentElement.getNodePrefix() != null) {
-                            out.write("</" + currentElement.getNodePrefix() + ":"
-                                    + currentElement.getNodeName() + ">");
-                        } else {
-                            out.write("</" + currentElement.getNodeName() + ">");
-                        }
-                        currentElement = openElements.peek();
-                    }
-                }
-            }
-
-            // Handle the DOCUMENT node
-            if (currentNode.getNodeType().equals("DOCUMENT")) {
-                out.write("<?xml version=\"1.0\"?>");
-
-                // Handle the ELEMENT nodes
-            } else if (currentNode.getNodeType().equals("ELEMENT")) {
-                if (atRootElement) {
-                    atRootElement = false;
-                } else {
-                    if (previousNodeWasElement) {
-                        out.write(">");
-                    }
-                }
-
-                // if publicid or system is not stored into db send it out by
-                // default
-                if (!storedDTD & firstElement) {
-                    if (docname != null && validateType != null
-                            && validateType.equals(DTD)) {
-                        if ((doctype != null) && (system_id != null)) {
-
-                            out.write("<!DOCTYPE " + docname + " PUBLIC \""
-                                    + doctype + "\" \"" + system_id + "\">");
-                        } else {
-
-                            out.write("<!DOCTYPE " + docname + ">");
-                        }
-                    }
-                }
-                firstElement = false;
-                openElements.push(currentNode);
-                logMetacat.debug("\n PUSHED: " + currentNode.getNodeName());
-                previousNodeWasElement = true;
-                if (currentNode.getNodePrefix() != null) {
-                    out.write("<" + currentNode.getNodePrefix() + ":"
-                            + currentNode.getNodeName());
-                } else {
-                    out.write("<" + currentNode.getNodeName());
-                }
-
-                // if currentNode is inline and handle eml2, set flag process
-                // on
-                if (currentNode.getNodeName() != null
-                        && currentNode.getNodeName().equals(Eml200SAXHandler.INLINE)
-                        && proccessEml2) {
-                	processInlineData = true;
-                }
-
-                // Handle the ATTRIBUTE nodes
-            } else if (currentNode.getNodeType().equals("ATTRIBUTE")) {
-                if (currentNode.getNodePrefix() != null) {
-                    out.write(" " + currentNode.getNodePrefix() + ":"
-                            + currentNode.getNodeName() + "=\""
-                            + currentNode.getNodeData() + "\"");
-                } else {
-                    out.write(" " + currentNode.getNodeName() + "=\""
-                            + currentNode.getNodeData() + "\"");
-                }
-
-                // Handle the NAMESPACE nodes
-            } else if (currentNode.getNodeType().equals("NAMESPACE")) {
-                String nsprefix = " xmlns:";
-                if(currentNode.getNodeName() == null || currentNode.getNodeName().trim().equals(""))
-                {
-                  nsprefix = " xmlns";
-                }
-                
-                out.write(nsprefix + currentNode.getNodeName() + "=\""
-                          + currentNode.getNodeData() + "\"");
-
-                // Handle the TEXT nodes
-            } else if (currentNode.getNodeType().equals("TEXT")) {
-                if (previousNodeWasElement) {
-                    out.write(">");
-                }
-                if (!processInlineData) {
-                    // if it is not inline data just out put data
-                    out.write(currentNode.getNodeData());
-                } else {
-                    // if it is inline data first to get the inline data
-                    // internal id
-                    String fileName = currentNode.getNodeData();
-                    // use full docid with revision
-                    String accessfileName = fileName; //DocumentUtil.getDocIdWithoutRevFromInlineDataID(fileName);
-                    
-                    // check if user has read permision for this inline data
-                    boolean readInlinedata = false;
-                    try {
-                        Hashtable<String, String> unReadableInlineDataList =
-                            PermissionController.getUnReadableInlineDataIdList(accessfileName, user, groups);
-                        if (!unReadableInlineDataList.containsValue(fileName)) {
-                            readInlinedata = true;
-                        }
-                    } catch (Exception e) {
-                        throw new McdbException(e.getMessage());
-                    }
-
-                    if (readInlinedata) {
-                        //user want to see it, pull out from file system and 
-                    	// output it for inline data, the data base only store 
-                    	// the file name, so we can combine the file name and
-                    	// inline data file path, to get it
-
-                        Reader reader = Eml200SAXHandler
-                                .readInlineDataFromFileSystem(fileName, encoding);
-                        char[] characterArray = new char[4 * 1024];
-                        try {
-                            int length = reader.read(characterArray);
-                            while (length != -1) {
-                                out.write(new String(characterArray, 0,
-                                                length));
-                                out.flush();
-                                length = reader.read(characterArray);
-                            }
-                            reader.close();
-                        } catch (IOException e) {
-                            throw new McdbException(e.getMessage());
-                        }
-                    }//if can read inline data
-                    else {
-                        // if user can't read it, we only send it back a empty
-                        // string in inline element.
-                        out.write("");
-                    }// else can't read inlinedata
-                    // reset proccess inline data false
-                    processInlineData = false;
-                }// in inlinedata part
-                previousNodeWasElement = false;
-                // Handle the COMMENT nodes
-            } else if (currentNode.getNodeType().equals("COMMENT")) {
-                if (previousNodeWasElement) {
-                    out.write(">");
-                }
-                out.write("<!--" + currentNode.getNodeData() + "-->");
-                previousNodeWasElement = false;
-
-                // Handle the PI nodes
-            } else if (currentNode.getNodeType().equals("PI")) {
-                if (previousNodeWasElement) {
-                    out.write(">");
-                }
-                out.write("<?" + currentNode.getNodeName() + " "
-                        + currentNode.getNodeData() + "?>");
-                previousNodeWasElement = false;
-                // Handle the DTD nodes (docname, publicid, systemid)
-            } else if (currentNode.getNodeType().equals(DTD)) {
-                storedDTD = true;
-                if (currentNode.getNodeName().equals(DOCNAME)) {
-                    dbDocName = currentNode.getNodeData();
-                }
-                if (currentNode.getNodeName().equals(PUBLICID)) {
-                    dbPublicID = currentNode.getNodeData();
-                }
-                if (currentNode.getNodeName().equals(SYSTEMID)) {
-                    dbSystemID = currentNode.getNodeData();
-                    // send out <!doctype .../>
-                    if (dbDocName != null) {
-                        if ((dbPublicID != null) && (dbSystemID != null)) {
-
-                            out
-                                    .write("<!DOCTYPE " + dbDocName
-                                            + " PUBLIC \"" + dbPublicID
-                                            + "\" \"" + dbSystemID + "\">");
-                        } else {
-
-                            out.write("<!DOCTYPE " + dbDocName + ">");
-                        }
-                    }
-
-                    //reset these variable
-                    dbDocName = null;
-                    dbPublicID = null;
-                    dbSystemID = null;
-                }
-
-                // Handle any other node type (do nothing)
-            } else {
-                // Any other types of nodes are not handled.
-                // Probably should throw an exception here to indicate this
-            }
-            
-            out.flush();
-        }
-
-        // Print the final end tag for the root element
-        while (!openElements.empty()) {
-            NodeRecord currentElement = (NodeRecord) openElements.pop();
-            logMetacat.debug("\n POPPED: " + currentElement.getNodeName());
-            if (currentElement.getNodePrefix() != null) {
-                out.write("</" + currentElement.getNodePrefix() + ":"
-                        + currentElement.getNodeName() + ">");
-            } else {
-                out.write("</" + currentElement.getNodeName() + ">");
-            }
-        }
-        out.flush();
-    }
     
     /**
 	 * Read the XML document from the file system and write to a Writer. Strip
@@ -2891,14 +2582,6 @@ public class DocumentImpl
             	   logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
                     conn.rollback();
                     conn.setAutoCommit(true);
-                    //if it is a eml2 document, we need delete online data
-                    if (parser != null) {
-                        ContentHandler handler = parser.getContentHandler();
-                        if (handler instanceof Eml200SAXHandler) {
-                            Eml200SAXHandler eml = (Eml200SAXHandler) handler;
-                            eml.deleteInlineFiles();
-                        }
-                    }
                     throw e;
                 }
                 // run write into access db base one relation table and access
@@ -2990,14 +2673,6 @@ public class DocumentImpl
             e.printStackTrace();
             conn.rollback();
             conn.setAutoCommit(true);
-            //if it is a eml2 document, we need delete online data
-            if (parser != null) {
-                ContentHandler handler = parser.getContentHandler();
-                if (handler instanceof Eml200SAXHandler) {
-                    Eml200SAXHandler eml = (Eml200SAXHandler) handler;
-                    eml.deleteInlineFiles();
-                }
-            }
             throw e;
         }
 
@@ -3199,13 +2874,6 @@ public class DocumentImpl
         	logMetacat.error("DocumentImpl.writeReplication - Problem with parsing: " + e.getMessage());
             conn.rollback();
             conn.setAutoCommit(true);
-            if (parser != null) {
-                ContentHandler handler = parser.getContentHandler();
-                if (handler instanceof Eml200SAXHandler) {
-                    Eml200SAXHandler eml = (Eml200SAXHandler) handler;
-                    eml.deleteInlineFiles();
-                }
-            }
             throw e;
         }
 

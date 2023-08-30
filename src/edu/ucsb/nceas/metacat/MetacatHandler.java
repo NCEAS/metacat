@@ -1345,7 +1345,8 @@ public class MetacatHandler {
                         		         ": " + 
                         		         e.getMessage());
                         e.printStackTrace(System.out);
-                        doc.toXmlFromDb(out, user, groups, withInlineData);
+                        //doc.toXmlFromDb(out, user, groups, withInlineData);
+                        throw e;
                     }
                 } else {
                     // TODO MCD, this should read from disk as well?
