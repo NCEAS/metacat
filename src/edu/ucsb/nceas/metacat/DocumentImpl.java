@@ -3840,141 +3840,80 @@ public class DocumentImpl
             String parserName = PropertyService.getProperty("xml.saxparser");
             parser = XMLReaderFactory.createXMLReader(parserName);
             //XMLSchemaService.getInstance().populateRegisteredSchemaList();
-            if (ruleBase != null && ruleBase.equals(EML200)) {
-                logMetacat.info("DocumentImpl.initalizeParser - Using eml 2.0.0 parser");
-                chandler = new Eml200SAXHandler(dbconn, action, docid, rev,
-                        user, groups, pub, serverCode, createDate, updateDate, writeAccessRules, guidsToSync);
-                chandler.setIsRevisionDoc(isRevision);
-                chandler.setEncoding(encoding);
-                parser.setContentHandler((ContentHandler) chandler);
-                parser.setErrorHandler((ErrorHandler) chandler);
-                parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
-                parser.setProperty(LEXICALPROPERTY, chandler);
-                parser.setFeature(NAMESPACEFEATURE, true);
-                if(needValidation) {
-                    logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 parser sets up validation feature since the parameter of the needValidataion is "+needValidation);
-                    // turn on schema validation feature
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                    logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 external schema location: " + schemaLocation);
-                    // Set external schemalocation.
-                    if (schemaLocation != null
-                            && !(schemaLocation.trim()).equals("")) {
-                        parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
-                                schemaLocation);
-                    } else {
-                        throw new Exception ("The schema for the namespace on docid "+docid+" can't be found in any place. So we can't validate the xml instance.");
-                    }
-                }
-                
-                logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 parser configured");
-            } else if (ruleBase != null && ruleBase.equals(EML210)) {
-                logMetacat.info("DocumentImpl.initalizeParser - Using eml 2.1.0 parser");
-                chandler = new Eml210SAXHandler(dbconn, action, docid, rev,
-                        user, groups, pub, serverCode, createDate, updateDate, writeAccessRules, guidsToSync);
-                chandler.setIsRevisionDoc(isRevision);
-                chandler.setEncoding(encoding);
-                parser.setContentHandler((ContentHandler) chandler);
-                parser.setErrorHandler((ErrorHandler) chandler);
-                parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
-                parser.setProperty(LEXICALPROPERTY, chandler);
+            //create a DBSAXHandler object which has the revision
+            // specification
+            chandler = new DBSAXHandler(dbconn, action, docid, rev, user,
+                    groups, pub, serverCode, createDate, updateDate, writeAccessRules);
+            chandler.setIsRevisionDoc(isRevision);
+            chandler.setEncoding(encoding);
+            parser.setContentHandler((ContentHandler) chandler);
+            parser.setErrorHandler((ErrorHandler) chandler);
+            parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
+            parser.setProperty(LEXICALPROPERTY, chandler);
+            if (ruleBase != null && (ruleBase.equals(SCHEMA) || ruleBase.equals(EML200) 
+                    || ruleBase.equals(EML210)) && needValidation) {
+                XMLSchemaService xmlss = XMLSchemaService.getInstance();
+                //xmlss.doRefresh();
+                logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
                 // turn on schema validation feature
+                parser.setFeature(VALIDATIONFEATURE, true);
                 parser.setFeature(NAMESPACEFEATURE, true);
-                if(needValidation) {
-                    logMetacat.info("DocumentImpl.initalizeParser - 2.1.0 parser sets up validation features since the parameter of the needValidataion is "+needValidation);
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                    logMetacat.info("DocumentImpl.initalizeParser - 2.1.0 external schema location: " + schemaLocation);
-                    // Set external schemalocation.
-                    if (schemaLocation != null
-                            && !(schemaLocation.trim()).equals("")) {
-                        parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
-                                schemaLocation);
-                    } else {
-                        throw new Exception ("The schema for the docid "+docid+" can't be found in any place. So we can't validate the xml instance.");
-                    }
-                }
-                logMetacat.debug("DocumentImpl.initalizeParser - Using eml 2.1.0 parser configured");
-            } else {
-                //create a DBSAXHandler object which has the revision
-                // specification
-                chandler = new DBSAXHandler(dbconn, action, docid, rev, user,
-                        groups, pub, serverCode, createDate, updateDate, writeAccessRules);
-                chandler.setIsRevisionDoc(isRevision);
-                chandler.setEncoding(encoding);
-                parser.setContentHandler((ContentHandler) chandler);
-                parser.setErrorHandler((ErrorHandler) chandler);
-                parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
-                parser.setProperty(LEXICALPROPERTY, chandler);
-
-                if (ruleBase != null && ruleBase.equals(SCHEMA)
-                        && needValidation) {
+                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
+                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
                 
-                    XMLSchemaService xmlss = XMLSchemaService.getInstance();
-                    //xmlss.doRefresh();
-                    logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
-                    // turn on schema validation feature
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    parser.setFeature(NAMESPACEFEATURE, true);
-                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                    
-                    Vector<XMLSchema> schemaList = xmlss.findSchemasInXML((StringReader)xml);
-                    boolean allSchemasRegistered = 
-                    	xmlss.areAllSchemasRegistered(schemaList);
-                    if (xmlss.useFullSchemaValidation() && !allSchemasRegistered) {
-                    	parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
-                    }
-                    logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: " + schemaLocation);              
-                    // Set external schemalocation.
-                    if (schemaLocation != null
-                            && !(schemaLocation.trim()).equals("")) {
-                        parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
-                                schemaLocation);
-                    } else {
-                        throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
-                    }
-                } else if (ruleBase != null && ruleBase.equals(NONAMESPACESCHEMA)
-                        && needValidation) {
-                    //xmlss.doRefresh();
-                    logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
-                    // turn on schema validation feature
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    parser.setFeature(NAMESPACEFEATURE, true);
-                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                    logMetacat.info("DocumentImpl.initalizeParser - Generic external no-namespace schema location: " + schemaLocation);              
-                    // Set external schemalocation.
-                    if (schemaLocation != null
-                            && !(schemaLocation.trim()).equals("")) {
-                        parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY,
-                                schemaLocation);
-                    } else {
-                        throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
-                    }
-                } else if (ruleBase != null && ruleBase.equals(DTD)
-                        && needValidation) {
-                    logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
-                    // turn on dtd validaton feature
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    eresolver = new DBEntityResolver(dbconn,
-                            (DBSAXHandler) chandler, dtd);
-                    dtdhandler = new DBDTDHandler(dbconn);
-                    parser.setEntityResolver((EntityResolver) eresolver);
-                    parser.setDTDHandler((DTDHandler) dtdhandler);
-                } else {
-                    logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
-                    // non validation
-                    parser.setFeature(VALIDATIONFEATURE, false);
-                    eresolver = new DBEntityResolver(dbconn,
-                            (DBSAXHandler) chandler, dtd);
-                    dtdhandler = new DBDTDHandler(dbconn);
-                    parser.setEntityResolver((EntityResolver) eresolver);
-                    parser.setDTDHandler((DTDHandler) dtdhandler);
+                Vector<XMLSchema> schemaList = xmlss.findSchemasInXML((StringReader)xml);
+                boolean allSchemasRegistered = 
+                	xmlss.areAllSchemasRegistered(schemaList);
+                if (xmlss.useFullSchemaValidation() && !allSchemasRegistered) {
+                	parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
                 }
-            }//else
+                logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: " + schemaLocation);              
+                // Set external schemalocation.
+                if (schemaLocation != null
+                        && !(schemaLocation.trim()).equals("")) {
+                    parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
+                            schemaLocation);
+                } else {
+                    throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
+                }
+            } else if (ruleBase != null && ruleBase.equals(NONAMESPACESCHEMA)
+                    && needValidation) {
+                //xmlss.doRefresh();
+                logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
+                // turn on schema validation feature
+                parser.setFeature(VALIDATIONFEATURE, true);
+                parser.setFeature(NAMESPACEFEATURE, true);
+                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
+                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
+                logMetacat.info("DocumentImpl.initalizeParser - Generic external no-namespace schema location: " + schemaLocation);              
+                // Set external schemalocation.
+                if (schemaLocation != null
+                        && !(schemaLocation.trim()).equals("")) {
+                    parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY,
+                            schemaLocation);
+                } else {
+                    throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
+                }
+            } else if (ruleBase != null && ruleBase.equals(DTD)
+                    && needValidation) {
+                logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
+                // turn on dtd validaton feature
+                parser.setFeature(VALIDATIONFEATURE, true);
+                eresolver = new DBEntityResolver(dbconn,
+                        (DBSAXHandler) chandler, dtd);
+                dtdhandler = new DBDTDHandler(dbconn);
+                parser.setEntityResolver((EntityResolver) eresolver);
+                parser.setDTDHandler((DTDHandler) dtdhandler);
+            } else {
+                logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
+                // non validation
+                parser.setFeature(VALIDATIONFEATURE, false);
+                eresolver = new DBEntityResolver(dbconn,
+                        (DBSAXHandler) chandler, dtd);
+                dtdhandler = new DBDTDHandler(dbconn);
+                parser.setEntityResolver((EntityResolver) eresolver);
+                parser.setDTDHandler((DTDHandler) dtdhandler);
+            }
         } catch (Exception e) {
             throw e;
         }
