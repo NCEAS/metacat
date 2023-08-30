@@ -1,6 +1,7 @@
 package edu.ucsb.nceas.metacat.admin;
 
-import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -10,18 +11,23 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.math3.stat.correlation.KendallsCorrelation;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.types.v1.NodeReference;
-import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.security.cert.X509Certificate;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Vector;
 
 /**
@@ -31,13 +37,12 @@ import java.util.Vector;
 public class D1Admin extends MetacatAdmin {
 
     private static D1Admin instance = null;
-    private Log logMetacat = LogFactory.getLog(D1Admin.class);
+    private final Log logMetacat = LogFactory.getLog(D1Admin.class);
 
     /**
      * private constructor since this is a singleton
      */
-    private D1Admin() throws AdminException {
-
+    private D1Admin() {
     }
 
     /**
@@ -337,7 +342,7 @@ public class D1Admin extends MetacatAdmin {
                         "dataone.mn.services.enabled", Boolean.toString(servicesEnabled));
 
                     // get the current node id, so we know if we updated the value
-                    String existingMemberNodeId = PropertyService.getProperty("dataone.nodeId");
+//                    String existingMemberNodeId = PropertyService.getProperty("dataone.nodeId");
 
                     // update the property value
                     PropertyService.setPropertyNoPersist("dataone.nodeId", memberNodeId);
@@ -350,14 +355,15 @@ public class D1Admin extends MetacatAdmin {
                     PropertyService.persistMainBackupProperties();
 
                     // Register/update as a DataONE Member Node
-                    registerDataONEMemberNode();
+                    upregDataONEMemberNode();
 
                     // did we end up changing the member node id from what it used to be?
-                    if (!existingMemberNodeId.equals(memberNodeId)) {
-                        // update all existing system Metadata for this node id
-                        IdentifierManager.getInstance()
-                            .updateAuthoritativeMemberNodeId(existingMemberNodeId, memberNodeId);
-                    }
+//                    if (!existingMemberNodeId.equals(memberNodeId)) {
+//                        // update all existing system Metadata for this node id
+//                        IdentifierManager.getInstance()
+//                            .updateAuthoritativeMemberNodeId(existingMemberNodeId, memberNodeId);
+//                    }
+
 
                     // dataone system metadata generation:
                     // we can generate this after the registration/configuration
@@ -433,42 +439,355 @@ public class D1Admin extends MetacatAdmin {
         return exists;
     }
 
+    //    private void registerDataONEMemberNode_ORIG()
+//        throws BaseException, PropertyNotFoundException, GeneralPropertyException {
+//
+//        logMetacat.debug("Get the Node description.");
+//        Node node = MNodeService.getInstance(null).getCapabilities();
+//        logMetacat.debug("Setting client certificate location.");
+//        String mnCertificatePath = PropertyService.getProperty("D1Client.certificate.file");
+//        CertificateManager.getInstance().setCertificateLocation(mnCertificatePath);
+//        CNode cn = D1Client.getCN(PropertyService.getProperty("D1Client.CN_URL"));
+//
+//        // check if this is new or an update
+//        boolean update = isNodeRegistered(node.getIdentifier().getValue());
+//
+//        // Session is null, because the libclient code automatically sets up an
+//        // SSL session for us using the client certificate provided
+//        Session session = null;
+//        if (update) {
+//            logMetacat.debug("Updating node with DataONE. " + cn.getNodeBaseServiceUrl());
+//            boolean result = cn.updateNodeCapabilities(session, node.getIdentifier(), node);
+//        } else {
+//            logMetacat.debug("Registering node with DataONE. " + cn.getNodeBaseServiceUrl());
+//            NodeReference mnodeRef = cn.register(session, node);
+//
+//            // save that we submitted registration
+//            PropertyService.setPropertyNoPersist(
+//                "dataone.mn.registration.submitted", Boolean.TRUE.toString());
+//
+//            // persist the properties
+//            PropertyService.persistProperties();
+//        }
+//
+//    }
+
     /**
-     * Register as a member node on the DataONE network.  The node description is retrieved from the
-     * getCapabilities() service, and so this should only be called after the properties have been
-     * properly set up in Metacat.
+     * upreg: Either update ("up") or register ("reg") DataONE Member Node (MN) config, depending
+     * upon whether this Metacat instance is already registered as a DataONE MN. Registration is
+     * carried out only if the operator has indicated that registration is required.
+     *
+     * NOTE: The node description is retrieved from the getCapabilities() service, and so this
+     * should only be called after the properties have been properly set up in Metacat.
      */
-    private void registerDataONEMemberNode()
-        throws BaseException, PropertyNotFoundException, GeneralPropertyException {
+    private void upregDataONEMemberNode()
+        throws BaseException, GeneralPropertyException, AdminException {
 
         logMetacat.debug("Get the Node description.");
         Node node = MNodeService.getInstance(null).getCapabilities();
-        logMetacat.debug("Setting client certificate location.");
+
         String mnCertificatePath = PropertyService.getProperty("D1Client.certificate.file");
         CertificateManager.getInstance().setCertificateLocation(mnCertificatePath);
+        logMetacat.debug("DataONE MN Client certificate set: " + mnCertificatePath);
+
         CNode cn = D1Client.getCN(PropertyService.getProperty("D1Client.CN_URL"));
 
         // check if this is new or an update
-        boolean update = isNodeRegistered(node.getIdentifier().getValue());
-
-        // Session is null, because the libclient code automatically sets up an
-        // SSL session for us using the client certificate provided
-        Session session = null;
-        if (update) {
-            logMetacat.debug("Updating node with DataONE. " + cn.getNodeBaseServiceUrl());
-            boolean result = cn.updateNodeCapabilities(session, node.getIdentifier(), node);
+        if (isNodeRegistered(node.getIdentifier().getValue())) {
+            handleRegisteredUpdate(node);
         } else {
-            logMetacat.debug("Registering node with DataONE. " + cn.getNodeBaseServiceUrl());
-            NodeReference mnodeRef = cn.register(session, node);
 
-            // save that we submitted registration
-            PropertyService.setPropertyNoPersist(
-                "dataone.mn.registration.submitted", Boolean.TRUE.toString());
+            // TODO
 
-            // persist the properties
-            PropertyService.persistProperties();
+
+            // OLD CODE:
+//            logMetacat.debug("Registering node with DataONE. " + cn.getNodeBaseServiceUrl());
+//
+//            NodeReference mnodeRef = cn.register(null, node);
+//
+//            // if we're not running in a container, save that we submitted registration
+//            PropertyService.setPropertyNoPersist(
+//                "dataone.mn.registration.submitted", Boolean.TRUE.toString());
+//            // persist the properties
+//            PropertyService.persistProperties();
         }
+    }
 
+    void handleRegisteredUpdate(Node node) throws AdminException {
+
+        if (node == null) {
+            throw new AdminException("handleRegisteredUpdate() received a null node!");
+        }
+        String nodeId = node.getIdentifier().getValue();
+        String previousNodeId = getMostRecentNodeId();
+        logMetacat.debug("handleRegisteredUpdate(): received new nodeId: " + nodeId
+                             + ". Most recent previous nodeId was: " + previousNodeId);
+
+        if (nodeId.equals(previousNodeId)) {
+            // nodeId UNCHANGED: push an idempotent update of all other Node Capabilities to the CN
+            final String END = " an update of Member Node settings to the CN (nodeId unchanged)";
+            if (updateCN(node)) {
+                logMetacat.info("handleRegisteredUpdate: Successfully pushed" + END);
+                return;
+            } else {
+                String msg = "handleRegisteredUpdate: *** FAILED *** to push" + END;
+                logMetacat.error(msg);
+                throw new AdminException(msg);
+            }
+        }
+        if (!canChangeNodeId()) {
+            // nodeId CHANGED, but not permitted to push update to the CN without operator consent
+            String msg =
+                "handleRegisteredUpdate: *Not Permitted* to push update to CN without operator "
+                    + "consent. (An attempt to change Property: 'dataone.nodeId' from:"
+                    + previousNodeId + " to: " + nodeId + " failed, because Property: "
+                    + "'dataone.autoRegisterMemberNode' had not been set to match today's date).";
+            logMetacat.error(msg);
+            throw new AdminException(msg);
+        }
+        if (!nodeIdMatchesClientCert(nodeId)) {
+            // nodeId CHANGED, but does not match client cert
+            String msg =
+                "handleRegisteredUpdate: An attempt to change Property: 'dataone.nodeId' from:"
+                    + previousNodeId + " to: " + nodeId + " failed, because the new node Id does "
+                    + "not agree with the 'Subject CN' value in the client certificate";
+            logMetacat.error(msg);
+            throw new AdminException(msg);
+        }
+        // nodeId CHANGED and checks complete: try to push an update of Node Capabilities to the CN:
+        logMetacat.debug("handleRegisteredUpdate(): BEGIN REGISTRATION UPDATE ATTEMPT "
+                             + "(including a nodeId change from:" + previousNodeId + " to: "
+                             + nodeId + ")");
+        if (!updateCN(node)) {
+            // ID changed, but does not match client cert
+            String msg =
+                "handleRegisteredUpdate(): Failed to push an update of Node Capabilities to CN "
+                    + "(including a nodeId change from:" + previousNodeId + " to: " + nodeId + ")";
+            logMetacat.error(msg);
+            throw new AdminException(msg);
+        }
+        logMetacat.debug("handleRegisteredUpdate(): SUCCESS: pushed an update of Node "
+                             + "Capabilities to CN. Now updating DataBase with new nodeId ("
+                             + nodeId + ")...");
+        updateAuthoritativeMemberNodeId(previousNodeId, nodeId);
+        logMetacat.debug("...updated authoritive_member_node in systemmetadata...");
+        saveMostRecentNodeId(nodeId);
+        logMetacat.debug("...added node_id to node_id_revisions. REGISTERED UPDATE FINISHED");
+    }
+
+    /**
+     * Check if the nodeId matches the "CN=" part of the client cert "Subject" field
+     *
+     * @return true if the nodeId matches the "CN=" part of the client cert "Subject" field
+     *
+     *     package-private to allow unit testing
+     */
+    boolean nodeIdMatchesClientCert(String nodeId) {
+
+        X509Certificate clientCert = CertificateManager.getInstance().loadCertificate();
+        String certSubject = CertificateManager.getInstance().getSubjectDN(clientCert);
+        logMetacat.debug(
+            "nodeIdMatchesClientCert() received nodeId: " + nodeId + ". Client cert 'Subject:' "
+                + certSubject);
+        if (certSubject == null || !certSubject.startsWith("CN=")) {
+            logMetacat.error("nodeIdMatchesClientCert(): Client cert 'Subject:' (" + certSubject
+                                + ") must begin with 'CN='. returning FALSE");
+            return false;
+        }
+        // Subject is of the form: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org", so the commonName
+        // will be the part between the end of "CN="...
+        final int start = 3;
+        // ... and the first comma:
+        int firstComma = certSubject.indexOf(",", start);
+        firstComma = (firstComma < start) ? certSubject.length() : firstComma; // in case no commas
+        String commonName = certSubject.substring(start, firstComma);
+        boolean matches = commonName.equals(nodeId);
+        logMetacat.debug("nodeIdMatchesClientCert(): " + String.valueOf(matches).toUpperCase()
+                             + "! (nodeId was: " + nodeId
+                             + " and Common Name (CN) from client cert was: " + commonName);
+        return matches;
+    }
+
+    /**
+     * Determine whether we are permitted to send a nodeId change to the CN:
+     * <p></p>
+     * If we're running in a container/K8s, this code runs automatically on startup, so we need
+     * explicit permission via the associated values.yaml flag. Specifically, the parameter
+     * <code>.Values.metacat.dataone.autoRegisterMemberNode</code> becomes the java property
+     * <code>dataone.autoRegisterMemberNode</code>, and this must match today's date (in
+     * yyyy-MM-dd format).
+     * </p><p>
+     * If we're running in a legacy deployment, we can go ahead, since this is triggered only if the
+     * operator has submitted the form requesting the change.
+     * </p>
+     *
+     * @return boolean true if it is OK to change the nodeId
+     *
+     *     package-private to allow unit testing
+     */
+    boolean canChangeNodeId() {
+        boolean result;
+        String autoRegDate = "";
+        if (Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"))) {
+            try {
+                autoRegDate = PropertyService.getProperty("dataone.autoRegisterMemberNode");
+                result = LocalDate.now().equals(LocalDate.parse(autoRegDate));
+
+            } catch (PropertyNotFoundException e) {
+                logMetacat.warn("DataONE Member Node (MN) NodeId Registration/Update not possible:"
+                                    + "\"dataone.autoRegisterMemberNode\" Property not set.");
+                result = false;
+
+            } catch (DateTimeParseException e) {
+                logMetacat.warn("DataONE Member Node (MN) NodeId Registration/Update not possible:"
+                                    + "\"dataone.autoRegisterMemberNode\" read, but can't parse "
+                                    + "date: "
+                                    + autoRegDate);
+                result = false;
+            }
+        } else {
+            result = true;
+        }
+        return result;
+    }
+
+    /**
+     * @param node
+     * @return package-private to allow unit testing
+     */
+    boolean updateCN(Node node) {
+        boolean result;
+        String cnUrl = "NOT SET";
+        CNode cn = null;
+        try {
+            cn = D1Client.getCN();
+            // Session is null, because libclient automatically sets up SSL session with client cert
+            result = cn.updateNodeCapabilities(null, node.getIdentifier(), node);
+        } catch (BaseException e) {
+            logMetacat.error(
+                "Calling CNode.updateNodeCapabilities() with CN URL: " + cn.getNodeBaseServiceUrl()
+                    + ", and nodeId: " + node.getIdentifier().getValue());
+            result = false;
+        }
+        return result;
+    }
+
+    /**
+     * Get the most recent value of nodeId that was last recorded in the database
+     *
+     * @return most recent (String) value of nodeId that was last recorded in the database
+     *
+     *     package-private to allow unit testing
+     */
+    String getMostRecentNodeId() {
+
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        String nodeId = "";
+        try {
+            dbConn = DBConnectionPool.getDBConnection("D1Admin.getMostRecentNodeId");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            String query = "SELECT node_id FROM node_id_revisions WHERE is_most_recent";
+            PreparedStatement stmt = dbConn.prepareStatement(query);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                nodeId = rs.getString(1);
+            }
+            stmt.close();
+            rs.close();
+        } catch (SQLException e) {
+            logMetacat.error("SQL error while getting most recent node Id: " + e.getMessage(), e);
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        if (nodeId.isEmpty()) {
+            // new installation: no node_id_revisions in database yet. Init from properties file:
+            try {
+                nodeId = PropertyService.getProperty("dataone.nodeId");
+            } catch (PropertyNotFoundException e) {
+                logMetacat.error(
+                    "\"dataone.nodeId\" not found in properties file: " + e.getMessage(), e);
+            }
+            if (!nodeId.isEmpty()) {
+                logMetacat.info("no node_id_revisions found in database."
+                                    + "Initializing with current nodeId from Properties: "
+                                    + nodeId);
+                try {
+                    saveMostRecentNodeId(nodeId);
+                } catch (AdminException e) {
+                    logMetacat.warn("Unable to initialize node_id_revisions database table with "
+                                        + "current nodeId from Properties (" + nodeId
+                                        + "). Will try again next time. Error message: "
+                                        + e.getMessage(), e);
+                }
+            }
+        }
+        logMetacat.debug("getMostRecentNodeId() returning: " + nodeId);
+        return nodeId;
+    }
+
+    /**
+     * Save the most recent value of nodeId to the database
+     *
+     * @param nodeId the nodeId to be saved
+     * @throws AdminException           if a problem is encountered
+     * @throws IllegalArgumentException if the nodeId is null or empty
+     *
+     *                                  package-private to allow unit testing
+     */
+    void saveMostRecentNodeId(String nodeId) throws AdminException {
+        if (nodeId == null || nodeId.isEmpty()) {
+            throw new AdminException(
+                "saveMostRecentNodeId(): nodeId (= " + nodeId + ") cannot be null or empty!");
+        }
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            dbConn = DBConnectionPool.getDBConnection("D1Admin.saveMostRecentNodeId");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            String query;
+            PreparedStatement stmt;
+            query = "INSERT INTO node_id_revisions (node_id, is_most_recent, date_created) "
+                + "VALUES (?, true, CURRENT_DATE)";
+            stmt = dbConn.prepareStatement(query);
+            stmt.setString(1, nodeId);
+            stmt.execute();
+            stmt.close();
+        } catch (SQLException e) {
+            String msg = "saveMostRecentNodeId(): SQL error while trying to INSERT most-recent "
+                + "nodeId value (" + nodeId + "). Error message: " + e.getMessage();
+            logMetacat.error(msg);
+            throw new AdminException(msg);
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+    }
+
+    private void updateAuthoritativeMemberNodeId(
+        String existingMemberNodeId, String newMemberNodeId) throws AdminException {
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        PreparedStatement stmt = null;
+        try {
+            dbConn = DBConnectionPool.getDBConnection("D1Admin.updateAuthoritativeMemberNodeId");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            String query = "UPDATE systemmetadata SET authoritive_member_node = ? "
+                + " WHERE authoritive_member_node = ?";
+            stmt = dbConn.prepareStatement(query);
+            stmt.setString(1, newMemberNodeId);
+            stmt.setString(2, existingMemberNodeId);
+            stmt.executeUpdate();
+            stmt.close();
+        } catch (SQLException e) {
+            String msg = "updateAuthoritativeMemberNodeId(): SQL error (" + e.getMessage()
+                + ") while trying to execute statement: " + stmt;
+            logMetacat.error(msg);
+            throw new AdminException(msg);
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
     }
 
     /**
@@ -476,6 +795,7 @@ public class D1Admin extends MetacatAdmin {
      *
      * @return a vector holding error message for any fields that fail validation.
      */
+    @Override
     protected Vector<String> validateOptions(HttpServletRequest request) {
         Vector<String> errorVector = new Vector<String>();
 
