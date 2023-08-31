@@ -24,9 +24,8 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -178,7 +177,6 @@ public class D1AdminTest {
      *               v
      *             DONE
      * </pre>
-     *
      */
 
     // Happy Path
@@ -193,13 +191,12 @@ public class D1AdminTest {
             setK8sEnv();
             runWithMockedClientCert(
                 "CN=urn:node:NewTestMemberNode", null,
-                () -> {
-                    runWithMockedDataBaseConnection(() -> {
-                        Node mockMN = getMockNode("urn:node:NewTestMemberNode");
-                        runWithMockedUpdateCN(true,
-                                              () -> d1Admin.configUnregisteredMN(mockMN));
-                    });
-                });
+                () -> runWithMockedDataBaseConnection(() -> {
+                    Node mockMN = getMockNode("urn:node:NewTestMemberNode");
+                    fail("FINISH IMPLEMENTING!!");
+                    runWithMockedCN(true,
+                                    () -> d1Admin.configUnregisteredMN(mockMN));
+                }));
         }
     }
 
@@ -268,13 +265,10 @@ public class D1AdminTest {
             setK8sEnv();
             runWithMockedClientCert(
                 "CN=urn:node:NewTestMemberNode", null,
-                () -> {
-                    runWithMockedDataBaseConnection(() -> {
-                        Node mockMN = getMockNode("urn:node:NewTestMemberNode");
-                        runWithMockedUpdateCN(true,
-                                              () -> d1Admin.configPreregisteredMN(mockMN));
-                    });
-                });
+                () -> runWithMockedDataBaseConnection(() -> {
+                    Node mockMN = getMockNode("urn:node:NewTestMemberNode");
+                    runWithMockedCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
+                }));
         }
     }
 
@@ -318,7 +312,7 @@ public class D1AdminTest {
                 = "node Id does not agree with the 'Subject CN' value in the client certificate";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub, () -> {
                 Node mockMN = getMockNode("urn:node:TestMemberNodeNEW");
-                runWithMockedUpdateCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
+                runWithMockedCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
             });
         }
     }
@@ -395,14 +389,25 @@ public class D1AdminTest {
     }
 
     @Test
+    public void registerWithCN() throws Exception {
+        Node mockMN = getMockNode("myNode");
+
+        // success case
+        runWithMockedCN(true, () -> assertTrue(d1Admin.registerWithCN(mockMN)), "myNode");
+
+        // unsuccessful update (cn.register() returns null)
+        runWithMockedCN(false, () -> assertFalse(d1Admin.registerWithCN(mockMN)), null);
+    }
+
+    @Test
     public void updateCN() throws Exception {
         Node mockMN = getMockNode("myNode");
 
         // success case
-        runWithMockedUpdateCN(true, () -> assertTrue(d1Admin.updateCN(mockMN)));
+        runWithMockedCN(true, () -> assertTrue(d1Admin.updateCN(mockMN)));
 
         // unsuccessful update (cn.updateNodeCapabilities() returns false)
-        runWithMockedUpdateCN(false, () -> assertFalse(d1Admin.updateCN(mockMN)));
+        runWithMockedCN(false, () -> assertFalse(d1Admin.updateCN(mockMN)));
     }
 
     private static Node getMockNode(String NodeId) {
@@ -414,8 +419,12 @@ public class D1AdminTest {
         return mockMN;
     }
 
-    private static void runWithMockedUpdateCN(boolean isUpdateSuccessful, TestCode testCode)
+    private static void runWithMockedCN(boolean isUpdateSuccessful, TestCode testCode)
         throws Exception {
+        runWithMockedCN(isUpdateSuccessful, testCode, null);
+    }
+    private static void runWithMockedCN(boolean isUpdateSuccessful, TestCode testCode,
+                                        String nodeIdForRegisterSuccess) throws Exception {
 
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             final String CN_URL = PropertyService.getProperty("D1Client.CN_URL");
@@ -423,6 +432,12 @@ public class D1AdminTest {
             Mockito.when(mockCN.getNodeBaseServiceUrl()).thenReturn(CN_URL);
             Mockito.when(mockCN.updateNodeCapabilities(eq(null), any(), any()))
                 .thenReturn(isUpdateSuccessful);
+
+            NodeReference mockNoreRef = Mockito.mock(NodeReference.class);
+            Mockito.when(mockNoreRef.getValue()).thenReturn((isUpdateSuccessful)?
+                                                            nodeIdForRegisterSuccess : null);
+            Mockito.when(mockCN.register(eq(null), any()))
+                .thenReturn(mockNoreRef);
             mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
 
             testCode.execute();

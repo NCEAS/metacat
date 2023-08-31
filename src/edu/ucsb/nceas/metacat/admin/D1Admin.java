@@ -16,6 +16,8 @@ import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.BaseException;
+import org.dataone.service.exceptions.IdentifierNotUnique;
+import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
 
@@ -35,6 +37,8 @@ import java.util.Vector;
  */
 public class D1Admin extends MetacatAdmin {
 
+    public static final boolean RUNNING_IN_CONTAINER =
+        Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
     private static D1Admin instance = null;
     private final Log logMetacat = LogFactory.getLog(D1Admin.class);
 
@@ -356,14 +360,6 @@ public class D1Admin extends MetacatAdmin {
                     // Register/update as a DataONE Member Node
                     upregDataONEMemberNode();
 
-// TODO - resolve
-//                    // did we end up changing the member node id from what it used to be?
-//                    if (!existingMemberNodeId.equals(memberNodeId)) {
-//                        // update all existing system Metadata for this node id
-//                        IdentifierManager.getInstance()
-//                            .updateAuthoritativeMemberNodeId(existingMemberNodeId, memberNodeId);
-//                    }
-
                     // dataone system metadata generation:
                     // we can generate this after the registration/configuration
                     // it will be more controlled and deliberate that way -BRL
@@ -372,7 +368,6 @@ public class D1Admin extends MetacatAdmin {
                     // application directories, so they will be available after
                     // the next upgrade
                     PropertyService.persistMainBackupProperties();
-
                 }
             } catch (GeneralPropertyException gpe) {
                 String errorMessage =
@@ -418,27 +413,15 @@ public class D1Admin extends MetacatAdmin {
         }
     }
 
-
-    private boolean isNodeRegistered(String nodeId) {
-        // check if this is new or an update
-        boolean exists = false;
-        try {
-            NodeList nodes = D1Client.getCN().listNodes();
-            for (Node n : nodes.getNodeList()) {
-                if (n.getIdentifier().getValue().equals(nodeId)) {
-                    exists = true;
-                    break;
-                }
-            }
-        } catch (BaseException e) {
-            logMetacat.error(
-                "Could not check for node with DataONE (" + e.getCode() + "/" + e.getDetail_code()
-                    + "): " + e.getDescription());
-        }
-        return exists;
-    }
-
-    //    private void registerDataONEMemberNode_ORIG()
+// TODO - NOTE THAT IN THE CASE WHERE THE MN HAS ALREADY BEEN REGISTERED IN THE PAST, AND THE
+//  USER IS CHANGING THE NODE ID TO A NEW VALUE, THE OLD CODE DOES *NOT* APPEAR TO USE THIS NEW
+//  NODE ID. INSTEAD IT USES THE VALUES FROM A CALL TO:
+//      Node node = MNodeService.getInstance(null).getCapabilities();
+//      [..]
+//      boolean result = cn.updateNodeCapabilities(session, node.getIdentifier(), node);
+//
+//
+//    private void registerDataONEMemberNode_ORIG()
 //        throws BaseException, PropertyNotFoundException, GeneralPropertyException {
 //
 //        logMetacat.debug("Get the Node description.");
@@ -501,28 +484,35 @@ public class D1Admin extends MetacatAdmin {
     }
 
     /**
-     * TODO
-     * @param node
-     * @throws AdminException
+     * Implementation of the logic for handling changes to the Member Node configuration, for a
+     * node that HAS NOT YET BEEN REGISTERED as part of the DataONE network. Basic steps are:
+     * <ol><li>
+     * Check the operator explicitly requested that the node be registered (vs. "local" changes).
+     * If so...
+     * </li><li>
+     * Check the provided nodeId matches the Common Name field in the client certificate. If so...
+     * </li><li>
+     * Try to submit a registration request to the Coordinating Node (CN). If successful...
+     * </li><li>
+     * Check if the nodeId used to register is different from the nodeId in the database, and if
+     * so, update the database
+     * </li></ol>
+     *
+     * @param node the <code>org.dataone.service.types.v2.Node</code> object representing this
+     *             Member Node.
+     * @throws AdminException if an update cannot be carried out for any reason.
+     *
+     * @implNote package-private to allow unit testing TODO
      */
-    void configUnregisteredMN(Node node) throws AdminException {
+    void configUnregisteredMN(Node node) throws AdminException, GeneralPropertyException {
 
         if (node == null) {
             throw new AdminException("configUnregisteredMN() received a null node!");
         }
         String nodeId = node.getIdentifier().getValue();
         String previousNodeId = getMostRecentNodeId();
-        logMetacat.debug("configUnregisteredMN(): received new nodeId: " + nodeId
+        logMetacat.debug("configUnregisteredMN(): called with nodeId: " + nodeId
                              + ". Most recent previous nodeId was: " + previousNodeId);
-
-// TODO - resolve - not needed?
-//        if (nodeId.equals(previousNodeId)) {
-//            // nodeId UNCHANGED: no new registration/update action required
-//            logMetacat.info(
-//                "configUnregisteredMN() nodeId unchanged: no registration/update required");
-//            return;
-//        }
-
         if (!canChangeNodeId()) {
             // Local nodeId change only (i.e. nodeId CHANGED, but not permitted to register with the
             // CN without operator consent)
@@ -547,25 +537,61 @@ public class D1Admin extends MetacatAdmin {
             logMetacat.error(msg);
             throw new AdminException(msg);
         }
-
-
-// TODO register CN and update DB. See flowchart
-//        // OLD CODE:
-//            logMetacat.debug("Registering node with DataONE. " + cn.getNodeBaseServiceUrl());
-//            NodeReference mnodeRef = cn.register(null, node);
-//
-        // TODO !!
-//            // if we're not running in a container, save that we submitted registration
-//            PropertyService.setPropertyNoPersist(
-//                "dataone.mn.registration.submitted", Boolean.TRUE.toString());
-//            // persist the properties
-//            PropertyService.persistProperties();
+        // checks complete: try to register as a new Member Node with the CN:
+        logMetacat.debug(
+            "configUnregisteredMN(): * * * BEGIN REGISTRATION ATTEMPT * * * - nodeId " + nodeId);
+        if (!registerWithCN(node)) {
+            // registration attempt unsuccessful
+            String msg =
+                "configUnregisteredMN(): FAILED to register as a new Member Node with the CN";
+            logMetacat.error(msg);
+            throw new AdminException(msg);
+        }
+        logMetacat.debug("configUnregisteredMN(): SUCCESS: sent registration request to CN. ");
+        // If nodeId has changed, we need to update the DB
+        if (!nodeId.equals(previousNodeId)) {
+            logMetacat.info(
+                "configUnregisteredMN() nodeId has changed from " + previousNodeId + " to "
+                    + nodeId + "; Updating DataBase...");;
+            updateDBNodeIds(previousNodeId, nodeId);
+        }
+        // if we're not running in a container, save that we submitted registration
+        if (!RUNNING_IN_CONTAINER) {
+            PropertyService.setPropertyNoPersist(
+                "dataone.mn.registration.submitted", Boolean.TRUE.toString());
+            // persist the properties
+            PropertyService.persistProperties();
+        }
+        logMetacat.debug("PREREGISTERED UPDATE FINISHED * * *");
     }
 
     /**
-     * TODO
-     * @param node
-     * @throws AdminException
+     * Implementation of the logic for handling changes to the Member Node configuration, (including
+     * the special case of a change to the nodeId) for a node that HAS ALREADY BEEN REGISTERED as
+     * part of the DataONE network. Basic steps are:
+     * <ol><li>
+     * Check if the nodeId of the provided Node is different from the nodeId in the
+     * database, that was previously used to register this MN.
+     * </li><li>
+     * NodeId UNCHANGED? Make an idempotent call to the Coordinating Node (CN) to update all the
+     * remaining MN configuration properties, then stop processing further steps and return.
+     * </li><li>
+     * NodeId WAS CHANGED? Check the operator explicitly requested that the node be registered
+     * (vs. "local" changes). If so...
+     * </li><li>
+     * Check the provided nodeId matches the Common Name field in the client certificate. If so...
+     * </li><li>
+     * Make an idempotent call to the Coordinating Node (CN) to update all the MN configuration,
+     * properties, including the new nodeId. If successful...
+     * </li><li>
+     * Update the nodeId in the database
+     * </li></ol>
+     *
+     * @param node the <code>org.dataone.service.types.v2.Node</code> object representing this
+     *             Member Node.
+     * @throws AdminException if an update cannot be carried out for any reason.
+     *
+     * @implNote package-private to allow unit testing
      */
     void configPreregisteredMN(Node node) throws AdminException {
 
@@ -613,7 +639,7 @@ public class D1Admin extends MetacatAdmin {
                              + "(including a nodeId change from:" + previousNodeId + " to: "
                              + nodeId + ")");
         if (!updateCN(node)) {
-            // ID changed, but does not match client cert
+            // update attempt unsuccessful
             String msg =
                 "configPreregisteredMN(): Failed to push an update of Node Capabilities to CN "
                     + "(including a nodeId change from:" + previousNodeId + " to: " + nodeId + ")";
@@ -683,7 +709,7 @@ public class D1Admin extends MetacatAdmin {
     boolean canChangeNodeId() {
         boolean result;
         String autoRegDate = "";
-        if (Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"))) {
+        if (RUNNING_IN_CONTAINER) {
             try {
                 autoRegDate = PropertyService.getProperty("dataone.autoRegisterMemberNode");
                 result = LocalDate.now().equals(LocalDate.parse(autoRegDate));
@@ -705,9 +731,56 @@ public class D1Admin extends MetacatAdmin {
         return result;
     }
 
+
+    /**
+     * Send this MN's registration request to the configured Coordinating Node (CN). (Note this does
+     * not complete registration; the final step has to be carried out manually by a DataONE admin.)
+     * @see https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html#CNRegister.register
+     *
+     * @param node
+     * @return boolean <code>true</code> upon the CN receiving a successful registration request, or
+     *          <code>false</code> otherwise
+     *
+     * @implNote package-private to allow unit testing
+     */
+    boolean registerWithCN(Node node) {
+
+        boolean result;
+        String nodeId = node.getIdentifier().getValue();
+        CNode cn = null;
+        try {
+            cn = D1Client.getCN();
+            logMetacat.info("Registering node with DataONE CN: " + cn.getNodeBaseServiceUrl());
+
+            // Session is null, because libclient automatically sets up SSL session with client cert
+            NodeReference mnRef = cn.register(null, node);
+
+            String returnedNodeId = (mnRef != null)? mnRef.getValue() : null;
+            result = (returnedNodeId != null && returnedNodeId.equals(nodeId));
+            if (!result) {
+                logMetacat.error("CNode.register() returned a node ID (" + returnedNodeId
+                                     + ") not matching the nodeId that was sent (" + nodeId + ")");
+            }
+        } catch (IdentifierNotUnique e) {
+            logMetacat.error("Attempt to register a Member Node with an ID that is already in use "
+                                 + "by a different registered node (" + nodeId + "). CN URL is: "
+                                 + cn.getNodeBaseServiceUrl() + "; error message was: "
+                                 + e.getMessage(), e);
+            result = false;
+
+        }catch (BaseException e) {
+            logMetacat.error("Calling CNode.register() with CN URL: " + cn.getNodeBaseServiceUrl()
+                                 + ", and nodeId: " + nodeId + "; error message was: "
+                                 + e.getMessage(), e);
+            result = false;
+        }
+        return result;
+    }
+
     /**
      * Send this MN's config details to the configured Coordinating Node (CN)
-     *
+     * @see https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html
+     *                                                            #CNRegister.updateNodeCapabilities
      * @param node
      * @return <code>true</code> if CN was successfully updated; <code>false</code> otherwise
      *
@@ -718,12 +791,29 @@ public class D1Admin extends MetacatAdmin {
         CNode cn = null;
         try {
             cn = D1Client.getCN();
+            logMetacat.info(
+                "Sending updated node capabilities to DataONE CN: " + cn.getNodeBaseServiceUrl());
+
+            // TODO - resolve. Does this mean we can't ever update the nodeId? Will it fail
+            //  silently, causing us to update the DB and get it out of sync with the CN??
+            //
+            // According to:
+            // https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html#CNRegister.updateNodeCapabilities
+            //
+            // "For updating the capabilities of the specified node. Most information is replaced
+            // by information in the new node, however, the node identifier, nodeType, ping,
+            // synchronization.lastHarvested, and synchronization.lastCompleteHarvest are
+            // preserved from the existing entry. Services in the old record not included in the
+            // new Node will be removed.
+
             // Session is null, because libclient automatically sets up SSL session with client cert
             result = cn.updateNodeCapabilities(null, node.getIdentifier(), node);
+
         } catch (BaseException e) {
             logMetacat.error(
                 "Calling CNode.updateNodeCapabilities() with CN URL: " + cn.getNodeBaseServiceUrl()
-                    + ", and nodeId: " + node.getIdentifier().getValue(), e);
+                    + ", and nodeId: " + node.getIdentifier().getValue() + "; error message was: "
+                    + e.getMessage(), e);
             result = false;
         }
         return result;
