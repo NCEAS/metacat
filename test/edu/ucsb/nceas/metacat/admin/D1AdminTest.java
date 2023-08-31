@@ -28,7 +28,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
@@ -41,7 +40,7 @@ import static org.mockito.ArgumentMatchers.eq;
  * ==================================================
  *
  *   This logic is encapsulated by the method:
- *       D1Admin::handleRegisteredUpdate()
+ *       D1Admin::configPreregisteredMN()
  *
  *           * START *
  *               |
@@ -143,9 +142,48 @@ public class D1AdminTest {
         LeanTestUtils.setTestEnvironmentVariable("METACAT_IS_RUNNING_IN_A_CONTAINER", "");
     }
 
+    /**
+     * ============================
+     * MN HAS NEVER BEEN REGISTERED
+     * ============================
+     *
+     *           * START *
+     *               |
+     *               v
+     *    +-----------------------+         +-----------------------+
+     *    | (K8s ONLY) Registration         |  UPDATE DB            |
+     *    |  change Requested?    - - NO -> |  *(authoritativeMNId  - -> | DONE |
+     *    |  (yaml flag ==        | (local  |  & nodeId history)*   |
+     *    |  today's date?)       | change) +-----------------------+
+     *    +----------|------------+
+     *               | YES
+     *               v
+     *    +-----------------------+
+     *    | New NodeId            |
+     *    | Matches Client Cert?  - - NO -> | LOG ERROR && DONE |
+     *    +----------|------------+
+     *               | YES
+     *               v
+     *    +-----------------------+
+     *    |  REGISTER @ CN        - - FAIL -> | LOG ERROR && DONE |
+     *    +----------|------------+
+     *               | SUCCESS
+     *               v
+     *    +-----------------------+
+     *    |  UPDATE DB            |
+     *    |  *(authoritativeMNId  |
+     *    |  & nodeId history)*   |
+     *    +-----------------------+
+     *               |
+     *               v
+     *             DONE
+     * </pre>
+     *
+     */
+
     // Happy Path
     @Test
-    public void handleRegisteredUpdate() throws Exception {
+    public void configUnregisteredMN() throws Exception {
         Properties withProperties = new Properties();
         // dataone.autoRegisterMemberNode valid @ today's date
         withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
@@ -157,19 +195,95 @@ public class D1AdminTest {
                 "CN=urn:node:NewTestMemberNode", null,
                 () -> {
                     runWithMockedDataBaseConnection(() -> {
-                        Node mockMN3 = getMockNode("urn:node:NewTestMemberNode");
-                        runWithMockedUpdateCN(true, () -> d1Admin.handleRegisteredUpdate(mockMN3));
+                        Node mockMN = getMockNode("urn:node:NewTestMemberNode");
+                        runWithMockedUpdateCN(true,
+                                              () -> d1Admin.configUnregisteredMN(mockMN));
+                    });
+                });
+        }
+    }
+
+
+    /**
+     * <pre>
+     * ==========================================
+     * MN HAS ALREADY BEEN REGISTERED IN THE PAST
+     * ==========================================
+     *
+     *   This logic is encapsulated by the method:
+     *       D1Admin::configPreregisteredMN()
+     *
+     *           * START *
+     *               |
+     *               v
+     *    +----------------------+         +-----------------------+
+     *    |   nodeId changed?    |         | UPDATE @ CN           |
+     *    |  (yaml:nodeId        - - NO -> | - Push MN config to   - - > | DONE |
+     *    |    != DB latest?)    |         | CN (nodeId UNCHANGED) |
+     *    +----------|-----------+         +-----------------------+
+     *               | YES
+     *               v
+     *    +-----------------------+
+     *    | (K8s ONLY) Registration
+     *    |  change Requested?    - - NO -> | LOG ERROR && DONE |
+     *    |  (yaml flag ==        |
+     *    |  today's date?)       |
+     *    +----------|------------+
+     *               | YES
+     *               v
+     *    +-----------------------+
+     *    | New NodeId            |
+     *    | Matches Client Cert?  - - NO -> | LOG ERROR && DONE |
+     *    +----------|------------+
+     *               | YES
+     *               v
+     *    +-----------------------+
+     *    |  UPDATE @ CN          |
+     *    |  - Push MN config to  |
+     *    |  CN. (nodeId CHANGED) - - FAIL -> | LOG ERROR && DONE |
+     *    +----------|------------+
+     *               | SUCCESS
+     *               v
+     *    +-----------------------+
+     *    |  UPDATE DB            |
+     *    |  *(authoritativeMNId  |
+     *    |  & nodeId history)*   |
+     *    +-----------------------+
+     *               |
+     *               v
+     *             DONE
+     * </pre>
+     *
+     */
+
+    // Happy Path
+    @Test
+    public void configPreregisteredMN() throws Exception {
+        Properties withProperties = new Properties();
+        // dataone.autoRegisterMemberNode valid @ today's date
+        withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
+        try (MockedStatic<PropertyService> ignored
+                 = LeanTestUtils.initializeMockPropertyService(withProperties)) {
+            assertTrue(d1Admin.canChangeNodeId());
+            setK8sEnv();
+            runWithMockedClientCert(
+                "CN=urn:node:NewTestMemberNode", null,
+                () -> {
+                    runWithMockedDataBaseConnection(() -> {
+                        Node mockMN = getMockNode("urn:node:NewTestMemberNode");
+                        runWithMockedUpdateCN(true,
+                                              () -> d1Admin.configPreregisteredMN(mockMN));
                     });
                 });
         }
     }
 
     @Test(expected = AdminException.class)
-    public void handleRegisteredUpdate_nullNode() throws AdminException {
+    public void configPreregisteredMN_nullNode() throws AdminException {
         try {
-            d1Admin.handleRegisteredUpdate(null);
+            d1Admin.configPreregisteredMN(null);
         } catch (AdminException expectedException) {
-            String sub = "handleRegisteredUpdate() received a null node!";
+            String sub = "configPreregisteredMN() received a null node!";
             assertTrue("e.getMessage() didn't contain expected substring ('"+ sub + "')",
                        expectedException.getMessage().contains(sub));
             throw expectedException;
@@ -177,20 +291,20 @@ public class D1AdminTest {
     }
 
     @Test(expected = AdminException.class)
-    public void handleRegisteredUpdate_noAutoRegisterProp() throws Exception {
+    public void configPreregisteredMN_noAutoRegisterProp() throws Exception {
 
         setK8sEnv();
         String sub = "*Not Permitted* to push update to CN without operator consent";
         runWithMockedClientCert("CN=Jing Tao", sub,
                                 () -> {
-                                    Node mockMN3 = getMockNode("Jing Tao");
-                                    d1Admin.handleRegisteredUpdate(mockMN3); // should throw exception
+                                    Node mockMN = getMockNode("Jing Tao");
+                                    d1Admin.configPreregisteredMN(mockMN); // should throw exception
                                 });
     }
 
 
     @Test(expected = AdminException.class)
-    public void handleRegisteredUpdate_nonMatchingClientCert() throws Exception {
+    public void configPreregisteredMN_nonMatchingClientCert() throws Exception {
         Properties withProperties = new Properties();
 
         // dataone.autoRegisterMemberNode valid @ today's date
@@ -203,8 +317,8 @@ public class D1AdminTest {
             String sub
                 = "node Id does not agree with the 'Subject CN' value in the client certificate";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub, () -> {
-                Node mockMN4 = getMockNode("urn:node:TestMemberNodeNEW");
-                runWithMockedUpdateCN(true, () -> d1Admin.handleRegisteredUpdate(mockMN4));
+                Node mockMN = getMockNode("urn:node:TestMemberNodeNEW");
+                runWithMockedUpdateCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
             });
         }
     }
@@ -291,17 +405,6 @@ public class D1AdminTest {
         runWithMockedUpdateCN(false, () -> assertFalse(d1Admin.updateCN(mockMN)));
     }
 
-    @Test(expected = AdminException.class)
-    public void saveMostRecentNodeId_null() throws AdminException {
-        d1Admin.saveMostRecentNodeId(null);
-    }
-
-    @Test(expected = AdminException.class)
-    public void saveMostRecentNodeId_empty() throws AdminException {
-        d1Admin.saveMostRecentNodeId("");
-    }
-
-
     private static Node getMockNode(String NodeId) {
         NodeReference mockNodeRef = Mockito.mock(NodeReference.class);
         Mockito.when(mockNodeRef.getValue()).thenReturn(NodeId);
@@ -360,7 +463,7 @@ public class D1AdminTest {
                     Mockito.when(mockRs.getString(1)).thenReturn(PREVIOUS_NODE_ID);
 
                     // PreparedStatement
-                    Mockito.when(mockPs.executeUpdate()).thenReturn(0);
+                    Mockito.when(mockPs.executeUpdate()).thenReturn(911);
                     Mockito.when(mockPs.executeQuery()).thenReturn(mockRs);
 
                     // DBConnection

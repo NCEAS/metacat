@@ -356,18 +356,17 @@ public class D1Admin extends MetacatAdmin {
                     // Register/update as a DataONE Member Node
                     upregDataONEMemberNode();
 
-                    // did we end up changing the member node id from what it used to be?
+// TODO - resolve
+//                    // did we end up changing the member node id from what it used to be?
 //                    if (!existingMemberNodeId.equals(memberNodeId)) {
 //                        // update all existing system Metadata for this node id
 //                        IdentifierManager.getInstance()
 //                            .updateAuthoritativeMemberNodeId(existingMemberNodeId, memberNodeId);
 //                    }
 
-
                     // dataone system metadata generation:
                     // we can generate this after the registration/configuration
                     // it will be more controlled and deliberate that way -BRL
-
 
                     // write the backup properties to a location outside the
                     // application directories, so they will be available after
@@ -418,6 +417,7 @@ public class D1Admin extends MetacatAdmin {
             }
         }
     }
+
 
     private boolean isNodeRegistered(String nodeId) {
         // check if this is new or an update
@@ -471,6 +471,7 @@ public class D1Admin extends MetacatAdmin {
 //
 //    }
 
+
     /**
      * upreg: Either update ("up") or register ("reg") DataONE Member Node (MN) config, depending
      * upon whether this Metacat instance is already registered as a DataONE MN. Registration is
@@ -491,43 +492,99 @@ public class D1Admin extends MetacatAdmin {
 
         // check if this is new or an update
         if (isNodeRegistered(node.getIdentifier().getValue())) {
-            handleRegisteredUpdate(node);
+            logMetacat.info("* * * Handling config changes: PREREGISTERED D1 MEMBER NODE...");
+            configPreregisteredMN(node);
         } else {
+            logMetacat.info("* * * Handling config changes: UNREGISTERED D1 MEMBER NODE...");
+            configUnregisteredMN(node);
+        }
+    }
 
-            // TODO
+    /**
+     * TODO
+     * @param node
+     * @throws AdminException
+     */
+    void configUnregisteredMN(Node node) throws AdminException {
+
+        if (node == null) {
+            throw new AdminException("configUnregisteredMN() received a null node!");
+        }
+        String nodeId = node.getIdentifier().getValue();
+        String previousNodeId = getMostRecentNodeId();
+        logMetacat.debug("configUnregisteredMN(): received new nodeId: " + nodeId
+                             + ". Most recent previous nodeId was: " + previousNodeId);
+
+// TODO - resolve - not needed?
+//        if (nodeId.equals(previousNodeId)) {
+//            // nodeId UNCHANGED: no new registration/update action required
+//            logMetacat.info(
+//                "configUnregisteredMN() nodeId unchanged: no registration/update required");
+//            return;
+//        }
+
+        if (!canChangeNodeId()) {
+            // Local nodeId change only (i.e. nodeId CHANGED, but not permitted to register with the
+            // CN without operator consent)
+            logMetacat.info("configUnregisteredMN(): Only a LOCAL nodeId change will be performed, "
+                                + "since operator consent to registered with the CN was not "
+                                + "provided.\nIf you wish to register Metacat as a DataONE Member "
+                                + "Node, you must set the Property: "
+                                + "'metacat.dataone.autoRegisterMemberNode' to match "
+                                + "today's date in `values.yaml`).");
+            logMetacat.debug("configUnregisteredMN(): updating DataBase with new nodeId ("
+                                 + nodeId + ")...");
+            updateDBNodeIds(previousNodeId, nodeId);
+            logMetacat.debug("LOCAL-ONLY MN UPDATE FINISHED * * *");
+            return;
+        }
+        if (!nodeIdMatchesClientCert(nodeId)) {
+            // nodeId does not match client cert
+            String msg =
+                "configUnregisteredMN: An attempt to register this node as a DataONE Member Node "
+                    + "FAILED, because the new node Id (" + nodeId + ") does not agree with the "
+                    + "'Subject CN' value in the client certificate";
+            logMetacat.error(msg);
+            throw new AdminException(msg);
+        }
 
 
-            // OLD CODE:
+// TODO register CN and update DB. See flowchart
+//        // OLD CODE:
 //            logMetacat.debug("Registering node with DataONE. " + cn.getNodeBaseServiceUrl());
-//
 //            NodeReference mnodeRef = cn.register(null, node);
 //
+        // TODO !!
 //            // if we're not running in a container, save that we submitted registration
 //            PropertyService.setPropertyNoPersist(
 //                "dataone.mn.registration.submitted", Boolean.TRUE.toString());
 //            // persist the properties
 //            PropertyService.persistProperties();
-        }
     }
 
-    void handleRegisteredUpdate(Node node) throws AdminException {
+    /**
+     * TODO
+     * @param node
+     * @throws AdminException
+     */
+    void configPreregisteredMN(Node node) throws AdminException {
 
         if (node == null) {
-            throw new AdminException("handleRegisteredUpdate() received a null node!");
+            throw new AdminException("configPreregisteredMN() received a null node!");
         }
         String nodeId = node.getIdentifier().getValue();
         String previousNodeId = getMostRecentNodeId();
-        logMetacat.debug("handleRegisteredUpdate(): received new nodeId: " + nodeId
+        logMetacat.debug("configPreregisteredMN(): received new nodeId: " + nodeId
                              + ". Most recent previous nodeId was: " + previousNodeId);
 
         if (nodeId.equals(previousNodeId)) {
             // nodeId UNCHANGED: push an idempotent update of all other Node Capabilities to the CN
             final String END = " an update of Member Node settings to the CN (nodeId unchanged)";
             if (updateCN(node)) {
-                logMetacat.info("handleRegisteredUpdate: Successfully pushed" + END);
+                logMetacat.info("configPreregisteredMN: Successfully pushed" + END);
                 return;
             } else {
-                String msg = "handleRegisteredUpdate: *** FAILED *** to push" + END;
+                String msg = "configPreregisteredMN: *** FAILED *** to push" + END;
                 logMetacat.error(msg);
                 throw new AdminException(msg);
             }
@@ -535,7 +592,7 @@ public class D1Admin extends MetacatAdmin {
         if (!canChangeNodeId()) {
             // nodeId CHANGED, but not permitted to push update to the CN without operator consent
             String msg =
-                "handleRegisteredUpdate: *Not Permitted* to push update to CN without operator "
+                "configPreregisteredMN: *Not Permitted* to push update to CN without operator "
                     + "consent. (An attempt to change Property: 'dataone.nodeId' from:"
                     + previousNodeId + " to: " + nodeId + " failed, because Property: "
                     + "'dataone.autoRegisterMemberNode' had not been set to match today's date).";
@@ -545,32 +602,29 @@ public class D1Admin extends MetacatAdmin {
         if (!nodeIdMatchesClientCert(nodeId)) {
             // nodeId CHANGED, but does not match client cert
             String msg =
-                "handleRegisteredUpdate: An attempt to change Property: 'dataone.nodeId' from:"
+                "configPreregisteredMN: An attempt to change Property: 'dataone.nodeId' from:"
                     + previousNodeId + " to: " + nodeId + " failed, because the new node Id does "
                     + "not agree with the 'Subject CN' value in the client certificate";
             logMetacat.error(msg);
             throw new AdminException(msg);
         }
         // nodeId CHANGED and checks complete: try to push an update of Node Capabilities to the CN:
-        logMetacat.debug("handleRegisteredUpdate(): BEGIN REGISTRATION UPDATE ATTEMPT "
+        logMetacat.debug("configPreregisteredMN():* * * BEGIN PREREGISTERED UPDATE ATTEMPT * * *"
                              + "(including a nodeId change from:" + previousNodeId + " to: "
                              + nodeId + ")");
         if (!updateCN(node)) {
             // ID changed, but does not match client cert
             String msg =
-                "handleRegisteredUpdate(): Failed to push an update of Node Capabilities to CN "
+                "configPreregisteredMN(): Failed to push an update of Node Capabilities to CN "
                     + "(including a nodeId change from:" + previousNodeId + " to: " + nodeId + ")";
             logMetacat.error(msg);
             throw new AdminException(msg);
         }
-        logMetacat.debug("handleRegisteredUpdate(): SUCCESS: pushed an update of Node "
+        logMetacat.debug("configPreregisteredMN(): SUCCESS: pushed an update of Node "
                              + "Capabilities to CN. Now updating DataBase with new nodeId ("
                              + nodeId + ")...");
-        int updatedRowCount = updateAuthoritativeMemberNodeId(previousNodeId, nodeId);
-        logMetacat.debug("...updated authoritive_member_node (" + updatedRowCount
-                             + "rows affected) in systemmetadata table...");
-        saveMostRecentNodeId(nodeId);
-        logMetacat.debug("...added node_id to node_id_revisions. REGISTERED UPDATE FINISHED");
+        updateDBNodeIds(previousNodeId, nodeId);
+        logMetacat.debug("PREREGISTERED UPDATE FINISHED * * *");
     }
 
     /**
@@ -578,7 +632,7 @@ public class D1Admin extends MetacatAdmin {
      *
      * @return true if the nodeId matches the "CN=" part of the client cert "Subject" field
      *
-     *     package-private to allow unit testing
+     * @implNote package-private to allow unit testing
      */
     boolean nodeIdMatchesClientCert(String nodeId) {
 
@@ -600,9 +654,13 @@ public class D1Admin extends MetacatAdmin {
         firstComma = (firstComma < start) ? certSubject.length() : firstComma; // in case no commas
         String commonName = certSubject.substring(start, firstComma);
         boolean matches = commonName.equals(nodeId);
-        logMetacat.debug("nodeIdMatchesClientCert(): " + String.valueOf(matches).toUpperCase()
-                             + "! (nodeId was: " + nodeId
-                             + " and Common Name (CN) from client cert was: " + commonName);
+        String msg = "nodeIdMatchesClientCert(): " + String.valueOf(matches).toUpperCase()
+            + "! (nodeId: " + nodeId + "; Common Name (CN) from client cert: " + commonName;
+        if (matches) {
+            logMetacat.info(msg);
+        } else {
+            logMetacat.error(msg);
+        }
         return matches;
     }
 
@@ -611,17 +669,16 @@ public class D1Admin extends MetacatAdmin {
      * <p></p>
      * If we're running in a container/K8s, this code runs automatically on startup, so we need
      * explicit permission via the associated values.yaml flag. Specifically, the parameter
-     * <code>.Values.metacat.dataone.autoRegisterMemberNode</code> becomes the java property
-     * <code>dataone.autoRegisterMemberNode</code>, and this must match today's date (in
+     * <code>.Values.metacat.dataone.autoRegisterMemberNode</code>  must match today's date (in
      * yyyy-MM-dd format).
      * </p><p>
-     * If we're running in a legacy deployment, we can go ahead, since this is triggered only if the
-     * operator has submitted the form requesting the change.
+     * If we're running in a legacy deployment, we can go ahead, since the operator has already
+     * given explicit consent by submitting the form in the Metacat Admin UI requesting the change.
      * </p>
      *
      * @return boolean true if it is OK to change the nodeId
      *
-     *     package-private to allow unit testing
+     * @implNote package-private to allow unit testing
      */
     boolean canChangeNodeId() {
         boolean result;
@@ -633,29 +690,31 @@ public class D1Admin extends MetacatAdmin {
 
             } catch (PropertyNotFoundException e) {
                 logMetacat.warn("DataONE Member Node (MN) NodeId Registration/Update not possible:"
-                                    + "\"dataone.autoRegisterMemberNode\" Property not set.");
+                                    + "'.Values.metacat.dataone.autoRegisterMemberNode' not set.");
                 result = false;
 
             } catch (DateTimeParseException e) {
                 logMetacat.warn("DataONE Member Node (MN) NodeId Registration/Update not possible:"
-                                    + "\"dataone.autoRegisterMemberNode\" read, but can't parse "
-                                    + "date: "
-                                    + autoRegDate);
+                                    + "'.Values.metacat.dataone.autoRegisterMemberNode' read, but"
+                                    + " can't parse date: " + autoRegDate);
                 result = false;
             }
-        } else {
+        } else { //legacy deployment: explicit consent already given by submitting the form
             result = true;
         }
         return result;
     }
 
     /**
+     * Send this MN's config details to the configured Coordinating Node (CN)
+     *
      * @param node
-     * @return package-private to allow unit testing
+     * @return <code>true</code> if CN was successfully updated; <code>false</code> otherwise
+     *
+     * @implNote package-private to allow unit testing
      */
     boolean updateCN(Node node) {
         boolean result;
-        String cnUrl = "NOT SET";
         CNode cn = null;
         try {
             cn = D1Client.getCN();
@@ -664,7 +723,7 @@ public class D1Admin extends MetacatAdmin {
         } catch (BaseException e) {
             logMetacat.error(
                 "Calling CNode.updateNodeCapabilities() with CN URL: " + cn.getNodeBaseServiceUrl()
-                    + ", and nodeId: " + node.getIdentifier().getValue());
+                    + ", and nodeId: " + node.getIdentifier().getValue(), e);
             result = false;
         }
         return result;
@@ -675,7 +734,7 @@ public class D1Admin extends MetacatAdmin {
      *
      * @return most recent (String) value of nodeId that was last recorded in the database
      *
-     *     package-private to allow unit testing
+     * @implNote package-private to allow unit testing
      */
     String getMostRecentNodeId() {
 
@@ -712,7 +771,7 @@ public class D1Admin extends MetacatAdmin {
                                     + "Initializing with current nodeId from Properties: "
                                     + nodeId);
                 try {
-                    saveMostRecentNodeId(nodeId);
+                    saveNewNodeIdRevision(nodeId);
                 } catch (AdminException e) {
                     logMetacat.warn("Unable to initialize node_id_revisions database table with "
                                         + "current nodeId from Properties (" + nodeId
@@ -726,50 +785,58 @@ public class D1Admin extends MetacatAdmin {
     }
 
     /**
-     * Save the most recent value of nodeId to the database
+     * Check to see if this node has already been registered with the Coordinating Node (CN)
      *
-     * @param nodeId the nodeId to be saved
-     * @throws AdminException           if a problem is encountered
-     * @throws IllegalArgumentException if the nodeId is null or empty
-     *
-     *                                  package-private to allow unit testing
+     * @param nodeId
+     * @return true if already registered; false otherwise
      */
-    void saveMostRecentNodeId(String nodeId) throws AdminException {
-        if (nodeId == null || nodeId.isEmpty()) {
-            throw new AdminException(
-                "saveMostRecentNodeId(): nodeId (= " + nodeId + ") cannot be null or empty!");
-        }
-        DBConnection dbConn = null;
-        int serialNumber = -1;
+    private boolean isNodeRegistered(String nodeId) {
+        // check if this is new or an update
+        boolean exists = false;
         try {
-            dbConn = DBConnectionPool.getDBConnection("D1Admin.saveMostRecentNodeId");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-            String query;
-            PreparedStatement stmt;
-            query = "UPDATE node_id_revisions SET is_most_recent = ?";
-            stmt = dbConn.prepareStatement(query);
-            stmt.setBoolean(1, false);
-            stmt.execute();
-            stmt.close();
-            dbConn.increaseUsageCount(1);
-
-            query = "INSERT INTO node_id_revisions (node_id, is_most_recent, date_created) "
-                + "VALUES (?, true, CURRENT_DATE)";
-            stmt = dbConn.prepareStatement(query);
-            stmt.setString(1, nodeId);
-            stmt.execute();
-            stmt.close();
-        } catch (SQLException e) {
-            String msg = "saveMostRecentNodeId(): SQL error while trying to INSERT most-recent "
-                + "nodeId value (" + nodeId + "). Error message: " + e.getMessage();
-            logMetacat.error(msg);
-            throw new AdminException(msg);
-        } finally {
-            // Return database connection to the pool
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            NodeList nodes = D1Client.getCN().listNodes();
+            for (Node n : nodes.getNodeList()) {
+                if (n.getIdentifier().getValue().equals(nodeId)) {
+                    exists = true;
+                    break;
+                }
+            }
+        } catch (BaseException e) {
+            logMetacat.error(
+                "Could not check for node with DataONE (" + e.getCode() + "/" + e.getDetail_code()
+                    + "): " + e.getDescription());
         }
+        return exists;
     }
 
+    /**
+     * Utility method that makes calls to <code>updateAuthoritativeMemberNodeId()</code> and
+     * <code>saveNewNodeIdRevision()</code> and provides logging
+     *
+     * @param existingMemberNodeId  the previous member node id
+     * @param newMemberNodeId       the new member node id
+     * @throws AdminException       if a problem is encountered
+     */
+    private void updateDBNodeIds(String existingMemberNodeId, String newMemberNodeId) throws AdminException {
+        logMetacat.debug("Updating DataBase with new nodeId " + newMemberNodeId + "(from previous nodeId:"
+                             + existingMemberNodeId + ")...");
+        int updatedRowCount = updateAuthoritativeMemberNodeId(existingMemberNodeId, newMemberNodeId);
+        logMetacat.debug(
+            "...updated 'authoritive_member_node' in 'systemmetadata' table (" + updatedRowCount
+                + "rows affected)...");
+        saveNewNodeIdRevision(newMemberNodeId);
+        logMetacat.debug(
+            "...added new node_id to 'node_id_revisions' table, and marked as most recent.");
+    }
+
+    /**
+     * Update the 'systemmetadata' DB table by replacing all the 'AuthoritativeMemberNode'
+     * entries that were set to the existingMemberNodeId, with the newMemberNodeId
+     *
+     * @param existingMemberNodeId the previous member node id
+     * @param newMemberNodeId the new member node id
+     * @throws AdminException           if a problem is encountered
+     */
     private int updateAuthoritativeMemberNodeId(
         String existingMemberNodeId, String newMemberNodeId) throws AdminException {
         DBConnection dbConn = null;
@@ -795,6 +862,48 @@ public class D1Admin extends MetacatAdmin {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
         return updatedRowCount;
+    }
+
+    /**
+     * Save the most recent value of nodeId to the database
+     *
+     * @param nodeId the nodeId to be saved
+     * @throws AdminException           if a problem is encountered
+     */
+    private void saveNewNodeIdRevision(String nodeId) throws AdminException {
+        if (nodeId == null || nodeId.isEmpty()) {
+            throw new AdminException(
+                "saveNewNodeIdRevision(): nodeId (= " + nodeId + ") cannot be null or empty!");
+        }
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            dbConn = DBConnectionPool.getDBConnection("D1Admin.saveNewNodeIdRevision");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            String query;
+            PreparedStatement stmt;
+            query = "UPDATE node_id_revisions SET is_most_recent = ?";
+            stmt = dbConn.prepareStatement(query);
+            stmt.setBoolean(1, false);
+            stmt.execute();
+            stmt.close();
+            dbConn.increaseUsageCount(1);
+
+            query = "INSERT INTO node_id_revisions (node_id, is_most_recent, date_created) "
+                + "VALUES (?, true, CURRENT_DATE)";
+            stmt = dbConn.prepareStatement(query);
+            stmt.setString(1, nodeId);
+            stmt.execute();
+            stmt.close();
+        } catch (SQLException e) {
+            String msg = "saveNewNodeIdRevision(): SQL error while trying to INSERT most-recent "
+                + "nodeId value (" + nodeId + "). Error message: " + e.getMessage();
+            logMetacat.error(msg);
+            throw new AdminException(msg);
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
     }
 
     /**
