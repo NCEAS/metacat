@@ -2952,19 +2952,7 @@ public class MetacatHandler {
      */
     private void buildDocumentIndex(String docid, PrintWriter out) {
         //if the pathquery option is off, we don't need to build index.
-        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
-            return;
-        }
-        try {
-            DocumentImpl doc = new DocumentImpl(docid, false);
-            doc.buildIndex();
-            out.print("<docid>" + StringEscapeUtils.escapeXml(docid));
-            out.println("</docid>");
-        } catch (McdbException me) {
-            out.print("<error>");
-            out.print(me.getMessage());
-            out.println("</error>");
-        }
+        //donothing
     }
     
     /**

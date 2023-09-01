@@ -357,24 +357,6 @@ public class MetaCatServlet extends HttpServlet {
 				logMetacat.info("MetaCatServlet.initSecondHalf - Finish to correct eml201 documents");
 			}
 
-			// Index the paths specified in the metacat.properties
-			checkIndexPaths();
-
-			// initiate the indexing Queue
-			IndexingQueue.getInstance();
-
-			// start the IndexingThread if indexingTimerTaskTime more than 0.
-			// It will index all the documents not yet indexed in the database
-			int indexingTimerTaskTime = Integer.parseInt(PropertyService
-					.getProperty("database.indexingTimerTaskTime"));
-			int delayTime = Integer.parseInt(PropertyService
-					.getProperty("database.indexingInitialDelay"));
-
-			if (indexingTimerTaskTime > 0) {
-				timer = new Timer();
-				timer.schedule(new IndexingTimerTask(), delayTime, indexingTimerTaskTime);
-			}
-			
 			/*
 			 * If spatial option is turned on and set to regenerate the spatial
 			 * cache on restart, trigger the harvester regeneratation method
@@ -425,6 +407,7 @@ public class MetaCatServlet extends HttpServlet {
 			SessionService.getInstance().unRegisterAllSessions();
 			
 	         //Initialize Metacat Handler
+			timer = new Timer();
             handler = new MetacatHandler(timer);
 
 			// Turn on sitemaps if appropriate
@@ -478,7 +461,6 @@ public class MetaCatServlet extends HttpServlet {
             logMetacat.warn("MetaCatServlet.destroy - Destroying MetacatServlet");
         } finally {
             timer.cancel();
-            IndexingQueue.getInstance().setMetacatRunning(false);
             DBConnectionPool.release();
         }
     }
