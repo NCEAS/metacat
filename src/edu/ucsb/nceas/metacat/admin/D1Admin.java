@@ -37,8 +37,6 @@ import java.util.Vector;
  */
 public class D1Admin extends MetacatAdmin {
 
-    public static final boolean RUNNING_IN_CONTAINER =
-        Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
     private static D1Admin instance = null;
     private final Log logMetacat = LogFactory.getLog(D1Admin.class);
 
@@ -556,7 +554,7 @@ public class D1Admin extends MetacatAdmin {
             updateDBNodeIds(previousNodeId, nodeId);
         }
         // if we're not running in a container, save that we submitted registration
-        if (!RUNNING_IN_CONTAINER) {
+        if (!isMetacatIsRunningInAContainer()) {
             PropertyService.setPropertyNoPersist(
                 "dataone.mn.registration.submitted", Boolean.TRUE.toString());
             // persist the properties
@@ -709,23 +707,31 @@ public class D1Admin extends MetacatAdmin {
     boolean canChangeNodeId() {
         boolean result;
         String autoRegDate = "";
-        if (RUNNING_IN_CONTAINER) {
+        if (isMetacatIsRunningInAContainer()) {
+            logMetacat.debug("canChangeNodeId(): Containerized/Kubernetes deployment detected");
             try {
                 autoRegDate = PropertyService.getProperty("dataone.autoRegisterMemberNode");
                 result = LocalDate.now().equals(LocalDate.parse(autoRegDate));
-
+                logMetacat.debug("canChangeNodeId(): returning " + result
+                                     + ", since '.Values.metacat.dataone.autoRegisterMemberNode' ("
+                                     + autoRegDate + ") is set to today's date (" + LocalDate.now()
+                                     + ")");
             } catch (PropertyNotFoundException e) {
-                logMetacat.warn("DataONE Member Node (MN) NodeId Registration/Update not possible:"
+                logMetacat.warn("canChangeNodeId(): DataONE Member Node (MN) NodeId "
+                                    + "Registration/Update not possible:"
                                     + "'.Values.metacat.dataone.autoRegisterMemberNode' not set.");
                 result = false;
 
             } catch (DateTimeParseException e) {
-                logMetacat.warn("DataONE Member Node (MN) NodeId Registration/Update not possible:"
+                logMetacat.warn("canChangeNodeId(): DataONE Member Node (MN) NodeId "
+                                    + "Registration/Update not possible:"
                                     + "'.Values.metacat.dataone.autoRegisterMemberNode' read, but"
                                     + " can't parse date: " + autoRegDate);
                 result = false;
             }
         } else { //legacy deployment: explicit consent already given by submitting the form
+            logMetacat.debug("canChangeNodeId(): Legacy (non-containerized) deployment detected. "
+                + "Returning TRUE, since explicit consent already given by submitting the form ");
             result = true;
         }
         return result;
@@ -737,23 +743,27 @@ public class D1Admin extends MetacatAdmin {
      * not complete registration; the final step has to be carried out manually by a DataONE admin.)
      * @see https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html#CNRegister.register
      *
-     * @param node
+     * @param mNode the Member Node to be registered
      * @return boolean <code>true</code> upon the CN receiving a successful registration request, or
      *          <code>false</code> otherwise
      *
      * @implNote package-private to allow unit testing
      */
-    boolean registerWithCN(Node node) {
+    boolean registerWithCN(Node mNode) {
 
         boolean result;
-        String nodeId = node.getIdentifier().getValue();
-        CNode cn = null;
+        String nodeId = mNode.getIdentifier().getValue();
+        final CNode cn;
+        String CnUrl = "CNode is NULL";
         try {
             cn = D1Client.getCN();
-            logMetacat.info("Registering node with DataONE CN: " + cn.getNodeBaseServiceUrl());
+            if (cn != null) {
+                CnUrl = cn.getNodeBaseServiceUrl();
+            }
+            logMetacat.info("Registering node with DataONE CN: " + CnUrl);
 
             // Session is null, because libclient automatically sets up SSL session with client cert
-            NodeReference mnRef = cn.register(null, node);
+            NodeReference mnRef = cn.register(null, mNode);
 
             String returnedNodeId = (mnRef != null)? mnRef.getValue() : null;
             result = (returnedNodeId != null && returnedNodeId.equals(nodeId));
@@ -764,12 +774,12 @@ public class D1Admin extends MetacatAdmin {
         } catch (IdentifierNotUnique e) {
             logMetacat.error("Attempt to register a Member Node with an ID that is already in use "
                                  + "by a different registered node (" + nodeId + "). CN URL is: "
-                                 + cn.getNodeBaseServiceUrl() + "; error message was: "
+                                 + CnUrl + "; error message was: "
                                  + e.getMessage(), e);
             result = false;
 
         }catch (BaseException e) {
-            logMetacat.error("Calling CNode.register() with CN URL: " + cn.getNodeBaseServiceUrl()
+            logMetacat.error("Calling CNode.register() with CN URL: " + CnUrl
                                  + ", and nodeId: " + nodeId + "; error message was: "
                                  + e.getMessage(), e);
             result = false;
@@ -781,18 +791,22 @@ public class D1Admin extends MetacatAdmin {
      * Send this MN's config details to the configured Coordinating Node (CN)
      * @see https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html
      *                                                            #CNRegister.updateNodeCapabilities
-     * @param node
+     * @param mNode the Member Node whose config details will be sent to the CN
      * @return <code>true</code> if CN was successfully updated; <code>false</code> otherwise
      *
      * @implNote package-private to allow unit testing
      */
-    boolean updateCN(Node node) {
+    boolean updateCN(Node mNode) {
         boolean result;
-        CNode cn = null;
+        final CNode cn;
+        String CnUrl = "CNode is NULL";
         try {
             cn = D1Client.getCN();
+            if (cn != null) {
+                CnUrl = cn.getNodeBaseServiceUrl();
+            }
             logMetacat.info(
-                "Sending updated node capabilities to DataONE CN: " + cn.getNodeBaseServiceUrl());
+                "Sending updated node capabilities to DataONE CN: " + CnUrl);
 
             // TODO - resolve. Does this mean we can't ever update the nodeId? Will it fail
             //  silently, causing us to update the DB and get it out of sync with the CN??
@@ -807,13 +821,14 @@ public class D1Admin extends MetacatAdmin {
             // new Node will be removed.
 
             // Session is null, because libclient automatically sets up SSL session with client cert
-            result = cn.updateNodeCapabilities(null, node.getIdentifier(), node);
+            result = cn.updateNodeCapabilities(null, mNode.getIdentifier(), mNode);
 
         } catch (BaseException e) {
+            final String nodeId = (mNode.getIdentifier() != null)?
+                                  mNode.getIdentifier().getValue() : "NULL!";
             logMetacat.error(
-                "Calling CNode.updateNodeCapabilities() with CN URL: " + cn.getNodeBaseServiceUrl()
-                    + ", and nodeId: " + node.getIdentifier().getValue() + "; error message was: "
-                    + e.getMessage(), e);
+                "Calling CNode.updateNodeCapabilities() with CN URL: " + CnUrl + ", and nodeId: "
+                    + nodeId + "; error message was: " + e.getMessage(), e);
             result = false;
         }
         return result;
@@ -913,10 +928,10 @@ public class D1Admin extends MetacatAdmin {
         int updatedRowCount = updateAuthoritativeMemberNodeId(existingMemberNodeId, newMemberNodeId);
         logMetacat.debug(
             "...updated 'authoritive_member_node' in 'systemmetadata' table (" + updatedRowCount
-                + "rows affected)...");
+                + " rows affected)...");
         saveNewNodeIdRevision(newMemberNodeId);
         logMetacat.debug(
-            "...added new node_id to 'node_id_revisions' table, and marked as most recent.");
+            "...added new node_id to 'node_id_revisions' table, and marked as 'is_most_recent'.");
     }
 
     /**
@@ -1008,5 +1023,9 @@ public class D1Admin extends MetacatAdmin {
         // TODO MCD validate options.
 
         return errorVector;
+    }
+
+    private static boolean isMetacatIsRunningInAContainer() {
+        return Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
     }
 }

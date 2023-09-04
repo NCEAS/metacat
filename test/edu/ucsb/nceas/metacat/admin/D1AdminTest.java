@@ -25,7 +25,6 @@ import java.util.Properties;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,101 +32,11 @@ import static org.mockito.ArgumentMatchers.eq;
 /**
  * <p>
  * Tests for the DataONE Member Node Registration and Update functionality in D1Admin
- * </p><p>LOGIC:</p>
- * <pre>
- * CASE 1: MN HAS ALREADY BEEN REGISTERED IN THE PAST
- * ==================================================
- *
- *   This logic is encapsulated by the method:
- *       D1Admin::configPreregisteredMN()
- *
- *           * START *
- *               |
- *               v
- *    +----------------------+         +-----------------------+
- *    |   nodeId changed?    |         | UPDATE @ CN           |
- *    |  (yaml:nodeId        - - NO -> | - Push MN config to   - - > | DONE |
- *    |    != DB latest?)    |         | CN (nodeId UNCHANGED) |
- *    +----------|-----------+         +-----------------------+
- *               | YES
- *               v
- *    +-----------------------+
- *    | (K8s ONLY) Registration
- *    |  change Requested?    - - NO -> | LOG ERROR && DONE |
- *    |  (yaml flag ==        |
- *    |  today's date?)       |
- *    +----------|------------+
- *               | YES
- *               v
- *    +-----------------------+
- *    | New NodeId            |
- *    | Matches Client Cert?  - - NO -> | LOG ERROR && DONE |
- *    +----------|------------+
- *               | YES
- *               v
- *    +-----------------------+
- *    |  UPDATE @ CN          |
- *    |  - Push MN config to  |
- *    |  CN. (nodeId CHANGED) - - FAIL -> | LOG ERROR && DONE |
- *    +----------|------------+
- *               | SUCCESS
- *               v
- *    +-----------------------+
- *    |  UPDATE DB            |
- *    |  *(authoritativeMNId  |
- *    |  & nodeId history)*   |
- *    +-----------------------+
- *               |
- *               v
- *             DONE
- *
- *
- * CASE 2: MN HAS NEVER BEEN REGISTERED
- * ====================================
- *
- *           * START *
- *               |
- *               v
- *    +----------------------+
- *    |   nodeId changed?    |
- *    |  (yaml:nodeId        - - NO -> | DONE |
- *    |    != DB latest?)    |
- *    +----------|-----------+
- *               | YES
- *               v
- *    +-----------------------+         +-----------------------+
- *    | (K8s ONLY) Registration         |  UPDATE DB            |
- *    |  change Requested?    - - NO -> |  *(authoritativeMNId  - -> | DONE |
- *    |  (yaml flag ==        | (local  |  & nodeId history)*   |
- *    |  today's date?)       | change) +-----------------------+
- *    +----------|------------+
- *               | YES
- *               v
- *    +-----------------------+
- *    | New NodeId            |
- *    | Matches Client Cert?  - - NO -> | LOG ERROR && DONE |
- *    +----------|------------+
- *               | YES
- *               v
- *    +-----------------------+
- *    |  REGISTER @ CN        - - FAIL -> | LOG ERROR && DONE |
- *    +----------|------------+
- *               | SUCCESS
- *               v
- *    +-----------------------+
- *    |  UPDATE DB            |
- *    |  *(authoritativeMNId  |
- *    |  & nodeId history)*   |
- *    +-----------------------+
- *               |
- *               v
- *             DONE
- * </pre>
- *
  */
 public class D1AdminTest {
 
     private static final String PREVIOUS_NODE_ID = "urn:node:TestingPreviousNodeId";
+    private static final String CONTAINERIZED = "METACAT_IS_RUNNING_IN_A_CONTAINER";
     private D1Admin d1Admin;
 
     @Before
@@ -138,7 +47,7 @@ public class D1AdminTest {
 
     @After
     public void tearDown() throws Exception {
-        LeanTestUtils.setTestEnvironmentVariable("METACAT_IS_RUNNING_IN_A_CONTAINER", "");
+        LeanTestUtils.setTestEnvironmentVariable(CONTAINERIZED, "");
     }
 
     /**
@@ -187,15 +96,16 @@ public class D1AdminTest {
         withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)) {
-            assertTrue(d1Admin.canChangeNodeId());
             setK8sEnv();
+            assertTrue(d1Admin.canChangeNodeId());
             runWithMockedClientCert(
                 "CN=urn:node:NewTestMemberNode", null,
                 () -> runWithMockedDataBaseConnection(() -> {
                     Node mockMN = getMockNode("urn:node:NewTestMemberNode");
-                    fail("FINISH IMPLEMENTING!!");
-                    runWithMockedCN(true,
-                                    () -> d1Admin.configUnregisteredMN(mockMN));
+                    registerWithMockedCN(true,
+                                         () -> d1Admin.configUnregisteredMN(
+                                             mockMN),
+                                         "urn:node:NewTestMemberNode");
                 }));
         }
     }
@@ -267,7 +177,7 @@ public class D1AdminTest {
                 "CN=urn:node:NewTestMemberNode", null,
                 () -> runWithMockedDataBaseConnection(() -> {
                     Node mockMN = getMockNode("urn:node:NewTestMemberNode");
-                    runWithMockedCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
+                    updateMockedCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
                 }));
         }
     }
@@ -306,13 +216,11 @@ public class D1AdminTest {
         try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
             withProperties)) {
             assertTrue(d1Admin.canChangeNodeId());
-
-            setK8sEnv();
             String sub
                 = "node Id does not agree with the 'Subject CN' value in the client certificate";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub, () -> {
                 Node mockMN = getMockNode("urn:node:TestMemberNodeNEW");
-                runWithMockedCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
+                updateMockedCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
             });
         }
     }
@@ -334,7 +242,6 @@ public class D1AdminTest {
     public void canChangeNodeId_k8sDeployment() throws Exception {
 
         setK8sEnv();
-
         Properties withProperties = new Properties();
 
         // dataone.autoRegisterMemberNode valid @ today's date
@@ -392,11 +299,16 @@ public class D1AdminTest {
     public void registerWithCN() throws Exception {
         Node mockMN = getMockNode("myNode");
 
-        // success case
-        runWithMockedCN(true, () -> assertTrue(d1Admin.registerWithCN(mockMN)), "myNode");
+        // cn.register() succeeds and returns correct node ID
+        registerWithMockedCN(true, () -> assertTrue(d1Admin.registerWithCN(mockMN)), "myNode");
 
-        // unsuccessful update (cn.register() returns null)
-        runWithMockedCN(false, () -> assertFalse(d1Admin.registerWithCN(mockMN)), null);
+        // cn.register() succeeds but returns wrong node ID
+        registerWithMockedCN(true, () -> assertFalse(d1Admin.registerWithCN(mockMN)), "wrongId");
+        registerWithMockedCN(true, () -> assertFalse(d1Admin.registerWithCN(mockMN)), "");
+        registerWithMockedCN(true, () -> assertFalse(d1Admin.registerWithCN(mockMN)), null);
+
+        // unsuccessful update (cn.register() fails)
+        registerWithMockedCN(false, () -> assertFalse(d1Admin.registerWithCN(mockMN)), null);
     }
 
     @Test
@@ -404,10 +316,10 @@ public class D1AdminTest {
         Node mockMN = getMockNode("myNode");
 
         // success case
-        runWithMockedCN(true, () -> assertTrue(d1Admin.updateCN(mockMN)));
+        updateMockedCN(true, () -> assertTrue(d1Admin.updateCN(mockMN)));
 
         // unsuccessful update (cn.updateNodeCapabilities() returns false)
-        runWithMockedCN(false, () -> assertFalse(d1Admin.updateCN(mockMN)));
+        updateMockedCN(false, () -> assertFalse(d1Admin.updateCN(mockMN)));
     }
 
     private static Node getMockNode(String NodeId) {
@@ -419,12 +331,12 @@ public class D1AdminTest {
         return mockMN;
     }
 
-    private static void runWithMockedCN(boolean isUpdateSuccessful, TestCode testCode)
+    private static void updateMockedCN(boolean isUpdateSuccessful, TestCode testCode)
         throws Exception {
-        runWithMockedCN(isUpdateSuccessful, testCode, null);
+        registerWithMockedCN(isUpdateSuccessful, testCode, null);
     }
-    private static void runWithMockedCN(boolean isUpdateSuccessful, TestCode testCode,
-                                        String nodeIdForRegisterSuccess) throws Exception {
+    private static void registerWithMockedCN(boolean isUpdateSuccessful, TestCode testCode,
+                                             String returnNodeIdWhenRegSuccess) throws Exception {
 
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             final String CN_URL = PropertyService.getProperty("D1Client.CN_URL");
@@ -433,11 +345,11 @@ public class D1AdminTest {
             Mockito.when(mockCN.updateNodeCapabilities(eq(null), any(), any()))
                 .thenReturn(isUpdateSuccessful);
 
-            NodeReference mockNoreRef = Mockito.mock(NodeReference.class);
-            Mockito.when(mockNoreRef.getValue()).thenReturn((isUpdateSuccessful)?
-                                                            nodeIdForRegisterSuccess : null);
+            NodeReference mockReturnedNodeRef = Mockito.mock(NodeReference.class);
+            Mockito.when(mockReturnedNodeRef.getValue()).thenReturn((isUpdateSuccessful)?
+                                                            returnNodeIdWhenRegSuccess : null);
             Mockito.when(mockCN.register(eq(null), any()))
-                .thenReturn(mockNoreRef);
+                .thenReturn(mockReturnedNodeRef);
             mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
 
             testCode.execute();
@@ -494,8 +406,8 @@ public class D1AdminTest {
         }
     }
 
-    private static void setK8sEnv() throws Exception {
-        LeanTestUtils.setTestEnvironmentVariable("METACAT_IS_RUNNING_IN_A_CONTAINER", "true");
+    private void setK8sEnv() throws Exception {
+        LeanTestUtils.setTestEnvironmentVariable(CONTAINERIZED, "true");
     }
 
     @FunctionalInterface
