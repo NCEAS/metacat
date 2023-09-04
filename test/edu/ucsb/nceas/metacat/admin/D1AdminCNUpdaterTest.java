@@ -19,30 +19,32 @@ import org.mockito.Mockito;
 import java.security.cert.X509Certificate;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
 /**
  * <p>
- * Tests for the DataONE Member Node Registration and Update functionality in D1Admin
+ * Tests for the DataONE Member Node Registration and Update functionality in d1AdminCNUpdater
  */
-public class D1AdminTest {
+public class D1AdminCNUpdaterTest {
 
     private static final String PREVIOUS_NODE_ID = "urn:node:TestingPreviousNodeId";
     private static final String CONTAINERIZED = "METACAT_IS_RUNNING_IN_A_CONTAINER";
-    private D1Admin d1Admin;
+    private D1AdminCNUpdater d1AdminCNUpdater;
 
     @Before
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
-        d1Admin = D1Admin.getInstance();
+        d1AdminCNUpdater = D1AdminCNUpdater.getInstance();
     }
 
     @After
@@ -87,7 +89,6 @@ public class D1AdminTest {
      *             DONE
      * </pre>
      */
-
     // Happy Path
     @Test
     public void configUnregisteredMN() throws Exception {
@@ -97,16 +98,29 @@ public class D1AdminTest {
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)) {
             setK8sEnv();
-            assertTrue(d1Admin.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeId());
             runWithMockedClientCert(
                 "CN=urn:node:NewTestMemberNode", null,
                 () -> runWithMockedDataBaseConnection(() -> {
                     Node mockMN = getMockNode("urn:node:NewTestMemberNode");
                     registerWithMockedCN(true,
-                                         () -> d1Admin.configUnregisteredMN(
+                                         () -> d1AdminCNUpdater.configUnregisteredMN(
                                              mockMN),
                                          "urn:node:NewTestMemberNode");
                 }));
+            runWithMockedClientCert(
+                "CN=urn:node:NewTestMemberNode", null,
+                () -> runWithMockedDataBaseConnection(() -> {
+                    Node mockMN = getMockNode("urn:node:NewTestMemberNode");
+                    try {
+                        registerWithMockedCN(true,
+                                             () -> d1AdminCNUpdater.configUnregisteredMN(mockMN),
+                                             "urn:node:NewTestMemberNode");
+                        fail("Should have thrown an exception");
+                    } catch (AdminException e) {
+                        assertTrue(e.getCause() instanceof SQLException);
+                    }
+                }, true));
         }
     }
 
@@ -118,7 +132,7 @@ public class D1AdminTest {
      * ==========================================
      *
      *   This logic is encapsulated by the method:
-     *       D1Admin::configPreregisteredMN()
+     *       d1AdminCNUpdater::configPreregisteredMN()
      *
      *           * START *
      *               |
@@ -162,7 +176,6 @@ public class D1AdminTest {
      * </pre>
      *
      */
-
     // Happy Path
     @Test
     public void configPreregisteredMN() throws Exception {
@@ -171,21 +184,33 @@ public class D1AdminTest {
         withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)) {
-            assertTrue(d1Admin.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeId());
             setK8sEnv();
             runWithMockedClientCert(
                 "CN=urn:node:NewTestMemberNode", null,
                 () -> runWithMockedDataBaseConnection(() -> {
                     Node mockMN = getMockNode("urn:node:NewTestMemberNode");
-                    updateMockedCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
+                    updateMockedCN(true, () -> d1AdminCNUpdater.configPreregisteredMN(mockMN));
                 }));
+            // SQL exception
+            runWithMockedClientCert(
+                "CN=urn:node:NewTestMemberNode", null,
+                () -> runWithMockedDataBaseConnection(() -> {
+                    Node mockMN = getMockNode("urn:node:NewTestMemberNode");
+                    try {
+                        updateMockedCN(true, () -> d1AdminCNUpdater.configPreregisteredMN(mockMN));
+                        fail("Should have thrown an exception");
+                    } catch (AdminException e) {
+                        assertTrue(e.getCause() instanceof SQLException);
+                    }
+                }, true));
         }
     }
 
     @Test(expected = AdminException.class)
     public void configPreregisteredMN_nullNode() throws AdminException {
         try {
-            d1Admin.configPreregisteredMN(null);
+            d1AdminCNUpdater.configPreregisteredMN(null);
         } catch (AdminException expectedException) {
             String sub = "configPreregisteredMN() received a null node!";
             assertTrue("e.getMessage() didn't contain expected substring ('"+ sub + "')",
@@ -202,7 +227,7 @@ public class D1AdminTest {
         runWithMockedClientCert("CN=Jing Tao", sub,
                                 () -> {
                                     Node mockMN = getMockNode("Jing Tao");
-                                    d1Admin.configPreregisteredMN(mockMN); // should throw exception
+                                    d1AdminCNUpdater.configPreregisteredMN(mockMN); // should throw exception
                                 });
     }
 
@@ -215,27 +240,39 @@ public class D1AdminTest {
         withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
         try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
             withProperties)) {
-            assertTrue(d1Admin.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeId());
             String sub
                 = "node Id does not agree with the 'Subject CN' value in the client certificate";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub, () -> {
                 Node mockMN = getMockNode("urn:node:TestMemberNodeNEW");
-                updateMockedCN(true, () -> d1Admin.configPreregisteredMN(mockMN));
+                updateMockedCN(true, () -> d1AdminCNUpdater.configPreregisteredMN(mockMN));
             });
         }
     }
 
     @Test
     public void getMostRecentNodeId() throws Exception {
+
+        // success
         runWithMockedDataBaseConnection(() -> {
-            String result = d1Admin.getMostRecentNodeId();
+            String result = d1AdminCNUpdater.getMostRecentNodeId();
             assertEquals(PREVIOUS_NODE_ID, result);
         });
+
+        // sql exception
+        runWithMockedDataBaseConnection(() -> {
+            try {
+                d1AdminCNUpdater.getMostRecentNodeId();
+                fail("Should have thrown an exception");
+            } catch (AdminException e) {
+                assertTrue(e.getCause() instanceof SQLException);
+            }
+        }, true);
     }
 
     @Test
     public void canChangeNodeId_legacyDeployment() {
-        assertTrue(d1Admin.canChangeNodeId());
+        assertTrue(d1AdminCNUpdater.canChangeNodeId());
     }
 
     @Test
@@ -248,28 +285,28 @@ public class D1AdminTest {
         withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)){
-            assertTrue(d1Admin.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeId());
         }
 
         // dataone.autoRegisterMemberNode non-valid @ past date
         withProperties.setProperty("dataone.autoRegisterMemberNode", "1993-05-01");
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)){
-            assertFalse(d1Admin.canChangeNodeId());
+            assertFalse(d1AdminCNUpdater.canChangeNodeId());
         }
 
         // dataone.autoRegisterMemberNode non-valid @ future date
         withProperties.setProperty("dataone.autoRegisterMemberNode", "2123-05-01");
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)){
-            assertFalse(d1Admin.canChangeNodeId());
+            assertFalse(d1AdminCNUpdater.canChangeNodeId());
         }
 
         // dataone.autoRegisterMemberNode non-valid - not set
         withProperties.setProperty("dataone.autoRegisterMemberNode", "");
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)){
-            assertFalse(d1Admin.canChangeNodeId());
+            assertFalse(d1AdminCNUpdater.canChangeNodeId());
         }
     }
 
@@ -279,11 +316,11 @@ public class D1AdminTest {
         // mock cert; malformed Subject -- no commas: only a CN and no DC components
         runWithMockedClientCert(
             "CN=urn:node:TestBROOKELT", null,
-            () -> assertTrue(d1Admin.nodeIdMatchesClientCert("urn:node:TestBROOKELT")));
+            () -> assertTrue(d1AdminCNUpdater.nodeIdMatchesClientCert("urn:node:TestBROOKELT")));
 
         // mock cert; malformed Subject -- no 'CN='
         runWithMockedClientCert("urn:node:TestBROOKELT,DC=ucsb,DC=org", null,
-                                () -> assertFalse(d1Admin.nodeIdMatchesClientCert("urn:node:TestBROOKELT,DC=ucsb,DC=org")));
+                                () -> assertFalse(d1AdminCNUpdater.nodeIdMatchesClientCert("urn:node:TestBROOKELT,DC=ucsb,DC=org")));
 
         // real test cert:
         //      $ openssl x509 -text -in test/test-credentials/test-user.pem | grep "Subject:"
@@ -291,8 +328,8 @@ public class D1AdminTest {
         //
         String mnCertificatePath = "test/test-credentials/test-user.pem";
         CertificateManager.getInstance().setCertificateLocation(mnCertificatePath);
-        assertTrue(d1Admin.nodeIdMatchesClientCert("Jing Tao"));
-        assertFalse(d1Admin.nodeIdMatchesClientCert("urn:node:Bogus"));
+        assertTrue(d1AdminCNUpdater.nodeIdMatchesClientCert("Jing Tao"));
+        assertFalse(d1AdminCNUpdater.nodeIdMatchesClientCert("urn:node:Bogus"));
     }
 
     @Test
@@ -300,15 +337,15 @@ public class D1AdminTest {
         Node mockMN = getMockNode("myNode");
 
         // cn.register() succeeds and returns correct node ID
-        registerWithMockedCN(true, () -> assertTrue(d1Admin.registerWithCN(mockMN)), "myNode");
+        registerWithMockedCN(true, () -> assertTrue(d1AdminCNUpdater.registerWithCN(mockMN)), "myNode");
 
         // cn.register() succeeds but returns wrong node ID
-        registerWithMockedCN(true, () -> assertFalse(d1Admin.registerWithCN(mockMN)), "wrongId");
-        registerWithMockedCN(true, () -> assertFalse(d1Admin.registerWithCN(mockMN)), "");
-        registerWithMockedCN(true, () -> assertFalse(d1Admin.registerWithCN(mockMN)), null);
+        registerWithMockedCN(true, () -> assertFalse(d1AdminCNUpdater.registerWithCN(mockMN)), "wrongId");
+        registerWithMockedCN(true, () -> assertFalse(d1AdminCNUpdater.registerWithCN(mockMN)), "");
+        registerWithMockedCN(true, () -> assertFalse(d1AdminCNUpdater.registerWithCN(mockMN)), null);
 
         // unsuccessful update (cn.register() fails)
-        registerWithMockedCN(false, () -> assertFalse(d1Admin.registerWithCN(mockMN)), null);
+        registerWithMockedCN(false, () -> assertFalse(d1AdminCNUpdater.registerWithCN(mockMN)), null);
     }
 
     @Test
@@ -316,10 +353,10 @@ public class D1AdminTest {
         Node mockMN = getMockNode("myNode");
 
         // success case
-        updateMockedCN(true, () -> assertTrue(d1Admin.updateCN(mockMN)));
+        updateMockedCN(true, () -> assertTrue(d1AdminCNUpdater.updateCN(mockMN)));
 
         // unsuccessful update (cn.updateNodeCapabilities() returns false)
-        updateMockedCN(false, () -> assertFalse(d1Admin.updateCN(mockMN)));
+        updateMockedCN(false, () -> assertFalse(d1AdminCNUpdater.updateCN(mockMN)));
     }
 
     private static Node getMockNode(String NodeId) {
@@ -378,6 +415,11 @@ public class D1AdminTest {
     }
 
     private void runWithMockedDataBaseConnection(TestCode testCode) throws Exception {
+        runWithMockedDataBaseConnection(testCode, false);
+    }
+
+    private void runWithMockedDataBaseConnection(TestCode testCode, boolean throwSQLException)
+        throws Exception {
 
         try (MockedStatic<DBConnectionPool> mockDbConnPool =
                  Mockito.mockStatic(DBConnectionPool.class)) {
@@ -391,7 +433,13 @@ public class D1AdminTest {
 
                     // PreparedStatement
                     Mockito.when(mockPs.executeUpdate()).thenReturn(911);
-                    Mockito.when(mockPs.executeQuery()).thenReturn(mockRs);
+                    if (throwSQLException) {
+                        Mockito.when(mockPs.executeQuery()).thenThrow(SQLException.class);
+                        Mockito.when(mockPs.executeUpdate()).thenThrow(SQLException.class);
+                    } else {
+                        Mockito.when(mockPs.executeUpdate()).thenReturn(911);
+                        Mockito.when(mockPs.executeQuery()).thenReturn(mockRs);
+                    }
 
                     // DBConnection
                     DBConnection mockDbConn = Mockito.mock(DBConnection.class);
