@@ -49,6 +49,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.D1Admin;
+import edu.ucsb.nceas.metacat.admin.D1AdminCNUpdater;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -409,8 +412,8 @@ public class MetaCatServlet extends HttpServlet {
 			// Set up the replication log file by setting the "replication.logfile.name" 
 			// system property and reconfiguring the log4j property configurator.
 			String replicationLogPath = PropertyService.getProperty("replication.logdir") 
-				+ FileUtil.getFS() + ReplicationService.REPLICATION_LOG_FILE_NAME;				
-			
+				+ FileUtil.getFS() + ReplicationService.REPLICATION_LOG_FILE_NAME;
+
 			if (FileUtil.getFileStatus(replicationLogPath) == FileUtil.DOES_NOT_EXIST) {
 				FileUtil.createFile(replicationLogPath);
 			}
@@ -435,6 +438,8 @@ public class MetaCatServlet extends HttpServlet {
 			
 			// initialize the HazelcastService
 			ServiceService.registerService("HazelcastService", HazelcastService.getInstance());
+
+            initializeContainerizedD1Admin();
 
 			_fullyInitialized = true;
 			
@@ -1251,4 +1256,25 @@ public class MetaCatServlet extends HttpServlet {
 			// Schedule the sitemap generator to run periodically
 			handler.scheduleSitemapGeneration();
 		}
+
+    private void initializeContainerizedD1Admin() throws ServletException {
+
+        if (D1AdminCNUpdater.isMetacatRunningInAContainer()) {
+
+            logMetacat.info("Running in a container; calling D1Admin::upRegD1MemberNode");
+            try {
+                D1Admin.getInstance().upRegD1MemberNode();
+            } catch (GeneralPropertyException | AdminException e) {
+                String msg
+                    = "initializeContainerizedD1Admin(): error calling "
+                    + "D1Admin.getInstance().upRegD1MemberNode: " + e.getMessage();
+                logMetacat.error(msg, e);
+                ServletException se = new ServletException(msg, e);
+                se.fillInStackTrace();
+                throw se;
+            }
+        } else {
+            logMetacat.info("NOT Running in a container; no automatic D1MemberNode updates");
+        }
+    }
 }
