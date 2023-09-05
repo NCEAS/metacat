@@ -197,8 +197,6 @@ CREATE TABLE xml_revisions (
    CONSTRAINT xml_revisions_pk PRIMARY KEY (revisionid),
    CONSTRAINT xml_revisions_rep_fk
 		FOREIGN KEY (server_location) REFERENCES xml_replication,
-   CONSTRAINT xml_revisions_root_fk
-		FOREIGN KEY (rootnodeid) REFERENCES xml_nodes_revisions,
    CONSTRAINT xml_revisions_catalog_fk
 		FOREIGN KEY (catalog_id) REFERENCES xml_catalog
 );

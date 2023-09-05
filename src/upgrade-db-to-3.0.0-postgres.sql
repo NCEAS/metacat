@@ -11,6 +11,12 @@ CREATE TABLE node_id_revisions (
   CONSTRAINT node_id_revisions_pk PRIMARY KEY (node_id_revision_id)
 );
 
+/*
+ * Drop some unneeded constraint in the xml_revsions table
+ */
+alter table xml_revisions drop constraint if exists xml_revisions_root_fk;
+
+ 
 
 /*
  * update the database version
