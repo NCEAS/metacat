@@ -118,7 +118,7 @@ public class D1AdminCNUpdater {
             updateDBNodeIds(previousNodeId, nodeId);
         }
         // if we're not running in a container, save that we submitted registration
-        if (!isMetacatIsRunningInAContainer()) {
+        if (!isMetacatRunningInAContainer()) {
             PropertyService.setPropertyNoPersist(
                 "dataone.mn.registration.submitted", Boolean.TRUE.toString());
             // persist the properties
@@ -267,7 +267,7 @@ public class D1AdminCNUpdater {
     boolean canChangeNodeId() {
         boolean result;
         String autoRegDate = "";
-        if (isMetacatIsRunningInAContainer()) {
+        if (isMetacatRunningInAContainer()) {
             logMetacat.debug("canChangeNodeId(): Containerized/Kubernetes deployment detected");
             try {
                 autoRegDate = PropertyService.getProperty("dataone.autoRegisterMemberNode");
@@ -573,7 +573,7 @@ public class D1AdminCNUpdater {
         }
     }
 
-    static boolean isMetacatIsRunningInAContainer() {
+    public static boolean isMetacatRunningInAContainer() {
         return Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
     }
 }

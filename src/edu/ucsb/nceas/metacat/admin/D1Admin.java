@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.BaseException;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v2.Node;
 
 import javax.servlet.http.HttpServletRequest;
@@ -343,7 +344,7 @@ public class D1Admin extends MetacatAdmin {
                     PropertyService.persistMainBackupProperties();
 
                     // Register/update as a DataONE Member Node
-                    upregDataONEMemberNode();
+                    upRegD1MemberNode();
 
                     // dataone system metadata generation:
                     // we can generate this after the registration/configuration
@@ -441,19 +442,29 @@ public class D1Admin extends MetacatAdmin {
 
 
     /**
-     * upreg: Either update ("up") or register ("reg") DataONE Member Node (MN) config, depending
+     * upReg: Either update ("up") or register ("reg") DataONE Member Node (MN) config, depending
      * upon whether this Metacat instance is already registered as a DataONE MN. Registration is
      * carried out only if the operator has indicated that registration is required.
      *
      * NOTE: The node description is retrieved from the getCapabilities() service, and so this
      * should only be called after the properties have been properly set up in Metacat.
      */
-    private void upregDataONEMemberNode()
-        throws BaseException, GeneralPropertyException, AdminException {
+    public void upRegD1MemberNode() throws GeneralPropertyException, AdminException {
 
         logMetacat.debug("Get the Node description.");
-        Node node = MNodeService.getInstance(null).getCapabilities();
-
+        Node node = null;
+        try {
+            node = MNodeService.getInstance(null).getCapabilities();
+        } catch (ServiceFailure e) {
+            String msg
+                = "upRegD1MemberNode(): ServiceFailure calling MNodeService::getCapabilities: "
+                + e.getMessage();
+            logMetacat.error(msg, e);
+            AdminException ae = new AdminException(msg);
+            ae.initCause(e);
+            ae.fillInStackTrace();
+            throw ae;
+        }
         String mnCertificatePath = PropertyService.getProperty("D1Client.certificate.file");
         CertificateManager.getInstance().setCertificateLocation(mnCertificatePath);
         logMetacat.debug("DataONE MN Client certificate set: " + mnCertificatePath);
