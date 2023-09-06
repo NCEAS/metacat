@@ -185,7 +185,7 @@ public class PropertiesWrapper {
             returnVal = mainProperties.getProperty(propertyName);
         }
         if (returnVal == null) {  // getProperty() returning an empty string is valid
-            logMetacat.error("did not find the property with key " + propertyName);
+            logMetacat.warn("did not find the property with key " + propertyName);
             throw new PropertyNotFoundException(
                 "PropertiesWrapper.getProperty(): Key/name does not exist in Properties: "
                     + propertyName);
