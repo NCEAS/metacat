@@ -519,9 +519,33 @@ The methods below will be included in the public API:
 
    Figure 2. Mermaid diagram illustrating store_object flow
    
+
+Annotations
+~~~~~~~~~~~~~~~~~~~
    
-   
-   
+To support a paging API/query service to parse large data packages, we are proposing that
+each member (subject) in a dataset package will have a RDF annotation file formatted in either
+N-Triples or JSON-LD. Each annotation file can contain multiple triples that describe the
+subject's relationships with its respective objects. These files will exist alongside 
+sysmeta documents in HashStore, and can be stored, retrieved and deleted with the same public
+API. In the diagram below, we illustrate this concept:
+
+.. figure:: images/hashstore_annotation_initial_flow_chart.png
+   :figclass: top
+   :align: center
+
+Notes:
+   - Each annotation file (prefixed by ANNO-) contains triples about a subject, and the dotted line
+     ending with an arrow represents where the annotation file would exist in HashStore
+   - Ex. 'dou.mok.1' has 5 triples, describing what package it belongs to, that it's an object that can
+     be found in HashStore, with a sysmeta document that can also be found in HashStore and a checksum
+     and checksum algorithm.
+
+To actually query the annotation graph, we will require an indexer that can not only index these
+annotation files, but also be able to merge what's in additional ORE and EML documents to provide
+completeness to the graph. This index serves as the basis for the query service that MetacatUI/front-end
+would access. Users would not be accessing HashStore/Metacat directly, but this indexed version instead.
+
 
 Virtual File Layout
 ~~~~~~~~~~~~~~~~~~~
