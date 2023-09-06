@@ -3,7 +3,7 @@
 set -e
 TAG=$1
 DEFAULT_TAG="DEVELOP"
-DEFAULT_VERSION="2.19.0"
+DEFAULT_VERSION="3.0.0"
 
 echo
 echo "Usage:   $0 [tag] [-devtools]"
