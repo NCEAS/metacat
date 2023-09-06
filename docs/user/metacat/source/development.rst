@@ -21,3 +21,4 @@ Contents:
    statistics-service
    ore-model-expansion
    storage-subsystem
+   storage-subsystem-cid-file-layout

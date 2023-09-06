@@ -1,5 +1,5 @@
-Physical File Layout
-~~~~~~~~~~~~~~~~~~~~
+Physical File Layout, Hash-tree based
+=====================================
    
 For physical file storage and layout, our goal is to provide a consistent directory
 structure that enables us to store each file once and only once, that will be
@@ -22,14 +22,14 @@ encoding the binary hash into a string representation. We will choose the
 simplest, most common configuration which is to use a `SHA-256` hash
 algorithm, with the binary digest converted to a string value using `base64`
 encoding. That makes each hash value 64 characters long (representing
-the 256 bit binary value). For example, here is a base64-encoded SHA-256 value:
+the 256 bit binary value). For example, here is a base16 hex-encoded SHA-256 value:
 
    4d198171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
 
 While we chose this common combination, we could also have chosen other hash
 algorithms (e.g., SHA-1, SHA3-256, blake2b-512) and alternate string encodings
 (e.g., base58, Multihash (https://multiformats.io/multihash/)). Multihash may be
-a valuable approach in to future-proof the storage system, because it enables us
+a valuable approach to future-proof the storage system, because it enables use
 of multiple checksum algorithms.
 
 **Folder layout**
@@ -69,10 +69,10 @@ stored as delimited files with a header and body section. The header contains
 the 64 character hash of the data file described by this metadata, followed by a
 space, then the `formatId` of the metadata format for the metadata in the file,
 and then a NULL (`\x00`). This header is then followed by the content of the
-metadata document in UTF-8 encoding (see example below). This metadata file is 
+metadata document in UTF-8 encoding (see example below). **This metadata file is 
 named using the SHA-256 hash of the persistent identifier (PID) of the object that 
 it describes, and stored in a `sysmeta` directory parallel to the one described 
-above, and structured analogously.
+above, and structured analogously.**
 
 For example, given the PID `jtao.1700.1`, one can calculate the SHA-256 of that PID using::
 
@@ -246,3 +246,105 @@ arbitrary additional metadata in a structured and predictable way but that does 
 require external database access to predict its location and type. Alternatively, we
 could use mime-multipart or a similar multipart file encoding to include multiple
 metadata files in the PID-encoded metadata file.
+
+Hash Trees (aka Merkle trees)
+-----------------------------
+
+While we plan to hash whole objects as described above,
+there also can be benefits of chunking data into smaller blocks and arranging
+them as a Merkle tree for storage. See https://en.wikipedia.org/wiki/Merkle_tree
+for an overview. Some of the features that might be useful for us:
+
+- Blocks of files that are closely related (e.g,, from append-only versioned files) would share the same hash, and therefore require less storage
+- Downloads can be fully parallelized across multiple interfaces/hosts for blocks
+- Given the root hash of a merkle tree, one can download the children blocks from any source (distributed, untrusted)
+- Given a complex set of objects, a single hash comparison of the root hash can quickly deduce whether two hash collections differ 
+    - Proceeding down the tree and comparing sub-tree hashes can pinpoint where the trees differ
+- In addition to representing a single "object" as a tree, we can also create other composite trees that represent mutli-object collections, such as data packages
+    - All of the benefits at the file level would also apply at the collection level
+
+These features are used within existing systems like Git and IPFS to build fully
+decentralized graphs of versioned content. While generating the CID for a leaf
+node object is straightforward, these systems also provide mechanisms for graph
+nodes to represent directory-level information, which itself is hashed and
+becomes part of the graph. For example, in Git, each object is of type `blob`,
+`tree`, `commit`, and `tag` (see
+https://towardsdatascience.com/understanding-the-fundamentals-of-git-25b5b7ded3c4).
+A `blob` represents the content the content of a file, and is named based on the
+SHA-1 hash of its contents.  The actual content of a blob object is the string
+`blob` followed by a space, the size of the file in bytes, a null `\0`
+character, and then the zlib-compressed content of the original file.  In
+contrast, a `tree` object represents metadata about a directory, and contains a
+listing of all of the blobs and other tree objects in that directory, along with
+their CIDs. That file itself is hashed and added to the object store, and
+so incorporates by reference the CIDs of the files and directories it contains.
+Finally, a `commit` object contains a pointer to the root tree object for the
+directory and metadata about the commit itself, including its parent commit,
+author, date, and message. These commit files are also hashed and included in
+the object store. This simple structure of a graph of hash-derived content
+identifiers allows a sophisticated and reliable version control system.
+
+Finally, these blocks can be used within a Distributed Hash Table with hashes as
+keys and data blocks as values (see
+https://en.wikipedia.org/wiki/Distributed_hash_table#Structure) to build an
+efficient search and discovery system for the nodes based on the key values.
+This approach is the core for distributed systems like BitTorrent and IPFS.
+
+Data packages as hash trees
+---------------------------
+
+First a review of Git...
+
+.. figure:: images/hash-trees/hash-trees-35.jpg
+   :align: center
+
+   Git object storage as a hash-tree.
+
+
+Design a Data Package layout with similar properties.
+
+Start with making a hash tree from our BagIt file layout:
+
+.. figure:: images/hash-trees/hash-trees-36.jpg
+   :align: center
+
+   BagIt-based hash tree.
+
+Next move sysmeta, and then eliminate folder tree objects...
+
+.. figure:: images/hash-trees/hash-trees-37.jpg
+   :align: center
+
+   Remove folder tree objects.
+
+Add annotation files as siblings... and then replace trees with annotation files...
+
+.. figure:: images/hash-trees/hash-trees-38.jpg
+   :align: center
+
+   Add annotation files.
+
+Remove sysmeta from the hash tree so it is no longer versioned. Then try switching to PID-based identifiers.
+
+.. figure:: images/hash-trees/hash-trees-39.jpg
+   :align: center
+
+   Switch to PID-hash file naming.
+
+Switch back again to hash identifiers, and add our folder structure back using annotation objects as tree objects...
+
+.. figure:: images/hash-trees/hash-trees-40.jpg
+   :align: center
+
+   Back to CIDs, with folders as annotation objects.
+
+Revisit the directory layout for a Git-like structure that lets us store multiple data package versions in a single folder hierarchy...
+
+.. figure:: images/hash-trees/hash-trees-41.jpg
+   :align: center
+
+   Git object storage as a hash-tree.
+
+
+
+

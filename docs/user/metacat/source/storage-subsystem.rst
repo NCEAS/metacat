@@ -352,8 +352,9 @@ PID for an object. This approach focuses on using the hash identifier of an auth
 identifier such as a PID or SID for naming objects (rather than the content identifier).
 The possibility that duplicate objects may be stored is accepted in favour of reducing the
 complexity and overhead involved in the object deduplication process.
-   The alternative approach of using the raw bytes of each object (content identifier)
-   is discussed in: appendix/storage-subsystem-cid-file-layout.rst
+
+The alternative approach of using the raw bytes of each object (content identifier) 
+is discussed in: appendix/storage-subsystem-cid-file-layout.rst
 
 **Raw File Storage**: The raw bytes of each object (data, metadata, or resource
 map) are saved in a file that is named using the hash of an authority-based identifier (PID) for that
@@ -480,46 +481,6 @@ into directory depths and widths as defined by a configuration file 'hashstore.y
 This configuration file is written by HashStore upon successful verification that
 a HashStore does not exist. 
 
-**Aside: Merkle trees** While we plan to hash whole objects as described above,
-there also can be benefits of chunking data into smaller blocks and arranging
-them as a Merkle tree for storage. See https://en.wikipedia.org/wiki/Merkle_tree
-for an overview. Some of the features that might be useful for us:
-
-- Blocks of files that are closely related (e.g,, from append-only versioned files) would share the same hash, and therefore require less storage
-- Downloads can be fully parallelized across multiple interfaces/hosts for blocks
-- Given the root hash of a merkle tree, one can download the children blocks from any source (distributed, untrusted)
-- Given a complex set of objects, a single hash comparison of the root hash can quickly deduce whether two hash collections differ 
-    - Proceeding down the tree and comparing sub-tree hashes can pinpoint where the trees differ
-- In addition to representing a single "object" as a tree, we can also create other composite trees that represent mutli-object collections, such as data packages
-    - All of the benefits at the file level would also apply at the collection level
-
-These features are used within existing systems like Git and IPFS to build fully
-decentralized graphs of versioned content. While generating the CID for a leaf
-node object is straightforward, these systems also provide mechanisms for graph
-nodes to represent directory-level information, which itself is hashed and
-becomes part of the graph. For example, in Git, each object is of type `blob`,
-`tree`, `commit`, and `tag` (see
-https://towardsdatascience.com/understanding-the-fundamentals-of-git-25b5b7ded3c4).
-A `blob` represents the content the content of a file, and is named based on the
-SHA-1 hash of its contents.  The actual content of a blob object is the string
-`blob` followed by a space, the size of the file in bytes, a null `\0`
-character, and then the zlib-compressed content of the original file.  In
-contrast, a `tree` object represents metadata about a directory, and contains a
-listing of all of the blobs and other tree objects in that directory, along with
-their CIDs. That file itself is hashed and added to the object store, and
-so incorporates by reference the CIDs of the files and directories it contains.
-Finally, a `commit` object contains a pointer to the root tree object for the
-directory and metadata about the commit itself, including its parent commit,
-author, date, and message. These commit files are also hashed and included in
-the object store. This simple structure of a graph of hash-derived content
-identifiers allows a sophisticated and reliable version control system.
-
-Finally, these blocks can be used within a Distributed Hash Table with hashes as
-keys and data blocks as values (see
-https://en.wikipedia.org/wiki/Distributed_hash_table#Structure) to build an
-efficient search and discovery system for the nodes based on the key values.
-This approach is the core for distributed systems like BitTorrent and IPFS.
-
 Public API
 ~~~~~~~~~~~~~~~~~~~
 
@@ -548,6 +509,7 @@ The methods below will be included in the public API:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | get_hex_digest     | pid, algorithm               | string (hex_digest)              | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
+
 * store_object(pid, data, additional_algorithm, checksum, checksum_algorithm)
 
 
@@ -959,7 +921,7 @@ Proposed MN.create method
    @enduml
 
 CheckedFile and CheckedFileInputStream Class Diagram
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. figure:: images/checkedFile-class.png
    :align: center  
