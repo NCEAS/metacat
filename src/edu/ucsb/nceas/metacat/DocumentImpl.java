@@ -2718,7 +2718,8 @@ public class DocumentImpl
                 Vector<XMLSchema> schemaList = xmlss.findSchemasInXML((StringReader)xml);
                 boolean allSchemasRegistered = 
                 	xmlss.areAllSchemasRegistered(schemaList);
-                if (xmlss.useFullSchemaValidation() && !allSchemasRegistered) {
+                if (xmlss.useFullSchemaValidation() && !allSchemasRegistered &&  
+                        !ruleBase.equals(EML210) && !ruleBase.equals(EML200)) {
                 	parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
                 }
                 logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: " + schemaLocation);              
