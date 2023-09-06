@@ -36,7 +36,7 @@ import junit.framework.TestSuite;
  * @author tao
  *
  */
-public class PISCOAccountTest extends MetaCatServletTest{
+public class PISCOAccountTest extends MetaCatServletIT {
     /**
      * Constructor to build the test
      * 

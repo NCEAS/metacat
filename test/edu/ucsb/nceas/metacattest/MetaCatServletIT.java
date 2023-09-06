@@ -20,7 +20,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 /**
  * A JUnit test for testing Step class processing
  */
-public class MetaCatServletTest extends MCTestCase {
+public class MetaCatServletIT extends MCTestCase {
     private MetacatClient metacat = null;
     private String serialNumber;
 
@@ -31,7 +31,7 @@ public class MetaCatServletTest extends MCTestCase {
      * @param name
      *            the name of the test method
      */
-    public MetaCatServletTest(String name) {
+    public MetaCatServletIT(String name) {
         super(name);
     }
 
@@ -41,7 +41,7 @@ public class MetaCatServletTest extends MCTestCase {
      * @param name
      *            the name of the test method
      */
-    public MetaCatServletTest(String name, String serial) {
+    public MetaCatServletIT(String name, String serial) {
         super(name);
         serialNumber = serial;
     }
@@ -73,41 +73,41 @@ public class MetaCatServletTest extends MCTestCase {
         String serial = null;
 
         TestSuite suite = new TestSuite();
-        suite.addTest(new MetaCatServletTest("initialize"));
-        suite.addTest(new MetaCatServletTest("testOtherReferralLogin"));
-        suite.addTest(new MetaCatServletTest("testOtherReferralLoginFail"));
-        suite.addTest(new MetaCatServletTest("testNCEASLoginFail"));
+        suite.addTest(new MetaCatServletIT("initialize"));
+        suite.addTest(new MetaCatServletIT("testOtherReferralLogin"));
+        suite.addTest(new MetaCatServletIT("testOtherReferralLoginFail"));
+        suite.addTest(new MetaCatServletIT("testNCEASLoginFail"));
         // Should put a login successfully at the end of login test
         // So insert or update can have cookie.
-        suite.addTest(new MetaCatServletTest("testNCEASLogin"));
+        suite.addTest(new MetaCatServletIT("testNCEASLogin"));
 
         // create random number for docid, so it can void repeat
         number = Math.random() * 100000;
         serial = Integer.toString(((new Double(number)).intValue()));
         debug("serial: " + serial);
-        suite.addTest(new MetaCatServletTest("testInsertXMLDocument", serial));
-        suite.addTest(new MetaCatServletTest("testReadXMLDocumentXMLFormat", serial));
-        suite.addTest(new MetaCatServletTest("testUpdateXMLDocument", serial));
+        suite.addTest(new MetaCatServletIT("testInsertXMLDocument", serial));
+        suite.addTest(new MetaCatServletIT("testReadXMLDocumentXMLFormat", serial));
+        suite.addTest(new MetaCatServletIT("testUpdateXMLDocument", serial));
 
-        suite.addTest(new MetaCatServletTest("testReadXMLDocumentHTMLFormat", serial));
-        suite.addTest(new MetaCatServletTest("testReadXMLDocumentZipFormat", serial));
+        suite.addTest(new MetaCatServletIT("testReadXMLDocumentHTMLFormat", serial));
+        suite.addTest(new MetaCatServletIT("testReadXMLDocumentZipFormat", serial));
 
-        suite.addTest(new MetaCatServletTest("testDeleteXMLDocument", serial));
+        suite.addTest(new MetaCatServletIT("testDeleteXMLDocument", serial));
 
         // insert invalid xml document
         number = Math.random() * 100000;
         serial = Integer.toString(((new Double(number)).intValue()));
-        suite.addTest(new MetaCatServletTest("testInsertInvalidateXMLDocument", serial));
+        suite.addTest(new MetaCatServletIT("testInsertInvalidateXMLDocument", serial));
         // insert non-well-formed document
         number = Math.random() * 100000;
         serial = Integer.toString(((new Double(number)).intValue()));
         suite
-                .addTest(new MetaCatServletTest("testInsertNonWellFormedXMLDocument",
-                        serial));
+                .addTest(new MetaCatServletIT("testInsertNonWellFormedXMLDocument",
+                                              serial));
 
-        suite.addTest(new MetaCatServletTest("testLogOut"));
+        suite.addTest(new MetaCatServletIT("testLogOut"));
 
-        suite.addTest(new MetaCatServletTest("testReindexFail"));
+        suite.addTest(new MetaCatServletIT("testReindexFail"));
 
 
         return suite;
