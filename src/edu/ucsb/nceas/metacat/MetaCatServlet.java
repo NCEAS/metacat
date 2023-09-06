@@ -1203,10 +1203,17 @@ public class MetaCatServlet extends HttpServlet {
         handler.scheduleSitemapGeneration();
     }
 
-    private void initializeContainerizedD1Admin() throws ServletException {
-
+    /**
+     * Check if we're running in a container/Kubernetes, and if so, call the D1Admin
+     * upRegD1MemberNode() method to handle DataONE Member Node registration or updates that may
+     * be necessary.
+     * If this is a legacy deployment (i.e. not containerized/k8s), this method does nothing, since
+     * Member Node updates are performed manually, via the admin pages.
+     *
+     * @throws ServletException if MN updates were unsuccessful
+     */
+    void initializeContainerizedD1Admin() throws ServletException {
         if (D1AdminCNUpdater.isMetacatRunningInAContainer()) {
-
             logMetacat.info("Running in a container; calling D1Admin::upRegD1MemberNode");
             try {
                 D1Admin.getInstance().upRegD1MemberNode();
