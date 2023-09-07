@@ -1,8 +1,7 @@
 FROM tomcat:9.0.78-jre8-temurin-jammy
-#FROM tomcat:8.5.90-jre8-temurin-jammy
 
 # ARG default values that can be overridden at build-time
-ARG DISTBIN=2.19.0
+ARG DISTBIN=''
 ARG DEVTOOLS=''
 
 # ENV default key=value env vars shared with container at runtime
