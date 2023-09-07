@@ -33,7 +33,6 @@ import org.dataone.bookkeeper.api.Usage;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.NotFound;
-import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
@@ -193,7 +192,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(notFound == true);
         
         //check the local database which should have zero record
-        ResultSet rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
+        ResultSet rs = QuotaDBManagerIT.getResultSet(portalQuotaId, instanceId);
         int index = 0;
         int indexActive = 0;
         int indexArchived = 0;
@@ -250,7 +249,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         QuotaDBManager.createUsage(usage, now);
         usage.setStatus(QuotaServiceManager.DELETED);
         QuotaDBManager.createUsage(usage, now);
-        ResultSet rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
+        ResultSet rs = QuotaDBManagerIT.getResultSet(portalQuotaId, instanceId);
         //check local database to see if we have those records
         int index = 0;
         int indexActive = 0;
@@ -309,7 +308,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         times = 0;
         boolean reportIsDone = false;
         while (times < maxAttempt) {
-            rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
+            rs = QuotaDBManagerIT.getResultSet(portalQuotaId, instanceId);
             //check local database to see if we have those records
             int number = 0;
             while (rs.next() ) {
@@ -329,7 +328,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         }
         assertTrue(reportIsDone == true);//make sure to check this variable.
         //it is ready check local database to see if we have those records
-        rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
+        rs = QuotaDBManagerIT.getResultSet(portalQuotaId, instanceId);
         index = 0;
         indexActive = 0;
         indexArchived = 0;
@@ -391,7 +390,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         usage.setStatus(QuotaServiceManager.INACTIVE);
         QuotaDBManager.createUsage(usage, now);
         //check local database to see if we have those records
-        ResultSet rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
+        ResultSet rs = QuotaDBManagerIT.getResultSet(portalQuotaId, instanceId);
         int index = 0;
         int indexActive = 0;
         int indexArchived = 0;
@@ -445,7 +444,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         //check the three records in the local database already have the reported date
         times = 0;
         while (times < maxAttempt) {
-            rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
+            rs = QuotaDBManagerIT.getResultSet(portalQuotaId, instanceId);
             //check local database to see if we have those records
             index = 0;
             indexActive = 0;
@@ -536,7 +535,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             int indexActive = 0;
             int times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -597,7 +596,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             int indexArchived = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -659,7 +658,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             int indexDeleted = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -786,7 +785,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             int indexActive = 0;
             int times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -844,7 +843,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             int indexDeleted = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -975,7 +974,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             int indexActive = 0;
             int times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -1042,7 +1041,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             indexActive = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -1100,7 +1099,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             indexActive = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -1161,7 +1160,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             int indexArchived = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -1258,7 +1257,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             indexActive = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr2);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr2);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -1319,7 +1318,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             indexArchived = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr2);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr2);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -1414,7 +1413,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             indexActive = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr3);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr3);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
@@ -1471,7 +1470,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             int indexDeleted = 0;
             times = 0;
             while (times < maxAttempt) {
-                rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr3);
+                rs = QuotaDBManagerIT.getResultSet(quotaId, sidStr3);
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
