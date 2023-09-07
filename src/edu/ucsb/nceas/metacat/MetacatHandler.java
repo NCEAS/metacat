@@ -143,6 +143,12 @@ public class MetacatHandler {
     private static final String ERROR = "<error>";
     private static final String ERRORCLOSE = "</error>";
     public static final String FGDCDOCTYPE = "metadata";
+    private static final String NOT_SUPPORT_MESSAGE = PROLOG +  "\n" + ERROR + 
+                                "The original Metacat API has been replaced, " + 
+                                "and so this request is no longer supported. " + 
+                                "Equivalent API methods now are available through " +
+                                "the DataONE API (see <https://knb.ecoinformatics.org/api>)." 
+                                + ERRORCLOSE;
     
 	private static Timer timer;
 	
@@ -162,95 +168,35 @@ public class MetacatHandler {
         
     }
     
-    
+    /**
+     * Send back the not-support message
+     * @param response
+     * @throws IOException
+     */
+    private void sendNotSupportMessage(HttpServletResponse response) throws IOException {
+        PrintWriter out = null;
+        try {
+            out = response.getWriter();
+            out.println(NOT_SUPPORT_MESSAGE);
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+    }
     protected void handleDataquery(
             Hashtable<String, String[]> params,
             HttpServletResponse response,
             String sessionId) throws PropertyNotFoundException, IOException {
-        
-        DataQuery dq = null;
-        if (sessionId != null) {
-            dq = new DataQuery(sessionId);
-        }
-        else {
-            dq = new DataQuery();
-        }
-        
-        String dataqueryXML = (params.get("dataquery"))[0];
-
-        ResultSet rs = null;
-        try {
-            rs = dq.executeQuery(dataqueryXML);
-        } catch (Exception e) {
-            //probably need to do something here
-            e.printStackTrace();
-            return;
-        }
-        
-        //process the result set
-        String qformat = "csv";
-        String[] temp = params.get("qformat");
-        if (temp != null && temp.length > 0) {
-            qformat = temp[0];
-        }
-        String fileName = "query-results." + qformat;
-        
-        //get the results as csv file
-        if (qformat != null && qformat.equalsIgnoreCase("csv")) {
-            response.setContentType("text/csv");
-            //response.setContentType("application/csv");
-            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
-            
-            Writer writer = new OutputStreamWriter(response.getOutputStream());
-            CSVWriter csv = new CSVWriter(writer, CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
-            try {
-                
-                csv.writeAll(rs, true);
-                
-                csv.flush();
-                response.flushBuffer();
-                 
-                rs.close();
-                
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            
-            return;
-        }
-        
+        sendNotSupportMessage(response);
     }
     
     protected void handleEditCart(
             Hashtable<String, String[]> params,
             HttpServletResponse response,
             String sessionId) throws PropertyNotFoundException, IOException {
-        
-        CartManager cm = null;
-        if (sessionId != null) {
-            cm = new CartManager(sessionId);
-        }
-        else {
-            cm = new CartManager();
-        }
-        
-        String editOperation = (params.get("operation"))[0];
-        
-        String[] docids = params.get("docid");
-        String[] field = params.get("field");
-        String[] path = params.get("path");
-        
-        Map<String,String> fields = null;
-        if (field != null && path != null) {
-            fields = new HashMap<String,String>();
-            fields.put(field[0], path[0]);
-        }
-        
-        //TODO handle attribute map (metadata fields)
-        cm.editCart(editOperation, docids, fields);
-        
+        sendNotSupportMessage(response);
     }
-    
     // ///////////////////////////// METACAT SPATIAL ///////////////////////////
     
     /**
@@ -260,83 +206,11 @@ public class MetacatHandler {
      * handleSQuery(out, params, response, username, groupnames, sess_id);
      * @throws HandlerException 
      */
-    protected void handleSpatialQuery(Writer out, Hashtable<String, String[]> params,
+    protected void handleSpatialQuery(Hashtable<String, String[]> params,
             HttpServletResponse response,
             String username, String[] groupnames,
-            String sess_id) throws PropertyNotFoundException, HandlerException {
-
-        if ( !PropertyService.getProperty("spatial.runSpatialOption").equals("true") ) {
-            response.setContentType("text/html");
-            try {
-				out.write("<html> Metacat Spatial Option is turned off </html>");
-	            out.close();
-			} catch (IOException e) {
-				throw new HandlerException(e.getMessage());
-			}
-            return;
-        }
-        
-        /*
-         * Perform spatial query against spatial cache
-         */
-        float _xmax = Float.valueOf( (params.get("xmax"))[0] ).floatValue();
-        float _ymax = Float.valueOf( (params.get("ymax"))[0] ).floatValue();
-        float _xmin = Float.valueOf( (params.get("xmin"))[0] ).floatValue();
-        float _ymin = Float.valueOf( (params.get("ymin"))[0] ).floatValue();
-        SpatialQuery sq = new SpatialQuery();
-        Vector<String> docids = sq.filterByBbox( _xmin, _ymin, _xmax, _ymax );
-        // logMetacat.info(" --- Spatial Query completed. Passing on the SQuery
-        // handler");
-        // logMetacat.warn("\n\n ******* after spatial query, we've got " +
-        // docids.size() + " docids \n\n");
-        
-        /*
-         * Create an array matching docids
-         */
-        String [] docidArray = new String[docids.size()];
-        docids.toArray(docidArray);
-        
-        /*
-         * Create squery string
-         */
-        String squery = DocumentIdQuery.createDocidQuery( docidArray );
-        // logMetacat.info("-----------\n" + squery + "\n------------------");
-        String[] queryArray = new String[1];
-        queryArray[0] = squery;
-        params.put("query", queryArray);
-        
-        /*
-         * Determine qformat
-         */
-        String[] qformatArray = new String[1];
-        try {
-            String _skin = (params.get("skin"))[0];
-            qformatArray[0] = _skin;
-        } catch (java.lang.NullPointerException e) {
-            // should be "default" but keep this for backwards compatibility
-            // with knp site
-            logMetacat.warn("MetacatHandler.handleSpatialQuery - No SKIN specified for metacat actions=spatial_query... defaulting to 'knp' skin !\n");
-            qformatArray[0] = "knp";
-        }
-        params.put("qformat", qformatArray);
-        
-        // change the action
-        String[] actionArray = new String[1];
-        actionArray[0] = "squery";
-        params.put("action", actionArray);
-        
-        /*
-         * Pass the docids to the DBQuery contructor
-         */
-        // This is a hack to get the empty result set to show...
-        // Otherwise dbquery sees no docidOverrides and does a full % percent
-        // query
-        if (docids.size() == 0)
-            docids.add("");
-        
-        DBQuery queryobj = new DBQuery(docids);
-        queryobj.findDocuments(response, out, params, username, groupnames, sess_id);
-        
+            String sess_id) throws PropertyNotFoundException, IOException {
+        sendNotSupportMessage(response);
     }
     
     // LOGIN & LOGOUT SECTION
@@ -441,51 +315,9 @@ public class MetacatHandler {
      * Handle the logout request. Close the connection.
      * @throws IOException 
      */
-    public void handleLogoutAction(Writer out, Hashtable<String, String[]> params,
+    public void handleLogoutAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String qformat = "xml";
-        if(params.get("qformat") != null){
-            qformat = params.get("qformat")[0];
-        }
-        
-        // close the connection
-        HttpSession sess = request.getSession(false);
-        logMetacat.info("MetacatHandler.handleLogoutAction - After get session in logout request");
-        if (sess != null) {
-            logMetacat.info("MetacatHandler.handleLogoutAction - The session id " + sess.getId()
-            + " will be invalidate in logout action");
-            logMetacat.info("MetacatHandler.handleLogoutAction - The session contains user "
-                    + sess.getAttribute("username")
-                    + " will be invalidate in logout action");
-            sess.invalidate();
-            SessionService.getInstance().unRegisterSession(sess.getId());
-        }
-        
-        // produce output
-        StringBuffer output = new StringBuffer();
-        output.append("<?xml version=\"1.0\"?>");
-        output.append("<logout>");
-        output.append("User logged out");
-        output.append("</logout>");
-        
-        //format and transform the output
-        if (qformat.equals("xml")) {
-            response.setContentType("text/xml");
-            out.write(output.toString());
-        } else {
-            try {
-                DBTransform trans = new DBTransform();
-                response.setContentType("text/html");
-                trans.transformXMLDocument(output.toString(),
-                        "-//NCEAS//login//EN", "-//W3C//HTML//EN", qformat,
-                        out, null, null);
-            } catch (Exception e) {
-                logMetacat.error(
-                        "MetacatHandler.handleLogoutAction - General error: "
-                        + e.getMessage());
-                e.printStackTrace(System.out);
-            }
-        }
+        sendNotSupportMessage(response);
     }
     
     // END OF LOGIN & LOGOUT SECTION
@@ -502,23 +334,10 @@ public class MetacatHandler {
      * @param groups the group array
      * @param sessionid  the sessionid
      */
-    protected void handleSQuery(Writer out, Hashtable<String, String[]> params,
+    protected void handleSQuery(Hashtable<String, String[]> params,
             HttpServletResponse response, String user, String[] groups,
-            String sessionid) throws PropertyNotFoundException {
-        long squeryWarnLimit = Long.parseLong(PropertyService.getProperty("database.squeryTimeWarnLimit"));
-        
-        long startTime = System.currentTimeMillis();
-        DBQuery queryobj = new DBQuery();
-        queryobj.findDocuments(response, out, params, user, groups, sessionid);
-        long outPutTime = System.currentTimeMillis();
-        long runTime = outPutTime - startTime;
-
-        if (runTime > squeryWarnLimit) {
-            logMetacat.warn("MetacatHandler.handleSQuery - Long running squery.  Total time: " + runTime + 
-                    " ms, squery: " + ((String[])params.get("query"))[0]);
-        }
-        logMetacat.debug("MetacatHandler.handleSQuery - squery: " + ((String[])params.get("query"))[0] + 
-                " ran in " + runTime + " ms");
+            String sessionid) throws PropertyNotFoundException, IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -531,28 +350,10 @@ public class MetacatHandler {
      * @throws IOException 
      * @throws UnsupportedEncodingException 
      */
-    protected void handleQuery(Writer out, Hashtable<String, String[]> params,
+    protected void handleQuery(Hashtable<String, String[]> params,
             HttpServletResponse response, String user, String[] groups,
             String sessionid) throws PropertyNotFoundException, UnsupportedEncodingException, IOException {
-        long queryWarnLimit = Long.parseLong(PropertyService.getProperty("database.queryTimeWarnLimit"));
-        
-        //create the query and run it
-        String xmlquery = DBQuery.createSQuery(params);
-        String[] queryArray = new String[1];
-        queryArray[0] = xmlquery;
-        params.put("query", queryArray);
-        long startTime = System.currentTimeMillis();
-        DBQuery queryobj = new DBQuery();
-        queryobj.findDocuments(response, out, params, user, groups, sessionid);
-        long outPutTime = System.currentTimeMillis();
-        long runTime = outPutTime -startTime;
-
-        if (runTime > queryWarnLimit) {
-            logMetacat.warn("MetacatHandler.handleQuery - Long running squery.  Total time: " + runTime + 
-                    " ms, squery: " + ((String[])params.get("query"))[0]);
-        }
-        logMetacat.debug("MetacatHandler.handleQuery - query: " + ((String[])params.get("query"))[0] + 
-                " ran in " + runTime + " ms");
+        sendNotSupportMessage(response);
     }
     
     // END OF SQUERY & QUERY SECTION
@@ -568,87 +369,8 @@ public class MetacatHandler {
      */
     protected void handleExportAction(Hashtable<String, String[]> params,
             HttpServletResponse response,
-            String user, String[] groups, String passWord) {
-        // Output stream
-        ServletOutputStream out = null;
-        // Zip output stream
-        ZipOutputStream zOut = null;
-        DBQuery queryObj = null;
-        
-        String[] docs = new String[10];
-        String docId = "";
-        
-        try {
-            // read the params
-            if (params.containsKey("docid")) {
-                docs = params.get("docid");
-            }
-            // Create a DBuery to handle export
-            queryObj = new DBQuery();
-            String qformat = null;
-            if (params.containsKey("qformat")) {
-                qformat = params.get("qformat")[0];
-                queryObj.setQformat(qformat);
-            }
-            // Get the docid
-            docId = docs[0];
-            // Make sure the client specify docid
-            if (docId == null || docId.equals("")) {
-                response.setContentType("text/xml"); //MIME type
-                // Get a printwriter
-                PrintWriter pw = response.getWriter();
-                // Send back message
-                pw.println("<?xml version=\"1.0\"?>");
-                pw.println("<error>");
-                pw.println("You didn't specify requested docid");
-                pw.println("</error>");
-                // Close printwriter
-                pw.close();
-                return;
-            }
-            // Get output stream
-            response.setContentType("application/zip"); //MIME type
-            response.setHeader("Content-Disposition",
-                    "attachment; filename="
-                    + docId + ".zip"); // Set the name of the zip file
-            out = response.getOutputStream();            
-            zOut = new ZipOutputStream(out);
-            zOut = queryObj
-                    .getZippedPackage(docId, out, user, groups, passWord);
-            zOut.finish(); //terminate the zip file
-            zOut.close(); //close the zip stream
-            
-        } catch (Exception e) {
-            try {
-                response.setContentType("text/xml"); //MIME type
-                // Send error message back
-                if (out != null) {
-                    PrintWriter pw = new PrintWriter(out);
-                    pw.println("<?xml version=\"1.0\"?>");
-                    pw.println("<error>");
-                    pw.println(e.getMessage());
-                    pw.println("</error>");
-                    // Close printwriter
-                    pw.close();
-                    // Close output stream
-                    out.close();
-                }
-                // Close zip output stream
-                if (zOut != null) {
-                    zOut.close();
-                }
-            } catch (IOException ioe) {
-                logMetacat.error("MetacatHandler.handleExportAction - Problem with the servlet output: "
-                        + ioe.getMessage());
-                e.printStackTrace(System.out);
-            }
-            
-            logMetacat.error("MetacatHandler.handleExportAction - General error: "
-                    + e.getMessage());
-            e.printStackTrace(System.out);
-            
-        }
-        
+            String user, String[] groups, String passWord) throws IOException{
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -663,94 +385,8 @@ public class MetacatHandler {
      */
     protected void handleReadInlineDataAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response,
-            String user, String passWord, String[] groups) {
-        String[] docs = new String[10];
-        String inlineDataId = null;
-        String docId = "";
-        ServletOutputStream out = null;
-        
-        try {
-            // read the params
-            if (params.containsKey("inlinedataid")) {
-                docs = params.get("inlinedataid");
-            }
-            // Get the docid
-            inlineDataId = docs[0];
-            // Make sure the client specify docid
-            if (inlineDataId == null || inlineDataId.equals("")) {
-                throw new Exception("You didn't specify requested inlinedataid"); }
-            
-            // check for permission, use full docid with revision
-            docId = DocumentUtil.getDocIdFromInlineDataID(inlineDataId);
-
-            PermissionController controller = new PermissionController(docId);
-            // check top level read permission
-            if (!controller.hasPermission(user, groups,
-                    AccessControlInterface.READSTRING)) {
-                throw new Exception("User " + user
-                        + " doesn't have permission " + " to read document "
-                        + docId);
-            } else {
-                //check data access level
-                try {
-                    Hashtable<String,String> unReadableInlineDataList =
-                            PermissionController.getUnReadableInlineDataIdList(docId, user, groups);
-                    if (unReadableInlineDataList.containsValue(inlineDataId)) {
-                        throw new Exception("User " + user
-                                + " doesn't have permission " + " to read inlinedata "
-                                + inlineDataId);
-                        
-                    }//if
-                }//try
-                catch (Exception e) {
-                    throw e;
-                }//catch
-            }//else
-            
-            // Get output stream
-            out = response.getOutputStream();
-            // read the inline data from the file
-            String inlinePath = PropertyService.getProperty("application.inlinedatafilepath");
-            File lineData = new File(inlinePath, inlineDataId);
-            FileInputStream input = new FileInputStream(lineData);
-            byte[] buffer = new byte[4 * 1024];
-            int bytes = input.read(buffer);
-            while (bytes != -1) {
-                out.write(buffer, 0, bytes);
-                bytes = input.read(buffer);
-            }
-            out.close();
-            
-            EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), user,
-                    inlineDataId, "readinlinedata");
-        } catch (Exception e) {
-            try {
-                PrintWriter pw = null;
-                // Send error message back
-                if (out != null) {
-                    pw = new PrintWriter(out);
-                } else {
-                    pw = response.getWriter();
-                }
-                pw.println("<?xml version=\"1.0\"?>");
-                pw.println("<error>");
-                pw.println(e.getMessage());
-                pw.println("</error>");
-                // Close printwriter
-                pw.close();
-                // Close output stream if out is not null
-                if (out != null) {
-                    out.close();
-                }
-            } catch (IOException ioe) {
-                logMetacat.error("MetacatHandler.handleReadInlineDataAction - Problem with the servlet output: "
-                        + ioe.getMessage());
-                e.printStackTrace(System.out);
-            }
-            logMetacat.error("MetacatHandler.handleReadInlineDataAction - General error: "
-                    + e.getMessage());
-            e.printStackTrace(System.out);
-        }
+            String user, String passWord, String[] groups) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -766,224 +402,10 @@ public class MetacatHandler {
      */
     public void handleReadAction(Hashtable<String, String[]> params, HttpServletRequest request,
             HttpServletResponse response, String user, String passWord,
-            String[] groups) {
-        ServletOutputStream out = null;
-        ZipOutputStream zout = null;
-        PrintWriter pw = null;
-        boolean zip = false;
-        boolean withInlineData = true;
-        
-        try {
-            String[] docs = new String[0];
-            String docid = "";
-            String qformat = "";
-            
-            // read the params
-            if (params.containsKey("docid")) {
-                docs = params.get("docid");
-            }
-            if (params.containsKey("qformat")) {
-                qformat = params.get("qformat")[0];
-            }
-            // the param for only metadata (eml)
-            // we don't support read a eml document without inline data now.
-            /*if (params.containsKey("inlinedata")) {
-             
-                String inlineData = ((String[]) params.get("inlinedata"))[0];
-                if (inlineData.equalsIgnoreCase("false")) {
-                    withInlineData = false;
-                }
-            }*/
-            // handle special case where the PID was given
-            if (params.containsKey("pid")) {
-                docs = params.get("pid");
-            	for (int i = 0; i < docs.length; i++) {
-            		String pid = docs[i];
-            		// look up the pid if we have it
-            		String localId = IdentifierManager.getInstance().getLocalId(pid);
-            		docs[i] = localId;
-            	}
-            	// put docid in parms for downstream methods to use
-            	params.put("docid", docs);
-            }
-            
-            if ((docs.length > 1) || qformat.equals("zip")) {
-                zip = true;
-                out = response.getOutputStream();
-                response.setContentType("application/zip"); //MIME type
-                zout = new ZipOutputStream(out);
-            }
-            // go through the list of docs to read
-            for (int i = 0; i < docs.length; i++) {
-                String providedFileName = null;
-                if (params.containsKey(docs[i])) {
-                    providedFileName = params.get(docs[i])[0];
-                }
-                try {
-                    
-                    URL murl = new URL(docs[i]);
-                    Hashtable<String,String> murlQueryStr = MetacatUtil.parseQuery(
-                            murl.getQuery());
-                    // case docid="http://.../?docid=aaa"
-                    // or docid="metacat://.../?docid=bbb"
-                    if (murlQueryStr.containsKey("docid")) {
-                        // get only docid, eliminate the rest
-                        docid = murlQueryStr.get("docid");
-                        if (zip) {
-                            addDocToZip(request, docid, providedFileName, zout, user, groups);
-                        } else {
-                            readFromMetacat(request.getRemoteAddr(), request.getHeader("User-Agent"), response, response.getOutputStream(), docid, qformat,
-                                    user, groups, withInlineData, params);
-                        }
-                        
-                        // case docid="http://.../filename"
-                    } else {
-                        docid = docs[i];
-                        //we don't support to read a file or http link directly
-                        throw new Exception("Metacat doesn't support this format of the docid - " + docid);
-                    }
-                    
-                } catch (MalformedURLException mue) {
-                    docid = docs[i];
-                    if (zip) {
-                        addDocToZip(request, docid, providedFileName, zout, user, groups);
-                    } else {
-                    	if (out == null) {
-                    		out = response.getOutputStream();
-                    	}
-                        readFromMetacat(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, docid, qformat,
-                                user, groups, withInlineData, params);
-                    }
-                }
-            }
-            
-            if (zip) {
-                zout.finish(); //terminate the zip file
-                zout.close(); //close the zip stream
-            }
-            
-        } catch (McdbDocNotFoundException notFoundE) {
-            // To handle doc not found exception
-            // the docid which didn't be found
-            String notFoundDocId = notFoundE.getUnfoundDocId();
-            String notFoundRevision = notFoundE.getUnfoundRevision();
-            logMetacat.warn("MetacatHandler.handleReadAction - Missed id: " + notFoundDocId);
-            logMetacat.warn("MetacatHandler.handleReadAction - Missed rev: " + notFoundRevision);
-            try {
-                // read docid from remote server
-                readFromRemoteMetaCat(response, notFoundDocId,
-                        notFoundRevision, user, passWord, out, zip, zout);
-                // Close zout outputstream
-                if (zout != null) {
-                    zout.close();
-                }
-                // close output stream
-                if (out != null) {
-                    out.close();
-                }
-                
-            } catch (Exception exc) {
-                logMetacat.error("MetacatHandler.handleReadAction - General error: "
-                        + exc.getMessage());
-                exc.printStackTrace(System.out);
-                try {
-                    if (out != null) {
-                        response.setContentType("text/xml");
-                        // Send back error message by printWriter
-                        pw = new PrintWriter(out);
-                        pw.println("<?xml version=\"1.0\"?>");
-                        pw.println("<error>");
-                        pw.println(notFoundE.getMessage());
-                        pw.println("</error>");
-                        pw.close();
-                        out.close();
-                        
-                    } else {
-                        response.setContentType("text/xml"); //MIME type
-                        // Send back error message if out = null
-                        if (pw == null) {
-                            // If pw is null, open the response
-                            pw = response.getWriter();
-                        }
-                        pw.println("<?xml version=\"1.0\"?>");
-                        pw.println("<error>");
-                        pw.println(notFoundE.getMessage());
-                        pw.println("</error>");
-                        pw.close();
-                    }
-                    // close zout
-                    if (zout != null) {
-                        zout.close();
-                    }
-                } catch (IOException ie) {
-                    logMetacat.error("MetacatHandler.handleReadAction - Problem with the servlet output: "
-                            + ie.getMessage());
-                    ie.printStackTrace(System.out);
-                }
-            }
-        } catch (Exception e) {
-            try {
-                
-                if (out != null) {
-                    response.setContentType("text/xml"); //MIME type
-                    pw = new PrintWriter(out);
-                    pw.println("<?xml version=\"1.0\"?>");
-                    pw.println("<error>");
-                    pw.println(e.getMessage());
-                    pw.println("</error>");
-                    pw.close();
-                    out.close();
-                } else {
-                    response.setContentType("text/xml"); //MIME type
-                    // Send back error message if out = null
-                    if (pw == null) {
-                        pw = response.getWriter();
-                    }
-                    pw.println("<?xml version=\"1.0\"?>");
-                    pw.println("<error>");
-                    pw.println(e.getMessage());
-                    pw.println("</error>");
-                    pw.close();
-                    
-                }
-                // Close zip output stream
-                if (zout != null) {
-                    zout.close();
-                }
-                
-            } catch (Exception e2) {
-                logMetacat.error("MetacatHandler.handleReadAction - " + 
-                		         "Problem with the servlet output: "+ 
-                		         e2.getMessage());
-                e2.printStackTrace(System.out);
-                
-            }
-            
-            logMetacat.error("MetacatHandler.handleReadAction - General error: "
-                    + e.getMessage());
-            e.printStackTrace(System.out);
-        }
+            String[] groups) throws IOException {
+        sendNotSupportMessage(response);
     }
     
-    /**
-     * 
-     * @return
-     */
-    public MetacatResultSet query(String metacatUrl, Hashtable<String, String[]>params, 
-            String username, String[] groups, String sessionid)
-      throws Exception
-    {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-     // use UTF-8 encoding for DB query
-        Writer out = new OutputStreamWriter(baos, MetaCatServlet.DEFAULT_ENCODING);
-        handleQuery(out, params, null, username, groups, sessionid);
-        out.flush();
-        baos.flush();
-        //baos.close(); 
-        //System.out.println("result from query: " + baos.toString());
-        MetacatResultSet rs = new MetacatResultSet(baos.toString(MetaCatServlet.DEFAULT_ENCODING));
-        return rs;
-    }
     
     /**
      * set the access permissions on the document specified

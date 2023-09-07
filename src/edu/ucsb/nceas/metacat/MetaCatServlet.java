@@ -824,10 +824,7 @@ public class MetaCatServlet extends HttpServlet {
 
 				// handle logout action
 			} else if (action.equals("logout")) {
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleLogoutAction(out, params, request, response);
-				out.close();
-
+				handler.handleLogoutAction(params, request, response);
 				// handle session validate request
 			} else if (action.equals("validatesession")) {
 				String token = request.getHeader("Authorization");
@@ -909,26 +906,14 @@ public class MetaCatServlet extends HttpServlet {
 			// Now that we know the session is valid, we can delegate the
 			// request to a particular action handler
 			if (action.equals("query")) {
-		        Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleQuery(out, params, response, userName, groupNames, sessionId);
-				out.close();
+				handler.handleQuery(params, response, userName, groupNames, sessionId);
 			} else if (action.equals("squery")) {
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				if (params.containsKey("query")) {
-					handler.handleSQuery(out, params, response, userName, groupNames, sessionId);
-					out.close();
-				} else {
-					out.write("Illegal action squery without \"query\" parameter");
-					out.close();
-				}
+			    handler.handleSQuery(params, response, userName, groupNames, sessionId);
 			} else if (action.trim().equals("spatial_query")) {
 
 				logMetacat
 						.debug("MetaCatServlet.handleGetOrPost - ******************* SPATIAL QUERY ********************");
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleSpatialQuery(out, params, response, userName, groupNames, sessionId);
-				out.close();
-
+				handler.handleSpatialQuery(params, response, userName, groupNames, sessionId);
 			} else if (action.trim().equals("dataquery")) {
 
 				logMetacat.debug("MetaCatServlet.handleGetOrPost - ******************* DATA QUERY ********************");
