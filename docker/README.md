@@ -19,9 +19,9 @@ building the docker image based on that. Starting in the root directory of the "
     ...
     ... a very long build process ensues, resulting in a tar.gz file
     $ cd docker
-    $ ./build 2.19.0
+    $ ./build 3.0.0
     $ docker image ls
     REPOSITORY    TAG      IMAGE ID        CREATED           SIZE
-    metacat       2.19.0   8da92210dfc4    39 minutes ago    1.27GB
+    metacat       3.0.0   8da92210dfc4    39 minutes ago    1.27GB
 
 The image can then be deployed in a Kubernetes environment - see the helm chart at `metacat/helm/`
