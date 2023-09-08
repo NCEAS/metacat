@@ -957,26 +957,10 @@ public class MetaCatServlet extends HttpServlet {
 				}
 				out.close();
 			} else if (action.equals("delete")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				PrintWriter out = response.getWriter();
-				if ((userName != null) && !userName.equals("public")) {
-					handler.handleDeleteAction(out, params, request, response, userName,
+					handler.handleDeleteAction(params, request, response, userName,
 							groupNames);
-				} else {
-					response.setContentType("text/xml");
-					out.println("<?xml version=\"1.0\"?>");
-					out.println("<error>");
-					String cleanMessage = StringEscapeUtils.escapeXml("Permission denied for " + action);
-					out.println(cleanMessage);
-					out.println("</error>");
-				}
-				out.close();
 			} else if (action.equals("validate")) {
-				PrintWriter out = response.getWriter();
-				handler.handleValidateAction(out, params);
-				out.close();
+				handler.handleValidateAction(response, params);
 			} else if (action.equals("setaccess")) {
 			    if(isReadOnly(response)) {
                     return;
@@ -985,9 +969,7 @@ public class MetaCatServlet extends HttpServlet {
 				handler.handleSetAccessAction(out, params, userName, request, response);
 				out.close();
 			} else if (action.equals("getaccesscontrol")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetAccessControlAction(out, params, response, userName, groupNames);
-				out.close();
+				handler.handleGetAccessControlAction(params, response, userName, groupNames);
 			} else if (action.equals("isauthorized")) {
 				PrintWriter out = response.getWriter();
 				DocumentUtil.isAuthorized(out, params, request, response);
@@ -1001,27 +983,17 @@ public class MetaCatServlet extends HttpServlet {
 				handler.handleGetDoctypesAction(out, params, response);
 				out.close();
 			} else if (action.equals("getdtdschema")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetDTDSchemaAction(out, params, response);
-				out.close();
+				handler.handleGetDTDSchemaAction(params, response);
 			} else if (action.equals("getdocid")) {
 				handler.handleGetDocid(params, response);
 			} else if (action.equals("getlastdocid")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetMaxDocidAction(out, params, response);
-				out.close();
+				handler.handleGetMaxDocidAction(params, response);
 			} else if (action.equals("getalldocids")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetAllDocidsAction(out, params, response);
-				out.close();
+				handler.handleGetAllDocidsAction(params, response);
 			} else if (action.equals("isregistered")) {
-				PrintWriter out = response.getWriter();
-				handler.handleIdIsRegisteredAction(out, params, response);
-				out.close();
+				handler.handleIdIsRegisteredAction(params, response);
 			} else if (action.equals("getrevisionanddoctype")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetRevisionAndDocTypeAction(out, params);
-				out.close();
+				handler.handleGetRevisionAndDocTypeAction(response, params);
 			} else if (action.equals("getversion")) {
 				response.setContentType("text/xml");
 				String version = null;
