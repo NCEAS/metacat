@@ -965,9 +965,7 @@ public class MetaCatServlet extends HttpServlet {
 			    if(isReadOnly(response)) {
                     return;
                 }
-				PrintWriter out = response.getWriter();
-				handler.handleSetAccessAction(out, params, userName, request, response);
-				out.close();
+				handler.handleSetAccessAction(params, userName, request, response);
 			} else if (action.equals("getaccesscontrol")) {
 				handler.handleGetAccessControlAction(params, response, userName, groupNames);
 			} else if (action.equals("isauthorized")) {
@@ -975,13 +973,9 @@ public class MetaCatServlet extends HttpServlet {
 				DocumentUtil.isAuthorized(out, params, request, response);
 				out.close();
 			} else if (action.equals("getprincipals")) {
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleGetPrincipalsAction(out, userName, password);
-				out.close();
+				handler.handleGetPrincipalsAction(response, userName, password);
 			} else if (action.equals("getdoctypes")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetDoctypesAction(out, params, response);
-				out.close();
+				handler.handleGetDoctypesAction(params, response);
 			} else if (action.equals("getdtdschema")) {
 				handler.handleGetDTDSchemaAction(params, response);
 			} else if (action.equals("getdocid")) {
