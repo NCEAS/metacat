@@ -137,7 +137,7 @@ public class MetacatHandler {
      * @param response
      * @throws IOException
      */
-    private void sendNotSupportMessage(HttpServletResponse response) throws IOException {
+    protected void sendNotSupportMessage(HttpServletResponse response) throws IOException {
         PrintWriter out = null;
         try {
             out = response.getWriter();

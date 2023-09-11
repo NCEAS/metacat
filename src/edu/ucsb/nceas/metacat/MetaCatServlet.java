@@ -43,7 +43,6 @@ import java.util.Vector;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -67,7 +66,6 @@ import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
-import edu.ucsb.nceas.metacat.shared.BaseException;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -77,7 +75,6 @@ import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.ErrorSendingErrorException;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
-import edu.ucsb.nceas.metacat.util.ResponseUtil;
 import edu.ucsb.nceas.metacat.util.SessionData;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
@@ -482,155 +479,6 @@ public class MetaCatServlet extends HttpServlet {
     }
     
     /**
-	 * Index the paths specified in the metacat.properties
-	 */
-    private void checkIndexPaths() {
-    	logMetacat.debug("MetaCatServlet.checkIndexPaths - starting....");
-    	boolean needCheck = false;
-    	try {
-    	    needCheck = Boolean.parseBoolean(PropertyService.getProperty("dbquery.init.check.newpath"));
-    	} catch (Exception e) {
-    	    logMetacat.warn("MetaCatServlet.checkIndexPaths - we can't get the property value of \"dbquery.init.check.newpath\" and the default value \"false\" will be used since " + e.getMessage());
-    	}
-    	logMetacat.info("MetaCatServlet.checkIndexPaths - the final of needCheckInexPath value is " + needCheck);
-    	if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE) || !needCheck) {
-    		logMetacat.info("MetaCatServlet.checkIndexPaths - the pathquery is disabled or the property \"dbquery.init.check.newpath\" is set false, so it does nothing for checking path_index");
-            return;
-        }
-    	logMetacat.info("MetaCatServlet.checkIndexPaths - after checking is the pathquery enabled or not...");
-        
-
-        Vector<String> pathsForIndexing = null;
-        try {  
-        	pathsForIndexing = SystemUtil.getPathsForIndexing();
-        }
-        catch (MetacatUtilException ue) {
-        	pathsForIndexing = null;
-            logMetacat.error("MetaCatServlet.checkIndexPaths - not find index paths.  Setting " 
-            		+ "pathsForIndexing to null: " + ue.getMessage());
-        }
-        
-        if (pathsForIndexing != null && !pathsForIndexing.isEmpty()) {
-            
-            logMetacat.debug("MetaCatServlet.checkIndexPaths - Indexing paths specified in metacat.properties....");
-            
-            DBConnection conn = null;
-            int serialNumber = -1;
-            PreparedStatement pstmt = null;
-            PreparedStatement pstmt1 = null;
-            ResultSet rs = null;
-            
-            for (String pathIndex : pathsForIndexing) {
-                logMetacat.debug("MetaCatServlet.checkIndexPaths - Checking if '" + pathIndex  + "' is indexed.... ");
-                
-                try {
-                    //check out DBConnection
-                    conn = DBConnectionPool.
-                            getDBConnection("MetaCatServlet.checkIndexPaths");
-                    serialNumber = conn.getCheckOutSerialNumber();
-                    
-                    pstmt = conn.prepareStatement(
-                            "SELECT * FROM xml_path_index " + "WHERE path = ?");
-                    pstmt.setString(1, pathIndex);
-                    
-                    pstmt.execute();
-                    rs = pstmt.getResultSet();
-                    
-                    if (!rs.next()) {
-                        logMetacat.debug("MetaCatServlet.checkIndexPaths - not indexed yet.");
-                        rs.close();
-                        pstmt.close();
-                        conn.increaseUsageCount(1);
-                        
-                        logMetacat.debug("MetaCatServlet.checkIndexPaths - Inserting following path in xml_path_index: "
-                                + pathIndex);
-                        if(pathIndex.indexOf("@")<0){
-                            pstmt = conn.prepareStatement("SELECT DISTINCT n.docid, "
-                                    + "n.nodedata, n.nodedatanumerical, n.nodedatadate, n.parentnodeid"
-                                    + " FROM xml_nodes n, xml_index i WHERE"
-                                    + " i.path = ? and n.parentnodeid=i.nodeid and"
-                                    + " n.nodetype LIKE 'TEXT' order by n.parentnodeid");
-                        } else {
-                            pstmt = conn.prepareStatement("SELECT DISTINCT n.docid, "
-                                    + "n.nodedata, n.nodedatanumerical, n.nodedatadate, n.parentnodeid"
-                                    + " FROM xml_nodes n, xml_index i WHERE"
-                                    + " i.path = ? and n.nodeid=i.nodeid and"
-                                    + " n.nodetype LIKE 'ATTRIBUTE' order by n.parentnodeid");
-                        }
-                        pstmt.setString(1, pathIndex);
-                        pstmt.execute();
-                        rs = pstmt.getResultSet();
-                        
-                        int count = 0;
-                        logMetacat.debug("MetaCatServlet.checkIndexPaths - Executed the select statement for: "
-                                + pathIndex);
-                        
-                        try {
-                            while (rs.next()) {
-                                
-                                String docid = rs.getString(1);
-                                String nodedata = rs.getString(2);
-                                float nodedatanumerical = rs.getFloat(3);
-                                Timestamp nodedatadate = rs.getTimestamp(4);
-                                int parentnodeid = rs.getInt(5);
-                                
-                                if (!nodedata.trim().equals("")) {
-                                    pstmt1 = conn.prepareStatement(
-                                            "INSERT INTO xml_path_index"
-                                            + " (docid, path, nodedata, "
-                                            + "nodedatanumerical, nodedatadate, parentnodeid)"
-                                            + " VALUES (?, ?, ?, ?, ?, ?)");
-                                    
-                                    pstmt1.setString(1, docid);
-                                    pstmt1.setString(2, pathIndex);
-                                    pstmt1.setString(3, nodedata);
-                                    pstmt1.setFloat(4, nodedatanumerical);
-                                    pstmt1.setTimestamp(5, nodedatadate);
-                                    pstmt1.setInt(6, parentnodeid);
-                                    
-                                    pstmt1.execute();
-                                    pstmt1.close();
-                                    
-                                    count++;
-                                    
-                                }
-                            }
-                        } catch (Exception e) {
-                            logMetacat.error("MetaCatServlet.checkIndexPaths - Exception:" + e.getMessage());
-                            e.printStackTrace();
-                        }
-                        
-                        rs.close();
-                        pstmt.close();
-                        conn.increaseUsageCount(1);
-                        
-                        logMetacat.info("MetaCatServlet.checkIndexPaths - Indexed " + count + " records from xml_nodes for '"
-                                + pathIndex + "'");
-                        
-                    } else {
-                        logMetacat.debug("MetaCatServlet.checkIndexPaths - already indexed.");
-                    }
-                    
-                    rs.close();
-                    pstmt.close();
-                    conn.increaseUsageCount(1);
-                    
-                } catch (Exception e) {
-                    logMetacat.error("MetaCatServlet.checkIndexPaths - Error in MetaCatServlet.checkIndexPaths: "
-                            + e.getMessage());
-                }finally {
-                    //check in DBonnection
-                    DBConnectionPool.returnDBConnection(conn, serialNumber);
-                }
-                
-                
-            }
-            
-            logMetacat.debug("MetaCatServlet.checkIndexPaths - Path Indexing Completed");
-        }
-    }
-    
-    /**
 	 * Control servlet response depending on the action parameter specified
 	 */
 	@SuppressWarnings("unchecked")
@@ -925,53 +773,25 @@ public class MetaCatServlet extends HttpServlet {
 
 				handler.handleExportAction(params, response, userName, groupNames, password);
 			} else if (action.equals("read")) {
-				if (params.get("archiveEntryName") != null) {
-					ArchiveHandler.getInstance().readArchiveEntry(params, request,
-							response, userName, password, groupNames);
-				} else {
-					handler.handleReadAction(params, request, response, userName, password,
+				handler.handleReadAction(params, request, response, userName, password,
 							groupNames);
-				}
+				
 			} else if (action.equals("readinlinedata")) {
 				handler.handleReadInlineDataAction(params, request, response, userName, password,
 						groupNames);
 			} else if (action.equals("insert") || action.equals("update")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				PrintWriter out = response.getWriter();
-				if ((userName != null) && !userName.equals("public")) {
-				    //formatid will be set null here since this is metacat api
-				    String formatId = null;
-				    Checksum checksum = null;//for Metacat API, we don't calculate the checksum
-				    File file = null;
-					handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, params, userName,
-							groupNames, true, true, null, formatId, checksum, file);
-				} else {
-					response.setContentType("text/xml");
-					out.println("<?xml version=\"1.0\"?>");
-					out.println("<error>");
-					String cleanMessage = StringEscapeUtils.escapeXml("Permission denied for user " + userName + " " + action);
-					out.println(cleanMessage);
-					out.println("</error>");
-				}
-				out.close();
+			   handler.sendNotSupportMessage(response);
 			} else if (action.equals("delete")) {
 					handler.handleDeleteAction(params, request, response, userName,
 							groupNames);
 			} else if (action.equals("validate")) {
 				handler.handleValidateAction(response, params);
 			} else if (action.equals("setaccess")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
 				handler.handleSetAccessAction(params, userName, request, response);
 			} else if (action.equals("getaccesscontrol")) {
 				handler.handleGetAccessControlAction(params, response, userName, groupNames);
 			} else if (action.equals("isauthorized")) {
-				PrintWriter out = response.getWriter();
-				DocumentUtil.isAuthorized(out, params, request, response);
-				out.close();
+			    handler.sendNotSupportMessage(response);
 			} else if (action.equals("getprincipals")) {
 				handler.handleGetPrincipalsAction(response, userName, password);
 			} else if (action.equals("getdoctypes")) {
@@ -1137,13 +957,6 @@ public class MetaCatServlet extends HttpServlet {
 			String errorString = "Handler error: " + he.getMessage();
 			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
 			throw new ServletException(errorString);
-		} catch (ErrorSendingErrorException esee) {
-			String errorString = "Error sending error message: " + esee.getMessage();
-			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
-			throw new ServletException(errorString);
-		} catch (ErrorHandledException ehe) {
-			// Nothing to do here.  We assume if we get here, the error has been 
-			// written to ouput.  Continue on and let it display.
 		} 
 	}
     

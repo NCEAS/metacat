@@ -470,69 +470,6 @@ public class DocumentUtil
         return result;
     }
     
-    public static void isAuthorized(PrintWriter out, Hashtable<String,String[]> params, 
-    		HttpServletRequest request, HttpServletResponse response) throws MetacatUtilException {
-    	
-    	String resourceLsid;
-    	String[] resourceLsids = params.get("resourceLsid");
-    	if (resourceLsids == null) {
-    		throw new MetacatUtilException("DocumentUtil.isAuthorized - " + 
-    				"resourceLsid parameter cannot be null.");
-    	}
-    	resourceLsid = resourceLsids[0];
-    	 
-    	String permission;
-    	String[] permissions = params.get("permission");
-    	if (permissions == null) {
-    		throw new MetacatUtilException("DocumentUtil.isAuthorized - " + 
-    				"permission parameter cannot be null.");
-    	}
-    	permission = permissions[0];
-    	
-    	String sessionId;
-    	String[] sessionIds = params.get("sessionId");
-    	if (sessionIds == null) {
-    		throw new MetacatUtilException("DocumentUtil.isAuthorized - " + 
-    				"sessionId parameter cannot be null.");
-    	}
-    	sessionId = sessionIds[0];
-    	
-    	String isAuthorized = "false";
-    	String message = "";
-    	
-    	String result = "<resourceAuthorization>";
-    	result += "<resourceId>" + resourceLsid + "</resourceId>"; 
-    	result += "<permission>" + permission + "</permission>";
-    	result += "<sessionId>" + sessionId + "</sessionId>";
-
-    	if (!SessionService.getInstance().isSessionRegistered(sessionId)) {
-    		message = "Session is not logged in";
-    	} else {
-    		SessionData sessionData = SessionService.getInstance().getRegisteredSession(sessionId);
-    		
-    		String docId = null;
-    		try {
-    			docId = LSIDUtil.getDocId(resourceLsid, true);
-    			PermissionController pc = new PermissionController(docId);   
-    			if (pc.hasPermission(sessionData.getUserName(), sessionData.getGroupNames(), permission)) {
-    				isAuthorized = "true";
-    				message = " docid: " + docId + " is authorized for session";
-    			}
-    		} catch (ParseLSIDException ple) {
-    			message = "unparseable resource lsid: " + ple.getMessage();
-    		} catch (McdbException me) {
-    			message = "could not create permission controller for docid: " + docId + " : " + me.getMessage();
-    		} catch (SQLException sqle) {
-    			message = "SQL error getting permissions for docid: " + docId + " : " + sqle.getMessage();
-    		}
-    	}
-    	
-    	result += "<isAuthorized>" + isAuthorized + "</isAuthorized>";
-    	result += "<message>" + message + "</message>";
-    	result += "</resourceAuthorization>";
-    	
-    	out.write(result);
-    }
     
     /**
      * Create a unique docid for use in inserts and updates using the default
