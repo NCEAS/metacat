@@ -26,19 +26,15 @@
 
 package edu.ucsb.nceas.metacat;
 
-import java.io.File;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Timer;
-import java.util.Vector;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -48,17 +44,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.service.types.v1.Checksum;
 
-import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
-import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
-import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPlugin;
 import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPluginManager;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
@@ -66,14 +57,11 @@ import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
-import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.spatial.SpatialHarvester;
-import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.metacat.util.ErrorSendingErrorException;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SessionData;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -809,152 +797,26 @@ public class MetaCatServlet extends HttpServlet {
 			} else if (action.equals("getrevisionanddoctype")) {
 				handler.handleGetRevisionAndDocTypeAction(response, params);
 			} else if (action.equals("getversion")) {
-				response.setContentType("text/xml");
-				String version = null;
-				try {
-				    version = MetacatVersion.getVersionAsXml();
-				    PrintWriter out = response.getWriter();
-	                out.println(version);
-	                out.close();
-				} catch (SQLException e) {
-				    PrintWriter out = response.getWriter();
-				    out.println("<?xml version=\"1.0\"?>");
-                    out.println("<erorr>");
-                    out.println(StringEscapeUtils.escapeXml(e.getMessage()));
-                    out.println("</erorr>");
-                    out.close();
-				}
+				handler.sendNotSupportMessage(response);
 			} else if (action.equals("getlog")) {
 				handler.handleGetLogAction(params, request, response, userName, groupNames, sessionId);
 			} else if (action.equals("getloggedinuserinfo")) {
-				PrintWriter out = response.getWriter();
-				response.setContentType("text/xml");
-				out.println("<?xml version=\"1.0\"?>");
-				out.println("\n<user>\n");
-				out.println("\n<username>\n");
-				out.println(userName);
-				out.println("\n</username>\n");
-				if (name != null) {
-					out.println("\n<name>\n");
-					out.println(name);
-					out.println("\n</name>\n");
-				}
-				if (AuthUtil.isAdministrator(userName, groupNames)) {
-					out.println("<isAdministrator></isAdministrator>\n");
-				}
-				if (AuthUtil.isModerator(userName, groupNames)) {
-					out.println("<isModerator></isModerator>\n");
-				}
-				out.println("\n</user>\n");
-				out.close();
+				handler.sendNotSupportMessage(response);
 			} else if (action.equals("buildindex")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
 				handler.handleBuildIndexAction(params, request, response, userName, groupNames);
 			} else if (action.equals("reindex")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				handler.handleReindexAction(params, request, response, userName, groupNames);
+			    handler.sendNotSupportMessage(response);
 			} else if (action.equals("reindexall")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-                handler.handleReindexAllAction(params, request, response, userName, groupNames);
-            } else if (action.equals("login") || action.equals("logout")) {
-				/*
-				 * } else if (action.equals("protocoltest")) { String testURL =
-				 * "metacat://dev.nceas.ucsb.edu/NCEAS.897766.9"; try { testURL =
-				 * ((String[]) params.get("url"))[0]; } catch (Throwable t) { }
-				 * String phandler = System
-				 * .getProperty("java.protocol.handler.pkgs");
-				 * response.setContentType("text/html"); PrintWriter out =
-				 * response.getWriter(); out.println("<body
-				 * bgcolor=\"white\">"); out.println("<p>Handler property:
-				 * <code>" + phandler + "</code></p>"); out.println("<p>Starting
-				 * test for:<br>"); out.println(" " + testURL + "</p>"); try {
-				 * URL u = new URL(testURL); out.println("<pre>");
-				 * out.println("Protocol: " + u.getProtocol()); out.println("
-				 * Host: " + u.getHost()); out.println(" Port: " + u.getPort());
-				 * out.println(" Path: " + u.getPath()); out.println(" Ref: " +
-				 * u.getRef()); String pquery = u.getQuery(); out.println("
-				 * Query: " + pquery); out.println(" Params: "); if (pquery !=
-				 * null) { Hashtable qparams =
-				 * MetacatUtil.parseQuery(u.getQuery()); for (Enumeration en =
-				 * qparams.keys(); en .hasMoreElements();) { String pname =
-				 * (String) en.nextElement(); String pvalue = (String)
-				 * qparams.get(pname); out.println(" " + pname + ": " + pvalue); } }
-				 * out.println("</pre>"); out.println("</body>");
-				 * out.close(); } catch (MalformedURLException mue) {
-				 * System.out.println( "bad url from
-				 * MetacatServlet.handleGetOrPost");
-				 * out.println(mue.getMessage()); mue.printStackTrace(out);
-				 * out.close(); }
-				 */
+			    handler.sendNotSupportMessage(response);
 			} else if (action.equals("refreshServices")) {
-				// TODO MCD this interface is for testing. It should go through
-				// a ServiceService class and only work for an admin user. Move 
-				// to the MetacatAdminServlet
-				ServiceService.refreshService("XMLSchemaService");
-				return;
+				handler.sendNotSupportMessage(response);
 			} else if (action.equals("shrink")) {
-			     // handle shrink DBConnection request
-                PrintWriter out = response.getWriter();
-                if(!AuthUtil.isAdministrator(userName, groupNames)){
-                    out.println("The user "+userName+ " is not the administrator of the Metacat and doesn't have the permission to call the method.");
-                    out.close();
-                    return;
-                }
-                boolean success = false;
-                // If all DBConnection in the pool are free and DBConnection
-                // pool
-                // size is greater than initial value, shrink the connection
-                // pool
-                // size to initial value
-                success = DBConnectionPool.shrinkConnectionPoolSize();
-                if (success) {
-                    // if successfully shrink the pool size to initial value
-                    out.println("DBConnection Pool shrunk successfully.");
-                }// if
-                else {
-                    out.println("DBConnection pool did not shrink successfully.");
-                }
-                // close out put
-                out.close();
+			    handler.sendNotSupportMessage(response);
 			} else {
-				//try the plugin handler if it has an entry for handling this action
-				MetacatHandlerPlugin handlerPlugin = MetacatHandlerPluginManager.getInstance().getHandler(action);
-				if (handlerPlugin != null) {
-				    if(isReadOnly(response)) {
-	                    return;
-	                }
-					handlerPlugin.handleAction(action, params, request, response, userName, groupNames, sessionId);
-				} 
-				else {
-					PrintWriter out = response.getWriter();
-					out.println("<?xml version=\"1.0\"?>");
-					out.println("<error>");
-					String cleanMessage = StringEscapeUtils.escapeXml("Error: action: " + action + " not registered.  Please report this error.");
-					out.println(cleanMessage);
-					out.println("</error>");
-					out.close();
-				}
+			    handler.sendNotSupportMessage(response);
 			}
 		} catch (PropertyNotFoundException pnfe) {
 			String errorString = "Critical property not found: " + pnfe.getMessage();
-			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
-			throw new ServletException(errorString);
-		} catch (MetacatUtilException ue) {
-			String errorString = "Utility error: " + ue.getMessage();
-			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
-			throw new ServletException(errorString);
-		} catch (ServiceException ue) {
-			String errorString = "Service error: " + ue.getMessage();
-			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
-			throw new ServletException(errorString);
-		} catch (HandlerException he) {
-			String errorString = "Handler error: " + he.getMessage();
 			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
 			throw new ServletException(errorString);
 		} 
