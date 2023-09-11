@@ -64,7 +64,7 @@ public class D1AdminCNUpdater {
      *             Member Node.
      * @throws AdminException if an update cannot be carried out for any reason.
      *
-     * @implNote package-private to allow unit testing TODO
+     * @implNote package-private to allow unit testing
      */
     void configUnregisteredMN(Node node) throws AdminException, GeneralPropertyException {
 
