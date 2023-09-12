@@ -21,6 +21,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 public class D1AdminCNUpdater {
@@ -76,18 +79,19 @@ public class D1AdminCNUpdater {
         logMetacat.debug("configUnregisteredMN(): called with nodeId: " + nodeId
                              + ". Most recent previous nodeId was: " + previousNodeId);
         if (!canChangeNodeId()) {
-            // Local nodeId change only (i.e. nodeId CHANGED, but not permitted to register with the
-            // CN without operator consent)
+            // Local change only (not permitted to register with the CN without operator consent)
             logMetacat.info("configUnregisteredMN(): Only a LOCAL nodeId change will be performed, "
                                 + "since operator consent to registered with the CN was not "
                                 + "provided.\nIf you wish to register Metacat as a DataONE Member "
                                 + "Node, you must set the Property: "
                                 + "'metacat.dataone.autoRegisterMemberNode' to match "
-                                + "today's date in `values.yaml`).");
-            logMetacat.debug("configUnregisteredMN(): updating DataBase with new nodeId ("
-                                 + nodeId + ")...");
-            updateDBNodeIds(previousNodeId, nodeId);
-            logMetacat.debug("LOCAL-ONLY MN UPDATE FINISHED * * *");
+                                + "today's date (in UTC timezone) in `values.yaml`.");
+            if (!nodeId.equals(previousNodeId)) {
+                logMetacat.debug("configUnregisteredMN(): updating DataBase with new nodeId ("
+                                     + nodeId + ")...");
+                updateDBNodeIds(previousNodeId, nodeId);
+                logMetacat.debug("LOCAL-ONLY MN NODE ID UPDATE FINISHED * * *");
+            }
             return;
         }
         if (!nodeIdMatchesClientCert(nodeId)) {
@@ -161,7 +165,8 @@ public class D1AdminCNUpdater {
         }
         String nodeId = node.getIdentifier().getValue();
         String previousNodeId = getMostRecentNodeId();
-        logMetacat.debug("configPreregisteredMN(): received new nodeId: " + nodeId + ". Most recent previous nodeId was: " + previousNodeId);
+        logMetacat.debug("configPreregisteredMN(): received new nodeId: " + nodeId
+                             + ". Most recent previous nodeId was: " + previousNodeId);
 
         if (nodeId.equals(previousNodeId)) {
             // nodeId UNCHANGED: push an idempotent update of all other Node Capabilities to the CN
@@ -181,7 +186,8 @@ public class D1AdminCNUpdater {
                 "configPreregisteredMN: *Not Permitted* to push update to CN without operator "
                     + "consent. (An attempt to change Property: 'dataone.nodeId' from:"
                     + previousNodeId + " to: " + nodeId + " failed, because Property: "
-                    + "'dataone.autoRegisterMemberNode' had not been set to match today's date).";
+                    + "'dataone.autoRegisterMemberNode' had not been set to match today's "
+                    + "date in UTC timezone).";
             logMetacat.error(msg);
             throw new AdminException(msg);
         }
@@ -195,9 +201,9 @@ public class D1AdminCNUpdater {
             throw new AdminException(msg);
         }
         // nodeId CHANGED and checks complete: try to push an update of Node Capabilities to the CN:
-        logMetacat.debug(
-            "configPreregisteredMN():* * * BEGIN PREREGISTERED UPDATE ATTEMPT * * *" + "(including a nodeId change from:" + previousNodeId + " to: "
-                + nodeId + ")");
+        logMetacat.debug("configPreregisteredMN():* * * BEGIN PREREGISTERED UPDATE ATTEMPT * * *"
+                             + "(including a nodeId change from:" + previousNodeId + " to: "
+                             + nodeId + ")");
         if (!updateCN(node)) {
             // update attempt unsuccessful
             String msg =
@@ -207,8 +213,8 @@ public class D1AdminCNUpdater {
             throw new AdminException(msg);
         }
         logMetacat.debug("configPreregisteredMN(): SUCCESS: pushed an update of Node "
-                                          + "Capabilities to CN. Now updating DataBase with new nodeId ("
-                                          + nodeId + ")...");
+                             + "Capabilities to CN. Now updating DataBase with new nodeId ("
+                             + nodeId + ")...");
         updateDBNodeIds(previousNodeId, nodeId);
         logMetacat.debug("PREREGISTERED UPDATE FINISHED * * *");
     }
@@ -227,8 +233,8 @@ public class D1AdminCNUpdater {
             "nodeIdMatchesClientCert() received nodeId: " + nodeId + ". Client cert 'Subject:' "
                 + certSubject);
         if (certSubject == null || !certSubject.startsWith("CN=")) {
-            logMetacat.error(
-                "nodeIdMatchesClientCert(): Client cert 'Subject:' (" + certSubject + ") must begin with 'CN='. returning FALSE");
+            logMetacat.error("nodeIdMatchesClientCert(): Client cert 'Subject:' (" + certSubject
+                                 + ") must begin with 'CN='. returning FALSE");
             return false;
         }
         // Subject is of the form: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org", so the commonName
@@ -240,7 +246,8 @@ public class D1AdminCNUpdater {
         String commonName = certSubject.substring(start, firstComma);
         boolean matches = commonName.equals(nodeId);
         String msg =
-            "nodeIdMatchesClientCert(): " + String.valueOf(matches).toUpperCase() + "! (nodeId: " + nodeId + "; Common Name (CN) from client cert: " + commonName;
+            "nodeIdMatchesClientCert(): " + String.valueOf(matches).toUpperCase() + "! (nodeId: "
+                + nodeId + "; Common Name (CN) from client cert: " + commonName;
         if (matches) {
             logMetacat.info(msg);
         } else {
@@ -254,8 +261,8 @@ public class D1AdminCNUpdater {
      * <p></p>
      * If we're running in a container/K8s, this code runs automatically on startup, so we need
      * explicit permission via the associated values.yaml flag. Specifically, the parameter
-     * <code>.Values.metacat.dataone.autoRegisterMemberNode</code>  must match today's date (in
-     * yyyy-MM-dd format).
+     * <code>.Values.metacat.dataone.autoRegisterMemberNode</code> must match today's date (in
+     * yyyy-MM-dd format, in UTC timezone).
      * </p><p>
      * If we're running in a legacy deployment, we can go ahead, since the operator has already
      * given explicit consent by submitting the form in the Metacat Admin UI requesting the change.
@@ -269,26 +276,33 @@ public class D1AdminCNUpdater {
         String autoRegDate = "";
         if (isMetacatRunningInAContainer()) {
             logMetacat.debug("canChangeNodeId(): Containerized/Kubernetes deployment detected");
+            ZonedDateTime utc = ZonedDateTime.now(ZoneOffset.UTC);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            String todaysDateUTC = utc.format(formatter);
             try {
                 autoRegDate = PropertyService.getProperty("dataone.autoRegisterMemberNode");
-                result = LocalDate.now().equals(LocalDate.parse(autoRegDate));
-                logMetacat.debug("canChangeNodeId(): returning " + result + ", since '.Values.metacat.dataone.autoRegisterMemberNode' ("
-                                                  + autoRegDate + ") is set to today's date (" + LocalDate.now()
-                                                  + ")");
+                result = todaysDateUTC.equals(autoRegDate);
+                logMetacat.debug("canChangeNodeId(): returning " + result
+                                     + ", since '.Values.metacat.dataone.autoRegisterMemberNode'="
+                                     + autoRegDate + ", and today's date in UTC timezone is: "
+                                     + todaysDateUTC);
             } catch (PropertyNotFoundException e) {
-                logMetacat.warn("canChangeNodeId(): DataONE Member Node (MN) NodeId " + "Registration/Update not possible:"
-                                                 + "'.Values.metacat.dataone.autoRegisterMemberNode' not set.");
+                logMetacat.warn("canChangeNodeId(): DataONE Member Node (MN) NodeId "
+                                    + "Registration/Update not possible:"
+                                    + "'.Values.metacat.dataone.autoRegisterMemberNode' not set.");
                 result = false;
 
             } catch (DateTimeParseException e) {
-                logMetacat.warn("canChangeNodeId(): DataONE Member Node (MN) NodeId " + "Registration/Update not possible:"
-                                                 + "'.Values.metacat.dataone.autoRegisterMemberNode' read, but"
-                                                 + " can't parse date: " + autoRegDate);
+                logMetacat.warn("canChangeNodeId(): DataONE Member Node (MN) NodeId "
+                                    + "Registration/Update not possible:"
+                                    + "'.Values.metacat.dataone.autoRegisterMemberNode' read, but"
+                                    + " can't parse date: " + autoRegDate);
                 result = false;
             }
         } else { //legacy deployment: explicit consent already given by submitting the form
-            logMetacat.debug(
-                "canChangeNodeId(): Legacy (non-containerized) deployment detected. " + "Returning TRUE, since explicit consent already given by submitting the form ");
+            logMetacat.debug("canChangeNodeId(): Legacy (non-containerized) deployment detected. "
+                                 + "Returning TRUE, since explicit consent already given by "
+                                 + "submitting the form ");
             result = true;
         }
         return result;
@@ -324,26 +338,36 @@ public class D1AdminCNUpdater {
             String returnedNodeId = (mnRef != null) ? mnRef.getValue() : null;
             result = (returnedNodeId != null && returnedNodeId.equals(nodeId));
             if (!result) {
-                logMetacat.error(
-                    "CNode.register() returned a node ID (" + returnedNodeId + ") not matching the nodeId that was sent (" + nodeId + ")");
+                logMetacat.error("CNode.register() returned a node ID (" + returnedNodeId
+                                     + ") not matching the nodeId that was sent (" + nodeId + ")");
             }
         } catch (IdentifierNotUnique e) {
-            logMetacat.error(
-                "Attempt to register a Member Node with an ID that is already in use " + "by a different registered node (" + nodeId + "). CN URL is: "
-                    + CnUrl + "; error message was: " + e.getMessage(), e);
+            logMetacat.error("Attempt to register a Member Node with an ID that is already in use "
+                                 + "by a different registered node (" + nodeId + "). CN URL is: "
+                                 + CnUrl + "; error message was: " + e.getMessage(), e);
             result = false;
 
         } catch (BaseException e) {
             logMetacat.error(
-                "Calling CNode.register() with CN URL: " + CnUrl + ", and nodeId: " + nodeId + "; error message was: "
-                    + e.getMessage(), e);
+                "Calling CNode.register() with CN URL: " + CnUrl + ", and nodeId: " + nodeId
+                    + "; error message was: " + e.getMessage(), e);
             result = false;
         }
         return result;
     }
 
     /**
-     * Send this MN's config details to the configured Coordinating Node (CN)
+     * Send this MN's config details to the configured Coordinating Node (CN).
+     *
+     *  NOTE: According to:
+     *  https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html
+     *  #CNRegister.updateNodeCapabilities
+     *
+     *  "For updating the capabilities of the specified node. Most information is replaced
+     *  by information in the new node, however, the node identifier, nodeType, ping,
+     *  synchronization.lastHarvested, and synchronization.lastCompleteHarvest are
+     *  preserved from the existing entry. Services in the old record not included in the
+     *  new Node will be removed."
      *
      * @param mNode the Member Node whose config details will be sent to the CN
      * @return <code>true</code> if CN was successfully updated; <code>false</code> otherwise
@@ -361,18 +385,6 @@ public class D1AdminCNUpdater {
                 CnUrl = cn.getNodeBaseServiceUrl();
             }
             logMetacat.info("Sending updated node capabilities to DataONE CN: " + CnUrl);
-
-            // TODO - resolve. Does this mean we can't ever update the nodeId? Will it fail
-            //  silently, causing us to update the DB and get it out of sync with the CN??
-            //
-            // According to:
-            // https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html#CNRegister.updateNodeCapabilities
-            //
-            // "For updating the capabilities of the specified node. Most information is replaced
-            // by information in the new node, however, the node identifier, nodeType, ping,
-            // synchronization.lastHarvested, and synchronization.lastCompleteHarvest are
-            // preserved from the existing entry. Services in the old record not included in the
-            // new Node will be removed.
 
             // Session is null, because libclient automatically sets up SSL session with client cert
             result = cn != null && cn.updateNodeCapabilities(null, mNode.getIdentifier(), mNode);
@@ -426,18 +438,20 @@ public class D1AdminCNUpdater {
             try {
                 nodeId = PropertyService.getProperty("dataone.nodeId");
             } catch (PropertyNotFoundException e) {
-                logMetacat
-                    .error("\"dataone.nodeId\" not found in properties file: " + e.getMessage(), e);
+                logMetacat.error(
+                    "\"dataone.nodeId\" not found in properties file: " + e.getMessage(), e);
             }
             if (!nodeId.isEmpty()) {
-                logMetacat.info("no node_id_revisions found in database." + "Initializing with current nodeId from Properties: "
-                                                 + nodeId);
+                logMetacat.info("no node_id_revisions found in database."
+                                    + "Initializing with current nodeId from Properties: "
+                                    + nodeId);
                 try {
                     saveNewNodeIdRevision(nodeId);
                 } catch (AdminException e) {
-                    logMetacat.warn(
-                        "Unable to initialize node_id_revisions database table with " + "current nodeId from Properties (" + nodeId
-                            + "). Will try again next time. Error message: " + e.getMessage(), e);
+                    logMetacat.warn("Unable to initialize node_id_revisions database table with "
+                                        + "current nodeId from Properties (" + nodeId
+                                        + "). Will try again next time. Error message: "
+                                        + e.getMessage(), e);
                 }
             }
         }
@@ -480,7 +494,8 @@ public class D1AdminCNUpdater {
      */
     void updateDBNodeIds(String existingMemberNodeId, String newMemberNodeId) throws AdminException {
         logMetacat.debug(
-            "Updating DataBase with new nodeId " + newMemberNodeId + "(from previous nodeId:" + existingMemberNodeId + ")...");
+            "Updating DataBase with new nodeId " + newMemberNodeId + "(from previous nodeId:"
+                + existingMemberNodeId + ")...");
         int updatedRowCount = updateAuthoritativeMemberNodeId(existingMemberNodeId, newMemberNodeId);
         logMetacat.debug(
             "...updated 'authoritive_member_node' in 'systemmetadata' table (" + updatedRowCount

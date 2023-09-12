@@ -136,6 +136,9 @@ public class D1Admin extends MetacatAdmin {
                 request.setAttribute(
                     "dataone.replicationpolicy.default.blockedNodeList", blockedNodeList);
 
+                // support email for error messaging
+                request.setAttribute(
+                    "supportEmail", PropertyService.getProperty("email.recipient"));
 
                 // try the backup properties
                 SortedProperties backupProperties = null;
@@ -330,9 +333,6 @@ public class D1Admin extends MetacatAdmin {
                     PropertyService.setPropertyNoPersist(
                         "dataone.mn.services.enabled", Boolean.toString(servicesEnabled));
 
-                    // get the current node id, so we know if we updated the value
-//                    String existingMemberNodeId = PropertyService.getProperty("dataone.nodeId");
-
                     // update the property value
                     PropertyService.setPropertyNoPersist("dataone.nodeId", memberNodeId);
 
@@ -398,48 +398,6 @@ public class D1Admin extends MetacatAdmin {
             }
         }
     }
-
-// TODO - NOTE THAT IN THE CASE WHERE THE MN HAS ALREADY BEEN REGISTERED IN THE PAST, AND THE
-//  USER IS CHANGING THE NODE ID TO A NEW VALUE, THE OLD CODE DOES *NOT* APPEAR TO USE THIS NEW
-//  NODE ID. INSTEAD IT USES THE VALUES FROM A CALL TO:
-//      Node node = MNodeService.getInstance(null).getCapabilities();
-//      [..]
-//      boolean result = cn.updateNodeCapabilities(session, node.getIdentifier(), node);
-//
-//
-//    private void registerDataONEMemberNode_ORIG()
-//        throws BaseException, PropertyNotFoundException, GeneralPropertyException {
-//
-//        logMetacat.debug("Get the Node description.");
-//        Node node = MNodeService.getInstance(null).getCapabilities();
-//        logMetacat.debug("Setting client certificate location.");
-//        String mnCertificatePath = PropertyService.getProperty("D1Client.certificate.file");
-//        CertificateManager.getInstance().setCertificateLocation(mnCertificatePath);
-//        CNode cn = D1Client.getCN(PropertyService.getProperty("D1Client.CN_URL"));
-//
-//        // check if this is new or an update
-//        boolean update = isNodeRegistered(node.getIdentifier().getValue());
-//
-//        // Session is null, because the libclient code automatically sets up an
-//        // SSL session for us using the client certificate provided
-//        Session session = null;
-//        if (update) {
-//            logMetacat.debug("Updating node with DataONE. " + cn.getNodeBaseServiceUrl());
-//            boolean result = cn.updateNodeCapabilities(session, node.getIdentifier(), node);
-//        } else {
-//            logMetacat.debug("Registering node with DataONE. " + cn.getNodeBaseServiceUrl());
-//            NodeReference mnodeRef = cn.register(session, node);
-//
-//            // save that we submitted registration
-//            PropertyService.setPropertyNoPersist(
-//                "dataone.mn.registration.submitted", Boolean.TRUE.toString());
-//
-//            // persist the properties
-//            PropertyService.persistProperties();
-//        }
-//
-//    }
-
 
     /**
      * upReg: Either update ("up") or register ("reg") DataONE Member Node (MN) config, depending

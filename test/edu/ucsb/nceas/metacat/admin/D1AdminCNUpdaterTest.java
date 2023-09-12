@@ -20,7 +20,9 @@ import java.security.cert.X509Certificate;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -30,6 +32,11 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 /**
  * <p>
@@ -94,7 +101,7 @@ public class D1AdminCNUpdaterTest {
     public void configUnregisteredMN() throws Exception {
         Properties withProperties = new Properties();
         // dataone.autoRegisterMemberNode valid @ today's date
-        withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
+        withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)) {
             setK8sEnv();
@@ -121,6 +128,49 @@ public class D1AdminCNUpdaterTest {
                         assertTrue(e.getCause() instanceof SQLException);
                     }
                 }, true));
+        }
+    }
+
+
+    @Test
+    public void configUnregisteredMN_nodeIdUnchanged() throws Exception {
+
+        //ensure database is not updated when node ID is unchanged
+        D1AdminCNUpdater d1AdminCNUpdaterSpy = spy(d1AdminCNUpdater);
+
+        doNothing().when(d1AdminCNUpdaterSpy).updateDBNodeIds(anyString(), anyString());
+
+        Properties withProperties = new Properties();
+        // dataone.autoRegisterMemberNode valid @ today's date
+        withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
+        try (MockedStatic<PropertyService> ignored
+                 = LeanTestUtils.initializeMockPropertyService(withProperties)) {
+            setK8sEnv();
+            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+
+            // nodeId is unchanged from previous nodeId. Should be no calls to updateDBNodeIds()
+            runWithMockedClientCert(
+                "CN=urn:node:TestingPreviousNodeId", null,
+                () -> runWithMockedDataBaseConnection(() -> {
+                    Node mockMN = getMockNode("urn:node:TestingPreviousNodeId");
+                    registerWithMockedCN(true,
+                                         () -> d1AdminCNUpdaterSpy.configUnregisteredMN(
+                                             mockMN),
+                                         "urn:node:TestingPreviousNodeId");
+                }));
+            verify(d1AdminCNUpdaterSpy, never()).updateDBNodeIds(anyString(), anyString());
+
+            // nodeId has changed from previous nodeId. Should be one call to updateDBNodeIds()
+            runWithMockedClientCert(
+                "CN=urn:node:NewTestMemberNode", null,
+                () -> runWithMockedDataBaseConnection(() -> {
+                    Node mockMN = getMockNode("urn:node:NewTestMemberNode");
+                    registerWithMockedCN(true,
+                                         () -> d1AdminCNUpdaterSpy.configUnregisteredMN(
+                                             mockMN),
+                                         "urn:node:NewTestMemberNode");
+                }));
+            verify(d1AdminCNUpdaterSpy, times(1)).updateDBNodeIds(anyString(), anyString());
         }
     }
 
@@ -181,7 +231,7 @@ public class D1AdminCNUpdaterTest {
     public void configPreregisteredMN() throws Exception {
         Properties withProperties = new Properties();
         // dataone.autoRegisterMemberNode valid @ today's date
-        withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
+        withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)) {
             assertTrue(d1AdminCNUpdater.canChangeNodeId());
@@ -225,10 +275,10 @@ public class D1AdminCNUpdaterTest {
         setK8sEnv();
         String sub = "*Not Permitted* to push update to CN without operator consent";
         runWithMockedClientCert("CN=Jing Tao", sub,
-                                () -> {
+                                () -> runWithMockedDataBaseConnection(() -> {
                                     Node mockMN = getMockNode("Jing Tao");
                                     d1AdminCNUpdater.configPreregisteredMN(mockMN); // should throw exception
-                                });
+                                }));
     }
 
 
@@ -237,16 +287,19 @@ public class D1AdminCNUpdaterTest {
         Properties withProperties = new Properties();
 
         // dataone.autoRegisterMemberNode valid @ today's date
-        withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
+        withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
         try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
             withProperties)) {
             assertTrue(d1AdminCNUpdater.canChangeNodeId());
             String sub
                 = "node Id does not agree with the 'Subject CN' value in the client certificate";
-            runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub, () -> {
-                Node mockMN = getMockNode("urn:node:TestMemberNodeNEW");
-                updateMockedCN(true, () -> d1AdminCNUpdater.configPreregisteredMN(mockMN));
-            });
+            runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub,
+                                    () -> runWithMockedDataBaseConnection(() -> {
+                                        Node mockMN = getMockNode("urn:node:TestMemberNodeNEW");
+                                        updateMockedCN(true,
+                                                       () -> d1AdminCNUpdater.configPreregisteredMN(
+                                                           mockMN));
+                                    }));
         }
     }
 
@@ -282,7 +335,7 @@ public class D1AdminCNUpdaterTest {
         Properties withProperties = new Properties();
 
         // dataone.autoRegisterMemberNode valid @ today's date
-        withProperties.setProperty("dataone.autoRegisterMemberNode", LocalDate.now().toString());
+        withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)){
             assertTrue(d1AdminCNUpdater.canChangeNodeId());
@@ -458,9 +511,14 @@ public class D1AdminCNUpdaterTest {
         LeanTestUtils.setTestEnvironmentVariable(CONTAINERIZED, "true");
     }
 
+    private String getTodaysDateUTC() {
+        ZonedDateTime utc = ZonedDateTime.now(ZoneOffset.UTC);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return utc.format(formatter);
+    }
+
     @FunctionalInterface
     interface TestCode {
         void execute() throws Exception;
     }
-
 }
