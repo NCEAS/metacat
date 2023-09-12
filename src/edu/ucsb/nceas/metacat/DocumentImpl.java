@@ -64,10 +64,7 @@ import java.util.regex.Pattern;
 import javax.xml.bind.DatatypeConverter;
 
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
-import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
-import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
-import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
@@ -80,7 +77,6 @@ import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
-import edu.ucsb.nceas.metacat.spatial.SpatialHarvester;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
@@ -2104,13 +2100,6 @@ public class DocumentImpl
         ForceReplicationHandler frh = new ForceReplicationHandler(accnum,
                 action, true, null);
         logMetacat.debug("DocumentImpl.write - ForceReplicationHandler created: " + frh.toString());
-        // clear cache after inserting or updating a document
-        if (PropertyService.getProperty("database.queryCacheOn").equals("true"))
-        {
-          //System.out.println("the string stored into cache is "+ resultsetBuffer.toString());
-     	   DBQuery.clearQueryResultCache();
-        }
-
         logMetacat.info("DocumentImpl.write - Conn Usage count after writing: "
                 + conn.getUsageCount());
         return (accnum);
@@ -2279,63 +2268,10 @@ public class DocumentImpl
                 accnum, action, true, notifyServer);
           logMetacat.debug("DocumentImpl.writeReplication - ForceReplicationHandler created: " + forceReplication.toString());
         }
-        
-        // clear cache after inserting or updating a document
-        if (PropertyService.getProperty("database.queryCacheOn").equals("true"))
-        {
-          //System.out.println("the string stored into cache is "+ resultsetBuffer.toString());
-     	   DBQuery.clearQueryResultCache();
-        }
-    
         return (accnum);
     }
     
-    /* Method get document type from db */
-    private static String getDocTypeFromDBForCurrentDocument(String accnumber)
-            throws SQLException
-    {
-        String documentType = null;
-        String docid = null;
-        PreparedStatement pstate = null;
-        ResultSet rs = null;
-        String sql = "SELECT doctype FROM xml_documents where docid = ?";
-        DBConnection dbConnection = null;
-        int serialNumber = -1;
-        try {
-            //get rid of revision number
-            docid = DocumentUtil.getDocIdFromString(accnumber);
-            dbConnection = DBConnectionPool.getDBConnection(
-                    "DocumentImpl.getDocTypeFromDBForCurrentDoc");
-            serialNumber = dbConnection.getCheckOutSerialNumber();
-            pstate = dbConnection.prepareStatement(sql);
-            //bind variable
-            pstate.setString(1, docid);
-            //excute query
-            logMetacat.debug("DocumentImpl.getDocTypeFromDBForCurrentDocument - executing SQL: " + pstate.toString());
-            pstate.execute();
-            //handle resultset
-            rs = pstate.getResultSet();
-            if (rs.next()) {
-                documentType = rs.getString(1);
-            }
-            rs.close();
-            pstate.close();
-        }//try
-        catch (SQLException e) {
-            logMetacat.error("DocumentImpl.getDocTypeFromDBForCurrentDocument - SQL error: " + 
-            		e.getMessage());
-            throw e;
-        }//catch
-        finally {
-            pstate.close();
-            DBConnectionPool.returnDBConnection(dbConnection, serialNumber);
-        }//
-        logMetacat.debug("DocumentImpl.getDocTypeFromDBForCurrentDocument - The current doctype from db is: "
-                + documentType);
-        return documentType;
-    }
-
-    
+   
     /**
      * Archive an object from the xml_documents table to the xml_revision table (including other changes as well).
      * Or delete an object totally from the db. The parameter "removeAll" decides which action will be taken.
