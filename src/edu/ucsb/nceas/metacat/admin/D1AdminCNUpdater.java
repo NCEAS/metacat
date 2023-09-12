@@ -128,7 +128,7 @@ public class D1AdminCNUpdater {
             // persist the properties
             PropertyService.persistProperties();
         }
-        logMetacat.debug("PREREGISTERED UPDATE FINISHED * * *");
+        logMetacat.debug("CHANGES TO PREVIOUSLY-UNREGISTERED NODE FINISHED * * *");
     }
 
     /**
