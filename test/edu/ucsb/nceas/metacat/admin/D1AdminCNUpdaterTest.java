@@ -150,13 +150,13 @@ public class D1AdminCNUpdaterTest {
 
             // nodeId is unchanged from previous nodeId. Should be no calls to updateDBNodeIds()
             runWithMockedClientCert(
-                "CN=urn:node:TestingPreviousNodeId", null,
+                "CN=" + PREVIOUS_NODE_ID, null,
                 () -> runWithMockedDataBaseConnection(() -> {
-                    Node mockMN = getMockNode("urn:node:TestingPreviousNodeId");
+                    Node mockMN = getMockNode(PREVIOUS_NODE_ID);
                     registerWithMockedCN(true,
                                          () -> d1AdminCNUpdaterSpy.configUnregisteredMN(
                                              mockMN),
-                                         "urn:node:TestingPreviousNodeId");
+                                         PREVIOUS_NODE_ID);
                 }));
             verify(d1AdminCNUpdaterSpy, never()).updateDBNodeIds(anyString(), anyString());
 
@@ -283,7 +283,27 @@ public class D1AdminCNUpdaterTest {
 
 
     @Test(expected = AdminException.class)
-    public void configPreregisteredMN_nonMatchingClientCert() throws Exception {
+    public void configPreregisteredMN_sameNodeId_nonMatchingClientCert() throws Exception {
+        Properties withProperties = new Properties();
+
+        // dataone.autoRegisterMemberNode valid @ today's date
+        withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
+        try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
+            withProperties)) {
+            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+            String sub = "Can't push an update of Node Capabilities to the CN";
+            runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub,
+                                    () -> runWithMockedDataBaseConnection(() -> {
+                                        Node mockMN = getMockNode(PREVIOUS_NODE_ID);
+                                        updateMockedCN(true,
+                                                       () -> d1AdminCNUpdater.configPreregisteredMN(
+                                                           mockMN));
+                                    }));
+        }
+    }
+
+    @Test(expected = AdminException.class)
+    public void configPreregisteredMN_changedNodeId_nonMatchingClientCert() throws Exception {
         Properties withProperties = new Properties();
 
         // dataone.autoRegisterMemberNode valid @ today's date

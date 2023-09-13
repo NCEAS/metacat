@@ -20,7 +20,6 @@ import java.security.cert.X509Certificate;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -170,6 +169,14 @@ public class D1AdminCNUpdater {
 
         if (nodeId.equals(previousNodeId)) {
             // nodeId UNCHANGED: push an idempotent update of all other Node Capabilities to the CN
+            if (!nodeIdMatchesClientCert(nodeId)) {
+                // nodeId CHANGED, but does not match client cert
+                String msg = "configPreregisteredMN: Can't push an update of Node Capabilities to"
+                    + " the CN, because the configured node Id doesn't agree with the "
+                    + "'Subject CN' value in the client certificate";
+                logMetacat.error(msg);
+                throw new AdminException(msg);
+            }
             final String END = " an update of Member Node settings to the CN (nodeId unchanged)";
             if (updateCN(node)) {
                 logMetacat.info("configPreregisteredMN: Successfully pushed" + END);
@@ -359,10 +366,9 @@ public class D1AdminCNUpdater {
     /**
      * Send this MN's config details to the configured Coordinating Node (CN).
      *
-     *  NOTE: According to:
-     *  https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html
-     *  #CNRegister.updateNodeCapabilities
-     *
+     *  NOTE: According to: <a href=
+     *  "https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html#CNRegister.updateNodeCapabilities"
+     *          >updateNodeCapabilities() API docs</a>
      *  "For updating the capabilities of the specified node. Most information is replaced
      *  by information in the new node, however, the node identifier, nodeType, ping,
      *  synchronization.lastHarvested, and synchronization.lastCompleteHarvest are
