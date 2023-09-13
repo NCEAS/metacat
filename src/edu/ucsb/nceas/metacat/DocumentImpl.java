@@ -2061,35 +2061,6 @@ public class DocumentImpl
             conn.setAutoCommit(true);
             throw e;
         }
-
-        // Delete enteries from xml_queryresult for given docid if
-        // action is UPDATE
-        // These enteries will be created again when the docid is part of a
-        // result next time
-        if (action.equals("UPDATE")) {
-          try {
-//              PreparedStatement pstmt = null;
-//              pstmt = conn.prepareStatement(
-//                      "DELETE FROM xml_queryresult WHERE docid = ?");
-//              pstmt.setString(1, docid);
-//              pstmt.execute();
-//              pstmt.close();
-//              conn.increaseUsageCount(1);
-              try {
-                  XMLQueryresultAccess xmlQueryresultAccess = new XMLQueryresultAccess();
-                  xmlQueryresultAccess.deleteXMLQueryresulForDoc(docid);
-              } catch (AccessException ae) {
-              	throw new SQLException("Problem deleting xml query result for docid " + 
-              			docid + " : " + ae.getMessage());
-              }
-          } catch (Exception e){
-              logMetacat.error("DocumentImpl.write - Error in deleting enteries from "
-                                       + "xml_queryresult where docid is "
-                                       + docid + " in DBQuery.write: "
-                                       + e.getMessage());
-           }
-
-        }
         
         // Force replicate out the new document to each server in our server
         // list. Start the thread to replicate this new document out to the
