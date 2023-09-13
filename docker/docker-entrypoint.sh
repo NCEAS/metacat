@@ -276,7 +276,10 @@ ${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
         fi
     fi
     echo '**************************************'
+    echo "Working directory is $(pwd)"
     echo "tailing logs in: $TC_HOME/logs/*"
+    echo '**************************************'
+    echo
     exec tail -n +0 -f "$TC_HOME"/logs/*
 else
   echo "* * *  DEVTOOLS = $DEVTOOLS and ARGS = $@ "
