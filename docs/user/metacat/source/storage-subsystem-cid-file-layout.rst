@@ -345,6 +345,10 @@ Revisit the directory layout for a Git-like structure that lets us store multipl
 
    Git object storage as a hash-tree.
 
+Data Information Package (DIP) prototype
+----------------------------------------
 
-
+See the [Data Info Package](https://github.com/mbjones/dip-noodling) repo for a quick proof-of-concept on some of these ideas.
+This includes shell script functions for basic operations, such as storing a blob as a new leaf node, tagging items
+by their CID, and listing and viewing various items in a package.
 
