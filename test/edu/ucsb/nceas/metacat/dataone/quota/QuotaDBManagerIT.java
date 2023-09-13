@@ -1,63 +1,32 @@
-/**
- *    Purpose: Implements a service for managing a Hazelcast cluster member
- *  Copyright: 2020 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.dataone.quota;
+
+import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import org.dataone.bookkeeper.api.Usage;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.List;
 
-import org.dataone.bookkeeper.api.Usage;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.database.DBConnection;
-import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+public class QuotaDBManagerIT {
 
-public class QuotaDBManagerTest  extends MCTestCase {
-    
-    /**
-     * Constructor
-     * @param name  name of method will be tested
-     */
-    public QuotaDBManagerTest(String name) {
-        super(name);
+    @Before
+    public void setUp() {
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
     }
-    
-    /**
-     * Create a suite of tests to be run together
-     */
-    public static Test suite() {
-        TestSuite suite = new TestSuite();
-        suite.addTest(new QuotaDBManagerTest("testCreateUsage"));
-        suite.addTest(new QuotaDBManagerTest("testCreateUsage2"));
-        suite.addTest(new QuotaDBManagerTest("testGetUnReportedUsagesAndSetReportDate"));
-        suite.addTest(new QuotaDBManagerTest("testLookupRemoteUsageId"));
-        return suite;
-    }
-    
+
     /**
      * Test the createUsage method
      */
+    @Test
     public void testCreateUsage() throws Exception {
         //create a usage with the report date
         int quotaId =  (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue() +  (new Double (Math.random() * 100000000)).intValue();
@@ -85,7 +54,6 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getString(10) == null);
         assertTrue(rs.getString(11) == null);
         rs.close();
-        
         
         //create a usage without the report date
         quotaId =  (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue();
@@ -133,30 +101,32 @@ public class QuotaDBManagerTest  extends MCTestCase {
      * Test the getUnReportedUsages and setReportDate method.
      * @throws Exception
      */
+    @Test
     public void testGetUnReportedUsagesAndSetReportDate() throws Exception {
         ResultSet rs = QuotaDBManager.getUnReportedUsages();
         LocalUsage usage = new LocalUsage();
         int index = 0;
         int previousUsageId = -1;
-        while (rs.next() && index < 500) {
-            int usageId = rs.getInt(1);
-            System.out.println("the usage id is " + usageId);
-            assertTrue(usageId > previousUsageId); //make sure the result set is ordered by the column usage_id  acs
-            usage.setLocalId(usageId);
-            usage.setQuotaId(rs.getInt(2));
-            usage.setInstanceId(rs.getString(3));
-            usage.setQuantity(rs.getDouble(4));
-            previousUsageId = usageId;
-            index++;
+        int usageId = -1;
+        while (rs.next()) {
+            usageId = rs.getInt(1);
+            if (index < 500) {
+                System.out.println("the usage id is " + usageId);
+                //make sure the result set is ordered by the column usage_id asc
+                assertTrue(usageId > previousUsageId);
+                index++;
+            }
         }
         assertTrue(index > 0);
+        // Choosing last row in resultset, because it will have the same nodeId as the current
+        // node, whereas older entries may have been created in the past, when the node had a
+        // different nodeId...
         rs.close();
-        
-        int usageId = usage.getLocalId();
+
         rs = getResultSet(usageId);
         assertTrue(rs.next());
-        assertTrue(rs.getInt(1) == usageId);
-        assertTrue(rs.getTimestamp(5) == null);
+        assertEquals(rs.getInt(1), usageId);
+        assertNull(rs.getTimestamp(5));
         rs.close();
         
         Date now = new Date();
@@ -164,10 +134,10 @@ public class QuotaDBManagerTest  extends MCTestCase {
         QuotaDBManager.setReportedDateAndRemoteId(usageId, now, remoteId);
         rs = getResultSet(usageId);
         assertTrue(rs.next());
-        assertTrue(rs.getInt(1) == usageId);
-        assertTrue(rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))) == 0);
-        assertTrue(rs.getInt(7) == remoteId);
-        assertTrue(rs.getString(8).equals(QuotaService.nodeId));
+        assertEquals(rs.getInt(1), usageId);
+        assertEquals(0, rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))));
+        assertEquals(rs.getInt(7), remoteId);
+        assertEquals(rs.getString(8), QuotaService.nodeId);
         rs.close();
     }
     
@@ -175,6 +145,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
      * Test the lookupRemoteUsageId method.
      * @throws Exception
      */
+    @Test
     public void testLookupRemoteUsageId() throws Exception {
         //create a usage with the report date
         int quotaId =  (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue() +  (new Double (Math.random() * 100000000)).intValue();
@@ -282,6 +253,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
      * Test the createUsage method for cases which don't quota id, instead, they have subscriber and quota type
      * @throws Exception
      */
+    @Test
     public void testCreateUsage2() throws Exception {
         String subscriber = "subscriber-" + (new Double (Math.random() * 100000000)).intValue();
         String requestor = "requestor-" + (new Double (Math.random() * 100000000)).intValue();

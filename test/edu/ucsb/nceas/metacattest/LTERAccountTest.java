@@ -38,7 +38,7 @@ import junit.framework.TestSuite;
  * @author tao
  *
  */
-public class LTERAccountTest extends MetaCatServletTest{
+public class LTERAccountTest extends MetaCatServletIT {
     /**
      * Constructor to build the test
      * 
