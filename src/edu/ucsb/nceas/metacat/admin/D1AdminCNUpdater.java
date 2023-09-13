@@ -480,6 +480,7 @@ public class D1AdminCNUpdater {
      *
      * @param nodeId This node's ID
      * @return true if already registered; false otherwise
+     * @implNote package-private to allow unit testing
      */
     boolean isNodeRegistered(String nodeId) {
         // check if this is new or an update
@@ -507,6 +508,7 @@ public class D1AdminCNUpdater {
      * @param existingMemberNodeId the previous member node id
      * @param newMemberNodeId      the new member node id
      * @throws AdminException if a problem is encountered
+     * @implNote package-private to allow unit testing
      */
     void updateDBNodeIds(String existingMemberNodeId, String newMemberNodeId) throws AdminException {
         logMetacat.debug(
@@ -528,6 +530,7 @@ public class D1AdminCNUpdater {
      * @param existingMemberNodeId the previous member node id
      * @param newMemberNodeId      the new member node id
      * @throws AdminException if a problem is encountered
+     * @implNote package-private to allow unit testing
      */
     int updateAuthoritativeMemberNodeId(
         String existingMemberNodeId, String newMemberNodeId) throws AdminException {
@@ -564,6 +567,7 @@ public class D1AdminCNUpdater {
      *
      * @param nodeId the nodeId to be saved
      * @throws AdminException if a problem is encountered
+     * @implNote package-private to allow unit testing
      */
     void saveNewNodeIdRevision(String nodeId) throws AdminException {
         if (nodeId == null || nodeId.isEmpty()) {
@@ -604,6 +608,12 @@ public class D1AdminCNUpdater {
         }
     }
 
+    /**
+     * Determine whether metacat is running in a containerized/kubernetes environment, by
+     * checking for the environment variable `METACAT_IS_RUNNING_IN_A_CONTAINER` being set to `true`
+     *
+     * @return true if metacat is running in a containerized/kubernetes environment; false otherwise
+     */
     public static boolean isMetacatRunningInAContainer() {
         return Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
     }
