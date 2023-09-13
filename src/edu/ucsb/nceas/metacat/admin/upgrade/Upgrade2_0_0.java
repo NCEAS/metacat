@@ -39,10 +39,6 @@ public class Upgrade2_0_0 implements UpgradeUtilityInterface {
         UpgradeEmptyReplicatedDataFile emptyDataUpgrader = new UpgradeEmptyReplicatedDataFile();
         success = emptyDataUpgrader.upgrade();
         
-        // node data datetime
-        UpgradeNodeDataDatetime dateTimeUpgrade = new UpgradeNodeDataDatetime();
-        success = success && dateTimeUpgrade.upgrade();
-        
         // Optionally upgrade GUIDs to use DOI syntax if configured
         GenerateGlobalIdentifiers globalIDUpgrade = new GenerateGlobalIdentifiers();
         success = success && globalIDUpgrade.upgrade();
