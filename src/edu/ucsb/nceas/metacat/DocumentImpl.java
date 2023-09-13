@@ -196,8 +196,6 @@ public class DocumentImpl
     private String docHomeServer;
     private String publicaccess;
     protected long rootnodeid;
-    private ElementNode rootNode = null;
-    private TreeSet<NodeRecord> nodeRecordList = null;
   
     private static Log logMetacat = LogFactory.getLog(DocumentImpl.class);
     private static Log logReplication = LogFactory.getLog("ReplicationLogging");
