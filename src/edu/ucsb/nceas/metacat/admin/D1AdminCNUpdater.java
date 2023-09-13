@@ -16,6 +16,8 @@ import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.cert.X509Certificate;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -170,7 +172,6 @@ public class D1AdminCNUpdater {
         if (nodeId.equals(previousNodeId)) {
             // nodeId UNCHANGED: push an idempotent update of all other Node Capabilities to the CN
             if (!nodeIdMatchesClientCert(nodeId)) {
-                // nodeId CHANGED, but does not match client cert
                 String msg = "configPreregisteredMN: Can't push an update of Node Capabilities to"
                     + " the CN, because the configured node Id doesn't agree with the "
                     + "'Subject CN' value in the client certificate";
@@ -234,31 +235,40 @@ public class D1AdminCNUpdater {
      */
     boolean nodeIdMatchesClientCert(String nodeId) {
 
-        X509Certificate clientCert = CertificateManager.getInstance().loadCertificate();
-        String certSubject = CertificateManager.getInstance().getSubjectDN(clientCert);
-        logMetacat.debug(
-            "nodeIdMatchesClientCert() received nodeId: " + nodeId + ". Client cert 'Subject:' "
-                + certSubject);
-        if (certSubject == null || !certSubject.startsWith("CN=")) {
-            logMetacat.error("nodeIdMatchesClientCert(): Client cert 'Subject:' (" + certSubject
-                                 + ") must begin with 'CN='. returning FALSE");
-            return false;
-        }
-        // Subject is of the form: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org", so the commonName
-        // will be the part between the end of "CN="...
-        final int start = 3;
-        // ... and the first comma:
-        int firstComma = certSubject.indexOf(",", start);
-        firstComma = (firstComma < start) ? certSubject.length() : firstComma; // in case no commas
-        String commonName = certSubject.substring(start, firstComma);
-        boolean matches = commonName.equals(nodeId);
-        String msg =
-            "nodeIdMatchesClientCert(): " + String.valueOf(matches).toUpperCase() + "! (nodeId: "
-                + nodeId + "; Common Name (CN) from client cert: " + commonName;
-        if (matches) {
-            logMetacat.info(msg);
+        boolean matches;
+        String certPath = CertificateManager.getInstance().getCertificateLocation();
+        if (certPath==null || !Files.isReadable(Paths.get(certPath))) {
+            logMetacat.error(
+                "nodeIdMatchesClientCert(): No Client cert found at location: " + certPath);
+            matches = false;
         } else {
-            logMetacat.error(msg);
+            X509Certificate clientCert = CertificateManager.getInstance().loadCertificate();
+            String certSubject = CertificateManager.getInstance().getSubjectDN(clientCert);
+            logMetacat.debug(
+                "nodeIdMatchesClientCert() received nodeId: " + nodeId + ". Client cert 'Subject:' "
+                    + certSubject);
+            if (certSubject == null || !certSubject.startsWith("CN=")) {
+                logMetacat.error("nodeIdMatchesClientCert(): Client cert 'Subject:' (" + certSubject
+                                     + ") must begin with 'CN='. returning FALSE");
+                return false;
+            }
+            // Subject is of the form: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org", so the
+            // commonName
+            // will be the part between the end of "CN="...
+            final int start = 3;
+            // ... and the first comma:
+            int firstComma = certSubject.indexOf(",", start);
+            firstComma =
+                (firstComma < start) ? certSubject.length() : firstComma; // in case no commas
+            String commonName = certSubject.substring(start, firstComma);
+            matches = commonName.equals(nodeId);
+            String msg = "nodeIdMatchesClientCert(): " + String.valueOf(matches).toUpperCase()
+                + "! (nodeId: " + nodeId + "; Common Name (CN) from client cert: " + commonName;
+            if (matches) {
+                logMetacat.info(msg);
+            } else {
+                logMetacat.error(msg);
+            }
         }
         return matches;
     }

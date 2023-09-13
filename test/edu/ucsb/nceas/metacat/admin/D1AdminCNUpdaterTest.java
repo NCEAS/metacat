@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.nio.file.Files;
 import java.security.cert.X509Certificate;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -281,6 +282,25 @@ public class D1AdminCNUpdaterTest {
                                 }));
     }
 
+    @Test(expected = AdminException.class)
+    public void configPreregisteredMN_sameNodeId_notFoundClientCert() throws Exception {
+        Properties withProperties = new Properties();
+
+        // dataone.autoRegisterMemberNode valid @ today's date
+        withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
+        try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
+            withProperties)) {
+            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+            String sub = "Can't push an update of Node Capabilities to the CN";
+            runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub,
+                                    () -> runWithMockedDataBaseConnection(() -> {
+                                        Node mockMN = getMockNode(PREVIOUS_NODE_ID);
+                                        updateMockedCN(true,
+                                                       () -> d1AdminCNUpdater.configPreregisteredMN(
+                                                           mockMN));
+                                    }), "/not/a/real/cert/location.pem");
+        }
+    }
 
     @Test(expected = AdminException.class)
     public void configPreregisteredMN_sameNodeId_nonMatchingClientCert() throws Exception {
@@ -468,6 +488,11 @@ public class D1AdminCNUpdaterTest {
 
     private void runWithMockedClientCert(String subjDN, String expectedExceptionSubstring,
                                          TestCode testCode) throws Exception {
+        runWithMockedClientCert(subjDN, expectedExceptionSubstring, testCode, null);
+    }
+
+    private void runWithMockedClientCert(String subjDN, String expectedExceptionSubstring,
+                                         TestCode testCode, String nonDefaultCertLocation) throws Exception {
         try (MockedStatic<CertificateManager> ignored
                  = Mockito.mockStatic(CertificateManager.class)) {
             CertificateManager mockCertMgr = Mockito.mock(CertificateManager.class);
@@ -475,8 +500,17 @@ public class D1AdminCNUpdaterTest {
             X509Certificate mockClientCert = Mockito.mock(X509Certificate.class);
             Mockito.when(mockCertMgr.loadCertificate()).thenReturn(mockClientCert);
             Mockito.when(mockCertMgr.getSubjectDN(any())).thenReturn(subjDN);
-
-            testCode.execute();
+            if (nonDefaultCertLocation == null) {
+                Mockito.when(mockCertMgr.getCertificateLocation()).thenReturn("/VALID/CERT.PEM");
+                try (MockedStatic<Files> ignored2 = Mockito.mockStatic(Files.class)) {
+                    Mockito.when(Files.isReadable(any())).thenReturn(true);
+                    testCode.execute();
+                }
+            } else {
+                Mockito.when(mockCertMgr.getCertificateLocation())
+                    .thenReturn(nonDefaultCertLocation);
+                testCode.execute();
+            }
         } catch (Exception expectedException) {
             expectedExceptionSubstring = (expectedExceptionSubstring == null)?
                                          "SET ME!!" : expectedExceptionSubstring;
