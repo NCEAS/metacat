@@ -49,6 +49,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.DBAdmin;
+import edu.ucsb.nceas.metacat.database.DBVersion;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -333,7 +336,10 @@ public class MetaCatServlet extends HttpServlet {
 	 *            the servlet context of MetaCatServlet
 	 */
 	public void initSecondHalf(ServletContext context) throws ServletException {
-		try {			
+		try {
+			// Always check & auto-update DB if running in Kubernetes
+			initializeContainerizedDBConfiguration();
+
 			ServiceService.registerService("DatabaseService", DatabaseService.getInstance());
 			
 			// initialize DBConnection pool
@@ -468,7 +474,7 @@ public class MetaCatServlet extends HttpServlet {
             throw new ServletException(errorMessage);
         } 
 	}
-    
+
     /**
 	 * Close all db connections from the pool
 	 */
@@ -1251,4 +1257,63 @@ public class MetaCatServlet extends HttpServlet {
 			// Schedule the sitemap generator to run periodically
 			handler.scheduleSitemapGeneration();
 		}
+
+
+	/**
+	 * Check if we're running in a container/Kubernetes, and if so, call the DBAdmin code to
+	 * check for and perform any database updates that may be necessary.
+	 *
+	 * If this is a legacy deployment (i.e. not containerized/k8s), this method does nothing, since
+	 * database updates are performed manually, via the admin pages.
+	 *
+	 * @throws ServletException if updates were unsuccessful
+	 */
+	void initializeContainerizedDBConfiguration() throws ServletException {
+		if (isContainerized()) {
+			logMetacat.info("Running in a container; checking for necessary database updates...");
+			MetacatVersion metacatVersion;
+			DBVersion dbVersion;
+			String mcVerStr = "NULL";
+			String dbVerStr = "NULL";
+			try {
+				metacatVersion = SystemUtil.getMetacatVersion();
+				mcVerStr = metacatVersion.getVersionString();
+				dbVersion = DBAdmin.getInstance().getDBVersion();
+				dbVerStr = dbVersion.getVersionString();
+				if (metacatVersion.compareTo(dbVersion) == 0) {
+					// ALREADY UPGRADED
+					logMetacat.info("initializeContainerisedDBConfiguration(): NO DATABASE "
+										+ "UPDATES REQUIRED, since database version (" + dbVerStr
+										+ ") matches metacat version (" + mcVerStr + ").");
+				} else {
+					// NEEDS UPGRADE
+					logMetacat.info("initializeContainerisedDBConfiguration(): UPDATING DATABASE, "
+										+ "since database version (" + dbVerStr
+										+ ") is behind Metacat version (" + mcVerStr + ").");
+					DBAdmin.getInstance().upgradeDatabase();
+				}
+			} catch (AdminException | PropertyNotFoundException e) {
+				String msg =
+					"initializeContainerisedDBConfiguration(): error getting metacat version ("
+						+ mcVerStr + ") or database version (" + dbVerStr + "). Error was: "
+						+ e.getMessage();
+				logMetacat.error(msg, e);
+				ServletException se = new ServletException(msg, e);
+				se.fillInStackTrace();
+				throw se;
+			}
+		} else {
+			logMetacat.info("NOT Running in a container; no automatic database updates");
+		}
+	}
+
+	/**
+	 * checks the environment variable "METACAT_IS_RUNNING_IN_A_CONTAINER", set by the helm
+	 * chart, to determine if this instance is running in Kubernetes
+	 *
+	 * @return true if this instance is running in a container; false otherwise
+	 */
+	boolean isContainerized() {
+		return Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
+	}
 }
