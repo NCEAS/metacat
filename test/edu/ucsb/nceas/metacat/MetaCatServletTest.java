@@ -4,7 +4,6 @@ import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.admin.D1Admin;
 import org.apache.commons.configuration.Configuration;
 import org.dataone.configuration.Settings;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -58,7 +57,8 @@ public class MetaCatServletTest {
             // read-only
             Mockito.when(mockD1Config.getString("application.readOnlyMode")).thenReturn("true");
             assertTrue(MetaCatServlet.isReadOnly(mockResponse));
-            assertTrue(stringWriter.toString().contains("Metacat is in read-only mode"));
+            assertTrue("Actual response was: " + stringWriter.toString(),
+                       stringWriter.toString().contains("Metacat is in read-only mode"));
         }
     }
 
