@@ -1,24 +1,18 @@
 package edu.ucsb.nceas.metacat.admin;
 
-import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
-import org.dataone.client.v2.CNode;
-import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.types.v1.NodeReference;
-import org.dataone.service.types.v1.Session;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v2.Node;
-import org.dataone.service.types.v2.NodeList;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,13 +25,13 @@ import java.util.Vector;
 public class D1Admin extends MetacatAdmin {
 
     private static D1Admin instance = null;
-    private Log logMetacat = LogFactory.getLog(D1Admin.class);
+    private final Log logMetacat = LogFactory.getLog(D1Admin.class);
+    private final D1AdminCNUpdater d1AdminCNUpdater = D1AdminCNUpdater.getInstance();
 
     /**
      * private constructor since this is a singleton
      */
-    private D1Admin() throws AdminException {
-
+    private D1Admin() {
     }
 
     /**
@@ -142,6 +136,9 @@ public class D1Admin extends MetacatAdmin {
                 request.setAttribute(
                     "dataone.replicationpolicy.default.blockedNodeList", blockedNodeList);
 
+                // support email for error messaging
+                request.setAttribute(
+                    "supportEmail", PropertyService.getProperty("email.recipient"));
 
                 // try the backup properties
                 SortedProperties backupProperties = null;
@@ -162,7 +159,7 @@ public class D1Admin extends MetacatAdmin {
 
                 // do we know if this is an update, pending verification, or a new registration?
                 memberNodeId = (String) request.getAttribute("dataone.nodeId");
-                boolean update = isNodeRegistered(memberNodeId);
+                boolean update = d1AdminCNUpdater.isNodeRegistered(memberNodeId);
                 request.setAttribute("dataone.isUpdate", Boolean.toString(update));
                 request.setAttribute(
                     "dataone.mn.registration.submitted", PropertyService.getProperty(
@@ -336,9 +333,6 @@ public class D1Admin extends MetacatAdmin {
                     PropertyService.setPropertyNoPersist(
                         "dataone.mn.services.enabled", Boolean.toString(servicesEnabled));
 
-                    // get the current node id, so we know if we updated the value
-                    String existingMemberNodeId = PropertyService.getProperty("dataone.nodeId");
-
                     // update the property value
                     PropertyService.setPropertyNoPersist("dataone.nodeId", memberNodeId);
 
@@ -350,25 +344,16 @@ public class D1Admin extends MetacatAdmin {
                     PropertyService.persistMainBackupProperties();
 
                     // Register/update as a DataONE Member Node
-                    registerDataONEMemberNode();
-
-                    // did we end up changing the member node id from what it used to be?
-                    if (!existingMemberNodeId.equals(memberNodeId)) {
-                        // update all existing system Metadata for this node id
-                        IdentifierManager.getInstance()
-                            .updateAuthoritativeMemberNodeId(existingMemberNodeId, memberNodeId);
-                    }
+                    upRegD1MemberNode();
 
                     // dataone system metadata generation:
                     // we can generate this after the registration/configuration
                     // it will be more controlled and deliberate that way -BRL
 
-
                     // write the backup properties to a location outside the
                     // application directories, so they will be available after
                     // the next upgrade
                     PropertyService.persistMainBackupProperties();
-
                 }
             } catch (GeneralPropertyException gpe) {
                 String errorMessage =
@@ -414,61 +399,42 @@ public class D1Admin extends MetacatAdmin {
         }
     }
 
-    private boolean isNodeRegistered(String nodeId) {
-        // check if this is new or an update
-        boolean exists = false;
-        try {
-            NodeList nodes = D1Client.getCN().listNodes();
-            for (Node n : nodes.getNodeList()) {
-                if (n.getIdentifier().getValue().equals(nodeId)) {
-                    exists = true;
-                    break;
-                }
-            }
-        } catch (BaseException e) {
-            logMetacat.error(
-                "Could not check for node with DataONE (" + e.getCode() + "/" + e.getDetail_code()
-                    + "): " + e.getDescription());
-        }
-        return exists;
-    }
-
     /**
-     * Register as a member node on the DataONE network.  The node description is retrieved from the
-     * getCapabilities() service, and so this should only be called after the properties have been
-     * properly set up in Metacat.
+     * upReg: Either update ("up") or register ("reg") DataONE Member Node (MN) config, depending
+     * upon whether this Metacat instance is already registered as a DataONE MN. Registration is
+     * carried out only if the operator has indicated that registration is required.
+     *
+     * NOTE: The node description is retrieved from the getCapabilities() service, and so this
+     * should only be called after the properties have been properly set up in Metacat.
      */
-    private void registerDataONEMemberNode()
-        throws BaseException, PropertyNotFoundException, GeneralPropertyException {
+    public void upRegD1MemberNode() throws GeneralPropertyException, AdminException {
 
         logMetacat.debug("Get the Node description.");
-        Node node = MNodeService.getInstance(null).getCapabilities();
-        logMetacat.debug("Setting client certificate location.");
+        Node node = null;
+        try {
+            node = MNodeService.getInstance(null).getCapabilities();
+        } catch (ServiceFailure e) {
+            String msg
+                = "upRegD1MemberNode(): ServiceFailure calling MNodeService::getCapabilities: "
+                + e.getMessage();
+            logMetacat.error(msg, e);
+            AdminException ae = new AdminException(msg);
+            ae.initCause(e);
+            ae.fillInStackTrace();
+            throw ae;
+        }
         String mnCertificatePath = PropertyService.getProperty("D1Client.certificate.file");
         CertificateManager.getInstance().setCertificateLocation(mnCertificatePath);
-        CNode cn = D1Client.getCN(PropertyService.getProperty("D1Client.CN_URL"));
+        logMetacat.debug("DataONE MN Client certificate set: " + mnCertificatePath);
 
         // check if this is new or an update
-        boolean update = isNodeRegistered(node.getIdentifier().getValue());
-
-        // Session is null, because the libclient code automatically sets up an
-        // SSL session for us using the client certificate provided
-        Session session = null;
-        if (update) {
-            logMetacat.debug("Updating node with DataONE. " + cn.getNodeBaseServiceUrl());
-            boolean result = cn.updateNodeCapabilities(session, node.getIdentifier(), node);
+        if (d1AdminCNUpdater.isNodeRegistered(node.getIdentifier().getValue())) {
+            logMetacat.info("* * * Handling config changes: PREREGISTERED D1 MEMBER NODE...");
+            d1AdminCNUpdater.configPreregisteredMN(node);
         } else {
-            logMetacat.debug("Registering node with DataONE. " + cn.getNodeBaseServiceUrl());
-            NodeReference mnodeRef = cn.register(session, node);
-
-            // save that we submitted registration
-            PropertyService.setPropertyNoPersist(
-                "dataone.mn.registration.submitted", Boolean.TRUE.toString());
-
-            // persist the properties
-            PropertyService.persistProperties();
+            logMetacat.info("* * * Handling config changes: UNREGISTERED D1 MEMBER NODE...");
+            d1AdminCNUpdater.configUnregisteredMN(node);
         }
-
     }
 
     /**
@@ -476,6 +442,7 @@ public class D1Admin extends MetacatAdmin {
      *
      * @return a vector holding error message for any fields that fail validation.
      */
+    @Override
     protected Vector<String> validateOptions(HttpServletRequest request) {
         Vector<String> errorVector = new Vector<String>();
 
@@ -483,4 +450,5 @@ public class D1Admin extends MetacatAdmin {
 
         return errorVector;
     }
+
 }

@@ -27,7 +27,7 @@ import java.util.Set;
 
 /**
  * <p>
- * CoreRequirementsListener is a ServletContextListener that is called automatically by the servlet
+ * An implementation of ServletContextListener that is called automatically by the servlet
  * container on startup, and used to verify that we have the essential components in place for
  * Metacat to run successfully.
  * </p><p>

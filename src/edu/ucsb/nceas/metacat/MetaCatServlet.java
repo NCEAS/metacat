@@ -49,6 +49,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.D1Admin;
+import edu.ucsb.nceas.metacat.admin.D1AdminCNUpdater;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -435,6 +438,8 @@ public class MetaCatServlet extends HttpServlet {
 			
 			// initialize the HazelcastService
 			ServiceService.registerService("HazelcastService", HazelcastService.getInstance());
+
+			initializeContainerizedD1Admin();
 
 			_fullyInitialized = true;
 			
@@ -1232,7 +1237,7 @@ public class MetaCatServlet extends HttpServlet {
             response.setContentType("text/xml");
             out.println("<?xml version=\"1.0\"?>");
             out.println("<error>");
-            out.println("The Metacat is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            out.println("Metacat is in read-only mode and your request can't be fulfilled. Please try again later.");
             out.println("</error>");
             out.close();
         }
@@ -1251,4 +1256,31 @@ public class MetaCatServlet extends HttpServlet {
 			// Schedule the sitemap generator to run periodically
 			handler.scheduleSitemapGeneration();
 		}
+
+	/**
+	 * Check if we're running in a container/Kubernetes, and if so, call the D1Admin
+	 * upRegD1MemberNode() method to handle DataONE Member Node registration or updates that may
+	 * be necessary.
+	 * If this is a legacy deployment (i.e. not containerized/k8s), this method does nothing, since
+	 * Member Node updates are performed manually, via the admin pages.
+	 *
+	 * @throws ServletException if MN updates were unsuccessful
+	 */
+	void initializeContainerizedD1Admin() throws ServletException {
+		if (D1AdminCNUpdater.isMetacatRunningInAContainer()) {
+			logMetacat.info("Running in a container; calling D1Admin::upRegD1MemberNode");
+			try {
+				D1Admin.getInstance().upRegD1MemberNode();
+			} catch (GeneralPropertyException | AdminException e) {
+				String msg = "initializeContainerizedD1Admin(): error calling "
+					+ "D1Admin.getInstance().upRegD1MemberNode: " + e.getMessage();
+				logMetacat.error(msg, e);
+				ServletException se = new ServletException(msg, e);
+				se.fillInStackTrace();
+				throw se;
+			}
+		} else {
+			logMetacat.info("NOT Running in a container; no automatic D1MemberNode updates");
+		}
+	}
 }
