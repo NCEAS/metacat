@@ -12,12 +12,57 @@ CREATE TABLE node_id_revisions (
 );
 
 /*
- * Drop some unneeded constraint in the xml_revsions table
+ * Drop some unneeded constraint in the xml_revisions table
  */
-alter table xml_revisions drop constraint if exists xml_revisions_root_fk;
+ALTER TABLE xml_revisions DROP CONSTRAINT IF EXISTS xml_revisions_root_fk;
 
+/*
+ * Drop some unneeded constraint and index in the xml_documents table
+ */
+ALTER TABLE xml_documents DROP CONSTRAINT IF EXISTS xml_documents_root_fk;
+DROP INDEX IF EXISTS xml_documents_idx3;
+DROP INDEX IF EXISTS xml_documents_idx4;
+CREATE INDEX IF NOT EXISTS xml_documents_idx6 ON xml_documents (docid);
+
+/*
+ * Drop the xml_path_index table
+ */
+DROP SEQUENCE IF EXISTS xml_path_index_id_seq;
+DROP TABLE IF EXISTS xml_path_index;
+
+/*
+ * Drop the xml_queryresult table
+ */
+DROP SEQUENCE IF EXISTS xml_queryresult_id_seq;
+DROP TABLE IF EXISTS xml_queryresult;
+
+/*
+ * Drop the xml_returnfield table
+ */
+DROP SEQUENCE IF EXISTS xml_returnfield_id_seq;
+DROP TABLE IF EXISTS xml_returnfield;
+
+/*
+ * Drop the xml_accesssubtree table
+ */
+DROP TABLE IF EXISTS xml_accesssubtree;
+
+/*
+ * Drop the xml_index table
+ */
+DROP TABLE IF EXISTS xml_index;
+
+/*
+ * Drop the xml_nodes_revisions table
+ */
+DROP TABLE IF EXISTS xml_nodes_revisions;
+
+/*
+ * Drop the xml_nodes table
+ */
+DROP SEQUENCE IF EXISTS xml_nodes_id_seq;
+DROP TABLE IF EXISTS xml_nodes;
  
-
 /*
  * update the database version
  */
