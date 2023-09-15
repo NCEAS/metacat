@@ -49,9 +49,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import edu.ucsb.nceas.metacat.admin.AdminException;
-import edu.ucsb.nceas.metacat.admin.DBAdmin;
-import edu.ucsb.nceas.metacat.database.DBVersion;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -1241,7 +1238,7 @@ public class MetaCatServlet extends HttpServlet {
             response.setContentType("text/xml");
             out.println("<?xml version=\"1.0\"?>");
             out.println("<error>");
-            out.println("The Metacat is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            out.println("Metacat is in read-only mode and your request can't be fulfilled. Please try again later.");
             out.println("</error>");
             out.close();
         }
@@ -1260,4 +1257,5 @@ public class MetaCatServlet extends HttpServlet {
 			// Schedule the sitemap generator to run periodically
 			handler.scheduleSitemapGeneration();
 		}
+
 }
