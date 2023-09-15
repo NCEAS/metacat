@@ -99,6 +99,7 @@ CREATE TABLE xml_documents (
 CREATE INDEX xml_documents_idx1 ON xml_documents (docid, doctype);
 CREATE INDEX xml_documents_idx2 ON xml_documents (lower(user_owner));
 CREATE INDEX xml_documents_idx5 ON xml_documents (docid, rev);
+CREATE INDEX xml_documents_idx6 ON xml_documents (docid);
 
 /*
  * Revised Documents -- table to store XML documents saved after an UPDATE
