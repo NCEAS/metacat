@@ -341,7 +341,7 @@ public class MetaCatServlet extends HttpServlet {
 			DBConnectionPool connPool = DBConnectionPool.getInstance();
 			logMetacat.debug("MetaCatServlet.initSecondHalf - DBConnection pool initialized: " + connPool.toString());
 
-			// Always check & auto-update DB if running in Kubernetes
+			// Always check & auto-update DB and MN settings if running in Kubernetes
 			if (Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"))) {
 				K8sAdminInitializer.initializeK8sInstance();
 			}
