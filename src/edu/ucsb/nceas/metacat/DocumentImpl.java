@@ -2404,21 +2404,6 @@ public class DocumentImpl
                 }
                 double afterArchiveDocAndNode = System.currentTimeMillis()/1000;
                 logMetacat.info("DocumentImpl.delete - The time for archiveDocAndNodesRevision is "+(afterArchiveDocAndNode - start));
-                // Now delete it from xml_access table
-                /*************** DO NOT DELETE ACCESS - need to archive this ******************/
-                double afterDeleteXmlAccess2 = System.currentTimeMillis()/1000;
-                /******* END DELETE ACCESS *************/            
-                
-                logMetacat.info("DocumentImpl.delete - deleting from xml_accesssubtree");
-                // Delete it from xml_accesssubtree table
-                pstmt = conn.prepareStatement("DELETE FROM xml_accesssubtree WHERE docid = ?");
-                //increase usage count
-                pstmt.setString(1, docid);
-                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                pstmt.execute();
-                pstmt.close();
-                conn.increaseUsageCount(1);
-
                 // Delete it from xml_documents table
                 logMetacat.info("DocumentImpl.delete - deleting from xml_documents");
                 pstmt = conn.prepareStatement("DELETE FROM xml_documents WHERE docid = ?");
