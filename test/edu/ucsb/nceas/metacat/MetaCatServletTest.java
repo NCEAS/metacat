@@ -1,7 +1,5 @@
 package edu.ucsb.nceas.metacat;
 
-import edu.ucsb.nceas.LeanTestUtils;
-import edu.ucsb.nceas.metacat.admin.D1Admin;
 import org.apache.commons.configuration.Configuration;
 import org.dataone.configuration.Settings;
 import org.junit.Before;
@@ -32,13 +30,6 @@ import static org.junit.Assert.*;
  */
 public class MetaCatServletTest {
 
-    private MetaCatServlet mcServlet;
-
-    @Before
-    public void setUp() throws Exception {
-        mcServlet = new MetaCatServlet();
-    }
-
     @Test
     public void isReadOnly() throws IOException {
         HttpServletResponse mockResponse = Mockito.mock(HttpServletResponse.class);
@@ -59,32 +50,6 @@ public class MetaCatServletTest {
             assertTrue(MetaCatServlet.isReadOnly(mockResponse));
             assertTrue("Actual response was: " + stringWriter.toString(),
                        stringWriter.toString().contains("Metacat is in read-only mode"));
-        }
-    }
-
-    @Test
-    public void initializeContainerizedD1Admin() throws Exception {
-
-        final String CONTAINERIZED = "METACAT_IS_RUNNING_IN_A_CONTAINER";
-
-        try (MockedStatic<D1Admin> ignored = Mockito.mockStatic(D1Admin.class)) {
-            D1Admin mockD1Admin = Mockito.mock(D1Admin.class);
-            Mockito.when(D1Admin.getInstance()).thenReturn(mockD1Admin);
-            Mockito.doNothing().when(mockD1Admin).upRegD1MemberNode();
-
-            // K8s mode
-            LeanTestUtils.setTestEnvironmentVariable(CONTAINERIZED, "true");
-            mcServlet.initializeContainerizedD1Admin();
-
-            // Verify that upRegD1MemberNode() was called
-            Mockito.verify(mockD1Admin, Mockito.times(1)).upRegD1MemberNode();
-
-            // Legacy mode
-            LeanTestUtils.setTestEnvironmentVariable(CONTAINERIZED, "false");
-            mcServlet.initializeContainerizedD1Admin();
-
-            // Verify that upRegD1MemberNode() was not called again (should still be 1)
-            Mockito.verify(mockD1Admin, Mockito.times(1)).upRegD1MemberNode();
         }
     }
 }

@@ -49,9 +49,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import edu.ucsb.nceas.metacat.admin.AdminException;
-import edu.ucsb.nceas.metacat.admin.D1Admin;
-import edu.ucsb.nceas.metacat.admin.D1AdminCNUpdater;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,6 +72,7 @@ import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.spatial.SpatialHarvester;
+import edu.ucsb.nceas.metacat.startup.K8sAdminInitializer;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -336,13 +334,18 @@ public class MetaCatServlet extends HttpServlet {
 	 *            the servlet context of MetaCatServlet
 	 */
 	public void initSecondHalf(ServletContext context) throws ServletException {
-		try {			
+		try {
 			ServiceService.registerService("DatabaseService", DatabaseService.getInstance());
 			
 			// initialize DBConnection pool
 			DBConnectionPool connPool = DBConnectionPool.getInstance();
 			logMetacat.debug("MetaCatServlet.initSecondHalf - DBConnection pool initialized: " + connPool.toString());
-			
+
+			// Always check & auto-update DB and MN settings if running in Kubernetes
+			if (Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"))) {
+				K8sAdminInitializer.initializeK8sInstance();
+			}
+
 			// register the XML schema service
 			ServiceService.registerService("XMLSchemaService", XMLSchemaService.getInstance());
 			
@@ -439,8 +442,6 @@ public class MetaCatServlet extends HttpServlet {
 			// initialize the HazelcastService
 			ServiceService.registerService("HazelcastService", HazelcastService.getInstance());
 
-			initializeContainerizedD1Admin();
-
 			_fullyInitialized = true;
 			
 			logMetacat.warn("MetaCatServlet.initSecondHalf - Metacat (" + MetacatVersion.getVersionID()
@@ -473,7 +474,7 @@ public class MetaCatServlet extends HttpServlet {
             throw new ServletException(errorMessage);
         } 
 	}
-    
+
     /**
 	 * Close all db connections from the pool
 	 */
@@ -1257,30 +1258,4 @@ public class MetaCatServlet extends HttpServlet {
 			handler.scheduleSitemapGeneration();
 		}
 
-	/**
-	 * Check if we're running in a container/Kubernetes, and if so, call the D1Admin
-	 * upRegD1MemberNode() method to handle DataONE Member Node registration or updates that may
-	 * be necessary.
-	 * If this is a legacy deployment (i.e. not containerized/k8s), this method does nothing, since
-	 * Member Node updates are performed manually, via the admin pages.
-	 *
-	 * @throws ServletException if MN updates were unsuccessful
-	 */
-	void initializeContainerizedD1Admin() throws ServletException {
-		if (D1AdminCNUpdater.isMetacatRunningInAContainer()) {
-			logMetacat.info("Running in a container; calling D1Admin::upRegD1MemberNode");
-			try {
-				D1Admin.getInstance().upRegD1MemberNode();
-			} catch (GeneralPropertyException | AdminException e) {
-				String msg = "initializeContainerizedD1Admin(): error calling "
-					+ "D1Admin.getInstance().upRegD1MemberNode: " + e.getMessage();
-				logMetacat.error(msg, e);
-				ServletException se = new ServletException(msg, e);
-				se.fillInStackTrace();
-				throw se;
-			}
-		} else {
-			logMetacat.info("NOT Running in a container; no automatic D1MemberNode updates");
-		}
-	}
 }
