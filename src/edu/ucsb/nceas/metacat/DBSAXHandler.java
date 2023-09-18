@@ -63,7 +63,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         DeclHandler
 {
-    public final static long NODE_ID =1;
+    public final static long NODE_ID = -1;
     
     protected boolean atFirstElement;
 
