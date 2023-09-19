@@ -53,17 +53,16 @@ public class K8sAdminInitializer {
     }
 
     /**
-     * Checks the environment variable "METACAT_IS_RUNNING_IN_A_CONTAINER", set by the helm chart,
+     * Checks the environment variable "METACAT_IN_K8S", set by the helm chart,
      * to verify that this instance is running in Kubernetes.
      *
      * @throws ServletException if this instance is NOT running in a container
      * @implNote package private to allow for unit testing
      */
     static void verifyK8s() throws ServletException {
-        if (!Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"))) {
-            throw new ServletException("initializeK8sInstance() called, but Metacat is NOT "
-                                           + "running in a container (or the "
-                                           + "METACAT_IS_RUNNING_IN_A_CONTAINER env var has not "
+        if (!Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"))) {
+            throw new ServletException("initializeK8sInstance() called, but Metacat is NOT running "
+                                           + "in a container (or METACAT_IN_K8S env var has not "
                                            + "been set correctly)");
         }
     }

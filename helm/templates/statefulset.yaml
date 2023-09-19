@@ -53,7 +53,7 @@ spec:
               mountPath: /var/metacat/certs/
               readOnly: true
           env:
-            - name: METACAT_IS_RUNNING_IN_A_CONTAINER
+            - name: METACAT_IN_K8S
               value: "true"
             - name: METACAT_DEBUG
               value: {{ ternary "true" "false" .Values.image.debug | quote }}

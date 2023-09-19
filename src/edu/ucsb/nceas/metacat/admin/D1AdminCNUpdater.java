@@ -123,7 +123,7 @@ public class D1AdminCNUpdater {
             updateDBNodeIds(previousNodeId, nodeId);
         }
         // if we're not running in a container, save that we submitted registration
-        if (!isMetacatRunningInAContainer()) {
+        if (!isRunningInK8s()) {
             PropertyService.setPropertyNoPersist(
                 "dataone.mn.registration.submitted", Boolean.TRUE.toString());
             // persist the properties
@@ -291,7 +291,7 @@ public class D1AdminCNUpdater {
     boolean canChangeNodeId() {
         boolean result;
         String autoRegDate = "";
-        if (isMetacatRunningInAContainer()) {
+        if (isRunningInK8s()) {
             logMetacat.debug("canChangeNodeId(): Containerized/Kubernetes deployment detected");
             ZonedDateTime utc = ZonedDateTime.now(ZoneOffset.UTC);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -610,11 +610,11 @@ public class D1AdminCNUpdater {
 
     /**
      * Determine whether metacat is running in a containerized/kubernetes environment, by
-     * checking for the environment variable `METACAT_IS_RUNNING_IN_A_CONTAINER` being set to `true`
+     * checking for the environment variable `METACAT_IN_K8S` being set to `true`
      *
      * @return true if metacat is running in a containerized/kubernetes environment; false otherwise
      */
-    public static boolean isMetacatRunningInAContainer() {
-        return Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
+    private static boolean isRunningInK8s() {
+        return Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
     }
 }
