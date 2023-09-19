@@ -62,8 +62,7 @@ public class MetacatIndexServlet extends HttpServlet {
             IndexWorker.loadExternalPropertiesFile(fullMetacatPropertiesFilePath);
             //load the site property file
             // metacatSitePropertiesFile is outside the tomcat webapps dir, so it should be available
-            Path metacatSitePropertiesFilePath =
-                metacatSitePropertiesFilePath = Paths.get(
+            Path metacatSitePropertiesFilePath = Paths.get(
                 Settings.getConfiguration().getString("application" + ".sitePropertiesDir"),
                 "metacat-site.properties");
             if (!metacatSitePropertiesFilePath.toFile().exists()) {
