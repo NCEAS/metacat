@@ -94,23 +94,47 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 
 ### Metacat Application-Specific Properties
 
-| Name                                                 | Description                                                   | Value                                                           |
-|------------------------------------------------------|---------------------------------------------------------------|-----------------------------------------------------------------|
-| `metacat.application.context`                        | The application context to use                                | `metacat`                                                       |
-| `metacat.administrator.username`                     | The admin username that will be used to authenticate          | `admin@localhost`                                               |
-| `metacat.auth.administrators`                        | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,ou=Account,dc=ecoinformatics,dc=org` |
-| `metacat.database.connectionURI`                     | postgres DB URI (RELEASE PREFIX, or blank for sub-chart)      | `jdbc:postgresql://mc-postgresql/metacat`                       |
-| `metacat.guid.doi.enabled`                           | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                          |
-| `metacat.server.httpPort`                            | The http port exposed externally, if NOT using the ingress    | `""`                                                            |
-| `metacat.server.name`                                | The hostname for the server, as exposed by the ingress        | `localhost`                                                     |
-| `metacat.solr.baseURL`                               | The url to access solr                                        | `http://host.docker.internal:8983/solr`                         |
-| `metacat.replication.logdir`                         | Location for the replication logs                             | `/var/metacat/logs`                                             |
-| `metacat.dataone.certificate.fromHttpHeader.enabled` | Enable mutual auth with client certs                          | `false`                                                         |
+| Name                             | Description                                                   | Value                                                           |
+| -------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- |
+| `metacat.application.context`    | The application context to use                                | `metacat`                                                       |
+| `metacat.administrator.username` | The admin username that will be used to authenticate          | `admin@localhost`                                               |
+| `metacat.auth.administrators`    | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,ou=Account,dc=ecoinformatics,dc=org` |
+| `metacat.database.connectionURI` | postgres DB URI (RELEASE PREFIX, or blank for sub-chart)      | `""`                                                            |
+| `metacat.guid.doi.enabled`       | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                          |
+| `metacat.server.httpPort`        | The http port exposed externally, if NOT using the ingress    | `""`                                                            |
+| `metacat.server.name`            | The hostname for the server, as exposed by the ingress        | `localhost`                                                     |
+| `metacat.solr.baseURL`           | The url to access solr                                        | `http://host.docker.internal:8983/solr`                         |
+| `metacat.replication.logdir`     | Location for the replication logs                             | `/var/metacat/logs`                                             |
+
+### OPTIONAL DataONE Member Node (MN) Parameters
+
+| Name                                                          | Description                                                       | Value                                                    |
+| ------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
+| `metacat.dataone.certificate.fromHttpHeader.enabled`          | Enable mutual auth with client certs                              | `false`                                                  |
+| `metacat.dataone.autoRegisterMemberNode`                      | Automatically push MN updates to CN? (yyyy-MM-dd)                 | `2023-02-28`                                             |
+| `metacat.D1Client.CN_URL`                                     | the url of the CN                                                 | `https://cn.dataone.org/cn`                              |
+| `metacat.dataone.nodeId`                                      | The unique ID of your DataONE MN - must match client cert subject | `urn:node:CHANGE_ME_TO_YOUR_VALUE!`                      |
+| `metacat.dataone.subject`                                     | The "subject" string from your DataONE MN client certificate      | `CN=urn:node:CHANGE_ME_TO_YOUR_VALUE!,DC=dataone,DC=org` |
+| `metacat.dataone.nodeName`                                    | short name for the node that can be used in user interfaces       | `My Metacat Node`                                        |
+| `metacat.dataone.nodeDescription`                             | What is the node's intended scope and purpose?                    | `Describe your Member Node briefly.`                     |
+| `metacat.dataone.contactSubject`                              | registered contact for this MN                                    | `http://orcid.org/0000-0002-8888-999X`                   |
+| `metacat.dataone.nodeSynchronize`                             | Enable Synchronization of Metadata to DataONE                     | `false`                                                  |
+| `metacat.dataone.nodeSynchronization.schedule.year`           | sync schedule year                                                | `*`                                                      |
+| `metacat.dataone.nodeSynchronization.schedule.mon`            | sync schedule month                                               | `*`                                                      |
+| `metacat.dataone.nodeSynchronization.schedule.mday`           | sync schedule day of month                                        | `*`                                                      |
+| `metacat.dataone.nodeSynchronization.schedule.wday`           | sync schedule day of week                                         | `?`                                                      |
+| `metacat.dataone.nodeSynchronization.schedule.hour`           | sync schedule hour                                                | `*`                                                      |
+| `metacat.dataone.nodeSynchronization.schedule.min`            | sync schedule minute                                              | `0/3`                                                    |
+| `metacat.dataone.nodeSynchronization.schedule.sec`            | sync schedule second                                              | `10`                                                     |
+| `metacat.dataone.nodeReplicate`                               | Accept and Store Replicas?                                        | `false`                                                  |
+| `metacat.dataone.replicationpolicy.default.numreplicas`       | # copies to store on other nodes                                  | `0`                                                      |
+| `metacat.dataone.replicationpolicy.default.preferredNodeList` | Preferred replication nodes                                       | `nil`                                                    |
+| `metacat.dataone.replicationpolicy.default.blockedNodeList`   | Nodes blocked from replication                                    | `nil`                                                    |
 
 ### Metacat Image, Container & Pod Parameters
 
 | Name                         | Description                                                                  | Value          |
-|------------------------------|------------------------------------------------------------------------------|----------------|
+| ---------------------------- | ---------------------------------------------------------------------------- | -------------- |
 | `image.repository`           | Metacat image repository                                                     | `metacat`      |
 | `image.tag`                  | Metacat image tag (immutable tags are recommended)                           | `DEVELOP`      |
 | `image.pullPolicy`           | Metacat image pull policy                                                    | `IfNotPresent` |
@@ -131,7 +155,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Metacat Persistence
 
 | Name                        | Description                                                    | Value               |
-|-----------------------------|----------------------------------------------------------------|---------------------|
+| --------------------------- | -------------------------------------------------------------- | ------------------- |
 | `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims | `true`              |
 | `persistence.storageClass`  | Storage class of backing PV                                    | `local-path`        |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use          | `""`                |
@@ -141,7 +165,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Networking & Monitoring
 
 | Name                          | Description                                                   | Value            |
-|-------------------------------|---------------------------------------------------------------|------------------|
+| ----------------------------- | ------------------------------------------------------------- | ---------------- |
 | `ingress.enabled`             | Enable or disable the ingress                                 | `true`           |
 | `ingress.className`           | ClassName of the ingress provider in your cluster             | `traefik`        |
 | `ingress.hosts`               | A collection of rules mapping different hosts to the backend. | `[]`             |
@@ -162,7 +186,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Postgresql Sub-Chart
 
 | Name                                           | Description                                             | Value                              |
-|------------------------------------------------|---------------------------------------------------------|------------------------------------|
+| ---------------------------------------------- | ------------------------------------------------------- | ---------------------------------- |
 | `postgresql.enabled`                           | enable the postgresql sub-chart                         | `true`                             |
 | `postgresql.auth.username`                     | Username for accessing the database used by metacat     | `metacat`                          |
 | `postgresql.auth.database`                     | The name of the database used by metacat.               | `metacat`                          |
@@ -178,7 +202,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Tomcat Configuration
 
 | Name                    | Description                                              | Value |
-|-------------------------|----------------------------------------------------------|-------|
+| ----------------------- | -------------------------------------------------------- | ----- |
 | `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
 | `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
 
