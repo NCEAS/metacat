@@ -1166,7 +1166,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
         }
 
         // find pids of last and next ObjectFormatList
-        String OBJECT_FORMAT_DOCID = ObjectFormatService.OBJECT_FORMAT_DOCID;
+        String OBJECT_FORMAT_DOCID = ObjectFormatService.OBJECT_FORMAT_PID_PREFIX;
         int lastRev = -1;
         try {
             lastRev = DBUtil.getLatestRevisionInDocumentTable(OBJECT_FORMAT_DOCID);
