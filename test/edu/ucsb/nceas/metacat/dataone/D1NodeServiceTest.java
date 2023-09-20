@@ -500,7 +500,7 @@ public class D1NodeServiceTest extends MCTestCase {
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             object.close();
             ObjectFormatIdentifier format = new ObjectFormatIdentifier();
-            format.setValue("http://ns.dataone.org/service/types/v2.0");
+            format.setValue("http://ns.dataone.org/service/types/v2.0:ObjectFormatList");
             sysmeta.setFormatId(format);
             //sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("text/xml").getFormatId());
             object = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
