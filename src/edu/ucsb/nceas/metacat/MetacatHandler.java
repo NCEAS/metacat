@@ -479,7 +479,7 @@ public class MetacatHandler {
      * @return fileInputStream  The file to read as a FileInputStream
      */
     private static FileInputStream readFromFilesystem(String filename) 
-      throws FileNotFoundException {
+      throws McdbDocNotFoundException {
         
         logMetacat.debug("MetacatHandler.readFromFilesystem() called.");
         
@@ -489,10 +489,10 @@ public class MetacatHandler {
           fileInputStream = new FileInputStream(filename);
 
         } catch ( FileNotFoundException fnfe ) {
-          logMetacat.debug("There was an error reading the file " +
+          logMetacat.warn("There was an error reading the file " +
                            filename + ". The error was: "         +
                            fnfe.getMessage());
-          throw fnfe;
+          throw new McdbDocNotFoundException(fnfe.getMessage());
            
         }
         

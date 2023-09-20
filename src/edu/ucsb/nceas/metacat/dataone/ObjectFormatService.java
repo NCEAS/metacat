@@ -24,6 +24,7 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -45,9 +46,11 @@ import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.McdbException;
+import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.utilities.ParseLSIDException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -149,76 +152,42 @@ public class ObjectFormatService {
 
 	}
 
-	/**
-	 * Get the object format list cached in Metacat
-	 */
-	private ObjectFormatList getCachedList() throws ServiceFailure {
+    /**
+     * Get the object format list cached in Metacat
+     */
+    private ObjectFormatList getCachedList() throws ServiceFailure {
+        ObjectFormatList objectFormatList = null;
+        try {
+            this.accNumber = getLatestObjectFormatDocid(OBJECT_FORMAT_PID_PREFIX);
+            logMetacat.debug("ObjectFormatService.getCachedList - " +
+                           " the docid of the object-format document is " + accNumber);
+            InputStream object = null;
+            //@TODO After we use the hash store, we don't need to try both 
+            try {
+                object = MetacatHandler.read(accNumber, D1NodeService.METADATA);
+            } catch (McdbDocNotFoundException me) {
+                object = MetacatHandler.read(accNumber, "DATA");
+            } 
+            objectFormatList = TypeMarshaller.unmarshalTypeFromStream(
+                                    ObjectFormatList.class, object);
+        } catch (IOException | InstantiationException | IllegalAccessException 
+                 | MarshallingException | McdbException | SQLException 
+                 | PropertyNotFoundException | ClassNotFoundException
+                 | ParseLSIDException e) {
+            throw new ServiceFailure("4841",
+                    "Unexpected exception from the service - "
+                     + e.getClass() + ": " + e.getMessage());
+        } 
+        // index the object format list based on the format identifier string
+        int listSize = objectFormatList.sizeObjectFormatList();
+        for (int i = 0; i < listSize; i++) {
+            ObjectFormat objectFormat = objectFormatList.getObjectFormat(i);
+            String identifier = objectFormat.getFormatId().getValue();
+            getObjectFormatMap().put(identifier, objectFormat);
+        }
+        return objectFormatList;
+    }
 
-		ObjectFormatList objectFormatList = null;
-
-		try {
-
-
-			// get the latest accession number if it is in Metacat
-				this.accNumber = getLatestObjectFormatDocid(OBJECT_FORMAT_PID_PREFIX);
-				logMetacat.debug("ObjectFormatService.getCachedList - " +
-                        " the docid of the object-format document is " + accNumber);
-				DocumentImpl objectFormatsDocument = new DocumentImpl(
-						accNumber, false);
-				ByteArrayInputStream bais = new ByteArrayInputStream(
-						objectFormatsDocument.getBytes());
-				// deserialize the object format list
-				try {
-					objectFormatList = TypeMarshaller.unmarshalTypeFromStream(
-							ObjectFormatList.class, bais);
-
-				} catch (IOException e) {
-					throw new ServiceFailure("4841",
-							"Unexpected exception from the service - "
-									+ e.getClass() + ": " + e.getMessage());
-
-				} catch (InstantiationException e) {
-					throw new ServiceFailure("4841",
-							"Unexpected exception from the service - "
-									+ e.getClass() + ": " + e.getMessage());
-
-				} catch (IllegalAccessException e) {
-					throw new ServiceFailure("4841",
-							"Unexpected exception from the service - "
-									+ e.getClass() + ": " + e.getMessage());
-
-				} catch (MarshallingException e) {
-					throw new ServiceFailure("4841",
-							"Unexpected exception from the service - "
-									+ e.getClass() + ": " + e.getMessage());
-				}
-		} catch (SQLException sqle) {
-			throw new ServiceFailure("4841",
-					"Unexpected exception from the service - "
-							+ sqle.getClass() + ": " + sqle.getMessage());
-
-		} catch (McdbException mcdbe) {
-			throw new ServiceFailure("4841",
-					"Unexpected exception from the service - "
-							+ mcdbe.getClass() + ": " + mcdbe.getMessage());
-
-		}
-
-		// index the object format list based on the format identifier string
-		int listSize = objectFormatList.sizeObjectFormatList();
-
-		for (int i = 0; i < listSize; i++) {
-
-			ObjectFormat objectFormat = objectFormatList.getObjectFormat(i);
-			String identifier = objectFormat.getFormatId().getValue();
-			getObjectFormatMap().put(identifier, objectFormat);
-
-		}
-
-		return objectFormatList;
-
-	}
-	
     /**
      * This method get the latest docid for the object-format documents whose guid
      * starts with "OBJECT_FORMAT_LIST.1"

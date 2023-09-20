@@ -51,6 +51,7 @@ import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
@@ -59,6 +60,7 @@ import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
@@ -478,43 +480,31 @@ public class D1NodeServiceTest extends MCTestCase {
     /**
      * For fresh Metacat installations without the Object Format List
      * we insert the default version from d1_common.jar
+     * @throws Exception 
      */
-    protected void setUpFormats() {
+    protected void setUpFormats() throws Exception {
+        int rev = 1;
+        Identifier guid = new Identifier();
+        guid.setValue(ObjectFormatService.OBJECT_FORMAT_PID_PREFIX + rev);
+        // check if it exists already
+        InputStream is = null;
+        Session session = getCNSession();
         try {
-            Metacat m = MetacatFactory.createMetacatConnection(metacatUrl);
-            m.login(username, password);
-            // check if it exists already
-            InputStream is = null;
-            try {
-                is = m.read(ObjectFormatService.OBJECT_FORMAT_DOCID);
-            } catch (Exception e) {
-                // probably missing the doc
-            }
-
-            if (is != null) {
-                // check for v2 OFL
-                try {
-                    ObjectFormatList ofl = TypeMarshaller.unmarshalTypeFromStream(ObjectFormatList.class, is);
-                } catch (ClassCastException cce) {
-                    // need to update it
-                    InputStream formats = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
-                    Reader xmlDocument = new InputStreamReader(formats);
-                    int rev = m.getNewestDocRevision(ObjectFormatService.OBJECT_FORMAT_DOCID);
-                    rev++;
-                    m.update(ObjectFormatService.OBJECT_FORMAT_DOCID + "." + rev, xmlDocument, null);
-                }
-
-            }
-            else {
-                // get the default from d1_common
-                InputStream formats = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
-                Reader xmlDocument = new InputStreamReader(formats);
-                m.insert(ObjectFormatService.OBJECT_FORMAT_DOCID + ".1", xmlDocument, null);
-            }
-            m.logout();
+            is = CNodeService.getInstance(request).get(session, guid);
         } catch (Exception e) {
-            // any number of things could go wrong
-            e.printStackTrace();
+            // probably missing the doc
+        }
+        if (is == null) {
+            // get the default from d1_common
+            InputStream object = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            object.close();
+            ObjectFormatIdentifier format = new ObjectFormatIdentifier();
+            format.setValue("http://ns.dataone.org/service/types/v2.0");
+            sysmeta.setFormatId(format);
+            //sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("text/xml").getFormatId());
+            object = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
+            CNodeService.getInstance(request).create(session, guid, object, sysmeta);
         }
     }
 

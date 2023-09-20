@@ -730,7 +730,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	/**
 	 * test to list the object formats registered in metacat
 	 */
-	public void testListFormats() {
+	public void testListFormats() throws Exception {
 		
     printTestHeader("testListFormats");
     
@@ -758,7 +758,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
   /**
    * Test getting a single object format from the registered list
    */
-  public void testGetFormat() {
+  public void testGetFormat() throws Exception {
   	
     printTestHeader("testGetFormat");
 
@@ -789,8 +789,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
     } catch (NotImplemented nie) {
     	fail("The getFormat() method has not been implemented: " + nie.getMessage());
 
-    }
-  	
+    } 
   }
 	
   /**
