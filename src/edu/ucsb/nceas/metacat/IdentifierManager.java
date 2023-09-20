@@ -2090,45 +2090,6 @@ public class IdentifierManager {
         return success;
     }
     
-    public void updateAuthoritativeMemberNodeId(String existingMemberNodeId, String newMemberNodeId)
-    {
-        DBConnection dbConn = null;
-        int serialNumber = -1;
-        
-        try {
-            // Get a database connection from the pool
-            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.updateAuthoritativeMemberNodeId");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-
-            // Execute the insert statement
-            String query = "update " + TYPE_SYSTEM_METADATA + 
-                " set authoritive_member_node = ? " +
-                " where authoritive_member_node = ?";
-            PreparedStatement stmt = dbConn.prepareStatement(query);
-            
-            //data values
-            stmt.setString(1, newMemberNodeId);
-            stmt.setString(2, existingMemberNodeId);
-
-            logMetacat.debug("stmt: " + stmt.toString());
-            //execute
-            int rows = stmt.executeUpdate();
-
-            stmt.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            logMetacat.error("updateSystemMetadataFields: SQL error while updating system metadata: " 
-                    + e.getMessage());
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            logMetacat.error("updateSystemMetadataFields: NumberFormat error while updating system metadata: " 
-                    + e.getMessage());
-        } finally {
-            // Return database connection to the pool
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-        }
-    }
-    
     /**
      * Determine if the object file exist for the given localId.
      * @param localId

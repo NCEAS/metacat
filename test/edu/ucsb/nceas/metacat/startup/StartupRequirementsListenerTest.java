@@ -1,4 +1,4 @@
-package edu.ucsb.nceas.metacat.healthchecks;
+package edu.ucsb.nceas.metacat.startup;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;

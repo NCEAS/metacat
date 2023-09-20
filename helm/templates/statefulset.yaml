@@ -53,7 +53,7 @@ spec:
               mountPath: /var/metacat/certs/
               readOnly: true
           env:
-            - name: METACAT_IS_RUNNING_IN_A_CONTAINER
+            - name: METACAT_IN_K8S
               value: "true"
             - name: METACAT_DEBUG
               value: {{ ternary "true" "false" .Values.image.debug | quote }}
@@ -62,7 +62,7 @@ spec:
             - name: METACAT_EXTERNAL_HOSTNAME
               value: {{ index .Values.metacat "server.name" }}
             - name: METACAT_EXTERNAL_PORT
-              value: {{ include "metacat.httpPort" . }}
+              value: {{ include "metacat.httpPort" . | quote }}
             - name: METACAT_APP_CONTEXT
               value: {{ index .Values.metacat "application.context" }}
             - name: TOMCAT_MEM_MIN
