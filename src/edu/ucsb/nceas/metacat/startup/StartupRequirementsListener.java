@@ -35,7 +35,7 @@ import java.util.Set;
  * malfunction), as was previously the case. 2. Clear and useful error messages and instructions are
  * logged to (tomcat logs) 'catalina .out' and 'hostname.(date).log' files
  * </p><p>
- * If the environment variable named METACAT_IS_RUNNING_IN_A_CONTAINER is set to "true", it is
+ * If the environment variable named METACAT_IN_K8S is set to "true", it is
  * assumed that the current metacat instance is running in a container (eg in a Kubernetes cluster).
  * In these cases, checks may need to be tailored to the environment. For example, the site
  * properties file is expected to be a read-only configMap in kubernetes, so the create/write
@@ -60,7 +60,7 @@ import java.util.Set;
 public class StartupRequirementsListener implements ServletContextListener {
 
     protected boolean RUNNING_IN_CONTAINER =
-        Boolean.parseBoolean(System.getenv("METACAT_IS_RUNNING_IN_A_CONTAINER"));
+        Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
     private static final Log logMetacat = LogFactory.getLog(StartupRequirementsListener.class);
     protected Properties runtimeProperties;
 

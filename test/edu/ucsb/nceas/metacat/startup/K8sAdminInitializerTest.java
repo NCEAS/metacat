@@ -19,7 +19,7 @@ import static org.mockito.Mockito.doNothing;
 
 public class K8sAdminInitializerTest {
 
-    private static final String CONTAINERIZED = "METACAT_IS_RUNNING_IN_A_CONTAINER";
+    private static final String CONTAINERIZED = "METACAT_IN_K8S";
 
 
     @Test(expected = ServletException.class)

@@ -46,7 +46,7 @@ import static org.mockito.Mockito.never;
 public class D1AdminCNUpdaterTest {
 
     private static final String PREVIOUS_NODE_ID = "urn:node:TestingPreviousNodeId";
-    private static final String CONTAINERIZED = "METACAT_IS_RUNNING_IN_A_CONTAINER";
+    private static final String CONTAINERIZED = "METACAT_IN_K8S";
     private D1AdminCNUpdater d1AdminCNUpdater;
 
     @Before
