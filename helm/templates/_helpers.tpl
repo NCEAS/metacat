@@ -77,7 +77,7 @@ Otherwise:
     {{- $metacatHttpPort = "80" -}}
 {{- end -}}
 {{- end -}}
-{{- $metacatHttpPort | quote }}
+{{- $metacatHttpPort }}
 {{- end }}
 
 {{/*

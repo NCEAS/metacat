@@ -60,6 +60,8 @@ import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.spatial.SpatialHarvester;
+import edu.ucsb.nceas.metacat.startup.K8sAdminInitializer;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
@@ -318,13 +320,18 @@ public class MetaCatServlet extends HttpServlet {
 	 *            the servlet context of MetaCatServlet
 	 */
 	public void initSecondHalf(ServletContext context) throws ServletException {
-		try {			
+		try {
 			ServiceService.registerService("DatabaseService", DatabaseService.getInstance());
 			
 			// initialize DBConnection pool
 			DBConnectionPool connPool = DBConnectionPool.getInstance();
 			logMetacat.debug("MetaCatServlet.initSecondHalf - DBConnection pool initialized: " + connPool.toString());
-			
+
+			// Always check & auto-update DB and MN settings if running in Kubernetes
+			if (Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"))) {
+				K8sAdminInitializer.initializeK8sInstance();
+			}
+
 			// register the XML schema service
 			ServiceService.registerService("XMLSchemaService", XMLSchemaService.getInstance());
 			
@@ -436,7 +443,7 @@ public class MetaCatServlet extends HttpServlet {
             throw new ServletException(errorMessage);
         } 
 	}
-    
+
     /**
 	 * Close all db connections from the pool
 	 */
@@ -840,7 +847,7 @@ public class MetaCatServlet extends HttpServlet {
             response.setContentType("text/xml");
             out.println("<?xml version=\"1.0\"?>");
             out.println("<error>");
-            out.println("The Metacat is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            out.println("Metacat is in read-only mode and your request can't be fulfilled. Please try again later.");
             out.println("</error>");
             out.close();
         }
@@ -859,4 +866,5 @@ public class MetaCatServlet extends HttpServlet {
 			// Schedule the sitemap generator to run periodically
 			handler.scheduleSitemapGeneration();
 		}
+
 }

@@ -200,84 +200,18 @@ elif [[ $1 = "catalina.sh" ]]; then
         fi
     fi
 
-    #   Start tomcat
-    "$@" > /dev/null 2>&1
-
     # Give time for tomcat to start
     echo
     echo '**************************************'
-    echo "Waiting for Tomcat to start before"
-    echo "checking upgrade/initialization status"
+    echo 'Starting Tomcat and tailing logs from:'
+    echo "$TC_HOME/logs/*"
     echo '**************************************'
-    while ! nc -z localhost 8080; do
-        echo "."
-        sleep 1
-    done
     echo
+    #   Start tomcat
+    "$@" > /dev/null 2>&1
 
-    #
-    # TODO: Replace DB config check with internal metacat check for an "autoconfig" flag at startup
-    #
-    # Login to Metacat Admin and start a session (cookie.txt)
-    echo "doing  curl -X POST to localhost admin page"
-    if [[ "$METACAT_DEBUG" == "true" ]]; then
-        echo "using password=${METACAT_ADMINISTRATOR_PASSWORD}\
-          & username=${METACAT_ADMINISTRATOR_USERNAME}"
-    fi
-    curl -X POST --data  "loginAction=Login&configureType=login&processForm=true&password=\
-${METACAT_ADMINISTRATOR_PASSWORD}&username=${METACAT_ADMINISTRATOR_USERNAME}" \
-         --cookie-jar ./cookie.txt http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin >\
-         /tmp/login_result.txt 2>&1
-    echo
-    echo '**************************************'
-    echo "admin login result from /tmp/login_result.txt:"
-
-    ADMIN_LOGGED_IN=$(grep -c "You are logged in" /tmp/login_result.txt || true)
-
-    if [[ $ADMIN_LOGGED_IN -eq 0 ]]; then
-        echo 'FAILED - unable to log in as admin'
-        echo '**************************************'
-        echo "grepping log $TC_HOME/logs/localhost*.$(date +%Y-%m-%d).log for startup conditions..."
-        grep -B7 -A20 "FATAL" "$TC_HOME"/logs/*
-        echo
-        echo '**************************************'
-        echo
-        echo
-        if [[ "$METACAT_DEBUG" != "true" ]]; then
-          echo 'Exiting...'
-          exit 3
-        else
-          echo 'IN DEBUG MODE, SO NOT EXITING, BUT NOTE THAT * * * SOMETHING IS WRONG!!! * * *'
-        fi
-    else
-        echo 'SUCCESS - You are logged in as admin'
-        echo '**************************************'
-
-        echo '**************************************'
-        echo "Checking if Database is configured..."
-
-        ## If the DB needs to be updated run the migration scripts
-        DB_CONFIGURED=$(grep -c "configureType=database" /tmp/login_result.txt || true)
-        if [ "$DB_CONFIGURED" -ne 0 ]; then
-            echo "Database needs configuring..."
-            # Run the database initialization to create or upgrade tables
-            # /${METACAT_APP_CONTEXT}/admin?configureType=database must have an
-            # authenticated session, then run:
-            curl -X POST --cookie ./cookie.txt \
-                --data "configureType=database&processForm=true" \
-                http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > /dev/null 2>&1
-
-            # Validate the database should be configured
-            curl -X POST --cookie ./cookie.txt \
-                --data "configureType=configure&processForm=false" \
-                http://localhost:8080/"${METACAT_APP_CONTEXT}"/admin > /dev/null 2>&1
-        else
-            echo "Database is already configured"
-        fi
-    fi
-    echo '**************************************'
-    echo "tailing logs in: $TC_HOME/logs/*"
     exec tail -n +0 -f "$TC_HOME"/logs/*
+
 else
   echo "* * *  DEVTOOLS = $DEVTOOLS and ARGS = $@ "
   echo "* * *  NO VALID STARTUP OPTIONS RECEIVED; EXITING  * * *"

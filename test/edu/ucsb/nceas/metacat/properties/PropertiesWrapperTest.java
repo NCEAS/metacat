@@ -220,7 +220,7 @@ public class PropertiesWrapperTest {
             expectedSecrets.setProperty("guid.doi.username",
                 LeanTestUtils.getExpectedProperties().getProperty("guid.doi.username"));
 
-            setEnv(testEnvSecrets);
+            LeanTestUtils.setTestEnvironmentVariables(testEnvSecrets);
 
             assertTrue(
                 LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST));
@@ -269,36 +269,6 @@ public class PropertiesWrapperTest {
                 fail("Expected a PropertyNotFoundException to be thrown, but it wasn't");
             } catch (PropertyNotFoundException e) {
                 assertNotNull(e);
-            }
-        }
-
-
-        // very difficult to mock or manipulate env vars in Java - hacking this for testing only. See:
-        //   https://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java
-        private void setEnv(Map<String, String> newenv) throws Exception {
-            try {
-                Class<?> envClass = Class.forName("java.lang.ProcessEnvironment");
-                Field envField = envClass.getDeclaredField("theEnvironment");
-                envField.setAccessible(true);
-                Map<String, String> env = (Map<String, String>) envField.get(null);
-                env.putAll(newenv);
-                Field caseInsEnvField = envClass.getDeclaredField("theCaseInsensitiveEnvironment");
-                caseInsEnvField.setAccessible(true);
-                Map<String, String> cienv = (Map<String, String>) caseInsEnvField.get(null);
-                cienv.putAll(newenv);
-            } catch (NoSuchFieldException e) {
-                Class[] classes = Collections.class.getDeclaredClasses();
-                Map<String, String> env = System.getenv();
-                for(Class cl : classes) {
-                    if("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
-                        Field field = cl.getDeclaredField("m");
-                        field.setAccessible(true);
-                        Object obj = field.get(env);
-                        Map<String, String> map = (Map<String, String>) obj;
-                        map.clear();
-                        map.putAll(newenv);
-                    }
-                }
             }
         }
     }
