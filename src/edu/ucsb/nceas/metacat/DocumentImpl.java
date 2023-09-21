@@ -3463,11 +3463,8 @@ public class DocumentImpl {
             //update systemmetadata table and solr index
             SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
             if (sysMeta != null) {
-                //sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
                 sysMeta.setArchived(true);
-                //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                 if (!removeAll) {
-                    //HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
                     SystemMetadataManager.getInstance().store(sysMeta);
                     MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
                 } else {
@@ -3490,11 +3487,6 @@ public class DocumentImpl {
 
             // remove the file if called for
             if (removeAll) {
-                //logMetacat.debug("the identifier set contains "+guid.getValue()+" is
-                // "+HazelcastService.getInstance().getIdentifiers().contains(guid));
-                //HazelcastService.getInstance().getIdentifiers().remove(guid);
-                //logMetacat.debug("the identifier set contains "+guid.getValue()+" after
-                // removing is "+HazelcastService.getInstance().getIdentifiers().contains(guid));
                 deleteFromFileSystem(accnum, isXML);
             }
 
