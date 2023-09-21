@@ -40,6 +40,7 @@ import edu.ucsb.nceas.metacat.client.DocumentNotFoundException;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.client.Metacat;
 import edu.ucsb.nceas.metacat.client.MetacatAuthException;
+import edu.ucsb.nceas.metacat.client.MetacatClient;
 import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.client.MetacatFactory;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
@@ -58,7 +59,7 @@ import org.apache.commons.io.IOUtils;
  */
 public class MetacatClientTest extends MCTestCase
 {
-
+    public static final String NOT_SUPPORT = "no longer supported";
     private String wrongMetacatUrl=
     	"http://localhostBAD/some/servlet/metacat";
   
@@ -84,7 +85,7 @@ public class MetacatClientTest extends MCTestCase
     private String onlinetestdatafile = "test/onlineDataFile1";
     private String queryFile = "test/query.xml";
     private String testdocument = "";
-    private Metacat m;
+    private MetacatClient m;
     private String spatialTestFile = "test/spatialEml.xml";
     private static final int TIME = 5;
     private static final String DOCID = "docid";
@@ -124,7 +125,8 @@ public class MetacatClientTest extends MCTestCase
 
         try {
             debug("Test Metacat: " + metacatUrl);
-            m = MetacatFactory.createMetacatConnection(metacatUrl);
+            Metacat metacat = MetacatFactory.createMetacatConnection(metacatUrl);
+            m = (MetacatClient) metacat;
         } catch (MetacatInaccessibleException mie) {
             System.err.println("Metacat is: " + metacatUrl);
             fail("Metacat connection failed." + mie.getMessage());
@@ -146,7 +148,15 @@ public class MetacatClientTest extends MCTestCase
       TestSuite suite = new TestSuite();     
       suite.addTest(new MetacatClientTest("initialize"));
       suite.addTest(new MetacatClientTest("invalidLogin"));
-      suite.addTest(new MetacatClientTest("logoutAndInvalidInsert"));
+      suite.addTest(new MetacatClientTest("getloggedinuserinfo"));
+      suite.addTest(new MetacatClientTest("logout"));
+      suite.addTest(new MetacatClientTest("validateSession"));
+      suite.addTest(new MetacatClientTest("isAuthorized"));
+      suite.addTest(new MetacatClientTest("readInlineData"));
+      suite.addTest(new MetacatClientTest("setAccess1"));
+      suite.addTest(new MetacatClientTest("setAccess2"));
+      suite.addTest(new MetacatClientTest("getAllDocids"));
+      suite.addTest(new MetacatClientTest("isRegistered"));
       suite.addTest(new MetacatClientTest("login"));
       suite.addTest(new MetacatClientTest("insert"));
       suite.addTest(new MetacatClientTest("getLastDocid"));  // needs to directly follow insert test!!
@@ -219,28 +229,32 @@ public class MetacatClientTest extends MCTestCase
             fail("Metacat Inaccessible:\n" + mie.getMessage());
         }
     }
+    
+    /**
+     * Test the getloggedinuserinfo method
+     * @throws Exception
+     */
+    public void getloggedinuserinfo() throws Exception {
+        String response = m.getloggedinuserinfo();
+        evaluateResponse(response);
+    }
+    
 
     /**
      * Test the logout() function. When logout, user will be public, it couldn't
      * insert a document.
      */
-    public void logoutAndInvalidInsert()
+    public void logout()
     {
        debug("\nStarting logoutAndInvalidInsert test...");
        try {
             String identifier = newdocid + ".1";
             m.login(username, password);
             m.logout();
-            String response = m.insert(identifier,
-                    new StringReader(testdocument), null);
-            debug("logoutAndInvalidInsert(): Response in logout="+response);
-            assertTrue(response.indexOf("<success>") == -1);
         } catch (MetacatAuthException mae) {
             fail("Authorization failed:\n" + mae.getMessage());
         } catch (MetacatInaccessibleException mie) {
             fail("Metacat Inaccessible:\n" + mie.getMessage());
-        } catch (InsufficientKarmaException ike) {
-            fail("Insufficient karma:\n" + ike.getMessage());
         } catch (MetacatException me) {
             if(me.getMessage().
               indexOf("Permission denied for user public inser") == -1){
@@ -249,6 +263,28 @@ public class MetacatClientTest extends MCTestCase
         } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
+    }
+    
+    /**
+     * Test the validateSession method
+     * @throws Exception
+     */
+    public void validateSession() throws Exception {
+        String session="s34swciere";
+        String response = m.validateSession(session);
+        evaluateResponse(response);
+    }
+    
+    /**
+     * Test the isAuthorizaed method
+     * @throws Exception
+     */
+    public void isAuthorized() throws Exception {
+        String resourceId = "foo";
+        String session="s34swciere";
+        String permission = "read";
+        String response = m.isAuthorized(resourceId, permission, session);
+        evaluateResponse(response);
     }
 
     /**
@@ -308,6 +344,18 @@ public class MetacatClientTest extends MCTestCase
         } catch(Exception e) {
             fail("Exception:\n" + e.getMessage());
         }
+    }
+    
+    /**
+     * Test the readInlineData method
+     * @throws Exception
+     */
+    public void readInlineData() throws Exception {
+        String inlineDataId = "inlinedata100";
+        InputStream input = m.readInlineData(inlineDataId);
+        String response = IOUtils.toString(input);
+        evaluateResponse(response);
+        
     }
 
     /**
@@ -454,6 +502,38 @@ public class MetacatClientTest extends MCTestCase
     }
      
   }
+    
+    /**
+     * Test the setAccess method
+     * @throws Exception
+     */
+    public void setAccess1() throws Exception {
+        String doicd = "foo.1.1";
+        String principal = "public";
+        String permission = "read";
+        String perType = "allow";
+        String perOrder = "allowFirst";
+        String response = m.setAccess(doicd, principal, permission, 
+                                        perType, perOrder);
+        evaluateResponse(response);
+    }
+    
+    /**
+     * Test the setAccess method
+     * @throws Exception
+     */
+    public void setAccess2() throws Exception {
+        String accessBlock = "<access order=\"allowFirst\" "
+                + "authSystem=\"knb\">\n"
+                + "        <allow>\n"
+                + "            <principal>public</principal>\n"
+                + "            <permission>read</permission>\n"
+                + "        </allow>\n"
+                + "    </access>";
+        String docid = "foo.2.1";
+        String response = m.setAccess(docid, accessBlock);
+        evaluateResponse(response);
+    }
 
     /**
      * Test the upload() function with a data file.
@@ -885,6 +965,34 @@ public class MetacatClientTest extends MCTestCase
    }
    
    /**
+    * Test the getAllDocids method
+    * @throws Exception
+    */
+   public void getAllDocids() throws Exception {
+       String scope = "tao";
+       try {
+           m.getAllDocids(scope);
+           fail("We can't reach here");
+       } catch (MetacatException e) {
+           evaluateResponse(e.getMessage());
+       }
+   }
+   
+   /**
+    * Test the isRegistered method
+    * @throws Exception
+    */
+   public void isRegistered() throws Exception {
+       String docid = "tao.1.1";
+       try {
+           m.isRegistered(docid);
+           fail("We can't reach here");
+       } catch (Exception e) {
+           evaluateResponse(e.getMessage());
+       }
+   }
+   
+   /**
     * Try to insert a bunch of eml documents which contain spatial information
     * This test is used to try to find a bug in spatial part of metacat
     */
@@ -977,5 +1085,17 @@ public class MetacatClientTest extends MCTestCase
     {
     	File file = new File(fileName);
     	file.delete();
+    }
+    
+    /**
+     * If the response message doesn't have a error message about disabling the
+     * Metacat API, it will throw an error. 
+     * @param response  the response will be evaluated. 
+     */
+    private void evaluateResponse(String response) {
+        if (response.indexOf("<error>") == -1 ||
+                response.indexOf(NOT_SUPPORT) == -1) {
+            fail("The Metacat API should be disabled");
+        }
     }
 }
