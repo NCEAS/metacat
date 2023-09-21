@@ -337,7 +337,10 @@ Switch back again to hash identifiers, and add our folder structure back using a
 .. figure:: images/hash-trees/hash-trees-40.jpg
    :align: center
 
-   Back to CIDs, with folders as annotation objects.
+.. figure:: images/hash-trees/hash-trees-40-mermaid.png
+   :align: center   
+
+Back to CIDs, with folders as annotation objects.
 
 Revisit the directory layout for a Git-like structure that lets us store multiple data package versions in a single folder hierarchy...
 
