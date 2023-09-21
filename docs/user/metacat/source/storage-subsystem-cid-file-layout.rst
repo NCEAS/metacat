@@ -40,7 +40,7 @@ make the tree simpler to explore and less likely to exceed operating system
 limits on files. We store all objects in an `objects` directory, with two
 levels of depth and a 'width' of 2 digits. Because each digit in the hash can
 contain 16 values, the directory structure can contain 65,536 subdirectories
-(256^2).  To accomodate a larger number of directories, we could add another level or
+(256^2).  To accommodate a larger number of directories, we could add another level or
 two of depth to the hierarchy.  An example file layout for three objects would be::
 
    /var/metacat/objects
@@ -238,7 +238,7 @@ based on the SAH-256 of the PID of the data object::
 metadata for each object, in the future we envision potentially including other
 metadata files that can be used for describing individual data objects. This
 might include package relationships and other annotations that we wish to
-include for each data file. To accomodate this, we could add another metadata
+include for each data file. To accommodate this, we could add another metadata
 directory (e.g., `annotations`) as a sibling to the `objects` directory, and include
 an additional metadata file using the same PID-based annotation approach described
 above for system metadata. This enables the storage system to be used to store
@@ -260,7 +260,8 @@ for an overview. Some of the features that might be useful for us:
 - Given the root hash of a merkle tree, one can download the children blocks from any source (distributed, untrusted)
 - Given a complex set of objects, a single hash comparison of the root hash can quickly deduce whether two hash collections differ 
     - Proceeding down the tree and comparing sub-tree hashes can pinpoint where the trees differ
-- In addition to representing a single "object" as a tree, we can also create other composite trees that represent mutli-object collections, such as data packages
+- In addition to representing a single "object" as a tree, we can also create other composite
+trees that represent multi-object collections, such as data packages
     - All of the benefits at the file level would also apply at the collection level
 
 These features are used within existing systems like Git and IPFS to build fully
@@ -351,4 +352,3 @@ Data Information Package (DIP) prototype
 See the [Data Info Package](https://github.com/mbjones/dip-noodling) repo for a quick proof-of-concept on some of these ideas.
 This includes shell script functions for basic operations, such as storing a blob as a new leaf node, tagging items
 by their CID, and listing and viewing various items in a package.
-
