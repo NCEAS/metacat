@@ -28,8 +28,6 @@ package edu.ucsb.nceas.metacattest.client;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -67,8 +65,6 @@ public class MetacatClientTest extends MCTestCase
   
     private static String username;
 	private static String password;
-	private static String anotheruser;
-	private static String anotherpassword;
 	static {
 		try {
 			username = PropertyService.getProperty("test.mcUser");
@@ -88,7 +84,6 @@ public class MetacatClientTest extends MCTestCase
     private String queryFile = "test/query.xml";
     private String testdocument = "";
     private MetacatClient m;
-    private String spatialTestFile = "test/spatialEml.xml";
     private static final int TIME = 5;
     private static final String DOCID = "docid";
     private static final String DATAID = "dataid";
@@ -137,6 +132,7 @@ public class MetacatClientTest extends MCTestCase
      * Release any objects after tests are complete
      */
     public void tearDown() {
+        
     }
 
     /**
@@ -180,8 +176,7 @@ public class MetacatClientTest extends MCTestCase
      * Run an initial test that always passes to check that the test
      * harness is working.
      */
-    public void initialize()
-    {
+    public void initialize() {
         assertTrue(1 == 1);
     }
 
@@ -237,8 +232,7 @@ public class MetacatClientTest extends MCTestCase
      * Test the logout() function. When logout, user will be public, it couldn't
      * insert a document.
      */
-    public void logout()
-    {
+    public void logout() {
        debug("\nStarting logoutAndInvalidInsert test...");
        try {
             m.logout();
@@ -310,7 +304,7 @@ public class MetacatClientTest extends MCTestCase
         debug("\nStarting invalidRead test...");
         try {
             String docid = readIdFromFile(DOCID);
-            m.read(docid+".1");
+            m.read(docid + ".1");
             fail(CAN_NOT_REACH);
         } catch (MetacatAuthException mae) {
             fail("Authorization failed:\n" + mae.getMessage());
@@ -367,14 +361,11 @@ public class MetacatClientTest extends MCTestCase
     public void queryWithQformat() {
         debug("\nStarting queryWithQformat test...");
         try {
-            m.login(username,password);
             FileReader fr = new FileReader(queryFile);
             String qformat = "knb";
             Reader r = m.query(fr, qformat);
             String result = IOUtil.getAsString(r, true);
             evaluateResponse(result);
-        } catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
         } catch (MetacatInaccessibleException mie) {
             fail("Metacat Inaccessible:\n" + mie.getMessage());
         } catch (Exception e) {
@@ -448,7 +439,6 @@ public class MetacatClientTest extends MCTestCase
     } catch (Exception e) {
         fail("General exception:\n" + e.getMessage());
     }
-     
   }
     
     /**
@@ -538,7 +528,6 @@ public class MetacatClientTest extends MCTestCase
                                        (int) testFile.length());
             fail(CAN_NOT_REACH);
         } catch (MetacatInaccessibleException mie) {
-          mie.printStackTrace();
             fail("Metacat Inaccessible:\n" + mie.getMessage());
         } catch (InsufficientKarmaException ike) {
             fail("Insufficient karma:\n" + ike.getMessage());
@@ -562,7 +551,6 @@ public class MetacatClientTest extends MCTestCase
                                        new FileInputStream(testFile), -1);
             fail(CAN_NOT_REACH);
         } catch (MetacatInaccessibleException mie) {
-          mie.printStackTrace();
             fail("Metacat Inaccessible:\n" + mie.getMessage());
         } catch (InsufficientKarmaException ike) {
             fail("Insufficient karma:\n" + ike.getMessage());
@@ -758,12 +746,12 @@ public class MetacatClientTest extends MCTestCase
     * Test the isRegistered method
     * @throws Exception
     */
-   public void isRegistered() throws Exception {
+   public void isRegistered() {
        String docid = "tao.1.1";
        try {
            m.isRegistered(docid);
            fail(CAN_NOT_REACH);
-       } catch (Exception e) {
+       } catch (MetacatException e) {
            evaluateResponse(e.getMessage());
        }
    }
@@ -773,16 +761,15 @@ public class MetacatClientTest extends MCTestCase
      * Write id to a file for persistance
      */
     private void writeIdToFile(String fileName, String id) throws Exception {
-    	File file = new File(fileName);
-    	StringReader reader = new StringReader(id);
-    	FileWriter writer = new FileWriter(file);
-    	char [] buffer = new char[1024];
-    	int c = reader.read(buffer);
-    	while (c != -1)
-    	{
-    		writer.write(buffer, 0, c);
-    		c = reader.read(buffer);
-    	}
+        File file = new File(fileName);
+        StringReader reader = new StringReader(id);
+        FileWriter writer = new FileWriter(file);
+        char [] buffer = new char[1024];
+        int c = reader.read(buffer);
+        while (c != -1) {
+            writer.write(buffer, 0, c);
+            c = reader.read(buffer);
+        }
     	writer.close();
     	reader.close();
     }
@@ -791,27 +778,19 @@ public class MetacatClientTest extends MCTestCase
      * Read id from a given file
      */
     private String readIdFromFile(String fileName) throws Exception {
-    	File file = new File(fileName);
-    	FileReader reader = new FileReader(file);
-    	StringWriter writer = new StringWriter();
-    	char [] buffer = new char[1024];
-    	int c = reader.read(buffer);
-    	while (c != -1)
-    	{
-    		writer.write(buffer, 0, c);
-    		c = reader.read(buffer);
-    	}
-    	reader.close();
-    	return writer.toString();
+        File file = new File(fileName);
+        FileReader reader = new FileReader(file);
+        StringWriter writer = new StringWriter();
+        char [] buffer = new char[1024];
+        int c = reader.read(buffer);
+        while (c != -1) {
+            writer.write(buffer, 0, c);
+            c = reader.read(buffer);
+        }
+        reader.close();
+        return writer.toString();
     }
     
-    /*
-     * Delete the given file
-     */
-    private void deleteFile(String fileName) throws Exception {
-    	File file = new File(fileName);
-    	file.delete();
-    }
     
     /**
      * If the response message doesn't have a error message about disabling the
