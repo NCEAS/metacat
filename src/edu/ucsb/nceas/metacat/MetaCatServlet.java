@@ -538,9 +538,6 @@ public class MetaCatServlet extends HttpServlet {
 			String ctype = request.getContentType();
 			
 			if (ctype != null && ctype.startsWith("multipart/form-data")) {
-			    if(isReadOnly(response)) {
-			        return;
-			    }
 				handler.handleMultipartForm(request, response);
 				return;
 			} 
@@ -557,52 +554,9 @@ public class MetaCatServlet extends HttpServlet {
 			// e.g., http://localhost:8180/metacat/metacat/test.1.1/knb
 			String pathInfo = request.getPathInfo();
 			if (pathInfo != null) {
-				String[] path = pathInfo.split("/");
-				if (path.length > 1) {
-					String docidToRead = path[1];
-					String docs[] = new String[1];
-					docs[0] = docidToRead;
-					logMetacat.debug("MetaCatServlet.handleGetOrPost - READING DOCID FROM PATHINFO: " + docs[0]);
-					params.put("docid", docs);
-					String skin = null;
-					if (path.length > 2) {
-						skin = path[2];
-						String skins[] = new String[1];
-						skins[0] = skin;
-						params.put("qformat", skins);
-					}
-					
-					// attempt to redirect to metacatui (#view/{pid}) if not getting the raw XML
-					// see: https://projects.ecoinformatics.org/ecoinfo/issues/6546
-					if (skin != null && !skin.equals("xml")) {
-						String uiContext = PropertyService.getProperty("ui.context");
-						String docidNoRev = DocumentUtil.getSmartDocId(docidToRead);
-						if (docidNoRev != null) {
-						    int rev = DocumentUtil.getRevisionFromAccessionNumber(docidToRead);
-	                        String pid = null;
-	                        try {
-	                            pid = IdentifierManager.getInstance().getGUID(docidNoRev, rev);
-	                            response.sendRedirect(SystemUtil.getServerURL() + "/" + uiContext + "/#view/" + pid );
-	                            return;
-	                        } catch (McdbDocNotFoundException nfe) {
-	                            logMetacat.warn("Could not locate PID for docid: " + docidToRead, nfe);
-	                        }
-						} else {
-						    PrintWriter out = response.getWriter();
-                            response.setContentType("text/xml");
-                            out.println("<?xml version=\"1.0\"?>");
-                            out.println("<error>");
-                            out.println("The docid " + docidToRead + " doesn't match the format and doesn't exist.");
-                            out.println("</error>");
-                            out.close();
-                            return;
-						}
-					}
-					
-					// otherwise carry on as usual
-					handler.handleReadAction(params, request, response, "public", null, null);
-					return;
-				}
+				// otherwise carry on as usual
+				handler.handleReadAction(params, request, response, "public", null, null);
+				return;
 			}
 
 			Enumeration<String> paramlist = 
@@ -630,19 +584,14 @@ public class MetaCatServlet extends HttpServlet {
 
 			// handle param is emptpy
 			if (params.isEmpty() || params == null) {
+			    handler.sendNotSupportMessage(response);
 				return;
 			}
 
 			// if the user clicked on the input images, decode which image
 			// was clicked then set the action.
 			if (params.get("action") == null) {
-				PrintWriter out = response.getWriter();
-				response.setContentType("text/xml");
-				out.println("<?xml version=\"1.0\"?>");
-				out.println("<error>");
-				out.println("Action not specified");
-				out.println("</error>");
-				out.close();
+				handler.sendNotSupportMessage(response);
 				return;
 			}
 
@@ -670,68 +619,7 @@ public class MetaCatServlet extends HttpServlet {
 				handler.handleLogoutAction(params, request, response);
 				// handle session validate request
 			} else if (action.equals("validatesession")) {
-				String token = request.getHeader("Authorization");
-				
-				// First check for a valid authentication token
-				if ( token != null && ! token.equals("") ) {
-					Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-					SessionData sessionData = RequestUtil.getSessionData(request);
-					
-					response.setContentType("text/xml");
-					out.write("<?xml version=\"1.0\"?>");
-					out.write("<validateSession><status>");
-					
-					if ( sessionData != null ) {
-						out.write("valid");
-						
-					} else {
-						out.write("invalid");
-						
-					}
-					out.write("</status>");
-				    
-					if (sessionData != null) {
-						out.write("<userInformation>");
-						out.write("<name>");
-						out.write(sessionData.getUserName());
-						out.write("</name>");
-						out.write("<fullName>");
-						out.write(sessionData.getName());
-						out.write("</fullName>");
-						String[] groups = sessionData.getGroupNames();
-						if ( groups != null ) {
-							for(String groupName : groups) {
-							  out.write("<group>");
-							  out.write(groupName);
-							  out.write("</group>");
-							}
-						}
-						out.write("</userInformation>");
-					}
-
-					out.write("<sessionId>" + sessionId + "</sessionId></validateSession>");				
-					out.close();
-					
-				} else {
-					// With no token, validate the sessionid
-					Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-					String idToValidate = null;
-					String idsToValidate[] = params.get("sessionid");
-					if (idsToValidate != null) {
-						idToValidate = idsToValidate[0];
-						
-					} else {
-						// use the sessionid from the cookie
-						SessionData sessionData = RequestUtil.getSessionData(request);
-						if (sessionData != null) {
-							idToValidate = sessionData.getId();
-							
-						}
-					}
-					SessionService.getInstance().validateSession(out, response, idToValidate);
-					out.close();
-				}
-
+                 handler.sendNotSupportMessage(response);
 				// aware of session expiration on every request
 			} else {
 				SessionData sessionData = RequestUtil.getSessionData(request);
