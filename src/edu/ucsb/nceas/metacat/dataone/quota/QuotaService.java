@@ -49,14 +49,14 @@ import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
  *
  */
 public abstract class QuotaService {
-    private static Log logMetacat  = LogFactory.getLog(QuotaService.class);
+    private static Log logMetacat = LogFactory.getLog(QuotaService.class);
     public static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
     public static int DEFAULT_QUOTA_ID = -1;
-    
+
     protected static ExecutorService executor = null;
     protected static BookKeeperClient client = null;
-    
-    
+
+
     /**
      * The method will be implemented by the child classes to enforce the quota service
      * @param quotaSubject  the subject of the quota which will be used
@@ -77,9 +77,9 @@ public abstract class QuotaService {
      * @param pid  the pid of the object will be checked
      * @param sid  the id of the series chain will be checked
      * @return true if the pid is the last one hasn't been archived; otherwise fals.
-     * @throws SQLException 
-     * @throws InvalidRequest 
-     * @throws ServiceFailure 
+     * @throws SQLException
+     * @throws InvalidRequest
+     * @throws ServiceFailure
      */
     protected boolean isLastUnarchivedInChain(String pid, String sid) throws InvalidRequest, ServiceFailure {
         boolean lastOne = true;
@@ -92,7 +92,7 @@ public abstract class QuotaService {
                         identifier.setValue(guid);
                         //SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
                         SystemMetadata sysmeta = SystemMetadataManager.getInstance().get(identifier);
-                        if(sysmeta.getArchived() == null || !sysmeta.getArchived()) {
+                        if (sysmeta.getArchived() == null || !sysmeta.getArchived()) {
                             lastOne = false;//found one which is not archived and its guid doesn't equals the pid
                             logMetacat.debug("QuotaService.isLastUnarchivedInChain - found the guid " + guid + " in the chain with sid " + sid +" hasn't been archived. So the whole chain hasn't been archived.");
                             break;
@@ -102,28 +102,28 @@ public abstract class QuotaService {
             } catch (SQLException e) {
                 throw new ServiceFailure("1104", "QuotaService.isLastUnarchivedInChain - Can't get the pids list in the chain with the sid " + sid + " since " + e.getMessage());
             }
-            
+
         } else {
             throw new InvalidRequest("1102", "QuotaService.isLastUnarchivedInChain - the pid or sid can't be null or blank for the portal quota.");
         }
         return lastOne;
     }
-    
+
     /**
      * Checking if the given pid is last one in this series chain hasn't been deleted
      * @param pid  the pid of the object will be checked
      * @param sid  the id of the series chain will be checked
      * @return true if the pid is the last one hasn't been deleted; otherwise fals.
-     * @throws SQLException 
-     * @throws InvalidRequest 
-     * @throws ServiceFailure 
+     * @throws SQLException
+     * @throws InvalidRequest
+     * @throws ServiceFailure
      */
     protected boolean isLastUndeletedInChain(String pid, String sid) throws InvalidRequest, ServiceFailure {
         boolean lastOne = false;
         if (sid != null && !sid.trim().equals("") && pid != null && !pid.trim().equals("")) {
             try {
                 List<String> guids = IdentifierManager.getInstance().getAllPidsInChain(sid);
-                if (guids.size() ==1) {
+                if (guids.size() == 1) {
                     String guid = guids.get(0);
                     if (guid != null && guid.equals(pid)) {
                         lastOne = true;//the series chain only has one element and it is the given pid
@@ -133,28 +133,28 @@ public abstract class QuotaService {
             } catch (SQLException e) {
                 throw new ServiceFailure("1104", "QuotaService.isLastUnDletedInChain - Can't get the pids list in the chain with the sid " + sid + " since " + e.getMessage());
             }
-            
+
         } else {
             throw new InvalidRequest("1102", "QuotaService.isLastUnDletedInChain - the pid or sid can't be null or blank for the portal quota.");
         }
         return lastOne;
     }
-    
+
     /**
      * Check if the quota has enough space for this request. If there is not enough space, an exception will be thrown
      * @param checkEnoughSpace  indicator if we need to check if the found quota has enough space for this usage
-     * @param quotaSubject  the subject of the quota which will be used 
+     * @param quotaSubject  the subject of the quota which will be used
      * @param requestor  the subject of the user who requests the usage
      * @param quotaType  the type of quota
      * @param quantity  the amount of the usage for the request
      * @return the quota id which will be used. -1 will be returned if the quota service is disabled
-     * @throws InvalidRequest 
-     * @throws IOException 
-     * @throws ServiceFailure 
-     * @throws NotFound 
-     * @throws ClientProtocolException 
-     * @throws InsufficientResources 
-     * @throws UnsupportedEncodingException 
+     * @throws InvalidRequest
+     * @throws IOException
+     * @throws ServiceFailure
+     * @throws NotFound
+     * @throws ClientProtocolException
+     * @throws InsufficientResources
+     * @throws UnsupportedEncodingException
      */
      protected int checkQuota(boolean checkEnoughSpace, String quotaSubject, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound, UnsupportedEncodingException {
         int quotaId = DEFAULT_QUOTA_ID;
@@ -174,7 +174,7 @@ public abstract class QuotaService {
                         existedUsages = existedUsagesObj.doubleValue();
                     }
                     logMetacat.debug("QuotaService.lookUpQuotaId - need to check space: the hardLimit in the quota with the quota subject " + quotaSubject + " with the type " + quotaType + "is " + hardLimit + ", the existed usages is " + existedUsages + " and the request amount of usage is " + quantity + " for the instance id " + instanceId);
-                    if (hardLimit  >= existedUsages + quantity) {
+                    if (hardLimit >= existedUsages + quantity) {
                         quotaId = quota.getId();
                         hasSpace = true;
                         logMetacat.debug("QuotaService.lookUpQuotaId - the hardLimit in the quota is " + hardLimit + " and it is greater than or equals the request amount of usage " + quantity + " plus existed usage " + existedUsages +". So the request is granted for the instance id " + instanceId);
@@ -194,8 +194,8 @@ public abstract class QuotaService {
         }
         return quotaId;
     }
-    
-    
+
+
     
     /**
      * Create a usage associated with the given quota id. It will create the usage by another thread.
@@ -216,7 +216,7 @@ public abstract class QuotaService {
         CreateUsageTask task = new CreateUsageTask(usage, client);
         executor.submit(task);
     }
-    
+
     /**
      * Update a usage with the archived status associated with the given quota id in the remote book keeper server. Locally we will add a new record with the archived status 
      * in the table. It will be run by another thread.
@@ -237,7 +237,7 @@ public abstract class QuotaService {
         UpdateUsageTask task = new UpdateUsageTask(usage, client);
         executor.submit(task);
     }
-    
+
     /**
      * Delete a usage associated with the given quota id in the remote book keeper server. However, locally we will add a new record with the deleted status 
      * in the table. It will be run by another thread.
