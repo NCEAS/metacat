@@ -730,10 +730,6 @@ public class MNodeService extends D1NodeService
             // and insert the new system metadata
             insertSystemMetadata(sysmeta);
 
-            // log the update event
-            //EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent")
-            // , subject.getValue(), localId, Event.UPDATE.toString());
-
             long end4 = System.currentTimeMillis();
             logMetacat.debug(
                 "MNodeService.update - the time spending on updating/saving system metadata  of "
@@ -918,10 +914,6 @@ public class MNodeService extends D1NodeService
     public boolean replicate(Session session, SystemMetadata sysmeta, NodeReference sourceNode)
         throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, InsufficientResources,
         UnsupportedType {
-        /*if(isReadOnlyMode()) {
-            throw new InvalidRequest("2153", "The Metacat member node is on the read-only mode
-            and your request can't be fulfiled. Please try again later.");
-        }*/
 
         if (session != null && sysmeta != null && sourceNode != null) {
             logMetacat.info(
@@ -955,7 +947,6 @@ public class MNodeService extends D1NodeService
         // get from the membernode
         // TODO: switch credentials for the server retrieval?
 
-        //       this.cn = D1Client.getCN();
         InputStream object = null;
         Session thisNodeSession = null;
         SystemMetadata localSystemMetadata = null;
@@ -970,7 +961,6 @@ public class MNodeService extends D1NodeService
                     .getValue();
             logMetacat.error(msg);
             throw new NotAuthorized("2152", msg);
-
         }
 
         // only allow cns call this method
@@ -1050,13 +1040,6 @@ public class MNodeService extends D1NodeService
 
                 // no local replica, get a replica
                 if (object == null) {
-                    /*boolean success = true;
-                    try {
-                        //use the v2 ping api to connect the source node
-                        mn.ping();
-                    } catch (Exception e) {
-                        success = false;
-                    }*/
                     D1NodeVersionChecker checker = new D1NodeVersionChecker(sourceNode);
                     String nodeVersion = checker.getVersion("MNRead");
                     if (nodeVersion != null && nodeVersion.equals(D1NodeVersionChecker.V1)) {
@@ -1744,10 +1727,7 @@ public class MNodeService extends D1NodeService
         } catch (Exception e) {
             throw new ServiceFailure("2161", "Could not log the error for: " + pid.getValue());
         }
-        //EventLog.getInstance().log("CN URL WILL GO HERE", 
-        //  session.getSubject().getValue(), localId, Event.SYNCHRONIZATION_FAILED);
         return true;
-
     }
 
     /**
@@ -2060,18 +2040,6 @@ public class MNodeService extends D1NodeService
                     "Updated local copy of system metadata for pid " + pid.getValue()
                         + " after change notification from the CN.");
 
-                // TODO: consider inspecting the change for archive
-                // see: https://projects.ecoinformatics.org/ecoinfo/issues/6417
-                //                if (newSysMeta.getArchived() != null && newSysMeta
-                //                .getArchived().booleanValue()) {
-                //                	try {
-                //						this.archive(session, newSysMeta.getIdentifier());
-                //					} catch (NotFound e) {
-                //						// do we care? nothing to do about it now
-                //						logMetacat.error(e.getMessage(), e);
-                //					}
-                //                }
-
             } catch (RuntimeException e) {
                 String msg =
                     "SystemMetadata for pid " + pid.getValue() + " couldn't be updated: "
@@ -2292,8 +2260,6 @@ public class MNodeService extends D1NodeService
     public QueryEngineList listQueryEngines(Session session)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented {
         QueryEngineList qel = new QueryEngineList();
-        //qel.addQueryEngine(EnabledQueryEngines.PATHQUERYENGINE);
-        //qel.addQueryEngine(EnabledQueryEngines.SOLRENGINE);
         List<String> enables = EnabledQueryEngines.getInstance().getEnabled();
         for (String name : enables) {
             qel.addQueryEngine(name);
@@ -3478,7 +3444,6 @@ public class MNodeService extends D1NodeService
      * @return the input stream which is the xml presentation of the status report
      */
     public InputStream getStatus(Session session) throws NotAuthorized, ServiceFailure {
-        //int size = IndexGenerator.getInstance().size();
         String size = "We don't support this feature.";
         StringBuffer result = new StringBuffer();
         result.append("<?xml version=\"1.0\"?>");
