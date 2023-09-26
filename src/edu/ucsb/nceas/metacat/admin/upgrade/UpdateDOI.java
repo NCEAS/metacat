@@ -1,32 +1,7 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2013 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.admin.upgrade;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,8 +15,6 @@ import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
-import edu.ucsb.nceas.metacat.util.DocumentUtil;
-
 
 
 /**
@@ -84,15 +57,14 @@ public class UpdateDOI implements UpgradeUtilityInterface {
                 //Create an identifier and retrieve the SystemMetadata for this guid
                 Identifier identifier = new Identifier();
                 identifier.setValue(pid);
-				//SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
                 SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(identifier);
                 if (sysMeta == null) {
-				    //The identifier can be a sid, so the sysMeta can be null. we need to check if it is a sid.
+                    //The identifier can be a sid, so the sysMeta can be null. we need to check
+                    // if it is a sid.
                     Identifier sid = new Identifier();
                     sid.setValue(pid);
                     Identifier head = IdentifierManager.getInstance().getHeadPID(sid);
                     if (head != null) {
-				        //sysMeta= HazelcastService.getInstance().getSystemMetadataMap().get(head);
                         sysMeta = SystemMetadataManager.getInstance().get(head);
                     }
                 }
@@ -119,23 +91,28 @@ public class UpdateDOI implements UpgradeUtilityInterface {
             // get only local ids for this server
             List<String> idList = null;
 
-            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_0_0NAMESPACE, nodeId, DOISCHEME);
+            idList = IdentifierManager.getInstance()
+                .getGUIDs(DocumentImpl.EML2_0_0NAMESPACE, nodeId, DOISCHEME);
             //Collections.sort(idList);
             updateDOIRegistration(idList);
 
-            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_0_1NAMESPACE, nodeId, DOISCHEME);
+            idList = IdentifierManager.getInstance()
+                .getGUIDs(DocumentImpl.EML2_0_1NAMESPACE, nodeId, DOISCHEME);
             //Collections.sort(idList);
             updateDOIRegistration(idList);
 
-            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_1_0NAMESPACE, nodeId, DOISCHEME);
+            idList = IdentifierManager.getInstance()
+                .getGUIDs(DocumentImpl.EML2_1_0NAMESPACE, nodeId, DOISCHEME);
             //Collections.sort(idList);
             updateDOIRegistration(idList);
 
-            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_1_1NAMESPACE, nodeId, DOISCHEME);
+            idList = IdentifierManager.getInstance()
+                .getGUIDs(DocumentImpl.EML2_1_1NAMESPACE, nodeId, DOISCHEME);
             //Collections.sort(idList);
             updateDOIRegistration(idList);
 
-            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_2_0NAMESPACE, nodeId, DOISCHEME);
+            idList = IdentifierManager.getInstance()
+                .getGUIDs(DocumentImpl.EML2_2_0NAMESPACE, nodeId, DOISCHEME);
             updateDOIRegistration(idList);
 
         } catch (Exception e) {
@@ -176,7 +153,8 @@ public class UpdateDOI implements UpgradeUtilityInterface {
         try {
             for (String formatId : formatIds) {
                 //Get all the docids with this formatId
-        		List<String> idList = IdentifierManager.getInstance().getGUIDs(formatId, nodeId, DOISCHEME);
+                List<String> idList =
+                    IdentifierManager.getInstance().getGUIDs(formatId, nodeId, DOISCHEME);
                 //Update the registration for all these guids
                 Collections.sort(idList);
                 updateDOIRegistration(idList);
