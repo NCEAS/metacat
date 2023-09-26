@@ -1497,7 +1497,7 @@ public abstract class D1NodeService {
         try {
 
             boolean needUpdateModificationDate = true;
-            updateSystemMetadataWithoutLock(sysMeta, needUpdateModificationDate);
+            updateSystemMetadata(sysMeta, needUpdateModificationDate);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
         }
@@ -1510,7 +1510,7 @@ public abstract class D1NodeService {
      * @param needUpdateModificationDate
      * @throws ServiceFailure
      */
-    private void updateSystemMetadataWithoutLock(
+    private void updateSystemMetadata(
         SystemMetadata sysMeta, boolean needUpdateModificationDate) throws ServiceFailure {
         logMetacat.debug("D1NodeService.updateSystemMetadataWithoutLock() called.");
         // submit for indexing
@@ -1681,7 +1681,7 @@ public abstract class D1NodeService {
         } else {
             logMetacat.debug("D1Node.update - regularly update the system metadata of the pid "
                                  + pid.getValue());
-            updateSystemMetadataWithoutLock(sysmeta, needUpdateModificationDate);
+            updateSystemMetadata(sysmeta, needUpdateModificationDate);
         }
 
         try {
@@ -1697,8 +1697,7 @@ public abstract class D1NodeService {
         } catch (SQLException e) {
             logMetacat.warn(
                 "Could not log 'updateSystemMetadata' event because the localId couldn't be "
-                + "identified for the pid: "
-                    + pid.getValue());
+                + "identified for the pid: " + pid.getValue());
         }
         return true;
     }
