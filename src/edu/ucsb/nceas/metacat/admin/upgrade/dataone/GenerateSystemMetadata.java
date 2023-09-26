@@ -1,29 +1,4 @@
 package edu.ucsb.nceas.metacat.admin.upgrade.dataone;
-/**
- *  '$RCSfile$'
- *    Purpose: A Class for upgrading the database to version 1.5
- *  Copyright: 2000 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Saurabh Garg
- *
- *   '$Author: leinfelder $'
- *     '$Date: 2011-03-29 18:23:38 +0000 (Tue, 29 Mar 2011) $'
- * '$Revision: 6025 $'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 
 
 import java.util.Collections;
@@ -103,15 +78,14 @@ public class GenerateSystemMetadata implements UpgradeUtilityInterface {
             // the ids for which to generate system metadata
             List<String> idList = null;
             // only get local objects
-            idList = IdentifierManager.getInstance().getLocalIdsWithNoSystemMetadata(true, serverLocation);
+            idList = IdentifierManager.getInstance()
+                .getLocalIdsWithNoSystemMetadata(true, serverLocation);
 
             // for testing, subset to a limited random number
             boolean test = false;
             if (test) {
-                //idList = DBUtil.getAllDocidsByType("eml://ecoinformatics.org/eml-2.1.0", true, serverLocation);
                 idList = DBUtil.getAllDocids("knb-lter-gce"); // use a scope
                 Collections.sort(idList);
-	            //Collections.shuffle(idList);
                 int start = 0;
                 int count = 100;
                 int limit = Math.min(idList.size(), start + count);
@@ -134,10 +108,6 @@ public class GenerateSystemMetadata implements UpgradeUtilityInterface {
             ExecutorService executor = Executors.newFixedThreadPool(nThreads);
             int taskCount = 0;
 
-            // init HZ
-            log.debug("Making sure Hazelcast is up");
-            //HazelcastService.getInstance();
-            
             // chunk into groups
             int fromIndex = 0;
             int toIndex = 0;
@@ -163,7 +133,8 @@ public class GenerateSystemMetadata implements UpgradeUtilityInterface {
                             // generate based on this list
                             try {
                                 log.debug("Processing subList.size: " + subList.size());
-								SystemMetadataFactory.generateSystemMetadata(subList, includeOre, downloadData);
+                                SystemMetadataFactory.generateSystemMetadata(
+                                    subList, includeOre, downloadData);
                                 log.debug("Done processing subList.size: " + subList.size());
 
                             } catch (Exception e) {
@@ -199,7 +170,8 @@ public class GenerateSystemMetadata implements UpgradeUtilityInterface {
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.HOURS);
             log.debug("Done waiting for all threads to complete");
             // now we are ready to be a data one node
-            PropertyService.setProperty("dataone.systemmetadata.generated", Boolean.TRUE.toString());
+            PropertyService.setProperty(
+                "dataone.systemmetadata.generated", Boolean.TRUE.toString());
 
         } catch (Exception e) {
             String msg = "Problem generating missing system metadata: " + e.getMessage();
@@ -222,8 +194,7 @@ public class GenerateSystemMetadata implements UpgradeUtilityInterface {
 
         try {
             // set up the properties based on the test/deployed configuration of the workspace
-        	SortedProperties testProperties = 
-				new SortedProperties("test/test.properties");
+            SortedProperties testProperties = new SortedProperties("test/test.properties");
             testProperties.load();
             String metacatContextDir = testProperties.getProperty("metacat.contextDir");
             PropertyService.getInstance(metacatContextDir + "/WEB-INF");
