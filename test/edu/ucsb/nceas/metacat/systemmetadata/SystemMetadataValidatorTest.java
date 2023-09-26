@@ -1,22 +1,5 @@
-/**
- *  Copyright: 2023 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.systemmetadata;
+
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -26,7 +9,6 @@ import java.util.Date;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
-
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
@@ -83,7 +65,9 @@ public class SystemMetadataValidatorTest extends D1NodeServiceTest {
         assertTrue(hasLatestVersion == true);
         try {
             hasLatestVersion = validator.hasLatestVersion(sysmeta);
-            fail("we shouldn't get there since the system metadata shouldn't have the same modification as the one set by client");
+            fail(
+                "we shouldn't get there since the system metadata shouldn't have the same "
+                    + "modification as the one set by client");
         } catch (InvalidSystemMetadata e) {
             
         }
@@ -119,7 +103,8 @@ public class SystemMetadataValidatorTest extends D1NodeServiceTest {
         readSysmeta.setDateSysMetadataModified(oldTime);
         try {
             hasLatestVersion = validator.hasLatestVersion(readSysmeta);
-            fail("we shouldn't get there since the ealier time doesn't match the modification date");
+            fail(
+                "we shouldn't get here since the earlier time doesn't match the modification date");
         } catch (InvalidSystemMetadata e) {
             
         }
