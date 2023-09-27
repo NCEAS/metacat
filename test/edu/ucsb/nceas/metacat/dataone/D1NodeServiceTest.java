@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
@@ -74,7 +73,6 @@ import org.mockito.Mockito;
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.client.Metacat;
 import edu.ucsb.nceas.metacat.client.MetacatFactory;
-import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
@@ -166,7 +164,7 @@ public class D1NodeServiceTest extends MCTestCase {
            rightsHolder.setValue("CN=arctic-data-admins,DC=dataone,DC=org");
            Subject user = new Subject();
 
-           user.setValue("http://orcid.org/0000-0003-3515-6710");
+           user.setValue("http://orcid.org/0000-0002-1209-5268");
            assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
            user.setValue("uid=foo");
