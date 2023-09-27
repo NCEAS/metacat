@@ -1989,19 +1989,52 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             InputStream dataObject1 = new ByteArrayInputStream(dataId.getValue().getBytes("UTF-8"));
             sysmeta = createSystemMetadata(dataId, session.getSubject(), dataObject1);
             MNodeService.getInstance(request).create(session, dataId, dataObject1, sysmeta);
+            String query = "q=id:" + "\"" + dataId.getValue() + "\"";
+            InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+            String resultStr = IOUtils.toString(stream, "UTF-8");
+            int account = 0;
+            while ( (resultStr == null || !resultStr.contains("checksum")) 
+                    && account <= MNodeQueryTest.tryAcccounts) {
+                Thread.sleep(500);
+                account++;
+                stream = MNodeService.getInstance(request).query(session, "solr", query);
+                resultStr = IOUtils.toString(stream, "UTF-8"); 
+            }
             // second data file
             InputStream dataObject2 =
                 new ByteArrayInputStream(dataId2.getValue().getBytes("UTF-8"));
             sysmeta = createSystemMetadata(dataId2, session.getSubject(), dataObject2);
             MNodeService.getInstance(request).create(session, dataId2, dataObject2, sysmeta);
+            query = "q=id:" + "\"" + dataId2.getValue() + "\"";
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+            account = 0;
+            while ( (resultStr == null || !resultStr.contains("checksum")) 
+                    && account <= MNodeQueryTest.tryAcccounts) {
+                Thread.sleep(500);
+                account++;
+                stream = MNodeService.getInstance(request).query(session, "solr", query);
+                resultStr = IOUtils.toString(stream, "UTF-8"); 
+            }
+            
             // metadata file
             InputStream metadataObject =
                 new ByteArrayInputStream(metadataId.getValue().getBytes("UTF-8"));
             sysmeta = createSystemMetadata(metadataId, session.getSubject(), metadataObject);
             MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
-
+            query = "q=id:" + "\"" + metadataId.getValue() + "\"";
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+            account = 0;
+            while ( (resultStr == null || !resultStr.contains("checksum")) 
+                    && account <= MNodeQueryTest.tryAcccounts) {
+                Thread.sleep(500);
+                account++;
+                stream = MNodeService.getInstance(request).query(session, "solr", query);
+                resultStr = IOUtils.toString(stream, "UTF-8"); 
+            }
+            
             // save the ORE object
-            Thread.sleep(10000);
             object = new ByteArrayInputStream(rdfXml.getBytes("UTF-8"));
             sysmeta = createSystemMetadata(resourceMapId, session.getSubject(), object);
             sysmeta.setFormatId(
@@ -2009,7 +2042,17 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                     .getFormatId());
             Identifier pid =
                 MNodeService.getInstance(request).create(session, resourceMapId, object, sysmeta);
-            Thread.sleep(20000);
+            query = "q=id:" + resourceMapId.getValue();
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+            account = 0;
+            while ( (resultStr == null || !resultStr.contains("checksum")) 
+                    && account <= MNodeQueryTest.tryAcccounts) {
+                Thread.sleep(500);
+                account++;
+                stream = MNodeService.getInstance(request).query(session, "solr", query);
+                resultStr = IOUtils.toString(stream, "UTF-8"); 
+            }
             // get the package we uploaded
             ObjectFormatIdentifier format = new ObjectFormatIdentifier();
             format.setValue("application/bagit-097");
@@ -2027,33 +2070,43 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                 ZipEntry entry = entries.nextElement();
                 // Check if it's the ORE
                 if (entry.getName().contains("testGetOREPackage")) {
-                    InputStream stream = zipFile.getInputStream(entry);
+                    InputStream stream2 = zipFile.getInputStream(entry);
                     object.reset();
-                    assertTrue(IOUtils.contentEquals(stream, object));
+                    assertTrue(IOUtils.contentEquals(stream2, object));
                 }
                 // Check if it's the science metadata
                 else if (entry.getName().contains("meta.1")) {
-                    InputStream stream = zipFile.getInputStream(entry);
+                    InputStream stream2 = zipFile.getInputStream(entry);
                     metadataObject.reset();
-                    assertTrue(IOUtils.contentEquals(stream, metadataObject));
+                    assertTrue(IOUtils.contentEquals(stream2, metadataObject));
                 }
                 // Check if it's the first data file
                 else if (entry.getName().contains("data.1")) {
-                    InputStream stream = zipFile.getInputStream(entry);
+                    InputStream stream2 = zipFile.getInputStream(entry);
                     dataObject1.reset();
-                    assertTrue(IOUtils.contentEquals(stream, dataObject1));
+                    assertTrue(IOUtils.contentEquals(stream2, dataObject1));
                 }
                 // Check if it's the second data file
                 else if (entry.getName().contains("data.2")) {
-                    InputStream stream = zipFile.getInputStream(entry);
+                    InputStream stream2 = zipFile.getInputStream(entry);
                     dataObject2.reset();
-                    assertTrue(IOUtils.contentEquals(stream, dataObject2));
+                    assertTrue(IOUtils.contentEquals(stream2, dataObject2));
                 }
             }
             // clean up
             bagFile.delete();
             Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
-            Thread.sleep(90000);
+            query = "q=id:" + "\"" + doi.getValue() + "\"";
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+            account = 0;
+            while ( (resultStr == null || !resultStr.contains("resourceMap")) 
+                    && account <= MNodeQueryTest.tryAcccounts) {
+                Thread.sleep(1000);
+                account++;
+                stream = MNodeService.getInstance(request).query(session, "solr", query);
+                resultStr = IOUtils.toString(stream, "UTF-8"); 
+            }
             System.out.println("+++++++++++++++++++ the metadataId on the ore package is "
                 + metadataId.getValue());
             List<Identifier> oreIds =

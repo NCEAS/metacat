@@ -85,7 +85,7 @@ import edu.ucsb.nceas.metacat.util.SystemUtil;
  *
  */
 public class MNodeQueryTest extends D1NodeServiceTest {
-
+    public static final int tryAcccounts = 100;
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
     private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
     private static String portalFilePath = "metacat-index/src/test/resources/collection/portal-example-simple.xml";
@@ -95,7 +95,6 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     private static String collection110FilePath = "metacat-index/src/test/resources/collection/collection-1.1.0-example-filterGroup-operator.xml";
     private static String collection110ResultFilePath = "metacat-index/src/test/resources/collection/collectionQuery-result-example-filterGroup-operator.txt";
     private static String emlWithAnnotation = "test/eml220withAnnotation.xml";
-    private int tryAcccounts = 100;
     
     private static String collectionResult = null;
     private static String collectionQueryPortal110 = null;
