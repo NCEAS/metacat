@@ -1283,11 +1283,11 @@ public class MetaCatServlet extends HttpServlet {
                 Date timeOfFirstRun = determineTimeOfFirstRunRegeneratingThread(timeStrOfFirstRun);
                 IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask();
                 Timer indexTimer = new Timer();
-                logMetacat.debug("MetacatServlet.startIndexGenerate - the " + 
-                                "first time for running the thread to reindex "+ 
-                                 "the failed objects is ==============" +
-                                 timeOfFirstRun.toString() + 
-                                 " and the period is " + period);
+                logMetacat.debug("MetacatServlet.startIndexGenerate - the " 
+                            + "first time for running the thread to reindex "
+                            + "the failed objects is ==============" 
+                            + timeOfFirstRun.toString() 
+                            + " and the period is " + period);
                 indexTimer.schedule(generator, timeOfFirstRun, period);
 	        }
 	    }
@@ -1307,9 +1307,10 @@ public class MetaCatServlet extends HttpServlet {
 	            givenDate = format.parse(givenTime);
 	        } catch (ParseException e) {
 	            try {
-	                logMetacat.warn("The given start time string " + givenTime + 
-	                                " can't be parsed since " + e.getMessage() + 
-	                                " and we will use the default time - 11:50 PM");
+	                logMetacat.warn("The given start time string " 
+	                                + givenTime + " can't be parsed since " 
+	                                + e.getMessage() + " and we will use the " 
+	                                + " default time - 11:50 PM");
 	                givenDate = format.parse("11:50 PM");
 	            } catch (ParseException ee) {
 	                givenDate = new Date();
@@ -1328,16 +1329,17 @@ public class MetaCatServlet extends HttpServlet {
 	        today.set(Calendar.HOUR_OF_DAY, hour);
 	        today.set(Calendar.MINUTE, minute);
 	        timeOfFirstRun = today.getTime();
-	        logMetacat.debug("The time (after transforming to today) to " + 
-	               "first time run the thread is " + timeOfFirstRun.toString());
+	        logMetacat.debug("The time (after transforming to today) to " 
+	                        + "first time run the thread is " 
+	                        + timeOfFirstRun.toString());
 	        Date now = new Date();
 	        if((timeOfFirstRun.getTime() - now.getTime()) <2000) {
 	            //if the given time already passed or only be less than 2 
 	            //seconds to pass, we need to set the timeOfFirstRun to be 
 	            //24 hours latter (the second day)
-	            logMetacat.debug("The time (after transforming to today) to " +  
-	                  "first time run the thread " + timeOfFirstRun.toString() + 
-	                  " passed and we will delay it 24 hours");
+	            logMetacat.debug("The time (after transforming to today) to " 
+	                 + "first time run the thread " + timeOfFirstRun.toString() 
+	                 + " passed and we will delay it 24 hours");
 	            timeOfFirstRun = new Date(timeOfFirstRun.getTime()+24*3600*1000);
 	            //timeOfFirstRun = new Date(timeOfFirstRun.getTime()+2*3600*1000);
 	        }
