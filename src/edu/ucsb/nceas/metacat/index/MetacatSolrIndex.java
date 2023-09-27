@@ -335,7 +335,7 @@ public class MetacatSolrIndex {
                     + " will not be submitted into the index queue on the RabbitMQ service.");
             return;
         }
-        String type = IndexGenerator.CREATE_INDEXT_TYPE;
+        String type = IndexGenerator.CREATE_INDEX_TYPE;
         if (isSysmetaChangeOnly) {
             type = IndexGenerator.SYSMETA_CHANGE_TYPE;
         }
