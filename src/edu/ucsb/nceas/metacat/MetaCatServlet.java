@@ -1275,7 +1275,6 @@ public class MetaCatServlet extends HttpServlet {
 	     * Start to re-generate indexes for those haven't been indexed in another thread.
 	     * It will create a timer to run this task periodically. 
 	     * If the property of "index.regenerate.interval" is less than 0, the thread would NOT run.
-	     * @throws ParseException 
 	     */
 	    private static void startIndexReGenerator() {
 	        long period = Settings.getConfiguration().getLong("index.regenerate.interval", 86400000); //milliseconds
@@ -1284,54 +1283,66 @@ public class MetaCatServlet extends HttpServlet {
                 Date timeOfFirstRun = determineTimeOfFirstRunRegeneratingThread(timeStrOfFirstRun);
                 IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask();
                 Timer indexTimer = new Timer();
-                logMetacat.debug("MetacatServlet.startIndexGenerate - the first time for runing the thread to reindex the failed objects is ==============" +
-                                 timeOfFirstRun.toString() + " and the period is " + period);
+                logMetacat.debug("MetacatServlet.startIndexGenerate - the " + 
+                                "first time for running the thread to reindex "+ 
+                                 "the failed objects is ==============" +
+                                 timeOfFirstRun.toString() + 
+                                 " and the period is " + period);
                 indexTimer.schedule(generator, timeOfFirstRun, period);
 	        }
 	    }
 	    
 	    /**
 	     * Determine the time to run the regenerating thread first. 
-	     * If the given time already passed or only be less than 2 seconds to pass, we need to set the timeOfFirstRun to be 24 hours latter (the second day)
-	     * @param givenTime the given time to run. The format should like 10:00 PM
+	     * If the given time already passed or only be less than 2 seconds to pass, 
+	     * we need to set the timeOfFirstRun to be 24 hours latter (the second day)
+	     * @param givenTime the given time to run. The format should like 10:00 PM.
+	     * It uses the default time zone set in the host.
 	     */
 	    private static Date determineTimeOfFirstRunRegeneratingThread(String givenTime) {
 	        Date timeOfFirstRun = null;
 	        DateFormat format = DateFormat.getTimeInstance(DateFormat.SHORT);
 	        Date givenDate = null;
 	        try {
-	            givenDate = format.parse(givenTime); //since it is short time, so the date will be 1/1/1970
+	            givenDate = format.parse(givenTime);
 	        } catch (ParseException e) {
 	            try {
-	                logMetacat.warn("MetacatServlet.determineTimeOfFirstRunRegeneratingThread - " + 
-	                                "the given start time string " + givenTime + " can't be parsed since " + 
-	                                 e.getMessage() + " and we will use the default time - 11:50 PM");
+	                logMetacat.warn("The given start time string " + givenTime + 
+	                                " can't be parsed since " + e.getMessage() + 
+	                                " and we will use the default time - 11:50 PM");
 	                givenDate = format.parse("11:50 PM");
 	            } catch (ParseException ee) {
 	                givenDate = new Date();
 	            }
 	        }
-	        logMetacat.debug("MetacatServlet.determineTimeOfFirstRunRegeneratingThread - The time (given) to first time run the thread is " + givenDate.toString());
+	        logMetacat.debug("The time (given) to first time run the thread is " 
+	                          + givenDate.toString());
 	        Calendar date = new GregorianCalendar();
 	        date.setTime(givenDate);
 	        int hour = date.get(Calendar.HOUR_OF_DAY);
-	        logMetacat.debug("MetacatServlet.determineTimeOfFirstRunRegeneratingThread - The given hour is " + hour);
+	        logMetacat.debug("The given hour is " + hour);
 	        int minute = date.get(Calendar.MINUTE);
-	        logMetacat.debug("MetacatServlet.determineTimeOfFirstRunRegeneratingThread - The given minutes is " + minute);
+	        logMetacat.debug("The given minutes is " + minute);
 	        //set the hour and minute to today
 	        Calendar today = new GregorianCalendar();
 	        today.set(Calendar.HOUR_OF_DAY, hour);
 	        today.set(Calendar.MINUTE, minute);
 	        timeOfFirstRun = today.getTime();
-	        logMetacat.debug("MetacatServlet.determineTimeOfFirstRunRegeneratingThread - The time (after transforming to today) to first time run the thread is " + timeOfFirstRun.toString());
+	        logMetacat.debug("The time (after transforming to today) to " + 
+	               "first time run the thread is " + timeOfFirstRun.toString());
 	        Date now = new Date();
 	        if((timeOfFirstRun.getTime() - now.getTime()) <2000) {
-	            //if the given time already passed or only be less than 2 seconds to pass, we need to set the timeOfFirstRun to be 24 hours latter (the second day)
-	            logMetacat.debug("MetacatServlet.determineTimeOfFirstRunRegeneratingThread - The time (after transforming to today) to first time run the thread " + timeOfFirstRun.toString()+" passed and we will delay it 24 hours");
+	            //if the given time already passed or only be less than 2 
+	            //seconds to pass, we need to set the timeOfFirstRun to be 
+	            //24 hours latter (the second day)
+	            logMetacat.debug("The time (after transforming to today) to " +  
+	                  "first time run the thread " + timeOfFirstRun.toString() + 
+	                  " passed and we will delay it 24 hours");
 	            timeOfFirstRun = new Date(timeOfFirstRun.getTime()+24*3600*1000);
 	            //timeOfFirstRun = new Date(timeOfFirstRun.getTime()+2*3600*1000);
 	        }
-	        logMetacat.debug("MetacatServlet.determineTimeOfFirstRunRegeneratingThread - The final time of the first time running the thread is " + timeOfFirstRun.toString());
+	        logMetacat.debug("The final time of the first time running the thread is " 
+	                        + timeOfFirstRun.toString());
 	        return timeOfFirstRun;
 	    }
 }
