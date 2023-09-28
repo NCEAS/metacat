@@ -305,9 +305,6 @@ public class PropertiesAdmin extends MetacatAdmin {
                 //modify some params of the index context
                 this.modifyIndexContextParams(indexContext);
 
-                // make sure hazelcast.xml uses a unique group name
-                this.modifyHazelcastConfig();
-
                 // set permissions on the registry cgi scripts, least on *nix systems
                 try {
                     String cgiFiles =
@@ -453,37 +450,6 @@ public class PropertiesAdmin extends MetacatAdmin {
                 SLASH + metacatContext + METACAT_PROPERTY_APPENDIX);
         }
         return webXmlContents;
-    }
-
-    /**
-     * Changes the Hazelcast group name to match the current context
-     * This ensures we do not share the same group if multiple Metacat
-     * instances are running in the same Tomcat container.
-     */
-    private void modifyHazelcastConfig() {
-        try {
-            String metacatContext = PropertyService.getProperty("application.context");
-            //System.out.println("the metacat context is ========================="+metacatContext);
-            if (metacatContext != null) {
-                String hzConfigFile =
-                                PropertyService.getProperty("application.deployDir")
-                                + FileUtil.getFS()
-                                + metacatContext
-                                + FileUtil.getFS()
-                                + "WEB-INF"
-                                + FileUtil.getFS()
-                                + "hazelcast.xml";
-                //System.out.println("============================== the web.xml file is "+indexConfigFile);
-                String configContents = FileUtil.readFileToString(hzConfigFile, "UTF-8");
-                //System.out.println("============================== the content of web.xml file is "+configContents);
-                configContents = configContents.replace("<name>metacat</name>", "<name>" + metacatContext + "</name>");
-                FileUtil.writeFile(hzConfigFile, new StringReader(configContents), "UTF-8");
-            }
-
-        } catch (Exception e) {
-            String errorMessage = "PropertiesAdmin.configureProperties - Problem setting groupName in hazelcast.xml: " + e.getMessage();
-            logMetacat.error(errorMessage);
-        }
     }
 
     /**
