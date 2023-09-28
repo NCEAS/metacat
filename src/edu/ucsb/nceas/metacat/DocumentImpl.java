@@ -36,11 +36,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.Writer;
-import java.math.BigInteger;
 import java.net.URL;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
@@ -52,11 +49,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Stack;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,14 +62,13 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
-import edu.ucsb.nceas.metacat.shared.AccessException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
@@ -825,10 +817,7 @@ public class DocumentImpl
             else if (openingtag.equals("<filelocked>")) {//the file is
                                                          // currently locked by
                                                          // another user
-                //notify our user to wait a few minutes, check out a new copy
-                // and try
-                //again.
-                //System.out.println("file locked");
+                //notify our user to wait a few minutes, check out a new copy and try again.
             	logReplication.error("lock denied for " + accnum + " on "
                         + server + " reason: file already locked");
                 throw new Exception(
@@ -1395,7 +1384,7 @@ public class DocumentImpl
     	
     	return changedString;
     }
-    
+
     private boolean isRevisionOnly(String docid, int revision) throws Exception
     {
         //System.out.println("inRevisionOnly given "+ docid + "."+ revision);
@@ -1428,7 +1417,6 @@ public class DocumentImpl
                 } else if (revision < r) { //the current
                                                               // revision is in
                                                               // xml_revisions.
-                    //System.out.println("returning true");
                     return true;
                 } else if (revision > r) { //error, rev
                                                               // cannot be
@@ -1439,20 +1427,10 @@ public class DocumentImpl
             }
             else
             {
-                //System.out.println("in revision table branch -------");
                 // if we couldn't find it in xml_documents we 
                 // need to find it in xml_revision table
                 Vector<Integer> revList = DBUtil.getRevListFromRevisionTable(docid);
-                /*for (int i=0; i<revList.size(); i++)
-                {
-                    //  Integer k = (Integer) revList.elementAt(i);
-                    // System.out.println("The rev in xml_revision table "+ k.toString());
-                }
-                
-                if (revList.contains(new Integer(revision)))
-                {
-                   return true;     
-                }*/
+
                 if(revList != null && !revList.isEmpty())
                 {
                   return true;
@@ -1470,12 +1448,6 @@ public class DocumentImpl
             DBConnectionPool.returnDBConnection(dbconn, serialNumber);
         }//finally
     }
-
-    /*private void getDocumentInfo(String docid) throws McdbException,
-            AccessionNumberException, Exception
-    {
-        getDocumentInfo(new DocumentIdentifier(docid));
-    }*/
 
     /**
      * Look up the document type information from the database
@@ -1628,8 +1600,6 @@ public class DocumentImpl
             PreparedStatement pstmt = null;
 
             if (action.equals("INSERT")) {
-                //AccessionNumber ac = new AccessionNumber();
-                //this.docid = ac.generate(docid, "INSERT");
                 String sql = null;
                 if (catalogid != null )
                 {
@@ -1649,13 +1619,6 @@ public class DocumentImpl
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, "
                         + "?, ?, ?, ?)";
                 }
-                /*pstmt = connection
-                        .prepareStatement("INSERT INTO xml_documents "
-                        + "(docid, rootnodeid, docname, doctype, user_owner, "
-                        + "user_updated, date_created, date_updated, "
-                        + "public_access, catalog_id, server_location, rev) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, " + createDate + ", "
-                        + updateDate + ", ?, ?, ?, ?)");*/
                 pstmt = connection.prepareStatement(sql);
                 // Increase dbconnection usage count
                 connection.increaseUsageCount(1);
@@ -1676,13 +1639,6 @@ public class DocumentImpl
                 pstmt.setTimestamp(8, new Timestamp(updateDate.getTime()));
                 //public access is usefulless, so set it to null
                 pstmt.setInt(9, 0);
-                /*
-                 * if ( pub == null ) { pstmt.setString(7, null); } else if (
-                 * pub.toUpperCase().equals("YES") || pub.equals("1") ) {
-                 * pstmt.setInt(7, 1); } else if (
-                 * pub.toUpperCase().equals("NO") || pub.equals("0") ) {
-                 * pstmt.setInt(7, 0); }
-                 */
                 pstmt.setInt(10, serverCode);
                 pstmt.setInt(11, rev);
                
@@ -2061,6 +2017,7 @@ public class DocumentImpl
             conn.setAutoCommit(true);
             throw e;
         }
+
         
         // Force replicate out the new document to each server in our server
         // list. Start the thread to replicate this new document out to the
@@ -2430,22 +2387,19 @@ public class DocumentImpl
             String pid = IdentifierManager.getInstance().getGUID(docid, rev);
             Identifier guid = new Identifier();
         	guid.setValue(pid);          
-            
-    
+
             //update systemmetadata table and solr index
-            SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
+            SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
             if (sysMeta != null) {
-    				sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+    				//sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
     				sysMeta.setArchived(true);
-                	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                	//sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                 	if(!removeAll) {
-                		HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
-                		MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
+                		SystemMetadataManager.getInstance().store(sysMeta);
+                		MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
                 	} else { 
                 		try {
-                			logMetacat.debug("the system metadata contains the key - guid "+guid.getValue()+" before removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
-                			HazelcastService.getInstance().getSystemMetadataMap().remove(guid);
-                			logMetacat.debug("the system metadata contains the guid "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
+                			SystemMetadataManager.getInstance().delete(guid);
                 			MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
                 		} catch (RuntimeException ee) {
                 			logMetacat.warn("we catch the run time exception in deleting system metadata "+ee.getMessage());
@@ -2461,13 +2415,10 @@ public class DocumentImpl
             
             // remove the file if called for
             if (removeAll) {
-            	logMetacat.debug("the identifier set contains "+guid.getValue()+" is "+HazelcastService.getInstance().getIdentifiers().contains(guid));
-            	HazelcastService.getInstance().getIdentifiers().remove(guid);
-            	logMetacat.debug("the identifier set contains "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getIdentifiers().contains(guid));
             	deleteFromFileSystem(accnum, isXML);
             }
                         
-            // add force delete replcation document here.
+            // add force delete replication document here.
             String deleteAction = ReplicationService.FORCEREPLICATEDELETE;
             if (removeAll) {
                 deleteAction = ReplicationService.FORCEREPLICATEDELETEALL;
@@ -2700,8 +2651,6 @@ public class DocumentImpl
                                      String user, long rootNodeId) throws Exception
     {
         String sysdate = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
-        //DBConnection conn = null;
-        //int serialNumber = -1;
         PreparedStatement pstmt = null;
       try
       {
@@ -3133,9 +3082,6 @@ public class DocumentImpl
     {
         DBConnection dbconn = null;
         int serialNumber = -1;
-//        AccessionNumber ac;
-//        PreparedStatement pstmt = null;
-//        String action = null;
         try 
         {
             //dbconn = util.openDBConnection();

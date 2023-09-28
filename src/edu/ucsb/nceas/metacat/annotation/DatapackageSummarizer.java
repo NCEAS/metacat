@@ -217,7 +217,7 @@ public class DatapackageSummarizer {
 		TDBFactory.release(dataset);
         
 		// add to index
-		MetacatSolrIndex.getInstance().submit(metadataPid, null, fields, true);
+		MetacatSolrIndex.getInstance().submit(metadataPid, null, true);
 		
 		
 	}

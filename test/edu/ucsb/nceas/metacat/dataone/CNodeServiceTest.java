@@ -88,6 +88,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 
 /**
  * A JUnit test for testing the dataone CNCore implementation
@@ -223,8 +224,12 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			guid.setValue("testCreate." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+			Date originalModificationDate = sysmeta.getDateSysMetadataModified();
+			Thread.sleep(1000);
 			Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
 			assertEquals(guid, pid);
+			SystemMetadata readSysmeta = SystemMetadataManager.getInstance().get(pid);
+			assertTrue(originalModificationDate.getTime() == readSysmeta.getDateSysMetadataModified().getTime());
         } catch(Exception e) {
         	e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
@@ -598,6 +603,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			guid.setValue("testReplicationStatus." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            Date originalModificationDate = sysmeta.getDateSysMetadataModified();
 			Replica replica = new Replica();
 			NodeReference replicaMemberNode = new NodeReference();
 			replicaMemberNode.setValue(MockCNode.getTestMN().getIdentifier().getValue());
@@ -684,6 +690,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
             assertNotNull(sysmeta);
             // check it
             assertEquals(status, sysmeta.getReplica(0).getReplicationStatus());
+            assertTrue(originalModificationDate.getTime() == sysmeta.getDateSysMetadataModified().getTime());
 			
         } catch(Exception e) {
             fail("Unexpected error: " + e.getMessage());
@@ -1445,7 +1452,8 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           //update system metadata sucessfully
           SystemMetadata sysmeta1c = new SystemMetadata();
           BeanUtils.copyProperties(sysmeta1c, sysmeta1);
-          sysmeta1c.setDateSysMetadataModified(date);
+          Date newDate1 = sysmeta1.getDateSysMetadataModified();
+          //sysmeta1c.setDateSysMetadataModified(date);
           CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta1c);
           SystemMetadata metadata2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           assertTrue(metadata2.getIdentifier().equals(guid));
@@ -1453,7 +1461,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           //assertTrue(metadata2.getArchived().equals(true));
           assertTrue(metadata2.getAccessPolicy().getAllowList().size() == 2);
           assertTrue(metadata2.getChecksum().getValue().equals(metadata.getChecksum().getValue()));
-          assertTrue(metadata2.getDateSysMetadataModified().getTime() == date.getTime());
+          assertTrue(metadata2.getDateSysMetadataModified().getTime() == newDate1.getTime());
           
           SystemMetadata sysmeta2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           version = sysmeta2.getSerialVersion();
@@ -1571,6 +1579,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           CNodeService.getInstance(request).updateSystemMetadata(session, id, sysmeta11);
           SystemMetadata result2 = CNodeService.getInstance(request).getSystemMetadata(session, id);
           assertTrue(result2.getIdentifier().equals(id));
+          System.out.println("the +++++ version is " +result2.getSerialVersion().intValue());
           assertTrue(result2.getSerialVersion().intValue() == 1);
           List<Replica> list2 = result.getReplicaList();
           assertTrue(list2.size()==2);
