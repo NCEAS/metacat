@@ -971,8 +971,6 @@
         </copy>
         <copy file="lib/log4j2.properties" todir="${war.classes}"
               filtering="yes"/>
-        <copy file="lib/hazelcast.xml" todir="${war.webinf}"
-              filtering="yes"/>
         <copy todir="${war.context}" filtering="no">
             <fileset dir="lib">
                 <include name="**/*.jpg"/>
@@ -1168,6 +1166,71 @@
                     <exclude name="**/D1NodeServiceTest$*.class"/>
                     <exclude name="**/LeanTestUtils$*.class"/>
                     <exclude name="**/D1AdminCNUpdaterTest$*.class"/>
+                    <exclude name="**/QueryRunner.class"/>
+                    <exclude name="**/MockObjectPathMap.class"/>
+                    <exclude name="**/HzObjectPathMapTest$1.class"/>
+                    <exclude name="**/HzObjectPathMapTest$2.class"/>
+                    <exclude name="**/MultiThreadClientIT.class"/>
+                    <exclude name="**/MultiThreadClientIT$1.class"/>
+                    <exclude name="**/AuthUtilIT.class"/>
+                    <exclude name="**/WrappingServletInputStream.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <tstamp>
+            <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa"/>
+        </tstamp>
+        <echo>Tests completed at ${NOW}</echo>
+    </target>
+
+    <target name="test-fast" depends="testprep"
+            description="Runs only the fast tests. WARNING: Omits MNode*Test, AccessControlTest, IdentifierManagerTest, and 4 known to fail without replication setup">
+
+        <!-- use the ant "junit" task to run JUnit tests. -->
+        <junit printsummary="yes" haltonfailure="no" fork="yes"
+               haltonerror="no">
+            <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <classpath>
+                <path refid="test.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-client.jar"/>
+                    <include name="harvester.jar"/>
+                    <include name="${name}-junittests.jar"/>
+                </fileset>
+                <pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
+            </classpath>
+
+            <formatter type="plain"/>
+
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${build.tests}">
+                    <include name="**/*.class"/>
+                    <!-- * * * WARNING * * * - excluding these valid but slow/failing tests!! -->
+                    <exclude name="**/MNodeReplicationTest.class" /> <!-- known to fail without replication setup -->
+                    <exclude name="**/MultipleDOIShouldersTest.class" /> <!-- known to fail without replication setup -->
+                    <exclude name="**/OstiDOIServiceTest.class" /> <!-- known to fail without replication setup -->
+                    <exclude name="**/ReplicationTest.class" /> <!-- known to fail without replication setup -->
+                    <exclude name="**/MNodeQueryTest.class" /> <!-- 121 sec -->
+                    <exclude name="**/MNodeServiceTest.class" /> <!-- 327 sec -->
+                    <exclude name="**/AccessControlTest.class" /> <!-- 405 sec -->
+                    <exclude name="**/IdentifierManagerTest.class" /> <!-- 154 sec -->
+                    <exclude name="**/InlineDataAccessTest.class" /> <!-- 212 sec -->
+                    <exclude name="**/MetacatClientTest.class" /> <!-- 326 sec -->
+                    <exclude name="**/OnlineDataAccessTest.class" /> <!-- 68 sec -->
+                    <exclude name="**/RegisterDOITest.class" /><!-- Hazelcast -->
+                    <exclude name="**/SolrQueryAccessFilterTest.class" /><!-- Hazelcast -->
+                    <!-- END of excluded valid but slow/failing tests -->
+
+                    <!-- these are not test cases -->
+                    <exclude name="**/MockReplicationMNode.class"/>
+                    <exclude name="**/LeanTestUtils$*.class"/>
+                    <exclude name="**/D1AdminCNUpdaterTest$*.class"/>
+                    <exclude name="**/MCTestCase.class"/>
+                    <exclude name="**/LeanTestUtils.class"/>
+                    <exclude name="**/ClientViewHelperTest.class"/>
+                    <exclude name="**/MockCNode.class"/>
+                    <exclude name="**/D1NodeServiceTest$*.class"/>
                     <exclude name="**/QueryRunner.class"/>
                     <exclude name="**/MockObjectPathMap.class"/>
                     <exclude name="**/HzObjectPathMapTest$1.class"/>

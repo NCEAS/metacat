@@ -106,7 +106,6 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
@@ -114,6 +113,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import edu.ucsb.nceas.metacat.util.ReplicationUtil;
@@ -704,8 +704,9 @@ public class ReplicationService extends BaseService {
 		      		IdentifierManager.getInstance().createMapping(sysMeta.getIdentifier().getValue(), docid);
 		      	}
 				// save the system metadata
-				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-				
+				//HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+		      	boolean changeModifyTime = false;
+		      	SystemMetadataManager.getInstance().store(sysMeta, changeModifyTime);
 			}
       
 			// dates
@@ -734,10 +735,11 @@ public class ReplicationService extends BaseService {
 	                                                    ReplicationService.REPLICATIONUSER, docid, "create");
 	                handler.saveReplication(source, docid, sysMeta, user, serverCode, server, event);
 	                if(sysMeta != null) {
-	                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+	                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
                     }
 	            } catch (Exception e) {
-	                HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
+	                //HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
+	                SystemMetadataManager.getInstance().delete(sysMeta.getIdentifier());
 	                throw e;
 	            }
 	        } else {
@@ -790,7 +792,7 @@ public class ReplicationService extends BaseService {
 	                    // submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure
 	                    // will not interrupt the process.
 	                    try {
-	                        MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+	                        MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 	                    } catch (Exception ee) {
 	                        logReplication.warn("ReplicationService.handleForceReplicateRequest - couldn't index the doc since "+ee.getMessage());
 	                    }
@@ -1051,9 +1053,11 @@ public class ReplicationService extends BaseService {
 	      		  IdentifierManager.getInstance().createMapping(sysMeta.getIdentifier().getValue(), docid);
 	      	  }
 	      	  // save the system metadata
-	      	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+	      	  //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+	      	boolean changeModifyTime = false;
+	      	  SystemMetadataManager.getInstance().store(sysMeta, changeModifyTime);
 	      	  // submit for indexing
-              MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+              MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 	        }
 	        
 	        // process the access control
@@ -1323,9 +1327,11 @@ public class ReplicationService extends BaseService {
 					TypeMarshaller.unmarshalTypeFromStream(
 							SystemMetadata.class,
 							new ByteArrayInputStream(systemMetadataXML.getBytes("UTF-8")));
-				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+				//HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+				boolean changeModifyTime = false;
+				SystemMetadataManager.getInstance().store(sysMeta, changeModifyTime);
 				// submit for indexing
-                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 			}
       
 			logReplication.info("ReplicationService.handleForceReplicateSystemMetadataRequest - processed guid: " + guid);

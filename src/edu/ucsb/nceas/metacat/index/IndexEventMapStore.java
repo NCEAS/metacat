@@ -35,20 +35,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
 
-import com.hazelcast.core.MapLoader;
-import com.hazelcast.core.MapStore;
 
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 
-public class IndexEventMapStore implements MapStore<Identifier, IndexEvent>, MapLoader<Identifier, IndexEvent> {
+public class IndexEventMapStore {
 
 	private Log logMetacat = LogFactory.getLog(IndexEventMapStore.class);
 
 	/**
 	 * The map store/loader methods
 	 */
-	
-	@Override
 	public IndexEvent load(Identifier identifier) {
 		try {
 			return IndexEventDAO.getInstance().get(identifier);
@@ -58,7 +54,6 @@ public class IndexEventMapStore implements MapStore<Identifier, IndexEvent>, Map
 		return null;
 	}
 
-	@Override
 	public Map<Identifier, IndexEvent> loadAll(Collection<Identifier> identifiers) {
 		Map<Identifier, IndexEvent> eventMap = new TreeMap<Identifier, IndexEvent>();
 		for (Identifier identifier: identifiers) {
@@ -73,7 +68,6 @@ public class IndexEventMapStore implements MapStore<Identifier, IndexEvent>, Map
 		return eventMap;
 	}
 
-	@Override
 	public Set<Identifier> loadAllKeys() {
 		try {
 			return IndexEventDAO.getInstance().getAllIdentifiers();
@@ -83,7 +77,6 @@ public class IndexEventMapStore implements MapStore<Identifier, IndexEvent>, Map
 		return null;
 	}
 
-	@Override
 	public void delete(Identifier identifier) {
 		try {
 			IndexEventDAO.getInstance().remove(identifier);
@@ -92,7 +85,6 @@ public class IndexEventMapStore implements MapStore<Identifier, IndexEvent>, Map
 		}		
 	}
 
-	@Override
 	public void deleteAll(Collection<Identifier> identifiers) {
 		for (Identifier identifier: identifiers) {
 			try {
@@ -103,7 +95,6 @@ public class IndexEventMapStore implements MapStore<Identifier, IndexEvent>, Map
 		}
 	}
 
-	@Override
 	public void store(Identifier identifier, IndexEvent event) {
 		try {
 			IndexEventDAO.getInstance().add(event);
@@ -112,7 +103,6 @@ public class IndexEventMapStore implements MapStore<Identifier, IndexEvent>, Map
 		}		
 	}
 
-	@Override
 	public void storeAll(Map<Identifier, IndexEvent> indexEventMap) {
 		for (IndexEvent event: indexEventMap.values()) {
 			try {

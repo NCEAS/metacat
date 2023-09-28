@@ -76,7 +76,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -96,11 +95,11 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataquery.DataQuery;
 import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
 import edu.ucsb.nceas.metacat.event.MetacatEventService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.service.SessionService;
@@ -110,6 +109,7 @@ import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.spatial.SpatialHarvester;
 import edu.ucsb.nceas.metacat.spatial.SpatialQuery;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
@@ -285,10 +285,6 @@ public class MetacatHandler {
         float _ymin = Float.valueOf( (params.get("ymin"))[0] ).floatValue();
         SpatialQuery sq = new SpatialQuery();
         Vector<String> docids = sq.filterByBbox( _xmin, _ymin, _xmax, _ymax );
-        // logMetacat.info(" --- Spatial Query completed. Passing on the SQuery
-        // handler");
-        // logMetacat.warn("\n\n ******* after spatial query, we've got " +
-        // docids.size() + " docids \n\n");
         
         /*
          * Create an array matching docids
@@ -399,8 +395,6 @@ public class MetacatHandler {
                     + " which has username" + session.getAttribute("username")
                     + " into hash in login method");
             try {
-                //System.out.println("registering session with id " + id);
-                //System.out.println("username: " + (String) session.getAttribute("username"));
                 SessionService.getInstance().registerSession(id, 
                         (String) session.getAttribute("username"), 
                         (String[]) session.getAttribute("groupnames"), 
@@ -785,15 +779,7 @@ public class MetacatHandler {
             if (params.containsKey("qformat")) {
                 qformat = params.get("qformat")[0];
             }
-            // the param for only metadata (eml)
-            // we don't support read a eml document without inline data now.
-            /*if (params.containsKey("inlinedata")) {
-             
-                String inlineData = ((String[]) params.get("inlinedata"))[0];
-                if (inlineData.equalsIgnoreCase("false")) {
-                    withInlineData = false;
-                }
-            }*/
+
             // handle special case where the PID was given
             if (params.containsKey("pid")) {
                 docs = params.get("pid");
@@ -979,8 +965,6 @@ public class MetacatHandler {
         handleQuery(out, params, null, username, groups, sessionid);
         out.flush();
         baos.flush();
-        //baos.close(); 
-        //System.out.println("result from query: " + baos.toString());
         MetacatResultSet rs = new MetacatResultSet(baos.toString(MetaCatServlet.DEFAULT_ENCODING));
         return rs;
     }
@@ -998,9 +982,7 @@ public class MetacatHandler {
         params.put("permType", new String[] {permissionType});
         params.put("permOrder", new String[] {permissionOrder});
         params.put("docid", new String[]{docid});
-        
-        //System.out.println("permission in MetacatHandler.setAccess: " + 
-        //                   params.get("permission")[0]);
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(baos);
         handleSetAccessAction(out, params, username, null, null);
@@ -1842,24 +1824,24 @@ public class MetacatHandler {
                    sysMeta = SystemMetadataFactory.createSystemMetadata(reindexDataObject, newdocid, true, false);
                     
                     // save it to the map
-                    HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+                    SystemMetadataManager.getInstance().store(sysMeta);
                     
                     // submit for indexing
-                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
                     
                     // [re]index the resource map now that everything is saved
                     // see: https://projects.ecoinformatics.org/ecoinfo/issues/6520
                     Identifier potentialOreIdentifier = new Identifier();
         			potentialOreIdentifier.setValue(SystemMetadataFactory.RESOURCE_MAP_PREFIX + sysMeta.getIdentifier().getValue());
-        			SystemMetadata oreSystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(potentialOreIdentifier);
+        			SystemMetadata oreSystemMetadata = SystemMetadataManager.getInstance().get(potentialOreIdentifier);
         			if (oreSystemMetadata != null) {
-                        MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getIdentifier(), oreSystemMetadata, null, false);
+                        MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getIdentifier(), oreSystemMetadata, false);
                         if (oreSystemMetadata.getObsoletes() != null) {
                             logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - submit the index task to reindex the obsoleted resource map " + 
                                               oreSystemMetadata.getObsoletes().getValue());
                             boolean isSysmetaChangeOnly = true;
-                            SystemMetadata obsoletedOresysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(oreSystemMetadata.getObsoletes());
-                            MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getObsoletes(), obsoletedOresysmeta, isSysmetaChangeOnly, null, true);
+                            SystemMetadata obsoletedOresysmeta = SystemMetadataManager.getInstance().get(oreSystemMetadata.getObsoletes());
+                            MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getObsoletes(), obsoletedOresysmeta, isSysmetaChangeOnly, true);
                         }
         			}
                     
@@ -2704,15 +2686,14 @@ public class MetacatHandler {
                     logMetacat.info("queueing doc index for pid " + id);
                     Identifier identifier = new Identifier();
                     identifier.setValue(id);
-					SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+					SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(identifier);
 					if (sysMeta == null) {
 					     failedList.add(id);
 					     logMetacat.info("no system metadata was found for pid " + id);
 					} else {
 						try {
 							// submit for indexing
-						    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-	                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
+	                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, false);
 						} catch (Exception e) {
 							failedList.add(id);
 						    logMetacat.info("Error submitting to index for pid " + id);
@@ -2920,16 +2901,23 @@ public class MetacatHandler {
                     guid = rs.getString(1);
                     Identifier identifier = new Identifier();
                     identifier.setValue(guid);
-                    SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                    SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(identifier);
                     if (sysMeta != null) {
                         // submit for indexing
-                        Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
+                        boolean isSysmetaChangeOnly = false;
+                        boolean followRevisions = false;
+                        MetacatSolrIndex.getInstance()
+                            .submit(identifier, sysMeta, isSysmetaChangeOnly, followRevisions,
+                                    IndexGenerator.LOW_PRIORITY);
                         i++;
-                        logMetacat.debug("MetacatHandler.buildIndexFromQuery - queued SystemMetadata for indexing in the buildIndexFromQuery on pid: " + guid);
+                        logMetacat.debug("MetacatHandler.buildIndexFromQuery - queued "
+                                             + "SystemMetadata for indexing in the "
+                                             + "buildIndexFromQuery on pid: " + guid);
                     }
                 } catch (Exception ee) {
-                    logMetacat.warn("MetacatHandler.buildIndexFromQuery - can't queue the object " + guid + " for indexing since: " + ee.getMessage());
+                    logMetacat.warn(
+                        "MetacatHandler.buildIndexFromQuery - can't queue the object " + guid
+                            + " for indexing since: " + ee.getMessage());
                 }
             } 
             rs.close();
@@ -3439,10 +3427,9 @@ public class MetacatHandler {
                                 SystemMetadata sm = SystemMetadataFactory.createSystemMetadata(docid, false, false);
                                 
                                 // manage it in the store
-                                HazelcastService.getInstance().getSystemMetadataMap().put(sm.getIdentifier(), sm);
-                                
+                                SystemMetadataManager.getInstance().store(sm);
                                 // submit for indexing
-                                MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, null, true);
+                                MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, true);
                                 
                             } catch (Exception ee) {
                                 // If the file did not exist before this method was 
@@ -3597,9 +3584,6 @@ public class MetacatHandler {
                 successList.addElement("MetacatHandler.handleSetAccessAction - " +
                 		               "successfully replaced access block for doc id: " + 
                 		               docList[0]);
-                
-                // force hazelcast to update system metadata
-                HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
          
                 // Update the CN with the modified access policy
                 logMetacat.debug("Setting CN access policy for pid: " + guid);
@@ -3748,9 +3732,6 @@ public class MetacatHandler {
                     } catch (Exception e) {
                        	logMetacat.warn("Error looking up pid for [assumed] docid: " + accessionNumber);
                     }
-                    
-            		// force hazelcast to refresh system metadata
-                    HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
                     
                     logMetacat.debug("Synching CN access policy for pid: " + guid);
 

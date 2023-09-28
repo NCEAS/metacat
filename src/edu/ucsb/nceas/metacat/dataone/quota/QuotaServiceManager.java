@@ -48,7 +48,6 @@ import org.dataone.service.types.v2.SystemMetadata;
 import com.lmax.disruptor.InsufficientCapacityException;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.replication.ReplicationHandler;
 
 /**
