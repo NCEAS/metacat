@@ -36,6 +36,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
 import org.apache.commons.io.FileUtils;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
 
@@ -80,6 +81,9 @@ public class ISO119139Test  extends D1NodeServiceTest {
         SystemMetadata sysmeta = 
                         createSystemMetadata(metadataId, session.getSubject(), metadataObject);
         metadataObject.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("http://www.isotc211.org/2005/gmd");
+        sysmeta.setFormatId(formatId);
         metadataObject = new FileInputStream(new File("./test/isoTestNodc1.xml"));
         MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
         SystemMetadata readSysmeta = MNodeService.getInstance(request)
