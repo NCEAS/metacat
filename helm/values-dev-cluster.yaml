@@ -21,15 +21,16 @@ postgresql:
   primary:
     persistence:
       size: 1Gi
+      storageClass: csi-rbd-sc
 
 image:
   debug: true
 
 # probes will kill remote debugger
-#livenessProbe:
-#  enabled: false
-#readinessProbe:
-#  enabled: false
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
 
 ingress:
   className: "nginx"
