@@ -17,7 +17,7 @@ persistence:
 postgresql:
   auth:
     ## MUST MATCH DEPLOYMENT NAME (MC)
-    existingSecret: dev-brooke-secrets
+    existingSecret: brooke-secrets
   primary:
     persistence:
       size: 1Gi
