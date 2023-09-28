@@ -1,28 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2004 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *  Purpose: To test the Access Controls in metacat by JUnit
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.replication;
 
 import java.io.File;
@@ -64,10 +39,9 @@ import edu.ucsb.nceas.utilities.access.DocInfoHandler;
 /**
  * A JUnit test for testing Metacat replication
  */
-public class ReplicationTest
-    extends D1NodeServiceTest {
+public class ReplicationTest extends D1NodeServiceTest {
 
-    private static final long forceReplicationSleep = 1 * 60 * 1000;
+    private static final long forceReplicationSleep = 60 * 1000;
     private String targetReplicationServer = null;
     private Metacat targetMetacat = null;
     private final static String TITLE = "Test replication";
@@ -84,27 +58,26 @@ public class ReplicationTest
     /**
      * Establish a testing framework by initializing appropriate objects
      */
-    public void setUp() {
-        try {
-        	// get the target ("B server")
+    public void setUp() throws Exception {
+
         targetReplicationServer = PropertyService.getProperty("test.replication.targetServer");
+        if (targetReplicationServer == null || targetReplicationServer.isEmpty()) {
+            fail("EXPECTED failure - no value found for test.replication.targetServer. If you "
+                     + "have replication set up correctly and you wish to test it, please set the "
+                     + "value:    test.replication.targetServer=mn-demo-6.test.dataone.org/knb    "
+                     + "in metacat-site.properties)");
+        }
+        try {
             m = MetacatFactory.createMetacatConnection(metacatUrl);
-            targetMetacat = MetacatFactory.createMetacatConnection("https://" + targetReplicationServer + "/metacat");
+            // get the target ("B server")
+            targetMetacat = MetacatFactory.createMetacatConnection(
+                "https://" + targetReplicationServer + "/metacat");
 
+        } catch (MetacatInaccessibleException mie) {
+            fail("Metacat connection failed. Metacat URL: " + metacatUrl
+                     + "; target Replication Server URL: " + targetReplicationServer
+                     + "; Error message: " + mie.getMessage());
         }
-        catch (MetacatInaccessibleException mie) {
-            System.err.println("Metacat is: " + metacatUrl);
-            fail("Metacat connection failed." + mie.getMessage());
-        } catch (Exception e) {
-        	e.printStackTrace();
-            fail(e.getMessage());
-        }
-    }
-
-    /**
-     * Release any objects after tests are complete
-     */
-    public void tearDown() {
     }
 
     /**
@@ -112,7 +85,6 @@ public class ReplicationTest
      */
     public static Test suite() {
         TestSuite suite = new TestSuite();
-        suite.addTest(new ReplicationTest("initialize"));
         // Test basic functions
         suite.addTest(new ReplicationTest("testCertificate"));
         suite.addTest(new ReplicationTest("testReplicateData_AtoB"));
@@ -123,18 +95,11 @@ public class ReplicationTest
         return suite;
     }
 
-    /**
-     * Run an initial test that always passes to check that the test
-     * harness is working.
-     */
-    public void initialize() {
-        assertTrue(1 == 1);
-    }
-
     public void testCertificate() {
         try {
             //System.out.println("test certificate ============");
-    		URL u = new URL("https://" + targetReplicationServer  + "/servlet/replication?server=" + MetacatUtil.getLocalReplicationServerName() + "&action=test");
+            URL u = new URL("https://" + targetReplicationServer + "/servlet/replication?server="
+                                + MetacatUtil.getLocalReplicationServerName() + "&action=test");
             String test = ReplicationService.getURLContent(u);
             //System.out.println("the result is "+test);
             assertTrue(test.contains("Test successfully"));
@@ -156,7 +121,9 @@ public class ReplicationTest
 
             // insert data locally
             m.login(username, password);
-    		m.upload(docid, "testObject", IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING), object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
+            m.upload(
+                docid, "testObject", IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING),
+                object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
 
             // wait for replication (forced)
             Thread.sleep(forceReplicationSleep);
@@ -171,7 +138,9 @@ public class ReplicationTest
             // update the object
             docid = baseDocid + "." + 2;
             object = "test2";
-    		m.upload(docid, "testObject", IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING), object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
+            m.upload(
+                docid, "testObject", IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING),
+                object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
 
             // wait for replication (forced)
             Thread.sleep(forceReplicationSleep);
@@ -183,12 +152,8 @@ public class ReplicationTest
             assertEquals(object, replicatedObject);
 
             // update the access control rules
-    		m.setAccess(
-    				docid, 
-    				AccessControlInterface.PUBLIC, 
-    				AccessControlInterface.READSTRING, 
-    				AccessControlInterface.ALLOW, 
-    				AccessControlInterface.ALLOWFIRST);
+            m.setAccess(docid, AccessControlInterface.PUBLIC, AccessControlInterface.READSTRING,
+                        AccessControlInterface.ALLOW, AccessControlInterface.ALLOWFIRST);
 
             // wait for replication (forced)
             Thread.sleep(forceReplicationSleep);
@@ -211,16 +176,18 @@ public class ReplicationTest
             docid = baseDocid + "." + 3;
             object = "test3";
             try {
-    			targetMetacat.upload(docid, "testObject", IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING), object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
+                targetMetacat.upload(
+                    docid, "testObject",
+                    IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING),
+                    object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
             } catch (Exception e) {
                 // should fail
                 assertTrue(true);
                 return;
             }
-    		// if we get here, he have failed
+            // if we get here, we have failed
             fail("Should not have been able to update archived data");
 
-			
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -294,12 +261,8 @@ public class ReplicationTest
             assertEquals(emlContent, replicatedObject);
 
             // update the access control rules
-    		m.setAccess(
-    				docid, 
-    				AccessControlInterface.PUBLIC, 
-    				AccessControlInterface.READSTRING, 
-    				AccessControlInterface.ALLOW, 
-    				AccessControlInterface.ALLOWFIRST);
+            m.setAccess(docid, AccessControlInterface.PUBLIC, AccessControlInterface.READSTRING,
+                        AccessControlInterface.ALLOW, AccessControlInterface.ALLOWFIRST);
 
             // wait for replication (forced)
             Thread.sleep(forceReplicationSleep);
@@ -343,7 +306,9 @@ public class ReplicationTest
 
             // insert data locally
             m.login(username, password);
-			m.upload(docid, "testObject", IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING), object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
+            m.upload(
+                docid, "testObject", IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING),
+                object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
 
             // wait for replication (forced)
             Thread.sleep(forceReplicationSleep);
@@ -358,7 +323,9 @@ public class ReplicationTest
             // update the object on the target
             docid = baseDocid + "." + 2;
             object = "test2";
-			targetMetacat.upload(docid, "testObject", IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING), object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
+            targetMetacat.upload(
+                docid, "testObject", IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING),
+                object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
 
             // wait for replication (forced)
             Thread.sleep(forceReplicationSleep);
@@ -369,7 +336,6 @@ public class ReplicationTest
 
             assertEquals(object, replicatedObject);
 
-			
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -391,7 +357,9 @@ public class ReplicationTest
 
             // insert data locally
             m.login(username, password);
-			m.upload(docid, fileName, IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING), object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
+            m.upload(
+                docid, fileName, IOUtils.toInputStream(object, MetaCatServlet.DEFAULT_ENCODING),
+                object.getBytes(MetaCatServlet.DEFAULT_ENCODING).length);
 
             // get the docinfo string
             String docInfoStr = ReplicationService.getDocumentInfo(docid);
@@ -429,7 +397,7 @@ public class ReplicationTest
      * Test the replication of an JsonLD document from A to B
      */
     public void testReplicateJsonLD_AtoB() throws Exception {
-            //create a json-ld object successfull
+        //create a json-ld object successful
         String base = DocumentUtil.generateDocumentId("replicationTestJsonLD", 0);
         String guidStr = base + "." + 1;
         Session session = getTestSession();
@@ -442,10 +410,9 @@ public class ReplicationTest
         sysmeta.setFormatId(formatid);
 
         InputStream object = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
-            Identifier pid = 
-              MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, pid);
-            assertTrue(result.getIdentifier().equals(guid));
+        assertEquals(result.getIdentifier(), guid);
         object.close();
 
         // wait for replication (forced)
@@ -455,9 +422,9 @@ public class ReplicationTest
         // check the target for the same data
         InputStream is = url.openStream();
         String replicatedObject = IOUtils.toString(is, MetaCatServlet.DEFAULT_ENCODING);
-            assertTrue(replicatedObject.contains("\"name\": \"Removal of organic carbon by natural bacterioplankton " 
-                          + "communities as a function of pCO2 from laboratory experiments between 2012 and 2016\""));
+        assertTrue(replicatedObject.contains(
+            "\"name\": \"Removal of organic carbon by natural bacterioplankton "
+                + "communities as a function of pCO2 from laboratory experiments between 2012 and"
+                + " 2016\""));
     }
-    
 }
-
