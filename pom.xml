@@ -271,7 +271,7 @@
         <dependency>
             <groupId>org.apache.wicket</groupId>
             <artifactId>wicket-core</artifactId>
-            <version>7.17.0</version>
+            <version>7.18.0</version>
             <exclusions>
                 <exclusion>
                   <groupId>org.slf4j</groupId>
@@ -337,7 +337,7 @@
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
-            <version>0.3m</version>
+            <version>0.4</version>
         </dependency>
         <!-- jena tdb -->
         <dependency>
