@@ -32,35 +32,58 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-import edu.ucsb.nceas.MCTestCase;
+import org.dataone.service.exceptions.NotAuthorized;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v2.SystemMetadata;
+
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.v1.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.Sitemap;
 import edu.ucsb.nceas.metacat.client.MetacatAuthException;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.utilities.FileUtil;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
  * Test the Sitemap class by generating the sitemaps in a separate directory.
  * 
  * @author Matt Jones
  */
-public class SitemapTest extends MCTestCase {
+public class SitemapTest extends D1NodeServiceTest {
 
 	// Temp dir for storing the sitemaps we're about to generate
     private Path sitemapTempDir;
+    
+    /**
+     * Constructor
+     * @param name  the name of test
+     */
+    public SitemapTest (String name) {
+        super(name);
+    }
+    
+    /**
+     * Create a suite of tests to be run together
+     */
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new SitemapTest("testGenerateSitemaps"));
+        suite.addTest(new SitemapTest("testGetMetadataFormatsQueryString"));
+        return suite;
+    }
 
     /**
      * Initialize the Metacat environment so the test can run.
      */
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
-
-		DBConnectionPool pool = DBConnectionPool.getInstance();
-		metacatConnectionNeeded = true;
 		sitemapTempDir = Files.createTempDirectory("sitemap");
-
-		super.setUp();
 	}
 
 	/**
@@ -70,21 +93,37 @@ public class SitemapTest extends MCTestCase {
     	try {
 			debug("\nRunning: testGenerateSitemaps()");
 
-			// login
-			debug("logging in as: username=" + username + " password=" + password);
-			m.login(username, password);
-
+			// gest sessions
+			Session session = getTestSession();
+			Session publicSession = new Session();
+			Subject publicSbj = new Subject();
+			publicSbj.setValue("public");
+			publicSession.setSubject(publicSbj);
+			ObjectFormatIdentifier format = new ObjectFormatIdentifier();
+			format.setValue("eml://ecoinformatics.org/eml-2.0.1");
+			
 			// insert 2.0.1 document w/o public read (shouldn't show up in sitemap)
 			String docid1 = generateDocumentId();
 			debug("inserting docid: " + docid1 + ".1 which has no access section");
 			testdocument = getTestEmlDoc("Doc with no access section", EML2_0_1, null,
 					null, null, null, null, null, null, null, null);
-			insertDocumentId(docid1 + ".1", testdocument, SUCCESS, false);
-			readDocumentIdWhichEqualsDoc(docid1, testdocument, SUCCESS, false);
+			InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+			Identifier guid = new Identifier();
+			guid.setValue(docid1 + ".1");
+			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+			sysmeta.setAccessPolicy(null);
+			sysmeta.setFormatId(format);
+			MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+			try {
+			    MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
+			    fail("We should get here");
+			} catch (NotAuthorized e) {
+			    assertTrue(e.getMessage().contains(docid1));
+			}
 
 			// insert 2.0.1 document w/ public read that we'll obsolete next
 			String docid2 = generateDocumentId();
-			debug("inserting docid: " + docid2 + ".1 which has public read/write section");
+			debug("inserting docid: " + docid2 + ".1 which has public read section");
 			Vector<String> accessRules1 = new Vector<String>();
 			String accessRule1 = generateOneAccessRule("public", true, true, true, false, false);
 			accessRules1.add(accessRule1);
@@ -92,7 +131,14 @@ public class SitemapTest extends MCTestCase {
 			testdocument = getTestEmlDoc(
 					"Doc with public read and write", EML2_0_1,
 					null, null, null, null, accessBlock, null, null, null, null);
-			insertDocumentId(docid2 + ".1", testdocument, SUCCESS, false);
+            object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid1 = new Identifier();
+            guid1.setValue(docid2 + ".1");
+            sysmeta = createSystemMetadata(guid1, session.getSubject(), object);
+            sysmeta.setFormatId(format);
+            MNodeService.getInstance(request).create(session, guid1, object, sysmeta);
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, guid1);
+
 
 			// Update the previous document so we can test whether sitemaps only list
 			// the head revision in each chain
@@ -100,7 +146,13 @@ public class SitemapTest extends MCTestCase {
 			testdocument = getTestEmlDoc(
 					"Doc with public read and write", EML2_0_1,
 					null, null, null, null, accessBlock, null, null, null, null);
-			updateDocumentId(docid2 + ".2", testdocument, SUCCESS, false);
+            object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid2 = new Identifier();
+            guid2.setValue(docid2 + ".2");
+            sysmeta = createSystemMetadata(guid2, session.getSubject(), object);
+            sysmeta.setFormatId(format);
+            MNodeService.getInstance(request).update(session, guid1, object, guid2, sysmeta);
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
 
 			// Insert a 2.0.1 document w/o public read (shouldn't show up sitemap)
 			String docid3 = generateDocumentId();
@@ -112,10 +164,19 @@ public class SitemapTest extends MCTestCase {
 			testdocument = getTestEmlDoc(
 					"Doc with public read and write", EML2_0_1,
 					null, null, null, null, accessBlock2, null, null, null, null);
-			insertDocumentId(docid3 + ".1", testdocument, SUCCESS, false);
-
-			debug("logging out");
-			m.logout();
+			object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid3 = new Identifier();
+            guid3.setValue(docid3 + ".1");
+            sysmeta = createSystemMetadata(guid3, session.getSubject(), object);
+            sysmeta.setAccessPolicy(null);
+            sysmeta.setFormatId(format);
+            MNodeService.getInstance(request).create(session, guid3, object, sysmeta);
+            try {
+                MNodeService.getInstance(request).getSystemMetadata(publicSession, guid3);
+                fail("We should get here");
+            } catch (NotAuthorized e) {
+                assertTrue(e.getMessage().contains(docid3));
+            }
 
 			File directory = sitemapTempDir.toFile();
 
