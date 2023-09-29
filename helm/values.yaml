@@ -267,8 +267,7 @@ metacat:
 ## @param image.tag Metacat image tag (immutable tags are recommended)
 ## @param image.pullPolicy Metacat image pull policy
 image:
-  #TODO pull from github container repo, e.g. see indexer: ghcr.io/dataoneorg/dataone-index-worker
-  repository: metacat
+  repository: ghcr.io/nceas/metacat
   pullPolicy: IfNotPresent
 
   ## @param image.tag Overrides the image tag. Will default to the chart appVersion if set to ""

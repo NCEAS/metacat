@@ -70,5 +70,8 @@ cp ../"${DISTBIN}" .
 
 echo "Starting docker image build: $(date)"
 
-docker image build $DEV_BUILD_OPTS \
-    --tag metacat:"$TAG" --build-arg DISTBIN="$DISTBIN" --build-arg DEVTOOLS="$DEVTOOLS" .
+docker image build $DEV_BUILD_OPTS       \
+    --tag ghcr.io/nceas/metacat:"$TAG"   \
+    --build-arg MC_VERSION="$MC_VERSION" \
+    --build-arg DISTBIN="$DISTBIN"       \
+    --build-arg DEVTOOLS="$DEVTOOLS" .

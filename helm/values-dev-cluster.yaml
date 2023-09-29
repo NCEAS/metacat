@@ -8,7 +8,8 @@
 
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
-  solr.baseURL: http://dataone-solr-headless.dataone-solr.svc.cluster.local:8983/solr
+  solr.baseURL: http://d1index-solr-headless.jing.svc.cluster.local:8983/solr
+  solr.coreName: dataone_index_shard1_replica_n4
 
 persistence:
   storageClass: csi-rbd-sc
@@ -17,7 +18,7 @@ persistence:
 postgresql:
   auth:
     ## MUST MATCH DEPLOYMENT NAME (MC)
-    existingSecret: brooke-secrets
+    existingSecret: dev-brooke-secrets
   primary:
     persistence:
       size: 1Gi
@@ -25,6 +26,7 @@ postgresql:
 
 image:
   debug: true
+  pullPolicy: Always
 
 # probes will kill remote debugger
 livenessProbe:
