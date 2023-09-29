@@ -25,7 +25,6 @@
 
 package edu.ucsb.nceas.metacattest;
 
-import java.io.StringReader;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -37,10 +36,6 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
 
-import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
-import edu.ucsb.nceas.metacat.client.MetacatAuthException;
-import edu.ucsb.nceas.metacat.client.MetacatException;
-import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.utilities.FileUtil;
@@ -98,7 +93,7 @@ public class InternationalizationTest extends D1NodeServiceTest {
         TestSuite suite = new TestSuite();
         suite.addTest(new InternationalizationTest("initialize"));
         // Test basic functions
-        //suite.addTest(new InternationalizationTest("unicodeCharacterTest"));
+        suite.addTest(new InternationalizationTest("unicodeCharacterTest"));
         suite.addTest(new InternationalizationTest("translation211Test"));
         return suite;
     }
@@ -166,76 +161,21 @@ public class InternationalizationTest extends D1NodeServiceTest {
             // include the docid
             testdocument = testdocument.replaceAll("_DOCID_", newdocid);
             testTitle = testTitle.replaceAll("_DOCID_", newdocid);
-            
-            // login
-            m.login(username, password);
-            
-            // insert
-            insertDocid(newdocid, testdocument, SUCCESS, false);
-
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_1_1_format);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             // this tests reading the document back from disk
             readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
-            
             // this tests searching for the document in the database
-            queryDocWhichHasTitle(testTitle, testTitle, EML2_1_0, SUCCESS);
-            
-            // clean up
-            //deleteDocid(newdocid, SUCCESS, false);
-            
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
+            queryTile(testTitle, newdocid, session);
+            MNodeService.getInstance(request).archive(session, guid);
+        } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
     }
-
-    /**
-     * Insert a document into metacat. The expected result is passed as result
-     */
-    private String insertDocid(String docid, String docText, boolean result,
-                               boolean expectMetacatException) {
-        String response = null;
-        try {
-        	
-        	debug("doctext: " + docText);
-        	
-            response = m.insert(docid,
-                                new StringReader(docText), null);
-            System.err.println(response);
-            if (result) {
-                assertTrue( (response.indexOf("<success>") != -1));
-                assertTrue(response.indexOf(docid) != -1);
-            }
-            else {
-                assertTrue( (response.indexOf("<success>") == -1));
-            }
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (InsufficientKarmaException ike) {
-                fail("Insufficient karma:\n" + ike.getMessage());
-        }
-        catch (MetacatException me) {
-            if (!expectMetacatException) {
-                fail("Metacat Error:\n" + me.getMessage());
-            }
-        }
-        catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
-        }
-        return response;
-    }
-
- 
-
-  
 
     /**
      * Read a document from metacat and check if it is equal to a given string.
