@@ -83,8 +83,12 @@ import edu.ucsb.nceas.metacat.util.SkinUtil;
  * A JUnit superclass for testing the dataone Node implementations
  */
 public class D1NodeServiceTest extends MCTestCase {
-
+    public static final int tryAcccounts = 100;
     protected MockHttpServletRequest request;
+    protected static ObjectFormatIdentifier eml_2_1_1_format = new ObjectFormatIdentifier();
+    static {
+        eml_2_1_1_format.setValue("eml://ecoinformatics.org/eml-2.1.1");
+    }
 
     /**
     * constructor for the test
