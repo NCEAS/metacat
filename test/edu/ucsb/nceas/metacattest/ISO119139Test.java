@@ -72,19 +72,19 @@ public class ISO119139Test  extends D1NodeServiceTest {
      * Insert a test document, returning the docid that was used. 
      */
     public void TestInsertDocument() throws Exception {
+        String path = "./test/isoTestNodc1.xml";
         Session session = getTestSession();
-        String xml = FileUtils.readFileToString(new File("./test/isoTestNodc1.xml"), "UTF-8");
         String metadataIdStr = generateDocumentId() + ".1";
         Identifier metadataId = new Identifier();
         metadataId.setValue(metadataIdStr);
-        InputStream metadataObject = new FileInputStream(new File("./test/isoTestNodc1.xml"));
+        InputStream metadataObject = new FileInputStream(new File(path));
         SystemMetadata sysmeta = 
                         createSystemMetadata(metadataId, session.getSubject(), metadataObject);
         metadataObject.close();
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("http://www.isotc211.org/2005/gmd");
         sysmeta.setFormatId(formatId);
-        metadataObject = new FileInputStream(new File("./test/isoTestNodc1.xml"));
+        metadataObject = new FileInputStream(new File(path));
         MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
         SystemMetadata readSysmeta = MNodeService.getInstance(request)
                                         .getSystemMetadata(session, metadataId);

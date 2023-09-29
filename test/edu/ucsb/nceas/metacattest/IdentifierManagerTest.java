@@ -27,6 +27,7 @@ package edu.ucsb.nceas.metacattest;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.*;
@@ -130,21 +131,16 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     /**
      * test getting a guid from the systemmetadata table
      */
-    public void testGetGUID()
-    {
+    public void testGetGUID() {
         ph("testGetGUID");
-        try
-        {
+        try {
             IdentifierManager im = IdentifierManager.getInstance();
-
-            String docid = insertTestDocument();
-            docid = docid.substring(0, docid.lastIndexOf("."));
-            
+            String guid = insertTestDocument();
+            String docidWithRev = im.getLocalId(guid);
+            String docid = docidWithRev.substring(0, docidWithRev.lastIndexOf("."));
             String gotGuid = im.getGUID(docid, 1);
-            assertNotNull(gotGuid);
-        }
-        catch(Exception e)
-        {
+            assertTrue(guid.equals(gotGuid));
+        } catch(Exception e) {
             fail("Unexpected exception in testGetGUID: " + e.getMessage());
         }
     }
@@ -180,19 +176,16 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     /** Test that known LocalId's can be looked up from GUIDs. */
     public void testGetLocalId() {
         ph("testGetLocalId");
-        IdentifierManager im = IdentifierManager.getInstance();
-        String docidWithRev = insertTestDocument();
-        String docid = docidWithRev.substring(0, docidWithRev.lastIndexOf("."));
-        String guid;
-        String idReturned;
         try {
-            guid = im.getGUID(docid, 1);
-            idReturned = im.getLocalId(guid);
-            assertEquals(docidWithRev, idReturned);
-            
+            IdentifierManager im = IdentifierManager.getInstance();
+            String guid = insertTestDocument();
+            String docidWithRev = im.getLocalId(guid);
+            String docid = docidWithRev.substring(0, docidWithRev.lastIndexOf("."));
+            String idReturned = im.getGUID(docid, 1);
+            assertTrue(guid.equals(idReturned));
         } catch (McdbDocNotFoundException e) {
             fail(e.getMessage());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             fail(e.getMessage());
         }
     }
@@ -217,41 +210,13 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
      * Test that an identifier is present in the system when it should
      *  be, and that it is not present when it shouldn't be. 
      */
-    public void testIdentifierExists() {
+    public void testIdentifierExists() throws Exception{
         ph("testIdentifierExists");
-        
         String goodGuid  = "";
-        String accString = "";
-        String docid     = "";
-        int rev          = 0;
-        
-        try {
-          IdentifierManager im = IdentifierManager.getInstance();
-          accString = insertTestDocument();
-          AccessionNumber accNumber = new AccessionNumber(accString, "NONE");
-          docid = accNumber.getDocid();
-          rev = new Integer(accNumber.getRev());
-          goodGuid = im.getGUID(docid, rev);
-          assertTrue(im.identifierExists(goodGuid));
-          assertFalse(im.identifierExists(badGuid));
-          
-        } catch ( McdbDocNotFoundException dnfe ) {
-          fail("The document " + docid + "couldn't be found. The error was: " +
-               dnfe.getMessage());
-          
-        } catch ( AccessionNumberException ane ) {
-          fail("The accession number could not be created for docid" +
-               accString + ". The error was: " + ane.getMessage());
-        
-        } catch ( NumberFormatException nfe ) {
-          fail("The revision number could not be created for docid" + 
-               accString + ". The error was: " + nfe.getMessage());
-          
-           } catch ( SQLException sqle ) {
-             fail("The accession number could not be created for docid" + 
-                  accString + ". The error was: " + sqle.getMessage());
-
-        }
+        IdentifierManager im = IdentifierManager.getInstance();
+        goodGuid = insertTestDocument();
+        assertTrue(im.identifierExists(goodGuid));
+        assertFalse(im.identifierExists(badGuid));
     }
     
     /**
@@ -1615,24 +1580,22 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     /** 
      * Insert a test document, returning the docid that was used. 
      */
-    private String insertTestDocument() {
-        String accessBlock = getAccessBlock("public", true, true,
-                false, false, false);
-        String emldoc = getTestEmlDoc("Test identifier manager", EML2_1_0, null,
-                null, "http://fake.example.com/somedata", null,
-                accessBlock, null, null,
-                null, null);
-        System.out.println("inserting doc: " + emldoc);
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = insertDocumentId(docid, emldoc, true, false);
-        } catch (MetacatAuthException e) {
-            fail(e.getMessage());
-        } catch (MetacatInaccessibleException e) {
-            fail(e.getMessage());
-        }
-        return docid;
+    private String insertTestDocument() throws Exception{
+        String path = "test/eml-2.2.0.xml";
+        Session session = getTestSession();
+        String metadataIdStr = generateDocumentId() + ".1";
+        Identifier metadataId = new Identifier();
+        metadataId.setValue(metadataIdStr);
+        InputStream metadataObject = new FileInputStream(new File(path));
+        SystemMetadata sysmeta = 
+                        createSystemMetadata(metadataId, session.getSubject(), metadataObject);
+        metadataObject.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta.setFormatId(formatId);
+        metadataObject = new FileInputStream(new File(path));
+        MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
+        return metadataIdStr;
     }
     
     
