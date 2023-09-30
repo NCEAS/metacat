@@ -113,7 +113,7 @@ public class SitemapTest extends D1NodeServiceTest {
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
 			sysmeta.setAccessPolicy(null);
 			sysmeta.setFormatId(format);
-			MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+			mnCreate(session, guid, object, sysmeta);
 			try {
 			    MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
 			    fail("We should get here");
@@ -136,7 +136,7 @@ public class SitemapTest extends D1NodeServiceTest {
             guid1.setValue(docid2 + ".1");
             sysmeta = createSystemMetadata(guid1, session.getSubject(), object);
             sysmeta.setFormatId(format);
-            MNodeService.getInstance(request).create(session, guid1, object, sysmeta);
+            mnCreate(session, guid1, object, sysmeta);
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid1);
 
 
@@ -151,7 +151,7 @@ public class SitemapTest extends D1NodeServiceTest {
             guid2.setValue(docid2 + ".2");
             sysmeta = createSystemMetadata(guid2, session.getSubject(), object);
             sysmeta.setFormatId(format);
-            MNodeService.getInstance(request).update(session, guid1, object, guid2, sysmeta);
+            mnUpdate(session, guid1, object, guid2, sysmeta);
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
 
 			// Insert a 2.0.1 document w/o public read (shouldn't show up sitemap)
@@ -170,7 +170,7 @@ public class SitemapTest extends D1NodeServiceTest {
             sysmeta = createSystemMetadata(guid3, session.getSubject(), object);
             sysmeta.setAccessPolicy(null);
             sysmeta.setFormatId(format);
-            MNodeService.getInstance(request).create(session, guid3, object, sysmeta);
+            mnCreate(session, guid3, object, sysmeta);
             try {
                 MNodeService.getInstance(request).getSystemMetadata(publicSession, guid3);
                 fail("We should get here");

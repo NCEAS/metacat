@@ -50,7 +50,16 @@ import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.IdentifierNotUnique;
+import org.dataone.service.exceptions.InsufficientResources;
+import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.InvalidToken;
+import org.dataone.service.exceptions.NotAuthorized;
+import org.dataone.service.exceptions.NotFound;
+import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
+import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
@@ -75,6 +84,7 @@ import org.mockito.Mockito;
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.client.Metacat;
 import edu.ucsb.nceas.metacat.client.MetacatFactory;
+import edu.ucsb.nceas.metacat.dataone.v1.MNodeService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
@@ -840,6 +850,54 @@ public class D1NodeServiceTest extends MCTestCase {
         sysmeta2 = new SystemMetadata();
         sysmeta2.setAccessPolicy(ap1);
         assertTrue(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+    }
+    
+    /**
+     * A wrapper method of MN.create.
+     * @param session  the subject which will create the object
+     * @param id  the identifier of the created object
+     * @param object  the bytes of the object
+     * @param sysmeta  the system metadata associated with the object
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws IdentifierNotUnique
+     * @throws UnsupportedType
+     * @throws InsufficientResources
+     * @throws InvalidSystemMetadata
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     */
+    public void mnCreate(Session session, Identifier id, InputStream object, SystemMetadata sysmeta) 
+                                throws InvalidToken, ServiceFailure, NotAuthorized, 
+                                IdentifierNotUnique, UnsupportedType, InsufficientResources, 
+                                InvalidSystemMetadata, NotImplemented, InvalidRequest {
+        MNodeService.getInstance(request).create(session, id, object, sysmeta);
+    }
+    
+    /**
+     * A wrapper method of MN.update
+     * @param session  the subject which will create the object
+     * @param pid  the identifier which will be updated
+     * @param object  the bytes of the new object
+     * @param newPid  the identifier which will replace the pid
+     * @param sysmeta  the system metadata associated with the new object
+     * @throws IdentifierNotUnique
+     * @throws InsufficientResources
+     * @throws InvalidRequest
+     * @throws InvalidSystemMetadata
+     * @throws InvalidToken
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     * @throws ServiceFailure
+     * @throws UnsupportedType
+     * @throws NotFound
+     */
+    public void mnUpdate(Session session, Identifier pid, InputStream object, Identifier newPid, 
+                          SystemMetadata sysmeta) throws IdentifierNotUnique, InsufficientResources, 
+                            InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, 
+                            NotImplemented, ServiceFailure, UnsupportedType, NotFound {
+        MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
     }
 
 }
