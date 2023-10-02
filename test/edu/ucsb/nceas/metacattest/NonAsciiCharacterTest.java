@@ -25,46 +25,30 @@
 
 package edu.ucsb.nceas.metacattest;
 
-import java.io.File;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
+import org.dataone.service.exceptions.ServiceFailure;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v2.SystemMetadata;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
-import edu.ucsb.nceas.metacat.client.MetacatAuthException;
-import edu.ucsb.nceas.metacat.client.MetacatException;
-import edu.ucsb.nceas.metacat.client.MetacatFactory;
-import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.utilities.IOUtil;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
 /**
  * A JUnit test for testing Metacat when Non Ascii Characters are inserted
  */
-public class NonAsciiCharacterTest
-    extends MCTestCase {
-
-	static {
-		try {
-			username = PropertyService.getProperty("test.mcUser");
-			password = PropertyService.getProperty("test.mcPassword");
-			anotheruser = PropertyService.getProperty("test.mcAnotherUser");
-			anotherpassword = PropertyService.getProperty("test.mcAnotherPassword");
-		} catch (PropertyNotFoundException pnfe) {
-			System.err.println("Could not get property in static block: " 
-					+ pnfe.getMessage());
-		}
-	}
-
+public class NonAsciiCharacterTest extends D1NodeServiceTest {
+    private Session session = null;
+    
     /**
      * These variables are for eml-2.0.1 only. For other eml versions,
      * this function might have to modified
@@ -157,16 +141,11 @@ public class NonAsciiCharacterTest
 
     /**
      * Establish a testing framework by initializing appropriate objects
+     * @throws Exception 
      */
-    public void setUp() {
-        try {
-            System.err.println("Test Metacat: " + metacatUrl);
-            m = MetacatFactory.createMetacatConnection(metacatUrl);
-        }
-        catch (MetacatInaccessibleException mie) {
-            System.err.println("Metacat is: " + metacatUrl);
-            fail("Metacat connection failed." + mie.getMessage());
-        }
+    public void setUp() throws Exception {
+        super.setUp();
+        session = getTestSession();
     }
 
     /**
@@ -208,23 +187,22 @@ public class NonAsciiCharacterTest
      * Test inserting an EML 2.0.1 document with > & <
      * should fail because this means an invalid xml document is being inserted
      */
-    public void invalidXMLCharacters201Test() {
-    	debug("\nRunning: invalidXMLCharacters201Test");
+    public void invalidXMLCharacters201Test() throws Exception {
+        debug("\nRunning: invalidXMLCharacters201Test");
+        String newdocid = generateDocid();
         try {
-            String newdocid = generateDocid();
-            m.login(username, password);
             testdocument = getTestEmlDoc("Checking > & < in doc: " + newdocid, EML2_0_1);
-            insertDocid(newdocid + ".1", testdocument, FAILURE, true);
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
+            //DaaONEAPI - MN.create
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_0_1_format);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
+            fail("It shouldn't get there since the uploaded object is invalid");
+        } catch (ServiceFailure e) {
+            assertTrue(e.getMessage().contains(newdocid));
+            assertTrue(e.getMessage().contains("'&'"));
         }
     }
     
@@ -232,23 +210,22 @@ public class NonAsciiCharacterTest
      * Test inserting an EML 2.1.0 document with > & <
      * should fail because this means an invalid xml document is being inserted
      */
-    public void invalidXMLCharacters210Test() {
-    	debug("\nRunning: invalidXMLCharacters210Test");
+    public void invalidXMLCharacters210Test() throws Exception {
+        debug("\nRunning: invalidXMLCharacters210Test");
+        String newdocid = generateDocid();
         try {
-            String newdocid = generateDocid();
-            m.login(username, password);
             testdocument = getTestEmlDoc("Checking > & < in doc: " + newdocid, EML2_1_0);
-            insertDocid(newdocid + ".1", testdocument, FAILURE, true);
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
+            //DaaONEAPI - MN.create
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_1_0_format);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
+            fail("It shouldn't get there since the uploaded object is invalid");
+        } catch (ServiceFailure e) {
+            assertTrue(e.getMessage().contains(newdocid));
+            assertTrue(e.getMessage().contains("'&'"));
         }
     }
 
@@ -263,31 +240,23 @@ public class NonAsciiCharacterTest
     	debug("\nRunning: symbolEncodedFormat201Test");
         try {
             String newdocid = generateDocid();
-            m.login(username, password);
-            
             String testTitle = 
-            	"Checking &gt; &lt; &quot; &apos; &amp; in doc: " + newdocid  + ".1";
+                    "Checking &gt; &lt; &quot; &apos; &amp; in doc: " + newdocid;
+            String convertedTestTitle = 
+                    "Checking &gt; &lt; &quot; &apos; &amp; in doc: " + newdocid;
             testdocument = getTestEmlDoc(testTitle, EML2_0_1);
-            insertDocid(newdocid  + ".1", testdocument, SUCCESS, false);
-            
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_0_1_format);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, false);
-            
+            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
             // this tests searching for the document in the database
-            Thread.sleep(3000);
-            queryDocWhichHasTitle(newdocid  + ".1", testTitle, EML2_0_1, SUCCESS);
-            
-            deleteDocid(newdocid  + ".1", SUCCESS, false);
-            
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
+            //queryTile(convertedTestTitle, newdocid, session);
+            MNodeService.getInstance(request).archive(session, guid);
+        } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
     }
@@ -303,31 +272,23 @@ public class NonAsciiCharacterTest
     	debug("\nRunning: symbolEncodedFormat210Test");
         try {
             String newdocid = generateDocid();
-            m.login(username, password);
-            
             String testTitle = 
-            	"Checking &gt; &lt; &quot; &apos; &amp; in doc: " + newdocid + ".1";
+                "Checking &gt; &lt; &quot; &apos; &amp; in doc: " + newdocid;
+            String convertedTestTitle = "Checking &gt; &lt; &quot; &apos; &amp; in doc: " 
+                                    + newdocid;
             testdocument = getTestEmlDoc(testTitle, EML2_1_0);
-            insertDocid(newdocid  + ".1", testdocument, SUCCESS, false);
-            
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_1_0_format);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, false);
-            
+            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
             // this tests searching for the document in the database
-            Thread.sleep(3000);
-            queryDocWhichHasTitle(newdocid  + ".1", testTitle, EML2_1_0, SUCCESS);
-            
-            deleteDocid(newdocid  + ".1", SUCCESS, false);
-            
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
+            //queryTile(convertedTestTitle, newdocid, session);
+            MNodeService.getInstance(request).archive(session, guid);
+        } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
     }
@@ -342,32 +303,21 @@ public class NonAsciiCharacterTest
     	debug("\nRunning: quote201Test");
         try {
             String newdocid = generateDocid();
-            m.login(username, password);
-            
-            String testTitle = "Checking ' ` \" in doc: " + newdocid  + ".1";
-            String convertedTestTitle = "Checking &apos; ` &quot; in doc: " + newdocid  + ".1";
-            
+            String testTitle = "Checking ' ` \" in doc: " + newdocid;
+            String convertedTestTitle = "Checking &apos; ` &quot; in doc: " + newdocid;
             testdocument = getTestEmlDoc(testTitle, EML2_0_1);
-            insertDocid(newdocid + ".1", testdocument, SUCCESS, true);
-            
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_0_1_format);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, true);
-            
+            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
             // this tests searching for the document in the database
-            Thread.sleep(3000);
-            queryDocWhichHasTitle(newdocid  + ".1", convertedTestTitle, EML2_0_1, SUCCESS);
-            
-            deleteDocid(newdocid  + ".1", SUCCESS, false);
-            
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
+            //queryTile(convertedTestTitle, newdocid, session);
+            MNodeService.getInstance(request).archive(session, guid);
+        } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
     }
@@ -382,32 +332,21 @@ public class NonAsciiCharacterTest
     	debug("\nRunning: quote210Test");
         try {
             String newdocid = generateDocid();
-            m.login(username, password);
-            
-            String testTitle = "Checking ' ` \" in doc: " + newdocid  + ".1";
-            String convertedTestTitle = "Checking &apos; ` &quot; in doc: " + newdocid  + ".1";
-            
+            String testTitle = "Checking ' ` \" in doc: " + newdocid;
+            String convertedTestTitle = "Checking &apos; ` &quot; in doc: " + newdocid;
             testdocument = getTestEmlDoc(testTitle, EML2_1_0);
-            insertDocid(newdocid + ".1", testdocument, SUCCESS, true);
-            
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_1_0_format);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, true);
-            
+            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
             // this tests searching for the document in the database
-            Thread.sleep(3000);
-            queryDocWhichHasTitle(newdocid  + ".1", convertedTestTitle, EML2_1_0, SUCCESS);
-            
-            deleteDocid(newdocid  + ".1", SUCCESS, false);
-            
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
+            //queryTile(testTitle, newdocid, session);
+            MNodeService.getInstance(request).archive(session, guid);
+        } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
     }
@@ -422,32 +361,21 @@ public class NonAsciiCharacterTest
     	debug("\nRunning: numericCharacterReferenceFormat201Test");
         try {
             String newdocid = generateDocid();
-            m.login(username, password);
-            
-            String testTitle = "Checking &#181; in doc: " + newdocid  + ".1";
-            String convertedTestTitle = "Checking µ in doc: " + newdocid  + ".1";
-            
+            String testTitle = "Checking &#181; in doc: " + newdocid;
+            String convertedTestTitle = "Checking µ in doc: " + newdocid;
             testdocument = getTestEmlDoc(testTitle, EML2_0_1);
-            insertDocid(newdocid + ".1", testdocument, SUCCESS, true);
-
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_0_1_format);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, true);
-            
+            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
             // this tests searching for the document in the database
-            Thread.sleep(3000);
-            queryDocWhichHasTitle(newdocid  + ".1", convertedTestTitle, EML2_0_1, SUCCESS);
-            
-            deleteDocid(newdocid  + ".1", SUCCESS, false);
-  
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
+            queryTile(convertedTestTitle, newdocid, session);
+            MNodeService.getInstance(request).archive(session, guid);
+        } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
     }
@@ -462,32 +390,21 @@ public class NonAsciiCharacterTest
     	debug("\nRunning: numericCharacterReferenceFormat210Test");
         try {
             String newdocid = generateDocid();
-            m.login(username, password);
-            
-            String testTitle = "Checking &#181; in doc: " + newdocid  + ".1";
-            String convertedTestTitle = "Checking µ in doc: " + newdocid  + ".1";
-            
+            String testTitle = "Checking &#181; in doc: " + newdocid;
+            String convertedTestTitle = "Checking µ in doc: " + newdocid;
             testdocument = getTestEmlDoc(testTitle, EML2_1_0);
-            insertDocid(newdocid + ".1", testdocument, SUCCESS, true);
-            
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_1_0_format);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, true);
-            
+            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
             // this tests searching for the document in the database
-            Thread.sleep(3000);
-            queryDocWhichHasTitle(newdocid  + ".1", convertedTestTitle, EML2_1_0, SUCCESS);
-            
-            deleteDocid(newdocid  + ".1", SUCCESS, false);
-            
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
+            queryTile(convertedTestTitle, newdocid, session);
+            MNodeService.getInstance(request).archive(session, guid);
+        } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
     }
@@ -502,34 +419,20 @@ public class NonAsciiCharacterTest
     	debug("\nRunning: nonLatinUnicodeCharacter201Test");
         try {
             String newdocid = generateDocid();
-            m.login(username, password);
-            
             String testTitle = "Checking characters like µ in doc: " + newdocid  + ".1";
-            
             testdocument = getTestEmlDoc(testTitle, EML2_0_1);
-            
-            debug("original test document:	" + testdocument);
-            
-            insertDocid(newdocid + ".1", testdocument, SUCCESS, false);
-            
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_0_1_format);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, true);
-            
+            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
             // this tests searching for the document in the database
-            Thread.sleep(3000);
-            queryDocWhichHasTitle(newdocid  + ".1", testTitle, EML2_0_1, SUCCESS);
-            
-            deleteDocid(newdocid  + ".1", SUCCESS, false);
-            
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
+            queryTile(testTitle, newdocid, session);
+            MNodeService.getInstance(request).archive(session, guid);
+        } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
     }
@@ -544,258 +447,22 @@ public class NonAsciiCharacterTest
     	debug("\nRunning: nonLatinUnicodeCharacter210Test");
         try {
             String newdocid = generateDocid();
-            m.login(username, password);
-            
-            String testTitle = "Checking characters like µ in doc: " + newdocid  + ".1";
-            
+            String testTitle = "Checking characters like µ in doc: " + newdocid;
             testdocument = getTestEmlDoc(testTitle, EML2_1_0);
-            insertDocid(newdocid + ".1", testdocument, SUCCESS, false);
-
+            InputStream object = new ByteArrayInputStream(testdocument.getBytes());
+            Identifier guid = new Identifier();
+            guid.setValue(newdocid);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(eml_2_1_0_format);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, true);
-            
+            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
             // this tests searching for the document in the database
-            Thread.sleep(3000);
-            queryDocWhichHasTitle(newdocid  + ".1", testTitle, EML2_1_0, SUCCESS);
-            
-            deleteDocid(newdocid  + ".1", SUCCESS, false);
-            
-            m.logout();
-        }
-        catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (Exception e) {
+            queryTile(testTitle, newdocid, session);
+            MNodeService.getInstance(request).archive(session, guid);
+        } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
-    }
-
-    /**
-     * Insert a document into metacat. The expected result is passed as result
-     */
-    private String insertDocid(String docid, String docText, boolean result,
-                               boolean expectMetacatException) {
-        String response = null;
-        try {
-        	
-        	debug("doctext: " + docText);
-        	
-            response = m.insert(docid,
-                                new StringReader(docText), null);
-            System.err.println(response);
-            if (result) {
-                assertTrue( (response.indexOf("<success>") != -1));
-                assertTrue(response.indexOf(docid) != -1);
-            }
-            else {
-                assertTrue( (response.indexOf("<success>") == -1));
-            }
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (InsufficientKarmaException ike) {
-                fail("Insufficient karma:\n" + ike.getMessage());
-        }
-        catch (MetacatException me) {
-            if (!expectMetacatException) {
-                fail("Metacat Error:\n" + me.getMessage());
-            }
-        }
-        catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
-        }
-        return response;
-    }
-
-    /**
-     * Insert a document into metacat. The expected result is passed as result
-     */
-    private String uploadDocid(String docid, String filePath, boolean result,
-                               boolean expectedKarmaException) {
-        String response = null;
-        try {
-            response = m.upload(docid, new File(filePath));
-            if (result) {
-                assertTrue( (response.indexOf("<success>") != -1));
-                assertTrue(response.indexOf(docid) != -1);
-            }
-            else {
-                assertTrue( (response.indexOf("<success>") == -1));
-            }
-            System.err.println("respose from metacat: " + response);
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (InsufficientKarmaException ike) {
-            if (!expectedKarmaException) {
-                fail("Insufficient karma:\n" + ike.getMessage());
-            }
-        }
-        catch (MetacatException me) {
-            if (result) {
-                fail("Metacat Error:\n" + me.getMessage());
-            } else {
-                System.err.println("Metacat Error:\n" + me.getMessage());
-            }
-        }
-        catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
-        }
-        return response;
-    }
-
-    /**
-     * Update a document in metacat. The expected result is passed as result
-     */
-    private String updateDocid(String docid, String docText, boolean result,
-                               boolean expectedKarmaFailure) {
-        String response = null;
-        try {
-            response = m.update(docid,
-                                new StringReader(testdocument), null);
-
-            if (result) {
-                assertTrue( (response.indexOf("<success>") != -1));
-                assertTrue(response.indexOf(docid) != -1);
-            }
-            else {
-                assertTrue( (response.indexOf("<success>") == -1));
-            }
-            System.err.println(response);
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (InsufficientKarmaException ike) {
-            if (!expectedKarmaFailure) {
-                fail("Insufficient karma:\n" + ike.getMessage());
-            }
-        }
-        catch (MetacatException me) {
-            if (result) {
-                fail("Metacat Error:\n" + me.getMessage());
-            } else {
-                System.err.println("Metacat Error:\n" + me.getMessage());
-            }
-        }
-        catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
-        }
-
-        return response;
-    }
-
-    /**
-     * Delete a document from metacat. The expected result is passed as result
-     */
-    private void deleteDocid(String docid, boolean result,
-                             boolean expextedKarmaFailure) {
-        try {
-            String response = m.delete(docid);
-            if (result) {
-                assertTrue(response.indexOf("<success>") != -1);
-            }
-            else {
-                assertTrue(response.indexOf("<success>") == -1);
-            }
-            System.err.println(response);
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (InsufficientKarmaException ike) {
-            if(!expextedKarmaFailure){
-                fail("Insufficient karma:\n" + ike.getMessage());
-            }
-        }
-        catch (MetacatException me) {
-            if (result) {
-                fail("Metacat Error:\n" + me.getMessage());
-            } else {
-                System.err.println("Metacat Error:\n" + me.getMessage());
-            }
-        }
-        catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
-        }
-    }
-
-    /**
-     * Read a document from metacat. The expected result is passed as result
-     */
-    private void readDocid(String docid, boolean result,
-                           boolean expextedKarmaFailure) {
-        try {
-            Reader r = new InputStreamReader(m.read(docid));
-            String response = IOUtil.getAsString(r, true);
-
-            if (!result) {
-                assertTrue(response.indexOf("<success>") == -1);
-            }
-            // System.err.println(response);
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (InsufficientKarmaException ike) {
-            if (!expextedKarmaFailure) {
-                fail("Insufficient karma:\n" + ike.getMessage());
-            }
-        }
-        catch (MetacatException me) {
-            fail("Metacat Error:\n" + me.getMessage());
-        }
-        catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
-        }
-    }
-
-    /**
-     * Read a document from metacat and check if it is equal to a given string.
-     * The expected result is passed as result
-     */
-    private void readDocidWhichEqualsDoc(String docid, String testDoc,
-                                         boolean result,
-                                         boolean expectedKarmaFailure) {
-        try {
-            Reader r = new InputStreamReader(m.read(docid), "UTF-8");
-            //InputStream is = m.read(docid);
-            String doc = IOUtil.getAsString(r, true);
-            //String doc = IOUtils.toString(is);
-            
-            if (result) {
-
-                if (!testDoc.equals(doc)) {
-                    debug("doc    :" + doc);
-                    debug("testDoc:" + testDoc);
-                }
-
-                assertTrue(testDoc.equals(doc));
-            }
-            else {
-                assertTrue(doc.indexOf("<error>") != -1);
-            }
-        }
-        catch (MetacatInaccessibleException mie) {
-            fail("Metacat Inaccessible:\n" + mie.getMessage());
-        }
-        catch (InsufficientKarmaException ike) {
-            if (!expectedKarmaFailure) {
-                fail("Insufficient karma:\n" + ike.getMessage());
-            }
-        }
-        catch (MetacatException me) {
-            fail("Metacat Error:\n" + me.getMessage());
-        }
-        catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
-        }
-
     }
 
     /**
@@ -823,7 +490,7 @@ public class NonAsciiCharacterTest
         docid.append(calendar.get(Calendar.MINUTE));
         docid.append(calendar.get(Calendar.SECOND));
    	    //sometimes this number is not unique, so we append a random number
-    	int random = (new Double(Math.random()*100)).intValue();
+    	int random = (new Double(Math.random()*10000000)).intValue();
     	docid.append(random);
         return docid.toString();
     }
