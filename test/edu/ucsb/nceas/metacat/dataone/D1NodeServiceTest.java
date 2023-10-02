@@ -28,8 +28,6 @@ package edu.ucsb.nceas.metacat.dataone;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Hashtable;
@@ -65,7 +63,6 @@ import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Node;
-import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -78,13 +75,9 @@ import org.dataone.service.types.v1.util.AccessUtil;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.util.ObjectFormatServiceImpl;
 import org.dataone.service.util.Constants;
-import org.dataone.service.util.TypeMarshaller;
 import org.mockito.Mockito;
 
 import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.client.Metacat;
-import edu.ucsb.nceas.metacat.client.MetacatFactory;
-import edu.ucsb.nceas.metacat.dataone.v1.MNodeService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
@@ -96,8 +89,14 @@ public class D1NodeServiceTest extends MCTestCase {
     public static final int tryAcccounts = 100;
     protected MockHttpServletRequest request;
     protected static ObjectFormatIdentifier eml_2_1_1_format = new ObjectFormatIdentifier();
+    protected static ObjectFormatIdentifier eml_2_0_1_format = new ObjectFormatIdentifier();
+    protected static ObjectFormatIdentifier eml_2_1_0_format = new ObjectFormatIdentifier();
+    protected static ObjectFormatIdentifier eml_dataset_beta_6_format = new ObjectFormatIdentifier();
     static {
         eml_2_1_1_format.setValue("eml://ecoinformatics.org/eml-2.1.1");
+        eml_2_1_0_format.setValue("eml://ecoinformatics.org/eml-2.1.0");
+        eml_2_0_1_format.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        eml_dataset_beta_6_format.setValue("-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN");
     }
 
     /**
@@ -868,11 +867,12 @@ public class D1NodeServiceTest extends MCTestCase {
      * @throws NotImplemented
      * @throws InvalidRequest
      */
-    public void mnCreate(Session session, Identifier id, InputStream object, SystemMetadata sysmeta) 
-                                throws InvalidToken, ServiceFailure, NotAuthorized, 
+    public Identifier mnCreate(Session session, Identifier id, InputStream object, 
+                                    SystemMetadata sysmeta) 
+                                        throws InvalidToken, ServiceFailure, NotAuthorized, 
                                 IdentifierNotUnique, UnsupportedType, InsufficientResources, 
                                 InvalidSystemMetadata, NotImplemented, InvalidRequest {
-        MNodeService.getInstance(request).create(session, id, object, sysmeta);
+        return MNodeService.getInstance(request).create(session, id, object, sysmeta);
     }
     
     /**
@@ -882,6 +882,7 @@ public class D1NodeServiceTest extends MCTestCase {
      * @param object  the bytes of the new object
      * @param newPid  the identifier which will replace the pid
      * @param sysmeta  the system metadata associated with the new object
+     * @return the identifier of the new object
      * @throws IdentifierNotUnique
      * @throws InsufficientResources
      * @throws InvalidRequest
@@ -893,11 +894,75 @@ public class D1NodeServiceTest extends MCTestCase {
      * @throws UnsupportedType
      * @throws NotFound
      */
-    public void mnUpdate(Session session, Identifier pid, InputStream object, Identifier newPid, 
-                          SystemMetadata sysmeta) throws IdentifierNotUnique, InsufficientResources, 
+    public Identifier mnUpdate(Session session, Identifier pid, InputStream object, 
+                                           Identifier newPid, SystemMetadata sysmeta) 
+                              throws IdentifierNotUnique, InsufficientResources, 
                             InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, 
                             NotImplemented, ServiceFailure, UnsupportedType, NotFound {
-        MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
+        return MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
+    }
+    
+    /**
+     * A wrapper method of CN.create.
+     * @param session  the subject which will create the object
+     * @param id  the identifier of the created object
+     * @param object  the bytes of the object
+     * @param sysmeta  the system metadata associated with the object
+     * @return the identifier of the created object
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws IdentifierNotUnique
+     * @throws UnsupportedType
+     * @throws InsufficientResources
+     * @throws InvalidSystemMetadata
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     */
+    public Identifier cnCreate(Session session, Identifier id, InputStream object, SystemMetadata sysmeta) 
+                                throws InvalidToken, ServiceFailure, NotAuthorized, 
+                                IdentifierNotUnique, UnsupportedType, InsufficientResources, 
+                                InvalidSystemMetadata, NotImplemented, InvalidRequest {
+        return CNodeService.getInstance(request).create(session, id, object, sysmeta);
     }
 
+    /**
+     * Read a document from metacat and check if it is equal to a given string.
+     * The expected result is passed as result
+     */
+    protected void readDocidWhichEqualsDoc(String docid, String testDoc, 
+                                            boolean result, Session session) {
+        try {
+            Identifier guid = new Identifier();
+            guid.setValue(docid);
+            InputStream object = MNodeService.getInstance(request).get(session, guid);
+            String doc = IOUtils.toString(object, "UTF-8");
+            if (!testDoc.equals(doc)) {
+                    debug("doc    :" + doc);
+                    debug("testDoc:" + testDoc);
+            }
+            assertTrue(testDoc.equals(doc));
+        } catch (Exception e) {
+            fail("General exception:\n" + e.getMessage());
+        }
+    }
+    
+    /**
+     * Use the solr query to query a title. If the result doesn't contains the given
+     * guid, test will fail.
+     */
+    protected void queryTile(String title, String guid, Session session) throws Exception {
+        String query = "q=title:" +"\"" + title +"\"";
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int count = 0;
+        while ( (resultStr == null || !resultStr.contains(guid)) 
+                                    && count <= D1NodeServiceTest.tryAcccounts) {
+            Thread.sleep(1000);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains(guid));
+    }
 }
