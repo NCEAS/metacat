@@ -31,7 +31,6 @@ import java.util.GregorianCalendar;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
-import org.apache.commons.io.IOUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -50,25 +49,6 @@ import java.io.InputStream;
  * A JUnit test for testing Metacat when Non Ascii Characters are inserted
  */
 public class InternationalizationTest extends D1NodeServiceTest {
-    
-   /**
-     * Use the solr query to query a title. If the result doesn't contains the given
-     * guid, test will fail.
-     */
-    protected void queryTile(String title, String guid, Session session) throws Exception {
-        String query = "q=title:" +"\"" + title +"\"";
-        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
-        int count = 0;
-        while ( (resultStr == null || !resultStr.contains(guid)) 
-                                    && count <= D1NodeServiceTest.tryAcccounts) {
-            Thread.sleep(1000);
-            count++;
-            stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
-        assertTrue(resultStr.contains(guid));
-    }
 
     /**
      * Constructor to build the test
@@ -177,26 +157,7 @@ public class InternationalizationTest extends D1NodeServiceTest {
         }
     }
 
-    /**
-     * Read a document from metacat and check if it is equal to a given string.
-     * The expected result is passed as result
-     */
-    private void readDocidWhichEqualsDoc(String docid, String testDoc, 
-                                            boolean result, Session session) {
-        try {
-            Identifier guid = new Identifier();
-            guid.setValue(docid);
-            InputStream object = MNodeService.getInstance(request).get(session, guid);
-            String doc = IOUtils.toString(object, "UTF-8");
-            if (!testDoc.equals(doc)) {
-                    debug("doc    :" + doc);
-                    debug("testDoc:" + testDoc);
-            }
-            assertTrue(testDoc.equals(doc));
-        } catch (Exception e) {
-            fail("General exception:\n" + e.getMessage());
-        }
-    }
+    
 
     /**
      * Create a hopefully unique docid for testing insert and update. Does
