@@ -992,17 +992,11 @@ public class MNResourceHandler extends D1ResourceHandler {
     }
     
     /**
-     * Get the status of the system. Now we only support to get the size of the index queue.
+     * Get the status of the system. 
+     * It showed the size of the index queue. But it is no longer supported.
      */
-    private void getStatus() throws IOException, NotAuthorized, ServiceFailure {
-        InputStream result = MNodeService.getInstance(request).getStatus(this.session);
-        response.setStatus(200);
-        response.setContentType("text/xml");
-        OutputStream out = response.getOutputStream();
-        out = response.getOutputStream();  
-        IOUtils.copy(result, out);
-        IOUtils.closeQuietly(out);
-        //IOUtils.copyLarge(result, out);
+    private void getStatus() throws NotImplemented {
+        throw new NotImplemented("0000", "The index status feature is no longer supported.");
     }
     
     /**
