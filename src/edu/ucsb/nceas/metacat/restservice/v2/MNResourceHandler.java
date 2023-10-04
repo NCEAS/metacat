@@ -587,8 +587,6 @@ public class MNResourceHandler extends D1ResourceHandler {
 
                     // set the content-type if we have it from the implementation
                     if (stream instanceof ContentTypeInputStream) {
-                        //response.setContentType("application/octet-stream");
-                        //response.setContentType("text/xml");
                         response.setContentType(((ContentTypeInputStream) stream).getContentType());
                     }
                     response.setStatus(200);
@@ -721,8 +719,6 @@ public class MNResourceHandler extends D1ResourceHandler {
             return;
             } else {
                 // TODO: list the registered views
-                //BaseException ni = new NotImplemented("9999", "MN.listViews() is not implemented at this node");
-                //throw ni;
                 OptionList list = mnode.listViews(session);
 
                 response.setContentType("text/xml");
@@ -826,12 +822,6 @@ public class MNResourceHandler extends D1ResourceHandler {
         // check authorization before sending to implementation
         D1AuthHelper authDel = new D1AuthHelper(request, pid, "1331", "????");
         authDel.doAdminAuthorization(session);
-//        boolean authorized = MNodeService.getInstance(request).isAdminAuthorized(session);
-//        if (!authorized) {
-//            String msg = "User is not authorized to call systemMetadataChanged";
-//            NotAuthorized failure = new NotAuthorized("1331", msg);
-//            throw failure;
-//        }
 
         // run it in a thread to avoid connection timeout
         final String ipAddress = request.getRemoteAddr();
@@ -1099,12 +1089,6 @@ public class MNResourceHandler extends D1ResourceHandler {
             // TODO: should we refactore replicate() in MNodeservice to not replicate, it would avoid a possible second listNodes call...
             D1AuthHelper authDel = new D1AuthHelper(request, null, "2152", "????");
             authDel.doAdminAuthorization(session);
-//            allowed = MNodeService.getInstance(request).isAdminAuthorized(session);
-//            if (!allowed) {
-//                String msg = "User is not an admin user";
-//                NotAuthorized failure = new NotAuthorized("2152", msg);
-//                throw failure;
-//            }
         }
 
         // parse the systemMetadata
@@ -1719,7 +1703,6 @@ public class MNResourceHandler extends D1ResourceHandler {
                 logMetacat.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Total create/update method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
         } catch (Exception e) {
             if(objFile != null) {
-                //objFile.deleteOnExit();
                 StreamingMultipartRequestResolver.deleteTempFile(objFile);
             }
             throw e;
