@@ -1,8 +1,8 @@
 /*
  * Create the node_id_revisions table
  */
-CREATE SEQUENCE node_id_revision_id_seq;
-CREATE TABLE node_id_revisions (
+CREATE SEQUENCE IF NOT EXISTS node_id_revision_id_seq;
+CREATE TABLE IF NOT EXISTS node_id_revisions (
   node_id_revision_id INTEGER default nextval ('node_id_revision_id_seq'), -- unique identifier for
                                                                            -- this node_id revision
   node_id           TEXT NOT NULL,      -- DataONE nodeId being persisted; eg: urn:node:TestBROOKE
@@ -27,20 +27,20 @@ CREATE INDEX IF NOT EXISTS xml_documents_idx6 ON xml_documents (docid);
 /*
  * Drop the xml_path_index table
  */
-DROP SEQUENCE IF EXISTS xml_path_index_id_seq;
 DROP TABLE IF EXISTS xml_path_index;
+DROP SEQUENCE IF EXISTS xml_path_index_id_seq;
 
 /*
  * Drop the xml_queryresult table
  */
-DROP SEQUENCE IF EXISTS xml_queryresult_id_seq;
 DROP TABLE IF EXISTS xml_queryresult;
+DROP SEQUENCE IF EXISTS xml_queryresult_id_seq;
 
 /*
  * Drop the xml_returnfield table
  */
-DROP SEQUENCE IF EXISTS xml_returnfield_id_seq;
 DROP TABLE IF EXISTS xml_returnfield;
+DROP SEQUENCE IF EXISTS xml_returnfield_id_seq;
 
 /*
  * Drop the xml_accesssubtree table
@@ -60,8 +60,8 @@ DROP TABLE IF EXISTS xml_nodes_revisions;
 /*
  * Drop the xml_nodes table
  */
-DROP SEQUENCE IF EXISTS xml_nodes_id_seq;
 DROP TABLE IF EXISTS xml_nodes;
+DROP SEQUENCE IF EXISTS xml_nodes_id_seq;
  
 /*
  * update the database version
