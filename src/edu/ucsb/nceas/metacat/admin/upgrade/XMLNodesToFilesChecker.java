@@ -1,16 +1,32 @@
 package edu.ucsb.nceas.metacat.admin.upgrade;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Iterator;
+import java.util.Stack;
+import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import edu.ucsb.nceas.metacat.DocumentImpl;
+import edu.ucsb.nceas.metacat.McdbException;
+import edu.ucsb.nceas.metacat.NodeComparator;
+import edu.ucsb.nceas.metacat.NodeRecord;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -26,8 +42,10 @@ public class XMLNodesToFilesChecker {
                                                + " AND docid NOT LIKE 'autogen.%'";
     private final static String XML_DOCUMENTS = "xml_documents";
     private final static String XML_REVISIONS = "xml_revisions";
+    private final static String INLINE = "inline";
     
-    private static String DOCUMENT_DIR = null;
+    private static String document_dir = null;
+    private static String inline_dir = null;
     private static Log logMetacat = LogFactory.getLog("DBtoFilesChecker");
 
     
@@ -36,10 +54,15 @@ public class XMLNodesToFilesChecker {
      * @throws PropertyNotFoundException 
      */
     public XMLNodesToFilesChecker() throws PropertyNotFoundException {
-        if (DOCUMENT_DIR == null) {
-            DOCUMENT_DIR = PropertyService.getProperty("application.documentfilepath");
+        if (document_dir == null) {
+            document_dir = PropertyService.getProperty("application.documentfilepath");
             logMetacat.debug("XMLNodestoFilesChecker.DBtoFilesChecker - The document directory is " 
-                                + DOCUMENT_DIR);
+                                + document_dir);
+        }
+        if (inline_dir == null)  {
+            inline_dir = PropertyService.getProperty("application.inlinedatafilepath");
+            logMetacat.debug("XMLNodestoFilesChecker.DBtoFilesChecker - The inline data directory is " 
+                    + inline_dir);
         }
     }
     
@@ -87,7 +110,7 @@ public class XMLNodesToFilesChecker {
                     docId = result.getString(1);
                     rev = result.getInt(2);
                     long rootNodeId = result.getLong(3);
-                    String path = DOCUMENT_DIR + File.separator + docId + "." + rev;
+                    String path = document_dir + File.separator + docId + "." + rev;
                     File documentFile = new File(path);
                     if (documentFile.exists()) {
                         continue;
@@ -97,7 +120,7 @@ public class XMLNodesToFilesChecker {
                 } catch (Exception e) {
                     logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - " 
                                 + "can't check if the metadata object " + docId + rev 
-                                + " exists in the directory " + DOCUMENT_DIR 
+                                + " exists in the directory " + document_dir 
                                 + " since " + e.getMessage());
                 }
             }
@@ -115,6 +138,361 @@ public class XMLNodesToFilesChecker {
         
     }
     
+    /**
+     * Print a text representation of the XML document to an OutputStream object
+     * @param outputStream  the OutputStream object will be get the content
+     * @param rootnodeid  the root node id of the document
+     * @param validateType  if this document is based on DTD
+     * @param systemId  the system id of the document
+     * @param doctype  the doc type of this document
+     * @param docname  the doc name of this document
+     * @throws McdbException
+     * @throws IOException
+     */
+    public void toXmlFromDb(OutputStream outputStream, String tableName, long rootnodeid, 
+                            String validateType, String systemId, String doctype, String docname) 
+                                    throws McdbException, IOException {
+        // flag for process eml2
+        boolean proccessEml2 = false;
+        boolean storedDTD = false;//flag to inidate publicid or system
+        // id stored in db or not
+        boolean firstElement = true;
+        String dbDocName = null;
+        String dbPublicID = null;
+        String dbSystemID = null;
+
+        if (doctype != null
+                && (doctype.equals(DocumentImpl.EML2_0_0NAMESPACE)
+                        || doctype.equals(DocumentImpl.EML2_0_1NAMESPACE) 
+                        || doctype.equals(DocumentImpl.EML2_1_0NAMESPACE)
+                        || doctype.equals(DocumentImpl.EML2_1_1NAMESPACE) 
+                        || doctype.equals(DocumentImpl.EML2_2_0NAMESPACE) )) {
+            proccessEml2 = true;
+        }
+        // flag for process inline data
+        boolean processInlineData = false;
+        TreeSet<NodeRecord> nodeRecordLists = getNodeRecordList(rootnodeid, tableName);
+        // Note: we haven't stored the encoding, so we use the default for XML
+        String encoding = "UTF-8";
+        Writer out = new OutputStreamWriter(outputStream, encoding);
+        Stack<NodeRecord> openElements = new Stack<NodeRecord>();
+        boolean atRootElement = true;
+        boolean previousNodeWasElement = false;
+        // Step through all of the node records we were given
+        Iterator<NodeRecord> it = nodeRecordLists.iterator();
+        while (it.hasNext()) {
+            NodeRecord currentNode = it.next();
+            logMetacat.debug("[Got Node ID: " + currentNode.getNodeId() + " ("
+                    + currentNode.getParentNodeId() + ", " + currentNode.getNodeIndex()
+                    + ", " + currentNode.getNodeType() + ", " + currentNode.getNodeName()
+                    + ", " + currentNode.getNodeData() + ")]");
+            // Print the end tag for the previous node if needed
+            //
+            // This is determined by inspecting the parent nodeid for the
+            // currentNode. If it is the same as the nodeid of the last element
+            // that was pushed onto the stack, then we are still in that
+            // previous
+            // parent element, and we do nothing. However, if it differs, then
+            // we
+            // have returned to a level above the previous parent, so we go into
+            // a loop and pop off nodes and print out their end tags until we
+            // get
+            // the node on the stack to match the currentNode parentnodeid
+            //
+            // So, this of course means that we rely on the list of elements
+            // having been sorted in a depth first traversal of the nodes, which
+            // is handled by the NodeComparator class used by the TreeSet
+            if (!atRootElement) {
+                NodeRecord currentElement = openElements.peek();
+                if (currentNode.getParentNodeId() != currentElement.getNodeId()) {
+                    while (currentNode.getParentNodeId() != currentElement.getNodeId()) {
+                        currentElement = (NodeRecord) openElements.pop();
+                        logMetacat.debug("\n POPPED: "
+                                + currentElement.getNodeName());
+                        if (previousNodeWasElement) {
+                            out.write(">");
+                            previousNodeWasElement = false;
+                        }
+                        if (currentElement.getNodePrefix() != null) {
+                            out.write("</" + currentElement.getNodePrefix() + ":"
+                                    + currentElement.getNodeName() + ">");
+                        } else {
+                            out.write("</" + currentElement.getNodeName() + ">");
+                        }
+                        currentElement = openElements.peek();
+                    }
+                }
+            }
+
+            // Handle the DOCUMENT node
+            if (currentNode.getNodeType().equals("DOCUMENT")) {
+                out.write("<?xml version=\"1.0\"?>");
+                // Handle the ELEMENT nodes
+            } else if (currentNode.getNodeType().equals("ELEMENT")) {
+                if (atRootElement) {
+                    atRootElement = false;
+                } else {
+                    if (previousNodeWasElement) {
+                        out.write(">");
+                    }
+                }
+                // if publicid or system is not stored into db send it out by
+                // default
+                if (!storedDTD & firstElement) {
+                    if (docname != null && validateType != null
+                            && validateType.equals(DocumentImpl.DTD)) {
+                        if ((doctype != null) && (systemId != null)) {
+                            out.write("<!DOCTYPE " + docname + " PUBLIC \""
+                                    + doctype + "\" \"" + systemId + "\">");
+                        } else {
+                            out.write("<!DOCTYPE " + docname + ">");
+                        }
+                    }
+                }
+                firstElement = false;
+                openElements.push(currentNode);
+                logMetacat.debug("\n PUSHED: " + currentNode.getNodeName());
+                previousNodeWasElement = true;
+                if (currentNode.getNodePrefix() != null) {
+                    out.write("<" + currentNode.getNodePrefix() + ":"
+                            + currentNode.getNodeName());
+                } else {
+                    out.write("<" + currentNode.getNodeName());
+                }
+
+                // if currentNode is inline and handle eml2, set flag process
+                // on
+                if (currentNode.getNodeName() != null
+                        && currentNode.getNodeName().equals(INLINE)
+                        && proccessEml2) {
+                    processInlineData = true;
+                }
+
+                // Handle the ATTRIBUTE nodes
+            } else if (currentNode.getNodeType().equals("ATTRIBUTE")) {
+                if (currentNode.getNodePrefix() != null) {
+                    out.write(" " + currentNode.getNodePrefix() + ":"
+                            + currentNode.getNodeName() + "=\""
+                            + currentNode.getNodeData() + "\"");
+                } else {
+                    out.write(" " + currentNode.getNodeName() + "=\""
+                            + currentNode.getNodeData() + "\"");
+                }
+
+                // Handle the NAMESPACE nodes
+            } else if (currentNode.getNodeType().equals("NAMESPACE")) {
+                String nsprefix = " xmlns:";
+                if(currentNode.getNodeName() == null || currentNode.getNodeName().trim().equals(""))
+                {
+                  nsprefix = " xmlns";
+                }
+                
+                out.write(nsprefix + currentNode.getNodeName() + "=\""
+                          + currentNode.getNodeData() + "\"");
+
+                // Handle the TEXT nodes
+            } else if (currentNode.getNodeType().equals("TEXT")) {
+                if (previousNodeWasElement) {
+                    out.write(">");
+                }
+                if (!processInlineData) {
+                    // if it is not inline data just out put data
+                    out.write(currentNode.getNodeData());
+                } else {
+                    // if it is inline data first to get the inline data
+                    // internal id
+                    String fileName = currentNode.getNodeData();
+                    //user want to see it, pull out from file system and 
+                    // output it for inline data, the data base only store 
+                    // the file name, so we can combine the file name and
+                    // inline data file path, to get it
+                    Reader reader = readInlineDataFromFileSystem(fileName, encoding);
+                    char[] characterArray = new char[4 * 1024];
+                    try {
+                        int length = reader.read(characterArray);
+                        while (length != -1) {
+                            out.write(new String(characterArray, 0,
+                                            length));
+                            out.flush();
+                            length = reader.read(characterArray);
+                        }
+                        reader.close();
+                    } catch (IOException e) {
+                        throw new McdbException(e.getMessage());
+                    }
+                    // reset proccess inline data false
+                    processInlineData = false;
+                }// in inlinedata part
+                previousNodeWasElement = false;
+                // Handle the COMMENT nodes
+            } else if (currentNode.getNodeType().equals("COMMENT")) {
+                if (previousNodeWasElement) {
+                    out.write(">");
+                }
+                out.write("<!--" + currentNode.getNodeData() + "-->");
+                previousNodeWasElement = false;
+                // Handle the PI nodes
+            } else if (currentNode.getNodeType().equals("PI")) {
+                if (previousNodeWasElement) {
+                    out.write(">");
+                }
+                out.write("<?" + currentNode.getNodeName() + " "
+                        + currentNode.getNodeData() + "?>");
+                previousNodeWasElement = false;
+                // Handle the DTD nodes (docname, publicid, systemid)
+            } else if (currentNode.getNodeType().equals(DocumentImpl.DTD)) {
+                storedDTD = true;
+                if (currentNode.getNodeName().equals(DocumentImpl.DOCNAME)) {
+                    dbDocName = currentNode.getNodeData();
+                }
+                if (currentNode.getNodeName().equals(DocumentImpl.PUBLICID)) {
+                    dbPublicID = currentNode.getNodeData();
+                }
+                if (currentNode.getNodeName().equals(DocumentImpl.SYSTEMID)) {
+                    dbSystemID = currentNode.getNodeData();
+                    // send out <!doctype .../>
+                    if (dbDocName != null) {
+                        if ((dbPublicID != null) && (dbSystemID != null)) {
+
+                            out
+                                    .write("<!DOCTYPE " + dbDocName
+                                            + " PUBLIC \"" + dbPublicID
+                                            + "\" \"" + dbSystemID + "\">");
+                        } else {
+
+                            out.write("<!DOCTYPE " + dbDocName + ">");
+                        }
+                    }
+
+                    //reset these variable
+                    dbDocName = null;
+                    dbPublicID = null;
+                    dbSystemID = null;
+                }
+                // Handle any other node type (do nothing)
+            } else {
+                // Any other types of nodes are not handled.
+                // Probably should throw an exception here to indicate this
+            }
+            
+            out.flush();
+        }
+        // Print the final end tag for the root element
+        while (!openElements.empty()) {
+            NodeRecord currentElement = (NodeRecord) openElements.pop();
+            logMetacat.debug("\n POPPED: " + currentElement.getNodeName());
+            if (currentElement.getNodePrefix() != null) {
+                out.write("</" + currentElement.getNodePrefix() + ":"
+                        + currentElement.getNodeName() + ">");
+            } else {
+                out.write("</" + currentElement.getNodeName() + ">");
+            }
+        }
+        out.flush();
+    }
+    
+    /**
+     * Read the inline data from a file
+     * @param fileName
+     * @param encoding
+     * @return
+     * @throws McdbException
+     */
+    private static Reader readInlineDataFromFileSystem(String fileName, String encoding)
+            throws McdbException {
+        // BufferedReader stringReader = null;
+        Reader fileReader = null;
+        try {
+            // the new file name will look like path/docid.rev.2
+            File inlineDataDirectory = new File(inline_dir);
+            File dataFile = new File(inlineDataDirectory, fileName);
+            fileReader = new InputStreamReader(new FileInputStream(dataFile), encoding);
+        } catch (Exception e) {
+            throw new McdbException(e.getMessage());
+        }
+        // return stringReader;
+        return fileReader;
+    }
+    
+    /**
+     * Look up the node data from the database
+     * @param rootnodeid  the id of the root node of the node tree to look up
+     * @param table  the table name which Metacat will find the nodes list
+     */
+    private TreeSet<NodeRecord> getNodeRecordList(long rootnodeid, String table) throws McdbException {
+        PreparedStatement pstmt = null;
+        DBConnection dbconn = null;
+        int serialNumber = -1;
+        TreeSet<NodeRecord> nodeRecordList = new TreeSet<NodeRecord>(new NodeComparator());
+        long nodeid = 0;
+        long parentnodeid = 0;
+        long nodeindex = 0;
+        String nodetype = null;
+        String nodename = null;
+        String nodeprefix = null;
+        String nodedata = null;
+        float nodedatanumerical = -1;
+        Timestamp nodedatadate = null;
+        //System.out.println("in getNodeREcorelist !!!!!!!!!!!3");
+        try {
+            dbconn = DBConnectionPool
+                    .getDBConnection("DocumentImpl.getNodeRecordList");
+            serialNumber = dbconn.getCheckOutSerialNumber();
+            pstmt = dbconn
+                    .prepareStatement("SELECT nodeid,parentnodeid,nodeindex, "
+                            + "nodetype,nodename,nodeprefix,nodedata, nodedatanumerical, nodedatadate "
+                            + "FROM " + table + " WHERE rootnodeid = ?");
+            // Bind the values to the query
+            pstmt.setLong(1, rootnodeid);
+            //System.out.println("in getNodeREcorelist !!!!!!!!!!!4");
+            logMetacat.debug("DocumentImpl.getNodeRecordList - executing SQL: " + pstmt.toString());
+            pstmt.execute();
+            ResultSet rs = pstmt.getResultSet();
+            //System.out.println("in getNodeREcorelist !!!!!!!!!!!5");
+            boolean tableHasRows = rs.next();
+            while (tableHasRows) {
+                //System.out.println("in getNodeREcorelist !!!!!!!!!!!6");
+                nodeid = rs.getLong(1);
+                parentnodeid = rs.getLong(2);
+                nodeindex = rs.getLong(3);
+                nodetype = rs.getString(4);
+                nodename = rs.getString(5);
+                nodeprefix = rs.getString(6);
+                nodedata = rs.getString(7);
+                try {
+                    logMetacat.debug("DocumentImpl.getNodeRecordList - Node data in read process before normalize=== "+nodedata);
+                    nodedata = MetacatUtil.normalize(nodedata);
+                    logMetacat.debug("DocumentImpl.getNodeRecordList - Node data in read process after normalize==== "+nodedata);
+                } catch (java.lang.StringIndexOutOfBoundsException SIO){
+                    logMetacat.warn("DocumentImpl.getNodeRecordList - StringIndexOutOfBoundsException in normalize() while reading the document");
+                }
+                nodedatanumerical = rs.getFloat(8);
+                nodedatadate = rs.getTimestamp(9);
+                // add the data to the node record list hashtable
+                NodeRecord currentRecord = new NodeRecord(nodeid, parentnodeid,
+                        nodeindex, nodetype, nodename, nodeprefix, nodedata, nodedatanumerical, nodedatadate);
+                nodeRecordList.add(currentRecord);
+                // Advance to the next node
+                tableHasRows = rs.next();
+            }
+            pstmt.close();
+            //System.out.println("in getNodeREcorelist !!!!!!!!!!!7");
+        } catch (SQLException e) {
+            throw new McdbException("Error in DocumentImpl.getNodeRecordList "
+                    + e.getMessage());
+        } finally {
+            try {
+                pstmt.close();
+            } catch (SQLException ee) {
+                logMetacat.error("DocumentImpl.getNodeRecordList - General error: "
+                                + ee.getMessage());
+            } finally {
+                DBConnectionPool.returnDBConnection(dbconn, serialNumber);
+            }
+        }
+        //System.out.println("in getNodeREcorelist !!!!!!!!!!!8");
+        return nodeRecordList;
+    }
     
     /**
      * Run the sql query against the given table. The query will select docid, revision and the 
