@@ -2,6 +2,8 @@ package edu.ucsb.nceas.metacat.admin.upgrade;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -37,7 +39,8 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *
  */
 public class XMLNodesToFilesChecker {
-    private final static String PREFIX_SQL = "SELECT docid, rev, rootnodeid FROM ";
+    private final static String PREFIX_SQL = "SELECT docid, rev, rootnodeid, catalog_id, " 
+                                                + "doctype, docname FROM ";
     private final static String APPENDIX_SQL = " WHERE rootnodeid >= 0 AND doctype != 'BIN' " 
                                                + " AND docid NOT LIKE 'autogen.%'";
     private final static String XML_DOCUMENTS = "xml_documents";
@@ -110,12 +113,27 @@ public class XMLNodesToFilesChecker {
                     docId = result.getString(1);
                     rev = result.getInt(2);
                     long rootNodeId = result.getLong(3);
+                    long catalogId = result.getLong(4);
+                    String docType = result.getNString(5);
+                    String docName = result.getNString(6);
                     String path = document_dir + File.separator + docId + "." + rev;
                     File documentFile = new File(path);
                     if (documentFile.exists()) {
                         continue;
                     } else {
-                        exportXMLnodesToFile(docId, rev, rootNodeId, tableName);
+                        //The file doesn't exist. Let's export the data from db to the file system.
+                        boolean isDTD = false;
+                        String[] systemIdEntyTypePair = getSystemIdAndTypePair(catalogId);
+                        String systemId = systemIdEntyTypePair[0];
+                        String entryType = systemIdEntyTypePair[1];
+                        logMetacat.debug("XMLNodestoFilesChecker.checkIfFilesExist - " 
+                                        + " the system id is " + systemId + " and entry type is " 
+                                        + entryType + " for the catalog id " + catalogId);
+                        if (entryType != null && entryType.equals(DocumentImpl.DTD)) {
+                            isDTD = true;
+                        }
+                        exportXMLnodesToFile(docId, rev, rootNodeId, tableName, isDTD, systemId, 
+                                             docType, docName);
                     }
                 } catch (Exception e) {
                     logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - " 
@@ -128,14 +146,69 @@ public class XMLNodesToFilesChecker {
     }
     
     /**
+     * Get system id and entry type (DTD, Schema et all) for the given catalog id
+     * @param catalogId  the catalog id which will be looked for
+     * @return an array of string. First element is the system id; the second one is the entry type
+     * @throws SQLException
+     */
+    private String[] getSystemIdAndTypePair(long catalogId) throws SQLException {
+        String[] result = new String[2];
+        ResultSet rs = null;
+        String sql = "SELECT system_id, entry_type FROM xml_catalog WHERE catalog_id=?";
+        DBConnection conn = null;
+        int serialNumber = -1;
+        PreparedStatement pstmt = null;
+        try {
+            //check out DBConnection
+            conn=DBConnectionPool.getDBConnection("DBtoFilesChecker.getSystemIdAndTypePair");
+            serialNumber=conn.getCheckOutSerialNumber();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, catalogId);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                result[0] = rs.getString(1);
+                result[1] = rs.getNString(2);
+            }
+        } finally {
+            try {
+                if (pstmt != null) {
+                     pstmt.close();
+                }
+                if (rs != null) {
+                     rs.close();
+                }
+            } finally {
+               DBConnectionPool.returnDBConnection(conn, serialNumber);
+            }
+        }
+        return result;
+    }
+    
+    /**
      * Export an object form xml_nodes/xml_nodes_revision table to a file.
      * Also check if the system metadata and identifier table have the record. 
      * @param docId
      * @param rev
      * @param rootNodeId
+     * @throws IOException 
+     * @throws McdbException 
      */
-    private void exportXMLnodesToFile(String docId, int rev, long rootNodeId, String tableName) {
-        
+    private void exportXMLnodesToFile(String docId, int rev, long rootNodeId, String tableName, 
+                                        boolean isDTD, String systemId, String docType, 
+                                        String docName) throws McdbException, IOException {
+        String path = document_dir + File.separator + docId + "." + rev;
+        File documentFile = new File(path);
+        FileOutputStream output = null;
+        try {
+            output = new FileOutputStream(documentFile);
+            toXmlFromDb(output, tableName, rootNodeId, isDTD, systemId, docType, docName);
+            logMetacat.debug("XMLNodestoFilesChecker.exportXMLnodesToFile - successfully wrote the " 
+                                + " meta data object to the path " + path);
+        } finally {
+            if (output != null) {
+                output.close();
+            }
+        }
     }
     
     /**
@@ -149,8 +222,8 @@ public class XMLNodesToFilesChecker {
      * @throws McdbException
      * @throws IOException
      */
-    public void toXmlFromDb(OutputStream outputStream, String tableName, long rootnodeid, 
-                            String validateType, String systemId, String doctype, String docname) 
+    private void toXmlFromDb(OutputStream outputStream, String tableName, long rootnodeid, 
+                            boolean isDTD, String systemId, String doctype, String docname) 
                                     throws McdbException, IOException {
         // flag for process eml2
         boolean proccessEml2 = false;
@@ -239,8 +312,7 @@ public class XMLNodesToFilesChecker {
                 // if publicid or system is not stored into db send it out by
                 // default
                 if (!storedDTD & firstElement) {
-                    if (docname != null && validateType != null
-                            && validateType.equals(DocumentImpl.DTD)) {
+                    if (docname != null && isDTD) {
                         if ((doctype != null) && (systemId != null)) {
                             out.write("<!DOCTYPE " + docname + " PUBLIC \""
                                     + doctype + "\" \"" + systemId + "\">");
