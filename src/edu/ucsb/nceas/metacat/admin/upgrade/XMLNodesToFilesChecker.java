@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
+import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.NodeComparator;
 import edu.ucsb.nceas.metacat.NodeRecord;
@@ -192,11 +193,14 @@ public class XMLNodesToFilesChecker {
      * @param rootNodeId
      * @throws IOException 
      * @throws McdbException 
+     * @throws SQLException 
      */
     private void exportXMLnodesToFile(String docId, int rev, long rootNodeId, String tableName, 
                                         boolean isDTD, String systemId, String docType, 
-                                        String docName) throws McdbException, IOException {
-        String path = document_dir + File.separator + docId + "." + rev;
+                                        String docName)
+                                          throws McdbException, IOException, SQLException {
+        String pid = docId + "." + rev;
+        String path = document_dir + File.separator + pid;
         File documentFile = new File(path);
         FileOutputStream output = null;
         try {
@@ -208,6 +212,10 @@ public class XMLNodesToFilesChecker {
             if (output != null) {
                 output.close();
             }
+        }
+        //Register the docid and guid in the identifier table if they don't exist.
+        if (!IdentifierManager.getInstance().mappingExists(pid)) {
+            IdentifierManager.getInstance().createMapping(pid, pid);
         }
     }
     
