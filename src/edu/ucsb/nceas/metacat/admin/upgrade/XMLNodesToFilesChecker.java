@@ -239,7 +239,6 @@ public class XMLNodesToFilesChecker {
                                                BaseException, MarshallingException, 
                                                HandlerException, SAXException {
         boolean hasSysmeta = false;
-        boolean hasChecksum = false;
         String pid = docId + "." + rev;
         Identifier identifier = new Identifier();
         identifier.setValue(pid);
@@ -251,7 +250,6 @@ public class XMLNodesToFilesChecker {
             checksum = sysmeta.getChecksum();
             if (checksum != null && checksum.getAlgorithm() != null 
                                  && !checksum.getAlgorithm().trim().equals("")) {
-                hasChecksum = true;
                 checksumAlgorithm = checksum.getAlgorithm();
             }
         }
@@ -271,24 +269,24 @@ public class XMLNodesToFilesChecker {
         }
         String localChecksum = DatatypeConverter.printHexBinary(md.digest());
         if (hasSysmeta) {
-            if (hasChecksum) {
-                if (checksum.getValue() != null && checksum.getValue().equals(localChecksum)) {
-                    //The checksum algorithms and values match. We don't need to anyting.
-                } else {
-                    // Set the new checksum
-                    Checksum newChecksum = new Checksum();
-                    newChecksum.setAlgorithm(checksumAlgorithm);
-                    newChecksum.setValue(localChecksum);
-                    sysmeta.setChecksum(newChecksum);
-                    storeSystemMetadataToDB(sysmeta);
-                }
+            //make sure the checksum in the existing system metadata match the checksum of the file
+            //we just created. If they don't match, set the new checksum into the existing sysmeta
+            if (checksum == null || checksum.getValue() == null || checksum.getAlgorithm() == null 
+                        || !checksum.getAlgorithm().equals(checksumAlgorithm)
+                        || !checksum.getValue().equals(localChecksum) ) {
+                // Set the new checksum
+                Checksum newChecksum = new Checksum();
+                newChecksum.setAlgorithm(checksumAlgorithm);
+                newChecksum.setValue(localChecksum);
+                sysmeta.setChecksum(newChecksum);
+                storeSystemMetadataToDB(sysmeta);
             }
         } else {
             //We need to generate the system metadata
             boolean includeORE = false;
             boolean downloadData = false;
             SystemMetadata newSysmeta = SystemMetadataFactory.
-                                                createSystemMetadata(pid, includeORE, downloadData);
+                                            createSystemMetadata(pid, includeORE, downloadData);
             storeSystemMetadataToDB(newSysmeta);
         }
         //Register the docid and guid in the identifier table if they don't exist.
