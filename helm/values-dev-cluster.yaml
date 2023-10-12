@@ -6,19 +6,66 @@
 ## see values.yaml for full documentation on the following parameters
 ##
 
+global:
+  passwordsSecret: &passwordSecretName metacatbrooke-secrets
+
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
-  solr.baseURL: http://d1index-solr-headless.jing.svc.cluster.local:8983/solr
-  solr.coreName: dataone_index_shard1_replica_n4
+#  solr.baseURL: http://metacatbrooke-solr-headless.brooke.svc.cluster.local:8983/solr
+  solr.baseURL: http://solruser:replace-with-a-solr-secret@metacatbrooke-solr-headless.brooke.svc.cluster.local:8983/solr
+#  solr.coreName: dataone_index_shard1_replica_n1
+#  solr.coreName: dataone_core
+  solr.coreName: dataone_index
+#  solr.adminUser: solruser
+#  solr.password: replace-with-a-solr-secret
+  index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
+  index.rabbitmq.username: &rmqUsername rmq
+  index.rabbitmq.password: change-to-using-a-secret
+  index.d1node.baseURL: "http://${server.name}/${application.context}/d1/mn"
+
+idxworker:
+  persistence:
+    ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
+    ## TODO: AUTO ASSIGN?
+    claimName: metacatbrooke-metacat-metacatbrooke-0
+  idxworker:
+    ## the url of the metacat instance that indexer is working with. (Not necessarily a d1 MN)
+    mn_url: "http://metacat-dev.test.dataone.org/metacat/d1/mn"
+    ## must match D1Client.CN_URL from metacat.properties
+    cn_url: "https://cn.dataone.org/cn"
+
+  rabbitmq:
+    hostname: metacatbrooke-rabbitmq-headless.brooke.svc
+  #  auth:
+  #    username: *rmqUsername
+  ## (must contain a value for rabbitmq-password key)
+  #    existingPasswordSecret: *passwordSecretName
+
+  solr:
+    ##  NOTE: uses deployment name; TODO: AUTO ASSIGN?
+    hostname: metacatbrooke-solr-headless.brooke.svc
+    extraVolumes:
+      - name: solr-config
+        configMap:
+          #  NOTE: uses deployment name  TODO: AUTO ASSIGN?
+          name: metacatbrooke-configfiles
+          defaultMode: 0777
+#    auth:
+#      adminUsername: ""
+#      adminPassword: ""
 
 persistence:
-  storageClass: csi-rbd-sc
-  size: 1Gi
+  storageClass: "-"
+  size: 100Gi
+  accessModes:
+    - ReadWriteMany
+  ## TODO: add to values.yaml or auto-populate
+  volumeName: cephfs-metacatbrooke-metacat
 
 postgresql:
   auth:
     ## MUST MATCH DEPLOYMENT NAME (MC)
-    existingSecret: dev-brooke-secrets
+    existingSecret: *passwordSecretName
   primary:
     persistence:
       size: 1Gi
