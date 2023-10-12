@@ -1,9 +1,11 @@
 package edu.ucsb.nceas.metacat.admin.upgrade;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -69,15 +71,19 @@ public class XMLNodesToFilesChecker {
     private final static String XML_REVISIONS = "xml_revisions";
     private final static String INLINE = "inline";
     private final static String SHA1 = "SHA-1";
+    private final static String SUCCESS_DOC_LOG_FILE = "success_export_xml_nodes_to_file_docid";
+    private final static String FAILURE_DOC_LOG_FILE = "failure_export_xml_nodes_to_file_docid";
     
     private static String document_dir = null;
     private static String inline_dir = null;
+    private static String log_dir = null;
     private static Log logMetacat = LogFactory.getLog("DBtoFilesChecker");
 
     
     /**
      * Default constructor
      * @throws PropertyNotFoundException 
+     * @throws IOException 
      */
     public XMLNodesToFilesChecker() throws PropertyNotFoundException {
         if (document_dir == null) {
@@ -90,6 +96,11 @@ public class XMLNodesToFilesChecker {
             logMetacat.debug("XMLNodestoFilesChecker.DBtoFilesChecker - The inline data directory is " 
                     + inline_dir);
         }
+        if (log_dir == null)  {
+            log_dir = PropertyService.getProperty("application.tempDir");
+            logMetacat.debug("XMLNodestoFilesChecker.DBtoFilesChecker - The log directory is " 
+                    + log_dir);
+        }
     }
     
     /**
@@ -97,8 +108,9 @@ public class XMLNodesToFilesChecker {
      * Note: this method must be called before running the 3.0.0 upgrade sql script, which will
      * drop the related tables.
      * @throws SQLException 
+     * @throws IOException 
      */
-    public void check() throws SQLException {
+    public void check() throws SQLException, IOException {
         checkXmlDocumentsTable();
         checkXmlRevisionsTable();
     }
@@ -106,8 +118,9 @@ public class XMLNodesToFilesChecker {
     /**
      * Check the objects in the xml_documents table
      * @throws SQLException 
+     * @throws IOException 
      */
-    private void checkXmlDocumentsTable() throws SQLException {
+    private void checkXmlDocumentsTable() throws SQLException, IOException {
         ResultSet rs = runSQL(XML_DOCUMENTS);
         checkIfFilesExist(rs, XML_DOCUMENTS);
     }
@@ -115,8 +128,9 @@ public class XMLNodesToFilesChecker {
     /**
      * Check the objects in the xml_documents table
      * @throws SQLException 
+     * @throws IOException
      */
-    private void checkXmlRevisionsTable() throws SQLException {
+    private void checkXmlRevisionsTable() throws SQLException, IOException {
         ResultSet rs = runSQL(XML_REVISIONS);
         checkIfFilesExist(rs, XML_REVISIONS);
     }
@@ -126,44 +140,86 @@ public class XMLNodesToFilesChecker {
      * skip it; otherwise export the database record on the xml_node table to the file system. 
      * @param result
      * @throws SQLException
+     * @throws IOException 
      */
-    private void checkIfFilesExist(ResultSet result, String tableName) throws SQLException {
-        if (result != null) {
-            while (result.next()) {
-                String docId = null;
-                int rev = -1;
-                try {
-                    docId = result.getString(1);
-                    rev = result.getInt(2);
-                    long rootNodeId = result.getLong(3);
-                    long catalogId = result.getLong(4);
-                    String docType = result.getNString(5);
-                    String docName = result.getNString(6);
-                    String path = document_dir + File.separator + docId + "." + rev;
-                    File documentFile = new File(path);
-                    if (documentFile.exists()) {
-                        continue;
-                    } else {
-                        //The file doesn't exist. Let's export the data from db to the file system.
-                        boolean isDTD = false;
-                        String[] systemIdEntyTypePair = getSystemIdAndTypePair(catalogId);
-                        String systemId = systemIdEntyTypePair[0];
-                        String entryType = systemIdEntyTypePair[1];
-                        logMetacat.debug("XMLNodestoFilesChecker.checkIfFilesExist - " 
-                                        + " the system id is " + systemId + " and entry type is " 
-                                        + entryType + " for the catalog id " + catalogId);
-                        if (entryType != null && entryType.equals(DocumentImpl.DTD)) {
-                            isDTD = true;
+    private void checkIfFilesExist(ResultSet result, String tableName) throws SQLException, 
+                                                                                    IOException {
+        boolean append = true;
+        BufferedWriter success_writer = null;
+        BufferedWriter failure_writer = null;
+        try {
+            success_writer = new BufferedWriter(new FileWriter(log_dir + File.separator 
+                                                    + SUCCESS_DOC_LOG_FILE, append));
+            failure_writer = new BufferedWriter(new FileWriter(log_dir + File.separator 
+                                                    + FAILURE_DOC_LOG_FILE, append));
+            if (result != null) {
+                while (result.next()) {
+                    String docId = null;
+                    int rev = -1;
+                    try {
+                        docId = result.getString(1);
+                        rev = result.getInt(2);
+                        long rootNodeId = result.getLong(3);
+                        long catalogId = result.getLong(4);
+                        String docType = result.getNString(5);
+                        String docName = result.getNString(6);
+                        String path = document_dir + File.separator + docId + "." + rev;
+                        File documentFile = new File(path);
+                        if (documentFile.exists()) {
+                            continue; //do nothting since the file exists
+                        } else {
+                            //The file doesn't exist. Let's export the data from db to the file system.
+                            boolean isDTD = false;
+                            String[] systemIdEntyTypePair = getSystemIdAndTypePair(catalogId);
+                            String systemId = systemIdEntyTypePair[0];
+                            String entryType = systemIdEntyTypePair[1];
+                            logMetacat.debug("XMLNodestoFilesChecker.checkIfFilesExist - " 
+                                            + " the system id is " + systemId + " and entry type is " 
+                                            + entryType + " for the catalog id " + catalogId);
+                            if (entryType != null && entryType.equals(DocumentImpl.DTD)) {
+                                isDTD = true;
+                            }
+                            exportXMLnodesToFile(docId, rev, rootNodeId, tableName, isDTD, systemId, 
+                                                 docType, docName);
+                            //Log the docid into success file
+                            try {
+                                success_writer.write(docId + "." + rev);
+                            } catch (IOException ioe) {
+                                logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - can't "
+                                                + "log the docid " + docId + "." + rev 
+                                                + " into the success log file since " 
+                                                + ioe.getMessage());
+                            }
                         }
-                        exportXMLnodesToFile(docId, rev, rootNodeId, tableName, isDTD, systemId, 
-                                             docType, docName);
+                    } catch (Exception e) {
+                        logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - " 
+                                    + "can't check if the metadata object " + docId + rev 
+                                    + " exists in the directory " + document_dir 
+                                    + " since " + e.getMessage());
+                        //Log the docid into success file
+                        try {
+                            failure_writer.write(docId + "." + rev);
+                        } catch (IOException ioe) {
+                            logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - can't "
+                                    + "log the docid " + docId + "." + rev 
+                                    + " into the failure log file since " 
+                                    + ioe.getMessage());
+                        }
+                        
                     }
-                } catch (Exception e) {
-                    logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - " 
-                                + "can't check if the metadata object " + docId + rev 
-                                + " exists in the directory " + document_dir 
-                                + " since " + e.getMessage());
                 }
+            }
+        } finally {
+            if (success_writer != null) {
+                try {
+                    success_writer.close();
+                } catch (IOException ee) {
+                    logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - can't close " 
+                                    + " the success_writer since " + ee.getMessage());
+                }
+            }
+            if (failure_writer != null) {
+                failure_writer.close();
             }
         }
     }
