@@ -188,15 +188,9 @@ public class MetacatClientTest extends MCTestCase
      // Try a valid login
         try {
             String response = m.login(username, password);
-            debug("login(): response=" + response);
-            assertTrue(response != null);
-            assertTrue(response.indexOf("<login>") != -1);
-            String sessionId = m.getSessionId();
-            debug("login(): Session ID=" + m.getSessionId());
-            assertTrue(sessionId != null);
-            assertTrue(response.indexOf(m.getSessionId()) != -1);
+            fail("Authorization should have failed since it is disabled.");
         } catch (MetacatAuthException mae) {
-            fail("Authorization failed:\n" + mae.getMessage());
+            assertTrue(1 == 1);
         } catch (MetacatInaccessibleException mie) {
             fail("Metacat Inaccessible:\n" + mie.getMessage());
         }

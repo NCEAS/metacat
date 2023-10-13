@@ -151,7 +151,7 @@ public class MetaCatServletNetTest extends MCTestCase {
         try {
             String user = PropertyService.getProperty("test.mcUser");
             String passwd = PropertyService.getProperty("test.mcPassword");
-            assertTrue(logIn(user, passwd));
+            assertTrue(!logIn(user, passwd));
             //assertTrue( withProtocol.getProtocol().equals("http"));
         } catch (PropertyNotFoundException e) {
             fail(e.getMessage());
@@ -377,21 +377,11 @@ public class MetaCatServletNetTest extends MCTestCase {
 		String response = getMetacatString(prop);
 		debug("Login Message: " + response);
 		boolean connected = false;
-		if (response.indexOf("<login>") != -1) {
-			connected = true;
-			// set the session id
-            int start = response.indexOf("<sessionId>") + 11;
-            int end = response.indexOf("</sessionId>");
-            if ((start != -1) && (end != -1)) {
-                sessionId = response.substring(start,end);
-            }
-		} else {
-			sessionId = "";
-			connected = false;
-		}
-		
-		debug("sessionId: " + this.sessionId);
-
+        if (response.indexOf("<error>") != -1 && response.indexOf(NOT_SUPPORT) != -1) {
+            connected = false;
+        } else {
+            connected = true;
+        }
 		return connected;
 	}
 

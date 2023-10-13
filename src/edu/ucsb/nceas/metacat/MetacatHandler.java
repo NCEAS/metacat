@@ -186,94 +186,9 @@ public class MetacatHandler {
      * authentication through the session.
      * @throws IOException 
      */
-    public void handleLoginAction(Writer out, Hashtable<String, String[]> params,
+    public void handleLoginAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response) throws IOException {
-        AuthSession sess = null;
-        
-        if(params.get("username") == null){
-            response.setContentType("text/xml");
-            out.write("<?xml version=\"1.0\"?>");
-            out.write("<error>");
-            out.write("Username not specified");
-            out.write("</error>");
-            return;
-        }
-        
-        // }
-        
-        if(params.get("password") == null){
-            response.setContentType("text/xml");
-            out.write("<?xml version=\"1.0\"?>");
-            out.write("<error>");
-            out.write("Password not specified");
-            out.write("</error>");
-            return;
-        }
-        
-        String un = (params.get("username"))[0];
-        logMetacat.info("MetacatHandler.handleLoginAction - user " + un + " is trying to login");
-        String pw = (params.get("password"))[0];
-        
-        String qformat = "xml";
-        if (params.get("qformat") != null) {
-            qformat = (params.get("qformat"))[0];
-        }
-        
-        try {
-            sess = new AuthSession();
-        } catch (Exception e) {
-            String errorMsg = "MetacatServlet.handleLoginAction - Problem in MetacatServlet.handleLoginAction() authenticating session: "
-                + e.getMessage();
-            logMetacat.error(errorMsg);
-            out.write(errorMsg);
-            e.printStackTrace(System.out);
-            return;
-        }
-        boolean isValid = sess.authenticate(request, un, pw);
-        
-        //if authenticate is true, store the session
-        if (isValid) {
-            HttpSession session = sess.getSessions();
-            String id = session.getId();
-            
-            logMetacat.debug("MetacatHandler.handleLoginAction - Store session id " + id
-                    + " which has username" + session.getAttribute("username")
-                    + " into hash in login method");
-            try {
-                SessionService.getInstance().registerSession(id, 
-                        (String) session.getAttribute("username"), 
-                        (String[]) session.getAttribute("groupnames"), 
-                        (String) session.getAttribute("password"), 
-                        (String) session.getAttribute("name"));
-                
-                    
-            } catch (ServiceException se) {
-                String errorMsg = "MetacatServlet.handleLoginAction - service problem registering session: "
-                        + se.getMessage();
-                logMetacat.error("MetacatHandler.handleLoginAction - " + errorMsg);
-                out.write(errorMsg);
-                se.printStackTrace(System.out);
-                return;
-            }           
-        }
-                
-        // format and transform the output
-        if (qformat.equals("xml")) {
-            response.setContentType("text/xml");
-            out.write(sess.getMessage());
-        } else {
-            try {
-                DBTransform trans = new DBTransform();
-                response.setContentType("text/html");
-                trans.transformXMLDocument(sess.getMessage(),
-                        "-//NCEAS//login//EN", "-//W3C//HTML//EN", qformat,
-                        out, null, null);
-            } catch (Exception e) {               
-                logMetacat.error("MetacatHandler.handleLoginAction - General error"
-                        + e.getMessage());
-                e.printStackTrace(System.out);
-            }
-        }
+        sendNotSupportMessage(response);
     }
     
     /**

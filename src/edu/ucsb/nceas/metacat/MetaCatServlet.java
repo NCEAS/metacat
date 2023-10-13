@@ -618,11 +618,7 @@ public class MetaCatServlet extends HttpServlet {
 
 			// handle login action
 			if (action.equals("login")) {
-				//PrintWriter out = response.getWriter();
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleLoginAction(out, params, request, response);
-				out.close();
-
+				handler.handleLoginAction(params, request, response);
 				// handle logout action
 			} else if (action.equals("logout")) {
 				handler.handleLogoutAction(params, request, response);
