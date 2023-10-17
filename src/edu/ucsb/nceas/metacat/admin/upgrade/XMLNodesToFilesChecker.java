@@ -65,7 +65,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public class XMLNodesToFilesChecker {
     private final static String PREFIX_SQL = "SELECT docid, rev, rootnodeid, catalog_id, " 
                                                 + "doctype, docname FROM ";
-    private final static String APPENDIX_SQL = " WHERE rootnodeid >= 0 AND doctype != 'BIN' " 
+    private final static String APPENDIX_SQL = " WHERE rootnodeid >= 0 " 
                                                + " AND docid NOT LIKE 'autogen.%'";
     private final static String XML_DOCUMENTS = "xml_documents";
     private final static String XML_REVISIONS = "xml_revisions";
