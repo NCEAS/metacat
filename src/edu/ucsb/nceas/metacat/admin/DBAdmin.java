@@ -84,6 +84,8 @@ public class DBAdmin extends MetacatAdmin {
 	// in the db. Only the latest version record should be active.
 	public static final int VERSION_INACTIVE = 0;
 	public static final int VERSION_ACTIVE = 1;
+    private final static String UPDATE3_0_0_ClASS_NAME = 
+                                                "edu.ucsb.nceas.metacat.admin.upgrade.Upgrade3_0_0";
 
 	private TreeSet<DBVersion> versionSet = null;
 
@@ -774,7 +776,29 @@ public class DBAdmin extends MetacatAdmin {
 	 * the database and calls runSQLFile on each.
 	 */
 	public void upgradeDatabase() throws AdminException {
-	    boolean persist = true;
+        boolean persist = true;
+        Vector<String> updateClassList = getUpdateClasses();
+        // Update3_0_0 should run before the database update
+        if(updateClassList.contains(UPDATE3_0_0_ClASS_NAME)) {
+            UpgradeUtilityInterface utility = null;
+            try {
+                utility = (UpgradeUtilityInterface) Class
+                                                    .forName(UPDATE3_0_0_ClASS_NAME).newInstance();
+                utility.upgrade();
+            } catch (Exception e) {
+                try {
+                    MetacatAdmin.updateUpgradeStatus("configutil.upgrade.java.status", 
+                                                                    MetacatAdmin.FAILURE, persist);
+                } catch (Exception ee) {
+                    logMetacat.warn("DBAdmin.upgradeDatabase - couldn't update the status of " 
+                                      + "the upgrading database process since " + ee.getMessage());
+                }
+                throw new AdminException("DBAdmin.upgradeDatabase - error getting utility class: " 
+                                                + UPDATE3_0_0_ClASS_NAME + ". Error message: "
+                                                + e.getMessage());
+            }
+            updateClassList.remove(UPDATE3_0_0_ClASS_NAME);
+        }
 		try {
 			// get a list of the script names that need to be run
 			Vector<String> updateScriptList = getUpdateScripts();
@@ -799,7 +823,7 @@ public class DBAdmin extends MetacatAdmin {
         } 
 			
 		// get the classes we need to execute in order to bring DB to current version
-		Vector<String> updateClassList = getUpdateClasses();
+
 		for (String className : updateClassList) {
 			UpgradeUtilityInterface utility = null;
 			try {
