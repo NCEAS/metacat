@@ -121,7 +121,7 @@ public class XMLNodesToFilesChecker {
      * @throws IOException 
      */
     private void checkXmlDocumentsTable() throws SQLException, IOException {
-        ResultSet rs = runSQL(XML_DOCUMENTS);
+        PreparedStatement rs = runSQL(XML_DOCUMENTS);
         checkIfFilesExist(rs, XML_DOCUMENTS);
     }
     
@@ -131,7 +131,7 @@ public class XMLNodesToFilesChecker {
      * @throws IOException
      */
     private void checkXmlRevisionsTable() throws SQLException, IOException {
-        ResultSet rs = runSQL(XML_REVISIONS);
+        PreparedStatement rs = runSQL(XML_REVISIONS);
         checkIfFilesExist(rs, XML_REVISIONS);
     }
     
@@ -142,18 +142,20 @@ public class XMLNodesToFilesChecker {
      * @throws SQLException
      * @throws IOException 
      */
-    private void checkIfFilesExist(ResultSet result, String tableName) throws SQLException, 
+    private void checkIfFilesExist(PreparedStatement pstmt, String tableName) throws SQLException, 
                                                                                     IOException {
         boolean append = true;
         BufferedWriter success_writer = null;
         BufferedWriter failure_writer = null;
+        ResultSet result = null;
         try {
             success_writer = new BufferedWriter(new FileWriter(log_dir + File.separator 
                                                     + SUCCESS_DOC_LOG_FILE, append));
             failure_writer = new BufferedWriter(new FileWriter(log_dir + File.separator 
                                                     + FAILURE_DOC_LOG_FILE, append));
-            if (result != null) {
-                while (result.next()) {
+            if (pstmt != null) {
+                result = pstmt.getResultSet();
+                while (result != null && result.next()) {
                     String docId = null;
                     int rev = -1;
                     try {
@@ -210,6 +212,23 @@ public class XMLNodesToFilesChecker {
                 }
             }
         } finally {
+            if (result != null) {
+                try {
+                    result.close();
+                } catch (SQLException e) {
+                    logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - can't close " 
+                            + " the result set since " + e.getMessage());
+                }
+            }
+            
+            if (pstmt != null) {
+                try {
+                    pstmt.close();
+                } catch (SQLException e) {
+                    logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - can't close " 
+                            + " the result set since " + e.getMessage());
+                }
+            }
             if (success_writer != null) {
                 try {
                     success_writer.close();
@@ -736,8 +755,7 @@ public class XMLNodesToFilesChecker {
      * @return  the result set of the query
      * @throws SQLException 
      */
-    private ResultSet runSQL(String tableName) throws SQLException {
-        ResultSet result = null;
+    private PreparedStatement runSQL(String tableName) throws SQLException {
         String sql = PREFIX_SQL + tableName + APPENDIX_SQL;
         DBConnection conn = null;
         int serialNumber = -1;
@@ -748,16 +766,9 @@ public class XMLNodesToFilesChecker {
           serialNumber=conn.getCheckOutSerialNumber();
           pstmt = conn.prepareStatement(sql);
           pstmt.execute();
-          result = pstmt.getResultSet();
         } finally {
-           try {
-               if(pstmt != null) {
-                   pstmt.close();
-               }
-           } finally {
-               DBConnectionPool.returnDBConnection(conn, serialNumber);
-           }
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
         }
-        return result;
+        return pstmt;
     }
 }

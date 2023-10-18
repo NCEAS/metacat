@@ -793,7 +793,7 @@ public class DBAdmin extends MetacatAdmin {
                     logMetacat.warn("DBAdmin.upgradeDatabase - couldn't update the status of " 
                                       + "the upgrading database process since " + ee.getMessage());
                 }
-                throw new AdminException("DBAdmin.upgradeDatabase - error getting utility class: " 
+                throw new AdminException("DBAdmin.upgradeDatabase - error to run the class: " 
                                                 + UPDATE3_0_0_ClASS_NAME + ". Error message: "
                                                 + e.getMessage());
             }
