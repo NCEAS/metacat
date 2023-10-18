@@ -714,11 +714,15 @@ public class XMLNodesToFilesChecker {
                 nodeprefix = rs.getString(6);
                 nodedata = rs.getString(7);
                 try {
-                    logMetacat.debug("DocumentImpl.getNodeRecordList - Node data in read process before normalize=== "+nodedata);
+                    logMetacat.debug("DocumentImpl.getNodeRecordList - " 
+                                    + "Node data in read process before normalize=== " + nodedata);
                     nodedata = MetacatUtil.normalize(nodedata);
-                    logMetacat.debug("DocumentImpl.getNodeRecordList - Node data in read process after normalize==== "+nodedata);
+                    logMetacat.debug("DocumentImpl.getNodeRecordList - " 
+                                    + "Node data in read process after normalize==== " + nodedata);
                 } catch (java.lang.StringIndexOutOfBoundsException SIO){
-                    logMetacat.warn("DocumentImpl.getNodeRecordList - StringIndexOutOfBoundsException in normalize() while reading the document");
+                    logMetacat.warn("DocumentImpl.getNodeRecordList - " 
+                                        + "StringIndexOutOfBoundsException in normalize() while " 
+                                        + "reading the document");
                 }
                 nodedatanumerical = rs.getFloat(8);
                 nodedatadate = rs.getTimestamp(9);
