@@ -163,8 +163,8 @@ public class XMLNodesToFilesChecker {
                         rev = result.getInt(2);
                         long rootNodeId = result.getLong(3);
                         long catalogId = result.getLong(4);
-                        String docType = result.getNString(5);
-                        String docName = result.getNString(6);
+                        String docType = result.getString(5);
+                        String docName = result.getString(6);
                         String path = document_dir + File.separator + docId + "." + rev;
                         File documentFile = new File(path);
                         if (documentFile.exists()) {
@@ -265,7 +265,7 @@ public class XMLNodesToFilesChecker {
             rs = pstmt.executeQuery();
             if (rs.next()) {
                 result[0] = rs.getString(1);
-                result[1] = rs.getNString(2);
+                result[1] = rs.getString(2);
             }
         } finally {
             try {
