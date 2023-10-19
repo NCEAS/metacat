@@ -443,6 +443,9 @@ public class XMLNodesToFilesChecker {
         // flag for process inline data
         boolean processInlineData = false;
         TreeSet<NodeRecord> nodeRecordLists = getNodeRecordList(rootnodeid, tableName);
+        if (nodeRecordLists.isEmpty()) {
+            throw new McdbException("There is no xml nodes found for rootnodeid " + rootnodeid);
+        }
         // Note: we haven't stored the encoding, so we use the default for XML
         String encoding = "UTF-8";
         Writer out = new OutputStreamWriter(outputStream, encoding);
