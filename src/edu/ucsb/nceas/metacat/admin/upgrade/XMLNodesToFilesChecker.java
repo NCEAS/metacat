@@ -69,6 +69,8 @@ public class XMLNodesToFilesChecker {
                                                + " AND docid NOT LIKE 'autogen.%'";
     private final static String XML_DOCUMENTS = "xml_documents";
     private final static String XML_REVISIONS = "xml_revisions";
+    private final static String XML_NODES = "xml_nodes";
+    private final static String XML_NODES_REVISIONS = "xml_nodes_revisions";
     private final static String INLINE = "inline";
     private final static String SHA1 = "SHA-1";
     private final static String SUCCESS_DOC_LOG_FILE = "success_export_xml_nodes_to_file_docid";
@@ -158,6 +160,8 @@ public class XMLNodesToFilesChecker {
                 while (result != null && result.next()) {
                     String docId = null;
                     int rev = -1;
+                    boolean fileOriginExists = true;
+                    File documentFile = null;
                     try {
                         docId = result.getString(1);
                         rev = result.getInt(2);
@@ -166,10 +170,16 @@ public class XMLNodesToFilesChecker {
                         String docType = result.getString(5);
                         String docName = result.getString(6);
                         String path = document_dir + File.separator + docId + "." + rev;
-                        File documentFile = new File(path);
+                        documentFile = new File(path);
                         if (documentFile.exists()) {
+                            fileOriginExists = true;
+                            logMetacat.debug("XMLNOdesToFileChecker.checkIfFilesExist - The file " 
+                                                + documentFile.getAbsolutePath() +" exists.");
                             continue; //do nothting since the file exists
                         } else {
+                            logMetacat.debug("XMLNOdesToFileChecker.checkIfFilesExist - The file " 
+                                             + documentFile.getAbsolutePath() +" doesnot exist.");
+                            fileOriginExists = false;
                             //The file doesn't exist. Let's export the data from db to the file system.
                             boolean isDTD = false;
                             String[] systemIdEntyTypePair = getSystemIdAndTypePair(catalogId);
@@ -185,7 +195,7 @@ public class XMLNodesToFilesChecker {
                                                  docType, docName);
                             //Log the docid into success file
                             try {
-                                success_writer.write(docId + "." + rev);
+                                success_writer.write(docId + "." + rev + "\n");
                             } catch (IOException ioe) {
                                 logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - can't "
                                                 + "log the docid " + docId + "." + rev 
@@ -198,9 +208,15 @@ public class XMLNodesToFilesChecker {
                                     + "can't check if the metadata object " + docId + rev 
                                     + " exists in the directory " + document_dir 
                                     + " since " + e.getMessage());
+                        if (!fileOriginExists && documentFile != null) {
+                            logMetacat.debug("XMLNodestoFilesChecker.checkIfFilesExist - delete " 
+                                                + " the just created file " 
+                                                    + documentFile.getAbsolutePath());
+                            documentFile.delete();
+                        }
                         //Log the docid into success file
                         try {
-                            failure_writer.write(docId + "." + rev);
+                            failure_writer.write(docId + "." + rev +"\n");
                         } catch (IOException ioe) {
                             logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - can't "
                                     + "log the docid " + docId + "." + rev 
@@ -688,9 +704,14 @@ public class XMLNodesToFilesChecker {
         float nodedatanumerical = -1;
         Timestamp nodedatadate = null;
         //System.out.println("in getNodeREcorelist !!!!!!!!!!!3");
+        if (table.equals(XML_DOCUMENTS)) {
+            table = XML_NODES;
+        } else {
+            table = XML_NODES_REVISIONS;
+        }
         try {
             dbconn = DBConnectionPool
-                    .getDBConnection("DocumentImpl.getNodeRecordList");
+                    .getDBConnection("XMLNodesToFilesChecker.getNodeRecordList");
             serialNumber = dbconn.getCheckOutSerialNumber();
             pstmt = dbconn
                     .prepareStatement("SELECT nodeid,parentnodeid,nodeindex, "
@@ -699,7 +720,8 @@ public class XMLNodesToFilesChecker {
             // Bind the values to the query
             pstmt.setLong(1, rootnodeid);
             //System.out.println("in getNodeREcorelist !!!!!!!!!!!4");
-            logMetacat.debug("DocumentImpl.getNodeRecordList - executing SQL: " + pstmt.toString());
+            logMetacat.debug("XMLNodesToFilesChecker.getNodeRecordList - executing SQL: " 
+                                + pstmt.toString());
             pstmt.execute();
             ResultSet rs = pstmt.getResultSet();
             //System.out.println("in getNodeREcorelist !!!!!!!!!!!5");
@@ -714,13 +736,13 @@ public class XMLNodesToFilesChecker {
                 nodeprefix = rs.getString(6);
                 nodedata = rs.getString(7);
                 try {
-                    logMetacat.debug("DocumentImpl.getNodeRecordList - " 
+                    logMetacat.debug("XMLNodesToFilesChecker.getNodeRecordList - " 
                                     + "Node data in read process before normalize=== " + nodedata);
                     nodedata = MetacatUtil.normalize(nodedata);
-                    logMetacat.debug("DocumentImpl.getNodeRecordList - " 
+                    logMetacat.debug("XMLNodesToFilesChecker.getNodeRecordList - " 
                                     + "Node data in read process after normalize==== " + nodedata);
                 } catch (java.lang.StringIndexOutOfBoundsException SIO){
-                    logMetacat.warn("DocumentImpl.getNodeRecordList - " 
+                    logMetacat.warn("XMLNodesToFilesChecker.getNodeRecordList - " 
                                         + "StringIndexOutOfBoundsException in normalize() while " 
                                         + "reading the document");
                 }
@@ -742,7 +764,7 @@ public class XMLNodesToFilesChecker {
             try {
                 pstmt.close();
             } catch (SQLException ee) {
-                logMetacat.error("DocumentImpl.getNodeRecordList - General error: "
+                logMetacat.error("XMLNodesToFilesChecker.getNodeRecordList - General error: "
                                 + ee.getMessage());
             } finally {
                 DBConnectionPool.returnDBConnection(dbconn, serialNumber);
