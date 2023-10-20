@@ -3,7 +3,6 @@ package edu.ucsb.nceas.metacat.admin.upgrade;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,8 +11,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,22 +20,14 @@ import java.util.Iterator;
 import java.util.Stack;
 import java.util.TreeSet;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.exceptions.InvalidRequest;
-import org.dataone.service.exceptions.ServiceFailure;
-import org.dataone.service.types.v1.Checksum;
-import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.SystemMetadata;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.AccessionNumberException;
 import edu.ucsb.nceas.metacat.DocumentImpl;
-import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.NodeComparator;
 import edu.ucsb.nceas.metacat.NodeRecord;
@@ -46,11 +35,9 @@ import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
-import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -72,7 +59,6 @@ public class XMLNodesToFilesChecker {
     private final static String XML_NODES = "xml_nodes";
     private final static String XML_NODES_REVISIONS = "xml_nodes_revisions";
     private final static String INLINE = "inline";
-    private final static String SHA1 = "SHA-1";
     private final static String SUCCESS_DOC_LOG_FILE = "success_export_xml_nodes_to_file_docid";
     private final static String FAILURE_DOC_LOG_FILE = "failure_export_xml_nodes_to_file_docid";
     
@@ -193,7 +179,7 @@ public class XMLNodesToFilesChecker {
                             }
                             exportXMLnodesToFile(docId, rev, rootNodeId, tableName, isDTD, systemId, 
                                                  docType, docName);
-                            //Log the docid into success file
+                            //Log the docid into the success file
                             try {
                                 success_writer.write(docId + "." + rev + "\n");
                             } catch (IOException ioe) {
@@ -205,8 +191,8 @@ public class XMLNodesToFilesChecker {
                         }
                     } catch (Exception e) {
                         logMetacat.warn("XMLNodestoFilesChecker.checkIfFilesExist - " 
-                                    + "can't check if the metadata object " + docId + rev 
-                                    + " exists in the directory " + document_dir 
+                                    + "can't successfully export the metadata object " + docId + rev 
+                                    + " to the directory " + document_dir 
                                     + " since " + e.getMessage());
                         if (!fileOriginExists && documentFile != null) {
                             logMetacat.debug("XMLNodestoFilesChecker.checkIfFilesExist - delete " 
@@ -214,7 +200,7 @@ public class XMLNodesToFilesChecker {
                                                     + documentFile.getAbsolutePath());
                             documentFile.delete();
                         }
-                        //Log the docid into success file
+                        //Log the docid into the failure file
                         try {
                             failure_writer.write(docId + "." + rev +"\n");
                         } catch (IOException ioe) {
@@ -223,7 +209,6 @@ public class XMLNodesToFilesChecker {
                                     + " into the failure log file since " 
                                     + ioe.getMessage());
                         }
-                        
                     }
                 }
             }
@@ -236,7 +221,6 @@ public class XMLNodesToFilesChecker {
                             + " the result set since " + e.getMessage());
                 }
             }
-            
             if (pstmt != null) {
                 try {
                     pstmt.close();
@@ -300,7 +284,6 @@ public class XMLNodesToFilesChecker {
     
     /**
      * Export an object form xml_nodes/xml_nodes_revision table to a file.
-     * Also check if the system metadata and identifier table have the record. 
      * @param docId
      * @param rev
      * @param rootNodeId
@@ -329,27 +312,12 @@ public class XMLNodesToFilesChecker {
                                                InsufficientKarmaException, ParseLSIDException, 
                                                BaseException, MarshallingException, 
                                                HandlerException, SAXException {
-        boolean hasSysmeta = false;
         String pid = docId + "." + rev;
-        Identifier identifier = new Identifier();
-        identifier.setValue(pid);
-        String checksumAlgorithm = SHA1;
-        Checksum checksum = null;
-        SystemMetadata sysmeta = SystemMetadataManager.getInstance().get(identifier);
-        if (sysmeta != null ) {
-            hasSysmeta = true;
-            checksum = sysmeta.getChecksum();
-            if (checksum != null && checksum.getAlgorithm() != null 
-                                 && !checksum.getAlgorithm().trim().equals("")) {
-                checksumAlgorithm = checksum.getAlgorithm();
-            }
-        }
         String path = document_dir + File.separator + pid;
         File documentFile = new File(path);
-        MessageDigest md = MessageDigest.getInstance(checksumAlgorithm);
-        DigestOutputStream output = null;
+        FileOutputStream output = null;
         try {
-            output = new DigestOutputStream(new FileOutputStream(documentFile), md);
+            output = new FileOutputStream(documentFile);
             toXmlFromDb(output, tableName, rootNodeId, isDTD, systemId, docType, docName);
             logMetacat.debug("XMLNodestoFilesChecker.exportXMLnodesToFile - successfully wrote the " 
                                 + " meta data object to the path " + path);
@@ -358,57 +326,8 @@ public class XMLNodesToFilesChecker {
                 output.close();
             }
         }
-        String localChecksum = DatatypeConverter.printHexBinary(md.digest());
-        if (hasSysmeta) {
-            //make sure the checksum in the existing system metadata match the checksum of the file
-            //we just created. If they don't match, set the new checksum into the existing sysmeta
-            if (checksum == null || checksum.getValue() == null || checksum.getAlgorithm() == null 
-                        || !checksum.getAlgorithm().equals(checksumAlgorithm)
-                        || !checksum.getValue().equals(localChecksum) ) {
-                // Set the new checksum
-                Checksum newChecksum = new Checksum();
-                newChecksum.setAlgorithm(checksumAlgorithm);
-                newChecksum.setValue(localChecksum);
-                sysmeta.setChecksum(newChecksum);
-                storeSystemMetadataToDB(sysmeta);
-            }
-        } else {
-            //We need to generate the system metadata
-            boolean includeORE = false;
-            boolean downloadData = false;
-            SystemMetadata newSysmeta = SystemMetadataFactory.
-                                            createSystemMetadata(pid, includeORE, downloadData);
-            storeSystemMetadataToDB(newSysmeta);
-        }
-        //Register the docid and guid in the identifier table if they don't exist.
-        if (!IdentifierManager.getInstance().mappingExists(pid)) {
-            IdentifierManager.getInstance().createMapping(pid, pid);
-        }
     }
-    
-    /**
-     * Store the given system metadata object into DB only
-     * @param sysmeta  the system metadata will be stored
-     * @throws SQLException
-     * @throws InvalidRequest
-     * @throws ServiceFailure
-     */
-    private void storeSystemMetadataToDB(SystemMetadata sysmeta) throws SQLException, InvalidRequest, 
-                                                                            ServiceFailure {
-        DBConnection conn = null;
-        int serialNumber = -1;
-        try {
-            //check out DBConnection
-            conn=DBConnectionPool.getDBConnection("DBtoFilesChecker.storeSystemMetadata");
-            serialNumber=conn.getCheckOutSerialNumber();
-            boolean modifyTimeStamp = true;
-            boolean onlyToDB = true;
-            SystemMetadataManager.getInstance().store(sysmeta, modifyTimeStamp, conn, onlyToDB);
-        } finally {
-           DBConnectionPool.returnDBConnection(conn, serialNumber);
-        }
-    }
-    
+
     /**
      * Print a text representation of the XML document to an OutputStream object
      * @param outputStream  the OutputStream object will be get the content
