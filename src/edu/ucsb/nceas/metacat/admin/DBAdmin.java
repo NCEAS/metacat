@@ -255,7 +255,7 @@ public class DBAdmin extends MetacatAdmin {
 	 *      -- TABLES_DO_NOT_EXIST = 1; 
 	 *      -- TABLES_EXIST = 2;
 	 */
-	public int getDBStatus() throws SQLException, PropertyNotFoundException {
+	public static int getDBStatus() throws SQLException, PropertyNotFoundException {
 		Connection connection = DBUtil.getConnection(PropertyService
 				.getProperty("database.connectionURI"), PropertyService
 				.getProperty("database.user"), PropertyService
@@ -778,8 +778,14 @@ public class DBAdmin extends MetacatAdmin {
 	public void upgradeDatabase() throws AdminException {
         boolean persist = true;
         Vector<String> updateClassList = getUpdateClasses();
+        int dbStatus = 100;
+        try {
+            dbStatus = getDBStatus();
+        } catch (PropertyNotFoundException | SQLException e) {
+            throw new AdminException(e.getMessage());
+        }
         // Update3_0_0 should run before the database update
-        if(updateClassList.contains(UPDATE3_0_0_ClASS_NAME)) {
+        if(updateClassList.contains(UPDATE3_0_0_ClASS_NAME) && dbStatus == TABLES_EXIST) {
             UpgradeUtilityInterface utility = null;
             try {
                 utility = (UpgradeUtilityInterface) Class
