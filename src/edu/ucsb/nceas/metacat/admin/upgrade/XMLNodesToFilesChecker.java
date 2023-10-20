@@ -32,6 +32,7 @@ import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.NodeComparator;
 import edu.ucsb.nceas.metacat.NodeRecord;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
+import edu.ucsb.nceas.metacat.admin.DBAdmin;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -97,8 +98,14 @@ public class XMLNodesToFilesChecker {
      * drop the related tables.
      * @throws SQLException 
      * @throws IOException 
+     * @throws PropertyNotFoundException 
      */
-    public void check() throws SQLException, IOException {
+    public void check() throws SQLException, IOException, PropertyNotFoundException {
+        if (DBAdmin.getDBStatus() != DBAdmin.TABLES_EXIST) {
+            logMetacat.debug("XMLNOdesToFileChecker.check - the xml_documents table " 
+                                + " doesnot exist, so we don't export data from db to the files");
+            return;
+        }
         checkXmlDocumentsTable();
         checkXmlRevisionsTable();
     }

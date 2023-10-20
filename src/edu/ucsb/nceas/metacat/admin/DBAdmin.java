@@ -778,14 +778,8 @@ public class DBAdmin extends MetacatAdmin {
 	public void upgradeDatabase() throws AdminException {
         boolean persist = true;
         Vector<String> updateClassList = getUpdateClasses();
-        int dbStatus = 100;
-        try {
-            dbStatus = getDBStatus();
-        } catch (PropertyNotFoundException | SQLException e) {
-            throw new AdminException(e.getMessage());
-        }
         // Update3_0_0 should run before the database update
-        if(updateClassList.contains(UPDATE3_0_0_ClASS_NAME) && dbStatus == TABLES_EXIST) {
+        if(updateClassList.contains(UPDATE3_0_0_ClASS_NAME)) {
             UpgradeUtilityInterface utility = null;
             try {
                 utility = (UpgradeUtilityInterface) Class
