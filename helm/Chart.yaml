@@ -38,3 +38,8 @@ dependencies:
 #    repository: ghcr.io/dataoneorg/dataone-index-worker
     version: 0.4.1
     condition: rabbitmq.enabled
+    import-values:
+      - child: solr
+        parent: idxworker.solr
+      - child: rabbitmq
+        parent: idxworker.rabbitmq

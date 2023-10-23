@@ -9,6 +9,7 @@
 global:
   passwordsSecret: &passwordSecretName metacatbrooke-secrets
 
+
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
 #  solr.baseURL: http://metacatbrooke-solr-headless.brooke.svc.cluster.local:8983/solr
@@ -21,9 +22,15 @@ metacat:
   index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
   index.rabbitmq.username: &rmqUsername rmq
   index.rabbitmq.password: change-to-using-a-secret
-  index.d1node.baseURL: "http://${server.name}/${application.context}/d1/mn"
+  ## Override only if TLS not enabled:
+  #index.d1node.baseURL: "http://${server.name}/${application.context}/d1/mn"
 
 idxworker:
+  image:
+    repository: ghcr.io/dataoneorg/dataone-index-worker
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: DEVELOP
   persistence:
     ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
     ## TODO: AUTO ASSIGN?
@@ -35,7 +42,7 @@ idxworker:
     cn_url: "https://cn.dataone.org/cn"
 
   rabbitmq:
-    hostname: metacatbrooke-rabbitmq-headless.brooke.svc
+    hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
   #  auth:
   #    username: *rmqUsername
   ## (must contain a value for rabbitmq-password key)
@@ -43,7 +50,7 @@ idxworker:
 
   solr:
     ##  NOTE: uses deployment name; TODO: AUTO ASSIGN?
-    hostname: metacatbrooke-solr-headless.brooke.svc
+    hostname: metacatbrooke-solr-headless.brooke.svc.cluster.local
     extraVolumes:
       - name: solr-config
         configMap:
@@ -82,11 +89,13 @@ readinessProbe:
   enabled: false
 
 ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   className: "nginx"
-#  tls:
-#    - hosts:
-#        - *extHostname
-#      secretName: tls-secret
+  tls:
+    - hosts:
+        - *extHostname
+      secretName: ingress-nginx-tls-cert
   hosts:
     - host: *extHostname
       paths:
