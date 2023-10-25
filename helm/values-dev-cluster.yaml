@@ -6,16 +6,11 @@
 ## see values.yaml for full documentation on the following parameters
 ##
 
-global:
-  passwordsSecret: &passwordSecretName metacatbrooke-secrets
-
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
   solr.baseURL: "http://metacatbrooke-solr-headless:8983/solr"
   solr.coreName: dataone_index
   index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
-  index.rabbitmq.username: &rmqUsername rmq
-  index.rabbitmq.password: change-to-using-a-secret
 
 idxworker:
   image:
@@ -31,11 +26,7 @@ idxworker:
 
   rabbitmq:
     ## TODO: AUTO ASSIGN?
-    hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
-  #  auth:
-  #    username: *rmqUsername
-  ## (must contain a value for rabbitmq-password key)
-  #    existingPasswordSecret: *passwordSecretName
+    hostname: metacatbrooke-rabbitmq-headless
 
   solr:
     ##  NOTE: uses deployment name; TODO: AUTO ASSIGN?
@@ -60,9 +51,6 @@ persistence:
   volumeName: cephfs-metacatbrooke-metacat
 
 postgresql:
-  auth:
-    ## MUST MATCH RELEASE NAME
-    existingSecret: *passwordSecretName
   primary:
     persistence:
       size: 1Gi

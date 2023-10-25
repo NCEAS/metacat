@@ -1,5 +1,25 @@
 ## Default values for metacat.
 ## This is a YAML-formatted file.
+##
+##     * * * * * * NOTE: SOME VALUES INCLUDE A ${RELEASE_NAME} PLACEHOLDER * * * * * *
+##     * * * * * *       THAT MUST BE REPLACED BY THE ACTUAL RELEASE NAME! * * * * * *
+##
+## This can be done by manually finding and replacing, or by using utilities such as `sed` or
+## `envsubst` as follows: (assuming your release name is "myrelease" and you're installing into
+##  namespace "mynamespace")
+##
+## OPTION 1: use `sed` to permanently edit in place (or could redirect to a different output file):
+##   $ RELEASE_NAME=myrelease \
+##     sed -i -e "s/\${RELEASE_NAME}/$RELEASE_NAME/g" values.yaml
+##   ...then `helm install` as usual
+##
+## OPTION 2: use `envsubst` to helm install, leaving values.yaml intact:
+##   $ RLS=myrelease ; NS=mynamespace ; \
+##     RELEASE_NAME=$RLS envsubst < ./helm/values.yaml | helm install $RLS -n $NS -f - ./helm
+##
+##   # if this results in "command not found: envsubst", you can install envsubst (e.g. on Mac OS:
+##        $  brew install gettext && brew link --force gettext
+##
 
 ## @section Global Properties Shared Across Sub-Charts Within This Deployment
 ##
@@ -7,11 +27,12 @@ global:
   ## @param global.passwordsSecret The name of the Secret containing passwords (RELEASE PREFIX)
   ## This is the secret deployed using `../admin/secrets.yaml`. IMPORTANT NOTE: make sure you edit
   ## this, since IT INCLUDES THE RELEASE NAME! For example, if the release name is 'myrelease',
-  ## the value of passwordsSecret: would be 'myrelease-secrets'.
+  ## the value of passwordsSecret: would be 'myrelease-metacat-secrets'.
   ##
-  ## (Note the actual key passwordsSecret is not used anywhere; only the alias &passwordSecretName)
+  ## (Note the actual key passwordsSecret is not used anywhere; only the yaml anchor/alias
+  ##  &passwordSecretName)
   ##
-  passwordsSecret: &passwordSecretName mc-secrets
+  passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
 
 
 ## @section Metacat Application-Specific Properties
@@ -121,7 +142,7 @@ metacat:
   ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
   ## at `index.rabbitmq.hostname`.
   ##
-  index.rabbitmq.username: &rmqUsername metacat-guest
+  index.rabbitmq.username: &rmqUsername metacat-rmq-guest
 
   ## @section OPTIONAL DataONE Member Node (MN) Parameters
   ##
@@ -600,8 +621,7 @@ postgresql:
     ##
     database: metacat
 
-    ## @param postgresql.auth.existingSecret Secrets location for postgres password (RELEASE PREFIX)
-    ## For example, if the release name is 'myrelease', secret name would be 'myrelease-secrets'
+    ## @param postgresql.auth.existingSecret Secrets location for postgres password
     ## Typically the existing secrets also used by metacat - see ./admin/secrets.yaml
     ##
     existingSecret: *passwordSecretName
@@ -658,4 +678,8 @@ idxworker:
     repository: ghcr.io/dataoneorg/dataone-index-worker
   idxworker: {}
   solr: {}
-  rabbitmq: {}
+  rabbitmq:
+    auth:
+      username: *rmqUsername
+      ## (must contain a value for `rabbitmq-password` key)
+      existingPasswordSecret: *passwordSecretName

@@ -94,7 +94,7 @@ spec:
               value: {{ .Values.postgresql.auth.username }}
           envFrom:
             - secretRef:
-                name: {{ .Release.Name }}-secrets
+                name: {{ .Release.Name }}-metacat-secrets
                   {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
                     {{- omit .Values.livenessProbe "enabled" | toYaml | nindent 12 }}
