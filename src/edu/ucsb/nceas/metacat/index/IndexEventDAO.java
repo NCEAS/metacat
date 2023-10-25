@@ -32,7 +32,6 @@ import java.sql.Timestamp;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
@@ -75,7 +74,7 @@ public class IndexEventDAO {
             // Execute the statement
             PreparedStatement stmt = dbConn.prepareStatement(sql);
             stmt.setString(1, event.getIdentifier().getValue());
-            stmt.setString(2, event.getAction().xmlValue());
+            stmt.setString(2, event.getAction());
             stmt.setString(3, event.getDescription());
             stmt.setTimestamp(4, new Timestamp(event.getDate().getTime()));
 
@@ -142,7 +141,7 @@ public class IndexEventDAO {
 
                 event = new IndexEvent();
                 event.setIdentifier(identifier);
-                event.setAction(Event.convert(action));
+                event.setAction(action);
                 event.setDate(timestamp);
                 event.setDescription(description);
             }

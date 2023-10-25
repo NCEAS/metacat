@@ -19,10 +19,8 @@
  */
 package edu.ucsb.nceas.metacat.index.queue;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,7 +42,6 @@ import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -52,8 +49,6 @@ import org.dspace.foresite.OREParserException;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
-import edu.ucsb.nceas.metacat.common.index.IndexTask;
-import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
@@ -243,61 +238,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
         }
         
     }
-    
-    /**
-     * Reindex the failed index tasks stored in the index_event table
-     * @throws ClassNotFoundException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     * @throws IndexEventLogException
-     * @throws ServiceFailure 
-     * @throws FileNotFoundException 
-     */
-    private void reIndexFailedTasks() throws ClassNotFoundException, InstantiationException, IllegalAccessException, FileNotFoundException, ServiceFailure {
-        //add the failedPids 
-        //List<IndexEvent> failedEvents = EventlogFactory.createIndexEventLog().getEvents(null, null, null, null);
-        List<IndexEvent> failedEvents = null;
-        //List<String> failedOtherIds = new ArrayList<String>();
-        List<String> failedResourceMapIds = new ArrayList<String>();
-        if(failedEvents != null) {
-            for(IndexEvent event : failedEvents) {
-                if(event != null && event.getIdentifier() != null) {
-                    String id = event.getIdentifier().getValue();
-                    Date now = new Date();
-                    //if the event is too old, we will ignore it.
-                    if(event.getDate() == null || (event.getDate() != null && ((now.getTime() - event.getDate().getTime()) <= maxAgeOfFailedIndexTask))) {
-                        try {
-                            if(event.getAction().compareTo(Event.DELETE) == 0) {
-                                //this is a delete event
-                                deleteIndex(id);
-                            } else {
-                                SystemMetadata sysmeta = getSystemMetadata(id);
-                                if(sysmeta != null) {
-                                    ObjectFormatIdentifier formatId =sysmeta.getFormatId();
-                                    if(formatId != null && formatId.getValue() != null && resourceMapNamespaces != null && isResourceMap(formatId)) {
-                                        failedResourceMapIds.add(id);
-                                    } else {
-                                        //failedOtherIds.add(id);
-                                        submitIndex(id);
-                                    }
-                                } else {
-                                    log.info("IndexGenerate.reIndexFAiledTasks - we wouldn't submit the reindex task for the pid "+id+" since there is no system metadata associate it");
-                                }
-                            }
-                        } catch (Exception e) {
-                            log.warn("IndexGenerate.reIndexFAiledTasks - failed to submit the reindex task for the pid "+id+" since "+e.getMessage());
-                        }
-                    } else {
-                        log.info("IndexGenerate.reIndexFAiledTasks - we wouldn't submit the reindex task for the pid "+id+" since it is too old.");
-                    }
-                }
-            }
-        }
-        //index(failedOtherIds);
-        index(failedResourceMapIds);
-    }
-    
-    
+
     /*
      * Put the ids into the index queue
      */
@@ -348,13 +289,8 @@ public class IndexGeneratorTimerTask extends TimerTask {
    
     
     public void run() {
-    
         try {
             log.info("IndexGenerator.run - start to run the index generator timer--------------------------------");
-            if(needReindexFailedEvent) {
-                log.info("IndexGenerator.run - start to reindex previous failed index tasks--------------------------------");
-                reIndexFailedTasks();
-            }
             if(needReindexSinceLastProcessDate) {
                 log.info("IndexGenerator.run - start to index objects whose modified date is younger than the last process date--------------------------------");
                 Date since = LastReindexDateManager.getInstance().getLastProcessDate();

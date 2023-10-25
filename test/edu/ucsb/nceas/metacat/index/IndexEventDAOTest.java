@@ -40,101 +40,101 @@ import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
  */
 public class IndexEventDAOTest extends MCTestCase {
 
-	private IndexEvent event = null;
+    private IndexEvent event = null;
 
-	/*
-	 * @see TestCase#setUp()
-	 */
-	protected void setUp() throws Exception {
-		super.setUp();
+    /*
+     * @see TestCase#setUp()
+     */
+    protected void setUp() throws Exception {
+        super.setUp();
 
-		// initialize the event
-		event = new IndexEvent();
-		event.setAction(Event.CREATE);
-		event.setDate(Calendar.getInstance().getTime());
-		event.setDescription("Testing DAO");
-		Identifier pid = new Identifier();
-		pid.setValue("IndexEventDAOTest." + System.currentTimeMillis());
-		event.setIdentifier(pid);
-	}
+        // initialize the event
+        event = new IndexEvent();
+        event.setAction("create");
+        event.setDate(Calendar.getInstance().getTime());
+        event.setDescription("Testing DAO");
+        Identifier pid = new Identifier();
+        pid.setValue("IndexEventDAOTest." + System.currentTimeMillis());
+        event.setIdentifier(pid);
+    }
 
-	/**
-	 * Test saving
-	 */
-	public void testSave() {
-		try {
-			// save
-			IndexEventDAO.getInstance().add(event);
-			// lookup
-			IndexEvent savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
-			// check
-			assertEquals(event.getIdentifier(), savedEvent.getIdentifier());
-			assertEquals(event.getAction(), savedEvent.getAction());
-			assertEquals(event.getDate(), savedEvent.getDate());
-			assertEquals(event.getDescription(), savedEvent.getDescription());
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Could not save; " + e.getMessage());
-		} finally {
-			// try to clean up as best we can
-			try {
-				IndexEventDAO.getInstance().remove(event.getIdentifier());
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
+    /**
+     * Test saving
+     */
+    public void testSave() {
+        try {
+            // save
+            IndexEventDAO.getInstance().add(event);
+            // lookup
+            IndexEvent savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
+            // check
+            assertEquals(event.getIdentifier(), savedEvent.getIdentifier());
+            assertEquals(event.getAction(), savedEvent.getAction());
+            assertEquals(event.getDate(), savedEvent.getDate());
+            assertEquals(event.getDescription(), savedEvent.getDescription());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not save; " + e.getMessage());
+        } finally {
+            // try to clean up as best we can
+            try {
+                IndexEventDAO.getInstance().remove(event.getIdentifier());
+            } catch (SQLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
 
-	/**
-	 * Test removing
-	 */
-	public void testRemove() {
-		try {
-			// save
-			IndexEventDAO.getInstance().add(event);
-			// remove
-			IndexEventDAO.getInstance().remove(event.getIdentifier());
-			// check
-			IndexEvent savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
-			assertNull(savedEvent);
+    /**
+     * Test removing
+     */
+    public void testRemove() {
+        try {
+            // save
+            IndexEventDAO.getInstance().add(event);
+            // remove
+            IndexEventDAO.getInstance().remove(event.getIdentifier());
+            // check
+            IndexEvent savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
+            assertNull(savedEvent);
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Could not test removal; " + e.getMessage());
-		}
-	}
-	
-	/**
-	 * Test listing
-	 */
-	public void testList() {
-		try {
-			
-			// get the count
-			Set<Identifier> allIdentifiers = IndexEventDAO.getInstance().getAllIdentifiers();
-			int originalSize = allIdentifiers.size();
-			
-			// get one
-			if (allIdentifiers != null && !allIdentifiers.isEmpty()) {
-				IndexEvent existingEvent = IndexEventDAO.getInstance().get(allIdentifiers.iterator().next());
-				assertNotNull(existingEvent);
-			}
-			// add one
-			IndexEventDAO.getInstance().add(event);
-			
-			// get the count again
-			int newSize = IndexEventDAO.getInstance().getAllIdentifiers().size();
-			assertEquals(originalSize+1, newSize);
-			
-			// clean up
-			IndexEventDAO.getInstance().remove(event.getIdentifier());
-			
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not test removal; " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Test listing
+     */
+    public void testList() {
+        try {
+            
+            // get the count
+            Set<Identifier> allIdentifiers = IndexEventDAO.getInstance().getAllIdentifiers();
+            int originalSize = allIdentifiers.size();
+            
+            // get one
+            if (allIdentifiers != null && !allIdentifiers.isEmpty()) {
+                IndexEvent existingEvent = IndexEventDAO.getInstance().get(allIdentifiers.iterator().next());
+                assertNotNull(existingEvent);
+            }
+            // add one
+            IndexEventDAO.getInstance().add(event);
+            
+            // get the count again
+            int newSize = IndexEventDAO.getInstance().getAllIdentifiers().size();
+            assertEquals(originalSize+1, newSize);
+            
+            // clean up
+            IndexEventDAO.getInstance().remove(event.getIdentifier());
+            
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Could not test removal; " + e.getMessage());
-		}
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Could not test removal; " + e.getMessage());
+        }
+    }
 
 }
