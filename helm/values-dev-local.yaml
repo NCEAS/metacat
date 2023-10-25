@@ -1,7 +1,7 @@
-## override values.yaml with values to use for running tests on local machine
+## override values.yaml with values to use for running on local machine (eg within Rancher Desktop)
 ##
 ## example:
-##    helm install my-release ./helm -f ./helm/values-test.yaml
+##    helm install my-release ./helm -f ./helm/values-dev-local.yaml
 ##
 
 metacat:

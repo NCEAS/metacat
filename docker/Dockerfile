@@ -56,11 +56,12 @@ WORKDIR "$TC_HOME"/bin
 
 EXPOSE 8080
 EXPOSE 5005
-EXPOSE 5701
-EXPOSE 5702
-EXPOSE 5703
 
+# metadata
+LABEL org.opencontainers.image.title="Metacat"
+LABEL org.opencontainers.image.version=${MC_VERSION}
 LABEL org.opencontainers.image.source="https://github.com/NCEAS/metacat"
+LABEL maintainer="NCEAS <https://github.com/NCEAS/metacat>"
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 

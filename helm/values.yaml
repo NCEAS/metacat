@@ -1,6 +1,19 @@
 ## Default values for metacat.
 ## This is a YAML-formatted file.
 
+## @section Global Properties Shared Across Sub-Charts Within This Deployment
+##
+global:
+  ## @param global.passwordsSecret The name of the Secret containing passwords (RELEASE PREFIX)
+  ## This is the secret deployed using `../admin/secrets.yaml`. IMPORTANT NOTE: make sure you edit
+  ## this, since IT INCLUDES THE RELEASE NAME! For example, if the release name is 'myrelease',
+  ## the value of passwordsSecret: would be 'myrelease-secrets'.
+  ##
+  ## (Note the actual key passwordsSecret is not used anywhere; only the alias &passwordSecretName)
+  ##
+  passwordsSecret: &passwordSecretName mc-secrets
+
+
 ## @section Metacat Application-Specific Properties
 ##
 ## The metacat section can contain any properties that metacat would expect to find in its
@@ -98,6 +111,17 @@ metacat:
   ## @param metacat.replication.logdir Location for the replication logs
   ##
   replication.logdir: /var/metacat/logs
+
+  ## @param metacat.index.rabbitmq.hostname the hostname of the rabbitmq instance that will be used
+  ## <servicename>.<namespace>.svc.cluster.local
+  ##
+  # TODO: Auto populate for subchart - see postgres url
+#  index.rabbitmq.hostname: brooke-rabbitmq-headless.default.svc.cluster.local
+
+  ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
+  ## at `index.rabbitmq.hostname`.
+  ##
+  index.rabbitmq.username: &rmqUsername metacat-guest
 
   ## @section OPTIONAL DataONE Member Node (MN) Parameters
   ##
@@ -267,8 +291,7 @@ metacat:
 ## @param image.tag Metacat image tag (immutable tags are recommended)
 ## @param image.pullPolicy Metacat image pull policy
 image:
-  #TODO pull from github container repo, e.g. see indexer: ghcr.io/dataoneorg/dataone-index-worker
-  repository: metacat
+  repository: ghcr.io/nceas/metacat
   pullPolicy: IfNotPresent
 
   ## @param image.tag Overrides the image tag. Will default to the chart appVersion if set to ""
@@ -291,10 +314,6 @@ imagePullSecrets: []
 ## Examples:
 ##     - containerPort: 5005
 ##       name: tc-remote-debug
-##     - containerPort: 5701
-##       name: hazelcast-port1
-##     - containerPort: 5702
-##       name: hazelcast-port2
 ##
 ## NOTE that port 8080 should not be included here - it is already defined in statefulset.yaml as:
 ##     - containerPort: 8080
@@ -383,18 +402,22 @@ persistence:
   existingClaim: ""
 
   ## @param persistence.accessModes PVC Access Mode for metacat volume
-  ## Example:
+  ## Metacat always requires read&write access, and dataone_indexer requires read access to the
+  ## same PVC, so the ideal setup is:
   ##    accessModes:
-  ##    - ReadWriteOnce   # allow only one node to mount in read/write mode
-  ##    - ReadOnlyMany    # allow many nodes to mount in read-only mode
-  ## ReadWriteOnce  is always required by metacat. ReadOnlyMany is useful for giving other
-  ## services (e.g. metadig) read-only access to metacat data.
-  ## Note that the underlying PersistentVolume (or pv auto-provisioner) must be able to provide
-  ## these modes, in order for the PVC to bind successfully. (For Rancher Desktop, this means
-  ## setting only ReadWriteOnce, not ReadOnlyMany)
+  ##    - ReadWriteOnce   # allow only one node (i.e. metacat) to mount in read/write mode
+  ##    - ReadOnlyMany    # allow many nodes (e.g. dataone_indexer, metadig) to mount read-only
+  ##
+  ## However, note that the underlying PersistentVolume (or pv auto-provisioner) must be able to
+  ## provide these modes, in order for the PVC to bind successfully. Since neither NCEAS dev
+  ## cluster nor Rancher Desktop supports RWO+ROX, we have to use RWX:
+  ##   accessModes:
+  ##     - ReadWriteMany
+  ## ...and be careful to ensure that non-metacat services restrict themselves to RO access in their
+  ## own PVC definitions
   ##
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
 
   ## @param persistence.size PVC Storage Request for metacat volume
   ##
@@ -499,9 +522,6 @@ service:
     - name: http-port
       port: 8080
       targetPort: metacat-web
-    - name: hazelcast-test1
-      port: 5701
-      targetPort: hazelcast-port1
 
 ## LivenessProbe
 ## Periodic probe of container liveness. Container will be restarted if the probe fails.
@@ -523,6 +543,9 @@ service:
 ##
 livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 15
+  timeoutSeconds: 10
   httpGet:
     path: /metacat/
     port: metacat-web
@@ -546,6 +569,9 @@ livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck rou
 ##
 readinessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
+  initialDelaySeconds: 35
+  periodSeconds: 5
+  timeoutSeconds: 5
   httpGet:
     path: /metacat/admin
     port: metacat-web
@@ -578,7 +604,7 @@ postgresql:
     ## For example, if the release name is 'myrelease', secret name would be 'myrelease-secrets'
     ## Typically the existing secrets also used by metacat - see ./admin/secrets.yaml
     ##
-    existingSecret: mc-secrets
+    existingSecret: *passwordSecretName
 
     ## @param postgresql.auth.secretKeys.userPasswordKey Identifies metacat db's account password
     ## within metacat's existing secrets
@@ -625,3 +651,11 @@ tomcat:
   heapMemory:
     min: ""
     max: ""
+
+idxworker:
+  enabled: true
+  image:
+    repository: ghcr.io/dataoneorg/dataone-index-worker
+  idxworker: {}
+  solr: {}
+  rabbitmq: {}
