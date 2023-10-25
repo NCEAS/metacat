@@ -29,6 +29,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -154,7 +156,6 @@ public class IndexEventDAO {
     }
     
     public Set<Identifier> getAllIdentifiers() throws SQLException {
-
         Set<Identifier> identifiers = new TreeSet<Identifier>();
         String sql = "select guid from index_event";
         DBConnection dbConn = null;
@@ -181,4 +182,47 @@ public class IndexEventDAO {
         return identifiers;
     }
 
+    /**
+     * Get the list of the index events which have the specified event action.
+     * @param eventAction  the action which the events should contain
+     * @return  list of the index events contains the action
+     * @throws SQLException
+     */
+    public List<IndexEvent> get(String eventAction) throws SQLException {
+        List<IndexEvent> events = new ArrayList<IndexEvent>();
+        String sql = "select guid, event_action, description, event_date from index_event "
+                      + "where event_action = ?";
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("IndexEventDAO.get");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            // Execute the statement
+            PreparedStatement stmt = dbConn.prepareStatement(sql);
+            stmt.setString(1, eventAction);
+            ResultSet rs = stmt.executeQuery();
+            boolean hasNext = rs.next();
+            while (hasNext) {
+                String guid = rs.getString(1);
+                Identifier identifier = new Identifier();
+                identifier.setValue(guid);
+                String action = rs.getString(2);
+                String description = rs.getString(3);
+                Timestamp timestamp = rs.getTimestamp(4);
+                IndexEvent event = new IndexEvent();
+                event.setIdentifier(identifier);
+                event.setAction(action);
+                event.setDate(timestamp);
+                event.setDescription(description);
+                events.add(event);
+                hasNext = rs.next();
+            }
+            stmt.close();
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        return events;
+    }
 }
