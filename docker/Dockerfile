@@ -56,9 +56,6 @@ WORKDIR "$TC_HOME"/bin
 
 EXPOSE 8080
 EXPOSE 5005
-EXPOSE 5701
-EXPOSE 5702
-EXPOSE 5703
 
 # metadata
 LABEL org.opencontainers.image.title="Metacat"

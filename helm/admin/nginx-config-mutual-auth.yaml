@@ -1,5 +1,5 @@
 ## This template sets up the nginx ingress to add a custom header defined in the yaml file
-## `../templates/`ingress-nginx-custom-headers`. Nginx then includes this headers with any incoming
+## `../templates/`ingress-nginx-custom-headers`. Nginx then includes this header with any incoming
 ## requests that include x509 client certs. Upon receiving this secret, metacat can then trust that
 ## incoming client-cert-authorized requests have really been authorized by the ingress, and are not
 ## being spoofed.

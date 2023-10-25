@@ -151,7 +151,6 @@ elif [[ $1 = "catalina.sh" ]]; then
         /var/metacat/documents   \
         /var/metacat/inline-data \
         /var/metacat/logs        \
-        /var/metacat/solr-home-legacy \
         /var/metacat/temporary
 
     setTomcatEnv
@@ -200,7 +199,6 @@ elif [[ $1 = "catalina.sh" ]]; then
         fi
     fi
 
-    # Give time for tomcat to start
     echo
     echo '**************************************'
     echo 'Starting Tomcat and tailing logs from:'

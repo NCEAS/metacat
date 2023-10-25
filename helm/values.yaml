@@ -314,10 +314,6 @@ imagePullSecrets: []
 ## Examples:
 ##     - containerPort: 5005
 ##       name: tc-remote-debug
-##     - containerPort: 5701
-##       name: hazelcast-port1
-##     - containerPort: 5702
-##       name: hazelcast-port2
 ##
 ## NOTE that port 8080 should not be included here - it is already defined in statefulset.yaml as:
 ##     - containerPort: 8080
@@ -526,9 +522,6 @@ service:
     - name: http-port
       port: 8080
       targetPort: metacat-web
-    - name: hazelcast-test1
-      port: 5701
-      targetPort: hazelcast-port1
 
 ## LivenessProbe
 ## Periodic probe of container liveness. Container will be restarted if the probe fails.
@@ -653,20 +646,10 @@ tomcat:
     min: ""
     max: ""
 
-## @section RabbitMQ Sub-Chart
-rabbitmq:
-  ## @param rabbitmq.enabled enable the rabbitmq sub-chart
-  ## set to false if you want to connect to your own existing rabbitmq deployment (and ensure
-  ## index.rabbitmq.hostname is set accordingly).
-  ##
+idxworker:
   enabled: true
-  auth:
-    ## rabbitmq.auth.username RabbitMQ application username
-    username: *rmqUsername
-    ## rabbitmq.auth.existingPasswordSecret Existing secret with RabbitMQ password (RELEASE PREFIX)
-    ## For example, if the release name is 'myrelease', secret name would be 'myrelease-secrets'
-    ## Typically the existing secrets also used by metacat - see ./admin/secrets.yaml
-    ##
-    ## (must contain a value for rabbitmq-password key)
-    ##
-    existingPasswordSecret: *passwordSecretName
+  image:
+    repository: ghcr.io/dataoneorg/dataone-index-worker
+  idxworker: {}
+  solr: {}
+  rabbitmq: {}
