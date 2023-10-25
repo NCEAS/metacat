@@ -543,6 +543,9 @@ service:
 ##
 livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 15
+  timeoutSeconds: 10
   httpGet:
     path: /metacat/
     port: metacat-web
@@ -566,6 +569,9 @@ livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck rou
 ##
 readinessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
+  initialDelaySeconds: 35
+  periodSeconds: 5
+  timeoutSeconds: 5
   httpGet:
     path: /metacat/admin
     port: metacat-web
