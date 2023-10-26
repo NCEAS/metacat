@@ -29,9 +29,9 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
      * @throws UnsupportedType
      */
     @Test
-    public void testGetSolrSpecVersion() throws UnsupportedType, NotFound, ParserConfigurationException, IOException, SAXException {
+    public void testGetSolrSpecVersion() throws UnsupportedType, NotFound,
+                            ParserConfigurationException, IOException, SAXException {
         String version = SolrQueryServiceController.getInstance().getSolrSpecVersion();
-        //System.out.println("version is ======================== "+version);
         assertTrue(version != null);
         assertTrue("The version should be 8.8.2 rather than " + version, version.equals("8.8.2"));
     }
@@ -47,9 +47,10 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
      */
     @Test
     public void testgetIndexSchemaFields() throws Exception {
-       Map<String, SchemaField> fields = SolrQueryServiceController.getInstance().getIndexSchemaFields();
+       Map<String, SchemaField> fields = SolrQueryServiceController
+                                                       .getInstance().getIndexSchemaFields();
        assertTrue(fields != null);
-       assertTrue("The number of index schema fields should be 160 rather than "
+       assertTrue("The number of index schema fields should be 165 rather than "
                    + fields.size(), fields.size() == 165);
     }
 
@@ -60,7 +61,8 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
     public void testQuery() throws Exception {
         String query = "q=*:*";
         SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
-        InputStream input = SolrQueryServiceController.getInstance().query(solrParams, null, SolrRequest.METHOD.GET);
+        InputStream input = SolrQueryServiceController
+                                    .getInstance().query(solrParams, null, SolrRequest.METHOD.GET);
         assertTrue(input != null);
     }
 }
