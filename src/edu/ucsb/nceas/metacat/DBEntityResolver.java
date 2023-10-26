@@ -42,10 +42,6 @@ import java.sql.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.Reader;
-import java.io.BufferedReader;
-import java.io.BufferedInputStream;
-import java.io.FileWriter;
-import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -178,23 +174,22 @@ public class DBEntityResolver implements EntityResolver
       }
       // check that it is accessible on our system before getting too far
       try {
-    	  InputStream in = null;
+          InputStream in = null;
           if (dbSystemID.startsWith("http://") || dbSystemID.startsWith("https://")) {
               in = checkURLConnection(dbSystemID);
           } else {
               in = new FileInputStream( new File(dbSystemID));
           }
-    	  dtdSource = new InputSource(in);
-	  } catch (SAXException se) {
-	      se.printStackTrace();
-	      throw se;
-	  } catch (IOException ioe) {
-	      throw ioe;
-	  }
-    } else {
-    
-      //InputStream istream = checkURLConnection(systemId);
-      //return null;
+          dtdSource = new InputSource(in);
+      } catch (SAXException se) {
+          logMetacat.error("DBEntityResolver.resolveEntity - can't get the dtd file since "
+                                  + se.getMessage());
+          throw se;
+      } catch (IOException ioe) {
+          logMetacat.error("DBEntityResolver.resolveEntity - can't get the dtd file since "
+                                  + ioe.getMessage());
+          throw ioe;
+      }
     }
     return dtdSource;
 
@@ -230,7 +225,6 @@ public class DBEntityResolver implements EntityResolver
         systemid = rs.getString(1);
         // system id may not have server url on front.  Add it if not.
         if (!systemid.startsWith("http://")) {
-        	//systemid = SystemUtil.getInternalContextURL() + systemid;
             systemid = SystemUtil.getContextDir() + systemid;
         }
       }
@@ -268,23 +262,23 @@ public class DBEntityResolver implements EntityResolver
     return systemid;
   }
 
-	/**
-	 * Check URL Connection for @systemId, and return an InputStream
-	 * that can be used to read from the systemId URL.  The parser ends
-	 * up using this via the InputSource to read the DTD.
-	 *
-	 * @param systemId a URI (in practice URL) to be checked and opened
-	 */
-	public static InputStream checkURLConnection(String systemId) throws SAXException {
-		try {
-			return (new URL(systemId).openStream());
+    /**
+     * Check URL Connection for @systemId, and return an InputStream
+     * that can be used to read from the systemId URL.  The parser ends
+     * up using this via the InputSource to read the DTD.
+     *
+     * @param systemId a URI (in practice URL) to be checked and opened
+     */
+    public static InputStream checkURLConnection(String systemId) throws SAXException {
+        try {
+            return (new URL(systemId).openStream());
 
-		} catch (MalformedURLException e) {
-			throw new SAXException("DBEntityResolver.checkURLConnection - Malformed URL when checking URL Connection: "
-					+ e.getMessage());
-		} catch (IOException e) {
-			throw new SAXException("DBEntityResolver.checkURLConnection - I/O issue when checking URL Connection: "
-					+ e.getMessage());
-		}
-	}
+        } catch (MalformedURLException e) {
+            throw new SAXException("DBEntityResolver.checkURLConnection - Malformed URL when checking URL Connection: "
+                    + e.getMessage());
+        } catch (IOException e) {
+            throw new SAXException("DBEntityResolver.checkURLConnection - I/O issue when checking URL Connection: "
+                    + e.getMessage());
+        }
+    }
 }
