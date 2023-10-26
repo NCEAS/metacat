@@ -72,7 +72,6 @@ public class XMLNodesToFilesChecker {
     /**
      * Default constructor
      * @throws PropertyNotFoundException 
-     * @throws IOException 
      */
     public XMLNodesToFilesChecker() throws PropertyNotFoundException {
         if (document_dir == null) {
@@ -103,7 +102,7 @@ public class XMLNodesToFilesChecker {
     public void check() throws SQLException, IOException, PropertyNotFoundException {
         if (DBAdmin.getDBStatus() != DBAdmin.TABLES_EXIST) {
             logMetacat.debug("XMLNOdesToFileChecker.check - the xml_documents table " 
-                                + " doesnot exist, so we don't export data from db to the files");
+                                + " does not exist, so we don't export data from db to the files");
             return;
         }
         checkXmlDocumentsTable();
@@ -117,7 +116,7 @@ public class XMLNodesToFilesChecker {
      */
     private void checkXmlDocumentsTable() throws SQLException, IOException {
         PreparedStatement rs = runSQL(XML_DOCUMENTS);
-        checkIfFilesExist(rs, XML_DOCUMENTS);
+        checkExportedFiles(rs, XML_DOCUMENTS);
     }
     
     /**
@@ -127,17 +126,20 @@ public class XMLNodesToFilesChecker {
      */
     private void checkXmlRevisionsTable() throws SQLException, IOException {
         PreparedStatement rs = runSQL(XML_REVISIONS);
-        checkIfFilesExist(rs, XML_REVISIONS);
+        checkExportedFiles(rs, XML_REVISIONS);
     }
     
     /**
-     * Iterate the result set to check if a docid exists in the file system. If it does exist,
-     * skip it; otherwise export the database record on the xml_node table to the file system. 
-     * @param result
+     * Iterate the result set from a PreparedStatement object to check if a docid exists in the file 
+     * system. If it does exist, skip it; otherwise export the database record on the given 
+     * table to the file system. 
+     * @param pstmt  the PreparedStatement object which contains a result set with 
+     *               a list of docids we need to check
+     * @param talbeName  the table name which contains the xml node data
      * @throws SQLException
      * @throws IOException 
      */
-    private void checkIfFilesExist(PreparedStatement pstmt, String tableName) throws SQLException, 
+    private void checkExportedFiles(PreparedStatement pstmt, String tableName) throws SQLException, 
                                                                                     IOException {
         boolean append = true;
         BufferedWriter success_writer = null;
@@ -296,50 +298,26 @@ public class XMLNodesToFilesChecker {
      * @param rootNodeId
      * @throws IOException 
      * @throws McdbException 
-     * @throws SQLException 
-     * @throws NoSuchAlgorithmException 
-     * @throws SAXException 
-     * @throws HandlerException 
-     * @throws MarshallingException 
-     * @throws BaseException 
-     * @throws ParseLSIDException 
-     * @throws InsufficientKarmaException 
-     * @throws AccessionNumberException 
-     * @throws AccessException 
-     * @throws AccessControlException 
-     * @throws PropertyNotFoundException 
-     * @throws ClassNotFoundException 
      */
     private void exportXMLnodesToFile(String docId, int rev, long rootNodeId, String tableName, 
                                 boolean isDTD, String systemId, String docType, String docName)
-                                        throws McdbException, IOException, SQLException, 
-                                               NoSuchAlgorithmException, ClassNotFoundException, 
-                                               PropertyNotFoundException, AccessControlException, 
-                                               AccessException, AccessionNumberException, 
-                                               InsufficientKarmaException, ParseLSIDException, 
-                                               BaseException, MarshallingException, 
-                                               HandlerException, SAXException {
+                                        throws McdbException, IOException {
         String pid = docId + "." + rev;
         String path = document_dir + File.separator + pid;
         File documentFile = new File(path);
-        FileOutputStream output = null;
-        try {
-            output = new FileOutputStream(documentFile);
+        try (FileOutputStream output = new FileOutputStream(documentFile)) {
             toXmlFromDb(output, tableName, rootNodeId, isDTD, systemId, docType, docName);
             logMetacat.debug("XMLNodestoFilesChecker.exportXMLnodesToFile - successfully wrote the " 
                                 + " meta data object to the path " + path);
-        } finally {
-            if (output != null) {
-                output.close();
-            }
         }
     }
 
     /**
      * Print a text representation of the XML document to an OutputStream object
      * @param outputStream  the OutputStream object will be get the content
+     * @param tableName  the database table name in which Metacat looks for the data
      * @param rootnodeid  the root node id of the document
-     * @param validateType  if this document is based on DTD
+     * @param isDTD  if this document is based on DTD
      * @param systemId  the system id of the document
      * @param doctype  the doc type of this document
      * @param docname  the doc name of this document
@@ -599,7 +577,6 @@ public class XMLNodesToFilesChecker {
      */
     private static Reader readInlineDataFromFileSystem(String fileName, String encoding)
             throws McdbException {
-        // BufferedReader stringReader = null;
         Reader fileReader = null;
         try {
             // the new file name will look like path/docid.rev.2
@@ -632,7 +609,6 @@ public class XMLNodesToFilesChecker {
         String nodedata = null;
         float nodedatanumerical = -1;
         Timestamp nodedatadate = null;
-        //System.out.println("in getNodeREcorelist !!!!!!!!!!!3");
         if (table.equals(XML_DOCUMENTS)) {
             table = XML_NODES;
         } else {
@@ -648,15 +624,12 @@ public class XMLNodesToFilesChecker {
                             + "FROM " + table + " WHERE rootnodeid = ?");
             // Bind the values to the query
             pstmt.setLong(1, rootnodeid);
-            //System.out.println("in getNodeREcorelist !!!!!!!!!!!4");
             logMetacat.debug("XMLNodesToFilesChecker.getNodeRecordList - executing SQL: " 
                                 + pstmt.toString());
             pstmt.execute();
             ResultSet rs = pstmt.getResultSet();
-            //System.out.println("in getNodeREcorelist !!!!!!!!!!!5");
             boolean tableHasRows = rs.next();
             while (tableHasRows) {
-                //System.out.println("in getNodeREcorelist !!!!!!!!!!!6");
                 nodeid = rs.getLong(1);
                 parentnodeid = rs.getLong(2);
                 nodeindex = rs.getLong(3);
@@ -685,7 +658,6 @@ public class XMLNodesToFilesChecker {
                 tableHasRows = rs.next();
             }
             pstmt.close();
-            //System.out.println("in getNodeREcorelist !!!!!!!!!!!7");
         } catch (SQLException e) {
             throw new McdbException("Error in DocumentImpl.getNodeRecordList "
                     + e.getMessage());
@@ -699,7 +671,6 @@ public class XMLNodesToFilesChecker {
                 DBConnectionPool.returnDBConnection(dbconn, serialNumber);
             }
         }
-        //System.out.println("in getNodeREcorelist !!!!!!!!!!!8");
         return nodeRecordList;
     }
     
