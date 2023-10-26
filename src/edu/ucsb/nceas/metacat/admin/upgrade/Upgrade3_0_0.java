@@ -15,7 +15,7 @@ public class Upgrade3_0_0 implements UpgradeUtilityInterface {
 
     /**
      * This method will run the class - XMLNodesToFilesChecker, which basically makes sure that
-     * every metadata document has been import from xml_nodes or xml_nodes_revision tables to
+     * every metadata document has been imported from xml_nodes or xml_nodes_revision tables to
      * the file system.
      */
     public boolean upgrade() throws AdminException {
