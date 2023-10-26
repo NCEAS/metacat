@@ -25,6 +25,7 @@ package edu.ucsb.nceas.metacat.index;
 
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Set;
 
 import org.dataone.service.types.v1.Event;
@@ -41,6 +42,7 @@ import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 public class IndexEventDAOTest extends MCTestCase {
 
     private IndexEvent event = null;
+    private static final String ACTION = IndexEvent.CREATE;
 
     /*
      * @see TestCase#setUp()
@@ -50,7 +52,7 @@ public class IndexEventDAOTest extends MCTestCase {
 
         // initialize the event
         event = new IndexEvent();
-        event.setAction("create");
+        event.setAction(ACTION);
         event.setDate(Calendar.getInstance().getTime());
         event.setDescription("Testing DAO");
         Identifier pid = new Identifier();
@@ -117,7 +119,8 @@ public class IndexEventDAOTest extends MCTestCase {
             
             // get one
             if (allIdentifiers != null && !allIdentifiers.isEmpty()) {
-                IndexEvent existingEvent = IndexEventDAO.getInstance().get(allIdentifiers.iterator().next());
+                IndexEvent existingEvent = IndexEventDAO.getInstance()
+                                                    .get(allIdentifiers.iterator().next());
                 assertNotNull(existingEvent);
             }
             // add one
@@ -135,6 +138,27 @@ public class IndexEventDAOTest extends MCTestCase {
             e.printStackTrace();
             fail("Could not test removal; " + e.getMessage());
         }
+    }
+    
+    /**
+     * Test getting 
+     * @throws Exception
+     */
+    public void testGet() throws Exception {
+        // add one
+        IndexEventDAO.getInstance().add(event);
+        // get the list of index events which have the action of CREATE_FAILURE_TO_QUEUE
+        List<IndexEvent> list = IndexEventDAO.getInstance().get(ACTION);
+        boolean found = false;
+        for (IndexEvent indexEvent : list) {
+            if (indexEvent.getIdentifier().getValue().equals(event.getIdentifier().getValue())) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue(found);
+        // clean up
+        IndexEventDAO.getInstance().remove(event.getIdentifier());
     }
 
 }
