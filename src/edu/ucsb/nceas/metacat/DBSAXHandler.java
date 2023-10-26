@@ -29,22 +29,16 @@ package edu.ucsb.nceas.metacat;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.Date;
-import java.util.EmptyStackException;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Stack;
 import java.util.Vector;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
-import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import edu.ucsb.nceas.utilities.triple.Triple;
 import edu.ucsb.nceas.utilities.triple.TripleCollection;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.StringUtil;
 
 import org.apache.commons.logging.Log;
@@ -77,8 +71,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     protected String systemid;
 
-    private boolean stackCreated = false;
-
     protected DBConnection connection = null;
 
     protected DocumentImpl currentDocument;
@@ -100,9 +92,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     protected String pub = null;
     
-	protected String encoding = null;
-
-//    private boolean endDocument = false;
+    protected String encoding = null;
 
     protected int serverCode = 1;
 
@@ -114,17 +104,11 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     // it is for if element was split
     protected StringBuffer textBuffer = new StringBuffer();
 
-//    protected Stack textBufferStack = new Stack();
-
     public static final int MAXDATACHARS = 4000;
-
-    //protected static final int MAXDATACHARS = 50;
 
     // methods writeChildNodeToDB, setAttribute, setNamespace,
     // writeTextForDBSAXNode will increase endNodeId.
     protected long endNodeId = -1; // The end node id for a substree
-    // DOCTITLE attr cleared from the db
-    //   private static final int MAXTITLELEN = 1000;
     
     private boolean isRevisionDoc  = false;
     
@@ -139,9 +123,9 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     boolean hasTriple = false;
     
-	protected boolean writeAccessRules = true;   
-	
-	protected boolean ignoreDenyFirst = true;
+    protected boolean writeAccessRules = true;
+    
+    protected boolean ignoreDenyFirst = true;
 
     public static final String ECOGRID = "ecogrid://";
 
@@ -161,33 +145,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         this.updateDate = updateDate;
     }
 
-    /**
-     * Construct an instance of the handler class
-     *
-     * @param conn the JDBC connection to which information is written
-     * @param action - "INSERT" or "UPDATE"
-     * @param docid to be inserted or updated into JDBC connection
-     * @param user the user connected to MetaCat servlet and owns the document
-     * @param groups the groups to which user belongs
-     * @param pub flag for public "read" access on document
-     * @param serverCode the serverid from xml_replication on which this
-     *            document resides.
-     *
-     */
-/* TODO excise this constructor because not used anywhere in project
-    public DBSAXHandler(DBConnection conn, String action, String docid,
-            String user, String[] groups, String pub, int serverCode)
-    {
-        this(conn);
-        this.action = action;
-        this.docid = docid;
-        this.user = user;
-        this.groups = groups;
-        this.pub = pub;
-        this.serverCode = serverCode;
-        this.xmlIndex = new Thread(this);
-    }
-*/
     /**
      * Construct an instance of the handler class In this constructor, user can
      * specify the version need to upadate
@@ -225,11 +182,11 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     }
 
     /** SAX Handler that receives notification of end of the document */
-	public void endDocument() throws SAXException {
-		logMetacat.trace("DBSaxHandler.endDocument - ending document");
-		// Starting new thread for writing XML Index.
-		// It calls the run method of the thread.
-	}
+    public void endDocument() throws SAXException {
+        logMetacat.trace("DBSaxHandler.endDocument - ending document");
+        // Starting new thread for writing XML Index.
+        // It calls the run method of the thread.
+    }
 
     /** SAX Handler that is called at the start of Namespace */
     public void startPrefixMapping(String prefix, String uri)
@@ -296,7 +253,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
                         String sql = "SELECT catalog_id FROM xml_catalog "
                             + "WHERE entry_type = 'DTD' "
                             + "AND public_id = ?";
-                        	
+                            
                         PreparedStatement pstmt = dbConn.prepareStatement(sql);
                         pstmt.setString(1, doctype);
                         ResultSet rs = pstmt.executeQuery();
@@ -318,9 +275,9 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
               
                 if (!isRevisionDoc)
                 {
-                  currentDocument = new DocumentImpl(connection, NODE_ID, 
+                  currentDocument = new DocumentImpl(connection, NODE_ID,
                          docname, doctype, docid, revision,
-                        action, user, this.pub, catalogid, this.serverCode, 
+                        action, user, this.pub, catalogid, this.serverCode,
                         createDate, updateDate);
                 }               
             } catch (Exception ane) {
@@ -353,24 +310,25 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
             if (attributeName != null
                     && attributeName
                             .indexOf(MetaCatServlet.SCHEMALOCATIONKEYWORD) != -1) {
-            	// These schemas will be registered in the end endDocument() method
-            	// assuming parsing is successful.
-        		// each namespace could have several schema locations.  parsedUri will
-        		// hold a list of uri and files.
-            	attributeValue = StringUtil.replaceTabsNewLines(attributeValue);
-            	attributeValue = StringUtil.replaceDuplicateSpaces(attributeValue);
-        		Vector<String> parsedUri = StringUtil.toVector(attributeValue, ' ');
-        		for (int j = 0; j < parsedUri.size(); j = j + 2 ) {
-        			if (j + 1 >= parsedUri.size()) {
-        				throw new SAXException("Odd number of elements found when parsing schema location: " + 	
-        						attributeValue + ". There should be an even number of uri/files in location.");
-        			}
-        			//since we don't have format id information here, we set it null
-        			String formatId = null;
-        			XMLSchema xmlSchema = 
-        				new XMLSchema(parsedUri.get(j), parsedUri.get(j + 1), formatId);
-        			schemaList.add(xmlSchema);
-        		}
+                // These schemas will be registered in the end endDocument() method
+                // assuming parsing is successful.
+                // each namespace could have several schema locations.  parsedUri will
+                // hold a list of uri and files.
+                attributeValue = StringUtil.replaceTabsNewLines(attributeValue);
+                attributeValue = StringUtil.replaceDuplicateSpaces(attributeValue);
+                Vector<String> parsedUri = StringUtil.toVector(attributeValue, ' ');
+                for (int j = 0; j < parsedUri.size(); j = j + 2 ) {
+                    if (j + 1 >= parsedUri.size()) {
+                        throw new SAXException("Odd number of elements found when parsing schema "
+                                + "location: " + attributeValue
+                                + ". There should be an even number of uri/files in location.");
+                    }
+                    //since we don't have format id information here, we set it null
+                    String formatId = null;
+                    XMLSchema xmlSchema =
+                        new XMLSchema(parsedUri.get(j), parsedUri.get(j + 1), formatId);
+                    schemaList.add(xmlSchema);
+                }
             }
         }
     }
@@ -474,7 +432,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     public void startEntity(String name) throws SAXException
     {
         logMetacat.trace("DBSaxHandler.startEntity - starting entity: " + name);
-        //System.out.println("start ENTITY: " + name);
         if (name.equals("[dtd]")) {
             processingDTD = true;
         }
@@ -486,7 +443,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     public void endEntity(String name) throws SAXException
     {
         logMetacat.trace("DBSaxHandler.endEntity - ending entity: " + name);
-        //System.out.println("end ENTITY: " + name);
         if (name.equals("[dtd]")) {
             processingDTD = false;
         }
@@ -498,7 +454,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     public void elementDecl(String name, String model)
             throws org.xml.sax.SAXException
     {
-        //System.out.println("ELEMENTDECL: " + name + " " + model);
         logMetacat.trace("DBSaxHandler.elementDecl - element declaration: " + name + " " + model);
     }
 
@@ -509,11 +464,8 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
             String valueDefault, String value) throws org.xml.sax.SAXException
     {
 
-        //System.out.println("ATTRIBUTEDECL: " + eName + " "
-        //                        + aName + " " + type + " " + valueDefault + " "
-        //                        + value);
-        logMetacat.trace("DBSaxHandler.attributeDecl - attribute declaration: " + eName + " " + aName + " "
-                + type + " " + valueDefault + " " + value);
+        logMetacat.trace("DBSaxHandler.attributeDecl - attribute declaration: " + eName
+                       + " " + aName + " " + type + " " + valueDefault + " " + value);
     }
 
     /**
@@ -522,8 +474,8 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     public void internalEntityDecl(String name, String value)
             throws org.xml.sax.SAXException
     {
-        //System.out.println("INTERNENTITYDECL: " + name + " " + value);
-        logMetacat.trace("DBSaxHandler.internalEntityDecl - internal entity declaration: " + name + " " + value);
+        logMetacat.trace("DBSaxHandler.internalEntityDecl - internal entity declaration: "
+                            + name + " " + value);
     }
 
     /**
@@ -532,18 +484,12 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     public void externalEntityDecl(String name, String publicId, String systemId)
             throws org.xml.sax.SAXException
     {
-        //System.out.println("EXTERNENTITYDECL: " + name + " " + publicId
-        //                              + " " + systemId);
-        logMetacat.trace("DBSaxHandler.externalEntityDecl - external entity declaration: " + name + " " + publicId
-                + " " + systemId);
+        logMetacat.trace("DBSaxHandler.externalEntityDecl - external entity declaration: "
+                            + name + " " + publicId + " " + systemId);
         // it processes other external entity, not the DTD;
         // it doesn't signal for the DTD here
         processingDTD = false;
     }
-
-    //
-    // the next section implements the ErrorHandler interface
-    //
 
     /**
      * SAX Handler that receives notification of fatal parsing errors
@@ -571,10 +517,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         logMetacat.warn("DBSaxHandler.warning - " + exception.getMessage());
         throw (new SAXException(exception.getMessage(), exception));
     }
-
-    //
-    // Helper, getter and setter methods
-    //
 
     /**
      * get the document name
@@ -608,16 +550,16 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
      */
     public void setIsRevisionDoc(boolean isRevisionDoc)
     {
-       this.isRevisionDoc = isRevisionDoc;   
+       this.isRevisionDoc = isRevisionDoc;
     }
 
     public String getEncoding() {
-		return encoding;
-	}
+        return encoding;
+    }
 
-	public void setEncoding(String encoding) {
-		this.encoding = encoding;
-	}
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
     
     public long getRootNodeId()
     {
