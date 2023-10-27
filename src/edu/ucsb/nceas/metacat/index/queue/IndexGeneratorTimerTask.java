@@ -54,7 +54,7 @@ import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 
 
-/*
+/**
  * A timer to regenerate failed index tasks or index tasks in a given time frame.
  */
 public class IndexGeneratorTimerTask extends TimerTask {
@@ -67,16 +67,13 @@ public class IndexGeneratorTimerTask extends TimerTask {
     public static final int MAXWAITNUMBER = 180;
     private static final String HTTP = "http://";
     private static final String MNAPPENDIX = "/d1/mn";
-    //private static final String RESOURCEMAPPROPERYNAME = "index.resourcemap.namespace";
     public static final String WAITIMEPOPERTYNAME = "index.regenerate.start.waitingtime";
     public static final String MAXATTEMPTSPROPERTYNAME = "index.regenerate.start.maxattempts";
     
-    private Log log = LogFactory.getLog(IndexGeneratorTimerTask.class);
-    //private MNode mNode = null;
+    private static Log log = LogFactory.getLog(IndexGeneratorTimerTask.class);
     private static List<String> resourceMapNamespaces = null;
-    private boolean needReindexFailedEvent =true; //if this task need to reindex the previously failed index task
-    private boolean needReindexSinceLastProcessDate = true; //objects whose modified date is younger than the last process date
-    private long maxAgeOfFailedIndexTask = 864000000; // 10 days
+    //objects whose modified date is younger than the last process date
+    private boolean needReindexSinceLastProcessDate = false;
     
     /**
      * Constructor
@@ -86,25 +83,16 @@ public class IndexGeneratorTimerTask extends TimerTask {
     public IndexGeneratorTimerTask() {
         resourceMapNamespaces = ResourceMapNamespaces.getNamespaces();
         try {
-            needReindexFailedEvent = Settings.getConfiguration().getBoolean("index.regenerate.failedObject");
+            needReindexSinceLastProcessDate = Settings.getConfiguration()
+                                            .getBoolean("index.regenerate.sincelastProcessDate");
         } catch (Exception e) {
-            log.warn("IndexGeneratorTimeTask.constructor - the value of property - index.regenerate.failedObject can't be got since "+e.getMessage()+" and we will set it to true as default.");
-            needReindexFailedEvent = true;
+            log.warn("IndexGeneratorTimeTask.constructor - the value of property - "
+                       + "index.regenerate.sincelastProcessDate can't be got since "
+                        + e.getMessage()+" and we will set it to true as default.");
+            needReindexSinceLastProcessDate = false;
         }
-        try {
-            needReindexSinceLastProcessDate = Settings.getConfiguration().getBoolean("index.regenerate.sincelastProcessDate");
-        } catch (Exception e) {
-            log.warn("IndexGeneratorTimeTask.constructor - the value of property - index.regenerate.sincelastProcessDate can't be got since "+e.getMessage()+" and we will set it to true as default.");
-            needReindexSinceLastProcessDate = true;
-        }
-        maxAgeOfFailedIndexTask = Settings.getConfiguration().getLong("index.regenerate.failedTask.max.age", 864000000);
-        //this.systemMetadataListener = systemMetadataListener;
-        //this.mNode = new MNode(buildMNBaseURL());
-      
     }
-    
-   
-    
+
     /**
      * Build the index for all documents.
      * @throws SolrServerException 
@@ -126,8 +114,10 @@ public class IndexGeneratorTimerTask extends TimerTask {
      * @throws OREParserException 
      */
     public void indexAll() throws InvalidRequest, InvalidToken,
-                NotAuthorized, NotImplemented, ServiceFailure, SolrServerException, ClassNotFoundException, InstantiationException, IllegalAccessException, 
-                XPathExpressionException, NotFound, UnsupportedType, IOException, SAXException, ParserConfigurationException, OREParserException {
+                NotAuthorized, NotImplemented, ServiceFailure, SolrServerException,
+                ClassNotFoundException, InstantiationException, IllegalAccessException,
+                XPathExpressionException, NotFound, UnsupportedType, IOException, SAXException,
+                ParserConfigurationException, OREParserException {
         Date since = null;
         Date until = null;
         index(since, until);
@@ -154,17 +144,19 @@ public class IndexGeneratorTimerTask extends TimerTask {
      * @throws XPathExpressionException 
      * @throws OREParserException 
      */
-    public void index(Date since) throws InvalidRequest, InvalidToken, 
-                    NotAuthorized, NotImplemented, ServiceFailure, SolrServerException, ClassNotFoundException, InstantiationException, IllegalAccessException, 
-                    XPathExpressionException, NotFound, UnsupportedType, IOException, SAXException, ParserConfigurationException, OREParserException {
+    public void index(Date since) throws InvalidRequest, InvalidToken,
+                    NotAuthorized, NotImplemented, ServiceFailure, SolrServerException,
+                    ClassNotFoundException, InstantiationException, IllegalAccessException,
+                    XPathExpressionException, NotFound, UnsupportedType, IOException, SAXException,
+                    ParserConfigurationException, OREParserException {
         Date until = null;
         index(since, until);
     }
     
     /**
-     *  Build the index for the docs which have been modified between the specified date.s
-     * @param since
-     * @param until
+     *  Build the index for the docs which have been modified between the specified dates.
+     * @param since  the start date
+     * @param until  the end date
      * @throws SolrServerException 
      * @throws ServiceFailure 
      * @throws NotImplemented 
@@ -183,17 +175,20 @@ public class IndexGeneratorTimerTask extends TimerTask {
      * @throws XPathExpressionException 
      * @throws OREParserException 
      */
-    public void index(Date since, Date until) throws SolrServerException, InvalidRequest, 
-                                                InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, ClassNotFoundException, InstantiationException, IllegalAccessException, XPathExpressionException, NotFound, UnsupportedType, IOException, SAXException, ParserConfigurationException, OREParserException {
+    public void index(Date since, Date until) throws SolrServerException, InvalidRequest,
+                                                InvalidToken, NotAuthorized, NotImplemented,
+                                                ServiceFailure, ClassNotFoundException,
+                                                InstantiationException, IllegalAccessException,
+                                                XPathExpressionException, NotFound, UnsupportedType,
+                                                IOException, SAXException,
+                                                ParserConfigurationException, OREParserException {
         Date processedDate = null;
         List<String> solrIds = null;
         List[] metacatIds = getMetacatIds(since, until);
         List<String> otherMetacatIds = metacatIds[FIRST];
         List<String> resourceMapIds =  metacatIds[SECOND];
-        //List<String> otherDeletedMetacatIds = metacatIds[THIRD];
-        //List<String> resourceMapDeletedIds = metacatIds[FOURTH];
-        
-        //figure out the procesedDate by comparing the last element of otherMetacatIds and resourceMapIds.
+        //figure out the procesedDate by comparing the last element
+        //of otherMetacatIds and resourceMapIds.
         List<Long> maxCollection = new ArrayList<Long>();
         Date latestOtherId = null;
         if (otherMetacatIds != null && !otherMetacatIds.isEmpty()) {
@@ -203,8 +198,6 @@ public class IndexGeneratorTimerTask extends TimerTask {
             latestOtherId = sysmeta.getDateSysMetadataModified();
             maxCollection.add(new Long(latestOtherId.getTime()));
         }
-        
-        
         Date latestResourceId = null;
         if (resourceMapIds != null && !resourceMapIds.isEmpty()) {
             int size = resourceMapIds.size();
@@ -213,24 +206,12 @@ public class IndexGeneratorTimerTask extends TimerTask {
             latestResourceId = sysmeta.getDateSysMetadataModified();
             maxCollection.add(new Long(latestResourceId.getTime()));
         }
-        
-        
         if(!maxCollection.isEmpty()) {
             Long max = Collections.max(maxCollection);
             processedDate = new Date(max.longValue());
         }
-        //log.info("the ids in index_event for reindex ( except the resourcemap)=====================================\n "+failedOtherIds);
-        //log.info("the resourcemap ids in index_event for reindex =====================================\n "+failedResourceMapIds);
-        log.info("the metacat ids (except the resource map ids)-----------------------------"+otherMetacatIds);
-        //logFile(otherMetacatIds, "ids-for-timed-indexing-log");
-        //log.info("the deleted metacat ids (except the resource map ids)-----------------------------"+otherDeletedMetacatIds);
-        log.info("the metacat resroucemap ids -----------------------------"+resourceMapIds);
-        //logFile(resourceMapIds, "ids-for-timed-indexing-log");
-        //log.info("the deleted metacat resroucemap ids -----------------------------"+resourceMapDeletedIds);
         index(otherMetacatIds);
-        //removeIndex(otherDeletedMetacatIds);
         index(resourceMapIds);
-        //removeIndex(resourceMapDeletedIds);
        
         //record the timed index.
         if(processedDate != null) {
@@ -239,16 +220,18 @@ public class IndexGeneratorTimerTask extends TimerTask {
         
     }
 
-    /*
+    /**
      * Put the ids into the index queue
+     * @param metacatIds  the list of ids will be put into the index queue
      */
-    private void index(List<String> metacatIds) {
+    protected static void index(List<String> metacatIds) {
         if(metacatIds != null) {
             for(String metacatId : metacatIds) {
                 try {
                     submitIndex(metacatId);
                 } catch (Exception e) {
-                    log.warn("IndexGeneratorTimeTask.index - can't submit the index task for the id "+metacatId +" since "+e.getMessage());
+                    log.warn("IndexGeneratorTimeTask.index - can't submit the index task for the id"
+                             + " " + metacatId +" since "+e.getMessage());
                 }
             }
         }
@@ -259,120 +242,68 @@ public class IndexGeneratorTimerTask extends TimerTask {
      * @param id the id will be submitted
      * @throws Exception 
      */
-    private void submitIndex(String id) throws Exception {
+    protected static void submitIndex(String id) throws Exception {
         if(id != null) {
             SystemMetadata sysmeta = getSystemMetadata(id);
             Identifier pid = new Identifier();
             pid.setValue(id);
             boolean isSysmetaChangeOnly = false;
             boolean followRevisions = false;
-            MetacatSolrIndex.getInstance().submit(pid, sysmeta, isSysmetaChangeOnly, followRevisions);
-            log.info("IndexGenerator.index - submitted the pid " + pid.getValue() +" into RabbitMQ successfully.");
+            MetacatSolrIndex.getInstance()
+                                .submit(pid, sysmeta, isSysmetaChangeOnly, followRevisions);
+            log.info("IndexGenerator.index - submitted the pid " + pid.getValue()
+                       + " into RabbitMQ successfully.");
        }
     }
     
-    /**
-     * Put a delete index task into the index queue
-     * @param id
-     */
-    private void deleteIndex(String id) throws Exception {
-        if(id != null) {
-            SystemMetadata sysmeta = getSystemMetadata(id);
-            Identifier pid = new Identifier();
-            pid.setValue(id);
-            MetacatSolrIndex.getInstance().submitDeleteTask(pid, sysmeta);
-            log.info("IndexGenerator.deleteIndex - submitted the task which deletes pid " + pid.getValue() 
-                     + " into Rabbitmq successfully.");
-        }
-    }
-    
-   
-    
     public void run() {
-        try {
-            log.info("IndexGenerator.run - start to run the index generator timer--------------------------------");
-            if(needReindexSinceLastProcessDate) {
-                log.info("IndexGenerator.run - start to index objects whose modified date is younger than the last process date--------------------------------");
-                Date since = LastReindexDateManager.getInstance().getLastProcessDate();
+        log.info("IndexGenerator.run - start to run the index generator timer");
+        if(needReindexSinceLastProcessDate) {
+            log.info("IndexGenerator.run - start to index objects whose modified date is younger "
+                        + " than the last process date");
+            Date since;
+            try {
+                since = LastReindexDateManager.getInstance().getLastProcessDate();
                 index(since);
+            } catch (IOException | ParseException | InvalidRequest | InvalidToken
+                       | NotAuthorized | NotImplemented | ServiceFailure
+                       | ClassNotFoundException | InstantiationException
+                       | IllegalAccessException | XPathExpressionException
+                       | NotFound | UnsupportedType | SolrServerException
+                       | SAXException | ParserConfigurationException | OREParserException e) {
+                log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for "
+                           + "those documents which haven't been indexed : " + e.getMessage());
             }
-        } catch (InvalidRequest e) {
-            // TODO Auto-generated catch block
-            //e.printStackTrace();
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (InvalidToken e) {
-            // TODO Auto-generated catch block
-            //e.printStackTrace();
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (NotAuthorized e) {
-            // TODO Auto-generated catch block
-            //e.printStackTrace();
-        } catch (NotImplemented e) {
-            // TODO Auto-generated catch block
-            //e.printStackTrace();
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (ServiceFailure e) {
-            // TODO Auto-generated catch block
-            //e.printStackTrace();
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (SolrServerException e) {
-            // TODO Auto-generated catch block
-            //e.printStackTrace();
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (FileNotFoundException e) {
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (InstantiationException e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (IllegalAccessException e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (XPathExpressionException e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (NotFound e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (UnsupportedType e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (SAXException e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (ParserConfigurationException e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (OREParserException e) {
-            // TODO Auto-generated catch block
-            log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        } catch (ParseException e) {
-            
         }
     }
     
    
     
-    /*
-     * Get an array of the list of ids of the metacat which has the systemmetadata modification in the range.
-     * 
-     * If since and util are null, it will return all of them.
-     * The first element of the list is the ids except the resource map. The second elements of the list is the ids of the resource map.
-     * The reason to split them is when we index the resource map, we need the index of the documents in the resource map ready.
-     * The last element in the each list has the latest SystemMetadata modification date. But they are not sorted.
+
+    /**
+     * Get an array list of ids of the metacat which has the systemmetadata modification date
+     * in the range. If since and util are null, it will return all of them.
+     * The first element of the list is the ids except the resource map. The second elements of
+     * the list is the ids of the resource map. The reason to split them is when we index the
+     * resource map, we need the index of the documents in the resource map ready.
+     * The last element in the each list has the latest SystemMetadata modification date.
+     * But they are not sorted.
+     * @param since
+     * @param until
+     * @return  the list of pids which should be reindexed
+     * @throws InvalidRequest
+     * @throws InvalidToken
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     * @throws ServiceFailure
+     * @throws FileNotFoundException
      */
-    private List[] getMetacatIds(Date since, Date until) throws InvalidRequest, 
-                        InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, FileNotFoundException {
+    private List[] getMetacatIds(Date since, Date until) throws InvalidRequest,
+                        InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
+                        FileNotFoundException {
         String fileName = "ids-from-hazelcast";
         List<String> resourceMapIds = new ArrayList();
-        //List<String> resourceMapDeletedIds = new ArrayList();
         List<String> otherIds = new ArrayList();
-        //List<String> otherDeletedIds = new ArrayList();
         List[] ids = new List[2];
         ids[FIRST]= otherIds;
         ids[SECOND] = resourceMapIds;
@@ -383,7 +314,8 @@ public class IndexGeneratorTimerTask extends TimerTask {
                     SystemMetadata sysmeta = getSystemMetadata(identifier);
                     if(sysmeta != null) {
                         ObjectFormatIdentifier formatId =sysmeta.getFormatId();
-                        if(formatId != null && formatId.getValue() != null && resourceMapNamespaces != null && isResourceMap(formatId)) {
+                        if(formatId != null && formatId.getValue() != null
+                                && resourceMapNamespaces != null && isResourceMap(formatId)) {
                             resourceMapIds.add(identifier);
                         } else {
                             otherIds.add(identifier);
@@ -395,8 +327,9 @@ public class IndexGeneratorTimerTask extends TimerTask {
         return ids;
     }
     
-    /*
-     * If the specified ObjectFormatIdentifier is a resrouce map namespace.
+    /**
+     * If the specified ObjectFormatIdentifier is a resroucemap namespace.
+     * @param formatId  the given format id
      */
    public static boolean isResourceMap(ObjectFormatIdentifier formatId) {
        return ResourceMapNamespaces.isResourceMap(formatId);
@@ -407,9 +340,9 @@ public class IndexGeneratorTimerTask extends TimerTask {
      * The null maybe is returned if there is no system metadata found.
      * @param id  the specified id.
      * @return the SystemMetadata associated with the id.
-     * @throws ServiceFailure 
+     * @throws ServiceFailure
      */
-    private SystemMetadata getSystemMetadata(String id) throws ServiceFailure {
+    protected static SystemMetadata getSystemMetadata(String id) throws ServiceFailure {
         SystemMetadata metadata = null;
         if(id != null && !id.trim().equals("")) {
             Identifier identifier = new Identifier();
