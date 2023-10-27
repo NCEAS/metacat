@@ -31,7 +31,7 @@ import edu.ucsb.nceas.utilities.FileUtil;
  *
  */
 public class IndexGenerator extends BaseService {
-
+    
     //Those strings are the types of the index tasks.
     //The create is the index task type for the action when a new object was 
     //created. So the solr index will be generated.
@@ -41,28 +41,28 @@ public class IndexGenerator extends BaseService {
     public final static String CREATE_INDEX_TYPE = "create";
     public final static String DELETE_INDEX_TYPE = "delete";
     //this handle for resource map only
-    public final static String SYSMETA_CHANGE_TYPE = "sysmeta";
-
+    public final static String SYSMETA_CHANGE_TYPE = "sysmeta"; 
+    
     public final static int HIGHEST_PRIORITY = 10; // some special cases
     public final static int HIGH_PRIORITY = 6; //use for the special cases
     //use for the operations such as create, update, updateSystem, delete, archive
-    public final static int MEDIUM_PRIORITY = 4;
+    public final static int MEDIUM_PRIORITY = 4; 
     //use for resource map objects in the operations such as create, update, 
     //updateSystem, delete, archive
-    public final static int MEDIUM_RESOURCEMAP_PRIORITY = 3;
+    public final static int MEDIUM_RESOURCEMAP_PRIORITY = 3; 
     //use for the bulk operations such as reindexing the whole corpus 
-    public final static int LOW_PRIORITY = 1;
+    public final static int LOW_PRIORITY = 1; 
     //The header name in the message to store the identifier
-    private final static String HEADER_ID = "id";
+    private final static String HEADER_ID = "id"; 
     //The header name in the message to store the path of the object 
-    private final static String HEADER_PATH = "path";
+    private final static String HEADER_PATH = "path"; 
     //The header name in the message to store the index type
-    private final static String HEADER_INDEX_TYPE = "index_type";
-
+    private final static String HEADER_INDEX_TYPE = "index_type"; 
+    
     private final static String EXCHANGE_NAME = "dataone-index";
     private final static String INDEX_QUEUE_NAME = "index";
     private final static String INDEX_ROUTING_KEY = "index";
-
+    
     // Default values for the RabbitMQ message broker server. The value of 
     //'localhost' is valid for a RabbitMQ server running on a 'bare metal' 
     //server, inside a VM, or within a Kubernetes where Mmetacat and the 
@@ -74,8 +74,8 @@ public class IndexGenerator extends BaseService {
                                       getInt("index.rabbitmq.hostport", 5672);
     private static String RabbitMQusername = Settings.getConfiguration().
                                   getString("index.rabbitmq.username", "guest");
-    private static final String ENV_VAR_RABBITMQ_PASSWORD = "RABBITMQ_PASSWORD";
-    private static String RabbitMQpassword = getRabbitMQPassword();
+    private static String RabbitMQpassword = Settings.getConfiguration().
+                                getString("index.rabbitmq.password", "guest");
     private static int RabbitMQMaxPriority = Settings.getConfiguration().
                                         getInt("index.rabbitmq.max.priority");
     private static Connection RabbitMQconnection = null;
@@ -83,7 +83,7 @@ public class IndexGenerator extends BaseService {
     private static IndexGenerator instance = null;
 
     private static Log logMetacat = LogFactory.getLog("IndexGenerator");
-
+    
     /**
      * Private constructor
      */
@@ -94,12 +94,12 @@ public class IndexGenerator extends BaseService {
           init();
         } catch (ServiceException se) {
           logMetacat.error("IndexGenerator.constructor - "
-                          + "There was a problem creating the IndexGenerator."
+                          + "There was a problem creating the IndexGenerator." 
                           + " The error message was: " + se.getMessage());
           throw se;
         }
     }
-
+    
     /**
      * Initialize the RabbitMQ service
      * @throws ServiceException
@@ -114,9 +114,9 @@ public class IndexGenerator extends BaseService {
         factory.setAutomaticRecoveryEnabled(true);
         // attempt recovery every 10 seconds after a failure
         factory.setNetworkRecoveryInterval(10000);
-        logMetacat.debug("IndexGenerator.init - Set RabbitMQ host to: "
+        logMetacat.debug("IndexGenerator.init - Set RabbitMQ host to: " 
                          + RabbitMQhost);
-        logMetacat.debug("IndexGenerator.init - Set RabbitMQ port to: "
+        logMetacat.debug("IndexGenerator.init - Set RabbitMQ port to: " 
                          + RabbitMQport);
 
         // Setup the 'InProcess' queue with a routing key - messages consumed 
@@ -132,30 +132,30 @@ public class IndexGenerator extends BaseService {
             boolean autoDelete = false;
             Map<String, Object> argus = new HashMap<String, Object>();
             argus.put("x-max-priority", RabbitMQMaxPriority);
-            logMetacat.debug("IndexGenerator.init - Set RabbitMQ max priority to: "
+            logMetacat.debug("IndexGenerator.init - Set RabbitMQ max priority to: " 
                             + RabbitMQMaxPriority);
-            RabbitMQchannel.queueDeclare(INDEX_QUEUE_NAME, durable,
+            RabbitMQchannel.queueDeclare(INDEX_QUEUE_NAME, durable, 
                                         exclusive, autoDelete, argus);
-            RabbitMQchannel.queueBind(INDEX_QUEUE_NAME, EXCHANGE_NAME,
+            RabbitMQchannel.queueBind(INDEX_QUEUE_NAME, EXCHANGE_NAME, 
                                     INDEX_ROUTING_KEY);
-
+            
             // Channel will only send one request for each worker at a time. 
             //This is only for consumer, so we comment it out.
             //see https://www.rabbitmq.com/consumer-prefetch.html
             //RabbitMQchannel.basicQos(1);
-            logMetacat.info("IndexGenerator.init - Connected to RabbitMQ queue "
+            logMetacat.info("IndexGenerator.init - Connected to RabbitMQ queue " 
                             + INDEX_QUEUE_NAME);
         } catch (Exception e) {
             logMetacat.error("IndexGenerator.init - Error connecting to RabbitMQ queue "
                             + INDEX_QUEUE_NAME + " since " + e.getMessage());
             throw new ServiceException(e.getMessage());
         }
-
+       
     }
-
+    
     /**
      * Get the last sub-directory in the path.
-     * If the path is /var/data, data will be returned.
+     * If the path is /var/data, data will be returned. 
      * @param path  the path will be analyzed.
      * @return  the last part of path
      */
@@ -169,11 +169,11 @@ public class IndexGenerator extends BaseService {
             int index = path.lastIndexOf("/");
             lastDir = path.substring(index+1);
         }
-        logMetacat.debug("IndexGenerator.getLastSubdir - the last sub-directory is "
+        logMetacat.debug("IndexGenerator.getLastSubdir - the last sub-directory is " 
                         + lastDir);
         return lastDir;
     }
-
+    
     /**
      * Implement a Singleton pattern using "double checked locking" pattern.
      *
@@ -183,13 +183,13 @@ public class IndexGenerator extends BaseService {
         if (instance == null) {
             synchronized (IndexGenerator.class) {
                 if (instance == null) {
-                    logMetacat.debug("IndexGenerator.getInstance - "
+                    logMetacat.debug("IndexGenerator.getInstance - " 
                                      + "Creating new controller instance");
                     try {
                         instance = new IndexGenerator();
                     } catch (ServiceException e) {
-                        logMetacat.debug("IndexGenerator.getInstance - failed "
-                                       + "to create the IndexGenerator instance"
+                        logMetacat.debug("IndexGenerator.getInstance - failed " 
+                                       + "to create the IndexGenerator instance" 
                                        + " and set it to null.");
                         instance = null;
                     }
@@ -198,29 +198,29 @@ public class IndexGenerator extends BaseService {
         }
         return instance;
     }
-
+    
     /**
      * Publish the given information to the index queue
      * @param id  the identifier of the object which will be indexed
      * @param index_type  the type of indexing, it can be delete, create or sysmeta
      * @param priority  the priority of the index task
      */
-    public void publish(Identifier id, String index_type, int priority)
+    public void publish(Identifier id, String index_type, int priority) 
                                     throws ServiceException, InvalidRequest {
-        if (id == null || id.getValue() == null
+        if (id == null || id.getValue() == null 
                        || id.getValue().trim().equals("")) {
-            throw new InvalidRequest("0000",
-                    "IndexGenerator.publishToIndexQueue - the identifier can't "
+            throw new InvalidRequest("0000", 
+                    "IndexGenerator.publishToIndexQueue - the identifier can't " 
                     + "be null or blank.");
         }
         if (index_type == null || index_type.trim().equals("")) {
-            throw new InvalidRequest("0000", "IndexGenerator.publishToIndexQueue"
+            throw new InvalidRequest("0000", "IndexGenerator.publishToIndexQueue" 
                                  + " - the index type can't be null or blank.");
         }
         if (RabbitMQchannel == null) {
-            throw new ServiceException("IndexGenerator.publishToIndexQueue - "
-                                + "can't publish the index task for "
-                                + id.getValue() + " since the RabbitMQ channel "
+            throw new ServiceException("IndexGenerator.publishToIndexQueue - " 
+                                + "can't publish the index task for " 
+                                + id.getValue() + " since the RabbitMQ channel " 
                 + " is null, which means Metacat cannot connect with RabbitMQ.");
         }
         try {
@@ -236,39 +236,39 @@ public class IndexGenerator extends BaseService {
             if (filePath != null) {
                 headers.put(HEADER_PATH, filePath);
             }
-            AMQP.BasicProperties basicProperties =
+            AMQP.BasicProperties basicProperties = 
                      new AMQP.BasicProperties.Builder()
                     .contentType("text/plain")
                     .deliveryMode(2) // set this message to persistent
                     .priority(priority)
                     .headers(headers)
                     .build();
-            RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY,
+            RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY, 
                                             basicProperties, null);
             logMetacat.info("IndexGenerator.publish - The index task with the "
-                            + "object dentifier " + id.getValue()
-                            + ", the index type " + index_type
-                            + ", the file path " + filePath
-                            + " (null means Metacat doesn't have the object), "
-                            + " the priority " + priority
-                            + " was push into RabbitMQ with the exchange name "
+                            + "object dentifier " + id.getValue() 
+                            + ", the index type " + index_type 
+                            + ", the file path " + filePath 
+                            + " (null means Metacat doesn't have the object), " 
+                            + " the priority " + priority 
+                            + " was push into RabbitMQ with the exchange name " 
                             + EXCHANGE_NAME);
         } catch (Exception e) {
-            throw new ServiceException("IndexGenerator.publishToIndexQueue - "
-                                       + "can't publish the index task for "
-                                       + id.getValue() + " since "
+            throw new ServiceException("IndexGenerator.publishToIndexQueue - " 
+                                       + "can't publish the index task for " 
+                                       + id.getValue() + " since " 
                                        + e.getMessage());
         }
     }
-
+    
     /**
-     * Get the relative file path for the identifier.
-     * This relative path is based on application.datafilepath (for data files)
+     * Get the relative file path for the identifier. 
+     * This relative path is based on application.datafilepath (for data files) 
      * or application.documentfilepath (for document files)
-     * For example, autogen.1.1 is the docid for guid foo.1 and it is a metadata
-     * object. The metadata objects are stored in the path
-     * /var/metacat/document/autogen.1.1.
-     * Since the application.documentfilepath is "/var/metacat/document",
+     * For example, autogen.1.1 is the docid for guid foo.1 and it is a metadata 
+     * object. The metadata objects are stored in the path 
+     * /var/metacat/document/autogen.1.1. 
+     * Since the application.documentfilepath is "/var/metacat/document", 
      * the relative file path will be autogen.1.1.
      * Note, the value can be null since cn doesn't store data objects.
      * @param id  the guid of object
@@ -277,18 +277,18 @@ public class IndexGenerator extends BaseService {
      */
     protected static String getFilePath(Identifier id) throws ServiceException {
         String path = null;
-        if (id == null || id.getValue() == null
+        if (id == null || id.getValue() == null 
                 || id.getValue().trim().equals("")) {
-            throw new ServiceException("IndexGenerator.getFilePath - the "
+            throw new ServiceException("IndexGenerator.getFilePath - the " 
                                        + "identifier can't be null or blank.");
         }
         String docid = null;
         try {
             docid = IdentifierManager.getInstance().getLocalId(id.getValue());
         } catch (McdbDocNotFoundException e) {
-            logMetacat.info("IndexGenerator.getFilePath - Metacat can't find "
-                            + "the docid for the identifier " + id.getValue()
-                            + ". This is possible since CN doesn't harvest data"
+            logMetacat.info("IndexGenerator.getFilePath - Metacat can't find " 
+                            + "the docid for the identifier " + id.getValue() 
+                            + ". This is possible since CN doesn't harvest data" 
                             + " objects at all.");
         } catch (SQLException e) {
            throw new ServiceException(e.getMessage());
@@ -296,11 +296,11 @@ public class IndexGenerator extends BaseService {
         if (docid != null) {
             path = docid;
         }
-        logMetacat.debug("IndexGenerator.getFilePath - The relative file path "
+        logMetacat.debug("IndexGenerator.getFilePath - The relative file path " 
                       + "for the identifier " + id.getValue() + " is " + path);
         return path;
     }
-
+    
     /**
      * This service is not refreshable
      */
@@ -327,7 +327,7 @@ public class IndexGenerator extends BaseService {
             throw new ServiceException(e.getMessage());
         }
     }
-
+    
     /**
      * Get the number of messages in the index queue
      * @return  the number of messages
@@ -336,19 +336,4 @@ public class IndexGenerator extends BaseService {
        return 0;
     }
 
-    private static String getRabbitMQPassword() {
-
-        String rmqPwd = System.getenv(ENV_VAR_RABBITMQ_PASSWORD);
-
-        if (rmqPwd == null || rmqPwd.trim().isEmpty()) {
-            //can't get the password from the env variable, so try to get it from properties file
-            rmqPwd = Settings.getConfiguration().getString("index.rabbitmq.password", "guest");
-            logMetacat.info(
-                "getRabbitMQPassword() - No RabbitMQ Password found in env. variable: \""
-                    + ENV_VAR_RABBITMQ_PASSWORD + "\"; falling back to properties file or default");
-        } else {
-            logMetacat.info("getRabbitMQPassword() - got RabbitMQ Password from env variable: \""
-                                                 + ENV_VAR_RABBITMQ_PASSWORD + "\"");
-        return rmqPwd;
-    }
 }
