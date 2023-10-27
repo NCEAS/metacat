@@ -74,8 +74,8 @@ public class IndexGenerator extends BaseService {
                                       getInt("index.rabbitmq.hostport", 5672);
     private static String RabbitMQusername = Settings.getConfiguration().
                                   getString("index.rabbitmq.username", "guest");
-    private static String RabbitMQpassword = Settings.getConfiguration().
-                                getString("index.rabbitmq.password", "guest");
+    private static final String ENV_VAR_RABBITMQ_PASSWORD = "RABBITMQ_PASSWORD";
+    private static String RabbitMQpassword = getRabbitMQPassword();
     private static int RabbitMQMaxPriority = Settings.getConfiguration().
                                         getInt("index.rabbitmq.max.priority");
     private static Connection RabbitMQconnection = null;
@@ -336,4 +336,20 @@ public class IndexGenerator extends BaseService {
        return 0;
     }
 
+    private static String getRabbitMQPassword() {
+
+        String rmqPwd = System.getenv(ENV_VAR_RABBITMQ_PASSWORD);
+
+        if (rmqPwd == null || rmqPwd.trim().isEmpty()) {
+            //can't get the password from the env variable, so try to get it from properties file
+            rmqPwd = Settings.getConfiguration().getString("index.rabbitmq.password", "guest");
+            logMetacat.info(
+                "getRabbitMQPassword() - No RabbitMQ Password found in env. variable: \""
+                    + ENV_VAR_RABBITMQ_PASSWORD + "\"; falling back to properties file or default");
+        } else {
+            logMetacat.info("getRabbitMQPassword() - got RabbitMQ Password from env variable: \""
+                                + ENV_VAR_RABBITMQ_PASSWORD + "\"");
+        }
+        return rmqPwd;
+    }
 }
