@@ -11,6 +11,7 @@ metacat:
   solr.baseURL: "http://metacatbrooke-solr-headless:8983/solr"
   solr.coreName: dataone_index
   index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
+  index.rabbitmq.password: ${env:rabbitmq-password}
 
 idxworker:
   image:
@@ -27,6 +28,7 @@ idxworker:
   rabbitmq:
     ## TODO: AUTO ASSIGN?
     hostname: metacatbrooke-rabbitmq-headless
+    existingPasswordSecret: metacatbrooke-metacat-secrets
 
   solr:
     ##  NOTE: uses deployment name; TODO: AUTO ASSIGN?
