@@ -26,8 +26,8 @@ ADD "$DISTBIN" /tmp
 
 RUN apt-get update && apt-get install -y --no-install-recommends  iputils-ping lsof      \
         netcat postgresql-client procps python3-bcrypt telnet unzip vim               && \
-    rm -rf /var/lib/apt/lists/*                                                       && \
-    mv /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war ${TC_HOME}/webapps  && \
+    rm -rf /var/lib/apt/lists/  /tmp/metacat-index.war                                && \
+    mv /tmp/metacat.war  /tmp/metacatui.war ${TC_HOME}/webapps                        && \
     chown -R metacat ${TC_HOME}                                                       && \
     ## Tomcat Mods to Extend Allowed Character Set \
     ## - Encoded forward slashes (%2f):
