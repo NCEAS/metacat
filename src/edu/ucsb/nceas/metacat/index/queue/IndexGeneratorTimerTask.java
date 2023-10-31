@@ -67,8 +67,6 @@ public class IndexGeneratorTimerTask extends TimerTask {
     public static final int MAXWAITNUMBER = 180;
     private static final String HTTP = "http://";
     private static final String MNAPPENDIX = "/d1/mn";
-    public static final String WAITIMEPOPERTYNAME = "index.regenerate.start.waitingtime";
-    public static final String MAXATTEMPTSPROPERTYNAME = "index.regenerate.start.maxattempts";
     
     private static Log log = LogFactory.getLog(IndexGeneratorTimerTask.class);
     private static List<String> resourceMapNamespaces = null;

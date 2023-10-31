@@ -42,9 +42,6 @@ public class FailedIndexResubmitTimerTask extends TimerTask {
 
     public static final int WAITTIME = 10000;
     public static final int MAXWAITNUMBER = 180;
-    public static final String WAITIMEPOPERTYNAME = "index.regenerate.start.waitingtime";
-    public static final String MAXATTEMPTSPROPERTYNAME = "index.regenerate.start.maxattempts";
-    
     private static Log log = LogFactory.getLog(FailedIndexResubmitTimerTask.class);
     //if this task need to reindex the previously failed index task
     private boolean needReindexFailedEvent = true;
