@@ -28,9 +28,7 @@ package edu.ucsb.nceas.metacat;
 
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -55,6 +53,7 @@ import org.dataone.configuration.Settings;
 
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
+import edu.ucsb.nceas.metacat.index.queue.FailedIndexResubmitTimerTask;
 import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.index.queue.IndexGeneratorTimerTask;
 import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPluginManager;
@@ -250,7 +249,7 @@ import edu.ucsb.nceas.utilities.UtilException;
 public class MetaCatServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
-	private Timer timer = null;
+	private static Timer timer = null;
     private static boolean _firstHalfInitialized = false;
     private static boolean _fullyInitialized = false;
     private MetacatHandler handler = null;
@@ -767,18 +766,35 @@ public class MetaCatServlet extends HttpServlet {
 	     * If the property of "index.regenerate.interval" is less than 0, the thread would NOT run.
 	     */
 	    private static void startIndexReGenerator() {
-	        long period = Settings.getConfiguration().getLong("index.regenerate.interval", 86400000); //milliseconds
-	        if(period > 0) {
-                String timeStrOfFirstRun = Settings.getConfiguration().getString("index.regenerate.firsttime", "11:50 PM");
+	        boolean regenerateIndex = Settings.getConfiguration()
+	                                    .getBoolean("index.regenerate.sincelastProcessDate", false);
+	        long period = Settings.getConfiguration()
+	                            .getLong("index.regenerate.interval", 86400000); //milliseconds
+	        if(regenerateIndex && period > 0) {
+                String timeStrOfFirstRun = Settings.getConfiguration()
+                                              .getString("index.regenerate.firsttime", "11:50 PM");
                 Date timeOfFirstRun = determineTimeOfFirstRunRegeneratingThread(timeStrOfFirstRun);
                 IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask();
-                Timer indexTimer = new Timer();
-                logMetacat.debug("MetacatServlet.startIndexGenerate - the " 
-                            + "first time for running the thread to reindex "
-                            + "the failed objects is ==============" 
-                            + timeOfFirstRun.toString() 
-                            + " and the period is " + period);
-                indexTimer.schedule(generator, timeOfFirstRun, period);
+                timer.schedule(generator, timeOfFirstRun, period);
+                logMetacat.info("MetacatServlet.startIndexGenerate - the " 
+                        + "first time for running the thread to reindex "
+                        + "the objects is "
+                        + timeOfFirstRun.toString()
+                        + " and the period is " + period);
+            }
+            boolean regneratedFailedIndex = Settings.getConfiguration()
+                                                .getBoolean("index.regenerate.failedObject", true);
+            long delay = Settings.getConfiguration()
+                                            .getLong("index.regenerate.failedTask.delay", 1200000);
+            long failedInterval = Settings.getConfiguration()
+                                          .getLong("index.regenerate.failedTask.interval", 3600000);
+            if (regneratedFailedIndex && failedInterval > 0) {
+                FailedIndexResubmitTimerTask task = new FailedIndexResubmitTimerTask();
+                timer.schedule(task, delay, failedInterval);
+                logMetacat.info("MetacatServlet.startIndexGenerate - the " 
+                        + "delay for running the thread to reindex "
+                        + "the failed objects is " + delay
+                        + " and the period is " + failedInterval);
 	        }
 	    }
 	    
