@@ -108,11 +108,6 @@ if [[ $DEVTOOLS == "true" ]]; then
 
 elif [[ $1 = "catalina.sh" ]]; then
 
-    # Expand the metacat-index.war
-    if [ ! -d "${TC_HOME}"/webapps/metacat-index ]; then
-        unzip "${TC_HOME}"/webapps/metacat-index.war -d "${TC_HOME}"/webapps/metacat-index
-    fi
-
     # Expand the metacatui.war
     if [ ! -d "${TC_HOME}"/webapps/metacatui ]; then
         unzip "${TC_HOME}"/webapps/metacatui.war -d "${TC_HOME}"/webapps/metacatui
