@@ -129,6 +129,11 @@ metacat:
   ##
   solr.baseURL: http://host.docker.internal:8983/solr
 
+  ## @param metacat.solr.adminUser the username for connecting to the RabbitMQ instance
+  ## at `index.rabbitmq.hostname`.
+  ##
+  solr.adminUser: &solrAdminUsername metacat-solr-admin
+
   ## @param metacat.replication.logdir Location for the replication logs
   ##
   replication.logdir: /var/metacat/logs
@@ -672,12 +677,17 @@ tomcat:
     min: ""
     max: ""
 
+## @section dataone_indexer Sub-Chart Configuration
 idxworker:
   enabled: true
   image:
     repository: ghcr.io/dataoneorg/dataone-index-worker
   idxworker: {}
-  solr: {}
+  solr:
+    auth:
+      adminUsername: *solrAdminUsername
+      ## (must contain a value for `SOLR_ADMIN_PASSWORD` key)
+      existingSecret: *passwordSecretName
   rabbitmq:
     auth:
       username: *rmqUsername

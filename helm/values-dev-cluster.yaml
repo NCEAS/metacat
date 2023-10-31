@@ -41,8 +41,6 @@ idxworker:
           defaultMode: 0777
     auth:
       enabled: false
-#      adminUsername: ""
-#      adminPassword: ""
 
 persistence:
   storageClass: "-"
