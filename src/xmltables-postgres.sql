@@ -47,77 +47,6 @@ INSERT INTO xml_replication (server, replicate, datareplicate, hub) VALUES ('loc
 
 
 /*
- * Nodes -- table to store XML Nodes (both elements and attributes)
- */
-CREATE SEQUENCE xml_nodes_id_seq;
-CREATE TABLE xml_nodes (
-	nodeid INT8 default nextval('xml_nodes_id_seq'),
-					-- the unique node id (pk)
-	nodeindex INT8,		-- order of nodes within parent
-	nodetype VARCHAR(20),	-- type (DOCUMENT, COMMENT, PI,
-				-- ELEMENT, ATTRIBUTE, TEXT)
-	nodename VARCHAR(250),	-- the name of an element or attribute
-        nodeprefix VARCHAR(50), -- the namespace prefix of the node
-	nodedata TEXT, -- the data for this node (e.g.,
-				-- for TEXT it is the content)
-	parentnodeid INT8,	-- index of the parent of this node
-	rootnodeid INT8,	-- index of the root node of this tree
-	docid VARCHAR(250),	-- index to the document id
-	date_created DATE,
-	date_updated DATE,
-    nodedatanumerical FLOAT8, -- the data for this node if it is a number
-    nodedatadate TIMESTAMP, -- the data for this node if it is a date
-   CONSTRAINT xml_nodes_pk PRIMARY KEY (nodeid),
-   CONSTRAINT xml_nodes_root_fk
-		FOREIGN KEY (rootnodeid) REFERENCES xml_nodes,
-   CONSTRAINT xml_nodes_parent_fk
-		FOREIGN KEY (parentnodeid) REFERENCES xml_nodes
-);
-/*
- * Indexes of rootnodeid, parentnodeid, and nodename in xml_nodes
- */
-CREATE INDEX xml_nodes_idx1 ON xml_nodes (rootnodeid);
-CREATE INDEX xml_nodes_idx2 ON xml_nodes (parentnodeid);
-CREATE INDEX xml_nodes_idx3 ON xml_nodes (nodename);
-CREATE INDEX xml_nodes_idx4 ON xml_nodes (docid);
-
-
-/*
- * Table for storing the nodes for the old revisions of the document and the deleted documents
- */
-CREATE TABLE xml_nodes_revisions (
-        nodeid INT8,            -- the unique node id (pk)
-        nodeindex INT8,         -- order of nodes within parent
-        nodetype VARCHAR(20),   -- type (DOCUMENT, COMMENT, PI,
-                                -- ELEMENT, ATTRIBUTE, TEXT)
-        nodename VARCHAR(250),  -- the name of an element or attribute
-        nodeprefix VARCHAR(50), -- the namespace prefix of the node
-        nodedata TEXT, -- the data for this node (e.g.,
-                                -- for TEXT it is the content)
-        parentnodeid INT8,      -- index of the parent of this node
-        rootnodeid INT8,        -- index of the root node of this tree
-        docid VARCHAR(250),     -- index to the document id
-        date_created DATE,
-        date_updated DATE,
-        nodedatanumerical FLOAT8, -- the data for this node if it is a number
-        nodedatadate TIMESTAMP, -- the data for this node if it is a date
-   CONSTRAINT xml_nodes_revisions_pk PRIMARY KEY (nodeid),
-   CONSTRAINT xml_nodes_revisions_root_fk
-                FOREIGN KEY (rootnodeid) REFERENCES xml_nodes_revisions,
-   CONSTRAINT xml_nodes_revisions_parent_fk
-                FOREIGN KEY (parentnodeid) REFERENCES xml_nodes_revisions
-);
-                                                                                                                                                             
-/*
- * Indexes of rootnodeid, parentnodeid, and nodename in xml_nodes_revisions
- */
-CREATE INDEX xml_nodes_revisions_idx1 ON xml_nodes_revisions (rootnodeid);
-CREATE INDEX xml_nodes_revisions_idx2 ON xml_nodes_revisions (parentnodeid);
-CREATE INDEX xml_nodes_revisions_idx3 ON xml_nodes_revisions (nodename);
-                                                                                                                                                             
-
-
-/*
  * XML Catalog -- table to store all external sources for XML documents
  */
 CREATE SEQUENCE xml_catalog_id_seq;
@@ -160,8 +89,6 @@ CREATE TABLE xml_documents (
      CONSTRAINT xml_documents_pk PRIMARY KEY (docid),
      CONSTRAINT xml_documents_rep_fk
      		FOREIGN KEY (server_location) REFERENCES xml_replication,
-    CONSTRAINT xml_documents_root_fk
-		FOREIGN KEY (rootnodeid) REFERENCES xml_nodes,
    CONSTRAINT xml_documents_catalog_fk
 		FOREIGN KEY (catalog_id) REFERENCES xml_catalog
 );
@@ -171,8 +98,8 @@ CREATE TABLE xml_documents (
  */
 CREATE INDEX xml_documents_idx1 ON xml_documents (docid, doctype);
 CREATE INDEX xml_documents_idx2 ON xml_documents (lower(user_owner));
-CREATE INDEX xml_documents_idx3 ON xml_documents (rootnodeid);
 CREATE INDEX xml_documents_idx5 ON xml_documents (docid, rev);
+CREATE INDEX xml_documents_idx6 ON xml_documents (docid);
 
 /*
  * Revised Documents -- table to store XML documents saved after an UPDATE
@@ -197,8 +124,6 @@ CREATE TABLE xml_revisions (
    CONSTRAINT xml_revisions_pk PRIMARY KEY (revisionid),
    CONSTRAINT xml_revisions_rep_fk
 		FOREIGN KEY (server_location) REFERENCES xml_replication,
-   CONSTRAINT xml_revisions_root_fk
-		FOREIGN KEY (rootnodeid) REFERENCES xml_nodes_revisions,
    CONSTRAINT xml_revisions_catalog_fk
 		FOREIGN KEY (catalog_id) REFERENCES xml_catalog
 );
@@ -233,29 +158,6 @@ CREATE INDEX xml_access_idx6 on xml_access(guid);
  * ALTER TABLE xml_access ADD COLUMN guid text;
 */
 
-/*
- * Index of Nodes -- table to store precomputed paths through tree for
- * quick searching in structured searches
- */
-CREATE TABLE xml_index (
-	nodeid INT8,		-- the unique node id
-	path TEXT,	-- precomputed path through tree
-	docid VARCHAR(250),	-- index to the document id
-	doctype VARCHAR(100),	-- public id indicating document type
-        parentnodeid INT8,      -- id of the parent of the node represented
-				-- by this row
-   CONSTRAINT xml_index_pk PRIMARY KEY (nodeid,path),
-   CONSTRAINT xml_index_nodeid_fk FOREIGN KEY (nodeid) REFERENCES xml_nodes,
-   CONSTRAINT xml_index_docid_fk
-		FOREIGN KEY (docid) REFERENCES xml_documents
-);
-
-/*
- * Index of the paths in xml_index
- */
-CREATE INDEX xml_index_idx1 ON xml_index (path);
-CREATE INDEX xml_index_idx2 ON xml_index (docid);
-CREATE INDEX xml_index_idx3 ON xml_index (nodeid);
 
 CREATE SEQUENCE xml_relation_id_seq;
 CREATE TABLE xml_relation (
@@ -368,51 +270,6 @@ CREATE TABLE smReplicationStatus (
 );
 
 /*
- * accesssubtree -- table to store access subtree info
- */
-CREATE TABLE xml_accesssubtree (
-	docid		VARCHAR(250),	-- the document id #
-  rev 		INT8 default 1, --the revision number of the docume
-  controllevel VARCHAR(50), -- the level it control -- document or subtree
-  subtreeid VARCHAR(250), -- the subtree id
-	startnodeid	INT8,	-- the start node id of access subtree
-  endnodeid INT8, -- the end node if of access subtree
-  CONSTRAINT xml_accesssubtree_docid_fk
-		FOREIGN KEY (docid) REFERENCES xml_documents
-);
-
-/*
- * Returnfields -- table to store combinations of returnfields requested
- *		    and the number of times this table is accessed
- */
-CREATE SEQUENCE xml_returnfield_id_seq;
-CREATE TABLE xml_returnfield (
-        returnfield_id     INT8 default nextval('xml_returnfield_id_seq'),   -- the id for this returnfield entry
-        returnfield_string VARCHAR(2000),                                    -- the returnfield string
-        usage_count        INT8,                                             -- the number of times this string has been requested
-        CONSTRAINT xml_returnfield_pk PRIMARY KEY (returnfield_id)
-);
-CREATE INDEX xml_returnfield_idx1 ON xml_returnfield(returnfield_string);
-
-/*
- * Queryresults -- table to store queryresults for a given docid
- * and returnfield_id
- */
-CREATE SEQUENCE xml_queryresult_id_seq;
-CREATE TABLE xml_queryresult(
-  queryresult_id INT8 default nextval('xml_queryresult_id_seq'), -- id for this entry
-  returnfield_id       INT8,          -- id for the returnfield corresponding to this entry
-  docid                VARCHAR(250),  -- docid of the document
-  queryresult_string   TEXT, -- resultant text generated for this docid and given
-  				       -- returnfield
-  CONSTRAINT xml_queryresult_pk PRIMARY KEY (queryresult_id),
-  CONSTRAINT xml_queryresult_searchid_fk
-               FOREIGN KEY (returnfield_id) REFERENCES xml_returnfield
-);
-
-CREATE INDEX xml_queryresult_idx1 ON xml_queryresult (returnfield_id, docid);
-
-/*
  * Logging -- table to store metadata and data access log
  */
 CREATE SEQUENCE access_log_id_seq;
@@ -439,35 +296,6 @@ CREATE TABLE index_event (
 	event_date TIMESTAMP
 );
 
-/*
- * Table for indexing the paths specified the administrator in metacat.properties
- */
-
-CREATE SEQUENCE xml_path_index_id_seq;
-CREATE TABLE xml_path_index (
-    nodeid INT8  default nextval('xml_path_index_id_seq'),
-        docid VARCHAR(250),     -- the document id
-        path TEXT,     -- precomputed path through tree
-        nodedata TEXT, -- the data for this node (e.g.,
-                                -- for TEXT it is the content)
-        nodedatanumerical FLOAT8, -- the data for this node if it is a number
-        nodedatadate TIMESTAMP, -- the data for this node if it is a date
-        parentnodeid INT8,      -- id of the parent of the node represented
-                                -- by this row
-   CONSTRAINT xml_path_index_pk PRIMARY KEY (nodeid),
-   CONSTRAINT xml_path_index_docid_fk
-                FOREIGN KEY (docid) REFERENCES xml_documents
-);
-
-/*
- * Indexes of path, nodedata and nodedatanumerical in xml_path_index
- */
-CREATE INDEX xml_path_index_idx1 ON xml_path_index (path);
-CREATE INDEX xml_path_index_idx2 ON xml_path_index (nodedata);
-CREATE INDEX xml_path_index_idx3 ON xml_path_index (nodedatanumerical);
-CREATE INDEX xml_path_index_idx4 ON xml_path_index (upper(nodedata));
-CREATE INDEX xml_path_index_idx5 ON xml_path_index (nodedatadate);
-CREATE INDEX xml_path_index_idx6 ON xml_path_index (docid);
 
 /*
  * harvest_site_schedule -- table to store harvest sites and schedule info

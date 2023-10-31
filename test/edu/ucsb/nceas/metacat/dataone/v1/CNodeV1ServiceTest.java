@@ -144,7 +144,7 @@ public class CNodeV1ServiceTest extends D1NodeV1ServiceTest {
         }
 	}
 	
-	public void testGetFormat() {
+	public void testGetFormat() throws Exception {
 	 // make sure we are set up
 	    setUpFormats();
 	    

@@ -2,17 +2,14 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import edu.ucsb.nceas.metacat.DBQuery;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
-import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
-import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.doi.DOIException;
@@ -2276,32 +2273,8 @@ public class MNodeService extends D1NodeService
         if (engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
             if (!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine " + engine
-                    + " hasn't been implemented or has been disabled.");
+                    + " is not supported any more.");
             }
-            String user = Constants.SUBJECT_PUBLIC;
-            String[] groups = null;
-            if (session != null) {
-                user = session.getSubject().getValue();
-            }
-            if (subjects != null) {
-                List<String> groupList = new ArrayList<String>();
-                for (Subject subject : subjects) {
-                    groupList.add(subject.getValue());
-                }
-                groups = groupList.toArray(new String[0]);
-            }
-            try {
-                DBQuery queryobj = new DBQuery();
-                String results = queryobj.performPathquery(query, user, groups);
-                ContentTypeByteArrayInputStream ctbais = new ContentTypeByteArrayInputStream(
-                    results.getBytes(MetaCatServlet.DEFAULT_ENCODING));
-                ctbais.setContentType("text/xml");
-                return ctbais;
-
-            } catch (Exception e) {
-                throw new ServiceFailure("Pathquery error", e.getMessage());
-            }
-
         } else if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
             if (!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine " + engine

@@ -942,15 +942,15 @@ public class MetacatClient implements Metacat {
         try {
         	InputStream result = sendParameters(prop);
             response = IOUtils.toString(result, encoding);
+            // Check for an error condition
+            if (response.indexOf("<error>") != -1) {
+                throw new MetacatException(response);
+            }
             //parseRevisionResponse will return null if there is an
             //error that it can't handle
             String revStr = parserRevisionResponse(response);
             Integer revObj = new Integer(revStr);
             rev = revObj.intValue();
-            // Check for an error condition
-            if (response.indexOf("<error>") != -1 && revStr == null) {
-                throw new MetacatException(response);
-            }
         } catch (Exception e) {
             throw new MetacatException(e.getMessage());
         }
