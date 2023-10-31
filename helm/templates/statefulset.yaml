@@ -20,6 +20,7 @@ spec:
       labels:
         {{- include "metacat.selectorLabels" . | nindent 8 }}
     spec:
+      {{- if .Values.idxworker.enabled }}
       initContainers:
         - name: init-solr-metacat-dep
           image: busybox:latest
@@ -39,6 +40,7 @@ spec:
               until nc -z {{ .Values.idxworker.rabbitmq.hostname }}
               {{ .Values.idxworker.rabbitmq.hostport}} > /dev/null; do
               echo waiting for RabbitMQ; sleep 1; done
+      {{ end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
