@@ -43,22 +43,3 @@ if __name__ == "__main__":
 
     # Overwrite the web xml file
     tree.write(web_xml_file)
-
-    # Update the metacat.properties.path in the metaca-index application
-    metacat_index_web_xml = "/usr/local/tomcat/webapps/metacat-index/WEB-INF/web.xml"
-    tree = ET.parse(metacat_index_web_xml)
-    root = tree.getroot()
-
-    # Iterate over the servlet-mappings and change the url pattern to the
-    # new application context
-    mappings = root.findall("./context-param", javaee)
-    for mapping in mappings:
-
-        param_name = mapping.find("param-name", javaee)
-        param_value = mapping.find("param-value", javaee)
-        if param_name is not None and param_name.text == "metacat.properties.path":
-            param_value.text = str(param_value.text.replace("/{}/WEB-INF".format(old_context), "/{}/WEB-INF".format(new_context)))
-            break
-
-    # Overwrite the web xml file
-    tree.write(metacat_index_web_xml)
