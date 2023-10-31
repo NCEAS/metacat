@@ -5,9 +5,6 @@ helps scientists find, understand and effectively use data sets they manage or t
 created by others. For more details, see https://github.com/NCEAS/metacat
 
 ## TL;DR
-For now, you need to have an existing instance of
-[solr](https://solr.apache.org/downloads.html#solr-8112) installed, running and
-[configured for metacat](https://knb.ecoinformatics.org/knb/docs/install.html#solr-server).
 Starting in the root directory of the `metacat` repo:
 
 ```shell
@@ -20,7 +17,10 @@ $ pushd docker ; ./build.sh ; popd
 # 3. FIRST TIME ONLY: add your credentials to helm/admin/secrets.yaml, and add to cluster
 $ vim helm/admin/secrets.yaml    ## follow the instructions in this file
 
-# 4. deploy and enjoy! Assuming your release name is "mc" (see Note below):
+# 4. Replace the occurrences of ${RELEASE_NAME} in values.yaml
+#    (see comments at beginning of values.yaml for easy ways to do this)
+
+# 5. deploy and enjoy! Assuming your release name is "mc" (see Note below):
 $ helm install mc ./helm
 ```
 
@@ -190,7 +190,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `postgresql.enabled`                           | enable the postgresql sub-chart                         | `true`                             |
 | `postgresql.auth.username`                     | Username for accessing the database used by metacat     | `metacat`                          |
 | `postgresql.auth.database`                     | The name of the database used by metacat.               | `metacat`                          |
-| `postgresql.auth.existingSecret`               | Secrets location for postgres password (RELEASE PREFIX) | `mc-secrets`                       |
+| `postgresql.auth.existingSecret`               | Secrets location for postgres password (RELEASE PREFIX) | `${RELEASE_NAME}-metacat-secrets`  |
 | `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password                | `POSTGRES_PASSWORD`                |
 | `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                     | `POSTGRES_PASSWORD`                |
 | `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication                | (See [values.yaml](./values.yaml)) |
@@ -256,9 +256,9 @@ template that you can complete and apply using `kubectl` - see file comments for
 remember to NEVER ADD SECRETS TO GITHUB!
 
 > **Important**:
-> 1. The deployed Secrets name includes the release name as a prefix, (e.g. `my-release-secrets`)
-> so it's important to ensure that the secrets name matches the release name referenced whenever
-> you use `helm` commands.
+> 1. The deployed Secrets name includes the release name as a prefix,
+> (e.g. `my-release-metacat-secrets`), so it's important to ensure that the secrets name matches
+> the release name referenced whenever you use `helm` commands.
 > 2. The parameter `postgresql.auth.existingSecret` in [values.yaml](./values.yaml) must be set to
 > match the name of these installed secrets (which will change if the release name is changed).
 

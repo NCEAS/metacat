@@ -26,15 +26,12 @@
 
 package edu.ucsb.nceas.metacat;
 
-import java.io.File;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Calendar;
@@ -43,30 +40,23 @@ import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.Timer;
-import java.util.Vector;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
-import org.dataone.service.types.v1.Checksum;
 
-import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
-import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
 import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.index.queue.IndexGeneratorTimerTask;
-import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPlugin;
 import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPluginManager;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
@@ -74,20 +64,13 @@ import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
-import edu.ucsb.nceas.metacat.shared.BaseException;
-import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.spatial.SpatialHarvester;
 import edu.ucsb.nceas.metacat.startup.K8sAdminInitializer;
-import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
-import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.metacat.util.ErrorSendingErrorException;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
-import edu.ucsb.nceas.metacat.util.ResponseUtil;
 import edu.ucsb.nceas.metacat.util.SessionData;
-import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -370,24 +353,6 @@ public class MetaCatServlet extends HttpServlet {
 				logMetacat.info("MetaCatServlet.initSecondHalf - Finish to correct eml201 documents");
 			}
 
-			// Index the paths specified in the metacat.properties
-			checkIndexPaths();
-
-			// initiate the indexing Queue
-			IndexingQueue.getInstance();
-
-			// start the IndexingThread if indexingTimerTaskTime more than 0.
-			// It will index all the documents not yet indexed in the database
-			int indexingTimerTaskTime = Integer.parseInt(PropertyService
-					.getProperty("database.indexingTimerTaskTime"));
-			int delayTime = Integer.parseInt(PropertyService
-					.getProperty("database.indexingInitialDelay"));
-
-			if (indexingTimerTaskTime > 0) {
-				timer = new Timer();
-				timer.schedule(new IndexingTimerTask(), delayTime, indexingTimerTaskTime);
-			}
-			
 			/*
 			 * If spatial option is turned on and set to regenerate the spatial
 			 * cache on restart, trigger the harvester regeneratation method
@@ -438,6 +403,7 @@ public class MetaCatServlet extends HttpServlet {
 			SessionService.getInstance().unRegisterAllSessions();
 			
 	         //Initialize Metacat Handler
+			timer = new Timer();
             handler = new MetacatHandler(timer);
 
 			// Turn on sitemaps if appropriate
@@ -496,7 +462,6 @@ public class MetaCatServlet extends HttpServlet {
             logMetacat.warn("MetaCatServlet.destroy - Destroying MetacatServlet");
         } finally {
             timer.cancel();
-            IndexingQueue.getInstance().setMetacatRunning(false);
             DBConnectionPool.release();
         }
     }
@@ -515,155 +480,6 @@ public class MetaCatServlet extends HttpServlet {
         
         // Process the data and send back the response
         handleGetOrPost(request, response);
-    }
-    
-    /**
-	 * Index the paths specified in the metacat.properties
-	 */
-    private void checkIndexPaths() {
-    	logMetacat.debug("MetaCatServlet.checkIndexPaths - starting....");
-    	boolean needCheck = false;
-    	try {
-    	    needCheck = Boolean.parseBoolean(PropertyService.getProperty("dbquery.init.check.newpath"));
-    	} catch (Exception e) {
-    	    logMetacat.warn("MetaCatServlet.checkIndexPaths - we can't get the property value of \"dbquery.init.check.newpath\" and the default value \"false\" will be used since " + e.getMessage());
-    	}
-    	logMetacat.info("MetaCatServlet.checkIndexPaths - the final of needCheckInexPath value is " + needCheck);
-    	if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE) || !needCheck) {
-    		logMetacat.info("MetaCatServlet.checkIndexPaths - the pathquery is disabled or the property \"dbquery.init.check.newpath\" is set false, so it does nothing for checking path_index");
-            return;
-        }
-    	logMetacat.info("MetaCatServlet.checkIndexPaths - after checking is the pathquery enabled or not...");
-        
-
-        Vector<String> pathsForIndexing = null;
-        try {  
-        	pathsForIndexing = SystemUtil.getPathsForIndexing();
-        }
-        catch (MetacatUtilException ue) {
-        	pathsForIndexing = null;
-            logMetacat.error("MetaCatServlet.checkIndexPaths - not find index paths.  Setting " 
-            		+ "pathsForIndexing to null: " + ue.getMessage());
-        }
-        
-        if (pathsForIndexing != null && !pathsForIndexing.isEmpty()) {
-            
-            logMetacat.debug("MetaCatServlet.checkIndexPaths - Indexing paths specified in metacat.properties....");
-            
-            DBConnection conn = null;
-            int serialNumber = -1;
-            PreparedStatement pstmt = null;
-            PreparedStatement pstmt1 = null;
-            ResultSet rs = null;
-            
-            for (String pathIndex : pathsForIndexing) {
-                logMetacat.debug("MetaCatServlet.checkIndexPaths - Checking if '" + pathIndex  + "' is indexed.... ");
-                
-                try {
-                    //check out DBConnection
-                    conn = DBConnectionPool.
-                            getDBConnection("MetaCatServlet.checkIndexPaths");
-                    serialNumber = conn.getCheckOutSerialNumber();
-                    
-                    pstmt = conn.prepareStatement(
-                            "SELECT * FROM xml_path_index " + "WHERE path = ?");
-                    pstmt.setString(1, pathIndex);
-                    
-                    pstmt.execute();
-                    rs = pstmt.getResultSet();
-                    
-                    if (!rs.next()) {
-                        logMetacat.debug("MetaCatServlet.checkIndexPaths - not indexed yet.");
-                        rs.close();
-                        pstmt.close();
-                        conn.increaseUsageCount(1);
-                        
-                        logMetacat.debug("MetaCatServlet.checkIndexPaths - Inserting following path in xml_path_index: "
-                                + pathIndex);
-                        if(pathIndex.indexOf("@")<0){
-                            pstmt = conn.prepareStatement("SELECT DISTINCT n.docid, "
-                                    + "n.nodedata, n.nodedatanumerical, n.nodedatadate, n.parentnodeid"
-                                    + " FROM xml_nodes n, xml_index i WHERE"
-                                    + " i.path = ? and n.parentnodeid=i.nodeid and"
-                                    + " n.nodetype LIKE 'TEXT' order by n.parentnodeid");
-                        } else {
-                            pstmt = conn.prepareStatement("SELECT DISTINCT n.docid, "
-                                    + "n.nodedata, n.nodedatanumerical, n.nodedatadate, n.parentnodeid"
-                                    + " FROM xml_nodes n, xml_index i WHERE"
-                                    + " i.path = ? and n.nodeid=i.nodeid and"
-                                    + " n.nodetype LIKE 'ATTRIBUTE' order by n.parentnodeid");
-                        }
-                        pstmt.setString(1, pathIndex);
-                        pstmt.execute();
-                        rs = pstmt.getResultSet();
-                        
-                        int count = 0;
-                        logMetacat.debug("MetaCatServlet.checkIndexPaths - Executed the select statement for: "
-                                + pathIndex);
-                        
-                        try {
-                            while (rs.next()) {
-                                
-                                String docid = rs.getString(1);
-                                String nodedata = rs.getString(2);
-                                float nodedatanumerical = rs.getFloat(3);
-                                Timestamp nodedatadate = rs.getTimestamp(4);
-                                int parentnodeid = rs.getInt(5);
-                                
-                                if (!nodedata.trim().equals("")) {
-                                    pstmt1 = conn.prepareStatement(
-                                            "INSERT INTO xml_path_index"
-                                            + " (docid, path, nodedata, "
-                                            + "nodedatanumerical, nodedatadate, parentnodeid)"
-                                            + " VALUES (?, ?, ?, ?, ?, ?)");
-                                    
-                                    pstmt1.setString(1, docid);
-                                    pstmt1.setString(2, pathIndex);
-                                    pstmt1.setString(3, nodedata);
-                                    pstmt1.setFloat(4, nodedatanumerical);
-                                    pstmt1.setTimestamp(5, nodedatadate);
-                                    pstmt1.setInt(6, parentnodeid);
-                                    
-                                    pstmt1.execute();
-                                    pstmt1.close();
-                                    
-                                    count++;
-                                    
-                                }
-                            }
-                        } catch (Exception e) {
-                            logMetacat.error("MetaCatServlet.checkIndexPaths - Exception:" + e.getMessage());
-                            e.printStackTrace();
-                        }
-                        
-                        rs.close();
-                        pstmt.close();
-                        conn.increaseUsageCount(1);
-                        
-                        logMetacat.info("MetaCatServlet.checkIndexPaths - Indexed " + count + " records from xml_nodes for '"
-                                + pathIndex + "'");
-                        
-                    } else {
-                        logMetacat.debug("MetaCatServlet.checkIndexPaths - already indexed.");
-                    }
-                    
-                    rs.close();
-                    pstmt.close();
-                    conn.increaseUsageCount(1);
-                    
-                } catch (Exception e) {
-                    logMetacat.error("MetaCatServlet.checkIndexPaths - Error in MetaCatServlet.checkIndexPaths: "
-                            + e.getMessage());
-                }finally {
-                    //check in DBonnection
-                    DBConnectionPool.returnDBConnection(conn, serialNumber);
-                }
-                
-                
-            }
-            
-            logMetacat.debug("MetaCatServlet.checkIndexPaths - Path Indexing Completed");
-        }
     }
     
     /**
@@ -731,9 +547,6 @@ public class MetaCatServlet extends HttpServlet {
 			String ctype = request.getContentType();
 			
 			if (ctype != null && ctype.startsWith("multipart/form-data")) {
-			    if(isReadOnly(response)) {
-			        return;
-			    }
 				handler.handleMultipartForm(request, response);
 				return;
 			} 
@@ -750,52 +563,9 @@ public class MetaCatServlet extends HttpServlet {
 			// e.g., http://localhost:8180/metacat/metacat/test.1.1/knb
 			String pathInfo = request.getPathInfo();
 			if (pathInfo != null) {
-				String[] path = pathInfo.split("/");
-				if (path.length > 1) {
-					String docidToRead = path[1];
-					String docs[] = new String[1];
-					docs[0] = docidToRead;
-					logMetacat.debug("MetaCatServlet.handleGetOrPost - READING DOCID FROM PATHINFO: " + docs[0]);
-					params.put("docid", docs);
-					String skin = null;
-					if (path.length > 2) {
-						skin = path[2];
-						String skins[] = new String[1];
-						skins[0] = skin;
-						params.put("qformat", skins);
-					}
-					
-					// attempt to redirect to metacatui (#view/{pid}) if not getting the raw XML
-					// see: https://projects.ecoinformatics.org/ecoinfo/issues/6546
-					if (skin != null && !skin.equals("xml")) {
-						String uiContext = PropertyService.getProperty("ui.context");
-						String docidNoRev = DocumentUtil.getSmartDocId(docidToRead);
-						if (docidNoRev != null) {
-						    int rev = DocumentUtil.getRevisionFromAccessionNumber(docidToRead);
-	                        String pid = null;
-	                        try {
-	                            pid = IdentifierManager.getInstance().getGUID(docidNoRev, rev);
-	                            response.sendRedirect(SystemUtil.getServerURL() + "/" + uiContext + "/#view/" + pid );
-	                            return;
-	                        } catch (McdbDocNotFoundException nfe) {
-	                            logMetacat.warn("Could not locate PID for docid: " + docidToRead, nfe);
-	                        }
-						} else {
-						    PrintWriter out = response.getWriter();
-                            response.setContentType("text/xml");
-                            out.println("<?xml version=\"1.0\"?>");
-                            out.println("<error>");
-                            out.println("The docid " + docidToRead + " doesn't match the format and doesn't exist.");
-                            out.println("</error>");
-                            out.close();
-                            return;
-						}
-					}
-					
-					// otherwise carry on as usual
-					handler.handleReadAction(params, request, response, "public", null, null);
-					return;
-				}
+				// otherwise carry on as usual
+				handler.handleReadAction(params, request, response, "public", null, null);
+				return;
 			}
 
 			Enumeration<String> paramlist = 
@@ -823,19 +593,14 @@ public class MetaCatServlet extends HttpServlet {
 
 			// handle param is emptpy
 			if (params.isEmpty() || params == null) {
+			    handler.sendNotSupportMessage(response);
 				return;
 			}
 
 			// if the user clicked on the input images, decode which image
 			// was clicked then set the action.
 			if (params.get("action") == null) {
-				PrintWriter out = response.getWriter();
-				response.setContentType("text/xml");
-				out.println("<?xml version=\"1.0\"?>");
-				out.println("<error>");
-				out.println("Action not specified");
-				out.println("</error>");
-				out.close();
+				handler.sendNotSupportMessage(response);
 				return;
 			}
 
@@ -853,81 +618,13 @@ public class MetaCatServlet extends HttpServlet {
 
 			// handle login action
 			if (action.equals("login")) {
-				//PrintWriter out = response.getWriter();
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleLoginAction(out, params, request, response);
-				out.close();
-
+				handler.handleLoginAction(params, request, response);
 				// handle logout action
 			} else if (action.equals("logout")) {
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleLogoutAction(out, params, request, response);
-				out.close();
-
+				handler.handleLogoutAction(params, request, response);
 				// handle session validate request
 			} else if (action.equals("validatesession")) {
-				String token = request.getHeader("Authorization");
-				
-				// First check for a valid authentication token
-				if ( token != null && ! token.equals("") ) {
-					Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-					SessionData sessionData = RequestUtil.getSessionData(request);
-					
-					response.setContentType("text/xml");
-					out.write("<?xml version=\"1.0\"?>");
-					out.write("<validateSession><status>");
-					
-					if ( sessionData != null ) {
-						out.write("valid");
-						
-					} else {
-						out.write("invalid");
-						
-					}
-					out.write("</status>");
-				    
-					if (sessionData != null) {
-						out.write("<userInformation>");
-						out.write("<name>");
-						out.write(sessionData.getUserName());
-						out.write("</name>");
-						out.write("<fullName>");
-						out.write(sessionData.getName());
-						out.write("</fullName>");
-						String[] groups = sessionData.getGroupNames();
-						if ( groups != null ) {
-							for(String groupName : groups) {
-							  out.write("<group>");
-							  out.write(groupName);
-							  out.write("</group>");
-							}
-						}
-						out.write("</userInformation>");
-					}
-
-					out.write("<sessionId>" + sessionId + "</sessionId></validateSession>");				
-					out.close();
-					
-				} else {
-					// With no token, validate the sessionid
-					Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-					String idToValidate = null;
-					String idsToValidate[] = params.get("sessionid");
-					if (idsToValidate != null) {
-						idToValidate = idsToValidate[0];
-						
-					} else {
-						// use the sessionid from the cookie
-						SessionData sessionData = RequestUtil.getSessionData(request);
-						if (sessionData != null) {
-							idToValidate = sessionData.getId();
-							
-						}
-					}
-					SessionService.getInstance().validateSession(out, response, idToValidate);
-					out.close();
-				}
-
+                 handler.sendNotSupportMessage(response);
 				// aware of session expiration on every request
 			} else {
 				SessionData sessionData = RequestUtil.getSessionData(request);
@@ -945,26 +642,14 @@ public class MetaCatServlet extends HttpServlet {
 			// Now that we know the session is valid, we can delegate the
 			// request to a particular action handler
 			if (action.equals("query")) {
-		        Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleQuery(out, params, response, userName, groupNames, sessionId);
-				out.close();
+				handler.handleQuery(params, response, userName, groupNames, sessionId);
 			} else if (action.equals("squery")) {
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				if (params.containsKey("query")) {
-					handler.handleSQuery(out, params, response, userName, groupNames, sessionId);
-					out.close();
-				} else {
-					out.write("Illegal action squery without \"query\" parameter");
-					out.close();
-				}
+			    handler.handleSQuery(params, response, userName, groupNames, sessionId);
 			} else if (action.trim().equals("spatial_query")) {
 
 				logMetacat
 						.debug("MetaCatServlet.handleGetOrPost - ******************* SPATIAL QUERY ********************");
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleSpatialQuery(out, params, response, userName, groupNames, sessionId);
-				out.close();
-
+				handler.handleSpatialQuery(params, response, userName, groupNames, sessionId);
 			} else if (action.trim().equals("dataquery")) {
 
 				logMetacat.debug("MetaCatServlet.handleGetOrPost - ******************* DATA QUERY ********************");
@@ -976,259 +661,64 @@ public class MetaCatServlet extends HttpServlet {
 
 				handler.handleExportAction(params, response, userName, groupNames, password);
 			} else if (action.equals("read")) {
-				if (params.get("archiveEntryName") != null) {
-					ArchiveHandler.getInstance().readArchiveEntry(params, request,
-							response, userName, password, groupNames);
-				} else {
-					handler.handleReadAction(params, request, response, userName, password,
+				handler.handleReadAction(params, request, response, userName, password,
 							groupNames);
-				}
+				
 			} else if (action.equals("readinlinedata")) {
 				handler.handleReadInlineDataAction(params, request, response, userName, password,
 						groupNames);
 			} else if (action.equals("insert") || action.equals("update")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				PrintWriter out = response.getWriter();
-				if ((userName != null) && !userName.equals("public")) {
-				    //formatid will be set null here since this is metacat api
-				    String formatId = null;
-				    Checksum checksum = null;//for Metacat API, we don't calculate the checksum
-				    File file = null;
-					handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, params, userName,
-							groupNames, true, true, null, formatId, checksum, file);
-				} else {
-					response.setContentType("text/xml");
-					out.println("<?xml version=\"1.0\"?>");
-					out.println("<error>");
-					String cleanMessage = StringEscapeUtils.escapeXml("Permission denied for user " + userName + " " + action);
-					out.println(cleanMessage);
-					out.println("</error>");
-				}
-				out.close();
+			   handler.sendNotSupportMessage(response);
 			} else if (action.equals("delete")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				PrintWriter out = response.getWriter();
-				if ((userName != null) && !userName.equals("public")) {
-					handler.handleDeleteAction(out, params, request, response, userName,
+					handler.handleDeleteAction(params, request, response, userName,
 							groupNames);
-				} else {
-					response.setContentType("text/xml");
-					out.println("<?xml version=\"1.0\"?>");
-					out.println("<error>");
-					String cleanMessage = StringEscapeUtils.escapeXml("Permission denied for " + action);
-					out.println(cleanMessage);
-					out.println("</error>");
-				}
-				out.close();
 			} else if (action.equals("validate")) {
-				PrintWriter out = response.getWriter();
-				handler.handleValidateAction(out, params);
-				out.close();
+				handler.handleValidateAction(response, params);
 			} else if (action.equals("setaccess")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				PrintWriter out = response.getWriter();
-				handler.handleSetAccessAction(out, params, userName, request, response);
-				out.close();
+				handler.handleSetAccessAction(params, userName, request, response);
 			} else if (action.equals("getaccesscontrol")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetAccessControlAction(out, params, response, userName, groupNames);
-				out.close();
+				handler.handleGetAccessControlAction(params, response, userName, groupNames);
 			} else if (action.equals("isauthorized")) {
-				PrintWriter out = response.getWriter();
-				DocumentUtil.isAuthorized(out, params, request, response);
-				out.close();
+			    handler.sendNotSupportMessage(response);
 			} else if (action.equals("getprincipals")) {
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				handler.handleGetPrincipalsAction(out, userName, password);
-				out.close();
+				handler.handleGetPrincipalsAction(response, userName, password);
 			} else if (action.equals("getdoctypes")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetDoctypesAction(out, params, response);
-				out.close();
+				handler.handleGetDoctypesAction(params, response);
 			} else if (action.equals("getdtdschema")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetDTDSchemaAction(out, params, response);
-				out.close();
+				handler.handleGetDTDSchemaAction(params, response);
 			} else if (action.equals("getdocid")) {
 				handler.handleGetDocid(params, response);
 			} else if (action.equals("getlastdocid")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetMaxDocidAction(out, params, response);
-				out.close();
+				handler.handleGetMaxDocidAction(params, response);
 			} else if (action.equals("getalldocids")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetAllDocidsAction(out, params, response);
-				out.close();
+				handler.handleGetAllDocidsAction(params, response);
 			} else if (action.equals("isregistered")) {
-				PrintWriter out = response.getWriter();
-				handler.handleIdIsRegisteredAction(out, params, response);
-				out.close();
+				handler.handleIdIsRegisteredAction(params, response);
 			} else if (action.equals("getrevisionanddoctype")) {
-				PrintWriter out = response.getWriter();
-				handler.handleGetRevisionAndDocTypeAction(out, params);
-				out.close();
+				handler.handleGetRevisionAndDocTypeAction(response, params);
 			} else if (action.equals("getversion")) {
-				response.setContentType("text/xml");
-				String version = null;
-				try {
-				    version = MetacatVersion.getVersionAsXml();
-				    PrintWriter out = response.getWriter();
-	                out.println(version);
-	                out.close();
-				} catch (SQLException e) {
-				    PrintWriter out = response.getWriter();
-				    out.println("<?xml version=\"1.0\"?>");
-                    out.println("<erorr>");
-                    out.println(StringEscapeUtils.escapeXml(e.getMessage()));
-                    out.println("</erorr>");
-                    out.close();
-				}
+				handler.sendNotSupportMessage(response);
 			} else if (action.equals("getlog")) {
 				handler.handleGetLogAction(params, request, response, userName, groupNames, sessionId);
 			} else if (action.equals("getloggedinuserinfo")) {
-				PrintWriter out = response.getWriter();
-				response.setContentType("text/xml");
-				out.println("<?xml version=\"1.0\"?>");
-				out.println("\n<user>\n");
-				out.println("\n<username>\n");
-				out.println(userName);
-				out.println("\n</username>\n");
-				if (name != null) {
-					out.println("\n<name>\n");
-					out.println(name);
-					out.println("\n</name>\n");
-				}
-				if (AuthUtil.isAdministrator(userName, groupNames)) {
-					out.println("<isAdministrator></isAdministrator>\n");
-				}
-				if (AuthUtil.isModerator(userName, groupNames)) {
-					out.println("<isModerator></isModerator>\n");
-				}
-				out.println("\n</user>\n");
-				out.close();
+				handler.sendNotSupportMessage(response);
 			} else if (action.equals("buildindex")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
 				handler.handleBuildIndexAction(params, request, response, userName, groupNames);
 			} else if (action.equals("reindex")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				handler.handleReindexAction(params, request, response, userName, groupNames);
+			    handler.sendNotSupportMessage(response);
 			} else if (action.equals("reindexall")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-                handler.handleReindexAllAction(params, request, response, userName, groupNames);
-            } else if (action.equals("login") || action.equals("logout")) {
-				/*
-				 * } else if (action.equals("protocoltest")) { String testURL =
-				 * "metacat://dev.nceas.ucsb.edu/NCEAS.897766.9"; try { testURL =
-				 * ((String[]) params.get("url"))[0]; } catch (Throwable t) { }
-				 * String phandler = System
-				 * .getProperty("java.protocol.handler.pkgs");
-				 * response.setContentType("text/html"); PrintWriter out =
-				 * response.getWriter(); out.println("<body
-				 * bgcolor=\"white\">"); out.println("<p>Handler property:
-				 * <code>" + phandler + "</code></p>"); out.println("<p>Starting
-				 * test for:<br>"); out.println(" " + testURL + "</p>"); try {
-				 * URL u = new URL(testURL); out.println("<pre>");
-				 * out.println("Protocol: " + u.getProtocol()); out.println("
-				 * Host: " + u.getHost()); out.println(" Port: " + u.getPort());
-				 * out.println(" Path: " + u.getPath()); out.println(" Ref: " +
-				 * u.getRef()); String pquery = u.getQuery(); out.println("
-				 * Query: " + pquery); out.println(" Params: "); if (pquery !=
-				 * null) { Hashtable qparams =
-				 * MetacatUtil.parseQuery(u.getQuery()); for (Enumeration en =
-				 * qparams.keys(); en .hasMoreElements();) { String pname =
-				 * (String) en.nextElement(); String pvalue = (String)
-				 * qparams.get(pname); out.println(" " + pname + ": " + pvalue); } }
-				 * out.println("</pre>"); out.println("</body>");
-				 * out.close(); } catch (MalformedURLException mue) {
-				 * System.out.println( "bad url from
-				 * MetacatServlet.handleGetOrPost");
-				 * out.println(mue.getMessage()); mue.printStackTrace(out);
-				 * out.close(); }
-				 */
+			    handler.sendNotSupportMessage(response);
 			} else if (action.equals("refreshServices")) {
-				// TODO MCD this interface is for testing. It should go through
-				// a ServiceService class and only work for an admin user. Move 
-				// to the MetacatAdminServlet
-				ServiceService.refreshService("XMLSchemaService");
-				return;
+				handler.sendNotSupportMessage(response);
 			} else if (action.equals("shrink")) {
-			     // handle shrink DBConnection request
-                PrintWriter out = response.getWriter();
-                if(!AuthUtil.isAdministrator(userName, groupNames)){
-                    out.println("The user "+userName+ " is not the administrator of the Metacat and doesn't have the permission to call the method.");
-                    out.close();
-                    return;
-                }
-                boolean success = false;
-                // If all DBConnection in the pool are free and DBConnection
-                // pool
-                // size is greater than initial value, shrink the connection
-                // pool
-                // size to initial value
-                success = DBConnectionPool.shrinkConnectionPoolSize();
-                if (success) {
-                    // if successfully shrink the pool size to initial value
-                    out.println("DBConnection Pool shrunk successfully.");
-                }// if
-                else {
-                    out.println("DBConnection pool did not shrink successfully.");
-                }
-                // close out put
-                out.close();
+			    handler.sendNotSupportMessage(response);
 			} else {
-				//try the plugin handler if it has an entry for handling this action
-				MetacatHandlerPlugin handlerPlugin = MetacatHandlerPluginManager.getInstance().getHandler(action);
-				if (handlerPlugin != null) {
-				    if(isReadOnly(response)) {
-	                    return;
-	                }
-					handlerPlugin.handleAction(action, params, request, response, userName, groupNames, sessionId);
-				} 
-				else {
-					PrintWriter out = response.getWriter();
-					out.println("<?xml version=\"1.0\"?>");
-					out.println("<error>");
-					String cleanMessage = StringEscapeUtils.escapeXml("Error: action: " + action + " not registered.  Please report this error.");
-					out.println(cleanMessage);
-					out.println("</error>");
-					out.close();
-				}
+			    handler.sendNotSupportMessage(response);
 			}
 		} catch (PropertyNotFoundException pnfe) {
 			String errorString = "Critical property not found: " + pnfe.getMessage();
 			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
 			throw new ServletException(errorString);
-		} catch (MetacatUtilException ue) {
-			String errorString = "Utility error: " + ue.getMessage();
-			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
-			throw new ServletException(errorString);
-		} catch (ServiceException ue) {
-			String errorString = "Service error: " + ue.getMessage();
-			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
-			throw new ServletException(errorString);
-		} catch (HandlerException he) {
-			String errorString = "Handler error: " + he.getMessage();
-			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
-			throw new ServletException(errorString);
-		} catch (ErrorSendingErrorException esee) {
-			String errorString = "Error sending error message: " + esee.getMessage();
-			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
-			throw new ServletException(errorString);
-		} catch (ErrorHandledException ehe) {
-			// Nothing to do here.  We assume if we get here, the error has been 
-			// written to ouput.  Continue on and let it display.
 		} 
 	}
     

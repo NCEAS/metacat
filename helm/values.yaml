@@ -1,5 +1,39 @@
 ## Default values for metacat.
 ## This is a YAML-formatted file.
+##
+##     * * * * * * NOTE: SOME VALUES INCLUDE A ${RELEASE_NAME} PLACEHOLDER * * * * * *
+##     * * * * * *       THAT MUST BE REPLACED BY THE ACTUAL RELEASE NAME! * * * * * *
+##
+## This can be done by manually finding and replacing, or by using utilities such as `sed` or
+## `envsubst` as follows: (assuming your release name is "myrelease" and you're installing into
+##  namespace "mynamespace")
+##
+## OPTION 1: use `sed` to permanently edit in place (or could redirect to a different output file):
+##   $ RELEASE_NAME=myrelease \
+##     sed -i -e "s/\${RELEASE_NAME}/$RELEASE_NAME/g" values.yaml
+##   ...then `helm install` as usual
+##
+## OPTION 2: use `envsubst` to helm install, leaving values.yaml intact:
+##   $ RLS=myrelease ; NS=mynamespace ; \
+##     RELEASE_NAME=$RLS envsubst < ./helm/values.yaml | helm install $RLS -n $NS -f - ./helm
+##
+##   # if this results in "command not found: envsubst", you can install envsubst (e.g. on Mac OS:
+##        $  brew install gettext && brew link --force gettext
+##
+
+## @section Global Properties Shared Across Sub-Charts Within This Deployment
+##
+global:
+  ## @param global.passwordsSecret The name of the Secret containing passwords (RELEASE PREFIX)
+  ## This is the secret deployed using `../admin/secrets.yaml`. IMPORTANT NOTE: make sure you edit
+  ## this, since IT INCLUDES THE RELEASE NAME! For example, if the release name is 'myrelease',
+  ## the value of passwordsSecret: would be 'myrelease-metacat-secrets'.
+  ##
+  ## (Note the actual key passwordsSecret is not used anywhere; only the yaml anchor/alias
+  ##  &passwordSecretName)
+  ##
+  passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
+
 
 ## @section Metacat Application-Specific Properties
 ##
@@ -95,9 +129,25 @@ metacat:
   ##
   solr.baseURL: http://host.docker.internal:8983/solr
 
+  ## @param metacat.solr.adminUser the username for connecting to the RabbitMQ instance
+  ## at `index.rabbitmq.hostname`.
+  ##
+  solr.adminUser: &solrAdminUsername metacat-solr-admin
+
   ## @param metacat.replication.logdir Location for the replication logs
   ##
   replication.logdir: /var/metacat/logs
+
+  ## @param metacat.index.rabbitmq.hostname the hostname of the rabbitmq instance that will be used
+  ## <servicename>.<namespace>.svc.cluster.local
+  ##
+  # TODO: Auto populate for subchart - see postgres url
+#  index.rabbitmq.hostname: brooke-rabbitmq-headless.default.svc.cluster.local
+
+  ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
+  ## at `index.rabbitmq.hostname`.
+  ##
+  index.rabbitmq.username: &rmqUsername metacat-rmq-guest
 
   ## @section OPTIONAL DataONE Member Node (MN) Parameters
   ##
@@ -267,8 +317,7 @@ metacat:
 ## @param image.tag Metacat image tag (immutable tags are recommended)
 ## @param image.pullPolicy Metacat image pull policy
 image:
-  #TODO pull from github container repo, e.g. see indexer: ghcr.io/dataoneorg/dataone-index-worker
-  repository: metacat
+  repository: ghcr.io/nceas/metacat
   pullPolicy: IfNotPresent
 
   ## @param image.tag Overrides the image tag. Will default to the chart appVersion if set to ""
@@ -291,10 +340,6 @@ imagePullSecrets: []
 ## Examples:
 ##     - containerPort: 5005
 ##       name: tc-remote-debug
-##     - containerPort: 5701
-##       name: hazelcast-port1
-##     - containerPort: 5702
-##       name: hazelcast-port2
 ##
 ## NOTE that port 8080 should not be included here - it is already defined in statefulset.yaml as:
 ##     - containerPort: 8080
@@ -383,18 +428,22 @@ persistence:
   existingClaim: ""
 
   ## @param persistence.accessModes PVC Access Mode for metacat volume
-  ## Example:
+  ## Metacat always requires read&write access, and dataone_indexer requires read access to the
+  ## same PVC, so the ideal setup is:
   ##    accessModes:
-  ##    - ReadWriteOnce   # allow only one node to mount in read/write mode
-  ##    - ReadOnlyMany    # allow many nodes to mount in read-only mode
-  ## ReadWriteOnce  is always required by metacat. ReadOnlyMany is useful for giving other
-  ## services (e.g. metadig) read-only access to metacat data.
-  ## Note that the underlying PersistentVolume (or pv auto-provisioner) must be able to provide
-  ## these modes, in order for the PVC to bind successfully. (For Rancher Desktop, this means
-  ## setting only ReadWriteOnce, not ReadOnlyMany)
+  ##    - ReadWriteOnce   # allow only one node (i.e. metacat) to mount in read/write mode
+  ##    - ReadOnlyMany    # allow many nodes (e.g. dataone_indexer, metadig) to mount read-only
+  ##
+  ## However, note that the underlying PersistentVolume (or pv auto-provisioner) must be able to
+  ## provide these modes, in order for the PVC to bind successfully. Since neither NCEAS dev
+  ## cluster nor Rancher Desktop supports RWO+ROX, we have to use RWX:
+  ##   accessModes:
+  ##     - ReadWriteMany
+  ## ...and be careful to ensure that non-metacat services restrict themselves to RO access in their
+  ## own PVC definitions
   ##
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
 
   ## @param persistence.size PVC Storage Request for metacat volume
   ##
@@ -499,9 +548,6 @@ service:
     - name: http-port
       port: 8080
       targetPort: metacat-web
-    - name: hazelcast-test1
-      port: 5701
-      targetPort: hazelcast-port1
 
 ## LivenessProbe
 ## Periodic probe of container liveness. Container will be restarted if the probe fails.
@@ -523,6 +569,9 @@ service:
 ##
 livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 15
+  timeoutSeconds: 10
   httpGet:
     path: /metacat/
     port: metacat-web
@@ -546,6 +595,9 @@ livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck rou
 ##
 readinessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
+  initialDelaySeconds: 35
+  periodSeconds: 5
+  timeoutSeconds: 5
   httpGet:
     path: /metacat/admin
     port: metacat-web
@@ -574,11 +626,10 @@ postgresql:
     ##
     database: metacat
 
-    ## @param postgresql.auth.existingSecret Secrets location for postgres password (RELEASE PREFIX)
-    ## For example, if the release name is 'myrelease', secret name would be 'myrelease-secrets'
+    ## @param postgresql.auth.existingSecret Secrets location for postgres password
     ## Typically the existing secrets also used by metacat - see ./admin/secrets.yaml
     ##
-    existingSecret: mc-secrets
+    existingSecret: *passwordSecretName
 
     ## @param postgresql.auth.secretKeys.userPasswordKey Identifies metacat db's account password
     ## within metacat's existing secrets
@@ -625,3 +676,20 @@ tomcat:
   heapMemory:
     min: ""
     max: ""
+
+## @section dataone_indexer Sub-Chart Configuration
+idxworker:
+  enabled: true
+  image:
+    repository: ghcr.io/dataoneorg/dataone-index-worker
+  idxworker: {}
+  solr:
+    auth:
+      adminUsername: *solrAdminUsername
+      ## (must contain a value for `SOLR_ADMIN_PASSWORD` key)
+      existingSecret: *passwordSecretName
+  rabbitmq:
+    auth:
+      username: *rmqUsername
+      ## (must contain a value for `rabbitmq-password` key)
+      existingPasswordSecret: *passwordSecretName

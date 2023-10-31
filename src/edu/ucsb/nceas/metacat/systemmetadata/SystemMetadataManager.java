@@ -126,7 +126,8 @@ public class SystemMetadataManager {
                     // use a single transaction for it all
                     dbConn.setAutoCommit(false);
                     // store with the values
-                    store(sysmeta, changeModifyTime, dbConn);
+                    boolean onlyToDB = false;
+                    store(sysmeta, changeModifyTime, dbConn, onlyToDB);
                     // commit if we got here with no errors
                     dbConn.commit();
                 } catch (InvalidRequest e) {
@@ -201,10 +202,14 @@ public class SystemMetadataManager {
      * Store a system metadata record into the store
      * @param sysmeta  the new system metadata will be inserted
      * @param changeModifyTIme  if we need to change the modify time
+     * @param dbConn  the db connection will be used during storing the system metadata into db
+     * @param onlyInDB  indicate if the system metadata only be stored in DB. It should always be 
+     *                  false except some special cases.
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
-    public void store(SystemMetadata sysmeta, boolean changeModifyTime, DBConnection dbConn) 
+    public void store(SystemMetadata sysmeta, boolean changeModifyTime, 
+                                                            DBConnection dbConn, boolean onlyToDB) 
                                                         throws InvalidRequest, ServiceFailure {
         if (sysmeta != null) {
             Identifier pid = sysmeta.getIdentifier();
@@ -250,6 +255,10 @@ public class SystemMetadataManager {
                     }
                     // update with the values
                     updateSystemMetadata(sysmeta, dbConn);
+                    
+                    if (!onlyToDB) {
+                        //TODO  store the system metadata to the file system
+                    }
                 } catch (McdbDocNotFoundException e) {
                     if (dbConn != null) {
                         try {
