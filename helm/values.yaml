@@ -33,7 +33,7 @@ global:
   ##  &passwordSecretName)
   ##
   passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
-
+  storageClass: &storageClassName local-path
 
 ## @section Metacat Application-Specific Properties
 ##
@@ -418,7 +418,7 @@ persistence:
   ## ...and then explicitly set storageClass to match the name of the default storageclass
   ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
   ##
-  storageClass: local-path
+  storageClass: *storageClassName
 
   ## @param persistence.existingClaim Name of an existing Persistent Volume Claim to re-use
   ## Set a value for 'existingClaim' only if you want to re-use a Persistent Volume Claim that has
