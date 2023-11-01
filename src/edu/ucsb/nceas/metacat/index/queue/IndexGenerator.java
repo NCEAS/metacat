@@ -178,7 +178,7 @@ public class IndexGenerator extends BaseService {
      *
      * @return a singleton instance of the RabbitMQService class.
      */
-    public static IndexGenerator getInstance() {
+    public static IndexGenerator getInstance() throws ServiceException {
         if (instance == null) {
             synchronized (IndexGenerator.class) {
                 if (instance == null) {
@@ -191,6 +191,7 @@ public class IndexGenerator extends BaseService {
                                        + "to create the IndexGenerator instance" 
                                        + " and set it to null.");
                         instance = null;
+                        throw e;
                     }
                 }
             }
