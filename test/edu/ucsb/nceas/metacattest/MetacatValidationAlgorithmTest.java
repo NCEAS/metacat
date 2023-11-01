@@ -25,27 +25,19 @@ package edu.ucsb.nceas.metacattest;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.StringReader;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.xml.sax.*;
-
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.AccessionNumber;
-import edu.ucsb.nceas.metacat.AccessionNumberException;
-import edu.ucsb.nceas.metacat.IdentifierManager;
-import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
-import edu.ucsb.nceas.metacat.client.MetacatAuthException;
-import edu.ucsb.nceas.metacat.client.MetacatException;
-import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
 import org.apache.commons.io.FileUtils;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
@@ -68,6 +60,9 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
                               "<metadata xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"http://www.fgdc.gov/metadata/foo.xsd\">"+
                                "<idinfo><citation><citeinfo><origin>National Center for Earth Surface Dynamics</origin><pubdate>20160811</pubdate><title>Shuttle Radar Topography Mission (SRTM)</title>"+
                                "<onlink>http://doi.org/10.5967/M09W0CGK</onlink></citeinfo></citation></idinfo></metadata>";
+    
+    private Session session = null;
+    
     public MetacatValidationAlgorithmTest (String name) {
         super(name);
     }
@@ -78,7 +73,8 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
     public static Test suite() {
         TestSuite suite = new TestSuite();
         // Test basic functions
-        suite.addTest(new MetacatValidationAlgorithmTest("testRegisteredDTDDucoment"));
+        suite.addTest(new MetacatValidationAlgorithmTest("initialize"));
+        suite.addTest(new MetacatValidationAlgorithmTest("testRegisteredDTDDocument"));
         suite.addTest(new MetacatValidationAlgorithmTest("testRegisteredDTDInvalidDucoment"));
         suite.addTest(new MetacatValidationAlgorithmTest("testUnRegisteredDTDDucoment"));
         suite.addTest(new MetacatValidationAlgorithmTest("testValidationUnneededDucoment"));
@@ -95,92 +91,102 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
      * used for testing with a known docid.
      */
     public void setUp() throws Exception{
-        metacatConnectionNeeded = true;
         super.setUp();
-        
-
+        session = getTestSession();
     }
     
-  
+    /**
+     * Initial blank test
+     */
+    public void initialize() {
+      assertTrue(1 == 1);
+    }
 
     /** 
      * Insert a test document which's dtd was registered, returning the docid that was used. 
      */
-    public void testRegisteredDTDDucoment() throws Exception {
-        String xml = FileUtils.readFileToString(new File("./test/jones.204.22.xml"), "UTF-8");
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = insertDocumentId(docid, xml, true, false);
-            assertTrue(response.contains(docid));
-        } catch (MetacatAuthException e) {
-            fail(e.getMessage());
-        } catch (MetacatInaccessibleException e) {
-            fail(e.getMessage());
-        }
+    public void testRegisteredDTDDocument() throws Exception {
+        InputStream object = new FileInputStream(new File("./test/jones.204.22.xml"));
+        Identifier guid = new Identifier();
+        guid.setValue("testRegisteredDTDDocument" + System.currentTimeMillis());
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object.close();
+        sysmeta.setFormatId(eml_dataset_beta_6_format);
+        object = new FileInputStream(new File("./test/jones.204.22.xml"));
+        mnCreate(session, guid, object, sysmeta);
+        SystemMetadata sysmetaFromServer = 
+                        MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
     }
     
     /** 
      * Insert a test document which's dtd was registered. But the xml doesn't follow the dta and returning an error. 
      */
     public void testRegisteredDTDInvalidDucoment() throws Exception {
-        String xml = FileUtils.readFileToString(new File("./test/jones.204.22.xml.invalid"), "UTF-8");
-        String docid = generateDocumentId() + ".1";
-        m.login(username, password);
+        Identifier guid = new Identifier();
         try {
-            String response = m.insert(docid, new StringReader(xml), null);
-            fail("we shouldn't get get since we inserted an invalid xml");
-        } catch (MetacatException e) {
-            assertTrue(e.getMessage().contains("<error>"));
+            InputStream object = new FileInputStream(new File("./test/jones.204.22.xml.invalid"));
+            guid.setValue("testRegisteredDTDInvalidDucoment." + System.currentTimeMillis());
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            object.close();
+            sysmeta.setFormatId(eml_dataset_beta_6_format);
+            object = new FileInputStream(new File("./test/jones.204.22.xml.invalid"));
+            mnCreate(session, guid, object, sysmeta);
+            fail("We shouldn't get here since the create should fail.");
+        } catch (ServiceFailure e) {
+            assertTrue(e.getMessage().contains("title1"));
+            assertTrue(e.getMessage().contains(guid.getValue()));
         }
-        
-        
     }
     
     /** 
-     * Insert a test document which's dtd was registered. But the xml doesn't follow the dta and returning an error. 
+     * Insert a test document which's dtd wasnot registered. It will be treated as a data object
      */
     public void testUnRegisteredDTDDucoment() throws Exception {
-        String xml = FileUtils.readFileToString(new File("./test/doc_with_unregister_dtd.xml"), "UTF-8");
-        String docid = generateDocumentId() + ".1";
-        m.login(username, password);
-        try {
-            String response = m.insert(docid, new StringReader(xml), null);
-            fail("We can't get since the inserted xml has a unregistered dtd");
-        } catch (MetacatException e) {
-            assertTrue(e.getMessage().contains("<error>"));
-            assertTrue(e.getMessage().contains("isn't registered in Metacat"));
-        }
+        String xml = 
+                FileUtils.readFileToString(new File("./test/doc_with_unregister_dtd.xml"), "UTF-8");
+        Identifier guid = new Identifier();
+        guid.setValue("testUnRegisteredDTDDucoment." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream(xml.getBytes());
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("-//ecoinformatics.org//foo");
+        sysmeta.setFormatId(formatId);
+        Identifier pid = mnCreate(session, guid, object, sysmeta);
+        SystemMetadata sysmetaFromServer = 
+                MNodeService.getInstance(request).getSystemMetadata(session, pid);
+        assertTrue(!D1NodeService.isScienceMetadata(sysmetaFromServer));
     }
     
     /** 
-     * Insert test documents which don't need to be validated: with embeded dtd or no declaration at all. 
+     * Insert test documents which don't need to be validated: with embeded dtd or
+     * no declaration at all. Dataone will treat them as the data files
      */
     public void testValidationUnneededDucoment() throws Exception {
+        Identifier guid = new Identifier();
         //with embedded dtd
         String xml = FileUtils.readFileToString(new File("./test/doc_with_embedded_dtd.xml"), "UTF-8");
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = insertDocumentId(docid, xml, true, false);
-            assertTrue(response.contains(docid));
-        } catch (MetacatAuthException e) {
-            fail(e.getMessage());
-        } catch (MetacatInaccessibleException e) {
-            fail(e.getMessage());
-        }
+        guid.setValue("testValidationUnneededDucoment1." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("test");
+        sysmeta.setFormatId(formatId);
+        mnCreate(session, guid, object, sysmeta);
+        SystemMetadata sysmetaFromServer = 
+                MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        assertTrue(!D1NodeService.isScienceMetadata(sysmetaFromServer));
+        
         //without dtd and scheam declaration
         xml = FileUtils.readFileToString(new File("./test/doc_without_declaration.xml"), "UTF-8");
-        docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = insertDocumentId(docid, xml, true, false);
-            assertTrue(response.contains(docid));
-        } catch (MetacatAuthException e) {
-            fail(e.getMessage());
-        } catch (MetacatInaccessibleException e) {
-            fail(e.getMessage());
-        }
+        guid.setValue("testValidationUnneededDucoment2." + System.currentTimeMillis());
+        object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatId);
+        mnCreate(session, guid, object, sysmeta);
+        sysmetaFromServer = 
+                MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        assertTrue(!D1NodeService.isScienceMetadata(sysmetaFromServer));
     }
     
     /**
@@ -188,48 +194,37 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
      */
     public void testUnregisteredNamespaceSchema() throws Exception {
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
-        formatId.setValue("http://www.cuahsi.org/waterML/1.1/");
-        //Metacat API
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(UNREGISTERED_SCHEMA_XML_INSTANCE), null);
-            fail("We shouldn't get there since the above statement should throw an exception.");
-        } catch (MetacatException e) {
-            assertTrue(e.getMessage().contains("<error>"));
-            assertTrue(e.getMessage().contains("http://www.w3schools.com"));
-            assertTrue(e.getMessage().contains("not registered"));
-        } 
-        Thread.sleep(200);
         //DaaONEAPI - MN.create
         try {
-            Session session = getTestSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testUnregisteredNamespaceSchema1." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(UNREGISTERED_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            formatId.setValue("http://www.w3schools.com");
             sysmeta.setFormatId(formatId);
-            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
+            SystemMetadata sysmetaFromServer = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertTrue(!D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch (Exception e) {
-            assertTrue(e.getMessage().contains("<error>"));
-            assertTrue(e.getMessage().contains("http://www.w3schools.com"));
-            assertTrue(e.getMessage().contains("not registered"));
+            throw e;
         } 
         
         //DaaONEAPI - CN.create
-        Thread.sleep(200);
         try {
             Session session = getCNSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testUnregisteredNamespaceSchema2." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(UNREGISTERED_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            formatId.setValue("http://www.w3schools.com");
             sysmeta.setFormatId(formatId);
-            Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = cnCreate(session, guid, object, sysmeta);
+            SystemMetadata sysmetaFromServer = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertTrue(!D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch(Exception e) {
-            assertTrue(e.getMessage().contains("<error>"));
-            assertTrue(e.getMessage().contains("http://www.w3schools.com"));
-            assertTrue(e.getMessage().contains("not registered"));
+           throw e;
         }
     }
     
@@ -245,41 +240,35 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
         //System.out.println("the eml document is \n"+eml200);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
-        //Metacat API
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(eml200), null);
-            assertTrue(response.contains(docid));
-        } catch (MetacatException e) {
-           fail("The test failed since "+e.getMessage());
-        } 
-        Thread.sleep(200);
         //DaaONEAPI - MN.create
         try {
-            Session session = getTestSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testEML20111." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(eml200.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
+            SystemMetadata sysmetaFromServer = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch (Exception e) {
             fail("The test failed since "+e.getMessage());
         } 
         
         //DaaONEAPI - CN.create
-        Thread.sleep(200);
         try {
             Session session = getCNSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testEML2012." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(eml200.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = cnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
+            SystemMetadata sysmetaFromServer = 
+                    CNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch(Exception e) {
             fail("The test failed since "+e.getMessage());
         }
@@ -287,12 +276,15 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
         //insert a invalid eml 201
         String invalidEml2 = eml200.replaceAll("access", "access1");
         //System.out.println(""+invalidEml2);
-        docid = generateDocumentId() + ".1";
         try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(invalidEml2), null);
+            Identifier guid = new Identifier();
+            guid.setValue("testEML201234." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream(invalidEml2.getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(formatId);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
-        } catch (MetacatException e) {
+        } catch (ServiceFailure e) {
             assertTrue(e.getMessage().contains("<error>"));
             assertTrue(e.getMessage().contains("access1"));
         } 
@@ -306,44 +298,37 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
         String title = "it is a test";
         String emlVersion = EML2_1_1;
         String eml211 = getTestEmlDoc(title, emlVersion);
-        System.out.println("the eml document is \n"+eml211);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("eml://ecoinformatics.org/eml-2.1.1");
-        //Metacat API
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(eml211), null);
-            assertTrue(response.contains(docid));
-        } catch (MetacatException e) {
-           fail("The test failed since "+e.getMessage());
-        } 
-        Thread.sleep(200);
         //DaaONEAPI - MN.create
         try {
-            Session session = getTestSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testEML2111." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(eml211.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
+            SystemMetadata sysmetaFromServer = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch (Exception e) {
             fail("The test failed since "+e.getMessage());
         } 
         
         //DaaONEAPI - CN.create
-        Thread.sleep(200);
         try {
-            Session session = getCNSession();
+            Session session1 = getCNSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testEML2112." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(eml211.getBytes("UTF-8"));
-            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta = createSystemMetadata(guid, session1.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = cnCreate(session1, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
+            SystemMetadata sysmetaFromServer = 
+                    CNodeService.getInstance(request).getSystemMetadata(session1, guid);
+            assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch(Exception e) {
             fail("The test failed since "+e.getMessage());
         }
@@ -351,12 +336,15 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
         //insert a invalid eml 201
         String invalidEml2 = eml211.replaceAll("access", "access1");
         //System.out.println(""+invalidEml2);
-        docid = generateDocumentId() + ".1";
         try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(invalidEml2), null);
+            Identifier guid = new Identifier();
+            guid.setValue("testEML21134." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream(invalidEml2.getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(formatId);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
-        } catch (MetacatException e) {
+        } catch (ServiceFailure e) {
             assertTrue(e.getMessage().contains("<error>"));
             assertTrue(e.getMessage().contains("access1"));
         } 
@@ -370,41 +358,35 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
         String xml = FileUtils.readFileToString(new File("./test/dryad-metadata-profile-sample.xml"), "UTF-8");
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("http://datadryad.org/profile/v3.1");
-        //Metacat API
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(xml), null);
-            assertTrue(response.contains(docid));
-        } catch (MetacatException e) {
-           fail("The test failed since "+e.getMessage());
-        } 
-        Thread.sleep(200);
         //DaaONEAPI - MN.create
         try {
-            Session session = getTestSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testRegisteredNamespaceOrFormatIdSchema1." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
+            SystemMetadata sysmetaFromServer = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch (Exception e) {
             fail("The test failed since "+e.getMessage());
         } 
         
         //DaaONEAPI - CN.create
-        Thread.sleep(200);
         try {
             Session session = getCNSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testRegisteredNamespaceOrFormatIdSchema23." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = cnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
+            SystemMetadata sysmetaFromServer = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch(Exception e) {
             fail("The test failed since "+e.getMessage());
         }
@@ -412,65 +394,58 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
         //insert a invalid dryad
         String invalidXml = FileUtils.readFileToString(new File("./test/dryad-metadata-profile-invalid.xml"), "UTF-8");
         //System.out.println(""+invalidEml2);
-        docid = generateDocumentId() + ".1";
         try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(invalidXml), null);
+            Identifier guid = new Identifier();
+            guid.setValue("testRegisteredNamespaceOrFormatIdSchema5." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream(invalidXml.getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(formatId);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
-        } catch (MetacatException e) {
+        } catch (ServiceFailure e) {
             assertTrue(e.getMessage().contains("bad"));
             assertTrue(e.getMessage().contains("<error>"));
         } 
         
     }
     
+    /**
+     * Create unregistered no namespace schema objects. They will be treated as data objects
+     */
     public void testUnregisteredNoNamespaceSchema() throws Exception {
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("www.fgdc.gov/foo/");
         String xml = UNREGISTERED_NONAMESPACE_SCHEMA_XML_INSTANCE;
-        //Metacat API
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(xml), null);
-            fail("We shouldn't get there since the above statement should throw an exception.");
-        } catch (MetacatException e) {
-            assertTrue(e.getMessage().contains("<error>"));
-            assertTrue(e.getMessage().contains("http://www.fgdc.gov/metadata/foo.xsd"));
-            assertTrue(e.getMessage().contains("not registered"));
-        } 
-        Thread.sleep(200);
+
         //DaaONEAPI - MN.create
         try {
-            Session session = getTestSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testUnregisteredNoNamespaceSchema1." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(UNREGISTERED_NONAMESPACE_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
+            SystemMetadata sysmetaFromServer = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertTrue(!D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch (Exception e) {
-            assertTrue(e.getMessage().contains("<error>"));
-            assertTrue(e.getMessage().contains("www.fgdc.gov/foo/"));
-            assertTrue(e.getMessage().contains("http://www.fgdc.gov/metadata/foo.xsd"));
-            assertTrue(e.getMessage().contains("not registered"));
+            throw e;
         } 
         
         //DaaONEAPI - CN.create
-        Thread.sleep(200);
         try {
             Session session = getCNSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testUnregisteredNoNamespaceSchema." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(UNREGISTERED_NONAMESPACE_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = cnCreate(session, guid, object, sysmeta);
+            SystemMetadata sysmetaFromServer = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertTrue(!D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch(Exception e) {
-            assertTrue(e.getMessage().contains("<error>"));
-            assertTrue(e.getMessage().contains("www.fgdc.gov/foo/"));
-            assertTrue(e.getMessage().contains("http://www.fgdc.gov/metadata/foo.xsd"));
-            assertTrue(e.getMessage().contains("not registered"));
+            throw e;
         }
     }
     
@@ -479,40 +454,35 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("FGDC-STD-001-1998");
         //Metacat API
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(xml), null);
-            assertTrue(response.contains(docid));
-        } catch (MetacatException e) {
-           fail("The test failed since "+e.getMessage());
-        } 
-        Thread.sleep(200);
         //DaaONEAPI - MN.create
         try {
-            Session session = getTestSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testRegisteredNoNamespaceSchema1." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
+            SystemMetadata sysmetaFromServer = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch (Exception e) {
             fail("The test failed since "+e.getMessage());
         } 
         
         //DaaONEAPI - CN.create
-        Thread.sleep(200);
         try {
             Session session = getCNSession();
             Identifier guid = new Identifier();
-            guid.setValue("testCreate." + System.currentTimeMillis());
+            guid.setValue("testRegisteredNoNamespaceSchema2." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
-            Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = cnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
+            SystemMetadata sysmetaFromServer = 
+                    CNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch(Exception e) {
             fail("The test failed since "+e.getMessage());
         }
@@ -520,12 +490,15 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
         //insert a invalid fgdc
         String invalidXml = xml.replace("metadata", "metadata1");
         //System.out.println(""+invalidEml2);
-        docid = generateDocumentId() + ".1";
         try {
-            m.login(username, password);
-            String response = m.insert(docid, new StringReader(invalidXml), null);
+            Identifier guid = new Identifier();
+            guid.setValue("testRegisteredNoNamespaceSchema3." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream(invalidXml.getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(formatId);
+            Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
-        } catch (MetacatException e) {
+        } catch (ServiceFailure e) {
             assertTrue(e.getMessage().contains("metadata1"));
             assertTrue(e.getMessage().contains("<error>"));
         } 

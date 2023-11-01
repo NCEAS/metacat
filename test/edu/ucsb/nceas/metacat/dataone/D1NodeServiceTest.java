@@ -28,8 +28,6 @@ package edu.ucsb.nceas.metacat.dataone;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Hashtable;
@@ -50,14 +48,24 @@ import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.IdentifierNotUnique;
+import org.dataone.service.exceptions.InsufficientResources;
+import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.InvalidToken;
+import org.dataone.service.exceptions.NotAuthorized;
+import org.dataone.service.exceptions.NotFound;
+import org.dataone.service.exceptions.NotImplemented;
+import org.dataone.service.exceptions.ServiceFailure;
+import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Node;
-import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
@@ -67,12 +75,9 @@ import org.dataone.service.types.v1.util.AccessUtil;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.util.ObjectFormatServiceImpl;
 import org.dataone.service.util.Constants;
-import org.dataone.service.util.TypeMarshaller;
 import org.mockito.Mockito;
 
 import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.client.Metacat;
-import edu.ucsb.nceas.metacat.client.MetacatFactory;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
@@ -81,8 +86,18 @@ import edu.ucsb.nceas.metacat.util.SkinUtil;
  * A JUnit superclass for testing the dataone Node implementations
  */
 public class D1NodeServiceTest extends MCTestCase {
-
+    public static final int tryAcccounts = 100;
     protected MockHttpServletRequest request;
+    protected static ObjectFormatIdentifier eml_2_1_1_format = new ObjectFormatIdentifier();
+    protected static ObjectFormatIdentifier eml_2_0_1_format = new ObjectFormatIdentifier();
+    protected static ObjectFormatIdentifier eml_2_1_0_format = new ObjectFormatIdentifier();
+    protected static ObjectFormatIdentifier eml_dataset_beta_6_format = new ObjectFormatIdentifier();
+    static {
+        eml_2_1_1_format.setValue("eml://ecoinformatics.org/eml-2.1.1");
+        eml_2_1_0_format.setValue("eml://ecoinformatics.org/eml-2.1.0");
+        eml_2_0_1_format.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        eml_dataset_beta_6_format.setValue("-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN");
+    }
 
     /**
     * constructor for the test
@@ -476,43 +491,31 @@ public class D1NodeServiceTest extends MCTestCase {
     /**
      * For fresh Metacat installations without the Object Format List
      * we insert the default version from d1_common.jar
+     * @throws Exception 
      */
-    protected void setUpFormats() {
+    protected void setUpFormats() throws Exception {
+        int rev = 1;
+        Identifier guid = new Identifier();
+        guid.setValue(ObjectFormatService.OBJECT_FORMAT_PID_PREFIX + rev);
+        // check if it exists already
+        InputStream is = null;
+        Session session = getCNSession();
         try {
-            Metacat m = MetacatFactory.createMetacatConnection(metacatUrl);
-            m.login(username, password);
-            // check if it exists already
-            InputStream is = null;
-            try {
-                is = m.read(ObjectFormatService.OBJECT_FORMAT_DOCID);
-            } catch (Exception e) {
-                // probably missing the doc
-            }
-
-            if (is != null) {
-                // check for v2 OFL
-                try {
-                    ObjectFormatList ofl = TypeMarshaller.unmarshalTypeFromStream(ObjectFormatList.class, is);
-                } catch (ClassCastException cce) {
-                    // need to update it
-                    InputStream formats = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
-                    Reader xmlDocument = new InputStreamReader(formats);
-                    int rev = m.getNewestDocRevision(ObjectFormatService.OBJECT_FORMAT_DOCID);
-                    rev++;
-                    m.update(ObjectFormatService.OBJECT_FORMAT_DOCID + "." + rev, xmlDocument, null);
-                }
-
-            }
-            else {
-                // get the default from d1_common
-                InputStream formats = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
-                Reader xmlDocument = new InputStreamReader(formats);
-                m.insert(ObjectFormatService.OBJECT_FORMAT_DOCID + ".1", xmlDocument, null);
-            }
-            m.logout();
+            is = CNodeService.getInstance(request).get(session, guid);
         } catch (Exception e) {
-            // any number of things could go wrong
-            e.printStackTrace();
+            // probably missing the doc
+        }
+        if (is == null) {
+            // get the default from d1_common
+            InputStream object = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            object.close();
+            ObjectFormatIdentifier format = new ObjectFormatIdentifier();
+            format.setValue("http://ns.dataone.org/service/types/v2.0:ObjectFormatList");
+            sysmeta.setFormatId(format);
+            //sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("text/xml").getFormatId());
+            object = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
+            CNodeService.getInstance(request).create(session, guid, object, sysmeta);
         }
     }
 
@@ -847,5 +850,119 @@ public class D1NodeServiceTest extends MCTestCase {
         sysmeta2.setAccessPolicy(ap1);
         assertTrue(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
     }
+    
+    /**
+     * A wrapper method of MN.create.
+     * @param session  the subject which will create the object
+     * @param id  the identifier of the created object
+     * @param object  the bytes of the object
+     * @param sysmeta  the system metadata associated with the object
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws IdentifierNotUnique
+     * @throws UnsupportedType
+     * @throws InsufficientResources
+     * @throws InvalidSystemMetadata
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     */
+    public Identifier mnCreate(Session session, Identifier id, InputStream object, 
+                                    SystemMetadata sysmeta) 
+                                        throws InvalidToken, ServiceFailure, NotAuthorized, 
+                                IdentifierNotUnique, UnsupportedType, InsufficientResources, 
+                                InvalidSystemMetadata, NotImplemented, InvalidRequest {
+        return MNodeService.getInstance(request).create(session, id, object, sysmeta);
+    }
+    
+    /**
+     * A wrapper method of MN.update
+     * @param session  the subject which will create the object
+     * @param pid  the identifier which will be updated
+     * @param object  the bytes of the new object
+     * @param newPid  the identifier which will replace the pid
+     * @param sysmeta  the system metadata associated with the new object
+     * @return the identifier of the new object
+     * @throws IdentifierNotUnique
+     * @throws InsufficientResources
+     * @throws InvalidRequest
+     * @throws InvalidSystemMetadata
+     * @throws InvalidToken
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     * @throws ServiceFailure
+     * @throws UnsupportedType
+     * @throws NotFound
+     */
+    public Identifier mnUpdate(Session session, Identifier pid, InputStream object, 
+                                           Identifier newPid, SystemMetadata sysmeta) 
+                              throws IdentifierNotUnique, InsufficientResources, 
+                            InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, 
+                            NotImplemented, ServiceFailure, UnsupportedType, NotFound {
+        return MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
+    }
+    
+    /**
+     * A wrapper method of CN.create.
+     * @param session  the subject which will create the object
+     * @param id  the identifier of the created object
+     * @param object  the bytes of the object
+     * @param sysmeta  the system metadata associated with the object
+     * @return the identifier of the created object
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws IdentifierNotUnique
+     * @throws UnsupportedType
+     * @throws InsufficientResources
+     * @throws InvalidSystemMetadata
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     */
+    public Identifier cnCreate(Session session, Identifier id, InputStream object, SystemMetadata sysmeta) 
+                                throws InvalidToken, ServiceFailure, NotAuthorized, 
+                                IdentifierNotUnique, UnsupportedType, InsufficientResources, 
+                                InvalidSystemMetadata, NotImplemented, InvalidRequest {
+        return CNodeService.getInstance(request).create(session, id, object, sysmeta);
+    }
 
+    /**
+     * Read a document from metacat and check if it is equal to a given string.
+     * The expected result is passed as result
+     */
+    protected void readDocidWhichEqualsDoc(String docid, String testDoc, 
+                                            boolean result, Session session) {
+        try {
+            Identifier guid = new Identifier();
+            guid.setValue(docid);
+            InputStream object = MNodeService.getInstance(request).get(session, guid);
+            String doc = IOUtils.toString(object, "UTF-8");
+            if (!testDoc.equals(doc)) {
+                    debug("doc    :" + doc);
+                    debug("testDoc:" + testDoc);
+            }
+            assertTrue(testDoc.equals(doc));
+        } catch (Exception e) {
+            fail("General exception:\n" + e.getMessage());
+        }
+    }
+    
+    /**
+     * Use the solr query to query a title. If the result doesn't contains the given
+     * guid, test will fail.
+     */
+    protected void queryTile(String title, String guid, Session session) throws Exception {
+        String query = "q=title:" +"\"" + title +"\"";
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int count = 0;
+        while ( (resultStr == null || !resultStr.contains(guid)) 
+                                    && count <= D1NodeServiceTest.tryAcccounts) {
+            Thread.sleep(1000);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains(guid));
+    }
 }

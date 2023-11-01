@@ -36,11 +36,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.Writer;
-import java.math.BigInteger;
 import java.net.URL;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
@@ -52,11 +49,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Stack;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,10 +57,7 @@ import java.util.regex.Pattern;
 import javax.xml.bind.DatatypeConverter;
 
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
-import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
-import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
-import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
@@ -78,8 +68,6 @@ import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
-import edu.ucsb.nceas.metacat.shared.AccessException;
-import edu.ucsb.nceas.metacat.spatial.SpatialHarvester;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -200,10 +188,6 @@ public class DocumentImpl
     private String docHomeServer;
     private String publicaccess;
     protected long rootnodeid;
-    private ElementNode rootNode = null;
-    private TreeSet<NodeRecord> nodeRecordList = null;
-    
-    private Vector<String> pathsForIndexing = null;
   
     private static Log logMetacat = LogFactory.getLog(DocumentImpl.class);
     private static Log logReplication = LogFactory.getLog("ReplicationLogging");
@@ -237,21 +221,9 @@ public class DocumentImpl
             //this.conn = conn;
             this.docid = DocumentUtil.getDocIdFromAccessionNumber(accNum);
             this.rev   = DocumentUtil.getRevisionFromAccessionNumber(accNum);
-            
-            pathsForIndexing = SystemUtil.getPathsForIndexing();
 
             // Look up the document information
             getDocumentInfo(docid, rev);
-
-            if (readNodes) {
-                // Download all of the document nodes using a single SQL query
-                // The sort order of the records is determined by the
-                // NodeComparator
-                // class, and needs to represent a depth-first traversal for the
-                // toXml() method to work properly
-                nodeRecordList = getNodeRecordList(rootnodeid);
-            }
-
         } catch (McdbException ex) {
             throw ex;
         } catch (Throwable t) {
@@ -324,9 +296,6 @@ public class DocumentImpl
         this.doctype = docType;
         this.docid = docId;
         this.rev = (new Integer(newRevision)).intValue();
-        
-        pathsForIndexing = SystemUtil.getPathsForIndexing();
-        
         //this.updatedVersion = newRevision;
         writeDocumentToDB(action, user, pub, catalogId, serverCode, createDate, updateDate);
     }
@@ -350,7 +319,7 @@ public class DocumentImpl
 
     /**
      * Register a document that resides on the filesystem with the database.
-     * (ie, just an entry in xml_documents, nothing in xml_nodes). Creates a
+     * (ie, just an entry in xml_documents). Creates a
      * reference to a filesystem document (used for non-xml data files). This
      * class only be called in MetaCatServerlet.
      *
@@ -434,7 +403,7 @@ public class DocumentImpl
 
     /**
      * Register a document that resides on the filesystem with the database.
-     * (ie, just an entry in xml_documents, nothing in xml_nodes). Creates a
+     * (ie, just an entry in xml_documents). Creates a
      * reference to a filesystem document (used for non-xml data files) This
      * method will be called for register data file in xml_documents in
      * Replication. This method is revised from registerDocument.
@@ -1031,42 +1000,6 @@ public class DocumentImpl
         return out.toByteArray();
 	}
 
-    /**
-     * Get a text representation of the XML document as a string This older
-     * algorithm uses a recursive tree of Objects to represent the nodes of the
-     * tree. Each object is passed the data for the document and searches all of
-     * the document data to find its children nodes and recursively build. Thus,
-     * because each node reads the whole document, this algorithm is extremely
-     * slow for larger documents, and the time to completion is O(N^N) wrt the
-     * number of nodes. See toXml() for a better algorithm.
-     */
-    public String readUsingSlowAlgorithm() throws McdbException
-    {
-        StringBuffer doc = new StringBuffer();
-
-        // First, check that we have the needed node data, and get it if not
-        if (nodeRecordList == null) {
-            nodeRecordList = getNodeRecordList(rootnodeid);
-        }
-
-        // Create the elements from the downloaded data in the TreeSet
-        rootNode = new ElementNode(nodeRecordList, rootnodeid);
-
-        // Append the resulting document to the StringBuffer and return it
-        doc.append("<?xml version=\"1.0\"?>\n");
-
-        if (docname != null) {
-            if ((doctype != null) && (system_id != null)) {
-                doc.append("<!DOCTYPE " + docname + " PUBLIC \"" + doctype
-                        + "\" \"" + system_id + "\">\n");
-            } else {
-                doc.append("<!DOCTYPE " + docname + ">\n");
-            }
-        }
-        doc.append(rootNode.toString());
-
-        return (doc.toString());
-    }
 
     /**
 	 * Print a text representation of the XML document to a Writer
@@ -1088,16 +1021,11 @@ public class DocumentImpl
 
 			if (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
 					|| FileUtil.getFileSize(documentPath) == 0) {
-				fos = new FileOutputStream(documentPath);
-				toXmlFromDb(fos, user, groups, true);
-				fos.close();
+			    throw new McdbException("Could not read file: " + documentPath + " : since it doesn't exist or the sieze is 0.");
 			}
 		} catch (PropertyNotFoundException pnfe) {
 			throw new McdbException("Could not write file: " + documentPath + " : "
 					+ pnfe.getMessage());
-		} catch (IOException ioe) {
-			throw new McdbException("Could not write file: " + documentPath + " : "
-					+ ioe.getMessage());
         } finally {
             IOUtils.closeQuietly(fos);
         }
@@ -1109,310 +1037,6 @@ public class DocumentImpl
 		return readFromFileSystem(out, user, groups, documentPath);
 	}
     
-    /**
-	 * Print a text representation of the XML document to a Writer
-	 * 
-	 * @param pw
-	 *            the Writer to which we print the document Now we decide no
-	 *            matter withinInlineData's value, the document will
-	 * 
-	 */
-    public void toXmlFromDb(OutputStream outputStream, String user, String[] groups,
-            boolean withInLineData) throws McdbException, IOException
-    {
-        // flag for process eml2
-        boolean proccessEml2 = false;
-        boolean storedDTD = false;//flag to inidate publicid or system
-        // id stored in db or not
-        boolean firstElement = true;
-        String dbDocName = null;
-        String dbPublicID = null;
-        String dbSystemID = null;
-
-        if (doctype != null
-                && (doctype.equals(EML2_0_0NAMESPACE)
-                        || doctype.equals(EML2_0_1NAMESPACE) 
-                        || doctype.equals(EML2_1_0NAMESPACE)
-                		|| doctype.equals(EML2_1_1NAMESPACE) || doctype.equals(EML2_2_0NAMESPACE) )) {
-            proccessEml2 = true;
-        }
-        // flag for process inline data
-        boolean processInlineData = false;
-
-        TreeSet<NodeRecord> nodeRecordLists = null;
-        
-        // Note: we haven't stored the encoding, so we use the default for XML
-        String encoding = "UTF-8";
-        Writer out = new OutputStreamWriter(outputStream, encoding);
-       
-        // Here add code to handle subtree access control
-        /*
-         * PermissionController control = new PermissionController(docid);
-         * Hashtable unaccessableSubTree =control.hasUnaccessableSubTree(user,
-         * groups, AccessControlInterface.READSTRING);
-         *
-         * if (!unaccessableSubTree.isEmpty()) {
-         *
-         * nodeRecordLists = getPartNodeRecordList(rootnodeid,
-         * unaccessableSubTree);
-         *  } else { nodeRecordLists = getNodeRecordList(rootnodeid); }
-         */
-        
-        if(this.nodeRecordList == null){
-            nodeRecordLists = getNodeRecordList(rootnodeid);
-        } else {
-        	nodeRecordLists = this.nodeRecordList;
-        }
-        Stack<NodeRecord> openElements = new Stack<NodeRecord>();
-        boolean atRootElement = true;
-        boolean previousNodeWasElement = false;
-
-        // Step through all of the node records we were given
-
-        Iterator<NodeRecord> it = nodeRecordLists.iterator();
-
-        while (it.hasNext()) {
-
-            NodeRecord currentNode = it.next();
-            logMetacat.debug("[Got Node ID: " + currentNode.getNodeId() + " ("
-                    + currentNode.getParentNodeId() + ", " + currentNode.getNodeIndex()
-                    + ", " + currentNode.getNodeType() + ", " + currentNode.getNodeName()
-                    + ", " + currentNode.getNodeData() + ")]");
-            // Print the end tag for the previous node if needed
-            //
-            // This is determined by inspecting the parent nodeid for the
-            // currentNode. If it is the same as the nodeid of the last element
-            // that was pushed onto the stack, then we are still in that
-            // previous
-            // parent element, and we do nothing. However, if it differs, then
-            // we
-            // have returned to a level above the previous parent, so we go into
-            // a loop and pop off nodes and print out their end tags until we
-            // get
-            // the node on the stack to match the currentNode parentnodeid
-            //
-            // So, this of course means that we rely on the list of elements
-            // having been sorted in a depth first traversal of the nodes, which
-            // is handled by the NodeComparator class used by the TreeSet
-            if (!atRootElement) {
-                NodeRecord currentElement = openElements.peek();
-                if (currentNode.getParentNodeId() != currentElement.getNodeId()) {
-                    while (currentNode.getParentNodeId() != currentElement.getNodeId()) {
-                        currentElement = (NodeRecord) openElements.pop();
-                        logMetacat.debug("\n POPPED: "
-                                + currentElement.getNodeName());
-                        if (previousNodeWasElement) {
-                            out.write(">");
-                            previousNodeWasElement = false;
-                        }
-                        if (currentElement.getNodePrefix() != null) {
-                            out.write("</" + currentElement.getNodePrefix() + ":"
-                                    + currentElement.getNodeName() + ">");
-                        } else {
-                            out.write("</" + currentElement.getNodeName() + ">");
-                        }
-                        currentElement = openElements.peek();
-                    }
-                }
-            }
-
-            // Handle the DOCUMENT node
-            if (currentNode.getNodeType().equals("DOCUMENT")) {
-                out.write("<?xml version=\"1.0\"?>");
-
-                // Handle the ELEMENT nodes
-            } else if (currentNode.getNodeType().equals("ELEMENT")) {
-                if (atRootElement) {
-                    atRootElement = false;
-                } else {
-                    if (previousNodeWasElement) {
-                        out.write(">");
-                    }
-                }
-
-                // if publicid or system is not stored into db send it out by
-                // default
-                if (!storedDTD & firstElement) {
-                    if (docname != null && validateType != null
-                            && validateType.equals(DTD)) {
-                        if ((doctype != null) && (system_id != null)) {
-
-                            out.write("<!DOCTYPE " + docname + " PUBLIC \""
-                                    + doctype + "\" \"" + system_id + "\">");
-                        } else {
-
-                            out.write("<!DOCTYPE " + docname + ">");
-                        }
-                    }
-                }
-                firstElement = false;
-                openElements.push(currentNode);
-                logMetacat.debug("\n PUSHED: " + currentNode.getNodeName());
-                previousNodeWasElement = true;
-                if (currentNode.getNodePrefix() != null) {
-                    out.write("<" + currentNode.getNodePrefix() + ":"
-                            + currentNode.getNodeName());
-                } else {
-                    out.write("<" + currentNode.getNodeName());
-                }
-
-                // if currentNode is inline and handle eml2, set flag process
-                // on
-                if (currentNode.getNodeName() != null
-                        && currentNode.getNodeName().equals(Eml200SAXHandler.INLINE)
-                        && proccessEml2) {
-                	processInlineData = true;
-                }
-
-                // Handle the ATTRIBUTE nodes
-            } else if (currentNode.getNodeType().equals("ATTRIBUTE")) {
-                if (currentNode.getNodePrefix() != null) {
-                    out.write(" " + currentNode.getNodePrefix() + ":"
-                            + currentNode.getNodeName() + "=\""
-                            + currentNode.getNodeData() + "\"");
-                } else {
-                    out.write(" " + currentNode.getNodeName() + "=\""
-                            + currentNode.getNodeData() + "\"");
-                }
-
-                // Handle the NAMESPACE nodes
-            } else if (currentNode.getNodeType().equals("NAMESPACE")) {
-                String nsprefix = " xmlns:";
-                if(currentNode.getNodeName() == null || currentNode.getNodeName().trim().equals(""))
-                {
-                  nsprefix = " xmlns";
-                }
-                
-                out.write(nsprefix + currentNode.getNodeName() + "=\""
-                          + currentNode.getNodeData() + "\"");
-
-                // Handle the TEXT nodes
-            } else if (currentNode.getNodeType().equals("TEXT")) {
-                if (previousNodeWasElement) {
-                    out.write(">");
-                }
-                if (!processInlineData) {
-                    // if it is not inline data just out put data
-                    out.write(currentNode.getNodeData());
-                } else {
-                    // if it is inline data first to get the inline data
-                    // internal id
-                    String fileName = currentNode.getNodeData();
-                    // use full docid with revision
-                    String accessfileName = fileName; //DocumentUtil.getDocIdWithoutRevFromInlineDataID(fileName);
-                    
-                    // check if user has read permision for this inline data
-                    boolean readInlinedata = false;
-                    try {
-                        Hashtable<String, String> unReadableInlineDataList =
-                            PermissionController.getUnReadableInlineDataIdList(accessfileName, user, groups);
-                        if (!unReadableInlineDataList.containsValue(fileName)) {
-                            readInlinedata = true;
-                        }
-                    } catch (Exception e) {
-                        throw new McdbException(e.getMessage());
-                    }
-
-                    if (readInlinedata) {
-                        //user want to see it, pull out from file system and 
-                    	// output it for inline data, the data base only store 
-                    	// the file name, so we can combine the file name and
-                    	// inline data file path, to get it
-
-                        Reader reader = Eml200SAXHandler
-                                .readInlineDataFromFileSystem(fileName, encoding);
-                        char[] characterArray = new char[4 * 1024];
-                        try {
-                            int length = reader.read(characterArray);
-                            while (length != -1) {
-                                out.write(new String(characterArray, 0,
-                                                length));
-                                out.flush();
-                                length = reader.read(characterArray);
-                            }
-                            reader.close();
-                        } catch (IOException e) {
-                            throw new McdbException(e.getMessage());
-                        }
-                    }//if can read inline data
-                    else {
-                        // if user can't read it, we only send it back a empty
-                        // string in inline element.
-                        out.write("");
-                    }// else can't read inlinedata
-                    // reset proccess inline data false
-                    processInlineData = false;
-                }// in inlinedata part
-                previousNodeWasElement = false;
-                // Handle the COMMENT nodes
-            } else if (currentNode.getNodeType().equals("COMMENT")) {
-                if (previousNodeWasElement) {
-                    out.write(">");
-                }
-                out.write("<!--" + currentNode.getNodeData() + "-->");
-                previousNodeWasElement = false;
-
-                // Handle the PI nodes
-            } else if (currentNode.getNodeType().equals("PI")) {
-                if (previousNodeWasElement) {
-                    out.write(">");
-                }
-                out.write("<?" + currentNode.getNodeName() + " "
-                        + currentNode.getNodeData() + "?>");
-                previousNodeWasElement = false;
-                // Handle the DTD nodes (docname, publicid, systemid)
-            } else if (currentNode.getNodeType().equals(DTD)) {
-                storedDTD = true;
-                if (currentNode.getNodeName().equals(DOCNAME)) {
-                    dbDocName = currentNode.getNodeData();
-                }
-                if (currentNode.getNodeName().equals(PUBLICID)) {
-                    dbPublicID = currentNode.getNodeData();
-                }
-                if (currentNode.getNodeName().equals(SYSTEMID)) {
-                    dbSystemID = currentNode.getNodeData();
-                    // send out <!doctype .../>
-                    if (dbDocName != null) {
-                        if ((dbPublicID != null) && (dbSystemID != null)) {
-
-                            out
-                                    .write("<!DOCTYPE " + dbDocName
-                                            + " PUBLIC \"" + dbPublicID
-                                            + "\" \"" + dbSystemID + "\">");
-                        } else {
-
-                            out.write("<!DOCTYPE " + dbDocName + ">");
-                        }
-                    }
-
-                    //reset these variable
-                    dbDocName = null;
-                    dbPublicID = null;
-                    dbSystemID = null;
-                }
-
-                // Handle any other node type (do nothing)
-            } else {
-                // Any other types of nodes are not handled.
-                // Probably should throw an exception here to indicate this
-            }
-            
-            out.flush();
-        }
-
-        // Print the final end tag for the root element
-        while (!openElements.empty()) {
-            NodeRecord currentElement = (NodeRecord) openElements.pop();
-            logMetacat.debug("\n POPPED: " + currentElement.getNodeName());
-            if (currentElement.getNodePrefix() != null) {
-                out.write("</" + currentElement.getNodePrefix() + ":"
-                        + currentElement.getNodeName() + ">");
-            } else {
-                out.write("</" + currentElement.getNodeName() + ">");
-            }
-        }
-        out.flush();
-    }
     
     /**
 	 * Read the XML document from the file system and write to a Writer. Strip
@@ -1761,389 +1385,6 @@ public class DocumentImpl
     	return changedString;
     }
 
-    /**
-	 * Build the index records for this document. For each node, all absolute
-	 * and relative paths to the root of the document are created and inserted
-	 * into the xml_index table. This requires that the DocumentImpl instance
-	 * exists, so first call the constructor that reads the document from the
-	 * database.
-	 * 
-	 * @throws McdbException
-	 *             on error getting the node records for the document
-	 */
-    public void buildIndex() throws McdbException
-    {
-        //if the pathquery option is off, we don't need to build the index.
-        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
-            return;
-        }
-    	logMetacat.info("DocumentImpl.buildIndex - building index for docid " + docid);
-    	double start = System.currentTimeMillis()/1000;
-        TreeSet<NodeRecord> nodeRecordLists = getNodeRecordList(rootnodeid);
-        boolean atRootElement = true;
-        long rootNodeId = -1;
-
-        // Build a map of the same records that are present in the
-        // TreeSet so that any node can be easily accessed by nodeId
-        HashMap<Long, NodeRecord> nodeRecordMap = new HashMap<Long, NodeRecord>();
-        Iterator<NodeRecord> it = nodeRecordLists.iterator();
-        while (it.hasNext()) {
-            NodeRecord currentNode = (NodeRecord) it.next();
-            Long nodeId = new Long(currentNode.getNodeId());
-            nodeRecordMap.put(nodeId, currentNode);
-        }
-
-//        String doc = docid;
-      double afterPutNode = System.currentTimeMillis()/1000;
-      logMetacat.debug("DocumentImpl.buildIndex - The time to put node id into map is " + (afterPutNode - start));
-      double afterDelete = 0;
-        // Opening separate db connection for deleting and writing
-        // XML Index -- be sure that it is all in one db transaction
-        int serialNumber = -1;
-        DBConnection dbConn = null;
-        try {
-            dbConn = DBConnectionPool.getDBConnection("DocumentImpl.buildIndex");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-            dbConn.setAutoCommit(false);
-            //make sure record is done
-            //checkDocumentTable();
-
-            // Delete the previous index entries for this document
-            deleteNodeIndex(dbConn);
-            afterDelete = System.currentTimeMillis()/1000;
-            // Step through all of the node records we were given
-            // and build the new index and update the database. Process
-            // TEXT nodes with their parent ELEMENT node ids to associate the
-            // element with it's node data (stored in the text node)
-            it = nodeRecordLists.iterator();
-            HashMap<String, PathIndexEntry> pathsFound = new HashMap<String, PathIndexEntry>();
-            while (it.hasNext()) {
-                NodeRecord currentNode = (NodeRecord) it.next();
-                HashMap<String, PathIndexEntry> pathList = new HashMap<String, PathIndexEntry>();
-                if ( currentNode.getNodeType().equals("ELEMENT") ||
-                     currentNode.getNodeType().equals("ATTRIBUTE") ){
-
-                    if (atRootElement) {
-                        rootNodeId = currentNode.getNodeId();
-                        atRootElement = false;
-                    }
-                    traverseParents(nodeRecordMap, rootNodeId,
-                                    currentNode.getNodeId(),
-                                    currentNode.getNodeId(), 
-                                    "", pathList, pathsFound);
-
-                    updateNodeIndex(dbConn, pathList);
-                } else if ( currentNode.getNodeType().equals("TEXT") ) {
-                  
-                  // A non-empty TEXT node represents the node data of its
-                  // parent ELEMENT node.  Traverse the parents starting from 
-                  // the TEXT node.  The xml_path_index table will be populated 
-                  // with ELEMENT paths with TEXT nodedata (since it's modeled 
-                  // this way in the DOM)
-                  NodeRecord parentNode = 
-                	  nodeRecordMap.get(new Long(currentNode.getParentNodeId()));
-
-                  if ( parentNode.getNodeType().equals("ELEMENT") ) {
-                    
-                    currentNode.setNodeType(parentNode.getNodeType());
-                    currentNode.setNodeName("");
-                    logMetacat.trace("DocumentImpl.buildIndex - Converted node " + currentNode.getNodeId() + 
-                      " to type " + parentNode.getNodeType());
-                    
-                  	traverseParents(nodeRecordMap, rootNodeId,
-                                    currentNode.getNodeId(),
-                                    currentNode.getNodeId(),
-                                    "", pathList, pathsFound);
-                  }
-                }
-                // Lastly, update the xml_path_index table
-                if(!pathsFound.isEmpty()){
-                	logMetacat.trace("DocumentImpl.buildIndex - updating path index");
-                    	
-                	updatePathIndex(dbConn, pathsFound);
-
-                	pathsFound.clear();
-                }
-            }
-            
-            dbConn.commit();
-        } catch (SQLException sqle) {
-            logMetacat.error("DocumentImpl.buildIndex - SQL Exception while indexing "
-            		+ "document " + docid + " : " + sqle.getMessage());
-            try {
-                dbConn.rollback();
-            } catch (SQLException sqle2) {
-                logMetacat.error("DocumentImpl.buildIndex - Error while rolling back: "
-                		 + sqle2.getMessage());
-            }
-            throw new McdbException("SQL error when building Index: " + sqle.getMessage());
-        } finally {
-			DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-		}
-		double finish = System.currentTimeMillis() / 1000;
-		logMetacat.info("DocumentImpl.buildIndex - The time for inserting is " + (finish - afterDelete));
-		logMetacat.info("DocumentImpl.buildIndex - BuildIndex complete for docid " + docid);
-
-		// Adds the docid to the spatial data cache
-		try {
-			if (PropertyService.getProperty("spatial.runSpatialOption").equals("true")) {
-				SpatialHarvester spatialHarvester = new SpatialHarvester();
-				logMetacat.debug("DocumentImpl.buildIndex -  Attempting to update the spatial cache for docid "
-								+ docid);
-				spatialHarvester.addToUpdateQue(docid);
-				spatialHarvester.destroy();
-				logMetacat.debug("DocumentImpl.buildIndex - Finished updating the spatial cache for docid "
-								+ docid);
-			}
-		} catch (PropertyNotFoundException pnfe) {
-			logMetacat.error("DocumentImpl.buildIndex - Could not get 'runSpatialOption' property.  Spatial " 
-					+ "cache not run for docid: " + docid + " : " + pnfe.getMessage());
-		} catch (StringIndexOutOfBoundsException siobe) {
-			logMetacat.error("DocumentImpl.buildIndex -  String indexing problem.  Spatial " 
-					+ "cache not run for docid: " + docid + " : " + siobe.getMessage());		
-		}
-	}
-
-    /**
-	 * Recurse up the parent node hierarchy and add each node to the hashmap of
-	 * paths to be indexed. Note: pathsForIndexing is a hash map of paths
-	 * 
-	 * @param records
-	 *            the set of records hashed by nodeId
-	 * @param rootNodeId
-	 *            the id of the root element of the document
-	 * @param leafNodeId
-	 *            the id of the leafNode being processed
-	 * @param id
-	 *            the id of the current node to be processed
-	 * @param children
-	 *            the string representation of all child nodes of this id
-	 * @param pathList
-	 *            the hash to which paths are added
-	 * @param nodedata
-	 *            the nodedata for the current node
-	 */
-    private void traverseParents(HashMap<Long,NodeRecord> records, long rootNodeId,
-            long leafNodeId, long id,String children, 
-            HashMap<String, PathIndexEntry> pathList, 
-            HashMap<String, PathIndexEntry> pathsFoundForIndexing) {
-    	Long nodeId = new Long(id);
-        NodeRecord current = (NodeRecord)records.get(nodeId);
-        long parentId = current.getParentNodeId();
-        String currentName = current.getNodeName();
-        NodeRecord leafRecord = (NodeRecord)records.get(new Long(leafNodeId));
-        String leafData = leafRecord.getNodeData();
-        long leafParentId = leafRecord.getParentNodeId();
-        float leafDataNumerical = leafRecord.getNodeDataNumerical();
-        Timestamp leafDataDate = leafRecord.getNodeDataDate();
-        
-        if ( current.getNodeType().equals("ELEMENT") ||
-            current.getNodeType().equals("ATTRIBUTE") ) {
-        	  
-        	  // process leaf node xpaths
-            if (children.equals("")) {
-                if (current.getNodeType().equals("ATTRIBUTE")) {
-                    currentName = "@" + currentName;
-                }
-                logMetacat.trace("DocumentImpl.traverseParents - A: " + currentName +"\n");
-                if ( currentName != null ) {
-                  if ( !currentName.equals("") ) {
-                    pathList.put(currentName, new PathIndexEntry(leafNodeId,
-                      currentName, docid, doctype, parentId));
-                  }
-                }
-				if (pathsForIndexing.contains(currentName)
-						&& leafData.trim().length() != 0) {
-					logMetacat.trace("DocumentImpl.traverseParents - paths found for indexing: " + currentName);
-					pathsFoundForIndexing.put(currentName, new PathIndexEntry(
-							leafNodeId, currentName, docid, leafParentId, leafData,
-							leafDataNumerical, leafDataDate));
-				}
-            }
-            
-            // process relative xpaths
-            if ( !currentName.equals("") ) {
-              currentName = "/" + currentName;
-              currentName = currentName + children;
-            }
-            if (parentId != 0) {
-                traverseParents(records, rootNodeId, leafNodeId,
-                    parentId, currentName, pathList, pathsFoundForIndexing);
-            }
-            String path = current.getNodeName() + children;
-            
-            if ( !children.equals("") ) {
-                logMetacat.trace("DocumentImpl.traverseParents - B: " + path +"\n");
-                pathList.put(path, new PathIndexEntry(leafNodeId, path, docid,
-                    doctype, parentId));
-				if (pathsForIndexing.contains(path)
-						&& leafData.trim().length() != 0) {
-					logMetacat.trace("DocumentImpl.traverseParents - paths found for indexing: " + currentName);
-					pathsFoundForIndexing.put(path, new PathIndexEntry(leafNodeId,
-							path, docid, leafParentId, leafData, leafDataNumerical, leafDataDate));
-				}
-            }
-            // process absolute xpaths
-            if (id == rootNodeId) {
-                String fullPath = "";
-                if ( !path.equals("") ) {
-                  fullPath = '/' + path;
-                }
-                logMetacat.trace("DocumentImpl.traverseParents - C: " + fullPath +"\n");
-                pathList.put(fullPath, new PathIndexEntry(leafNodeId, fullPath,
-                    docid, doctype, parentId));
-
-				if (pathsForIndexing.contains(fullPath)
-						&& leafData.trim().length() != 0) {
-					logMetacat.trace("DocumentImpl.traverseParents - paths found for indexing: " + currentName);
-					pathsFoundForIndexing.put(fullPath, new PathIndexEntry(
-							leafNodeId, fullPath, docid, leafParentId, leafData,
-							leafDataNumerical, leafDataDate));
-				}
-            }
-        } 
-    }
-
-    /**
-	 * Delete the paths from the xml_index table on the database in preparation
-	 * of a subsequent update.
-	 * 
-	 * @param conn
-	 *            the database connection to use, keeping a single transaction
-	 * @throws SQLException
-	 *             if there is an error deleting from the db
-	 */
-    private void deleteNodeIndex(DBConnection conn) throws SQLException
-    {
-        //String familyId = MetacatUtil.getDocIdFromString(docid);
-    	double start = System.currentTimeMillis()/1000;
-        String familyId = docid;
-        String sql = "DELETE FROM xml_index WHERE docid = ?";
-
-        PreparedStatement pstmt = conn.prepareStatement(sql);
-
-        // Increase usage count for the connection
-        conn.increaseUsageCount(1);
-
-        // Execute the delete and close the statement
-        pstmt.setString(1, familyId);
-        logMetacat.debug("DocumentImpl.deleteNodeIndex - executing SQL: " + pstmt.toString());
-        int rows = pstmt.executeUpdate();
-        pstmt.close();
-        logMetacat.debug("DocumentImpl.deleteNodeIndex - Deleted " + rows + " rows from xml_index " +
-            "for document " + docid);
-        double afterDeleteIndex = System.currentTimeMillis()/1000;
-        logMetacat.debug("DocumentImpl.deleteNodeIndex - The delete index time is "+(afterDeleteIndex - start));
-        // Delete all the entries in xml_queryresult
-        try {
-            XMLQueryresultAccess xmlQueryresultAccess = new XMLQueryresultAccess();
-            xmlQueryresultAccess.deleteXMLQueryresulForDoc(docid);
-        } catch (AccessException ae) {
-        	throw new SQLException("Problem deleting xml query result for docid " + 
-        			docid + " : " + ae.getMessage());
-        }
-        logMetacat.debug("DocumentImpl.deleteNodeIndex - Deleted " + rows + " rows from xml_queryresult " +
-                "for document " + docid);
-        double afterDeleteQueryResult = System.currentTimeMillis()/1000;
-        logMetacat.debug("DocumentImpl.deleteNodeIndex - The delete query result time is "+(afterDeleteQueryResult - afterDeleteIndex ));
-        // Delete all the entries in xml_path_index
-        pstmt = conn.prepareStatement(
-                "DELETE FROM xml_path_index WHERE docid = ?");
-        pstmt.setString(1, docid);
-        logMetacat.debug("DocumentImpl.deleteNodeIndex - executing SQL: " + pstmt.toString());
-        rows = pstmt.executeUpdate();
-        conn.increaseUsageCount(1);
-        pstmt.close();
-        double afterDeletePathIndex = System.currentTimeMillis()/1000;
-        logMetacat.info("DocumentImpl.deleteNodeIndex - The delete path index time is "+ (afterDeletePathIndex - afterDeleteQueryResult));
-        logMetacat.info("DocumentImpl.deleteNodeIndex - Deleted " + rows + " rows from xml_path_index " +
-                "for document " + docid);
-
-    }
-
-    /**
-	 * Insert the paths from the pathList into the xml_index table on the
-     * database.
-     *
-     * @param conn the database connection to use, keeping a single transaction
-     * @param pathList the hash of paths to insert
-     * @throws SQLException if there is an error inserting into the db
-     */
-    private void updateNodeIndex(DBConnection conn, HashMap<String, PathIndexEntry> pathList)
-    	throws SQLException
-    {
-        // Create an insert statement to reuse for all of the path
-        // insertions
-        PreparedStatement pstmt = conn.prepareStatement(
-                "INSERT INTO xml_index (nodeid, path, docid, doctype, " +
-                "parentnodeid) " + "VALUES (?, ?, ?, ?, ?)");
-        // Increase usage count for the connection
-        conn.increaseUsageCount(1);
-        String familyId = docid;
-        pstmt.setString(3, familyId);
-        pstmt.setString(4, doctype);
-
-        // Step through the hashtable and insert each of the path values
-        Iterator<PathIndexEntry> it = pathList.values().iterator();
-        while (it.hasNext()) {
-        	 PathIndexEntry entry = (PathIndexEntry)it.next();
-        	 pstmt.setLong(1, entry.nodeId);
-        	 pstmt.setString(2, entry.path);
-        	 pstmt.setLong(5, entry.parentId);
-        	 logMetacat.debug("DocumentImpl.updateNodeIndex - executing SQL: " + pstmt.toString());
-        	 pstmt.executeUpdate();
-         }
-        // Close the database statement
-        pstmt.close();
-    }
-
-    /**
-     * Insert the paths from the pathList into the xml_path_index table on the
-     * database.
-     *
-     * @param conn the database connection to use, keeping a single transaction
-     * @param pathList the hash of paths to insert
-     * @throws SQLException if there is an error inserting into the db
-     */
-    private void updatePathIndex(DBConnection conn, HashMap<String, PathIndexEntry> pathsFound)
-        throws SQLException {
-        // Increase usage count for the connection
-        conn.increaseUsageCount(1);
-        
-        // Create an insert statement to reuse for all of the path
-        // insertions
-        PreparedStatement pstmt = conn.prepareStatement("INSERT INTO "
-                + "xml_path_index (docid, path, nodedata, "
-                + "nodedatanumerical, nodedatadate, parentnodeid)"
-                + " VALUES (?, ?, ?, ?, ?, ?)");
-        
-        // Step through the hashtable and insert each of the path values
-        Iterator<PathIndexEntry> it = pathsFound.values().iterator();
-         while (it.hasNext()) {
-             PathIndexEntry entry = (PathIndexEntry)it.next();
-             if (entry.path.length() > 2784) {
-            	 logMetacat.warn("DocumentImpl.updatePathIndex - the path for doc id " + entry.docid + 
-            			 " is too long and will db break indexing.  This path was not indexed: " + entry.path);
-            	 continue;
-             }
-             if (entry.nodeData.length() > 2784) {
-            	 logMetacat.warn("DocumentImpl.updatePathIndex - the node data for doc id " + entry.docid + 
-            			 " is too long and will break db indexing.  This path was not indexed: " + entry.path);
-            	 continue;
-             }
-             pstmt.setString(1,entry.docid);
-             pstmt.setString(2, entry.path);
-             pstmt.setString(3, entry.nodeData);
-             pstmt.setFloat(4, entry.nodeDataNumerical);
-             pstmt.setTimestamp(5, entry.nodeDataDate);
-             pstmt.setLong(6, entry.parentId);  
-             logMetacat.debug("DocumentImpl.updatePathIndex - executing SQL: " + pstmt.toString());
-             pstmt.execute();
-        }
-        // Close the database statement
-        pstmt.close();
-    }
-
     private boolean isRevisionOnly(String docid, int revision) throws Exception
     {
         //System.out.println("inRevisionOnly given "+ docid + "."+ revision);
@@ -2340,113 +1581,6 @@ public class DocumentImpl
         }
     }
 
-
-    /**
-     * Look up the node data from the database
-     *
-     * @param rootnodeid
-     *            the id of the root node of the node tree to look up
-     */
-    private TreeSet<NodeRecord> getNodeRecordList(long rootnodeid) throws McdbException
-    {
-        PreparedStatement pstmt = null;
-        DBConnection dbconn = null;
-        int serialNumber = -1;
-        TreeSet<NodeRecord> nodeRecordList = new TreeSet<NodeRecord>(new NodeComparator());
-        long nodeid = 0;
-        long parentnodeid = 0;
-        long nodeindex = 0;
-        String nodetype = null;
-        String nodename = null;
-        String nodeprefix = null;
-        String nodedata = null;
-        float nodedatanumerical = -1;
-        Timestamp nodedatadate = null;
-
-//        String quotechar = DatabaseService.getDBAdapter().getStringDelimiter();
-        String table = "xml_nodes";
-        //System.out.println("in getNodeREcorelist !!!!!!!!!!!for root node id "+rootnodeid);
-        try {
-            if (isRevisionOnly(docid, rev)) { //pull the document from xml_revisions
-                // instead of from xml_documents;
-                table = "xml_nodes_revisions";
-                //System.out.println("in getNodeREcorelist !!!!!!!!!!!2");
-            }
-        }  catch (McdbDocNotFoundException notFound) {
-            throw notFound;
-        } catch (Exception e) {
-
-            logMetacat.error("DocumentImpl.getNodeRecordList - General error: "
-                    + e.getMessage());
-        }
-        //System.out.println("in getNodeREcorelist !!!!!!!!!!!3");
-        try {
-            dbconn = DBConnectionPool
-                    .getDBConnection("DocumentImpl.getNodeRecordList");
-            serialNumber = dbconn.getCheckOutSerialNumber();
-            pstmt = dbconn
-                    .prepareStatement("SELECT nodeid,parentnodeid,nodeindex, "
-                            + "nodetype,nodename,nodeprefix,nodedata, nodedatanumerical, nodedatadate "
-                            + "FROM " + table + " WHERE rootnodeid = ?");
-
-            // Bind the values to the query
-            pstmt.setLong(1, rootnodeid);
-            //System.out.println("in getNodeREcorelist !!!!!!!!!!!4");
-            logMetacat.debug("DocumentImpl.getNodeRecordList - executing SQL: " + pstmt.toString());
-            pstmt.execute();
-            ResultSet rs = pstmt.getResultSet();
-            //System.out.println("in getNodeREcorelist !!!!!!!!!!!5");
-            boolean tableHasRows = rs.next();
-            while (tableHasRows) {
-                //System.out.println("in getNodeREcorelist !!!!!!!!!!!6");
-                nodeid = rs.getLong(1);
-                parentnodeid = rs.getLong(2);
-                nodeindex = rs.getLong(3);
-                nodetype = rs.getString(4);
-                nodename = rs.getString(5);
-                nodeprefix = rs.getString(6);
-                nodedata = rs.getString(7);
-                try
-                {
-                	logMetacat.debug("DocumentImpl.getNodeRecordList - Node data in read process before normalize=== "+nodedata);
-                	nodedata = MetacatUtil.normalize(nodedata);
-                	logMetacat.debug("DocumentImpl.getNodeRecordList - Node data in read process after normalize==== "+nodedata);
-                } catch (java.lang.StringIndexOutOfBoundsException SIO){
-                	logMetacat.warn("DocumentImpl.getNodeRecordList - StringIndexOutOfBoundsException in normalize() while reading the document");
-                }
-                nodedatanumerical = rs.getFloat(8);
-                nodedatadate = rs.getTimestamp(9);
-
-                
-                // add the data to the node record list hashtable
-                NodeRecord currentRecord = new NodeRecord(nodeid, parentnodeid,
-                        nodeindex, nodetype, nodename, nodeprefix, nodedata, nodedatanumerical, nodedatadate);
-                nodeRecordList.add(currentRecord);
-
-                // Advance to the next node
-                tableHasRows = rs.next();
-            }
-            pstmt.close();
-            //System.out.println("in getNodeREcorelist !!!!!!!!!!!7");
-
-        } catch (SQLException e) {
-            throw new McdbException("Error in DocumentImpl.getNodeRecordList "
-                    + e.getMessage());
-        } finally {
-            try {
-                pstmt.close();
-            } catch (SQLException ee) {
-                logMetacat.error("DocumentImpl.getNodeRecordList - General error: "
-                                + ee.getMessage());
-            } finally {
-                DBConnectionPool.returnDBConnection(dbconn, serialNumber);
-            }
-        }
-        //System.out.println("in getNodeREcorelist !!!!!!!!!!!8");
-        return nodeRecordList;
-
-    }
-
     /** creates SQL code and inserts new document into DB connection */
     private void writeDocumentToDB(String action, String user, String pub,
             String catalogid, int serverCode, Date createDate, Date updateDate) throws SQLException, Exception
@@ -2520,7 +1654,7 @@ public class DocumentImpl
                 // Save the old document publicaccessentry in a backup table
                 String accNumber = docid + PropertyService.getProperty("document.accNumSeparator") + thisrev;
                 thisdoc = new DocumentImpl(accNumber, false);
-                DocumentImpl.archiveDocAndNodesRevision(connection, docid, user, thisdoc);
+                DocumentImpl.moveDocToRevision(connection, docid, user, thisdoc);
                 //if the updated vesion is not greater than current one,
                 //throw it into a exception
                 if (rev <= thisrev) {
@@ -2531,30 +1665,6 @@ public class DocumentImpl
                     thisrev = rev;
                 }
                 logMetacat.debug("DocumentImpl.writeDocumentToDB - final revision is: " + thisrev);
-                boolean useXMLIndex = (new Boolean(PropertyService
-                        .getProperty("database.usexmlindex"))).booleanValue();
-                if (useXMLIndex) {
-                	
-                	// make sure we don't have a pending index task
-                    removeDocidFromIndexingQueue(docid, String.valueOf(rev));
-                    
-                    double start = System.currentTimeMillis()/1000;
-                    // Delete index for the old version of docid
-                    // The new index is inserting on the next calls to DBSAXNode
-                    pstmt = connection
-                            .prepareStatement("DELETE FROM xml_index WHERE docid='"
-                                    + this.docid + "'");
-
-                    // Increase dbconnection usage count
-                    connection.increaseUsageCount(1);
-                  
-                    logMetacat.debug("DocumentImpl.writeDocumentToDB - executing SQL: " + pstmt.toString());
-                    pstmt.execute();
-                  
-                    pstmt.close();
-                    double end = System.currentTimeMillis()/1000;
-                    logMetacat.info("DocumentImpl.writeDocumentToDB - Time for delete xml_index in UPDATE is "+(end -start));
-                }
 
                 // Update the new document to reflect the new node tree
                 String updateSql = null;
@@ -2612,12 +1722,6 @@ public class DocumentImpl
             pstmt.execute();
             
             pstmt.close();
-            if(action.equals("UPDATE")){
-            	logMetacat.debug("DocumentImpl.writeDocumentToDB - Deleting xml nodes for docid: " + 
-            			thisdoc.getDocID() + " using root node ID: " + thisdoc.getRootNodeID());
-            	deleteXMLNodes(connection, thisdoc.getRootNodeID());
-            }
-
         } catch (SQLException sqle) {
         	logMetacat.error("DocumentImpl.writeDocumentToDB - SQL error: " + sqle.getMessage());
             sqle.printStackTrace();
@@ -2803,9 +1907,6 @@ public class DocumentImpl
                     logMetacat.debug("DocumentImpl.write - parsing xml");
                     parser.parse(new InputSource(xmlReader));
                     
-                    // update the node data to include numeric and date values
-                    updateNodeValues(conn, docid);
-                    
                     //write the file to disk
                     logMetacat.debug("DocumentImpl.write - Writing xml to file system");                    
                 	writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
@@ -2813,9 +1914,6 @@ public class DocumentImpl
                 	conn.commit();
                     conn.setAutoCommit(true);
 
-                    // write to xml_node complete. start the indexing thread.
-                    addDocidToIndexingQueue(docid, rev);
-                    
 			        // The EML parser has already written to systemmetadata and then writes to xml_access when the db transaction
                     // is committed. If the pids that have been updated are for data objects with their own access rules, we
 			        // must inform the CN to sync it's access rules with the MN, so the EML 2.1 parser collected such pids from the parse
@@ -2834,20 +1932,8 @@ public class DocumentImpl
             	   logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
                     conn.rollback();
                     conn.setAutoCommit(true);
-                    //if it is a eml2 document, we need delete online data
-                    if (parser != null) {
-                        ContentHandler handler = parser.getContentHandler();
-                        if (handler instanceof Eml200SAXHandler) {
-                            Eml200SAXHandler eml = (Eml200SAXHandler) handler;
-                            eml.deleteInlineFiles();
-                        }
-                    }
                     throw e;
                 }
-                // run write into access db base one relation table and access
-                // object
-                runRelationAndAccessHandler(accnum, user, groups, serverCode);
-
                 // Force replication the docid
                 ForceReplicationHandler frh = new ForceReplicationHandler(
                         accnum, true, null);
@@ -2909,16 +1995,12 @@ public class DocumentImpl
             //logMetacat.debug("DocumentImpl.write - XML to be parsed: " + xmlString);
             parser.parse(new InputSource(xmlReader));
 
-            //update nodes
-            updateNodeValues(conn, docid);
-            
             //write the file to disk
         	writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
         	
         	 conn.commit();
              conn.setAutoCommit(true);
 
-            addDocidToIndexingQueue(docid, rev);
     		if (guidsToSync.size() > 0) {
     			try {
     				SyncAccessPolicy syncAP = new SyncAccessPolicy();
@@ -2933,42 +2015,9 @@ public class DocumentImpl
             e.printStackTrace();
             conn.rollback();
             conn.setAutoCommit(true);
-            //if it is a eml2 document, we need delete online data
-            if (parser != null) {
-                ContentHandler handler = parser.getContentHandler();
-                if (handler instanceof Eml200SAXHandler) {
-                    Eml200SAXHandler eml = (Eml200SAXHandler) handler;
-                    eml.deleteInlineFiles();
-                }
-            }
             throw e;
         }
 
-        // run access db base on relation table and access object
-        //System.out.println("the accnum will be write into access table "+accnum);
-        runRelationAndAccessHandler(accnum, user, groups, serverCode);
-
-        // Delete enteries from xml_queryresult for given docid if
-        // action is UPDATE
-        // These enteries will be created again when the docid is part of a
-        // result next time
-        if (action.equals("UPDATE")) {
-          try {
-              try {
-                  XMLQueryresultAccess xmlQueryresultAccess = new XMLQueryresultAccess();
-                  xmlQueryresultAccess.deleteXMLQueryresulForDoc(docid);
-              } catch (AccessException ae) {
-              	throw new SQLException("Problem deleting xml query result for docid " + 
-              			docid + " : " + ae.getMessage());
-              }
-          } catch (Exception e){
-              logMetacat.error("DocumentImpl.write - Error in deleting enteries from "
-                                       + "xml_queryresult where docid is "
-                                       + docid + " in DBQuery.write: "
-                                       + e.getMessage());
-           }
-
-        }
         
         // Force replicate out the new document to each server in our server
         // list. Start the thread to replicate this new document out to the
@@ -2977,34 +2026,12 @@ public class DocumentImpl
         ForceReplicationHandler frh = new ForceReplicationHandler(accnum,
                 action, true, null);
         logMetacat.debug("DocumentImpl.write - ForceReplicationHandler created: " + frh.toString());
-        // clear cache after inserting or updating a document
-        if (PropertyService.getProperty("database.queryCacheOn").equals("true"))
-        {
-          //System.out.println("the string stored into cache is "+ resultsetBuffer.toString());
-     	   DBQuery.clearQueryResultCache();
-        }
-
         logMetacat.info("DocumentImpl.write - Conn Usage count after writing: "
                 + conn.getUsageCount());
         return (accnum);
     }
 
     
-    private static void addDocidToIndexingQueue(String docid, String rev) throws PropertyNotFoundException {
-        boolean useXMLIndex =
-            (new Boolean(PropertyService.getProperty("database.usexmlindex"))).booleanValue();
-        if (useXMLIndex) {
-            	IndexingQueue.getInstance().add(docid, rev);
-        }
-    }
-    
-    private static void removeDocidFromIndexingQueue(String docid, String rev) throws PropertyNotFoundException {
-        boolean useXMLIndex =
-            (new Boolean(PropertyService.getProperty("database.usexmlindex"))).booleanValue();
-        if (useXMLIndex) {
-            	IndexingQueue.getInstance().remove(docid, rev);
-        }
-    }
 
     /**
      * Write an XML file to the database during replication
@@ -3085,7 +2112,6 @@ public class DocumentImpl
                         + " into local" + " metacat with servercode: "
                         + serverCode);
 
-        // insert into xml_nodes table
         XMLReader parser = null;
         boolean isRevision = false;
         try {
@@ -3118,13 +2144,6 @@ public class DocumentImpl
             File objectFile = null;
             writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
             
-            // write to xml_node complete. start the indexing thread.
-            // this only for xml_documents
-            if (!isRevision)
-            {
-            	addDocidToIndexingQueue(docid, rev);
-            }
-            
             DBSAXHandler dbx = (DBSAXHandler) parser.getContentHandler();
             rootId = dbx.getRootNodeId();
             docType = dbx.getDocumentType();
@@ -3135,13 +2154,6 @@ public class DocumentImpl
         	logMetacat.error("DocumentImpl.writeReplication - Problem with parsing: " + e.getMessage());
             conn.rollback();
             conn.setAutoCommit(true);
-            if (parser != null) {
-                ContentHandler handler = parser.getContentHandler();
-                if (handler instanceof Eml200SAXHandler) {
-                    Eml200SAXHandler eml = (Eml200SAXHandler) handler;
-                    eml.deleteInlineFiles();
-                }
-            }
             throw e;
         }
 
@@ -3150,15 +2162,13 @@ public class DocumentImpl
             conn.setAutoCommit(false);
             if (!isRevision)
             {
-               runRelationAndAccessHandler(accnum, user, groups, serverCode);
+               //runRelationAndAccessHandler(accnum, user, groups, serverCode);
             }
             else
             {
               // in replicate revision documents,
-              // we need to move nodes from xml_nodes to xml_nodes_revision and register the record
+              // we need to register the record
             	// into xml_revision table
-               moveNodesToNodesRevision(conn, rootId);
-               deleteXMLNodes(conn, rootId);
                writeDocumentToRevisionTable(conn, docid, rev, docType, docName, user, 
                        catalogId, serverCode, rootId, createDate, updateDate);
               
@@ -3169,12 +2179,6 @@ public class DocumentImpl
         } catch (Exception ee) {
         	conn.rollback();
             conn.setAutoCommit(true);
-            if (tableName.equals(REVISIONTABLE))
-            {
-                // because we couldn't register the table into xml_revsion
-                // we need to delete the nodes in xml_ndoes.
-                deleteXMLNodes(conn, rootId);
-            }
             logReplication.error("DocumentImpl.writeReplication - Failed to " + "create access "
                     + "rule for package: " + accnum + " because "
                     + ee.getMessage());
@@ -3190,142 +2194,10 @@ public class DocumentImpl
                 accnum, action, true, notifyServer);
           logMetacat.debug("DocumentImpl.writeReplication - ForceReplicationHandler created: " + forceReplication.toString());
         }
-        
-        // clear cache after inserting or updating a document
-        if (PropertyService.getProperty("database.queryCacheOn").equals("true"))
-        {
-          //System.out.println("the string stored into cache is "+ resultsetBuffer.toString());
-     	   DBQuery.clearQueryResultCache();
-        }
-    
         return (accnum);
     }
-
-    /* Running write record to xml_relation and xml_access */
-    private static void runRelationAndAccessHandler(String accnumber,
-            String userName, String[] group, int servercode) throws Exception
-    {
-        DBConnection dbconn = null;
-        int serialNumber = -1;
-//        PreparedStatement pstmt = null;
-        String documenttype = getDocTypeFromDBForCurrentDocument(accnumber);
-        try {
-            String packagedoctype = PropertyService.getProperty("xml.packagedoctype");
-            Vector<String> packagedoctypes = new Vector<String>();
-            packagedoctypes = MetacatUtil.getOptionList(packagedoctype);
-            String docIdWithoutRev = DocumentUtil.getDocIdFromAccessionNumber(accnumber);
-            int revision = DocumentUtil.getRevisionFromAccessionNumber(accnumber);
-            if (documenttype != null &&
-                    packagedoctypes.contains(documenttype)) {
-                dbconn = DBConnectionPool.getDBConnection(
-                        "DocumentImpl.runRelationAndAccessHandeler");
-                serialNumber = dbconn.getCheckOutSerialNumber();
-                dbconn.setAutoCommit(false);
-                // from the relations get the access file id for that package
-                String aclidWithRev = RelationHandler.getAccessFileIDWithRevision(docIdWithoutRev);
-                if (aclidWithRev != null)
-                {
-                  String aclid = DocumentUtil.getDocIdFromAccessionNumber(aclidWithRev);
-                  revision = DocumentUtil.getRevisionFromAccessionNumber(aclidWithRev);
-                 
-                  // if there are access file, write ACL for that package
-                  if (aclid != null) {
-                    runAccessControlList(dbconn, aclid, revision, userName, group,
-                            servercode);
-                  }
-                }
-                dbconn.commit();
-                dbconn.setAutoCommit(true);
-            }
-            // if it is an access file
-            else if (documenttype != null
-                    && MetacatUtil.getOptionList(
-                            PropertyService.getProperty("xml.accessdoctype")).contains(
-                            documenttype)) {
-                dbconn = DBConnectionPool.getDBConnection(
-                        "DocumentImpl.runRelationAndAccessHandeler");
-                serialNumber = dbconn.getCheckOutSerialNumber();
-                dbconn.setAutoCommit(false);
-                // write ACL for the package
-                runAccessControlList(dbconn, docIdWithoutRev, revision, userName, group,
-                        servercode);
-                dbconn.commit();
-                dbconn.setAutoCommit(true);
-
-            }
-
-        } catch (Exception e) {
-            if (dbconn != null) {
-                dbconn.rollback();
-                dbconn.setAutoCommit(true);
-            }
-            logMetacat.error("DocumentImpl.runRelationAndAccessHandler - Error in DocumentImple.runRelationAndAccessHandler "
-                            + e.getMessage());
-            throw e;
-        } finally {
-            if (dbconn != null) {
-                DBConnectionPool.returnDBConnection(dbconn, serialNumber);
-            }
-        }
-    }
-
-    // It runs in xmlIndex thread. It writes ACL for a package.
-    private static void runAccessControlList(DBConnection conn, String aclid,
-            int rev, String users, String[] group, int servercode) throws Exception
-    {
-        // read the access file from xml_nodes
-        // parse the access file and store the access info into xml_access
-        AccessControlList aclobj = new AccessControlList(conn, aclid, rev, users,
-                group, servercode);
-
-    }
-
-    /* Method get document type from db */
-    private static String getDocTypeFromDBForCurrentDocument(String accnumber)
-            throws SQLException
-    {
-        String documentType = null;
-        String docid = null;
-        PreparedStatement pstate = null;
-        ResultSet rs = null;
-        String sql = "SELECT doctype FROM xml_documents where docid = ?";
-        DBConnection dbConnection = null;
-        int serialNumber = -1;
-        try {
-            //get rid of revision number
-            docid = DocumentUtil.getDocIdFromString(accnumber);
-            dbConnection = DBConnectionPool.getDBConnection(
-                    "DocumentImpl.getDocTypeFromDBForCurrentDoc");
-            serialNumber = dbConnection.getCheckOutSerialNumber();
-            pstate = dbConnection.prepareStatement(sql);
-            //bind variable
-            pstate.setString(1, docid);
-            //excute query
-            logMetacat.debug("DocumentImpl.getDocTypeFromDBForCurrentDocument - executing SQL: " + pstate.toString());
-            pstate.execute();
-            //handle resultset
-            rs = pstate.getResultSet();
-            if (rs.next()) {
-                documentType = rs.getString(1);
-            }
-            rs.close();
-            pstate.close();
-        }//try
-        catch (SQLException e) {
-            logMetacat.error("DocumentImpl.getDocTypeFromDBForCurrentDocument - SQL error: " + 
-            		e.getMessage());
-            throw e;
-        }//catch
-        finally {
-            pstate.close();
-            DBConnectionPool.returnDBConnection(dbConnection, serialNumber);
-        }//
-        logMetacat.debug("DocumentImpl.getDocTypeFromDBForCurrentDocument - The current doctype from db is: "
-                + documentType);
-        return documentType;
-    }
-
     
+   
     /**
      * Archive an object from the xml_documents table to the xml_revision table (including other changes as well).
      * Or delete an object totally from the db. The parameter "removeAll" decides which action will be taken.
@@ -3385,7 +2257,7 @@ public class DocumentImpl
 
             // Check if the document exists.
             if(!removeAll) {
-            	//this only archives a document from xml_documents to xml_revisions (also archive the xml_nodes table as well)
+            	//this only archives a document from xml_documents to xml_revisions 
             	 logMetacat.info("DocumentImp.delete - archive the document "+accnum);
             	 pstmt = conn.prepareStatement("SELECT rev, docid FROM xml_documents WHERE docid = ?");
             	 pstmt.setString(1, docid);
@@ -3481,75 +2353,14 @@ public class DocumentImpl
             }
 
             conn.setAutoCommit(false);
-            // make sure we don't have a pending index task
-            removeDocidFromIndexingQueue(docid, String.valueOf(rev));
             if(!inRevisionTable) {
             	   // Copy the record to the xml_revisions table if not a full delete
                 if (!removeAll) {
-                	DocumentImpl.archiveDocAndNodesRevision(conn, docid, user, null);
+                	DocumentImpl.moveDocToRevision(conn, docid, user, null);
                     logMetacat.info("DocumentImpl.delete - calling archiveDocAndNodesRevision");
-
                 }
                 double afterArchiveDocAndNode = System.currentTimeMillis()/1000;
                 logMetacat.info("DocumentImpl.delete - The time for archiveDocAndNodesRevision is "+(afterArchiveDocAndNode - start));
-                       
-                // Now delete it from the xml_index table
-                pstmt = conn.prepareStatement("DELETE FROM xml_index WHERE docid = ?");
-                pstmt.setString(1, docid);
-                logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
-                pstmt.execute();
-                pstmt.close();
-                conn.increaseUsageCount(1);
-                
-                double afterDeleteIndex = System.currentTimeMillis()/1000;
-                logMetacat.info("DocumentImpl.delete - The deleting xml_index time is "+(afterDeleteIndex - afterArchiveDocAndNode ));
-                
-                // Now delete it from xml_access table
-                /*************** DO NOT DELETE ACCESS - need to archive this ******************/
-                double afterDeleteXmlAccess2 = System.currentTimeMillis()/1000;
-                /******* END DELETE ACCESS *************/            
-                
-                // Delete enteries from xml_queryresult
-                try {
-                    XMLQueryresultAccess xmlQueryresultAccess = new XMLQueryresultAccess();
-                    xmlQueryresultAccess.deleteXMLQueryresulForDoc(docid);
-                } catch (AccessException ae) {
-                	throw new SQLException("Problem deleting xml query result for docid " + 
-                			docid + " : " + ae.getMessage());
-                }
-                double afterDeleteQueryResult = System.currentTimeMillis()/1000;
-                logMetacat.info("DocumentImpl.delete - The deleting xml_queryresult time is "+(afterDeleteQueryResult - afterDeleteXmlAccess2));
-                // Delete it from relation table
-                pstmt = conn.prepareStatement("DELETE FROM xml_relation WHERE docid = ?");
-                //increase usage count
-                pstmt.setString(1, docid);
-                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                pstmt.execute();
-                pstmt.close();
-                conn.increaseUsageCount(1);
-                double afterXMLRelation = System.currentTimeMillis()/1000;
-                logMetacat.info("DocumentImpl.delete - The deleting time  relation is "+ (afterXMLRelation - afterDeleteQueryResult) );
-
-                // Delete it from xml_path_index table
-                logMetacat.info("DocumentImpl.delete - deleting from xml_path_index");
-                pstmt = conn.prepareStatement("DELETE FROM xml_path_index WHERE docid = ?");
-                //increase usage count
-                pstmt.setString(1, docid);
-                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                pstmt.execute();
-                pstmt.close();
-                conn.increaseUsageCount(1);
-
-                logMetacat.info("DocumentImpl.delete - deleting from xml_accesssubtree");
-                // Delete it from xml_accesssubtree table
-                pstmt = conn.prepareStatement("DELETE FROM xml_accesssubtree WHERE docid = ?");
-                //increase usage count
-                pstmt.setString(1, docid);
-                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                pstmt.execute();
-                pstmt.close();
-                conn.increaseUsageCount(1);
-
                 // Delete it from xml_documents table
                 logMetacat.info("DocumentImpl.delete - deleting from xml_documents");
                 pstmt = conn.prepareStatement("DELETE FROM xml_documents WHERE docid = ?");
@@ -3560,35 +2371,11 @@ public class DocumentImpl
                 //Usaga count increase 1
                 conn.increaseUsageCount(1);
                 double afterDeleteDoc = System.currentTimeMillis()/1000;
-                logMetacat.info("DocumentImpl.delete - the time to delete  xml_path_index,  xml_accesssubtree, xml_documents time is "+ 
-                		(afterDeleteDoc - afterXMLRelation ));
-                // Delete the old nodes in xml_nodes table...
-                pstmt = conn.prepareStatement("DELETE FROM xml_nodes WHERE docid = ?");
-
-                // Increase dbconnection usage count
-                conn.increaseUsageCount(1);
-                // Bind the values to the query and execute it
-                pstmt.setString(1, docid);
-                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                pstmt.execute();
-                pstmt.close();
-
-                double afterDeleteXMLNodes = System.currentTimeMillis()/1000;
-                logMetacat.info("DocumentImpl.delete - Deleting xml_nodes time is "+(afterDeleteXMLNodes-afterDeleteDoc));
             } else {
-            	long rootnodeid = getRevisionRootNodeId(conn, docid, rev);
             	logMetacat.info("DocumentImpl.delete - deleting from xml_revisions");
                 pstmt = conn.prepareStatement("DELETE FROM xml_revisions WHERE docid = ? AND rev = ?");
                 pstmt.setString(1, docid);
                 pstmt.setInt(2, rev);
-                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                pstmt.execute();
-                pstmt.close();
-                conn.increaseUsageCount(1);
-                
-                logMetacat.info("DocumentImpl.delete - deleting from xml_nodes_revisions");
-                pstmt = conn.prepareStatement("DELETE FROM xml_nodes_revisions WHERE rootnodeid = ?");
-                pstmt.setLong(1, rootnodeid);
                 logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
                 pstmt.execute();
                 pstmt.close();
@@ -3599,14 +2386,8 @@ public class DocumentImpl
             // set as archived in the systemMetadata  if it is not a complete removal
             String pid = IdentifierManager.getInstance().getGUID(docid, rev);
             Identifier guid = new Identifier();
-            guid.setValue(pid);
-            
-            // clear cache after inserting or updating a document
-            if (PropertyService.getProperty("database.queryCacheOn").equals("true")) {
-            	//System.out.println("the string stored into cache is "+ resultsetBuffer.toString());
-            	DBQuery.clearQueryResultCache();
-            }
-            
+        	guid.setValue(pid);          
+
             //update systemmetadata table and solr index
             SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
             if (sysMeta != null) {
@@ -3655,7 +2436,6 @@ public class DocumentImpl
             logMetacat.error("DocumentImpl.delete -  Error: " + e.getMessage());
             throw e;
         } finally {
-
             try {
                 // close preparedStatement
                 if (pstmt != null) {
@@ -3755,141 +2535,81 @@ public class DocumentImpl
             String parserName = PropertyService.getProperty("xml.saxparser");
             parser = XMLReaderFactory.createXMLReader(parserName);
             //XMLSchemaService.getInstance().populateRegisteredSchemaList();
-            if (ruleBase != null && ruleBase.equals(EML200)) {
-                logMetacat.info("DocumentImpl.initalizeParser - Using eml 2.0.0 parser");
-                chandler = new Eml200SAXHandler(dbconn, action, docid, rev,
-                        user, groups, pub, serverCode, createDate, updateDate, writeAccessRules, guidsToSync);
-                chandler.setIsRevisionDoc(isRevision);
-                chandler.setEncoding(encoding);
-                parser.setContentHandler((ContentHandler) chandler);
-                parser.setErrorHandler((ErrorHandler) chandler);
-                parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
-                parser.setProperty(LEXICALPROPERTY, chandler);
-                parser.setFeature(NAMESPACEFEATURE, true);
-                if(needValidation) {
-                    logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 parser sets up validation feature since the parameter of the needValidataion is "+needValidation);
-                    // turn on schema validation feature
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                    logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 external schema location: " + schemaLocation);
-                    // Set external schemalocation.
-                    if (schemaLocation != null
-                            && !(schemaLocation.trim()).equals("")) {
-                        parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
-                                schemaLocation);
-                    } else {
-                        throw new Exception ("The schema for the namespace on docid "+docid+" can't be found in any place. So we can't validate the xml instance.");
-                    }
-                }
-                
-                logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 parser configured");
-            } else if (ruleBase != null && ruleBase.equals(EML210)) {
-                logMetacat.info("DocumentImpl.initalizeParser - Using eml 2.1.0 parser");
-                chandler = new Eml210SAXHandler(dbconn, action, docid, rev,
-                        user, groups, pub, serverCode, createDate, updateDate, writeAccessRules, guidsToSync);
-                chandler.setIsRevisionDoc(isRevision);
-                chandler.setEncoding(encoding);
-                parser.setContentHandler((ContentHandler) chandler);
-                parser.setErrorHandler((ErrorHandler) chandler);
-                parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
-                parser.setProperty(LEXICALPROPERTY, chandler);
+            //create a DBSAXHandler object which has the revision
+            // specification
+            chandler = new DBSAXHandler(dbconn, action, docid, rev, user,
+                    groups, pub, serverCode, createDate, updateDate, writeAccessRules);
+            chandler.setIsRevisionDoc(isRevision);
+            chandler.setEncoding(encoding);
+            parser.setContentHandler((ContentHandler) chandler);
+            parser.setErrorHandler((ErrorHandler) chandler);
+            parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
+            parser.setProperty(LEXICALPROPERTY, chandler);
+            if (ruleBase != null && (ruleBase.equals(SCHEMA) || ruleBase.equals(EML200) 
+                    || ruleBase.equals(EML210)) && needValidation) {
+                XMLSchemaService xmlss = XMLSchemaService.getInstance();
+                //xmlss.doRefresh();
+                logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
                 // turn on schema validation feature
+                parser.setFeature(VALIDATIONFEATURE, true);
                 parser.setFeature(NAMESPACEFEATURE, true);
-                if(needValidation) {
-                    logMetacat.info("DocumentImpl.initalizeParser - 2.1.0 parser sets up validation features since the parameter of the needValidataion is "+needValidation);
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                    logMetacat.info("DocumentImpl.initalizeParser - 2.1.0 external schema location: " + schemaLocation);
-                    // Set external schemalocation.
-                    if (schemaLocation != null
-                            && !(schemaLocation.trim()).equals("")) {
-                        parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
-                                schemaLocation);
-                    } else {
-                        throw new Exception ("The schema for the docid "+docid+" can't be found in any place. So we can't validate the xml instance.");
-                    }
-                }
-                logMetacat.debug("DocumentImpl.initalizeParser - Using eml 2.1.0 parser configured");
-            } else {
-                //create a DBSAXHandler object which has the revision
-                // specification
-                chandler = new DBSAXHandler(dbconn, action, docid, rev, user,
-                        groups, pub, serverCode, createDate, updateDate, writeAccessRules);
-                chandler.setIsRevisionDoc(isRevision);
-                chandler.setEncoding(encoding);
-                parser.setContentHandler((ContentHandler) chandler);
-                parser.setErrorHandler((ErrorHandler) chandler);
-                parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
-                parser.setProperty(LEXICALPROPERTY, chandler);
-
-                if (ruleBase != null && ruleBase.equals(SCHEMA)
-                        && needValidation) {
+                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
+                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
                 
-                    XMLSchemaService xmlss = XMLSchemaService.getInstance();
-                    //xmlss.doRefresh();
-                    logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
-                    // turn on schema validation feature
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    parser.setFeature(NAMESPACEFEATURE, true);
-                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                    
-                    Vector<XMLSchema> schemaList = xmlss.findSchemasInXML((StringReader)xml);
-                    boolean allSchemasRegistered = 
-                    	xmlss.areAllSchemasRegistered(schemaList);
-                    if (xmlss.useFullSchemaValidation() && !allSchemasRegistered) {
-                    	parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
-                    }
-                    logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: " + schemaLocation);              
-                    // Set external schemalocation.
-                    if (schemaLocation != null
-                            && !(schemaLocation.trim()).equals("")) {
-                        parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
-                                schemaLocation);
-                    } else {
-                        throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
-                    }
-                } else if (ruleBase != null && ruleBase.equals(NONAMESPACESCHEMA)
-                        && needValidation) {
-                    //xmlss.doRefresh();
-                    logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
-                    // turn on schema validation feature
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    parser.setFeature(NAMESPACEFEATURE, true);
-                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                    logMetacat.info("DocumentImpl.initalizeParser - Generic external no-namespace schema location: " + schemaLocation);              
-                    // Set external schemalocation.
-                    if (schemaLocation != null
-                            && !(schemaLocation.trim()).equals("")) {
-                        parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY,
-                                schemaLocation);
-                    } else {
-                        throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
-                    }
-                } else if (ruleBase != null && ruleBase.equals(DTD)
-                        && needValidation) {
-                    logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
-                    // turn on dtd validaton feature
-                    parser.setFeature(VALIDATIONFEATURE, true);
-                    eresolver = new DBEntityResolver(dbconn,
-                            (DBSAXHandler) chandler, dtd);
-                    dtdhandler = new DBDTDHandler(dbconn);
-                    parser.setEntityResolver((EntityResolver) eresolver);
-                    parser.setDTDHandler((DTDHandler) dtdhandler);
-                } else {
-                    logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
-                    // non validation
-                    parser.setFeature(VALIDATIONFEATURE, false);
-                    eresolver = new DBEntityResolver(dbconn,
-                            (DBSAXHandler) chandler, dtd);
-                    dtdhandler = new DBDTDHandler(dbconn);
-                    parser.setEntityResolver((EntityResolver) eresolver);
-                    parser.setDTDHandler((DTDHandler) dtdhandler);
+                Vector<XMLSchema> schemaList = xmlss.findSchemasInXML((StringReader)xml);
+                boolean allSchemasRegistered = 
+                	xmlss.areAllSchemasRegistered(schemaList);
+                if (xmlss.useFullSchemaValidation() && !allSchemasRegistered &&  
+                        !ruleBase.equals(EML210) && !ruleBase.equals(EML200)) {
+                	parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
                 }
-            }//else
+                logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: " + schemaLocation);              
+                // Set external schemalocation.
+                if (schemaLocation != null
+                        && !(schemaLocation.trim()).equals("")) {
+                    parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
+                            schemaLocation);
+                } else {
+                    throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
+                }
+            } else if (ruleBase != null && ruleBase.equals(NONAMESPACESCHEMA)
+                    && needValidation) {
+                //xmlss.doRefresh();
+                logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
+                // turn on schema validation feature
+                parser.setFeature(VALIDATIONFEATURE, true);
+                parser.setFeature(NAMESPACEFEATURE, true);
+                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
+                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
+                logMetacat.info("DocumentImpl.initalizeParser - Generic external no-namespace schema location: " + schemaLocation);              
+                // Set external schemalocation.
+                if (schemaLocation != null
+                        && !(schemaLocation.trim()).equals("")) {
+                    parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY,
+                            schemaLocation);
+                } else {
+                    throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
+                }
+            } else if (ruleBase != null && ruleBase.equals(DTD)
+                    && needValidation) {
+                logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
+                // turn on dtd validaton feature
+                parser.setFeature(VALIDATIONFEATURE, true);
+                eresolver = new DBEntityResolver(dbconn,
+                        (DBSAXHandler) chandler, dtd);
+                dtdhandler = new DBDTDHandler(dbconn);
+                parser.setEntityResolver((EntityResolver) eresolver);
+                parser.setDTDHandler((DTDHandler) dtdhandler);
+            } else {
+                logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
+                // non validation
+                parser.setFeature(VALIDATIONFEATURE, false);
+                eresolver = new DBEntityResolver(dbconn,
+                        (DBSAXHandler) chandler, dtd);
+                dtdhandler = new DBDTDHandler(dbconn);
+                parser.setEntityResolver((EntityResolver) eresolver);
+                parser.setDTDHandler((DTDHandler) dtdhandler);
+            }
         } catch (Exception e) {
             throw e;
         }
@@ -3897,56 +2617,43 @@ public class DocumentImpl
     }
 
     /**
-     * Save a document entry in the xml_revisions and xml_nodes_revision
+     * Save a document entry in the xml_revisions
      *  table Connection use as a
      * paramter is in order to rollback feature
      */
-    private static void archiveDocAndNodesRevision(DBConnection dbconn, String docid,
+    private static void moveDocToRevision(DBConnection dbconn, String docid,
             String user, DocumentImpl doc)
     {
-        
-
-        // create a record in xml_revisions table
-        // for that document as selected from xml_documents
-
         try {
             if (doc == null) {
                 String accNumber = docid + PropertyService.getProperty("document.accNumSeparator") +
                 DBUtil.getLatestRevisionInDocumentTable(docid);
                     doc = new DocumentImpl(accNumber);
             }
-            
             long rootNodeId = doc.getRootNodeID();
-
-            archiveDocAndNodesRevison(dbconn, docid, user, rootNodeId);
-
+            archiveDocToRevision(dbconn, docid, user, rootNodeId);
         }catch (Exception e) {
             logMetacat.error(
                     "DocumentImpl.archiveDocAndNodesRevision - Error in DocumentImpl.archiveDocRevision : "
                             + e.getMessage());
         }
-       
-        
     }
     
     /**
-     * This method will archive both xml_revision and xml_nodes_revision.
+     * This method will archive both xml_revision.
      * @param dbconn
      * @param docid
      * @param user
      * @param rootNodeId
      * @throws Exception
      */
-    private static void archiveDocAndNodesRevison(DBConnection dbconn, String docid, 
+    private static void archiveDocToRevision(DBConnection dbconn, String docid, 
                                      String user, long rootNodeId) throws Exception
     {
         String sysdate = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
         PreparedStatement pstmt = null;
       try
       {
-        // Move the nodes from xml_nodes to xml_nodes_revisions table...
-        moveNodesToNodesRevision(dbconn, rootNodeId);
-        //archiveDocRevision(docid, user);
         //Move the document information to xml_revisions table...
         double start = System.currentTimeMillis()/1000;
         pstmt = dbconn.prepareStatement("INSERT INTO xml_revisions "
@@ -3991,100 +2698,6 @@ public class DocumentImpl
        
     }
     
-    private static void updateNodeValues(DBConnection dbConnection, String docid) throws SQLException {
-    	PreparedStatement sqlStatement = null;
-        PreparedStatement pstmt = null;
-        ResultSet rset = null;
-
-        sqlStatement = dbConnection.prepareStatement(
-        		"SELECT DISTINCT NODEID, NODEDATA "
-                + "FROM xml_nodes "
-                + "WHERE nodedata IS NOT NULL "
-                + "AND docid = ?");
-        sqlStatement.setString(1, docid);
-        rset = sqlStatement.executeQuery();
-
-        int count = 0;
-        while (rset.next()) {
-
-            String nodeid = rset.getString(1);
-            String nodedata = rset.getString(2);
-
-            try {
-                if (!nodedata.trim().equals("")) {
-                	
-                	try {
-                		double dataNumeric = Double.parseDouble(nodedata);
-	                    pstmt = dbConnection.prepareStatement(
-	                        "UPDATE xml_nodes " +
-	                        " SET nodedatanumerical = ?" +
-	                        " WHERE nodeid = " + nodeid);
-	                    pstmt.setDouble(1, dataNumeric);
-	                    pstmt.execute();
-	                    pstmt.close();
-                	} catch (Exception e) {
-                		// try a date
-                		try {
-	                		Calendar dataDateValue = DatatypeConverter.parseDateTime(nodedata);
-		                    Timestamp dataTimestamp = new Timestamp(dataDateValue.getTimeInMillis());
-		                    pstmt = dbConnection.prepareStatement(
-		                        "UPDATE xml_nodes " +
-		                        " SET nodedatadate = ?" +
-		                        " WHERE nodeid = " + nodeid);
-		                    pstmt.setTimestamp(1, dataTimestamp);
-		                    pstmt.execute();
-		                    pstmt.close();
-                		} catch (Exception e2) {
-							// we are done with this node
-						} 
-					}
-
-                    count++;
-                    if (count%5 == 0) {
-                        logMetacat.info(count + "...");
-                    }
-            		
-                }
-            } catch (Exception e) {
-            	// do nothing, was not a valid date
-            	e.printStackTrace();
-            } 
-        }
-
-        rset.close();
-        sqlStatement.close();
-    }
-    
-    private static void moveNodesToNodesRevision(DBConnection dbconn,
-                                       long rootNodeId) throws Exception
-    {
-        logMetacat.debug("DocumentImpl.moveNodesToNodesRevision - the root node id is "+rootNodeId+
-                " will be moved from xml_nodes to xml_node_revision table");
-        PreparedStatement pstmt = null;
-        double start = System.currentTimeMillis()/1000;
-        // Move the nodes from xml_nodes to xml_revisions table...
-        pstmt = dbconn.prepareStatement("INSERT INTO xml_nodes_revisions "
-                + "(nodeid, nodeindex, nodetype, nodename, nodeprefix, "
-                + "nodedata, parentnodeid, rootnodeid, docid, date_created,"
-                + " date_updated, nodedatanumerical, nodedatadate) "
-                + "SELECT nodeid, nodeindex, nodetype, nodename, nodeprefix, "  
-                + "nodedata, parentnodeid, rootnodeid, docid, date_created,"
-                + " date_updated, nodedatanumerical, nodedatadate "
-                + "FROM xml_nodes WHERE rootnodeid = ?");
-
-        // Increase dbconnection usage count
-        dbconn.increaseUsageCount(1);
-        // Bind the values to the query and execute it
-        pstmt.setLong(1, rootNodeId);
-        logMetacat.debug("DocumentImpl.moveNodesToNodesRevision - executing SQL: " + pstmt.toString());
-        pstmt.execute();
-        pstmt.close();
-        double end = System.currentTimeMillis()/1000;
-        logMetacat.debug("DocumentImpl.moveNodesToNodesRevision - Moving nodes from xml_nodes to xml_nodes_revision takes "+(end -start));
-        
-
-    }
-
     /** Save a document entry in the xml_revisions table */
     private static void archiveDocRevision(String docid, String user, DBConnection conn) throws Exception
     {
@@ -4127,43 +2740,6 @@ public class DocumentImpl
             } 
         }
     }
-
-    /**
-     * delete a entry in xml_table for given docid
-     *
-     * @param docId,
-     *            the id of the document need to be delete
-     */
-    private static void deleteXMLDocuments(String docId) throws SQLException
-    {
-        DBConnection conn = null;
-        int serialNumber = -1;
-        PreparedStatement pStmt = null;
-        try {
-            //check out DBConnection
-            conn = DBConnectionPool
-                    .getDBConnection("DocumentImpl.deleteXMLDocuments");
-            serialNumber = conn.getCheckOutSerialNumber();
-            //delete a record
-            pStmt = conn.prepareStatement(
-                    "DELETE FROM xml_documents WHERE docid = ? ");
-            pStmt.setString(1, docId);
-            logMetacat.debug("DocumentImpl.deleteXMLDocuments - executing SQL: " + pStmt.toString());
-            pStmt.execute();
-        } finally {
-            try {
-                pStmt.close();
-            } catch (SQLException e) {
-                logMetacat.error("DocumentImpl.deleteXMLDocuments - SQL error: "
-                                + e.getMessage());
-            } finally {
-                //return back DBconnection
-                DBConnectionPool.returnDBConnection(conn, serialNumber);
-            }
-        }
-    }
-
-   
 
     /**
      * Get server location form database for a accNum
@@ -4376,150 +2952,7 @@ public class DocumentImpl
 
     }
 
-    /**
-     * the main routine used to test the DBWriter utility.
-     * <p>
-     * Usage: java DocumentImpl <-f filename -a action -d docid>
-     *
-     * @param filename
-     *            the filename to be loaded into the database
-     * @param action
-     *            the action to perform (READ, INSERT, UPDATE, DELETE)
-     * @param docid
-     *            the id of the document to process
-     */
-    static public void main(String[] args)
-    {
-        DBConnection dbconn = null;
-        int serialNumber = -1;
-        try {
-            String filename = null;
-            String dtdfilename = null;
-            String action = null;
-            String docid = null;
-            boolean showRuntime = false;
-            boolean useOldReadAlgorithm = false;
 
-            // Parse the command line arguments
-            for (int i = 0; i < args.length; ++i) {
-                if (args[i].equals("-f")) {
-                    filename = args[++i];
-                } else if (args[i].equals("-r")) {
-                    dtdfilename = args[++i];
-                } else if (args[i].equals("-a")) {
-                    action = args[++i];
-                } else if (args[i].equals("-d")) {
-                    docid = args[++i];
-                } else if (args[i].equals("-t")) {
-                    showRuntime = true;
-                } else if (args[i].equals("-old")) {
-                    useOldReadAlgorithm = true;
-                } else {
-                    System.err.println("   args[" + i + "] '" + args[i]
-                            + "' ignored.");
-                }
-            }
-
-            // Check if the required arguments are provided
-            boolean argsAreValid = false;
-            if (action != null) {
-                if (action.equals("INSERT")) {
-                    if (filename != null) {
-                        argsAreValid = true;
-                    }
-                } else if (action.equals("UPDATE")) {
-                    if ((filename != null) && (docid != null)) {
-                        argsAreValid = true;
-                    }
-                } else if (action.equals("DELETE")) {
-                    if (docid != null) {
-                        argsAreValid = true;
-                    }
-                } else if (action.equals("READ")) {
-                    if (docid != null) {
-                        argsAreValid = true;
-                    }
-                }
-            }
-
-            // Print usage message if the arguments are not valid
-            if (!argsAreValid) {
-                System.err.println("Wrong number of arguments!!!");
-                System.err
-                        .println("USAGE: java DocumentImpl [-t] <-a INSERT> [-d docid] <-f filename> "
-                                + "[-r dtdfilename]");
-                System.err
-                        .println("   OR: java DocumentImpl [-t] <-a UPDATE -d docid -f filename> "
-                                + "[-r dtdfilename]");
-                System.err
-                        .println("   OR: java DocumentImpl [-t] <-a DELETE -d docid>");
-                System.err
-                        .println("   OR: java DocumentImpl [-t] [-old] <-a READ -d docid>");
-                return;
-            }
-
-            // Time the request if asked for
-            double startTime = System.currentTimeMillis();
-
-            // Open a connection to the database
-
-            dbconn = DBConnectionPool.getDBConnection("DocumentImpl.main");
-            serialNumber = dbconn.getCheckOutSerialNumber();
-
-            double connTime = System.currentTimeMillis();
-            // Execute the action requested (READ, INSERT, UPDATE, DELETE)
-            if (action.equals("READ")) {
-                DocumentImpl xmldoc = new DocumentImpl(docid);
-                if (useOldReadAlgorithm) {
-                    logMetacat.error("DocumentImpl.main - " + xmldoc.readUsingSlowAlgorithm());
-                } else {
-                    xmldoc.toXml(System.out, null, null, true);
-                }
-            } else if (action.equals("DELETE")) {
-                DocumentImpl.delete(docid, null, null, null, false);
-                //System.out.println("Document deleted: " + docid);
-            } else {
-                /*
-                 * String newdocid = DocumentImpl.write(dbconn, filename, null,
-                 * dtdfilename, action, docid, null, null); if ((docid != null) &&
-                 * (!docid.equals(newdocid))) { if (action.equals("INSERT")) {
-                 * System.out.println("New document ID generated!!! "); } else
-                 * if (action.equals("UPDATE")) { System.out.println("ERROR:
-                 * Couldn't update document!!! "); } } else if ((docid == null) &&
-                 * (action.equals("UPDATE"))) { System.out.println("ERROR:
-                 * Couldn't update document!!! "); }
-                 * System.out.println("Document processing finished for: " +
-                 * filename + " (" + newdocid + ")");
-                 */
-            }
-
-            double stopTime = System.currentTimeMillis();
-            double dbOpenTime = (connTime - startTime) / 1000;
-            double insertTime = (stopTime - connTime) / 1000;
-            double executionTime = (stopTime - startTime) / 1000;
-            if (showRuntime) {
-                logMetacat.info("DocumentImpl.main - Total Execution time was: "
-                        + executionTime + " seconds.");
-                logMetacat.info("DocumentImpl.main - Time to open DB connection was: "
-                        + dbOpenTime + " seconds.");
-                logMetacat.info("DocumentImpl.main - Time to insert document was: " + insertTime
-                        + " seconds.");
-            }
-            dbconn.close();
-        } catch (McdbException me) {
-            me.toXml(new OutputStreamWriter(System.err));
-        } catch (AccessionNumberException ane) {
-            System.err.println(ane.getMessage());
-        } catch (Exception e) {
-            System.err.println("EXCEPTION HANDLING REQUIRED");
-            System.err.println(e.getMessage());
-            e.printStackTrace(System.err);
-        } finally {
-            // Return db connection
-            DBConnectionPool.returnDBConnection(dbconn, serialNumber);
-        }
-    }
-    
     /*
      * This method will write a record to revision table base on given
      * info. The create date and update will be current time.
@@ -4670,51 +3103,4 @@ public class DocumentImpl
         }
     }
     
-    /*
-     * This method will delete the xml_nodes table for a given root id
-     * This method will be called in the time_replication for revision table
-     * In revision replication, xml first will insert into xml_nodes, then
-     * move to xml_nodes_revision and register into xml_revsion table.
-     * if in the second step some error happend, we need to delete the
-     * node in xml_nodes table as roll back
-     */
-    static private void deleteXMLNodes(DBConnection dbconn, long rootId) throws Exception
-    {
-//        AccessionNumber ac;
-    	logMetacat.debug("DocumentImpl.deleteXMLNodes - for root Id: " + rootId);
-        PreparedStatement pstmt = null;
-        double start = System.currentTimeMillis()/1000;
-        String sql = "DELETE FROM xml_nodes WHERE rootnodeid = ? ";
-        pstmt = dbconn.prepareStatement(sql);
-        pstmt.setLong(1, rootId);
-        // Increase dbconnection usage count
-        dbconn.increaseUsageCount(1);
-        logMetacat.debug("DocumentImpl.deleteXMLNodes - executing SQL: " + pstmt.toString());
-        pstmt.execute();
-        pstmt.close(); 
-        double end = System.currentTimeMillis()/1000;
-        logMetacat.info("DocumentImpl.deleteXMLNodes - The time to delete xml_nodes in UPDATE is "+(end -start));
-     
-    }
-    
-    /*
-     * Get the root node id from xml_revisions table by a specified docid and rev
-     */
-    private static long getRevisionRootNodeId(DBConnection conn, String docid, int rev) throws SQLException {
-    	long rootnodeid = -1;
-        String sql = "SELECT rootnodeid FROM xml_revisions WHERE docid = ? and rev = ?";
-        PreparedStatement stmt = null;
-        stmt = conn.prepareStatement(sql);
-        stmt.setString(1, docid);
-        stmt.setInt(2,  rev);
-        ResultSet result = stmt.executeQuery();
-        boolean hasResult = result.next();
-        if (hasResult)
-        {
-          rootnodeid = result.getLong(1);
-        }
-        logMetacat.debug("DocumentImpl.getRevisionRootNodeId - The root node id of docid " + docid+"."+rev +
-                                 " is " + rootnodeid);
-        return rootnodeid;
-    }
 }

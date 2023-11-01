@@ -636,7 +636,7 @@ public class MCTestCase
      */
     protected String generateDocumentId() {
         try {
-            Thread.sleep(1010);
+            Thread.sleep(5);
         } catch (InterruptedException ie) {
             debug("Could not sleep: " + ie.getMessage());
         }

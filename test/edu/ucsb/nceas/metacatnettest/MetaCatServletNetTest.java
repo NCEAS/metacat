@@ -62,7 +62,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * A JUnit test for testing Step class processing
  */
 public class MetaCatServletNetTest extends MCTestCase {
-	
+	public static final String NOT_SUPPORT = "no longer supported";
 	private String serialNumber;
 	private static String sessionId;
 
@@ -151,7 +151,7 @@ public class MetaCatServletNetTest extends MCTestCase {
         try {
             String user = PropertyService.getProperty("test.mcUser");
             String passwd = PropertyService.getProperty("test.mcPassword");
-            assertTrue(logIn(user, passwd));
+            assertTrue(!logIn(user, passwd));
             //assertTrue( withProtocol.getProtocol().equals("http"));
         } catch (PropertyNotFoundException e) {
             fail(e.getMessage());
@@ -251,7 +251,7 @@ public class MetaCatServletNetTest extends MCTestCase {
 				+ "</allow>";
 
 		debug("xml document: " + content);
-		assertTrue(!handleXMLDocument(content, name, "insert"));
+		assertTrue(handleXMLDocument(content, name, "insert"));
 	}
 
 	/**
@@ -377,21 +377,11 @@ public class MetaCatServletNetTest extends MCTestCase {
 		String response = getMetacatString(prop);
 		debug("Login Message: " + response);
 		boolean connected = false;
-		if (response.indexOf("<login>") != -1) {
-			connected = true;
-			// set the session id
-            int start = response.indexOf("<sessionId>") + 11;
-            int end = response.indexOf("</sessionId>");
-            if ((start != -1) && (end != -1)) {
-                sessionId = response.substring(start,end);
-            }
-		} else {
-			sessionId = "";
-			connected = false;
-		}
-		
-		debug("sessionId: " + this.sessionId);
-
+        if (response.indexOf("<error>") != -1 && response.indexOf(NOT_SUPPORT) != -1) {
+            connected = false;
+        } else {
+            connected = true;
+        }
 		return connected;
 	}
 
@@ -411,7 +401,7 @@ public class MetaCatServletNetTest extends MCTestCase {
 		String response = getMetacatString(prop);
 		debug("Logout Message: " + response);
 
-		if (response.indexOf("<logout>") != -1) {
+		if (response.indexOf("<error>") != -1 && response.indexOf(NOT_SUPPORT) != -1) {
 			disConnected = true;
 		} else {
 			disConnected = false;
@@ -436,11 +426,10 @@ public class MetaCatServletNetTest extends MCTestCase {
 		message = getMetacatString(prop);
 		message = message.trim();
 		//MetacatUtil.debugMessage("Read Message: "+message, 30);
-		if (message == null || message.equals("") || message.indexOf("<error>") != -1) {//there was an error
-
-			return false;
-		} else {//successfully
+		if (message.indexOf("<error>") != -1 && message.indexOf(NOT_SUPPORT) != -1) {
 			return true;
+		} else {
+			return false;
 		}
 
 	}
@@ -467,14 +456,10 @@ public class MetaCatServletNetTest extends MCTestCase {
 
 		String message = getMetacatString(prop);
 		debug("Insert or Update Message: " + message);
-		if (message.indexOf("<error>") != -1) {//there was an error
-
-			return false;
-		} else if (message.indexOf("<success>") != -1) {//the operation worked
-			//write the file to the cache and return the file object
+		if (message.indexOf("<error>") != -1 
+		            && message.indexOf(NOT_SUPPORT) != -1) {
 			return true;
-
-		} else {//something weird happened.
+		} else {
 			return false;
 		}
 
@@ -488,14 +473,9 @@ public class MetaCatServletNetTest extends MCTestCase {
 
 		String message = getMetacatString(prop);
 		debug("Delete Message: " + message);
-		if (message.indexOf("<error>") != -1) {//there was an error
-
-			return false;
-		} else if (message.indexOf("<success>") != -1) {//the operation worked
-			//write the file to the cache and return the file object
+		if (message.indexOf("<error>") != -1 && message.indexOf(NOT_SUPPORT) != -1) {
 			return true;
-
-		} else {//something weird happened.
+		} else {
 			return false;
 		}
 	}
@@ -511,8 +491,7 @@ public class MetaCatServletNetTest extends MCTestCase {
 		//Get response for calling sendDataFile function
 		response = sendDataFile(id, file);
 
-		if (response.indexOf("success") != -1) {
-			//insert successfully
+		if (response.indexOf("<error>") != -1 && response.indexOf(NOT_SUPPORT) != -1) {
 			return true;
 		} else {
 			return false;
@@ -642,9 +621,9 @@ public class MetaCatServletNetTest extends MCTestCase {
 	    String context = PropertyService.getProperty("application.context");
 	    String docId = "file://" + webapps + "/" + context + "/schema/eml-2.2.0/eml.xsd";
 	    String qformat = "zip";
-	    assertTrue(!handleReadAction(docId, qformat));
+	    assertTrue(handleReadAction(docId, qformat));
 	    qformat = "knb";
-	    assertTrue(!handleReadAction(docId, qformat));
+	    assertTrue(handleReadAction(docId, qformat));
 	}
 
 }

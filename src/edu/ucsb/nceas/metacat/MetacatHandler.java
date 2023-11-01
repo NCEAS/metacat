@@ -24,76 +24,46 @@
 
 package edu.ucsb.nceas.metacat;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.Vector;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import javax.activation.MimetypesFileTypeMap;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.XmlStreamReader;
-import org.apache.commons.lang.StringEscapeUtils;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
 
-import au.com.bytecode.opencsv.CSVWriter;
-import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
-import edu.ucsb.nceas.metacat.accesscontrol.AccessControlForSingleFile;
-import edu.ucsb.nceas.utilities.access.AccessControlInterface;
-import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
-import edu.ucsb.nceas.metacat.cart.CartManager;
+
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
-import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
+
 import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
-import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.dataquery.DataQuery;
 import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
@@ -101,7 +71,6 @@ import edu.ucsb.nceas.metacat.event.MetacatEventService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
@@ -112,9 +81,6 @@ import edu.ucsb.nceas.metacat.spatial.SpatialQuery;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.metacat.util.MetacatUtil;
-import edu.ucsb.nceas.metacat.util.RequestUtil;
-import edu.ucsb.nceas.metacat.util.SessionData;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.LSIDUtil;
@@ -143,6 +109,12 @@ public class MetacatHandler {
     private static final String ERROR = "<error>";
     private static final String ERRORCLOSE = "</error>";
     public static final String FGDCDOCTYPE = "metadata";
+    private static final String NOT_SUPPORT_MESSAGE = PROLOG +  "\n" + ERROR + 
+                                "The original Metacat API has been replaced, " + 
+                                "and so this request is no longer supported. " + 
+                                "Equivalent API methods now are available through " +
+                                "the DataONE API (see <https://knb.ecoinformatics.org/api>)." 
+                                + ERRORCLOSE;
     
 	private static Timer timer;
 	
@@ -162,95 +134,36 @@ public class MetacatHandler {
         
     }
     
+    /**
+     * Send back the not-support message
+     * @param response
+     * @throws IOException
+     */
+    protected void sendNotSupportMessage(HttpServletResponse response) throws IOException {
+        PrintWriter out = null;
+        try {
+            out = response.getWriter();
+            out.println(NOT_SUPPORT_MESSAGE);
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+    }
     
     protected void handleDataquery(
             Hashtable<String, String[]> params,
             HttpServletResponse response,
             String sessionId) throws PropertyNotFoundException, IOException {
-        
-        DataQuery dq = null;
-        if (sessionId != null) {
-            dq = new DataQuery(sessionId);
-        }
-        else {
-            dq = new DataQuery();
-        }
-        
-        String dataqueryXML = (params.get("dataquery"))[0];
-
-        ResultSet rs = null;
-        try {
-            rs = dq.executeQuery(dataqueryXML);
-        } catch (Exception e) {
-            //probably need to do something here
-            e.printStackTrace();
-            return;
-        }
-        
-        //process the result set
-        String qformat = "csv";
-        String[] temp = params.get("qformat");
-        if (temp != null && temp.length > 0) {
-            qformat = temp[0];
-        }
-        String fileName = "query-results." + qformat;
-        
-        //get the results as csv file
-        if (qformat != null && qformat.equalsIgnoreCase("csv")) {
-            response.setContentType("text/csv");
-            //response.setContentType("application/csv");
-            response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
-            
-            Writer writer = new OutputStreamWriter(response.getOutputStream());
-            CSVWriter csv = new CSVWriter(writer, CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
-            try {
-                
-                csv.writeAll(rs, true);
-                
-                csv.flush();
-                response.flushBuffer();
-                 
-                rs.close();
-                
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            
-            return;
-        }
-        
+        sendNotSupportMessage(response);
     }
     
     protected void handleEditCart(
             Hashtable<String, String[]> params,
             HttpServletResponse response,
             String sessionId) throws PropertyNotFoundException, IOException {
-        
-        CartManager cm = null;
-        if (sessionId != null) {
-            cm = new CartManager(sessionId);
-        }
-        else {
-            cm = new CartManager();
-        }
-        
-        String editOperation = (params.get("operation"))[0];
-        
-        String[] docids = params.get("docid");
-        String[] field = params.get("field");
-        String[] path = params.get("path");
-        
-        Map<String,String> fields = null;
-        if (field != null && path != null) {
-            fields = new HashMap<String,String>();
-            fields.put(field[0], path[0]);
-        }
-        
-        //TODO handle attribute map (metadata fields)
-        cm.editCart(editOperation, docids, fields);
-        
+        sendNotSupportMessage(response);
     }
-    
     // ///////////////////////////// METACAT SPATIAL ///////////////////////////
     
     /**
@@ -260,79 +173,11 @@ public class MetacatHandler {
      * handleSQuery(out, params, response, username, groupnames, sess_id);
      * @throws HandlerException 
      */
-    protected void handleSpatialQuery(Writer out, Hashtable<String, String[]> params,
+    protected void handleSpatialQuery(Hashtable<String, String[]> params,
             HttpServletResponse response,
             String username, String[] groupnames,
-            String sess_id) throws PropertyNotFoundException, HandlerException {
-
-        if ( !PropertyService.getProperty("spatial.runSpatialOption").equals("true") ) {
-            response.setContentType("text/html");
-            try {
-				out.write("<html> Metacat Spatial Option is turned off </html>");
-	            out.close();
-			} catch (IOException e) {
-				throw new HandlerException(e.getMessage());
-			}
-            return;
-        }
-        
-        /*
-         * Perform spatial query against spatial cache
-         */
-        float _xmax = Float.valueOf( (params.get("xmax"))[0] ).floatValue();
-        float _ymax = Float.valueOf( (params.get("ymax"))[0] ).floatValue();
-        float _xmin = Float.valueOf( (params.get("xmin"))[0] ).floatValue();
-        float _ymin = Float.valueOf( (params.get("ymin"))[0] ).floatValue();
-        SpatialQuery sq = new SpatialQuery();
-        Vector<String> docids = sq.filterByBbox( _xmin, _ymin, _xmax, _ymax );
-        
-        /*
-         * Create an array matching docids
-         */
-        String [] docidArray = new String[docids.size()];
-        docids.toArray(docidArray);
-        
-        /*
-         * Create squery string
-         */
-        String squery = DocumentIdQuery.createDocidQuery( docidArray );
-        // logMetacat.info("-----------\n" + squery + "\n------------------");
-        String[] queryArray = new String[1];
-        queryArray[0] = squery;
-        params.put("query", queryArray);
-        
-        /*
-         * Determine qformat
-         */
-        String[] qformatArray = new String[1];
-        try {
-            String _skin = (params.get("skin"))[0];
-            qformatArray[0] = _skin;
-        } catch (java.lang.NullPointerException e) {
-            // should be "default" but keep this for backwards compatibility
-            // with knp site
-            logMetacat.warn("MetacatHandler.handleSpatialQuery - No SKIN specified for metacat actions=spatial_query... defaulting to 'knp' skin !\n");
-            qformatArray[0] = "knp";
-        }
-        params.put("qformat", qformatArray);
-        
-        // change the action
-        String[] actionArray = new String[1];
-        actionArray[0] = "squery";
-        params.put("action", actionArray);
-        
-        /*
-         * Pass the docids to the DBQuery contructor
-         */
-        // This is a hack to get the empty result set to show...
-        // Otherwise dbquery sees no docidOverrides and does a full % percent
-        // query
-        if (docids.size() == 0)
-            docids.add("");
-        
-        DBQuery queryobj = new DBQuery(docids);
-        queryobj.findDocuments(response, out, params, username, groupnames, sess_id);
-        
+            String sess_id) throws PropertyNotFoundException, IOException {
+        sendNotSupportMessage(response);
     }
     
     // LOGIN & LOGOUT SECTION
@@ -341,145 +186,18 @@ public class MetacatHandler {
      * authentication through the session.
      * @throws IOException 
      */
-    public void handleLoginAction(Writer out, Hashtable<String, String[]> params,
+    public void handleLoginAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response) throws IOException {
-        AuthSession sess = null;
-        
-        if(params.get("username") == null){
-            response.setContentType("text/xml");
-            out.write("<?xml version=\"1.0\"?>");
-            out.write("<error>");
-            out.write("Username not specified");
-            out.write("</error>");
-            return;
-        }
-        
-        // }
-        
-        if(params.get("password") == null){
-            response.setContentType("text/xml");
-            out.write("<?xml version=\"1.0\"?>");
-            out.write("<error>");
-            out.write("Password not specified");
-            out.write("</error>");
-            return;
-        }
-        
-        String un = (params.get("username"))[0];
-        logMetacat.info("MetacatHandler.handleLoginAction - user " + un + " is trying to login");
-        String pw = (params.get("password"))[0];
-        
-        String qformat = "xml";
-        if (params.get("qformat") != null) {
-            qformat = (params.get("qformat"))[0];
-        }
-        
-        try {
-            sess = new AuthSession();
-        } catch (Exception e) {
-            String errorMsg = "MetacatServlet.handleLoginAction - Problem in MetacatServlet.handleLoginAction() authenticating session: "
-                + e.getMessage();
-            logMetacat.error(errorMsg);
-            out.write(errorMsg);
-            e.printStackTrace(System.out);
-            return;
-        }
-        boolean isValid = sess.authenticate(request, un, pw);
-        
-        //if authenticate is true, store the session
-        if (isValid) {
-            HttpSession session = sess.getSessions();
-            String id = session.getId();
-            
-            logMetacat.debug("MetacatHandler.handleLoginAction - Store session id " + id
-                    + " which has username" + session.getAttribute("username")
-                    + " into hash in login method");
-            try {
-                SessionService.getInstance().registerSession(id, 
-                        (String) session.getAttribute("username"), 
-                        (String[]) session.getAttribute("groupnames"), 
-                        (String) session.getAttribute("password"), 
-                        (String) session.getAttribute("name"));
-                
-                    
-            } catch (ServiceException se) {
-                String errorMsg = "MetacatServlet.handleLoginAction - service problem registering session: "
-                        + se.getMessage();
-                logMetacat.error("MetacatHandler.handleLoginAction - " + errorMsg);
-                out.write(errorMsg);
-                se.printStackTrace(System.out);
-                return;
-            }           
-        }
-                
-        // format and transform the output
-        if (qformat.equals("xml")) {
-            response.setContentType("text/xml");
-            out.write(sess.getMessage());
-        } else {
-            try {
-                DBTransform trans = new DBTransform();
-                response.setContentType("text/html");
-                trans.transformXMLDocument(sess.getMessage(),
-                        "-//NCEAS//login//EN", "-//W3C//HTML//EN", qformat,
-                        out, null, null);
-            } catch (Exception e) {               
-                logMetacat.error("MetacatHandler.handleLoginAction - General error"
-                        + e.getMessage());
-                e.printStackTrace(System.out);
-            }
-        }
+        sendNotSupportMessage(response);
     }
     
     /**
      * Handle the logout request. Close the connection.
      * @throws IOException 
      */
-    public void handleLogoutAction(Writer out, Hashtable<String, String[]> params,
+    public void handleLogoutAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String qformat = "xml";
-        if(params.get("qformat") != null){
-            qformat = params.get("qformat")[0];
-        }
-        
-        // close the connection
-        HttpSession sess = request.getSession(false);
-        logMetacat.info("MetacatHandler.handleLogoutAction - After get session in logout request");
-        if (sess != null) {
-            logMetacat.info("MetacatHandler.handleLogoutAction - The session id " + sess.getId()
-            + " will be invalidate in logout action");
-            logMetacat.info("MetacatHandler.handleLogoutAction - The session contains user "
-                    + sess.getAttribute("username")
-                    + " will be invalidate in logout action");
-            sess.invalidate();
-            SessionService.getInstance().unRegisterSession(sess.getId());
-        }
-        
-        // produce output
-        StringBuffer output = new StringBuffer();
-        output.append("<?xml version=\"1.0\"?>");
-        output.append("<logout>");
-        output.append("User logged out");
-        output.append("</logout>");
-        
-        //format and transform the output
-        if (qformat.equals("xml")) {
-            response.setContentType("text/xml");
-            out.write(output.toString());
-        } else {
-            try {
-                DBTransform trans = new DBTransform();
-                response.setContentType("text/html");
-                trans.transformXMLDocument(output.toString(),
-                        "-//NCEAS//login//EN", "-//W3C//HTML//EN", qformat,
-                        out, null, null);
-            } catch (Exception e) {
-                logMetacat.error(
-                        "MetacatHandler.handleLogoutAction - General error: "
-                        + e.getMessage());
-                e.printStackTrace(System.out);
-            }
-        }
+        sendNotSupportMessage(response);
     }
     
     // END OF LOGIN & LOGOUT SECTION
@@ -496,23 +214,10 @@ public class MetacatHandler {
      * @param groups the group array
      * @param sessionid  the sessionid
      */
-    protected void handleSQuery(Writer out, Hashtable<String, String[]> params,
+    protected void handleSQuery(Hashtable<String, String[]> params,
             HttpServletResponse response, String user, String[] groups,
-            String sessionid) throws PropertyNotFoundException {
-        long squeryWarnLimit = Long.parseLong(PropertyService.getProperty("database.squeryTimeWarnLimit"));
-        
-        long startTime = System.currentTimeMillis();
-        DBQuery queryobj = new DBQuery();
-        queryobj.findDocuments(response, out, params, user, groups, sessionid);
-        long outPutTime = System.currentTimeMillis();
-        long runTime = outPutTime - startTime;
-
-        if (runTime > squeryWarnLimit) {
-            logMetacat.warn("MetacatHandler.handleSQuery - Long running squery.  Total time: " + runTime + 
-                    " ms, squery: " + ((String[])params.get("query"))[0]);
-        }
-        logMetacat.debug("MetacatHandler.handleSQuery - squery: " + ((String[])params.get("query"))[0] + 
-                " ran in " + runTime + " ms");
+            String sessionid) throws PropertyNotFoundException, IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -525,28 +230,10 @@ public class MetacatHandler {
      * @throws IOException 
      * @throws UnsupportedEncodingException 
      */
-    protected void handleQuery(Writer out, Hashtable<String, String[]> params,
+    protected void handleQuery(Hashtable<String, String[]> params,
             HttpServletResponse response, String user, String[] groups,
             String sessionid) throws PropertyNotFoundException, UnsupportedEncodingException, IOException {
-        long queryWarnLimit = Long.parseLong(PropertyService.getProperty("database.queryTimeWarnLimit"));
-        
-        //create the query and run it
-        String xmlquery = DBQuery.createSQuery(params);
-        String[] queryArray = new String[1];
-        queryArray[0] = xmlquery;
-        params.put("query", queryArray);
-        long startTime = System.currentTimeMillis();
-        DBQuery queryobj = new DBQuery();
-        queryobj.findDocuments(response, out, params, user, groups, sessionid);
-        long outPutTime = System.currentTimeMillis();
-        long runTime = outPutTime -startTime;
-
-        if (runTime > queryWarnLimit) {
-            logMetacat.warn("MetacatHandler.handleQuery - Long running squery.  Total time: " + runTime + 
-                    " ms, squery: " + ((String[])params.get("query"))[0]);
-        }
-        logMetacat.debug("MetacatHandler.handleQuery - query: " + ((String[])params.get("query"))[0] + 
-                " ran in " + runTime + " ms");
+        sendNotSupportMessage(response);
     }
     
     // END OF SQUERY & QUERY SECTION
@@ -562,87 +249,8 @@ public class MetacatHandler {
      */
     protected void handleExportAction(Hashtable<String, String[]> params,
             HttpServletResponse response,
-            String user, String[] groups, String passWord) {
-        // Output stream
-        ServletOutputStream out = null;
-        // Zip output stream
-        ZipOutputStream zOut = null;
-        DBQuery queryObj = null;
-        
-        String[] docs = new String[10];
-        String docId = "";
-        
-        try {
-            // read the params
-            if (params.containsKey("docid")) {
-                docs = params.get("docid");
-            }
-            // Create a DBuery to handle export
-            queryObj = new DBQuery();
-            String qformat = null;
-            if (params.containsKey("qformat")) {
-                qformat = params.get("qformat")[0];
-                queryObj.setQformat(qformat);
-            }
-            // Get the docid
-            docId = docs[0];
-            // Make sure the client specify docid
-            if (docId == null || docId.equals("")) {
-                response.setContentType("text/xml"); //MIME type
-                // Get a printwriter
-                PrintWriter pw = response.getWriter();
-                // Send back message
-                pw.println("<?xml version=\"1.0\"?>");
-                pw.println("<error>");
-                pw.println("You didn't specify requested docid");
-                pw.println("</error>");
-                // Close printwriter
-                pw.close();
-                return;
-            }
-            // Get output stream
-            response.setContentType("application/zip"); //MIME type
-            response.setHeader("Content-Disposition",
-                    "attachment; filename="
-                    + docId + ".zip"); // Set the name of the zip file
-            out = response.getOutputStream();            
-            zOut = new ZipOutputStream(out);
-            zOut = queryObj
-                    .getZippedPackage(docId, out, user, groups, passWord);
-            zOut.finish(); //terminate the zip file
-            zOut.close(); //close the zip stream
-            
-        } catch (Exception e) {
-            try {
-                response.setContentType("text/xml"); //MIME type
-                // Send error message back
-                if (out != null) {
-                    PrintWriter pw = new PrintWriter(out);
-                    pw.println("<?xml version=\"1.0\"?>");
-                    pw.println("<error>");
-                    pw.println(e.getMessage());
-                    pw.println("</error>");
-                    // Close printwriter
-                    pw.close();
-                    // Close output stream
-                    out.close();
-                }
-                // Close zip output stream
-                if (zOut != null) {
-                    zOut.close();
-                }
-            } catch (IOException ioe) {
-                logMetacat.error("MetacatHandler.handleExportAction - Problem with the servlet output: "
-                        + ioe.getMessage());
-                e.printStackTrace(System.out);
-            }
-            
-            logMetacat.error("MetacatHandler.handleExportAction - General error: "
-                    + e.getMessage());
-            e.printStackTrace(System.out);
-            
-        }
-        
+            String user, String[] groups, String passWord) throws IOException{
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -657,94 +265,8 @@ public class MetacatHandler {
      */
     protected void handleReadInlineDataAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response,
-            String user, String passWord, String[] groups) {
-        String[] docs = new String[10];
-        String inlineDataId = null;
-        String docId = "";
-        ServletOutputStream out = null;
-        
-        try {
-            // read the params
-            if (params.containsKey("inlinedataid")) {
-                docs = params.get("inlinedataid");
-            }
-            // Get the docid
-            inlineDataId = docs[0];
-            // Make sure the client specify docid
-            if (inlineDataId == null || inlineDataId.equals("")) {
-                throw new Exception("You didn't specify requested inlinedataid"); }
-            
-            // check for permission, use full docid with revision
-            docId = DocumentUtil.getDocIdFromInlineDataID(inlineDataId);
-
-            PermissionController controller = new PermissionController(docId);
-            // check top level read permission
-            if (!controller.hasPermission(user, groups,
-                    AccessControlInterface.READSTRING)) {
-                throw new Exception("User " + user
-                        + " doesn't have permission " + " to read document "
-                        + docId);
-            } else {
-                //check data access level
-                try {
-                    Hashtable<String,String> unReadableInlineDataList =
-                            PermissionController.getUnReadableInlineDataIdList(docId, user, groups);
-                    if (unReadableInlineDataList.containsValue(inlineDataId)) {
-                        throw new Exception("User " + user
-                                + " doesn't have permission " + " to read inlinedata "
-                                + inlineDataId);
-                        
-                    }//if
-                }//try
-                catch (Exception e) {
-                    throw e;
-                }//catch
-            }//else
-            
-            // Get output stream
-            out = response.getOutputStream();
-            // read the inline data from the file
-            String inlinePath = PropertyService.getProperty("application.inlinedatafilepath");
-            File lineData = new File(inlinePath, inlineDataId);
-            FileInputStream input = new FileInputStream(lineData);
-            byte[] buffer = new byte[4 * 1024];
-            int bytes = input.read(buffer);
-            while (bytes != -1) {
-                out.write(buffer, 0, bytes);
-                bytes = input.read(buffer);
-            }
-            out.close();
-            
-            EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), user,
-                    inlineDataId, "readinlinedata");
-        } catch (Exception e) {
-            try {
-                PrintWriter pw = null;
-                // Send error message back
-                if (out != null) {
-                    pw = new PrintWriter(out);
-                } else {
-                    pw = response.getWriter();
-                }
-                pw.println("<?xml version=\"1.0\"?>");
-                pw.println("<error>");
-                pw.println(e.getMessage());
-                pw.println("</error>");
-                // Close printwriter
-                pw.close();
-                // Close output stream if out is not null
-                if (out != null) {
-                    out.close();
-                }
-            } catch (IOException ioe) {
-                logMetacat.error("MetacatHandler.handleReadInlineDataAction - Problem with the servlet output: "
-                        + ioe.getMessage());
-                e.printStackTrace(System.out);
-            }
-            logMetacat.error("MetacatHandler.handleReadInlineDataAction - General error: "
-                    + e.getMessage());
-            e.printStackTrace(System.out);
-        }
+            String user, String passWord, String[] groups) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -760,236 +282,10 @@ public class MetacatHandler {
      */
     public void handleReadAction(Hashtable<String, String[]> params, HttpServletRequest request,
             HttpServletResponse response, String user, String passWord,
-            String[] groups) {
-        ServletOutputStream out = null;
-        ZipOutputStream zout = null;
-        PrintWriter pw = null;
-        boolean zip = false;
-        boolean withInlineData = true;
-        
-        try {
-            String[] docs = new String[0];
-            String docid = "";
-            String qformat = "";
-            
-            // read the params
-            if (params.containsKey("docid")) {
-                docs = params.get("docid");
-            }
-            if (params.containsKey("qformat")) {
-                qformat = params.get("qformat")[0];
-            }
+            String[] groups) throws IOException {
+        sendNotSupportMessage(response);
+    }
 
-            // handle special case where the PID was given
-            if (params.containsKey("pid")) {
-                docs = params.get("pid");
-            	for (int i = 0; i < docs.length; i++) {
-            		String pid = docs[i];
-            		// look up the pid if we have it
-            		String localId = IdentifierManager.getInstance().getLocalId(pid);
-            		docs[i] = localId;
-            	}
-            	// put docid in parms for downstream methods to use
-            	params.put("docid", docs);
-            }
-            
-            if ((docs.length > 1) || qformat.equals("zip")) {
-                zip = true;
-                out = response.getOutputStream();
-                response.setContentType("application/zip"); //MIME type
-                zout = new ZipOutputStream(out);
-            }
-            // go through the list of docs to read
-            for (int i = 0; i < docs.length; i++) {
-                String providedFileName = null;
-                if (params.containsKey(docs[i])) {
-                    providedFileName = params.get(docs[i])[0];
-                }
-                try {
-                    
-                    URL murl = new URL(docs[i]);
-                    Hashtable<String,String> murlQueryStr = MetacatUtil.parseQuery(
-                            murl.getQuery());
-                    // case docid="http://.../?docid=aaa"
-                    // or docid="metacat://.../?docid=bbb"
-                    if (murlQueryStr.containsKey("docid")) {
-                        // get only docid, eliminate the rest
-                        docid = murlQueryStr.get("docid");
-                        if (zip) {
-                            addDocToZip(request, docid, providedFileName, zout, user, groups);
-                        } else {
-                            readFromMetacat(request.getRemoteAddr(), request.getHeader("User-Agent"), response, response.getOutputStream(), docid, qformat,
-                                    user, groups, withInlineData, params);
-                        }
-                        
-                        // case docid="http://.../filename"
-                    } else {
-                        docid = docs[i];
-                        //we don't support to read a file or http link directly
-                        throw new Exception("Metacat doesn't support this format of the docid - " + docid);
-                    }
-                    
-                } catch (MalformedURLException mue) {
-                    docid = docs[i];
-                    if (zip) {
-                        addDocToZip(request, docid, providedFileName, zout, user, groups);
-                    } else {
-                    	if (out == null) {
-                    		out = response.getOutputStream();
-                    	}
-                        readFromMetacat(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, docid, qformat,
-                                user, groups, withInlineData, params);
-                    }
-                }
-            }
-            
-            if (zip) {
-                zout.finish(); //terminate the zip file
-                zout.close(); //close the zip stream
-            }
-            
-        } catch (McdbDocNotFoundException notFoundE) {
-            // To handle doc not found exception
-            // the docid which didn't be found
-            String notFoundDocId = notFoundE.getUnfoundDocId();
-            String notFoundRevision = notFoundE.getUnfoundRevision();
-            logMetacat.warn("MetacatHandler.handleReadAction - Missed id: " + notFoundDocId);
-            logMetacat.warn("MetacatHandler.handleReadAction - Missed rev: " + notFoundRevision);
-            try {
-                // read docid from remote server
-                readFromRemoteMetaCat(response, notFoundDocId,
-                        notFoundRevision, user, passWord, out, zip, zout);
-                // Close zout outputstream
-                if (zout != null) {
-                    zout.close();
-                }
-                // close output stream
-                if (out != null) {
-                    out.close();
-                }
-                
-            } catch (Exception exc) {
-                logMetacat.error("MetacatHandler.handleReadAction - General error: "
-                        + exc.getMessage());
-                exc.printStackTrace(System.out);
-                try {
-                    if (out != null) {
-                        response.setContentType("text/xml");
-                        // Send back error message by printWriter
-                        pw = new PrintWriter(out);
-                        pw.println("<?xml version=\"1.0\"?>");
-                        pw.println("<error>");
-                        pw.println(notFoundE.getMessage());
-                        pw.println("</error>");
-                        pw.close();
-                        out.close();
-                        
-                    } else {
-                        response.setContentType("text/xml"); //MIME type
-                        // Send back error message if out = null
-                        if (pw == null) {
-                            // If pw is null, open the response
-                            pw = response.getWriter();
-                        }
-                        pw.println("<?xml version=\"1.0\"?>");
-                        pw.println("<error>");
-                        pw.println(notFoundE.getMessage());
-                        pw.println("</error>");
-                        pw.close();
-                    }
-                    // close zout
-                    if (zout != null) {
-                        zout.close();
-                    }
-                } catch (IOException ie) {
-                    logMetacat.error("MetacatHandler.handleReadAction - Problem with the servlet output: "
-                            + ie.getMessage());
-                    ie.printStackTrace(System.out);
-                }
-            }
-        } catch (Exception e) {
-            try {
-                
-                if (out != null) {
-                    response.setContentType("text/xml"); //MIME type
-                    pw = new PrintWriter(out);
-                    pw.println("<?xml version=\"1.0\"?>");
-                    pw.println("<error>");
-                    pw.println(e.getMessage());
-                    pw.println("</error>");
-                    pw.close();
-                    out.close();
-                } else {
-                    response.setContentType("text/xml"); //MIME type
-                    // Send back error message if out = null
-                    if (pw == null) {
-                        pw = response.getWriter();
-                    }
-                    pw.println("<?xml version=\"1.0\"?>");
-                    pw.println("<error>");
-                    pw.println(e.getMessage());
-                    pw.println("</error>");
-                    pw.close();
-                    
-                }
-                // Close zip output stream
-                if (zout != null) {
-                    zout.close();
-                }
-                
-            } catch (Exception e2) {
-                logMetacat.error("MetacatHandler.handleReadAction - " + 
-                		         "Problem with the servlet output: "+ 
-                		         e2.getMessage());
-                e2.printStackTrace(System.out);
-                
-            }
-            
-            logMetacat.error("MetacatHandler.handleReadAction - General error: "
-                    + e.getMessage());
-            e.printStackTrace(System.out);
-        }
-    }
-    
-    /**
-     * 
-     * @return
-     */
-    public MetacatResultSet query(String metacatUrl, Hashtable<String, String[]>params, 
-            String username, String[] groups, String sessionid)
-      throws Exception
-    {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-     // use UTF-8 encoding for DB query
-        Writer out = new OutputStreamWriter(baos, MetaCatServlet.DEFAULT_ENCODING);
-        handleQuery(out, params, null, username, groups, sessionid);
-        out.flush();
-        baos.flush();
-        MetacatResultSet rs = new MetacatResultSet(baos.toString(MetaCatServlet.DEFAULT_ENCODING));
-        return rs;
-    }
-    
-    /**
-     * set the access permissions on the document specified
-     */
-    public void setAccess(String metacatUrl, String username, String docid, String principal, 
-            String permission, String permissionType, String permissionOrder)
-      throws Exception
-    {
-        Hashtable<String,String[]> params = new Hashtable<String,String[]>();
-        params.put("principal", new String[] {principal});
-        params.put("permission", new String[] {permission});
-        params.put("permType", new String[] {permissionType});
-        params.put("permOrder", new String[] {permissionOrder});
-        params.put("docid", new String[]{docid});
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter out = new PrintWriter(baos);
-        handleSetAccessAction(out, params, username, null, null);
-        String resp = baos.toString();
-        //System.out.println("response from MetacatHandler.setAccess: " + resp);
-    }
-    
     /**
      * Read a document from metacat and return the InputStream. The dataType will be null.
      * @param docid - the metacat docid to read
@@ -1098,7 +394,7 @@ public class MetacatHandler {
      * @return fileInputStream  The file to read as a FileInputStream
      */
     private static FileInputStream readFromFilesystem(String filename) 
-      throws FileNotFoundException {
+      throws McdbDocNotFoundException {
         
         logMetacat.debug("MetacatHandler.readFromFilesystem() called.");
         
@@ -1108,474 +404,16 @@ public class MetacatHandler {
           fileInputStream = new FileInputStream(filename);
 
         } catch ( FileNotFoundException fnfe ) {
-          logMetacat.debug("There was an error reading the file " +
+          logMetacat.warn("There was an error reading the file " +
                            filename + ". The error was: "         +
                            fnfe.getMessage());
-          throw fnfe;
+          throw new McdbDocNotFoundException(fnfe.getMessage());
            
         }
         
       return fileInputStream;  
     }
     
-    /*
-     * Delete a document in metacat based on the docid.
-     *
-     * @param out      - the print writer used to send output
-     * @param response - the HTTP servlet response to be returned
-     * @param docid    - the internal docid as a String
-     * @param user     - the username of the principal doing the delete
-     * @param groups   - the groups list of the principal doing the delete
-     *
-     * @throws AccessionNumberException
-     * @throws McdbDocNotFoundException
-     * @throws InsufficientKarmaException
-     * @throws SQLException
-     * @throws Exception
-     */
-    private void deleteFromMetacat(PrintWriter out, HttpServletRequest request,
-      HttpServletResponse response, String docid, String user, String[] groups)
-      throws McdbDocNotFoundException {
-      
-      // Delete a document from the database based on the docid
-      try {
-          
-        DocumentImpl.delete(docid, user, groups, null, false); // null: don't notify server
-        EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"),
-                user, docid, "delete");
-        response.setContentType("text/xml");
-        out.println(this.PROLOG);
-        out.println(this.SUCCESS);
-        out.println("Document deleted.");
-        out.println(this.SUCCESSCLOSE);
-        logMetacat.info("MetacatHandler.handleDeleteAction - " +
-          "Document deleted.");
-        
-        try {
-          // Delete from spatial cache if runningSpatialOption
-          if ( PropertyService.getProperty("spatial.runSpatialOption").equals("true") ) {
-            SpatialHarvester sh = new SpatialHarvester();
-            sh.addToDeleteQue( DocumentUtil.getSmartDocId( docid ) );
-            sh.destroy();
-          }
-          
-        } catch ( PropertyNotFoundException pnfe ) {
-          logMetacat.error("MetacatHandler.deleteFromMetacat() - "    +
-            "Couldn't find spatial.runSpatialOption property during " +
-            "document deletion.");
-            
-        }
-          
-      } catch (AccessionNumberException ane) {
-        response.setContentType("text/xml");
-        out.println(this.PROLOG);
-        out.println(this.ERROR);
-        //out.println("Error deleting document!!!");
-        out.println(ane.getMessage());
-        out.println(this.ERRORCLOSE);
-        logMetacat.error("MetacatHandler.deleteFromMetacat() - " +
-          "Document could not be deleted: "
-                + ane.getMessage());
-        ane.printStackTrace(System.out);
-        
-      } catch ( SQLException sqle ) {
-        response.setContentType("text/xml");
-        out.println(this.PROLOG);
-        out.println(this.ERROR);
-        //out.println("Error deleting document!!!");
-        out.println(sqle.getMessage());
-        out.println(this.ERRORCLOSE);
-        logMetacat.error("MetacatHandler.deleteFromMetacat() - " +
-          "Document could not be deleted: "
-                + sqle.getMessage());
-        sqle.printStackTrace(System.out);
-        
-      } catch ( McdbDocNotFoundException dnfe ) {
-        throw dnfe;
-        
-      } catch ( InsufficientKarmaException ike ) {
-        response.setContentType("text/xml");
-        out.println(this.PROLOG);
-        out.println(this.ERROR);
-        //out.println("Error deleting document!!!");
-        out.println(ike.getMessage());
-        out.println(this.ERRORCLOSE);
-        logMetacat.error("MetacatHandler.deleteFromMetacat() - " +
-          "Document could not be deleted: "
-                + ike.getMessage());
-        ike.printStackTrace(System.out);
-        
-      } catch ( Exception e ) {
-        response.setContentType("text/xml");
-        out.println(this.PROLOG);
-        out.println(this.ERROR);
-        //out.println("Error deleting document!!!");
-        out.println(e.getMessage());
-        out.println(this.ERRORCLOSE);
-        logMetacat.error("MetacatHandler.deleteFromMetacat() - " +
-          "Document could not be deleted: "
-                + e.getMessage());
-        e.printStackTrace(System.out);
-        
-      }
-    }
-    
-    /** read metadata or data from Metacat
-     * @param userAgent 
-     * @throws PropertyNotFoundException 
-     * @throws ParseLSIDException 
-     * @throws InsufficientKarmaException 
-     */
-    public void readFromMetacat(String ipAddress, String userAgent,
-            HttpServletResponse response, OutputStream out, String docid, String qformat,
-            String user, String[] groups, boolean withInlineData, 
-            Hashtable<String, String[]> params) throws ClassNotFoundException, 
-            IOException, SQLException, McdbException, PropertyNotFoundException, 
-            ParseLSIDException, InsufficientKarmaException {
-        
-        try {
-            
-            if (docid.startsWith("urn:")) {
-                docid = LSIDUtil.getDocId(docid, true);                 
-            }
-            
-            // here is hack for handle docid=john.10(in order to tell mike.jim.10.1
-            // mike.jim.10, we require to provide entire docid with rev). But
-            // some old client they only provide docid without rev, so we need
-            // to handle this suituation. First we will check how many
-            // seperator here, if only one, we will append the rev in xml_documents
-            // to the id.
-            docid = DocumentUtil.appendRev(docid);
-            
-            DocumentImpl doc = new DocumentImpl(docid, false);
-            
-            //check the permission for read
-            if (!DocumentImpl.hasReadPermission(user, groups, docid)) {
-                
-                InsufficientKarmaException e = 
-                	new InsufficientKarmaException("User " + user
-                        + " does not have permission"
-                        + " to read the document with the docid " + docid);
-                throw e;
-            }
-            
-            if (doc.getRootNodeID() == 0) {
-                // this is data file, so find the path on disk for the file
-                String filepath = PropertyService.getProperty("application.datafilepath");
-                if (!filepath.endsWith("/")) {
-                    filepath += "/";
-                }
-                String filename = filepath + docid;
-                FileInputStream fin = null;
-                fin = new FileInputStream(filename);
-                
-                if (response != null) {
-                    // MIME type
-                    //String contentType = servletContext.getMimeType(filename);
-                    String contentType = (new MimetypesFileTypeMap()).getContentType(filename);
-                    if (contentType == null) {
-                        ContentTypeProvider provider = new ContentTypeProvider(
-                                docid);
-                        contentType = provider.getContentType();
-                        logMetacat.info("MetacatHandler.readFromMetacat - Final contenttype is: "
-                                + contentType);
-                    }
-                    response.setContentType(contentType);
-
-                    // Set the output filename on the response
-                    String outputname = generateOutputName(docid, params, doc);                    
-                    response.setHeader("Content-Disposition",
-                            "attachment; filename=\"" + outputname + "\"");
-                }
-                
-                // Write the data to the output stream
-                try {
-                    byte[] buf = new byte[4 * 1024]; // 4K buffer
-                    int b = fin.read(buf);
-                    while (b != -1) {
-                        out.write(buf, 0, b);
-                        b = fin.read(buf);
-                    }
-                    fin.close();
-                } finally {
-                    IOUtils.closeQuietly(fin);
-                }
-                
-            } else {
-                // this is metadata doc
-                if (qformat.equals("xml") || qformat.equals("")) {
-                    // if equals "", that means no qformat is specified. hence
-                    // by default the document should be returned in xml format
-                    // set content type first
-                    
-                    if (response != null) {
-                        response.setContentType("text/xml"); //MIME type
-                        response.setHeader("Content-Disposition",
-                                "attachment; filename=" + docid + ".xml");
-                    }
-                    
-                    // Try to get the metadata file from disk. If it isn't
-                    // found, create it from the db and write it to disk then.
-                    try {
-                        doc.toXml(out, user, groups, withInlineData);               
-                    } catch (McdbException e) {
-                        // any exceptions in reading the xml from disc, and we go back to the
-                        // old way of creating the xml directly.
-                        logMetacat.error("MetacatHandler.readFromMetacat - "  + 
-                        		         "could not read from document file " + 
-                        		         docid + 
-                        		         ": " + 
-                        		         e.getMessage());
-                        e.printStackTrace(System.out);
-                        doc.toXmlFromDb(out, user, groups, withInlineData);
-                    }
-                } else {
-                    // TODO MCD, this should read from disk as well?
-                    //*** This is a metadata doc, to be returned in a skin/custom format.
-                    //*** Add param to indicate if public has read access or not.
-                    logMetacat.debug("User: \n" + user);
-                    if (!user.equals("public")) {
-                        if (DocumentImpl.hasReadPermission("public", null, docid))
-                            params.put("publicRead", new String[] {"true"});
-                        else
-                            params.put("publicRead", new String[] {"false"});
-                    }
-                    
-                    if(doc.getDoctype() != null && doc.getDoctype().equals(FGDCDOCTYPE)) {
-                      //for fgdc doctype, we need to pass parameter enableFGDCediting
-                      PermissionController controller = new PermissionController(docid);
-                      if(controller.hasPermission(user, groups, AccessControlInterface.WRITESTRING)) {
-                        params.put("enableFGDCediting", new String[] {"true"});
-                      } else {
-                        params.put("enableFGDCediting", new String[] {"false"});
-                      }
-                    }
-                    if (response != null) {
-                        response.setContentType("text/html"); //MIME type
-                    }
-                    
-                    // detect actual encoding
-                    String docString = doc.toString(user, groups, withInlineData);
-                    XmlStreamReader xsr = 
-                    	new XmlStreamReader(new ByteArrayInputStream(doc.getBytes()));
-        			String encoding = xsr.getEncoding();
-                    Writer w = null;
-        			if (encoding != null) {
-        				w = new OutputStreamWriter(out, encoding);
-        			} else {
-                        w = new OutputStreamWriter(out);
-        			}
-
-                    // Look up the document type
-                    String doctype = doc.getDoctype();
-                    // Transform the document to the new doctype
-                    DBTransform dbt = new DBTransform();
-                    dbt.transformXMLDocument(
-                    		docString, 
-                    		doctype, "-//W3C//HTML//EN",
-                            qformat, 
-                            w, 
-                            params, 
-                            null);
-                }
-                
-            }
-            EventLog.getInstance().log(ipAddress, userAgent, user, docid, "read");
-        } catch (PropertyNotFoundException except) {
-            throw except;
-        }
-    }
-
-    /**
-     * Create a filename to be used for naming a downloaded document
-     * @param docid the identifier of the document to be named
-     * @param params the parameters of the request
-     * @param doc the DocumentImpl of the document to be named
-     * @return String containing a name for the download
-     */
-    private String generateOutputName(String docid,
-            Hashtable<String, String[]> params, DocumentImpl doc) {
-    	SystemMetadata sysMeta = null;
-    	String guid = null;
-    	int rev = -1;
-    	String fileName = null;
-    	
-    	// First, if SystemMetadata.fileName is present, use it
-    	try {
-    		rev = Integer.valueOf(DocumentUtil.getRevisionStringFromString(docid)).intValue();
-    		docid = DocumentUtil.getDocIdFromAccessionNumber(docid);
-    		if (rev > 0 ) {
-				guid = IdentifierManager.getInstance().getGUID(docid, rev);
-				if ( guid != null ) {
-					sysMeta = IdentifierManager.getInstance().getSystemMetadata(guid);
-					if ( sysMeta != null ) {
-						fileName = sysMeta.getFileName();
-					}
-				}
-			}
-		} catch (McdbDocNotFoundException e) {
-			logMetacat.debug("Couldn't find the given docid: " + e.getMessage());
-			
-		}
-    	
-    	if (fileName != null ) {
-    		return fileName;
-    	}
-    	
-    	// Otherwise, generate a name
-        String outputname = null;
-        // check for the existence of a metadatadocid parameter,
-        // if this is sent, then send a filename which contains both
-        // the metadata docid and the data docid, so the link with
-        // metadata is explicitly encoded in the filename.
-        String metadatadocid = null;
-        Vector<String> nameparts = new Vector<String>();
-
-        if(params.containsKey("metadatadocid")) {
-            metadatadocid = params.get("metadatadocid")[0];
-        }
-        if (metadatadocid != null && !metadatadocid.equals("")) {
-            nameparts.add(metadatadocid);
-        }
-        // we'll always have the docid, include it in the name
-        String doctype = doc.getDoctype();
-        // TODO: fix this to lookup the associated FGDC metadata document,
-        // and grab the doctype tag for it.  These should be set to something 
-        // consistent, not 'metadata' as it stands...
-        //if (!doctype.equals("metadata")) {
-        //    nameparts.add(docid);
-        //} 
-        nameparts.add(docid);
-        // Set the name of the data file to the entity name plus docid,
-        // or if that is unavailable, use the docid alone
-        String docname = doc.getDocname();
-        if (docname != null && !docname.equals("")) {
-            nameparts.add(docname); 
-        }
-        // combine the name elements with a dash, using a 'join' equivalent
-        String delimiter = "-";
-        Iterator<String> iter = nameparts.iterator();
-        StringBuffer buffer = new StringBuffer(iter.next());
-        while (iter.hasNext()) buffer.append(delimiter).append(iter.next());
-        outputname = buffer.toString();
-        return outputname;
-    }
-    
-    
-    /**
-     * read file/doc and write to ZipOutputStream
-     *
-     * @param docid
-     * @param zout
-     * @param user
-     * @param groups
-     * @throws ClassNotFoundException
-     * @throws IOException
-     * @throws SQLException
-     * @throws McdbException
-     * @throws Exception
-     */
-    private void addDocToZip(HttpServletRequest request, String docid, String providedFileName,
-            ZipOutputStream zout, String user, String[] groups) throws
-            ClassNotFoundException, IOException, SQLException, McdbException,
-            Exception {
-        byte[] bytestring = null;
-        ZipEntry zentry = null;
-            
-            // this is metacat doc (data file or metadata doc)
-            try {
-                DocumentImpl doc = new DocumentImpl(docid, false);
-                
-                //check the permission for read
-                if (!DocumentImpl.hasReadPermission(user, groups, docid)) {
-                    Exception e = new Exception("User " + user
-                            + " does not have "
-                            + "permission to read the document with the docid "
-                            + docid);
-                    throw e;
-                }
-                
-                if (doc.getRootNodeID() == 0) {
-                    // this is data file; add file to zip
-                    String filepath = PropertyService.getProperty("application.datafilepath");
-                    if (!filepath.endsWith("/")) {
-                        filepath += "/";
-                    }
-                    String filename = filepath + docid;
-                    FileInputStream fin = null;
-                    fin = new FileInputStream(filename);
-                    try {
-                        //use provided file name if we have one
-                        if (providedFileName != null && providedFileName.length() > 1) {
-                            zentry = new ZipEntry(providedFileName);
-                        }
-                        else {
-                            zentry = new ZipEntry(docid);
-                        }
-                        zout.putNextEntry(zentry);
-                        byte[] buf = new byte[4 * 1024]; // 4K buffer
-                        int b = fin.read(buf);
-                        while (b != -1) {
-                            zout.write(buf, 0, b);
-                            b = fin.read(buf);
-                        }
-                        fin.close();
-                    } finally {
-                        IOUtils.closeQuietly(fin);
-                    }
-                    zout.closeEntry();
-                    
-                } else {
-                    // this is metadata doc; add doc to zip
-                    bytestring = doc.getBytes();
-                    //use provided file name if given
-                    if (providedFileName != null && providedFileName.length() > 1) {
-                        zentry = new ZipEntry(providedFileName);
-                    }
-                    else {
-                        zentry = new ZipEntry(docid + ".xml");
-                    }
-                    zentry.setSize(bytestring.length);
-                    zout.putNextEntry(zentry);
-                    zout.write(bytestring, 0, bytestring.length);
-                    zout.closeEntry();
-                }
-                EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), user,
-                        docid, "read");
-            } catch (Exception except) {
-                throw except;
-            }
-    }
-    
-    /**
-     * If metacat couldn't find a data file or document locally, it will read
-     * this docid from its home server. This is for the replication feature
-     */
-    private void readFromRemoteMetaCat(HttpServletResponse response,
-            String docid, String rev, String user, String password,
-            ServletOutputStream out, boolean zip, ZipOutputStream zout)
-            throws Exception {
-        // Create a object of RemoteDocument, "" is for zipEntryPath
-        RemoteDocument remoteDoc = new RemoteDocument(docid, rev, user,
-                password, "");
-        String docType = remoteDoc.getDocType();
-        // Only read data file
-        if (docType.equals("BIN")) {
-            // If it is zip format
-            if (zip) {
-                remoteDoc.readDocumentFromRemoteServerByZip(zout);
-            } else {
-                if (out == null) {
-                    out = response.getOutputStream();
-                }
-                response.setContentType("application/octet-stream");
-                remoteDoc.readDocumentFromRemoteServer(out);
-            }
-        } else {
-            throw new Exception("Docid: " + docid + "." + rev
-                    + " couldn't find");
-        }
-    }
     
     /**
      * Handle the database putdocument request and write an XML document to the
@@ -1997,141 +835,17 @@ public class MetacatHandler {
      * Handle the database delete request and delete an XML document from the
      * database connection
      */
-    public void handleDeleteAction(PrintWriter out, Hashtable<String, String[]> params,
+    public void handleDeleteAction(Hashtable<String, String[]> params,
       HttpServletRequest request, HttpServletResponse response,
-      String user, String[] groups) {
-      
-      String[] docid = params.get("docid");
-      
-      if(docid == null){
-        response.setContentType("text/xml");
-        out.println(this.PROLOG);
-        out.println(this.ERROR);
-        out.println("Docid not specified.");
-        out.println(this.ERRORCLOSE);
-        logMetacat.error("MetacatHandler.handleDeleteAction - " +
-          "Docid not specified for the document to be deleted.");
-      
-      } else {
-        
-        // delete the document from the database
-        String localId = null;
-        try {
-          
-          // is the docid a GUID? 
-          IdentifierManager im = IdentifierManager.getInstance();
-          localId = im.getLocalId(docid[0]);
-          this.deleteFromMetacat(out, request, response, localId, 
-            user, groups);
-          
-        } catch (McdbDocNotFoundException mdnfe) {
-          
-          try {
-            localId = docid[0];
-
-            // not a GUID, use the docid instead
-            this.deleteFromMetacat(out, request, response, localId, 
-              user, groups);
-              
-          } catch ( McdbDocNotFoundException dnfe ) {
-            response.setContentType("text/xml");
-            out.println(this.PROLOG);
-            out.println(this.ERROR);
-            //out.println("Error deleting document!!!");
-            out.println(dnfe.getMessage());
-            out.println(this.ERRORCLOSE);
-            logMetacat.error("MetacatHandler.handleDeleteAction - " +
-              "Document could not be deleted: "
-                    + dnfe.getMessage());
-            dnfe.printStackTrace(System.out);
-            return;
-          } // end try()
-        
-        } catch (SQLException sqle) {
-            response.setContentType("text/xml");
-            out.println(this.PROLOG);
-            out.println(this.ERROR);
-            //out.println("Error deleting document!!!");
-            out.println(sqle.getMessage());
-            out.println(this.ERRORCLOSE);
-            logMetacat.error("MetacatHandler.handleDeleteAction - " +
-              "Document could not be deleted: "
-                    + sqle.getMessage());
-            sqle.printStackTrace(System.out);
-            return;
-        } // end try()
-        
-        // alert that it happened
-        MetacatDocumentEvent mde = new MetacatDocumentEvent();
-        mde.setDocid(localId);
-        mde.setDoctype(null);
-        mde.setAction("delete");
-        mde.setUser(user);
-        mde.setGroups(groups);
-        MetacatEventService.getInstance().notifyMetacatEventObservers(mde);
-        
-      } // end if()
-      
+      String user, String[] groups) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
      * Handle the validation request and return the results to the requestor
      */
-    protected void handleValidateAction(PrintWriter out, Hashtable<String, String[]> params) {
-        
-        // Get the document indicated
-        String valtext = null;
-        DBConnection dbConn = null;
-        int serialNumber = -1;
-        
-        try {
-            valtext = params.get("valtext")[0];
-        } catch (Exception nullpe) {
-            
-            String docid = null;
-            try {
-                // Find the document id number
-                docid = params.get("docid")[0];
-                
-                // Get the document indicated from the db
-                DocumentImpl xmldoc = new DocumentImpl(docid, false);
-                valtext = xmldoc.toString();
-                
-            } catch (NullPointerException npe) {
-                
-                out.println("<error>Error getting document ID: " + StringEscapeUtils.escapeXml(docid)
-                        + "</error>");
-                //if ( conn != null ) { util.returnConnection(conn); }
-                return;
-            } catch (Exception e) {
-                
-                out.println(e.getMessage());
-            }
-        }
-        
-        try {
-            // get a connection from the pool
-            dbConn = DBConnectionPool
-                    .getDBConnection("MetacatHandler.handleValidateAction");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-            DBValidate valobj = new DBValidate(dbConn);
-//            boolean valid = valobj.validateString(valtext);
-            
-            // set content type and other response header fields first
-            
-            out.println(valobj.returnErrors());
-            
-        } catch (NullPointerException npe2) {
-            // set content type and other response header fields first
-            
-            out.println("<error>Error validating document.</error>");
-        } catch (Exception e) {
-            
-            out.println(e.getMessage());
-        } finally {
-            // Return db connection
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-        }
+    protected void handleValidateAction(HttpServletResponse response, Hashtable<String, String[]> params) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -2144,30 +858,7 @@ public class MetacatHandler {
      * @throws IOException
      */
     protected void handleGetDocid(Hashtable<String, String[]> params, HttpServletResponse response) throws IOException {
-        response.setContentType("text/xml");
-    	ServletOutputStream out = response.getOutputStream();
-    	try {
-            // Get pid from parameters
-    		String pid = null;
-            if (params.containsKey("pid")) {
-            	pid = params.get("pid")[0];
-            }
-            String docid = IdentifierManager.getInstance().getLocalId(pid);
-            out.println(PROLOG);
-            out.print("<docid>");
-            out.print(docid);
-            out.print("</docid>");
-    		
-    	} catch (Exception e) {
-            // Handle exception
-            out.println(PROLOG);
-            out.println(ERROR);
-            out.println(e.getMessage());
-            out.println(ERRORCLOSE);
-        } finally {
-        	out.close();
-        }
-    	
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -2175,89 +866,19 @@ public class MetacatHandler {
      * revision and doctype from data base The output is String look like
      * "rev;doctype"
      */
-    protected void handleGetRevisionAndDocTypeAction(PrintWriter out,
-            Hashtable<String, String[]> params) {
-        // To store doc parameter
-        String[] docs = new String[10];
-        // Store a single doc id
-        String givenDocId = null;
-        // Get docid from parameters
-        if (params.containsKey("docid")) {
-            docs = params.get("docid");
-        }
-        // Get first docid form string array
-        givenDocId = docs[0];
-        
-        try {
-            // Make sure there is a docid
-            if (givenDocId == null || givenDocId.equals("")) { throw new Exception(
-                    "User didn't specify docid!"); }//if
-            
-            // Create a DBUtil object
-            DBUtil dbutil = new DBUtil();
-            // Get a rev and doctype
-            String revAndDocType = dbutil
-                    .getCurrentRevisionAndDocTypeForGivenDocument(givenDocId);
-            out.println(revAndDocType);
-            
-        } catch (Exception e) {
-            // Handle exception
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println(e.getMessage());
-            out.println("</error>");
-        }
-        
+    protected void handleGetRevisionAndDocTypeAction(HttpServletResponse response,
+            Hashtable<String, String[]> params) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
      * Handle "getaccesscontrol" action. Read Access Control List from db
      * connection in XML format
      */
-    protected void handleGetAccessControlAction(PrintWriter out,
-            Hashtable<String,String[]> params, HttpServletResponse response, String username,
-            String[] groupnames) {
-
-        String docid = params.get("docid")[0];
-        if (docid.startsWith("urn:")) {
-            try {
-                String actualDocId = LSIDUtil.getDocId(docid, false);
-                docid = actualDocId;
-            } catch (ParseLSIDException ple) {
-                logMetacat.error("MetacatHandler.handleGetAccessControlAction - " +
-                                 "could not parse lsid: " + 
-                                 docid + " : " + ple.getMessage());  
-                ple.printStackTrace(System.out);
-            }
-        }
-        
-        String qformat = "xml";
-        if (params.get("qformat") != null) {
-            qformat = (params.get("qformat"))[0];
-        }
-        
-        try {
-            AccessControlForSingleFile acfsf = new AccessControlForSingleFile(docid);
-            String acltext = acfsf.getACL(username, groupnames);
-            if (qformat.equals("xml")) {
-                response.setContentType("text/xml");
-                out.println(acltext);
-            } else {
-                DBTransform trans = new DBTransform();
-                response.setContentType("text/html");
-                trans.transformXMLDocument(acltext,"-//NCEAS//getaccesscontrol//EN", 
-                    "-//W3C//HTML//EN", qformat, out, params, null);              
-            }            
-        } catch (Exception e) {
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println(e.getMessage());
-            out.println("</error>");
-        } 
-//        finally {
-//            // Retrun db connection to pool
-//            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-//        }
+    protected void handleGetAccessControlAction(Hashtable<String,String[]> params, 
+            HttpServletResponse response, String username,
+            String[] groupnames) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -2265,67 +886,27 @@ public class MetacatHandler {
      * authentication scheme in XML format
      * @throws IOException 
      */
-    protected void handleGetPrincipalsAction(Writer out, String user,
+    protected void handleGetPrincipalsAction(HttpServletResponse response, String user,
             String password) throws IOException {
-        try {
-            AuthSession auth = new AuthSession();
-            String principals = auth.getPrincipals(user, password);
-            out.write(principals);
-            
-        } catch (Exception e) {
-            out.write("<?xml version=\"1.0\"?>");
-            out.write("<error>");
-            out.write(e.getMessage());
-            out.write("</error>");
-        }
+        sendNotSupportMessage(response);
     }
     
     /**
      * Handle "getdoctypes" action. Read all doctypes from db connection in XML
      * format
      */
-    protected void handleGetDoctypesAction(PrintWriter out, Hashtable<String, 
-    		String[]> params, HttpServletResponse response) {
-        try {
-            DBUtil dbutil = new DBUtil();
-            String doctypes = dbutil.readDoctypes();
-            out.println(doctypes);
-        } catch (Exception e) {
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println(e.getMessage());
-            out.println("</error>");
-        }
+    protected void handleGetDoctypesAction(Hashtable<String, 
+    		String[]> params, HttpServletResponse response) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
      * Handle the "getdtdschema" action. Read DTD or Schema file for a given
      * doctype from Metacat catalog system
      */
-    protected void handleGetDTDSchemaAction(PrintWriter out, Hashtable<String, 
-    		String[]> params, HttpServletResponse response) {
-        
-        String doctype = null;
-        String[] doctypeArr = params.get("doctype");
-        
-        // get only the first doctype specified in the list of doctypes
-        // it could be done for all doctypes in that list
-        if (doctypeArr != null) {
-            doctype = params.get("doctype")[0];
-        }
-        
-        try {
-            DBUtil dbutil = new DBUtil();
-            String dtdschema = dbutil.readDTDSchema(doctype);
-            out.println(dtdschema);
-            
-        } catch (Exception e) {
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println(e.getMessage());
-            out.println("</error>");
-        }
-        
+    protected void handleGetDTDSchemaAction(Hashtable<String, 
+    		String[]> params, HttpServletResponse response) throws IOException{
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -2334,89 +915,27 @@ public class MetacatHandler {
      * @param params request parameters
      * @param response the http servlet response
      */
-    public void handleIdIsRegisteredAction(PrintWriter out, Hashtable<String, 
-    		String[]> params, HttpServletResponse response) {
-        String id = null;
-        boolean exists = false;
-        if(params.get("docid") != null) {
-            id = params.get("docid")[0];
-        }
-        
-        try {
-            DBUtil dbutil = new DBUtil();
-            exists = dbutil.idExists(id);
-        } catch (Exception e) {
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println(e.getMessage());
-            out.println("</error>");
-        }
-        
-        out.println("<?xml version=\"1.0\"?>");
-        out.println("<isRegistered>");
-        out.println("<docid>" + StringEscapeUtils.escapeXml(id) + "</docid>");
-        out.println("<exists>" + exists + "</exists>");
-        out.println("</isRegistered>");
+    public void handleIdIsRegisteredAction(Hashtable<String, 
+    		String[]> params, HttpServletResponse response) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
      * Handle the "getalldocids" action. return a list of all docids registered
      * in the system
      */
-    public void handleGetAllDocidsAction(PrintWriter out, Hashtable<String, 
-    		String[]> params, HttpServletResponse response) {
-        String scope = null;
-        if(params.get("scope") != null) {
-            scope = params.get("scope")[0];
-        }
-        
-        try {
-            Vector<String> docids = DBUtil.getAllDocids(scope);
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<idList>");
-            out.println("  <scope>" + StringEscapeUtils.escapeXml(scope) + "</scope>");
-            for(int i=0; i<docids.size(); i++) {
-                String docid = docids.elementAt(i);
-                out.println("  <docid>" + docid + "</docid>");
-            }
-            out.println("</idList>");
-            
-        } catch (Exception e) {
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println(e.getMessage());
-            out.println("</error>");
-        }
+    public void handleGetAllDocidsAction(Hashtable<String, 
+    		String[]> params, HttpServletResponse response) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
      * Handle the "getlastdocid" action. Get the latest docid with rev number
      * from db connection in XML format
      */
-    public void handleGetMaxDocidAction(PrintWriter out, Hashtable<String, 
-    		String[]> params, HttpServletResponse response) {
-        
-        String scope = params.get("scope")[0];
-        if (scope == null) {
-            scope = params.get("username")[0];
-        }
-        
-        try {
-            
-            DBUtil dbutil = new DBUtil();
-            String lastDocid = dbutil.getMaxDocid(scope);
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<lastDocid>");
-            out.println("  <scope>" + StringEscapeUtils.escapeXml(scope) + "</scope>");
-            out.println("  <docid>" + lastDocid + "</docid>");
-            out.println("</lastDocid>");
-            
-        } catch (Exception e) {
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println(e.getMessage());
-            out.println("</error>");
-        }
+    public void handleGetMaxDocidAction(Hashtable<String, 
+    		String[]> params, HttpServletResponse response) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -2429,113 +948,8 @@ public class MetacatHandler {
      */
     protected void handleGetLogAction(Hashtable<String, String[]> params, 
     		HttpServletRequest request, HttpServletResponse response, 
-    		String username, String[] groups, String sessionId) {
-        try {
-        	// figure out the output as part of the action
-            PrintWriter out = null;
-            
-            String[] qformatParam = params.get("qformat");
-            String qformat = null;
-            if (qformatParam != null && qformatParam.length > 0) {
-            	qformat = qformatParam[0];
-            }
-            
-            // Get all of the parameters in the correct formats
-            String[] ipAddress = params.get("ipaddress");
-            String[] principal = params.get("principal");
-            String[] docid = params.get("docid");
-            String[] event = params.get("event");
-            String[] startArray = params.get("start");
-            String[] endArray = params.get("end");
-            String start = null;
-            String end = null;
-            if (startArray != null) {
-                start = startArray[0];
-            }
-            if (endArray != null) {
-                end = endArray[0];
-            }
-            Timestamp startDate = null;
-            Timestamp endDate = null;
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            try {
-                if (start != null) {
-                    startDate = new Timestamp((format.parse(start)).getTime());
-                }
-                if (end != null) {
-                    endDate = new Timestamp((format.parse(end)).getTime());
-                }
-            } catch (ParseException e) {
-                logMetacat.error("MetacatHandler.handleGetLogAction - " +
-                		         "Failed to created Timestamp from input.");
-                e.printStackTrace(System.out);
-            }
-            
-            boolean anon = false;
-            // Check that the user is authenticated as an administrator account
-            if (!AuthUtil.isAdministrator(username, groups)) {
-                anon = true;
-            	// public can view only for a specific doc id
-                if (docid == null || docid.length == 0) {
-                	response.setContentType("text/xml");
-                    out = response.getWriter();
-	                out.print("<error>");
-	                out.print("The user \"" + username +
-	                        "\" is not authorized for this action.");
-	                out.print("</error>");
-	                return;
-                }
-            }
-            
-            String report = 
-            	EventLog.getInstance().getReport(
-            		ipAddress, 
-            		principal,
-                    docid, 
-                    event, 
-                    startDate, 
-                    endDate, 
-                    anon);
-            
-            // something other than xml
-            if (qformat != null && !qformat.equals("xml")) {
-                response.setContentType("text/html");
-                out = response.getWriter();
-                
-                try {
-	                DBTransform trans = new DBTransform();
-					trans.transformXMLDocument(
-	                		report,
-	                        "-//NCEAS//log//EN", 
-	                        "-//W3C//HTML//EN", 
-	                        qformat,
-	                        out, 
-	                        params, 
-	                        sessionId);
-	            } catch (Exception e) {               
-	                logMetacat.error("MetacatHandler.handleGetLogAction - General error"
-	                        + e.getMessage());
-	                e.printStackTrace(System.out);
-	            }
-            } else {
-            	// output as xml
-            	response.setContentType("text/xml");
-                out = response.getWriter();
-                out.println(report);
-	            out.close();
-            }
-            
-        } catch (IOException e) {
-            logMetacat.error("MetacatHandler.handleGetLogAction - " +
-            		         "Could not open http response for writing: " + 
-            		         e.getMessage());
-            e.printStackTrace(System.out);
-        } catch (MetacatUtilException ue) {
-            logMetacat.error("MetacatHandler.handleGetLogAction - " +
-            		         "Could not determine if user is administrator: " + 
-            		         ue.getMessage());
-            ue.printStackTrace(System.out);
-        }
+    		String username, String[] groups, String sessionId) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -2554,70 +968,8 @@ public class MetacatHandler {
      */
     protected void handleBuildIndexAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response,
-            String username, String[] groups) {
-
-        // Get all of the parameters in the correct formats
-        String[] docid = params.get("docid");
-        
-        // Rebuild the indices for appropriate documents
-        try {
-            response.setContentType("text/xml");
-            PrintWriter out = response.getWriter();
-            if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
-                out.print("<error>");
-                out.print(DBQuery.XPATHQUERYOFFINFO);
-                out.print("</error>");
-                return;
-            }
-            
-            // Check that the user is authenticated as an administrator account
-            if (!AuthUtil.isAdministrator(username, groups)) {
-                out.print("<error>");
-                out.print("The user \"" + username +
-                        "\" is not authorized for this action.");
-                out.print("</error>");
-                return;
-            }
-            
-            // Process the documents
-            out.println("<success>");
-            if (docid == null || docid.length == 0) {
-                // Process all of the documents
-                try {
-                    Vector<String> documents = getDocumentList();
-                    Iterator<String> it = documents.iterator();
-                    while (it.hasNext()) {
-                        String id = it.next();
-                        System.out.println("building doc index for all documents");
-                        buildDocumentIndex(id, out);
-                        System.out.println("done building doc index for all documents");
-                    }
-                } catch (SQLException se) {
-                    out.print("<error>");
-                    out.print(se.getMessage());
-                    out.println("</error>");
-                }
-            } else {
-                // Only process the requested documents
-                for (int i = 0; i < docid.length; i++) {
-                    System.out.println("building doc index for document " + docid[i]);
-                    buildDocumentIndex(docid[i], out);
-                    System.out.println("done building doc index for document " + docid[i]);
-                }
-            }
-            out.println("</success>");
-            out.close();
-        } catch (IOException e) {
-            logMetacat.error("MetacatHandler.handleBuildIndexAction - " +
-            		         "Could not open http response for writing: " + 
-            		         e.getMessage());
-            e.printStackTrace(System.out);
-        } catch (MetacatUtilException ue) {
-            logMetacat.error("MetacatHandler.handleBuildIndexAction - " +
-            		         "Could not determine if user is administrator: " + 
-            		         ue.getMessage());
-            ue.printStackTrace(System.out);
-        }
+            String username, String[] groups) throws IOException {
+        sendNotSupportMessage(response);
     }
     
     /**
@@ -2930,1003 +1282,28 @@ public class MetacatHandler {
         }
         return i;
     }
-    /**
-     * Build the index for one document by reading the document and
-     * calling its buildIndex() method.
-     *
-     * @param docid the document (with revision) to rebuild
-     * @param out the PrintWriter to which output is printed
-     */
-    private void buildDocumentIndex(String docid, PrintWriter out) {
-        //if the pathquery option is off, we don't need to build index.
-        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
-            return;
-        }
-        try {
-            DocumentImpl doc = new DocumentImpl(docid, false);
-            doc.buildIndex();
-            out.print("<docid>" + StringEscapeUtils.escapeXml(docid));
-            out.println("</docid>");
-        } catch (McdbException me) {
-            out.print("<error>");
-            out.print(me.getMessage());
-            out.println("</error>");
-        }
-    }
-    
+ 
     /**
      * Handle documents passed to metacat that are encoded using the
      * "multipart/form-data" mime type. This is typically used for uploading
      * data files which may be binary and large.
      */
     protected void handleMultipartForm(HttpServletRequest request,
-            HttpServletResponse response) {
-        PrintWriter out = null;
-        String action = null;
-        File tempFile = null;
-        
-        // Get the out stream
-        try {
-            out = response.getWriter();
-        } catch (IOException ioe2) {
-            logMetacat.error("MetacatHandler.handleMultipartForm - " +
-                             "Fatal Error: couldn't get response " + 
-                             "output stream.");
-            ioe2.printStackTrace(System.out);
-            return;
-        }
-        
-        // Parse the multipart form, and save the parameters in a Hashtable and
-        // save the FileParts in a hashtable
-        
-        Hashtable<String,String[]> params = new Hashtable<String,String[]>();
-        Hashtable<String,String> fileList = new Hashtable<String,String>();
-        
-        // Get the session information
-        String username = "public";
-        String password = null;
-        String[] groupnames = null;
-        String sess_id = null;
-        
-        // be aware of session expiration on every request
-        SessionData sessionData = RequestUtil.getSessionData(request);
-        
-        if (sessionData != null) {
-            username = sessionData.getUserName();
-            password = sessionData.getPassword();
-            groupnames = sessionData.getGroupNames();
-            sess_id = sessionData.getId();
-        }
-        try {
-            if (!AuthUtil.canInsertOrUpdate(username, groupnames)) {
-                String msg = this.PROLOG +
-                             this.ERROR +
-                             "User '" + 
-                             username + 
-                             "' is not allowed to upload data" +
-                             this.ERRORCLOSE;
-                if(out != null)
-                {
-                  out.println(msg);
-                }
-                
-                logMetacat.error("MetacatHandler.handleMultipartForm - " + 
-                                 "User '" + 
-                                 username + 
-                                 "' not allowed to upload");
-                out.close();
-                return;
-            }
-        } catch (Exception e) {
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println("Error: problem to determine if the user can upload data objects: " + e.getMessage());
-            out.println("</error>");
-            out.close();
-            return;
-        }
-       
-        
-        int sizeLimit = 1000;
-        String tmpDir = "/tmp";
-        try {
-            sizeLimit = 
-                (new Integer(PropertyService.getProperty("replication.datafilesizelimit"))).intValue();
-        } catch (PropertyNotFoundException pnfe) {
-            logMetacat.error("MetacatHandler.handleMultipartForm - " +
-            		         "Could not determine data file size limit.  Using 1000. " + 
-            		         pnfe.getMessage());
-            pnfe.printStackTrace(System.out);
-        }
-        try {
-            tmpDir = PropertyService.getProperty("application.tempDir");
-        } catch (PropertyNotFoundException pnfe) {
-            logMetacat.error("MetacatHandler.handleMultipartForm - " +
-            		         "Could not determine temp dir, using default. " + 
-            		         pnfe.getMessage());
-            pnfe.printStackTrace(System.out);
-        }
-        logMetacat.debug("MetacatHandler.handleMultipartForm - " +
-        		         "The size limit of uploaded data files is: " + 
-        		         sizeLimit);
-        
-        try {
-        	boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-        	// Create a factory for disk-based file items
-        	DiskFileItemFactory factory = new DiskFileItemFactory();
-
-        	// Configure a repository (to ensure a secure temp location is used)
-        	File repository = new File(tmpDir);
-        	factory.setRepository(repository);
-
-        	// Create a new file upload handler
-        	ServletFileUpload upload = new ServletFileUpload(factory);
-
-        	// Parse the request
-        	List<FileItem> items = upload.parseRequest(request);
-        	
-        	Iterator<FileItem> iter = items.iterator();
-        	while (iter.hasNext()) {
-        		FileItem item = iter.next();
-        		String name = item.getFieldName();
-        		
-        	    if (item.isFormField()) {
-        	    	
-                    // it's a parameter part
-                    String[] values = new String[1];
-                    values[0] = item.getString();
-                    params.put(name, values);
-                    if (name.equals("action")) {
-                        action = values[0];
-                    }
-                } else {
-                    // it's a file part
-                    String fileName = item.getName();                    
-
-                    // write to disk
-                    tempFile = MetacatUtil.writeTempUploadFile(item, fileName);
-                    fileList.put(name, tempFile.getAbsolutePath());
-                    fileList.put("filename", fileName);
-                    fileList.put("name", tempFile.getAbsolutePath());
-                }
-            }
-        } catch (Exception ioe) {
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println("Error: problem reading multipart data: " + ioe.getMessage());
-            out.println("</error>");
-            out.close();
-            return;
-        }
-        
-       
-
-        if (action.equals("upload")) {
-            if (username != null && !username.equals("public")) {
-                handleUploadAction(request, out, params, fileList, username,
-                        groupnames, response);
-            } else {                
-                out.println("<?xml version=\"1.0\"?>");
-                out.println("<error>");
-                
-                out.println("Permission denied for upload action");
-                out.println("</error>");
-            }
-        } else if(action.equals("insertmultipart")) {
-          if (username != null && !username.equals("public")) {
-            logMetacat.debug("MetacatHandler.handleMultipartForm - handling multipart insert");
-              handleInsertMultipartAction(request, response,
-                            out, params, fileList, username, groupnames);
-          } else {
-              out.println("<?xml version=\"1.0\"?>");
-              out.println("<error>");
-              out.println("Permission denied for insertmultipart action");
-              out.println("</error>");
-          }
-        } else {
-            /*
-             * try { out = response.getWriter(); } catch (IOException ioe2) {
-             * System.err.println("Fatal Error: couldn't get response output
-             * stream.");
-             */
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println("Error: action not registered.  Please report this error.");
-            out.println("</error>");
-        }
-        
-        // clean up the temp file
-        if (tempFile != null && tempFile.exists()) {
-        	tempFile.delete();
-        }
-        out.close();
+            HttpServletResponse response) throws IOException {
+        sendNotSupportMessage(response);
     }
-    
-    /**
-     * Handle the upload action by saving the attached file to disk and
-     * registering it in the Metacat db
-     */
-    private void handleInsertMultipartAction(HttpServletRequest request, 
-            HttpServletResponse response,
-            PrintWriter out, Hashtable<String,String[]> params, Hashtable<String,String> fileList,
-            String username, String[] groupnames)
-    {
 
-      String action = null;
-      String docid = null;
-      String qformat = null;
-      String output = "";
-      
-      /*
-       * response.setContentType("text/xml"); try { out =
-       * response.getWriter(); } catch (IOException ioe2) {
-       * System.err.println("Fatal Error: couldn't get response output
-       * stream.");
-       */
-      if(params.containsKey("qformat")) 
-      {
-          qformat = params.get("qformat")[0];
-      }
-      
-      if (params.containsKey("docid")) 
-      {
-          docid = params.get("docid")[0];
-      }
-      
-      Identifier identifier = new Identifier();
-      identifier.setValue(docid);
-      if(!D1NodeService.isValidIdentifier(identifier)) {
-          output += this.PROLOG;
-          output += this.ERROR;
-          output += "The docid "+docid +" is not valid since it is null or contians the white space(s).";
-          output += this.ERRORCLOSE;
-          logMetacat.warn("MetacatHandler.handleInsertMultipartAction - " +
-                          "The docid "+docid +" is not valid since it is null or contians the white space(s).");
-          if (qformat == null || qformat.equals("xml")) {
-              response.setContentType("text/xml");
-              String cleanMessage = StringEscapeUtils.escapeXml(output);
-              out.println(cleanMessage);
-          } else {
-              try {
-                  DBTransform trans = new DBTransform();
-                  response.setContentType("text/html");
-                  trans.transformXMLDocument(output,
-                          "message", "-//W3C//HTML//EN", qformat,
-                          out, null, null);
-              } catch (Exception e) {
-
-                  logMetacat.error("MetacatHandler.handleInsertMultipartAction - General error: "
-                          + e.getMessage());
-                  e.printStackTrace(System.out);
-              }
-          }
-          return;
-      }
-      
-      
-      
-      // Make sure we have a docid and datafile
-      if (docid != null && fileList.containsKey("datafile")) 
-      {
-        logMetacat.info("MetacatHandler.handleInsertMultipartAction - " +
-        		        "Uploading data docid: " + docid);
-        // Get a reference to the file part of the form
-        //FilePart filePart = (FilePart) fileList.get("datafile");
-        String fileName = fileList.get("filename");
-        logMetacat.debug("MetacatHandler.handleInsertMultipartAction - " +
-        		         "Uploading filename: " + fileName);
-        // Check if the right file existed in the uploaded data
-        if (fileName != null) 
-        {
-              
-          try 
-          {
-              //logMetacat.info("Upload datafile " + docid
-              // +"...", 10);
-              //If document get lock data file grant
-            if (DocumentImpl.getDataFileLockGrant(docid)) 
-            {
-              // Save the data file to disk using "docid" as the name
-              String datafilepath = PropertyService.getProperty("application.datafilepath");
-              File dataDirectory = new File(datafilepath);
-              dataDirectory.mkdirs();
-              File newFile = null;
-    //          File tempFile = null;
-              String tempFileName = fileList.get("name");
-              String newFileName = dataDirectory + File.separator + docid;
-              long size = 0;
-              boolean fileExists = false;
-                      
-              try 
-              {
-                newFile = new File(newFileName);
-                fileExists = newFile.exists();
-                logMetacat.info("MetacatHandler.handleInsertMultipartAction - " +
-                		        "new file status is: " + fileExists);
-                if(fileExists)
-                {
-                  newFile.delete();
-                  newFile.createNewFile();
-                  fileExists = false;
-                }
-                
-                if ( fileExists == false ) 
-                {
-                    // copy file to desired output location
-                    try 
-                    {
-                        MetacatUtil.copyFile(tempFileName, newFileName);
-                    } 
-                    catch (IOException ioe) 
-                    {
-                        logMetacat.error("MetacatHandler.handleInsertMultipartAction - " +
-                        		         "IO Exception copying file: " +
-                                         ioe.getMessage());
-                        ioe.printStackTrace(System.out);
-                    }
-                    size = newFile.length();
-                    if (size == 0) 
-                    {
-                        throw new IOException("MetacatHandler.handleInsertMultipartAction - " +
-                        		              "Uploaded file is 0 bytes!");
-                    }
-                }
-                logMetacat.info("MetacatHandler.handleInsertMultipartAction - " +
-                		        "Uploading the following to Metacat:" +
-                                fileName + ", " + docid + ", " +
-                                username + ", " + groupnames);
-                
-                // Read the file with appropriate encoding
-                XmlStreamReader xsr = new XmlStreamReader(new FileInputStream(newFile));
-                String encoding = xsr.getEncoding();
-                Reader fr = new InputStreamReader(new FileInputStream(newFile), encoding);
-                
-                char[] c = new char[1024];
-                int numread = fr.read(c, 0, 1024);
-                StringBuffer sb = new StringBuffer();
-                while(numread != -1)
-                {
-                  sb.append(c, 0, numread);
-                  numread = fr.read(c, 0, 1024);
-                }
-                
-                Enumeration<String> keys = params.keys();
-                while(keys.hasMoreElements())
-                { //convert the params to arrays
-                  String key = keys.nextElement();
-                  String[] paramValue = params.get(key);
-                  String[] s = new String[1];
-                  s[0] = paramValue[0];
-                  params.put(key, s);
-                }
-                //add the doctext to the params
-                String doctext = sb.toString();
-                String[] doctextArr = new String[1];
-                doctextArr[0] = doctext;
-                params.put("doctext", doctextArr);
-                boolean writeAccessRules = true;
-                //call the insert routine
-                String formatId = null;
-                Checksum checksum = null;//for Metacat API, we don't calculate the checksum
-                File file = null;
-                handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, 
-                          params, username, groupnames, true, writeAccessRules, null, formatId, checksum, file);
-              }
-              catch(Exception e)
-              {
-                throw e;
-              }
-            }
-          }
-          catch(Exception e)
-          {
-              logMetacat.error("MetacatHandler.handleInsertMultipartAction - " +
-            		           "error uploading text file via multipart: " + 
-            		           e.getMessage());
-              e.printStackTrace(System.out);;
-          }
-        }
-      }
-    }
-    
-    /**
-     * Handle the upload action by saving the attached file to disk and
-     * registering it in the Metacat db
-     */
-    private void handleUploadAction(HttpServletRequest request,
-            PrintWriter out, Hashtable<String, String[]> params, 
-            Hashtable<String,String> fileList, String username, String[] groupnames, 
-            HttpServletResponse response) {
-        
-        String docid = null;
-        String qformat = null;
-        String output = "";
-
-        /*
-         * response.setContentType("text/xml"); try { out =
-         * response.getWriter(); } catch (IOException ioe2) {
-         * System.err.println("Fatal Error: couldn't get response output
-         * stream.");
-         */
-
-        if (params.containsKey("docid")) {
-            docid = params.get("docid")[0];
-        }
-        
-        Identifier identifier = new Identifier();
-        identifier.setValue(docid);
-        if(!D1NodeService.isValidIdentifier(identifier)) {
-            output += this.PROLOG;
-            output += this.ERROR;
-            output += "The docid "+docid +" is not valid since it is null or contians the white space(s).";
-            output += this.ERRORCLOSE;
-            logMetacat.warn("MetacatHandler.handleUploadAction - " +
-                            "The docid "+docid +" is not valid since it is null or contians the white space(s).");
-        } else {
-         // Make sure we have a docid and datafile
-            if (docid != null && fileList.containsKey("datafile")) {
-                logMetacat.info("MetacatHandler.handleUploadAction - " +
-                                "Uploading data docid: " + docid);
-                // Get a reference to the file part of the form
-                //FilePart filePart = (FilePart) fileList.get("datafile");
-                String fileName = fileList.get("filename");
-                logMetacat.info("MetacatHandler.handleUploadAction - " +
-                                "Uploading filename: " + fileName);
-                // Check if the right file existed in the uploaded data
-                if (fileName != null) {
-
-                    try {
-                        //logMetacat.info("Upload datafile " + docid
-                        // +"...", 10);
-                        //If document get lock data file grant
-                        if (DocumentImpl.getDataFileLockGrant(docid)) {
-                            // Save the data file to disk using "docid" as the name
-                            String datafilepath = PropertyService.getProperty("application.datafilepath");
-                            File dataDirectory = new File(datafilepath);
-                            dataDirectory.mkdirs();
-                            File newFile = null;
-                            //                    File tempFile = null;
-                            String tempFileName = fileList.get("name");
-                            String newFileName = dataDirectory + File.separator + docid;
-                            long size = 0;
-                            boolean fileExists = false;
-
-                            try {
-                                newFile = new File(newFileName);
-                                fileExists = newFile.exists();
-                                logMetacat.info("MetacatHandler.handleUploadAction - " +
-                                                "new file status is: " + fileExists);
-                                if ( fileExists == false ) {
-                                    // copy file to desired output location
-                                    try {
-                                        MetacatUtil.copyFile(tempFileName, newFileName);
-                                    } catch (IOException ioe) {
-                                        logMetacat.error("IO Exception copying file: " +
-                                                ioe.getMessage());
-                                        ioe.printStackTrace(System.out);
-                                    }
-                                    size = newFile.length();
-                                    if (size == 0) {
-                                        throw new IOException("Uploaded file is 0 bytes!");
-                                    }
-                                } // Latent bug here if the file already exists, then the
-                                  // conditional fails but the document is still registered.
-                                  // maybe this never happens because we already requested a lock?
-                                logMetacat.info("MetacatHandler.handleUploadAction - " +
-                                                "Uploading the following to Metacat:" +
-                                                fileName + ", " + docid + ", " +
-                                                username + ", " + groupnames);
-                                //register the file in the database (which generates
-                                // an exception
-                                //if the docid is not acceptable or other untoward
-                                // things happen
-                                DocumentImpl.registerDocument(fileName, "BIN", docid,
-                                        username, groupnames);
-                                
-                                // generate system metadata about the doc
-                                SystemMetadata sm = SystemMetadataFactory.createSystemMetadata(docid, false, false);
-                                
-                                // manage it in the store
-                                SystemMetadataManager.getInstance().store(sm);
-                                // submit for indexing
-                                MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, true);
-                                
-                            } catch (Exception ee) {
-                                // If the file did not exist before this method was 
-                                // called and an exception is generated while 
-                                // creating or registering it, then we want to delete
-                                // the file from disk because the operation failed.
-                                // However, if the file already existed before the 
-                                // method was called, then the exception probably
-                                // occurs when registering the document, and so we
-                                // want to leave the old file in place.
-                                if ( fileExists == false ) {
-                                    newFile.delete();
-                                }
-                                
-                                logMetacat.info("MetacatHandler.handleUploadAction - " +
-                                                "in Exception: fileExists is " + fileExists);
-                                logMetacat.error("MetacatHandler.handleUploadAction - " +
-                                                 "Upload Error: " + ee.getMessage());
-                                throw ee;
-                            }
-
-                            EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"),
-                                    username, docid, "upload");
-                            // Force replication this data file
-                            // To data file, "insert" and update is same
-                            // The fourth parameter is null. Because it is
-                            // notification server
-                            // and this method is in MetaCatServerlet. It is
-                            // original command,
-                            // not get force replication info from another metacat
-                            ForceReplicationHandler frh = new ForceReplicationHandler(
-                                    docid, "insert", false, null);
-                            logMetacat.debug("MetacatHandler.handleUploadAction - " +
-                                             "ForceReplicationHandler created: " + 
-                                             frh.toString());
-
-                            // set content type and other response header fields
-                            // first
-                            output += "<?xml version=\"1.0\"?>";
-                            output += "<success>";
-                            output += "<docid>" + docid + "</docid>";
-                            output += "<size>" + size + "</size>";
-                            output += "</success>";
-                        }
-
-                    } catch (Exception e) {
-
-                        output += "<?xml version=\"1.0\"?>";
-                        output += "<error>";
-                        output += e.getMessage();
-                        output += "</error>";
-                    }
-                } else {
-                    // the field did not contain a file
-                    output += "<?xml version=\"1.0\"?>";
-                    output += "<error>";
-                    output += "The uploaded data did not contain a valid file.";
-                    output += "</error>";
-                }
-            } else {
-                // Error bcse docid missing or file missing
-                output += "<?xml version=\"1.0\"?>";
-                output += "<error>";
-                output += "The uploaded data did not contain a valid docid "
-                    + "or valid file.";
-                output += "</error>";
-            }
-        }
-
-
-        if(params.containsKey("qformat")) {
-            qformat = params.get("qformat")[0];
-        }
-        
-        if (qformat == null || qformat.equals("xml")) {
-            response.setContentType("text/xml");
-            out.println(output);
-        } else {
-            try {
-                DBTransform trans = new DBTransform();
-                response.setContentType("text/html");
-                trans.transformXMLDocument(output,
-                        "message", "-//W3C//HTML//EN", qformat,
-                        out, null, null);
-            } catch (Exception e) {
-
-                logMetacat.error("MetacatHandler.handleUploadAction - General error: "
-                        + e.getMessage());
-                e.printStackTrace(System.out);
-            }
-        }
-    }
     
     /*
      * A method to handle set access action
      */
-    protected void handleSetAccessAction(PrintWriter out, Hashtable<String, String[]> params,
-            String username, HttpServletRequest request, HttpServletResponse response) {
-        
-        String permission = null;
-        String permType = null;
-        String permOrder = null;
-        Vector<String> errorList = new Vector<String>();
-        String error = null;
-        Vector<String> successList = new Vector<String>();
-        String success = null;
-        boolean isEmlPkgMember = false;
-        
-		SystemMetadata mnSysMeta = null;
-		Session session = null;
-		Identifier pid = new Identifier();
-        String guid = null;
-		AccessPolicy mnAccessPolicy = null;
-		SystemMetadata cnSysMeta = null;
-        
-        String[] docList = params.get("docid");
-        String[] principalList = params.get("principal");
-        String[] permissionList = params.get("permission");
-        String[] permTypeList = params.get("permType");
-        String[] permOrderList = params.get("permOrder");
-        String[] qformatList = params.get("qformat");
-        String[] accessBlock = params.get("accessBlock");
-        if(accessBlock != null) {
-            if (docList == null) {
-                errorList.addElement("MetacatHandler.handleSetAccessAction - " +
-                		             "Doc id missing.  Please check your " +
-                		             "parameter list, it should look like: " + 
-                		             "?action=setaccess&docid=<doc_id>&accessBlock=<access_section>");
-                outputResponse(successList, errorList, out);
-                return;
-            } else {
-                // look-up pid assuming docid
-                guid = docList[0];
-                try {
-   	             String docid = DocumentUtil.getDocIdFromAccessionNumber(docList[0]);
-   	             int rev = DocumentUtil.getRevisionFromAccessionNumber(docList[0]);
-   	             guid = IdentifierManager.getInstance().getGUID(docid, rev);
-               	 logMetacat.debug("Setting access on found pid: " + guid);
-                } catch (McdbDocNotFoundException e) {
-               	 // log the warning
-               	 logMetacat.warn("No pid found for [assumed] docid: " + docList[0]);
-                } catch (Exception e) {
-                	logMetacat.warn("Error looking up pid for [assumed] dociid: " + docList[0]);
-                }
-            }
-            try {
-            	
-              	logMetacat.debug("Setting access for docid: " + docList[0]);
-                AccessControlForSingleFile accessControl = 
-                    new AccessControlForSingleFile(docList[0]);
-                accessControl.insertPermissions(accessBlock[0]);
-                successList.addElement("MetacatHandler.handleSetAccessAction - " +
-                		               "successfully replaced access block for doc id: " + 
-                		               docList[0]);
-         
-                // Update the CN with the modified access policy
-                logMetacat.debug("Setting CN access policy for pid: " + guid);
-
-    			try {
-    				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(guid));
-    				SyncAccessPolicy syncAP = new SyncAccessPolicy();
-
-    				logMetacat.debug("Trying to syncing access policy for pid: "
-    						+ guid);
-    				syncAP.sync(guids);
-    			} catch (Exception e) {
-    				logMetacat.error("Error syncing pid: " + guid
-    						+ " Exception " + e.getMessage());
-                    e.printStackTrace(System.out);
-    			}
-            } catch(AccessControlException ace) {
-                errorList.addElement("MetacatHandler.handleSetAccessAction - " +
-                		             "access control error when setting " + 
-                                     "access block: " + ace.getMessage());
-            }
-            outputResponse(successList, errorList, out);
-            return;
-        }
-        
-        // Make sure the parameter is not null
-        if (docList == null || principalList == null || permTypeList == null
-                || permissionList == null) {
-            error = "MetacatHandler.handleSetAccessAction - Please check " +
-                    "your parameter list, it should look like: "
-                    + "?action=setaccess&docid=pipeline.1.1&principal=public"
-                    + "&permission=read&permType=allow&permOrder=allowFirst";
-            errorList.addElement(error);
-            outputResponse(successList, errorList, out);
-            return;
-        }
-        
-        // Only select first element for permission, type and order
-        permission = permissionList[0];
-        permType = permTypeList[0];
-        System.out.println("permission in MetacatHandler.handleSetAccessAction: " + permission);
-        
-        if (permOrderList != null) {
-            permOrder = permOrderList[0];
-        }
-        
-        // Get package doctype set
-        Vector<String> packageSet = null;
-        try {
-            packageSet = 
-                MetacatUtil.getOptionList(PropertyService.getProperty("xml.packagedoctypeset"));
-        } catch (PropertyNotFoundException pnfe) {
-            logMetacat.error("MetacatHandler.handleSetAccessAction - " +
-            		         "Could not find package doctype set.  Setting to null: " 
-                    + pnfe.getMessage());
-        }
-        //debug
-        if (packageSet != null) {
-            for (int i = 0; i < packageSet.size(); i++) {
-                logMetacat.debug("MetacatHandler.handleSetAccessAction - " +
-                		         "doctype in package set: " + 
-                		         packageSet.elementAt(i));
-            }
-        }
-        
-        // handle every accessionNumber
-        for (int i = 0; i < docList.length; i++) {
-            String docid = docList[i];
-
-            if (docid.startsWith("urn:")) {
-                try {
-                    String actualDocId = LSIDUtil.getDocId(docid, false);
-                    docid = actualDocId;
-                } catch (ParseLSIDException ple) {
-                    logMetacat.error("MetacatHandler.handleSetAccessAction - " +
-                            "could not parse lsid: " + docid + " : " + ple.getMessage()); 
-                    ple.printStackTrace(System.out);
-                }
-            }
-            String accessionNumber = docid;
-            String owner = null;
-            String publicId = null;
-            // Get document owner and public id
-            try {
-                owner = getFieldValueForDoc(accessionNumber, "user_owner");
-                publicId = getFieldValueForDoc(accessionNumber, "doctype");
-            } catch (Exception e) {
-                logMetacat.error("MetacatHandler.handleSetAccessAction - " +
-                		         "Error in handleSetAccessAction: " + 
-                		         e.getMessage());
-                e.printStackTrace(System.out);
-                error = "Error in set access control for document - " + 
-                        accessionNumber + e.getMessage();
-                errorList.addElement(error);
-                continue;
-            }
-            //check if user is the owner. Only owner can do owner
-            if (username == null || owner == null || !username.equals(owner)) {
-                error = "User - " + username + " does not have permission to set "
-                        + "access control for docid - " + accessionNumber;
-                errorList.addElement(error);
-                System.out.println("user " + username + " does not have permission to set " + 
-                        "access control for docid " + accessionNumber);
-                continue;
-            }
-            
-            //*** Find out if the document is a Member of an EML package.
-            //*** (for efficiency, only check if it isn't already true
-            //*** for the case of multiple files).
-            if (isEmlPkgMember == false)
-                isEmlPkgMember = (DBUtil.findDataSetDocIdForGivenDocument(accessionNumber) != null);
-            
-            // If docid publicid is BIN data file or other beta4, 6 package document
-            // we could not do set access control. Because we don't want inconsistent
-            // to its access docuemnt
-            if (publicId != null && packageSet != null
-                    && packageSet.contains(publicId) && isEmlPkgMember) {
-                error = "Could not set access control to document " + accessionNumber
-                        + "because it is in a pakcage and it has a access file for it";
-                errorList.addElement(error);
-                System.out.println("this is a beta4 or 6 document so we can't set the access element.");
-                continue;
-            }
-            // for every principle
-            for (int j = 0; j < principalList.length; j++) {
-                String principal = principalList[j];
-                try {
-                    //insert permission
-                    AccessControlForSingleFile accessControl = 
-                        new AccessControlForSingleFile(accessionNumber);
-                    //System.out.println("permission in MetacatHandler: " + 
-                    //                   l.longValue());
-                    //System.out.println("permission in MetacatHandler: " + 
-                    //                   Integer.valueOf(AccessControlList.intValue(permission)).longValue());
-                    accessControl.insertPermissions(principal, 
-                      Integer.valueOf(AccessControlList.intValue(permission)).longValue(), 
-                      permType, permOrder, null, null);
-                    
-                    // refresh using guid
-                    guid = accessionNumber;
-                    try {
-          	             String tempDocid = DocumentUtil.getDocIdFromAccessionNumber(accessionNumber);
-          	             int rev = DocumentUtil.getRevisionFromAccessionNumber(accessionNumber);
-          	             guid = IdentifierManager.getInstance().getGUID(tempDocid, rev);
-                      	 logMetacat.debug("Found pid: " + guid);
-                    } catch (Exception e) {
-                       	logMetacat.warn("Error looking up pid for [assumed] docid: " + accessionNumber);
-                    }
-                    
-                    logMetacat.debug("Synching CN access policy for pid: " + guid);
-
-        			try {
-        				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(guid));
-        				SyncAccessPolicy syncAP = new SyncAccessPolicy();
-        				logMetacat.debug("Trying to syncing access policy for pid: " + guid);
-        				syncAP.sync(guids);
-        			} catch (Exception e) {
-        				logMetacat.error("Error syncing pids: " + guid
-        						+ " Exception " + e.getMessage(), e);
-        			}
-                } catch (Exception ee) {
-                    logMetacat.error("MetacatHandler.handleSetAccessAction - " +
-                    		         "Error inserting permission: " + 
-                    		         ee.getMessage(), ee);
-                    error = "Failed to set access control for document "
-                            + accessionNumber + " because " + ee.getMessage();
-                    errorList.addElement(error);
-                    continue;
-                }
-            }
-            
-
-            //force replication when this action is called
-            boolean isXml = true;
-            if (publicId.equalsIgnoreCase("BIN")) {
-                isXml = false;
-            }
-            ForceReplicationHandler frh = 
-                new ForceReplicationHandler(accessionNumber, isXml, null);
-            logMetacat.debug("MetacatHandler.handleSetAccessAction - " +
-            		         "ForceReplicationHandler created: " + frh.toString());
-            
-        }
-        if (errorList.isEmpty()) {
-        	successList.addElement("MetacatHandler.handleSetAccessAction - " +
-        			               "successfully added individual access for doc id: " + 
-        			               docList[0]);
-        }
-        if (params.get("forwardto")  != null) {
-            try {
-                RequestUtil.forwardRequest(request, response, params);
-            } catch (MetacatUtilException mue) {
-                logMetacat.error("metaCatServlet.handleSetAccessAction - could not forward " +
-                        "request. Sending output to response writer");
-                mue.printStackTrace(System.out);
-                outputResponse(successList, errorList, out);
-            }               
-        } else {
-            outputResponse(successList, errorList, out);
-        }
+    protected void handleSetAccessAction(Hashtable<String, String[]> params,
+            String username, HttpServletRequest request, HttpServletResponse response)
+                    throws IOException {
+        sendNotSupportMessage(response);
     }
     
-    /*
-     * A method try to determin a docid's public id, if couldn't find null will
-     * be returned.
-     */
-    private String getFieldValueForDoc(String accessionNumber, String fieldName)
-    throws Exception {
-        if (accessionNumber == null || accessionNumber.equals("")
-        || fieldName == null || fieldName.equals("")) { throw new Exception(
-                "Docid or field name was not specified"); }
-        
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        String fieldValue = null;
-        String docId = null;
-        DBConnection conn = null;
-        int serialNumber = -1;
-        
-        // get rid of revision if access number has
-        docId = DocumentUtil.getDocIdFromString(accessionNumber);
-        try {
-            //check out DBConnection
-            conn = DBConnectionPool
-                    .getDBConnection("MetacatHandler.getPublicIdForDoc");
-            serialNumber = conn.getCheckOutSerialNumber();
-            pstmt = conn.prepareStatement("SELECT " + fieldName
-                    + " FROM xml_documents " + "WHERE docid = ? ");
-            
-            pstmt.setString(1, docId);
-            pstmt.execute();
-            rs = pstmt.getResultSet();
-            boolean hasRow = rs.next();
-        //    int perm = 0;
-            if (hasRow) {
-                fieldValue = rs.getString(1);
-            } else {
-                throw new Exception("Could not find document: "
-                        + accessionNumber);
-            }
-        } catch (Exception e) {
-            logMetacat.error("MetacatHandler.getFieldValueForDoc - General error: "
-                    + e.getMessage());
-            throw e;
-        } finally {
-            try {
-                rs.close();
-                pstmt.close();
-                
-            } finally {
-                DBConnectionPool.returnDBConnection(conn, serialNumber);
-            }
-        }
-        return fieldValue;
-    }
-    
-    /*
-     * Get the list of documents from the database and return the list in an
-     * Vector of identifiers.
-     *
-     * @ returns the array of identifiers
-     */
-    private Vector<String> getDocumentList() throws SQLException {
-        Vector<String> docList = new Vector<String>();
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        DBConnection conn = null;
-        int serialNumber = -1;
-        
-        try {
-            //check out DBConnection
-            conn = DBConnectionPool
-                    .getDBConnection("MetacatHandler.getDocumentList");
-            serialNumber = conn.getCheckOutSerialNumber();
-            pstmt = conn.prepareStatement("SELECT docid, rev"
-                    + " FROM xml_documents ");
-            pstmt.execute();
-            rs = pstmt.getResultSet();
-            while (rs.next()) {
-                String docid = rs.getString(1);
-                String rev = rs.getString(2);
-                docList.add(docid + "." + rev);
-            }
-        } catch (SQLException e) {
-            logMetacat.error("MetacatHandler.getDocumentList - General exception: "
-                    + e.getMessage());
-            throw e;
-        } finally {
-            try {
-                rs.close();
-                pstmt.close();
-                
-            } catch (SQLException se) {
-                logMetacat.error("MetacatHandler.getDocumentList - General exception: "
-                        + se.getMessage());
-                throw se;
-            } finally {
-                DBConnectionPool.returnDBConnection(conn, serialNumber);
-            }
-        }
-        return docList;
-    }
-    
-    /*
-     * A method to output setAccess action result
-     */
-    private void outputResponse(Vector<String> successList, Vector<String> errorList,
-            Writer out) {
-    	try {
-	        boolean error = false;
-	        boolean success = false;
-	        // Output prolog
-	        out.write(PROLOG);
-	        // output success message
-	        if (successList != null) {
-	            for (int i = 0; i < successList.size(); i++) {
-	                out.write(SUCCESS);
-	                out.write(successList.elementAt(i));
-	                out.write(SUCCESSCLOSE);
-	                success = true;
-	            }
-	        }
-	        // output error message
-	        if (errorList != null) {
-	            for (int i = 0; i < errorList.size(); i++) {
-	                out.write(ERROR);
-	                out.write(errorList.elementAt(i));
-	                out.write(ERRORCLOSE);
-	                error = true;
-	            }
-	        }
-	        
-	        // if no error and no success info, send a error that nothing happened
-	        if (!error && !success) {
-	            out.write(ERROR);
-	            out.write("Nothing happend for setaccess action");
-	            out.write(ERRORCLOSE);
-	        }
-    	} catch (Exception e) {
-			logMetacat.error(e.getMessage(), e);
-		} 
-    }
-    
+
     /**
      * Schedule the sitemap generator to run periodically and update all
      * of the sitemap files for search indexing engines
