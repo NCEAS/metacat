@@ -61,7 +61,8 @@ public class IndexEvent implements Serializable {
 
     /**
      * Set the action of the event
-     * @param action
+     * @param action  the action should be the String constants defined in
+     * this class, such as CREATE
      */
     public void setAction(String action) {
         this.action = action;
