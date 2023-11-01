@@ -6,6 +6,9 @@
 ## see values.yaml for full documentation on the following parameters
 ##
 
+global:
+  storageClass: &storageClassName csi-rbd-sc
+
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
   solr.baseURL: "http://metacatbrooke-solr-headless:8983/solr"
@@ -17,17 +20,20 @@ idxworker:
   image:
     pullPolicy: Always
     tag: DEVELOP
+    debug: true
   persistence:
     ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
     ## TODO: AUTO ASSIGN?
     claimName: metacatbrooke-metacat-metacatbrooke-0
   idxworker:
+    ## TODO: AUTO ASSIGN?
     ## the url of the metacat instance that indexer is working with. (Not necessarily a d1 MN)
-    mn_url: "http://metacat-dev.test.dataone.org/metacat/d1/mn"
+    mn_url: "https://metacat-dev.test.dataone.org/metacat/d1/mn"
 
   rabbitmq:
     ## TODO: AUTO ASSIGN?
     hostname: metacatbrooke-rabbitmq-headless
+    ## TODO: AUTO ASSIGN?
     existingPasswordSecret: metacatbrooke-metacat-secrets
 
   solr:
@@ -54,7 +60,7 @@ postgresql:
   primary:
     persistence:
       size: 1Gi
-      storageClass: csi-rbd-sc
+      storageClass: *storageClassName
 
 image:
   debug: true
