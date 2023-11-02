@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Timer;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -21,6 +22,8 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.junit.Before;
+import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -33,43 +36,39 @@ import edu.ucsb.nceas.metacat.dataone.MNodeQueryTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.index.IndexEventDAO;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 /**
  * The test class for the class of FailedIndexResubmitTimerTaskTest
  * @author tao
  *
  */
-public class FailedIndexResubmitTimerTaskTest extends D1NodeServiceTest {
+public class FailedIndexResubmitTimerTaskTestIT {
     private Session session = null;
     private Identifier guid = null;
     private String query = null;
     private String resultStr = null;
+    private D1NodeServiceTest d1NodeTest = null;
+    HttpServletRequest request = null;
     
     /**
-     * Get the test suite
-     * @return the test suite
+     * Insert an object and make sure indexing succeed.
      */
-    public static Test suite() {
-        TestSuite suite = new TestSuite();
-        suite.addTest(new FailedIndexResubmitTimerTaskTest("testCreateFailure"));
-        suite.addTest(new FailedIndexResubmitTimerTaskTest("testDeleteFailure"));
-        return suite;
-    }
-    
-    /**
-     * Overwrite the setUp method - insert an object and make sure indexing succeed.
-     */
+    @Before
     public void setUp() throws Exception {
+        d1NodeTest = new D1NodeServiceTest("initialize");
+        request = d1NodeTest.getServletRequest();
         //insert metadata
-        session = getTestSession();
+        session = d1NodeTest.getTestSession();
         guid = new Identifier();
         //guid.setValue("testCreateFailure.1698383743829");
         guid.setValue("testCreateFailure." + System.currentTimeMillis());
         InputStream object = 
                         new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
-        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        SystemMetadata sysmeta = d1NodeTest
+                                        .createSystemMetadata(guid, session.getSubject(), object);
         object.close();
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
@@ -90,18 +89,12 @@ public class FailedIndexResubmitTimerTaskTest extends D1NodeServiceTest {
         }
     }
     
-    /**
-     * Constructor
-     * @param name  the name of the test
-     */
-    public FailedIndexResubmitTimerTaskTest(String name) {
-        super(name);
-    }
     
     /**
      * Test the scenario that a create index task can't be put into the index queue
      * @throws Exception
      */
+    @Test
     public void testCreateFailure() throws Exception  {
         String originVersion = getSolrDocVersion(resultStr);
         //add the identifier to the index event as a create_failure index task
@@ -149,6 +142,7 @@ public class FailedIndexResubmitTimerTaskTest extends D1NodeServiceTest {
      * Test the scenario that a delete index task can't be put into the index queue
      * @throws Exception
      */
+    @Test
     public void testDeleteFailure() throws Exception  {
         //add the identifier to the index event as a create_failure index task
         IndexEvent event = new IndexEvent();
