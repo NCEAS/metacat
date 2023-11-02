@@ -45,8 +45,6 @@ idxworker:
           #  NOTE: uses deployment name  TODO: AUTO ASSIGN?
           name: metacatbrooke-configfiles
           defaultMode: 0777
-    auth:
-      enabled: false
 
 persistence:
   storageClass: "-"

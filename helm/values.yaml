@@ -683,11 +683,7 @@ idxworker:
   image:
     repository: ghcr.io/dataoneorg/dataone-index-worker
   idxworker: {}
-  solr:
-    auth:
-      adminUsername: *solrAdminUsername
-      ## (must contain a value for `SOLR_ADMIN_PASSWORD` key)
-      existingSecret: *passwordSecretName
+  solr: {}
   rabbitmq:
     auth:
       username: *rmqUsername
