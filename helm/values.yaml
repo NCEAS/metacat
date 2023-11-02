@@ -683,16 +683,7 @@ idxworker:
   image:
     repository: ghcr.io/dataoneorg/dataone-index-worker
   idxworker: {}
-  solr:
-    auth:
-      ## Nov 2023: Agreed with Matt we don't need solr auth for now, since solr isn't exposed
-      ## outside the cluster. Can add later if needed by anyone not using the subchart, and
-      ## instead connecting to a solr instance outside the cluster
-      ##
-      enabled: false
-      # adminUsername: *solrAdminUsername
-      ## (must contain a value for `SOLR_ADMIN_PASSWORD` key)
-      # existingSecret: *passwordSecretName
+  solr: {}
   rabbitmq:
     auth:
       username: *rmqUsername
