@@ -1,29 +1,3 @@
-/**
- *  '$RCSfile$'
- *    Purpose: A Class that implements a metadata catalog as a java Servlet
- *  Copyright: 2006 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Matt Jones, Dan Higgins, Jivka Bojilova, Chad Berkley, Matthew Perry
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat;
 
 
@@ -77,174 +51,7 @@ import edu.ucsb.nceas.utilities.UtilException;
 
 /**
  * A metadata catalog server implemented as a Java Servlet
- *
- * Valid actions are:
- * 
- * action=login
- *     username
- *     password
- *     qformat
- * action=logout
- *     qformat
- * action=query -- query the values of all elements and attributes and return a result set of nodes
- *     meta_file_id --
- *     returndoctype --
- *     filterdoctype --
- *     returnfield --
- *     owner --
- *     site --
- *     operator --
- *     casesensitive --
- *     searchmode --
- *     anyfield --
- * action=spatial_query -- run a spatial query.  these queries may include any of the
- *                         queries supported by the WFS / WMS standards
- *     xmax --
- *     ymax --
- *     xmin --
- *     ymin --
- *     skin --
- *     pagesize --
- *     pagestart --
- * action=squery -- structured query (see pathquery.dtd)
- *     query --
- *     pagesize --
- *     pagestart --
- * action=export -- export a zip format for data packadge
- *     docid --
- * action=read -- read any metadata/data file from Metacat and from Internet
- *     archiveEntryName --
- *     docid --
- *     qformat --
- *     metadatadocid --
- * action=readinlinedata -- read inline data only
- *     inlinedataid
- * action=insert -- insert an XML document into the database store
- *     qformat -- 
- *     docid --
- *     doctext --
- *     dtdtext --
- * action=insertmultipart -- insert an xml document into the database using multipart encoding
- *     qformat --
- *     docid --
- * action=update -- update an XML document that is in the database store
- *     qformat --
- *     docid --
- *     doctext --
- *     dtdtext --
- * action=delete -- delete an XML document from the database store
- *     docid --
- * action=validate -- validate the xml contained in valtext
- *     valtext --
- *     docid --
- * action=setaccess -- change access permissions for a user on a document.
- *     docid --
- *     principal --
- *     permission --
- *     permType --
- *     permOrder --
- * action=getaccesscontrol -- retrieve acl info for Metacat document
- *     docid -- 
- * action=getprincipals -- retrieve a list of principals in XML
- * action=getalldocids -- retrieves a list of all docids registered with the system
- *     scope --
- * action=getlastdocid --
- *     scope --
- *     username --
- * action=isregistered -- checks to see if the provided docid is registered
- *     docid --
- * action=getrevisionanddoctype -- get a document's revision and doctype from database
- *     docid --
- * action=getversion -- 
- * action=getdoctypes -- retrieve all doctypes (publicID)
- * action=getdtdschema -- retrieve a DTD or Schema file
- *     doctype --
- * action=getlog -- get a report of events that have occurred in the system
- *     ipAddress --  filter on one or more IP addresses>
- *     principal -- filter on one or more principals (LDAP DN syntax)
- *     docid -- filter on one or more document identifiers (with revision)
- *     event -- filter on event type (e.g., read, insert, update, delete)
- *     start -- filter out events before the start date-time
- *     end -- filter out events before the end date-time
- * action=getloggedinuserinfo -- get user info for the currently logged in user
- *     ipAddress --  filter on one or more IP addresses>
- *     principal -- filter on one or more principals (LDAP DN syntax)
- *     docid -- filter on one or more document identifiers (with revision)
- *     event -- filter on event type (e.g., read, insert, update, delete)
- *     start -- filter out events before the start date-time
- *     end -- filter out events before the end date-time
- * action=shrink -- Shrink the database connection pool size if it has grown and
- *                  extra connections are no longer being used.
- * action=buildindex --
- *     docid --
- * action=refreshServices --
- * action=scheduleWorkflow -- Schedule a workflow to be run.  Scheduling a workflow
- *                            registers it with the scheduling engine and creates a row
- *                            in the scheduled_job table.  Note that this may be
- *                            extracted into a separate servlet.
- *     delay -- The amount of time from now before the workflow should be run.  The
- *              delay can be expressed in number of seconds, minutes, hours and days,
- *              for instance 30s, 2h, etc.
- *     starttime -- The time that the workflow should first run.  If both are provided
- *                  this takes precedence over delay.  The time should be expressed as:
- *                  MM/dd/yyyy HH:mm:ss with the timezone assumed to be that of the OS.
- *     endtime -- The time when the workflow should end. The time should be expressed as:
- *                  MM/dd/yyyy HH:mm:ss with the timezone assumed to be that of the OS.
- *     intervalvalue -- The numeric value of the interval between runs
- *     intervalunit -- The unit of the interval between runs.  Can be s, m, h, d for
- *                     seconds, minutes, hours and days respectively
- *     workflowid -- The lsid of the workflow that we want to schedule.  This workflow
- *                   must already exist in the database.
- *     karid -- The karid for the workflow that we want to schedule.
- *     workflowname -- The name of the workflow.
- *     forwardto -- If provided, forward to this page when processing is done.
- *     qformat -- If provided, render results using the stylesheets associated with
- *                this skin.  Default is xml.
- * action=unscheduleWorkflow -- Unschedule a workflow.  Unscheduling a workflow
- *                            removes it from the scheduling engine and changes the
- *                            status in the scheduled_job table to " unscheduled.  Note
- *                            that this may be extracted into a separate servlet.
- *     workflowjobname -- The job ID for the workflow run that we want to unschedule.  This
- *                      is held in the database as scheduled_job.name
- *     forwardto -- If provided, forward to this page when processing is done.
- *     qformat -- If provided, render results using the stylesheets associated with
- *                this skin.  Default is xml.
- * action=rescheduleWorkflow -- Unschedule a workflow.  Rescheduling a workflow 
- *                            registers it with the scheduling engine and changes the
- *                            status in the scheduled_job table to " scheduled.  Note
- *                            that this may be extracted into a separate servlet.
- *     workflowjobname -- The job ID for the workflow run that we want to reschedule.  This
- *                      is held in the database as scheduled_job.name
- *     forwardto -- If provided, forward to this page when processing is done.
- *     qformat -- If provided, render results using the stylesheets associated with
- *                this skin.  Default is xml.
- * action=deleteScheduledWorkflow -- Delete a workflow.  Deleting a workflow
- *                            removes it from the scheduling engine and changes the
- *                            status in the scheduled_job table to " deleted.  Note
- *                            that this may be extracted into a separate servlet.
- *     workflowjobname -- The job ID for the workflow run that we want to delete.  This
- *                      is held in the database as scheduled_job.name
- *     forwardto -- If provided, forward to this page when processing is done.
- *     qformat -- If provided, render results using the stylesheets associated with
- *                this skin.  Default is xml.
- * action=reindex -- rebuild the solr index for the specified pids.
- *     pid -- the id of the document which will be rebuilt slor index.
- * action=reindexall -- rebuild the solr index for all objects in the systemmetadata table.
- *
- * Here are some of the common parameters for actions
- *     doctype -- document type list returned by the query (publicID)
- *     qformat=xml -- display resultset from query in XML
- *     qformat=html -- display resultset from query in HTML
- *     qformat=zip -- zip resultset from query
- *     docid=34 -- display the document with the document ID number 34
- *     doctext -- XML text of the document to load into the database
- *     acltext -- XML access text for a document to load into the database
- *     dtdtext -- XML DTD text for a new DTD to load into Metacat XML Catalog
- *     query -- actual query text (to go with 'action=query' or 'action=squery')
- *     valtext -- XML text to be validated
- *     scope --can limit the query by the scope of the id
- *     docid --the docid to check
- *     datadoc -- data document name (id)
+ * All actions are disabled since Metacat 3.0.0
  */
 public class MetaCatServlet extends HttpServlet {
 
@@ -765,13 +572,38 @@ public class MetaCatServlet extends HttpServlet {
          * If the property of "index.regenerate.interval" is less than 0, the thread would NOT run.
          */
         private static void startIndexReGenerator() {
-            boolean regenerateIndex = Settings.getConfiguration()
-                                        .getBoolean("index.regenerate.sincelastProcessDate", false);
-            long period = Settings.getConfiguration()
-                                .getLong("index.regenerate.interval", 86400000); //milliseconds
+            boolean regenerateIndex = false;
+            try {
+                regenerateIndex = (new Boolean(PropertyService
+                                             .getProperty("index.regenerate.sincelastProcessDate")))
+                                                .booleanValue();
+            } catch (PropertyNotFoundException e) {
+                logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
+                                  + "index.regenerate.sincelastProcessDate"
+                                  + " is not found and Metacat will use " + regenerateIndex
+                                  + " as the default one.");
+            }
+            long period = 86400000;//milliseconds
+            try {
+                period = (new Long(PropertyService
+                                              .getProperty("index.regenerate.interval")))
+                                                .longValue();
+            } catch (PropertyNotFoundException | NumberFormatException e) {
+                logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
+                              + "index.regenerate.interval"
+                              + " is not found and Metacat will use " + period
+                              + " ms as the default one.");
+            }
             if(regenerateIndex && period > 0) {
-                String timeStrOfFirstRun = Settings.getConfiguration()
-                                              .getString("index.regenerate.firsttime", "11:50 PM");
+                String timeStrOfFirstRun = "11:50 PM";
+                try {
+                    timeStrOfFirstRun = PropertyService.getProperty("index.regenerate.firsttime");
+                } catch (PropertyNotFoundException e) {
+                    logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
+                            + "index.regenerate.firsttime"
+                            + " is not found and Metacat will use " + timeStrOfFirstRun
+                            + " as the default one.");
+                }
                 Date timeOfFirstRun = determineTimeOfFirstRunRegeneratingThread(timeStrOfFirstRun);
                 IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask();
                 timer.schedule(generator, timeOfFirstRun, period);
@@ -781,12 +613,37 @@ public class MetaCatServlet extends HttpServlet {
                         + timeOfFirstRun.toString()
                         + " and the period is " + period);
             }
-            boolean regneratedFailedIndex = Settings.getConfiguration()
-                                                .getBoolean("index.regenerate.failedObject", true);
-            long delay = Settings.getConfiguration()
-                                            .getLong("index.regenerate.failedTask.delay", 1200000);
-            long failedInterval = Settings.getConfiguration()
-                                          .getLong("index.regenerate.failedTask.interval", 3600000);
+            boolean regneratedFailedIndex = true;
+            try {
+                regneratedFailedIndex = (new Boolean(PropertyService
+                                               .getProperty("index.regenerate.failedObject")))
+                                                 .booleanValue();
+            } catch (PropertyNotFoundException e) {
+                logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
+                        + "index.regenerate.failedObject"
+                        + " is not found and Metacat will use "+ regneratedFailedIndex
+                        + " as the default one.");
+            }
+            long delay = 1200000;
+            try {
+                delay = (new Long(PropertyService
+                                    .getProperty("index.regenerate.failedTask.delay"))).longValue();
+            } catch (PropertyNotFoundException | NumberFormatException e) {
+                logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
+                        + "index.regenerate.failedTask.delay"
+                       + " is not found and Metacat will use " + delay + " ms as the default one.");
+            }
+            long failedInterval = 3600000;
+            try {
+                failedInterval = (new Long(PropertyService
+                                        .getProperty("index.regenerate.failedTask.interval")))
+                                        .longValue();
+            } catch (PropertyNotFoundException | NumberFormatException e) {
+                logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
+                        + "index.regenerate.failedTask.interval"
+                        + " is not found and Metacat will use " + failedInterval
+                        + " ms as the default one.");
+            }
             if (regneratedFailedIndex && failedInterval > 0) {
                 FailedIndexResubmitTimerTask task = new FailedIndexResubmitTimerTask();
                 timer.schedule(task, delay, failedInterval);
@@ -839,14 +696,13 @@ public class MetaCatServlet extends HttpServlet {
                             + timeOfFirstRun.toString());
             Date now = new Date();
             if((timeOfFirstRun.getTime() - now.getTime()) <2000) {
-                //if the given time already passed or only be less than 2
-                //seconds to pass, we need to set the timeOfFirstRun to be
-                //24 hours latter (the second day)
+                //if the given time has already passed, or is less than 2
+                //seconds in the future, we need to set the timeOfFirstRun to be
+                //24 hours latter (i.e. the second day)
                 logMetacat.debug("The time (after transforming to today) to "
                      + "first time run the thread " + timeOfFirstRun.toString()
                      + " passed and we will delay it 24 hours");
                 timeOfFirstRun = new Date(timeOfFirstRun.getTime()+24*3600*1000);
-                //timeOfFirstRun = new Date(timeOfFirstRun.getTime()+2*3600*1000);
             }
             logMetacat.debug("The final time of the first time running the thread is "
                             + timeOfFirstRun.toString());
