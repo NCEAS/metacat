@@ -269,7 +269,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
                        | IllegalAccessException | XPathExpressionException
                        | NotFound | UnsupportedType | SolrServerException
                        | SAXException | ParserConfigurationException | OREParserException e) {
-                log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for "
+                log.info("IndexGenerator.run - Metadata-Index couldn't generate indexes for "
                            + "those documents which haven't been indexed : " + e.getMessage());
             }
         }
