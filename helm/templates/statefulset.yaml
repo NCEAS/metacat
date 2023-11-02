@@ -28,18 +28,18 @@ spec:
             - sh
             - -c
             - >
-              until nc -z {{ .Values.idxworker.solr.hostname}}
+              until nc -z {{ .Values.idxworker.solr.hostname}}{{ print " " -}}
               {{ .Values.idxworker.solr.service.ports.http }} > /dev/null; do
-              echo waiting for Solr; sleep 1; done
+              echo waiting for Solr; sleep 1; done;
         - name: init-rabbitmq-metacat-dep
           image: busybox:latest
           command:
             - sh
             - -c
             - >
-              until nc -z {{ .Values.idxworker.rabbitmq.hostname }}
+              until nc -z {{ .Values.idxworker.rabbitmq.hostname }}{{ print " " -}}
               {{ .Values.idxworker.rabbitmq.hostport}} > /dev/null; do
-              echo waiting for RabbitMQ; sleep 1; done
+              echo waiting for RabbitMQ; sleep 1; done;
       {{ end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
