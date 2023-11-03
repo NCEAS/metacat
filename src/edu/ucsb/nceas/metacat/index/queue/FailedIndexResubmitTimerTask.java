@@ -48,9 +48,12 @@ public class FailedIndexResubmitTimerTask extends TimerTask {
      * Reindex the failed index tasks stored in the index_event table
      */
     private void reindexFailedTasks() {
+        Date now = new Date();
+        //the default oldest age is 10 days earlier (older) than the current time
+        Date oldestAge = new Date(now.getTime() - maxAgeOfFailedIndexTask);
         try {
             List<IndexEvent> failedCreateEvents = IndexEventDAO.getInstance()
-                                                        .get(IndexEvent.CREATE_FAILURE_TO_QUEUE);
+                                                .get(IndexEvent.CREATE_FAILURE_TO_QUEUE, oldestAge);
             reindexFailedTasks(failedCreateEvents);
         } catch (SQLException e) {
             log.error("FailedIndexResubmitTimerTask.reIndexFAiledTasks - failed to get the failure "
@@ -59,7 +62,7 @@ public class FailedIndexResubmitTimerTask extends TimerTask {
         
         try {
             List<IndexEvent> failedDeleteEvents = IndexEventDAO.getInstance()
-                                                         .get(IndexEvent.DELETE_FAILURE_TO_QUEUE);
+                                                .get(IndexEvent.DELETE_FAILURE_TO_QUEUE, oldestAge);
             reindexFailedTasks(failedDeleteEvents);
         } catch (SQLException e) {
             log.error("FailedIndexResubmitTimerTask.reIndexFAiledTasks - failed to get the failure "
@@ -80,36 +83,26 @@ public class FailedIndexResubmitTimerTask extends TimerTask {
                 if(event != null && event.getIdentifier() != null) {
                     String id = event.getIdentifier().getValue();
                     if (id != null && !id.trim().equals("")) {
-                        Date now = new Date();
-                        //if the event is too old, we will ignore it.
-                        if(event.getDate() == null || (event.getDate() != null &&
-                           ((now.getTime() - event.getDate().getTime())
-                                   <= maxAgeOfFailedIndexTask))) {
-                            try {
-                                if(firstTime && event.getAction()
-                                              .compareTo(IndexEvent.DELETE_FAILURE_TO_QUEUE) == 0) {
-                                    firstTime = false;
-                                    deleteEvent = true;
-                                }
-                                if (deleteEvent) {
-                                    //this is a delete event
-                                    deleteIndex(id);
-                                    //Succeeded and remove it from the index event table
-                                    IndexEventDAO.getInstance().remove(event.getIdentifier());
-                                } else {
-                                    IndexGeneratorTimerTask.submitIndex(id);
-                                    //Succeeded and remove it from the index event table
-                                    IndexEventDAO.getInstance().remove(event.getIdentifier());
-                                }
-                            } catch (Exception e) {
-                                log.warn("FailedIndexResubmitTimerTask.reIndexFAiledTasks - failed "
-                                        + "to submit the reindex task for the pid " + id
-                                        + " since " + e.getMessage());
+                        try {
+                            if(firstTime && event.getAction()
+                                          .compareTo(IndexEvent.DELETE_FAILURE_TO_QUEUE) == 0) {
+                                firstTime = false;
+                                deleteEvent = true;
                             }
-                        } else {
-                            log.info("FailedIndexResubmitTimerTask.reIndexFAiledTasks - we wouldn't"
-                                  + " submit the reindex task for the pid " + id 
-                                  + " since it is too old.");
+                            if (deleteEvent) {
+                                //this is a delete event
+                                deleteIndex(id);
+                                //Succeeded and remove it from the index event table
+                                IndexEventDAO.getInstance().remove(event.getIdentifier());
+                            } else {
+                                IndexGeneratorTimerTask.submitIndex(id);
+                                //Succeeded and remove it from the index event table
+                                IndexEventDAO.getInstance().remove(event.getIdentifier());
+                            }
+                        } catch (Exception e) {
+                            log.warn("FailedIndexResubmitTimerTask.reIndexFAiledTasks - failed "
+                                    + "to submit the reindex task for the pid " + id
+                                    + " since " + e.getMessage());
                         }
                     }
                 }

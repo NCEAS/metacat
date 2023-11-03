@@ -25,6 +25,7 @@ package edu.ucsb.nceas.metacat.index;
 
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -145,10 +146,12 @@ public class IndexEventDAOTest extends MCTestCase {
      * @throws Exception
      */
     public void testGet() throws Exception {
+        Date time1 = new Date();
+        Date oldestAge = new Date(time1.getTime() - 240000);
         // add one
         IndexEventDAO.getInstance().add(event);
         // get the list of index events which have the action of CREATE_FAILURE_TO_QUEUE
-        List<IndexEvent> list = IndexEventDAO.getInstance().get(ACTION);
+        List<IndexEvent> list = IndexEventDAO.getInstance().get(ACTION, oldestAge);
         boolean found = false;
         for (IndexEvent indexEvent : list) {
             if (indexEvent.getIdentifier().getValue().equals(event.getIdentifier().getValue())) {
@@ -157,6 +160,34 @@ public class IndexEventDAOTest extends MCTestCase {
             }
         }
         assertTrue(found);
+        
+        //set the oldest age to be future, so we shouldn't find the event in the list
+        Date newTime = new Date();
+        oldestAge = new Date(newTime.getTime() + 10000);
+        // get the list of index events which have the action of CREATE_FAILURE_TO_QUEUE
+        list = IndexEventDAO.getInstance().get(ACTION, oldestAge);
+        found = false;
+        for (IndexEvent indexEvent : list) {
+            if (indexEvent.getIdentifier().getValue().equals(event.getIdentifier().getValue())) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue(!found);
+        
+        //set oldestAge null, which means no age limitation. So it should find the event
+        oldestAge = null;
+        // get the list of index events which have the action of CREATE_FAILURE_TO_QUEUE
+        list = IndexEventDAO.getInstance().get(ACTION, oldestAge);
+        found = false;
+        for (IndexEvent indexEvent : list) {
+            if (indexEvent.getIdentifier().getValue().equals(event.getIdentifier().getValue())) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue(found);
+        
         // clean up
         IndexEventDAO.getInstance().remove(event.getIdentifier());
     }

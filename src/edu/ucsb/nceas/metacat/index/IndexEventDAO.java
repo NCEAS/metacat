@@ -30,10 +30,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
 
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
@@ -44,6 +47,7 @@ public class IndexEventDAO {
     
     private static IndexEventDAO instance = null;
     private static String DELETESQL = "delete from index_event where guid = ?";
+    private static Log logMetacat = LogFactory.getLog(IndexEventDAO.class);
 
     private IndexEventDAO() {}
 
@@ -183,15 +187,28 @@ public class IndexEventDAO {
     }
 
     /**
-     * Get the list of the index events which have the specified event action.
+     * Get the list of the index events which have the specified event action and are
+     * younger than the specified oldest age. 2023-02-01 is younger than 2000-01-01.
      * @param eventAction  the action which the events should contain
+     * @param oldestAge  the oldest age which the events can be.
+     *                    If it is null, we don't have the age limit.
      * @return  list of the index events contains the action
      * @throws SQLException
      */
-    public List<IndexEvent> get(String eventAction) throws SQLException {
+    public List<IndexEvent> get(String eventAction, Date oldestAge) throws SQLException {
+        boolean hasAgeLimit = false;
+        Timestamp oldestAgeTs = null;
         List<IndexEvent> events = new ArrayList<IndexEvent>();
         String sql = "select guid, event_action, description, event_date from index_event "
                       + "where event_action = ?";
+        if (oldestAge != null) {
+            hasAgeLimit = true;
+            oldestAgeTs = new Timestamp(oldestAge.getTime());
+            // geater means younger. 2023-0201 is younger, also greater than 2000-01-01
+            sql = sql + " and event_date > ?";
+            logMetacat.debug("IndexEventDAO.get - the max age timestamp is "
+                                + oldestAgeTs.toString());
+        }
         DBConnection dbConn = null;
         int serialNumber = -1;
         try {
@@ -201,6 +218,9 @@ public class IndexEventDAO {
             // Execute the statement
             PreparedStatement stmt = dbConn.prepareStatement(sql);
             stmt.setString(1, eventAction);
+            if (hasAgeLimit) {
+                stmt.setTimestamp(2, oldestAgeTs);
+            }
             ResultSet rs = stmt.executeQuery();
             boolean hasNext = rs.next();
             while (hasNext) {
