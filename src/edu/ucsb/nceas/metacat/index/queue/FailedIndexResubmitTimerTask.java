@@ -23,7 +23,7 @@ public class FailedIndexResubmitTimerTask extends TimerTask {
     private static Log log = LogFactory.getLog(FailedIndexResubmitTimerTask.class);
     //if this task need to reindex the previously failed index task
     private boolean needReindexFailedEvent = true;
-    private long maxAgeOfFailedIndexTask = 864000000; // 10 days
+    protected static long maxAgeOfFailedIndexTask = 864000000; // 10 days
     
     /**
      * Constructor

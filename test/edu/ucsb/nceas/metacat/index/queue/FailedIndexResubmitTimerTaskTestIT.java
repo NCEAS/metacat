@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Timer;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +39,8 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.index.IndexEventDAO;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 /**
@@ -82,7 +85,7 @@ public class FailedIndexResubmitTimerTaskTestIT {
         int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
                                                 && count <= MNodeQueryTest.tryAcccounts) {
-            Thread.sleep(1000);
+            Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
@@ -124,7 +127,7 @@ public class FailedIndexResubmitTimerTaskTestIT {
         int count = 0;
         String newVersion = null;
         while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
-            Thread.sleep(1000);
+            Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
@@ -137,13 +140,71 @@ public class FailedIndexResubmitTimerTaskTestIT {
         savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
         assertNull(savedEvent);
     }
+
+    /**
+     * Test the scenario that Metacat would not pick up a too old failure event
+     * @throws Exception
+     */
+    @Test
+    public void testNotPickupOldFailure() throws Exception {
+        String originVersion = getSolrDocVersion(resultStr);
+        //add the identifier to the index event as a create_failure index task
+        IndexEvent event = new IndexEvent();
+        event.setAction(IndexEvent.CREATE_FAILURE_TO_QUEUE);
+        Date now = new Date();
+        long age = Calendar.getInstance().getTime().getTime()
+                                    - 3 * FailedIndexResubmitTimerTask.maxAgeOfFailedIndexTask;
+        Date eventDate = new Date(age);
+        event.setDate(eventDate);
+        event.setDescription("Testing DAO");
+        event.setIdentifier(guid);
+        IndexEventDAO.getInstance().add(event);
+
+        // check
+        IndexEvent savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
+        assertEquals(event.getIdentifier(), savedEvent.getIdentifier());
+        assertEquals(event.getAction(), savedEvent.getAction());
+        assertEquals(event.getDate(), savedEvent.getDate());
+        assertEquals(event.getDescription(), savedEvent.getDescription());
+
+        // create timer to resubmit the failed index task
+        Timer indexTimer = new Timer();
+        long delay = 0;
+        indexTimer.schedule(new FailedIndexResubmitTimerTask(), delay);
+
+        // check if a reindex happened (the solr doc version changed)
+        // Since it is too old, it should not happen.
+        boolean versionChanged = false;
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        int count = 0;
+        String newVersion = null;
+        while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
+            Thread.sleep(500);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+            newVersion = getSolrDocVersion(resultStr);
+            versionChanged = !newVersion.equals(originVersion);
+        }
+        assertFalse(versionChanged);
+        
+        // the saved event should NOT be deleted
+        savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
+        assertNotNull(savedEvent);
+        //delete it
+        IndexEventDAO.getInstance().remove(event.getIdentifier());
+        savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
+        assertNull(savedEvent);
+    }
+    
     
     /**
      * Test the scenario that a delete index task can't be put into the index queue
      * @throws Exception
      */
     @Test
-    public void testDeleteFailure() throws Exception  {
+    public void testDeleteFailure() throws Exception {
         //add the identifier to the index event as a create_failure index task
         IndexEvent event = new IndexEvent();
         event.setAction(IndexEvent.DELETE_FAILURE_TO_QUEUE);
@@ -170,7 +231,7 @@ public class FailedIndexResubmitTimerTaskTestIT {
         int count = 0;
         while ((resultStr != null && resultStr.contains("checksum"))
                                                 && count <= MNodeQueryTest.tryAcccounts) {
-            Thread.sleep(1000);
+            Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
