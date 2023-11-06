@@ -54,7 +54,7 @@ import java.util.Vector;
  * General entry point for the Metacat server which is called from various mechanisms such as the
  * standard MetacatServlet class and the various web service servlets such as RestServlet class.
  * All application logic should be encapsulated in this class, and the calling classes should only
- * contain parameter marshaling and demarshaling code, delegating all else to this MetacatHandler
+ * contain parameter marshaling and unmarshalling code, delegating all else to this MetacatHandler
  * instance.
  *
  * @author Matthew Jones
@@ -71,7 +71,6 @@ public class MetacatHandler {
     private static final String SUCCESSCLOSE = "</success>";
     private static final String ERROR = "<error>";
     private static final String ERRORCLOSE = "</error>";
-    public static final String FGDCDOCTYPE = "metadata";
     private static final String NOT_SUPPORT_MESSAGE =
         PROLOG + "\n" + ERROR + "The original Metacat API has been replaced, "
             + "and so this request is no longer supported. "
@@ -178,7 +177,7 @@ public class MetacatHandler {
      * @param out       the output stream to the client
      * @param params    the Hashtable of parameters that should be included in the squery.
      * @param response  the response object linked to the client
-     * @param user      the user name (it maybe different to the one in param)
+     * @param user      the username (it maybe different to the one in param)
      * @param groups    the group array
      * @param sessionid the sessionid
      */
@@ -200,7 +199,7 @@ public class MetacatHandler {
     protected void handleQuery(
         Hashtable<String, String[]> params, HttpServletResponse response, String user,
         String[] groups, String sessionid)
-        throws PropertyNotFoundException, UnsupportedEncodingException, IOException {
+        throws PropertyNotFoundException, IOException {
         sendNotSupportMessage(response);
     }
 
@@ -319,7 +318,7 @@ public class MetacatHandler {
             String filename = filepath + docid;
             inputStream = readFromFilesystem(filename);
         } else {
-            // accomodate old clients that send docids without revision numbers
+            // accommodate old clients that send docids without revision numbers
             docid = DocumentUtil.appendRev(docid);
             DocumentImpl doc = new DocumentImpl(docid, false);
             // deal with data or metadata cases
@@ -341,7 +340,7 @@ public class MetacatHandler {
                     throw pnf;
                 } // end try()
             } else {
-                // this is an metadata document
+                // this is n metadata document
                 // Get the xml (will try disk then DB)
                 try {
                     // force the InputStream to be returned
@@ -627,7 +626,7 @@ public class MetacatHandler {
                         } catch (McdbDocNotFoundException mnfe) {
                             // handle inserts
                             try {
-                                // create the system metadata. During the creatation, the data
+                                // create the system metadata. During the creation, the data
                                 // file in the eml may need to be reindexed.
                                 boolean reindexDataObject = true;
                                 sysMeta =
@@ -738,10 +737,8 @@ public class MetacatHandler {
                                            null, null);
                 return output;
             } catch (Exception e) {
-
                 logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " + "General error: "
-                                     + e.getMessage());
-                e.printStackTrace(System.out);
+                                     + e.getMessage(), e);
             }
         }
         return output;
@@ -988,7 +985,8 @@ public class MetacatHandler {
 
             if (!isAuthorized) {
                 results.append("<error>");
-                results.append("The user \"" + username + "\" is not authorized for this action.");
+                results.append("The user \"").append(username);
+                results.append("\" is not authorized for this action.");
                 results.append("</error>");
                 //out.close(); it will be closed in the finally statement
                 return;
@@ -1025,7 +1023,7 @@ public class MetacatHandler {
             if (successList.size() > 0) {
                 results.append("<success>\n");
                 for (String id : successList) {
-                    results.append("<pid>" + id + "</pid>\n");
+                    results.append("<pid>").append(id).append("</pid>\n");
                 }
                 results.append(
                     "<note>The object(s) was/were submitted to the index queue successfully. "
@@ -1036,7 +1034,7 @@ public class MetacatHandler {
             if (failedList.size() > 0) {
                 results.append("<error>\n");
                 for (String id : failedList) {
-                    results.append("<pid>" + id + "</pid>\n");
+                    results.append("<pid>").append(id).append("</pid>\n");
                 }
                 results.append(
                     "<note>The object(s) couldn't be submitted to the index queue.</note>");
@@ -1048,7 +1046,7 @@ public class MetacatHandler {
             logMetacat.error("MetacatHandler.handleReindex action - " + e.getMessage());
             e.printStackTrace();
             results.append("<error>");
-            results.append("There was an error - " + e.getMessage());
+            results.append("There was an error - ").append(e.getMessage());
             results.append("</error>");
         } finally {
             logMetacat.debug("================= in the finally statement");
@@ -1285,7 +1283,7 @@ public class MetacatHandler {
         if (_sitemapScheduled) {
             logMetacat.debug("MetacatHandler.scheduleSitemapGeneration: Tried to call "
                                  + "scheduleSitemapGeneration() when a sitemap was already "
-                                 + "scheduld. Doing nothing.");
+                                 + "scheduled. Doing nothing.");
 
             return;
         }
@@ -1312,7 +1310,7 @@ public class MetacatHandler {
         String locationBase = "";
         String entryBase = "";
         String portalBase = "";
-        List<String> portalFormats = new ArrayList();
+        List<String> portalFormats = new ArrayList<>();
 
         try {
             serverUrl = SystemUtil.getSecureServerURL();
@@ -1354,12 +1352,5 @@ public class MetacatHandler {
 
         timer.schedule(smap, firstDelay, sitemapInterval);
         _sitemapScheduled = true;
-    }
-
-    /**
-     * @param sitemapScheduled toggle the _sitemapScheduled flag
-     */
-    public void set_sitemapScheduled(boolean sitemapScheduled) {
-        _sitemapScheduled = sitemapScheduled;
     }
 }
