@@ -6,7 +6,7 @@
     <xsl:param name="data_type" select="'SM'"/>
     <xsl:param name="country" select="'US'"/>
     <xsl:param name="lang" select="'English'"/>
-    <xsl:param name="site_code" select="'ESS-DIVE'"/>
+    <xsl:param name="site_code"/>
     <xsl:param name="site_url"/>   
     <xsl:param name="subject" select="'54 ENVIRONMENTAL SCIENCES'"/>
     <xsl:param name="osti_id"/>
@@ -178,7 +178,9 @@
                         <xsl:value-of select="contact/organizationName"/>
                     </contact_org>
                 </xsl:if>
-                <site_input_code><xsl:value-of select="$site_code"/></site_input_code>
+                <xsl:if test="$site_code">
+                    <site_input_code><xsl:value-of select="$site_code"/></site_input_code>
+                </xsl:if>
                 <doi_infix></doi_infix>
                 <subject_categories_code><xsl:value-of select="$subject"/></subject_categories_code>
                 <language><xsl:value-of select="$lang"/></language>
