@@ -1,29 +1,3 @@
-/**
- *  '$RCSfile$'
- *    Purpose: A Class that represents an XML document
- *  Copyright: 2000 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Matt Jones
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat;
 
 import java.io.BufferedInputStream;
@@ -112,7 +86,7 @@ public class DocumentImpl
     public static final String REVISIONTABLE = "xml_revisions";
     public static final String DOCUMENTTABLE = "xml_documents";
     public static final String BIN = "BIN";
-    
+
     /*
      * public static final String EXTERNALSCHEMALOCATION =
      * "eml://ecoinformatics.org/eml-2.0.0
@@ -127,37 +101,37 @@ public class DocumentImpl
     public static final String FULLSCHEMAVALIDATIONFEATURE = "http://apache.org/xml/features/validation/schema-full-checking";
     public static final String NAMESPACEFEATURE = "http://xml.org/sax/features/namespaces";
     public static final String NAMESPACEPREFIXESFEATURE = "http://xml.org/sax/features/namespace-prefixes";
-    
+
     public static final String EML2_0_0NAMESPACE;
     public static final String EML2_0_1NAMESPACE;
     public static final String EML2_1_0NAMESPACE;
     public static final String EML2_1_1NAMESPACE;
     public static final String EML2_2_0NAMESPACE;
     public static final String RDF_SYNTAX_NAMESPACE;
-    
+
     static {
-    	String eml200NameSpace = null;
-    	String eml201NameSpace = null;
-    	String eml210NameSpace = null;
-    	String eml211NameSpace = null;
-    	String eml220NameSpace = null;
-    	String rdfNameSpace = null;
-    	try {
-    		eml200NameSpace = PropertyService.getProperty("xml.eml2_0_0namespace");
-    		eml201NameSpace = PropertyService.getProperty("xml.eml2_0_1namespace");
-    		eml210NameSpace = PropertyService.getProperty("xml.eml2_1_0namespace");
-    		eml211NameSpace = PropertyService.getProperty("xml.eml2_1_1namespace");
-    		eml220NameSpace = PropertyService.getProperty("xml.eml2_2_0namespace");
-    		rdfNameSpace = PropertyService.getProperty("xml.rdf_syntax_namespace");
-    	} catch (PropertyNotFoundException pnfe) {
-    		System.err.println("Could not get property in static block: " 
-					+ pnfe.getMessage());
-    	}
-    	
-    	EML2_2_0NAMESPACE = eml220NameSpace;
-    	EML2_1_1NAMESPACE = eml211NameSpace;
+        String eml200NameSpace = null;
+        String eml201NameSpace = null;
+        String eml210NameSpace = null;
+        String eml211NameSpace = null;
+        String eml220NameSpace = null;
+        String rdfNameSpace = null;
+        try {
+            eml200NameSpace = PropertyService.getProperty("xml.eml2_0_0namespace");
+            eml201NameSpace = PropertyService.getProperty("xml.eml2_0_1namespace");
+            eml210NameSpace = PropertyService.getProperty("xml.eml2_1_0namespace");
+            eml211NameSpace = PropertyService.getProperty("xml.eml2_1_1namespace");
+            eml220NameSpace = PropertyService.getProperty("xml.eml2_2_0namespace");
+            rdfNameSpace = PropertyService.getProperty("xml.rdf_syntax_namespace");
+        } catch (PropertyNotFoundException pnfe) {
+            System.err.println("Could not get property in static block: "
+                    + pnfe.getMessage());
+        }
+
+        EML2_2_0NAMESPACE = eml220NameSpace;
+        EML2_1_1NAMESPACE = eml211NameSpace;
         // "eml://ecoinformatics.org/eml-2.1.1";
-    	EML2_1_0NAMESPACE = eml210NameSpace;
+        EML2_1_0NAMESPACE = eml210NameSpace;
         // "eml://ecoinformatics.org/eml-2.1.0";
         EML2_0_1NAMESPACE = eml201NameSpace;
         // "eml://ecoinformatics.org/eml-2.0.1";
@@ -165,7 +139,7 @@ public class DocumentImpl
         // "eml://ecoinformatics.org/eml-2.0.0";
         RDF_SYNTAX_NAMESPACE = rdfNameSpace;
     }
-     
+
     public static final String DOCNAME = "docname";
     public static final String PUBLICID = "publicid";
     public static final String SYSTEMID = "systemid";
@@ -188,7 +162,7 @@ public class DocumentImpl
     private String docHomeServer;
     private String publicaccess;
     protected long rootnodeid;
-  
+
     private static Log logMetacat = LogFactory.getLog(DocumentImpl.class);
     private static Log logReplication = LogFactory.getLog("ReplicationLogging");
 
@@ -198,7 +172,7 @@ public class DocumentImpl
      */
     public DocumentImpl()
     {
-        
+
     }
 
     /**
@@ -227,7 +201,7 @@ public class DocumentImpl
         } catch (McdbException ex) {
             throw ex;
         } catch (Throwable t) {
-        	throw new McdbException("Error reading document: " + docid);
+            throw new McdbException("Error reading document: " + docid);
         }
     }
 
@@ -286,7 +260,7 @@ public class DocumentImpl
      */
     public DocumentImpl(DBConnection conn, long rootNodeId, String docName,
             String docType, String docId, String newRevision, String action,
-            String user, String pub, String catalogId, int serverCode, 
+            String user, String pub, String catalogId, int serverCode,
             Date createDate, Date updateDate)
             throws SQLException, Exception
     {
@@ -367,18 +341,18 @@ public class DocumentImpl
             if (action.equals("UPDATE"))
             {
                 //archive the old entry
-            	// check permissions on the old doc when updating
-            	int latestRevision = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
-				String previousDocid = 
-					docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator") + latestRevision;
-                if (!hasWritePermission(user, groups, previousDocid)) { 
-                	throw new Exception(
+                // check permissions on the old doc when updating
+                int latestRevision = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
+                String previousDocid =
+                    docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator") + latestRevision;
+                if (!hasWritePermission(user, groups, previousDocid)) {
+                    throw new Exception(
                         "User " + user
                         + " does not have permission to update the document"
                         + accnum); }
-                archiveDocRevision(docIdWithoutRev, user, conn);  
+                archiveDocRevision(docIdWithoutRev, user, conn);
             }
-            
+
             String rev = Integer.toString(userSpecifyRev);
             modifyRecordsInGivenTable(DOCUMENTTABLE, action,docIdWithoutRev, doctype, docname,
                         user, rev, serverCode, null, null, conn);
@@ -398,7 +372,7 @@ public class DocumentImpl
             //check in DBConnection
             DBConnectionPool.returnDBConnection(conn, serialNumber);
         }
-        
+
     }
 
     /**
@@ -431,7 +405,7 @@ public class DocumentImpl
      *            resides.
      */
     public static void registerDocumentInReplication(String docname,
-            String doctype, String accnum, String user, int serverCode, 
+            String doctype, String accnum, String user, int serverCode,
             String tableName, Date createDate, Date updateDate)
             throws SQLException, AccessionNumberException, Exception
     {
@@ -453,7 +427,7 @@ public class DocumentImpl
                 if (action.equals("UPDATE"))
                 {
                         //archive the old entry
-                        archiveDocRevision(docIdWithoutRev, user, conn);  
+                        archiveDocRevision(docIdWithoutRev, user, conn);
                 }
             }
             else if (tableName.equals(REVISIONTABLE))
@@ -464,7 +438,7 @@ public class DocumentImpl
             {
                 throw new Exception("Couldn't handle this table name "+tableName);
             }
-           
+
             String rev = Integer.toString(userSpecifyRev);
             modifyRecordsInGivenTable(tableName, action,docIdWithoutRev, doctype, docname,
                         user, rev, serverCode, createDate, updateDate, conn);
@@ -482,9 +456,9 @@ public class DocumentImpl
             //check in DBConnection
             DBConnectionPool.returnDBConnection(conn, serialNumber);
         }
-       
+
     }
-    
+
    /*
     * This method will insert or update xml-documents or xml_revision table
     */
@@ -493,25 +467,25 @@ public class DocumentImpl
                        String rev, int serverCode, Date createDate, Date updateDate,
                        DBConnection dbconn) throws Exception
    {
-      
+
       PreparedStatement pstmt = null;
       int revision = (new Integer(rev)).intValue();
       String sqlDateString = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
       Date today = new Date(Calendar.getInstance().getTimeInMillis());
-      
+
       if (createDate == null){
           createDate = today;
       }
-      
+
       if (updateDate == null) {
           updateDate = today;
       }
-      
+
       try {
-        
+
         StringBuffer sql = new StringBuffer();
         if (action != null && action.equals("INSERT")) {
-            
+
             sql.append("insert into ");
             sql.append(tableName);
             sql.append(" (docid, docname, doctype, ");
@@ -540,7 +514,7 @@ public class DocumentImpl
             pstmt.setTimestamp(9, new Timestamp(updateDate.getTime()));
 
         } else if (action != null && action.equals("UPDATE")) {
-            
+
             sql.append("update xml_documents set docname = ?,");
             sql.append("user_updated = ?, ");
             sql.append("server_location= ?, ");
@@ -559,20 +533,20 @@ public class DocumentImpl
         logMetacat.debug("DocumentImpl.modifyRecordsInGivenTable - executing SQL: " + pstmt.toString());
         pstmt.execute();
         pstmt.close();
-       
+
     }
-    catch(Exception e) 
+    catch(Exception e)
     {
         logMetacat.debug("Caught a general exception: " + e.getMessage());
         throw e;
     }
-    finally 
+    finally
     {
        if(pstmt != null)
        {
          pstmt.close();
        }
-     }     
+     }
    }
     /**
      * This method will register a data file entry in xml_documents and save a
@@ -599,7 +573,7 @@ public class DocumentImpl
      */
     public static void writeDataFileInReplication(InputStream input,
             String filePath, String docname, String doctype, String accnum,
-            String user, String docHomeServer, String notificationServer, 
+            String user, String docHomeServer, String notificationServer,
             String tableName, boolean timedReplication, Date createDate, Date updateDate)
             throws SQLException, AccessionNumberException, Exception
     {
@@ -618,24 +592,24 @@ public class DocumentImpl
         // Get server code again
         serverCode = getServerCode(docHomeServer);
 
-        
+
         //write inputstream into file system.
         File dataDirectory = new File(filePath);
         File newFile = null;
         try
         {
             newFile = new File(dataDirectory, accnum);
-    
+
             // create a buffered byte output stream
             // that uses a default-sized output buffer
             FileOutputStream fos = new FileOutputStream(newFile);
             BufferedOutputStream outPut = new BufferedOutputStream(fos);
-    
+
             BufferedInputStream bis = null;
             bis = new BufferedInputStream(input);
             byte[] buf = new byte[4 * 1024]; // 4K buffer
             int b = bis.read(buf);
-    
+
             while (b != -1) {
                 outPut.write(buf, 0, b);
                 b = bis.read(buf);
@@ -643,7 +617,7 @@ public class DocumentImpl
             bis.close();
             outPut.close();
             fos.close();
-            
+
             //register data file into xml_documents table
             registerDocumentInReplication(docname, doctype, accnum, user,
                     serverCode, tableName, createDate, updateDate);
@@ -653,7 +627,7 @@ public class DocumentImpl
             newFile.delete();
             throw ee;
         }
-        
+
         // Force replicate data file
         if (!timedReplication)
         {
@@ -662,8 +636,8 @@ public class DocumentImpl
           logMetacat.info("ForceReplicationHandler created: " + forceReplication.toString());
         }
     }
-    
-    
+
+
     /*
      * This method will determine if we need to insert or update xml_document base
      * on given docid, rev and rev in xml_documents table
@@ -711,7 +685,7 @@ public class DocumentImpl
         }
         return action;
      }
-     
+
      /*
       * This method will check if the xml_revision table already has the
       * document or not
@@ -720,7 +694,7 @@ public class DocumentImpl
      {
          String action = "INSERT";
          Vector<Integer> localrev = null;
-           
+
          try
          {
            localrev = DBUtil.getRevListFromRevisionTable(docid);
@@ -735,18 +709,18 @@ public class DocumentImpl
          }
          logMetacat.debug("rev list in xml_revision table for docid "+ docid + " is "+
                                  localrev.toString());
-         
+
          // if the rev is in the xml_revision, it throws a exception
          if (localrev.contains(new Integer(rev)))
          {
-            throw new Exception("The docid and rev is already in xml_revision table");       
+            throw new Exception("The docid and rev is already in xml_revision table");
          }
 
          return action;
      }
-     
+
      /*
-      * 
+      *
       */
 
     /**
@@ -808,7 +782,7 @@ public class DocumentImpl
             if (openingtag.equals("<lockgranted>")) {
                 //the lock was granted go ahead with the insert
                 //System.out.println("In lockgranted");
-            	logReplication.info("lock granted for " + accnum
+                logReplication.info("lock granted for " + accnum
                         + " from " + server);
                 flag = true;
                 return flag;
@@ -818,7 +792,7 @@ public class DocumentImpl
                                                          // currently locked by
                                                          // another user
                 //notify our user to wait a few minutes, check out a new copy and try again.
-            	logReplication.error("lock denied for " + accnum + " on "
+                logReplication.error("lock denied for " + accnum + " on "
                         + server + " reason: file already locked");
                 throw new Exception(
                         "The file specified is already locked by another "
@@ -832,7 +806,7 @@ public class DocumentImpl
                                                              // copy of the
                 //file and merge his version with the new version.
                 //System.out.println("outdated file");
-            	logReplication.error("lock denied for " + accnum + " on "
+                logReplication.error("lock denied for " + accnum + " on "
                         + server + " reason: local file outdated");
                 throw new Exception(
                         "The file you are trying to update is an outdated"
@@ -940,7 +914,7 @@ public class DocumentImpl
      */
     public String toString(String user, String[] groups, boolean withInlinedata)
     {
-    	ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             this.toXml(out, user, groups, withInlinedata);
         } catch (McdbException mcdbe) {
@@ -949,12 +923,12 @@ public class DocumentImpl
         String encoding = null;
         String document = null;
         try {
-        	XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(out.toByteArray()));
-        	encoding = xsr.getEncoding();
-        	document = out.toString(encoding);
+            XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(out.toByteArray()));
+            encoding = xsr.getEncoding();
+            document = out.toString(encoding);
         } catch (Exception e) {
-        	document = out.toString();
-		}
+            document = out.toString();
+        }
         return document;
     }
 
@@ -964,425 +938,425 @@ public class DocumentImpl
      */
     public String toString()
     {
-    	ByteArrayOutputStream out = new ByteArrayOutputStream();
-    	String userName = null;
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        String userName = null;
         String[] groupNames = null;
         boolean withInlineData = true;
         try {
             this.toXml(out, userName, groupNames, withInlineData);
         } catch (McdbException mcdbe) {
-        	logMetacat.warn("Could not convert documentImpl to xml: " + mcdbe.getMessage());
+            logMetacat.warn("Could not convert documentImpl to xml: " + mcdbe.getMessage());
             return null;
         }
         String encoding = null;
         String document = null;
         try {
-        	XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(out.toByteArray()));
-        	encoding = xsr.getEncoding();
-        	document = out.toString(encoding);
+            XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(out.toByteArray()));
+            encoding = xsr.getEncoding();
+            document = out.toString(encoding);
         } catch (Exception e) {
-        	document = out.toString();
-		}
+            document = out.toString();
+        }
         return document;
     }
-    
-	public byte[] getBytes() {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-    	String userName = null;
+
+    public byte[] getBytes() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        String userName = null;
         String[] groupNames = null;
         boolean withInlineData = true;
         try {
             this.toXml(out, userName, groupNames, withInlineData);
         } catch (McdbException mcdbe) {
-        	logMetacat.warn("Could not convert documentImpl to xml: " + mcdbe.getMessage());
+            logMetacat.warn("Could not convert documentImpl to xml: " + mcdbe.getMessage());
             return null;
         }
         return out.toByteArray();
-	}
+    }
 
 
     /**
-	 * Print a text representation of the XML document to a Writer
-	 * 
-	 * @param pw
-	 *            the Writer to which we print the document Now we decide no
-	 *            matter withinInlineData's value, the document will
-	 * 
-	 */
-	public InputStream toXml(OutputStream out, String user, String[] groups, boolean withInLineData)
-			throws McdbException {
-		String documentDir = null;
-		String documentPath = null;
-		FileOutputStream fos = null;
-		try {
-			String separator = PropertyService.getProperty("document.accNumSeparator");
-			documentDir = PropertyService.getProperty("application.documentfilepath");
-			documentPath = documentDir + FileUtil.getFS() + docid + separator + rev;
+     * Print a text representation of the XML document to a Writer
+     *
+     * @param pw
+     *            the Writer to which we print the document Now we decide no
+     *            matter withinInlineData's value, the document will
+     *
+     */
+    public InputStream toXml(OutputStream out, String user, String[] groups, boolean withInLineData)
+            throws McdbException {
+        String documentDir = null;
+        String documentPath = null;
+        FileOutputStream fos = null;
+        try {
+            String separator = PropertyService.getProperty("document.accNumSeparator");
+            documentDir = PropertyService.getProperty("application.documentfilepath");
+            documentPath = documentDir + FileUtil.getFS() + docid + separator + rev;
 
-			if (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
-					|| FileUtil.getFileSize(documentPath) == 0) {
-			    throw new McdbException("Could not read file: " + documentPath + " : since it doesn't exist or the sieze is 0.");
-			}
-		} catch (PropertyNotFoundException pnfe) {
-			throw new McdbException("Could not write file: " + documentPath + " : "
-					+ pnfe.getMessage());
+            if (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
+                    || FileUtil.getFileSize(documentPath) == 0) {
+                throw new McdbException("Could not read file: " + documentPath + " : since it doesn't exist or the sieze is 0.");
+            }
+        } catch (PropertyNotFoundException pnfe) {
+            throw new McdbException("Could not write file: " + documentPath + " : "
+                    + pnfe.getMessage());
         } finally {
             IOUtils.closeQuietly(fos);
         }
-		
-		if (FileUtil.getFileSize(documentPath) == 0) {
-			throw new McdbException("Attempting to read a zero length document from disk: " + documentPath);
-		}
-		
-		return readFromFileSystem(out, user, groups, documentPath);
-	}
-    
-    
+
+        if (FileUtil.getFileSize(documentPath) == 0) {
+            throw new McdbException("Attempting to read a zero length document from disk: " + documentPath);
+        }
+
+        return readFromFileSystem(out, user, groups, documentPath);
+    }
+
+
     /**
-	 * Read the XML document from the file system and write to a Writer. Strip
-	 * out any inline data that the user does not have permission to read.
-	 * 
-	 * @param pw
-	 *            the Writer to which we print the document
-	 * @param user
-	 *            the user we will use to verify inline data access
-	 * @param groups
-	 *            the groups we will use to verify inline data access
-	 * @param documentPath
-	 *            the location of the document on disk
-	 * 
-	 */
+     * Read the XML document from the file system and write to a Writer. Strip
+     * out any inline data that the user does not have permission to read.
+     *
+     * @param pw
+     *            the Writer to which we print the document
+     * @param user
+     *            the user we will use to verify inline data access
+     * @param groups
+     *            the groups we will use to verify inline data access
+     * @param documentPath
+     *            the location of the document on disk
+     *
+     */
     public InputStream readFromFileSystem(
-    		OutputStream out, String user, String[] groups, String documentPath) throws McdbException {
-        
-		String xmlFileContents = null;
-		String encoding = null;
-		
-		try {
-			
-			// get a list of inline data sections that are not readable
-			// by this user
-			String fullDocid = docid + "." + rev;
+            OutputStream out, String user, String[] groups, String documentPath) throws McdbException {
+
+        String xmlFileContents = null;
+        String encoding = null;
+
+        try {
+
+            // get a list of inline data sections that are not readable
+            // by this user
+            String fullDocid = docid + "." + rev;
             Hashtable<String, String> unReadableInlineDataList =
                 PermissionController.getUnReadableInlineDataIdList(fullDocid, user, groups);
-            
+
             // If this is for each unreadable section, strip the inline data
-			// from the doc
-			if (unReadableInlineDataList.size() > 0 && doctype != null) {
-				
-				// detect and use correct encoding
-	            xmlFileContents = FileUtil.readFileToString(documentPath);
-	            // guess the encoding from default bytes
-				XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlFileContents.getBytes()));
-				encoding = xsr.getEncoding();
-				xsr.close();
-				// reread the contents using the correct encoding
-				if (encoding != null) {
-					xmlFileContents = FileUtil.readFileToString(documentPath, encoding);
-				}
-				
-				Set<String> inlineKeySet = unReadableInlineDataList.keySet();
-				boolean pre210Doc = doctype.equals(EML2_0_0NAMESPACE)
-						|| doctype.equals(EML2_0_1NAMESPACE);
+            // from the doc
+            if (unReadableInlineDataList.size() > 0 && doctype != null) {
 
-				for (String inlineKey : inlineKeySet) {
-					String inlineValue = unReadableInlineDataList.get(inlineKey);
-					if (inlineValue.startsWith(docid)) {
-						// There are two different methods of stripping inline data depending
-						// on whether this is a 2.0.1 or earlier doc or 2.1.0 and later.  This 
-						// is because of eml schema changes for inline access.
-						if (pre210Doc) {
-							xmlFileContents = stripInline20XData(xmlFileContents, inlineKey);
-						} else {
-							xmlFileContents = stripInline21XData(xmlFileContents, inlineKey);
-						}
-					}
-				}
-			}
-            
-			// will get input either from string content or file on disk
-			InputStream is = null;
-			
-			// get the input stream
-			if (xmlFileContents != null) {
-				is = IOUtils.toInputStream(xmlFileContents, encoding);
-			} else {
-				is = new FileInputStream(documentPath);
-			}
+                // detect and use correct encoding
+                xmlFileContents = FileUtil.readFileToString(documentPath);
+                // guess the encoding from default bytes
+                XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlFileContents.getBytes()));
+                encoding = xsr.getEncoding();
+                xsr.close();
+                // reread the contents using the correct encoding
+                if (encoding != null) {
+                    xmlFileContents = FileUtil.readFileToString(documentPath, encoding);
+                }
 
-			// send it to out
-			if (out != null) {
-				IOUtils.copyLarge(is, out);
-			}
-			// return the stream
-			return is;
-			
-	     } catch (UtilException e) {
+                Set<String> inlineKeySet = unReadableInlineDataList.keySet();
+                boolean pre210Doc = doctype.equals(EML2_0_0NAMESPACE)
+                        || doctype.equals(EML2_0_1NAMESPACE);
+
+                for (String inlineKey : inlineKeySet) {
+                    String inlineValue = unReadableInlineDataList.get(inlineKey);
+                    if (inlineValue.startsWith(docid)) {
+                        // There are two different methods of stripping inline data depending
+                        // on whether this is a 2.0.1 or earlier doc or 2.1.0 and later.  This
+                        // is because of eml schema changes for inline access.
+                        if (pre210Doc) {
+                            xmlFileContents = stripInline20XData(xmlFileContents, inlineKey);
+                        } else {
+                            xmlFileContents = stripInline21XData(xmlFileContents, inlineKey);
+                        }
+                    }
+                }
+            }
+
+            // will get input either from string content or file on disk
+            InputStream is = null;
+
+            // get the input stream
+            if (xmlFileContents != null) {
+                is = IOUtils.toInputStream(xmlFileContents, encoding);
+            } else {
+                is = new FileInputStream(documentPath);
+            }
+
+            // send it to out
+            if (out != null) {
+                IOUtils.copyLarge(is, out);
+            }
+            // return the stream
+            return is;
+
+         } catch (UtilException e) {
              throw new McdbException(e.getMessage());
          } catch (IOException e) {
              throw new McdbException(e.getMessage());
         }
-		
+
     }
-    
+
     /**
-	 * Write an XML document to the file system.
-	 * 
-	 * @param xml
-	 *            the document we want to write out
-	 * @param accNumber
-	 *            the document id which is used to name the output file
-	 */
+     * Write an XML document to the file system.
+     *
+     * @param xml
+     *            the document we want to write out
+     * @param accNumber
+     *            the document id which is used to name the output file
+     */
     private static void writeToFileSystem(byte[] xml, String accNumber, Checksum checksum, File objectFile) throws McdbException, InvalidSystemMetadata, IOException {
 
-		// write the document to disk
-		String documentDir = null;
-		String documentPath = null;
-		boolean needCalculateChecksum = false;
-		String checksumValue = null;
-		MessageDigest md = null;
+        // write the document to disk
+        String documentDir = null;
+        String documentPath = null;
+        boolean needCalculateChecksum = false;
+        String checksumValue = null;
+        MessageDigest md = null;
 
-		try {				
-			documentDir = PropertyService.getProperty("application.documentfilepath");
-			documentPath = documentDir + FileUtil.getFS() + accNumber;
+        try {
+            documentDir = PropertyService.getProperty("application.documentfilepath");
+            documentPath = documentDir + FileUtil.getFS() + accNumber;
 
-			if (xml == null || xml.equals("")) {
-				throw new McdbException("Attempting to write a file with no xml content: " + documentPath);
-			}
-			
-			if (accNumber == null) {
-				throw new McdbException("Could not write document file.  Accession Number number is null" );
-			}
-			
-			if (FileUtil.getFileStatus(documentPath) >= FileUtil.EXISTS_ONLY) {
-				throw new McdbException("The file you are trying to write already exists "
+            if (xml == null || xml.equals("")) {
+                throw new McdbException("Attempting to write a file with no xml content: " + documentPath);
+            }
+
+            if (accNumber == null) {
+                throw new McdbException("Could not write document file.  Accession Number number is null" );
+            }
+
+            if (FileUtil.getFileStatus(documentPath) >= FileUtil.EXISTS_ONLY) {
+                throw new McdbException("The file you are trying to write already exists "
                         + " in metacat.  Please update your version number.");
-			}
-			
-			if (accNumber != null
-					&& (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST 
-							|| FileUtil.getFileSize(documentPath) == 0)) {
-			    if (objectFile != null && objectFile.exists()) {
-			        logMetacat.info("DocumentImpl.writeToFileSystem - the object file already exists at the temp location and the checksum was checked. Metacat only needs to move it to the permanent position " + documentPath);
-			        File permanentFile = new File(documentPath);
-			        FileUtils.moveFile(objectFile, permanentFile);
-			    } else {
-			        logMetacat.info("DocumentImpl.writeToFileSystem - Metacat needs to write the metadata bytes into the file  " + documentPath);
-			        if (checksum != null) {
-	                    needCalculateChecksum = true;
-	                    checksumValue = checksum.getValue();
-	                    logMetacat.info("DocumentImpl.writeToFileSystem - the checksum from the system metadata is " + checksumValue);
-	                    if (checksumValue == null || checksumValue.trim().equals("")) {
-	                        logMetacat.error("DocumentImpl.writeToFileSystem - the checksum value from the system metadata shouldn't be null or blank");
-	                        throw new InvalidSystemMetadata("1180", "The checksum value from the system metadata shouldn't be null or blank.");
-	                    }
-	                    String algorithm = checksum.getAlgorithm();
-	                    logMetacat.info("DocumentImpl.writeToFileSystem - the algorithm to calculate the checksum from the system metadata is " + algorithm);
-	                    if (algorithm == null || algorithm.trim().equals("")) {
-	                        logMetacat.error("DocumentImpl.writeToFileSystem - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank");
-	                        throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
-	                    }
-	                    try {
-	                        md = MessageDigest.getInstance(algorithm);
-	                    } catch (NoSuchAlgorithmException ee) {
-	                        logMetacat.error("DocumentImpl.writeToFileSystem - we don't support the algorithm " + algorithm + " to calculate the checksum.", ee);
-	                        throw new InvalidSystemMetadata("1180", "The algorithm " + algorithm + " to calculate the checksum is not supported: " + ee.getMessage());
-	                    }
-	                }
+            }
 
-	                OutputStream fos = null;
-	                try {
-	                    if (needCalculateChecksum) {
-	                        logMetacat.info("DocumentImpl.writeToFileSystem - we need to compute the checksum since it is from DataONE API");
-	                        fos = new DigestOutputStream(new FileOutputStream(documentPath), md);
-	                    } else {
-	                        logMetacat.info("DocumentImpl.writeToFileSystem - we don't need to compute the checksum since it is from Metacat API or the checksum has been verified.");
-	                        fos = new FileOutputStream(documentPath);
-	                    }
-	                    
-	                    IOUtils.write(xml, fos);
-	                    fos.flush();
-	                    fos.close();
-	                    if (needCalculateChecksum) {
-	                        String localChecksum = DatatypeConverter.printHexBinary(md.digest());
-	                        logMetacat.info("DocumentImpl.writeToFileSystem - the check sum calculated from the saved local file is " + localChecksum);
-	                        if (localChecksum == null || localChecksum.trim().equals("") || !localChecksum.equalsIgnoreCase(checksumValue)) {
-	                            logMetacat.error("DocumentImpl.writeToFileSystem - the check sum calculated from the saved local file is " + localChecksum + ". But it doesn't match the value from the system metadata " + checksumValue);
-	                            File newFile = new File(documentPath);
-	                            boolean success = newFile.delete();
-	                            logMetacat.info("Delete the file " + newFile.getAbsolutePath() + " sucessfully? " + success);
-	                            throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is " + localChecksum + ". But it doesn't match the value from the system metadata " + checksumValue + ".");
-	                        }
-	                    }
-	                } catch (IOException ioe) {
-	                    throw new McdbException("Could not write file: " + documentPath + " : " + ioe.getMessage());
-	                } finally {
-	                    IOUtils.closeQuietly(fos);
-	                }
-			    }
-			    
-			}			
+            if (accNumber != null
+                    && (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
+                            || FileUtil.getFileSize(documentPath) == 0)) {
+                if (objectFile != null && objectFile.exists()) {
+                    logMetacat.info("DocumentImpl.writeToFileSystem - the object file already exists at the temp location and the checksum was checked. Metacat only needs to move it to the permanent position " + documentPath);
+                    File permanentFile = new File(documentPath);
+                    FileUtils.moveFile(objectFile, permanentFile);
+                } else {
+                    logMetacat.info("DocumentImpl.writeToFileSystem - Metacat needs to write the metadata bytes into the file  " + documentPath);
+                    if (checksum != null) {
+                        needCalculateChecksum = true;
+                        checksumValue = checksum.getValue();
+                        logMetacat.info("DocumentImpl.writeToFileSystem - the checksum from the system metadata is " + checksumValue);
+                        if (checksumValue == null || checksumValue.trim().equals("")) {
+                            logMetacat.error("DocumentImpl.writeToFileSystem - the checksum value from the system metadata shouldn't be null or blank");
+                            throw new InvalidSystemMetadata("1180", "The checksum value from the system metadata shouldn't be null or blank.");
+                        }
+                        String algorithm = checksum.getAlgorithm();
+                        logMetacat.info("DocumentImpl.writeToFileSystem - the algorithm to calculate the checksum from the system metadata is " + algorithm);
+                        if (algorithm == null || algorithm.trim().equals("")) {
+                            logMetacat.error("DocumentImpl.writeToFileSystem - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank");
+                            throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
+                        }
+                        try {
+                            md = MessageDigest.getInstance(algorithm);
+                        } catch (NoSuchAlgorithmException ee) {
+                            logMetacat.error("DocumentImpl.writeToFileSystem - we don't support the algorithm " + algorithm + " to calculate the checksum.", ee);
+                            throw new InvalidSystemMetadata("1180", "The algorithm " + algorithm + " to calculate the checksum is not supported: " + ee.getMessage());
+                        }
+                    }
 
-		} catch (PropertyNotFoundException pnfe) {
-			throw new McdbException("Could not write file: " + documentPath + " : "
-					+ pnfe.getMessage());
-		}
-	}	
-    
+                    OutputStream fos = null;
+                    try {
+                        if (needCalculateChecksum) {
+                            logMetacat.info("DocumentImpl.writeToFileSystem - we need to compute the checksum since it is from DataONE API");
+                            fos = new DigestOutputStream(new FileOutputStream(documentPath), md);
+                        } else {
+                            logMetacat.info("DocumentImpl.writeToFileSystem - we don't need to compute the checksum since it is from Metacat API or the checksum has been verified.");
+                            fos = new FileOutputStream(documentPath);
+                        }
+
+                        IOUtils.write(xml, fos);
+                        fos.flush();
+                        fos.close();
+                        if (needCalculateChecksum) {
+                            String localChecksum = DatatypeConverter.printHexBinary(md.digest());
+                            logMetacat.info("DocumentImpl.writeToFileSystem - the check sum calculated from the saved local file is " + localChecksum);
+                            if (localChecksum == null || localChecksum.trim().equals("") || !localChecksum.equalsIgnoreCase(checksumValue)) {
+                                logMetacat.error("DocumentImpl.writeToFileSystem - the check sum calculated from the saved local file is " + localChecksum + ". But it doesn't match the value from the system metadata " + checksumValue);
+                                File newFile = new File(documentPath);
+                                boolean success = newFile.delete();
+                                logMetacat.info("Delete the file " + newFile.getAbsolutePath() + " sucessfully? " + success);
+                                throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is " + localChecksum + ". But it doesn't match the value from the system metadata " + checksumValue + ".");
+                            }
+                        }
+                    } catch (IOException ioe) {
+                        throw new McdbException("Could not write file: " + documentPath + " : " + ioe.getMessage());
+                    } finally {
+                        IOUtils.closeQuietly(fos);
+                    }
+                }
+
+            }
+
+        } catch (PropertyNotFoundException pnfe) {
+            throw new McdbException("Could not write file: " + documentPath + " : "
+                    + pnfe.getMessage());
+        }
+    }
+
     /**
      * Deletes a doc or data file from the filesystem using the accession number.
-     * 
+     *
      * @param accNumber
      * @param isXml
      * @throws McdbException
      */
     public static void deleteFromFileSystem(String accNumber, boolean isXml) throws McdbException {
 
-    	// must have an id
-    	if (accNumber == null) {
-			throw new McdbException("Could not delete file.  Accession Number number is null" );
-		}
-    	
-		// remove the document from disk	
-    	String documentPath = null;
-	
-		// get the correct location on disk
-		documentPath = getFilePath(accNumber, isXml);
-		// delete it if it exists			
-		if (accNumber != null && FileUtil.getFileStatus(documentPath) != FileUtil.DOES_NOT_EXIST) {
-			    try {
-			    	FileUtil.deleteFile(documentPath);
-			    } catch (IOException ioe) {
-			        throw new McdbException("Could not delete file: " + documentPath + " : " + ioe.getMessage());
-			    }
-		}			
-		
-	}
-    
-    private static String getFilePath(String accNumber, boolean isXml) throws McdbException{
-    	if (accNumber == null) {
-			throw new McdbException("Could not get the file path since the Accession Number number is null" );
-		}
-    	String documentPath = null;
-    	try {
-    		String documentDir = null;
-    		
-			// get the correct location on disk
-			if (isXml) {
-				documentDir = PropertyService.getProperty("application.documentfilepath");
-			} else {
-				documentDir = PropertyService.getProperty("application.datafilepath");
-			}
-			documentPath = documentDir + FileUtil.getFS() + accNumber;
-			return documentPath;
-			
-		} catch (PropertyNotFoundException pnfe) {
-			throw new McdbException(pnfe.getClass().getName() + ": Could not delete file because: " 
-					+ documentPath + " : " + pnfe.getMessage());
-		}
-    }
-    
-    /**
-	 * Strip out an inline data section from a 2.0.X version document. This assumes 
-	 * that the inline element is within a distribution element and the id for the
-	 * distribution is the same as the subtreeid in the xml_access table.
-	 * 
-	 * @param xmlFileContents
-	 *            the contents of the file
-	 * @param inLineKey
-	 *            the unique key for this inline element
-	 */
-    private String stripInline20XData(String xmlFileContents, String inLineId)
-			throws McdbException {
-		String changedString = xmlFileContents;
-		
-    	Pattern distStartPattern = Pattern.compile("<distribution", Pattern.CASE_INSENSITIVE); 
-    	Pattern distEndPattern = Pattern.compile("</distribution>", Pattern.CASE_INSENSITIVE);
-    	Pattern idPattern = Pattern.compile("id=\"" + inLineId);
-    	Pattern inlinePattern = Pattern.compile("<inline>.*</inline>");
-    	
-    	Matcher distStartMatcher = distStartPattern.matcher(xmlFileContents);
-    	Matcher distEndMatcher = distEndPattern.matcher(xmlFileContents);
-    	Matcher idMatcher = idPattern.matcher(xmlFileContents);
-    	Matcher inlineMatcher = inlinePattern.matcher(xmlFileContents);
-    	 
-    	// loop through the document looking for distribution elements
-    	while (distStartMatcher.find()) {
-    		// find the index of the corresponding end element
-    		int distStart = distStartMatcher.end();
-        	if (!distEndMatcher.find(distStart)) {
-        		throw new McdbException("Could not find end tag for distribution");
-        	}
-        	int distEnd = distEndMatcher.start();
-        	
-        	// look for our inline id within the range of this distribution.
-        	idMatcher.region(distStart, distEnd);
-        	if (idMatcher.find()) {
-        		// if this distribution has the desired id, replace any 
-        		// <inline>.*</inline> in this distribution with <inline></inline>
-        		inlineMatcher.region(distStart, distEnd);
-            	if (inlineMatcher.find()) {
-            		changedString = inlineMatcher.replaceAll("<inline></inline>");
-            	} else {
-            		logMetacat.warn("Could not find an inline element for distribution: " + inLineId);
-            	}
-        	}
-    		
-    	}
+        // must have an id
+        if (accNumber == null) {
+            throw new McdbException("Could not delete file.  Accession Number number is null" );
+        }
 
-		return changedString;
-	}
-    
+        // remove the document from disk
+        String documentPath = null;
+
+        // get the correct location on disk
+        documentPath = getFilePath(accNumber, isXml);
+        // delete it if it exists
+        if (accNumber != null && FileUtil.getFileStatus(documentPath) != FileUtil.DOES_NOT_EXIST) {
+                try {
+                    FileUtil.deleteFile(documentPath);
+                } catch (IOException ioe) {
+                    throw new McdbException("Could not delete file: " + documentPath + " : " + ioe.getMessage());
+                }
+        }
+
+    }
+
+    private static String getFilePath(String accNumber, boolean isXml) throws McdbException{
+        if (accNumber == null) {
+            throw new McdbException("Could not get the file path since the Accession Number number is null" );
+        }
+        String documentPath = null;
+        try {
+            String documentDir = null;
+
+            // get the correct location on disk
+            if (isXml) {
+                documentDir = PropertyService.getProperty("application.documentfilepath");
+            } else {
+                documentDir = PropertyService.getProperty("application.datafilepath");
+            }
+            documentPath = documentDir + FileUtil.getFS() + accNumber;
+            return documentPath;
+
+        } catch (PropertyNotFoundException pnfe) {
+            throw new McdbException(pnfe.getClass().getName() + ": Could not delete file because: "
+                    + documentPath + " : " + pnfe.getMessage());
+        }
+    }
+
     /**
-	 * Strip out an inline data section from a 2.1.X version document. This
-	 * assumes that the inline element is within a distribution element and the
-	 * subtreeid in the xml_access table is an integer that represents the nth
-	 * distribution element in the document.
-	 * 
-	 * @param xmlFileContents
-	 *            the contents of the file
-	 * @param inLineKey
-	 *            the unique key for this inline element
-	 */
+     * Strip out an inline data section from a 2.0.X version document. This assumes
+     * that the inline element is within a distribution element and the id for the
+     * distribution is the same as the subtreeid in the xml_access table.
+     *
+     * @param xmlFileContents
+     *            the contents of the file
+     * @param inLineKey
+     *            the unique key for this inline element
+     */
+    private String stripInline20XData(String xmlFileContents, String inLineId)
+            throws McdbException {
+        String changedString = xmlFileContents;
+
+        Pattern distStartPattern = Pattern.compile("<distribution", Pattern.CASE_INSENSITIVE);
+        Pattern distEndPattern = Pattern.compile("</distribution>", Pattern.CASE_INSENSITIVE);
+        Pattern idPattern = Pattern.compile("id=\"" + inLineId);
+        Pattern inlinePattern = Pattern.compile("<inline>.*</inline>");
+
+        Matcher distStartMatcher = distStartPattern.matcher(xmlFileContents);
+        Matcher distEndMatcher = distEndPattern.matcher(xmlFileContents);
+        Matcher idMatcher = idPattern.matcher(xmlFileContents);
+        Matcher inlineMatcher = inlinePattern.matcher(xmlFileContents);
+
+        // loop through the document looking for distribution elements
+        while (distStartMatcher.find()) {
+            // find the index of the corresponding end element
+            int distStart = distStartMatcher.end();
+            if (!distEndMatcher.find(distStart)) {
+                throw new McdbException("Could not find end tag for distribution");
+            }
+            int distEnd = distEndMatcher.start();
+
+            // look for our inline id within the range of this distribution.
+            idMatcher.region(distStart, distEnd);
+            if (idMatcher.find()) {
+                // if this distribution has the desired id, replace any
+                // <inline>.*</inline> in this distribution with <inline></inline>
+                inlineMatcher.region(distStart, distEnd);
+                if (inlineMatcher.find()) {
+                    changedString = inlineMatcher.replaceAll("<inline></inline>");
+                } else {
+                    logMetacat.warn("Could not find an inline element for distribution: " + inLineId);
+                }
+            }
+
+        }
+
+        return changedString;
+    }
+
+    /**
+     * Strip out an inline data section from a 2.1.X version document. This
+     * assumes that the inline element is within a distribution element and the
+     * subtreeid in the xml_access table is an integer that represents the nth
+     * distribution element in the document.
+     *
+     * @param xmlFileContents
+     *            the contents of the file
+     * @param inLineKey
+     *            the unique key for this inline element
+     */
     private String stripInline21XData(String xmlFileContents, String inLineId) throws McdbException {
-    	int distributionIndex = Integer.valueOf(inLineId);
-    	String changedString = xmlFileContents;
-    	Pattern distStartPattern = Pattern.compile("<distribution", Pattern.CASE_INSENSITIVE); 
-    	Pattern distEndPattern = Pattern.compile("</distribution>", Pattern.CASE_INSENSITIVE); 
-    	Pattern inlinePattern = Pattern.compile("<inline>.*</inline>");
-    	Matcher matcher = distStartPattern.matcher(xmlFileContents);
-    	
-    	// iterate through distributions until we find the nth match.  The nth match 
-    	// corresponds to the inLineKey that was passed in.  Use the end of that match
-    	// to set the start range we will search for the inline element.
-    	for (int i = 0; i < distributionIndex; i++) {
-    		if (!matcher.find()) {
-    			throw new McdbException("Could not find distribution number " + (i + 1));
-    		}
-    	}	
-    	int distStart = matcher.end();
-    	
-    	// find the end tag for the distribution.  Use the beginning of that match to set
-    	// the end range we will search for the inline element
-    	matcher.usePattern(distEndPattern);
-    	if (!matcher.find(distStart)) {
-    		throw new McdbException("Could not find end tag for distribution");
-    	}
-    	int distEnd = matcher.start();
-    	
-    	// set the inline search range
-    	matcher.region(distStart, distEnd);
-    	
-    	// match any inline elements and replace with an empty inline element
-    	matcher.usePattern(inlinePattern);  	
-    	if (matcher.find()) {
-    		changedString = matcher.replaceAll("<inline></inline>");
-    	} else {
-    		logMetacat.warn("Could not find an inline element for distribution: " 
-    				+ inLineId);
-    	}
-    	
-    	return changedString;
+        int distributionIndex = Integer.valueOf(inLineId);
+        String changedString = xmlFileContents;
+        Pattern distStartPattern = Pattern.compile("<distribution", Pattern.CASE_INSENSITIVE);
+        Pattern distEndPattern = Pattern.compile("</distribution>", Pattern.CASE_INSENSITIVE);
+        Pattern inlinePattern = Pattern.compile("<inline>.*</inline>");
+        Matcher matcher = distStartPattern.matcher(xmlFileContents);
+
+        // iterate through distributions until we find the nth match.  The nth match
+        // corresponds to the inLineKey that was passed in.  Use the end of that match
+        // to set the start range we will search for the inline element.
+        for (int i = 0; i < distributionIndex; i++) {
+            if (!matcher.find()) {
+                throw new McdbException("Could not find distribution number " + (i + 1));
+            }
+        }
+        int distStart = matcher.end();
+
+        // find the end tag for the distribution.  Use the beginning of that match to set
+        // the end range we will search for the inline element
+        matcher.usePattern(distEndPattern);
+        if (!matcher.find(distStart)) {
+            throw new McdbException("Could not find end tag for distribution");
+        }
+        int distEnd = matcher.start();
+
+        // set the inline search range
+        matcher.region(distStart, distEnd);
+
+        // match any inline elements and replace with an empty inline element
+        matcher.usePattern(inlinePattern);
+        if (matcher.find()) {
+            changedString = matcher.replaceAll("<inline></inline>");
+        } else {
+            logMetacat.warn("Could not find an inline element for distribution: "
+                    + inLineId);
+        }
+
+        return changedString;
     }
 
     private boolean isRevisionOnly(String docid, int revision) throws Exception
@@ -1405,7 +1379,7 @@ public class DocumentImpl
             ResultSet rs = pstmt.getResultSet();
             boolean tablehasrows = rs.next();
             //if (rev.equals("newest") || rev.equals("all")) { return false; }
-            
+
             if (tablehasrows) {
                 int r = rs.getInt(1);
                 //System.out.println("the rev in xml_documents table is "+r);
@@ -1427,7 +1401,7 @@ public class DocumentImpl
             }
             else
             {
-                // if we couldn't find it in xml_documents we 
+                // if we couldn't find it in xml_documents we
                 // need to find it in xml_revision table
                 Vector<Integer> revList = DBUtil.getRevListFromRevisionTable(docid);
 
@@ -1553,7 +1527,7 @@ public class DocumentImpl
                     this.system_id = rs.getString(1);
                     // system id may not have server url on front.  Add it if not.
                     if (!system_id.startsWith("http://")) {
-                    	system_id = SystemUtil.getContextURL() + system_id;
+                        system_id = SystemUtil.getContextURL() + system_id;
                     }
                     this.validateType = rs.getString(2);
 
@@ -1603,7 +1577,7 @@ public class DocumentImpl
                 String sql = null;
                 if (catalogid != null )
                 {
-                	sql = "INSERT INTO xml_documents "
+                    sql = "INSERT INTO xml_documents "
                         + "(docid, rootnodeid, docname, doctype, user_owner, "
                         + "user_updated, date_created, date_updated, "
                         + "public_access, server_location, rev, catalog_id) "
@@ -1612,7 +1586,7 @@ public class DocumentImpl
                 }
                 else
                 {
-                	sql = "INSERT INTO xml_documents "
+                    sql = "INSERT INTO xml_documents "
                         + "(docid, rootnodeid, docname, doctype, user_owner, "
                         + "user_updated, date_created, date_updated, "
                         + "public_access, server_location, rev) "
@@ -1622,7 +1596,7 @@ public class DocumentImpl
                 pstmt = connection.prepareStatement(sql);
                 // Increase dbconnection usage count
                 connection.increaseUsageCount(1);
-                
+
                 //note that the server_location is set to 1.
                 //this means that "localhost" in the xml_replication table must
                 //always be the first entry!!!!!
@@ -1641,13 +1615,13 @@ public class DocumentImpl
                 pstmt.setInt(9, 0);
                 pstmt.setInt(10, serverCode);
                 pstmt.setInt(11, rev);
-               
+
                 if (catalogid != null)
                 {
                   pstmt.setInt(12, (new Integer(catalogid)).intValue());
                 }
-                
-                
+
+
             } else if (action.equals("UPDATE")) {
                 int thisrev = DBUtil.getLatestRevisionInDocumentTable(docid);
                 logMetacat.debug("DocumentImpl.writeDocumentToDB - this revision is: " + thisrev);
@@ -1670,7 +1644,7 @@ public class DocumentImpl
                 String updateSql = null;
                 if (catalogid != null)
                 {
-                	updateSql = "UPDATE xml_documents "
+                    updateSql = "UPDATE xml_documents "
                         + "SET rootnodeid = ?, docname = ?, doctype = ?, "
                         + "user_updated = ?, date_updated = ?, "
                         + "server_location = ?, rev = ?, public_access = ?, "
@@ -1679,7 +1653,7 @@ public class DocumentImpl
                 }
                 else
                 {
-                	updateSql = "UPDATE xml_documents "
+                    updateSql = "UPDATE xml_documents "
                         + "SET rootnodeid = ?, docname = ?, doctype = ?, "
                         + "user_updated = ?, date_updated = ?, "
                         + "server_location = ?, rev = ?, public_access = ? "
@@ -1720,14 +1694,14 @@ public class DocumentImpl
             // Do the insertion
             logMetacat.debug("DocumentImpl.writeDocumentToDB - executing SQL: " + pstmt.toString());
             pstmt.execute();
-            
+
             pstmt.close();
         } catch (SQLException sqle) {
-        	logMetacat.error("DocumentImpl.writeDocumentToDB - SQL error: " + sqle.getMessage());
+            logMetacat.error("DocumentImpl.writeDocumentToDB - SQL error: " + sqle.getMessage());
             sqle.printStackTrace();
             throw sqle;
         } catch (Exception e) {
-        	logMetacat.error("DocumentImpl.writeDocumentToDB - General error: " + e.getMessage());
+            logMetacat.error("DocumentImpl.writeDocumentToDB - General error: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }
@@ -1752,7 +1726,7 @@ public class DocumentImpl
      *            the user that owns the document
      * @param groups
      *            the groups to which user belongs
-     * @param writeAccessRules 
+     * @param writeAccessRules
      */
     /*
      * public static String write(DBConnection conn,String filename, String pub,
@@ -1806,7 +1780,7 @@ public class DocumentImpl
      *            checked upon update for a file lock. if override = false then
      *            a document not from this server, upon update will be locked
      *            and version checked.
-     * @param writeAccessRules 
+     * @param writeAccessRules
      */
 
     public static String write(DBConnection conn, String xmlString, String pub,
@@ -1815,16 +1789,16 @@ public class DocumentImpl
             boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String schemaLocation, Checksum checksum, File objectFile) throws Exception
     {
         // NEW - WHEN CLIENT ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV IN IT
-    	
-    	// Get the xml as a string so we can write to file later
-    	StringReader xmlReader = new StringReader(xmlString);
-    	// detect encoding
+
+        // Get the xml as a string so we can write to file later
+        StringReader xmlReader = new StringReader(xmlString);
+        // detect encoding
         XmlStreamReader xsr = null;
         if(xmlBytes == null || xmlBytes.length == 0 ) {
             xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
         } else {
             xsr = new XmlStreamReader(new ByteArrayInputStream(xmlBytes));
-        }         
+        }
         String encoding = xsr.getEncoding();
         //get the byte array from xmlString if the xmlbyte is null (this comes from metacat api)
         if(xmlBytes == null || xmlBytes.length == 0) {
@@ -1847,10 +1821,10 @@ public class DocumentImpl
             // the file and merge the differences manually.
 
             // check for 'write' permission for 'user' to update this document
-        	// use the previous revision to check the permissions
+            // use the previous revision to check the permissions
             String docIdWithoutRev = DocumentUtil.getSmartDocId(accnum);
-        	int latestRev = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
-        	String latestDocId = docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator") + latestRev;
+            int latestRev = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
+            String latestDocId = docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator") + latestRev;
             if (!hasWritePermission(user, groups, latestDocId)) {
                 throw new Exception(
                     "User " + user
@@ -1871,26 +1845,26 @@ public class DocumentImpl
             //System.out.println("sending message: " + u.toString());
             String openingtag = null;
             try {
-            	String serverResStr = ReplicationService.getURLContent(u);
-            	openingtag = serverResStr.substring(0, serverResStr.indexOf(">") + 1);
+                String serverResStr = ReplicationService.getURLContent(u);
+                openingtag = serverResStr.substring(0, serverResStr.indexOf(">") + 1);
             } catch (IOException e) {
-				// give a more meaningful error if replication check fails
-            	// see http://bugzilla.ecoinformatics.org/show_bug.cgi?id=4907
-            	String msg = "Error during replication lock request on server=" + server;
-            	logReplication.error(msg);
-            	throw new Exception(msg, e);
-			}
-            
+                // give a more meaningful error if replication check fails
+                // see http://bugzilla.ecoinformatics.org/show_bug.cgi?id=4907
+                String msg = "Error during replication lock request on server=" + server;
+                logReplication.error(msg);
+                throw new Exception(msg, e);
+            }
+
             if (openingtag.equals("<lockgranted>")) {//the lock was granted go
                                                      // ahead with the insert
                 XMLReader parser = null;
                 try {
                     //System.out.println("In lockgranted");
-                	logReplication.info("lock granted for " + accnum
+                    logReplication.info("lock granted for " + accnum
                             + " from " + server);
-                	
-                	
-			        Vector<String>guidsToSync = new Vector<String>();
+
+
+                    Vector<String>guidsToSync = new Vector<String>();
 
                     /*
                      * XMLReader parser = initializeParser(conn, action, docid,
@@ -1900,36 +1874,36 @@ public class DocumentImpl
                     parser = initializeParser(conn, action, docid, xmlReader, updaterev,
                             user, groups, pub, serverCode, dtd, ruleBase,
                             needValidation, false, null, null, encoding, writeAccessRules, guidsToSync, schemaLocation);
-                    	// false means it is not a revision doc
+                        // false means it is not a revision doc
                                    //null, null are createdate and updatedate
                                    //null will use current time as create date time
                     conn.setAutoCommit(false);
                     logMetacat.debug("DocumentImpl.write - parsing xml");
                     parser.parse(new InputSource(xmlReader));
-                    
+
                     //write the file to disk
-                    logMetacat.debug("DocumentImpl.write - Writing xml to file system");                    
-                	writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
-                	
-                	conn.commit();
+                    logMetacat.debug("DocumentImpl.write - Writing xml to file system");
+                    writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
+
+                    conn.commit();
                     conn.setAutoCommit(true);
 
-			        // The EML parser has already written to systemmetadata and then writes to xml_access when the db transaction
+                    // The EML parser has already written to systemmetadata and then writes to xml_access when the db transaction
                     // is committed. If the pids that have been updated are for data objects with their own access rules, we
-			        // must inform the CN to sync it's access rules with the MN, so the EML 2.1 parser collected such pids from the parse
-			        // operation.
-            		if (guidsToSync.size() > 0) {
-            			try {
-            				SyncAccessPolicy syncAP = new SyncAccessPolicy();
-            				syncAP.sync(guidsToSync);
-            			} catch (Exception e) {
-            				logMetacat.error("Error syncing pids with CN: " + " Exception " + e.getMessage());
-            				e.printStackTrace(System.out);
-            			}
-            		}
+                    // must inform the CN to sync it's access rules with the MN, so the EML 2.1 parser collected such pids from the parse
+                    // operation.
+                    if (guidsToSync.size() > 0) {
+                        try {
+                            SyncAccessPolicy syncAP = new SyncAccessPolicy();
+                            syncAP.sync(guidsToSync);
+                        } catch (Exception e) {
+                            logMetacat.error("Error syncing pids with CN: " + " Exception " + e.getMessage());
+                            e.printStackTrace(System.out);
+                        }
+                    }
                } catch (Exception e) {
                    e.printStackTrace();
-            	   logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
+                   logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
                     conn.rollback();
                     conn.setAutoCommit(true);
                     throw e;
@@ -1946,7 +1920,7 @@ public class DocumentImpl
                 // the file is currently locked by another user notify our
                 // user to wait a few minutes, check out a new copy and try
                 // again.
-            	logReplication.error("DocumentImpl.write - lock denied for " + accnum + " on "
+                logReplication.error("DocumentImpl.write - lock denied for " + accnum + " on "
                         + server + " reason: file already locked");
                 throw new Exception(
                         "The file specified is already locked by another "
@@ -1957,7 +1931,7 @@ public class DocumentImpl
                 // our file is outdated. notify our user to check out a new
                 // copy of the file and merge his version with the new version.
                 //System.out.println("outdated file");
-            	logReplication.info("DocumentImpl.write - lock denied for " + accnum + " on "
+                logReplication.info("DocumentImpl.write - lock denied for " + accnum + " on "
                         + server + " reason: local file outdated");
                 throw new Exception(
                         "The file you are trying to update is an outdated"
@@ -1967,13 +1941,13 @@ public class DocumentImpl
         }
 
         if (action.equals("UPDATE")) {
-			// check for 'write' permission for 'user' to update this document
-        	// use the previous revision to check the permissions
+            // check for 'write' permission for 'user' to update this document
+            // use the previous revision to check the permissions
             String docIdWithoutRev = DocumentUtil.getSmartDocId(accnum);
-        	int latestRev = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
-        	String latestDocId = docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator") + latestRev;
-            if (!hasWritePermission(user, groups, latestDocId) 
-            		&& !AuthUtil.isAdministrator(user, groups)) {
+            int latestRev = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
+            String latestDocId = docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator") + latestRev;
+            if (!hasWritePermission(user, groups, latestDocId)
+                    && !AuthUtil.isAdministrator(user, groups)) {
                 throw new Exception(
                     "User " + user
                     + " does not have permission to update XML Document #"
@@ -1981,9 +1955,9 @@ public class DocumentImpl
         }
         XMLReader parser = null;
         try {
-            
-	        
-	        Vector<String>guidsToSync = new Vector<String>();
+
+
+            Vector<String>guidsToSync = new Vector<String>();
 
             parser = initializeParser(conn, action, docid, xmlReader, rev, user, groups,
                     pub, serverCode, dtd, ruleBase, needValidation, false, null, null, encoding, writeAccessRules, guidsToSync, schemaLocation);
@@ -1996,29 +1970,29 @@ public class DocumentImpl
             parser.parse(new InputSource(xmlReader));
 
             //write the file to disk
-        	writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
-        	
-        	 conn.commit();
+            writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
+
+             conn.commit();
              conn.setAutoCommit(true);
 
-    		if (guidsToSync.size() > 0) {
-    			try {
-    				SyncAccessPolicy syncAP = new SyncAccessPolicy();
-    				syncAP.sync(guidsToSync);
-    			} catch (Exception e) {
-    				logMetacat.error("Error syncing pids with CN: " + " Exception " + e.getMessage());
-    				e.printStackTrace(System.out);
-    			}
-    		}
+            if (guidsToSync.size() > 0) {
+                try {
+                    SyncAccessPolicy syncAP = new SyncAccessPolicy();
+                    syncAP.sync(guidsToSync);
+                } catch (Exception e) {
+                    logMetacat.error("Error syncing pids with CN: " + " Exception " + e.getMessage());
+                    e.printStackTrace(System.out);
+                }
+            }
         } catch (Exception e) {
-        	logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
+            logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
             e.printStackTrace();
             conn.rollback();
             conn.setAutoCommit(true);
             throw e;
         }
 
-        
+
         // Force replicate out the new document to each server in our server
         // list. Start the thread to replicate this new document out to the
         // other servers true mean it is xml document null is because no
@@ -2031,7 +2005,7 @@ public class DocumentImpl
         return (accnum);
     }
 
-    
+
 
     /**
      * Write an XML file to the database during replication
@@ -2063,12 +2037,12 @@ public class DocumentImpl
     public static String writeReplication(DBConnection conn, String xmlString, byte[] xmlBytes,
             String pub, Reader dtd, String action, String accnum, String user,
             String[] groups, String homeServer, String notifyServer,
-            String ruleBase, boolean needValidation, String tableName, 
+            String ruleBase, boolean needValidation, String tableName,
             boolean timedReplication, Date createDate, Date updateDate, String schemaLocation) throws Exception
     {
-    	// Get the xml as a string so we can write to file later
-    	StringReader xmlReader = new StringReader(xmlString);
-    	
+        // Get the xml as a string so we can write to file later
+        StringReader xmlReader = new StringReader(xmlString);
+
         long rootId;
         String docType = null;
         String docName = null;
@@ -2115,7 +2089,7 @@ public class DocumentImpl
         XMLReader parser = null;
         boolean isRevision = false;
         try {
-            
+
             if (tableName.equals(REVISIONTABLE))
             {
                 isRevision = true;
@@ -2123,27 +2097,27 @@ public class DocumentImpl
             // detect encoding
             //XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
             XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlBytes));
-	        String encoding = xsr.getEncoding();
-	        
-	        // no need to write the EML-contained access rules for replication
-	        boolean writeAccessRules = false;
-	        Vector<String>guidsToSync = new Vector<String>();
+            String encoding = xsr.getEncoding();
+
+            // no need to write the EML-contained access rules for replication
+            boolean writeAccessRules = false;
+            Vector<String>guidsToSync = new Vector<String>();
 
             parser = initializeParser(conn, action, docid, xmlReader, rev, user, groups,
-                    pub, serverCode, dtd, ruleBase, needValidation, 
+                    pub, serverCode, dtd, ruleBase, needValidation,
                     isRevision, createDate, updateDate, encoding, writeAccessRules, guidsToSync, schemaLocation);
-         
+
             conn.setAutoCommit(false);
             parser.parse(new InputSource(xmlReader));
             conn.commit();
             conn.setAutoCommit(true);
-            
+
             // Write the file to disk
             //byte[] bytes = xmlString.getBytes(encoding);
             Checksum checksum = null;
             File objectFile = null;
             writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
-            
+
             DBSAXHandler dbx = (DBSAXHandler) parser.getContentHandler();
             rootId = dbx.getRootNodeId();
             docType = dbx.getDocumentType();
@@ -2151,7 +2125,7 @@ public class DocumentImpl
             catalogId = dbx.getCatalogId();
 
         } catch (Exception e) {
-        	logMetacat.error("DocumentImpl.writeReplication - Problem with parsing: " + e.getMessage());
+            logMetacat.error("DocumentImpl.writeReplication - Problem with parsing: " + e.getMessage());
             conn.rollback();
             conn.setAutoCommit(true);
             throw e;
@@ -2168,16 +2142,16 @@ public class DocumentImpl
             {
               // in replicate revision documents,
               // we need to register the record
-            	// into xml_revision table
-               writeDocumentToRevisionTable(conn, docid, rev, docType, docName, user, 
+                // into xml_revision table
+               writeDocumentToRevisionTable(conn, docid, rev, docType, docName, user,
                        catalogId, serverCode, rootId, createDate, updateDate);
-              
+
             }
             conn.commit();
             conn.setAutoCommit(true);
-            
+
         } catch (Exception ee) {
-        	conn.rollback();
+            conn.rollback();
             conn.setAutoCommit(true);
             logReplication.error("DocumentImpl.writeReplication - Failed to " + "create access "
                     + "rule for package: " + accnum + " because "
@@ -2186,7 +2160,7 @@ public class DocumentImpl
                     + "rule for package: " + accnum + " because "
                     + ee.getMessage());
         }
-      
+
         //Force replication to other server
         if (!timedReplication)
         {
@@ -2196,8 +2170,8 @@ public class DocumentImpl
         }
         return (accnum);
     }
-    
-   
+
+
     /**
      * Archive an object from the xml_documents table to the xml_revision table (including other changes as well).
      * Or delete an object totally from the db. The parameter "removeAll" decides which action will be taken.
@@ -2211,7 +2185,7 @@ public class DocumentImpl
      * @throws McdbDocNotFoundException
      * @throws Exception
      */
-    public static void delete(String accnum, String user, 
+    public static void delete(String accnum, String user,
             String[] groups, String notifyServer, boolean removeAll)
             throws SQLException, InsufficientKarmaException, McdbDocNotFoundException,
             Exception {
@@ -2219,12 +2193,12 @@ public class DocumentImpl
         boolean ignoreRev = true;
         delete(accnum, ignoreRev, user, groups, notifyServer, removeAll);
      }
-    
+
     /**
      * Archive an object from the xml_documents table to the xml_revision table (including other changes as well).
      * Or delete an object totally from the db. The parameter "removeAll" decides which action will be taken.
      * @param accnum  the local id (including the rev) will be applied.
-     * @param ignoreRev  if the archive action should only match docid and ignore the rev 
+     * @param ignoreRev  if the archive action should only match docid and ignore the rev
      * @param user  the subject who does the action.
      * @param groups  the groups which the user belongs to.
      * @param notifyServer  the server will be notified in the replication. It can be null.
@@ -2234,7 +2208,7 @@ public class DocumentImpl
      * @throws McdbDocNotFoundException
      * @throws Exception
      */
-    public static void delete(String accnum, boolean ignoreRev, String user, 
+    public static void delete(String accnum, boolean ignoreRev, String user,
       String[] groups, String notifyServer, boolean removeAll)
       throws SQLException, InsufficientKarmaException, McdbDocNotFoundException,
       Exception
@@ -2257,87 +2231,87 @@ public class DocumentImpl
 
             // Check if the document exists.
             if(!removeAll) {
-            	//this only archives a document from xml_documents to xml_revisions 
-            	 logMetacat.info("DocumentImp.delete - archive the document "+accnum);
-            	 pstmt = conn.prepareStatement("SELECT rev, docid FROM xml_documents WHERE docid = ?");
-            	 pstmt.setString(1, docid);
+                //this only archives a document from xml_documents to xml_revisions
+                 logMetacat.info("DocumentImp.delete - archive the document "+accnum);
+                 pstmt = conn.prepareStatement("SELECT rev, docid FROM xml_documents WHERE docid = ?");
+                 pstmt.setString(1, docid);
                  logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
                  pstmt.execute();
                  ResultSet rs = pstmt.getResultSet();
                  if(!rs.next()){
-                	 rs.close();
+                     rs.close();
                      pstmt.close();
-                     conn.increaseUsageCount(1);                 	
-                     throw new McdbDocNotFoundException("Docid " + accnum  + 
+                     conn.increaseUsageCount(1);
+                     throw new McdbDocNotFoundException("Docid " + accnum  +
                            " does not exist. Please check that you have also " +
                            "specified the revision number of the document.");
                  } else {
-                	//Get the rev from the xml_table. If the value is greater than the one user specified, we will use this one.
-                	 //In ReplicationHandler.handleDeleteSingleDocument method, the code use "1" as the revision number not matther what is the actual value
-                	 int revFromTable = rs.getInt(1);
-                	 if(!ignoreRev && revFromTable != rev) {
-                	     pstmt.close();
-                         conn.increaseUsageCount(1);                    
-                         throw new McdbDocNotFoundException("Docid " + accnum  + 
+                    //Get the rev from the xml_table. If the value is greater than the one user specified, we will use this one.
+                     //In ReplicationHandler.handleDeleteSingleDocument method, the code use "1" as the revision number not matther what is the actual value
+                     int revFromTable = rs.getInt(1);
+                     if(!ignoreRev && revFromTable != rev) {
+                         pstmt.close();
+                         conn.increaseUsageCount(1);
+                         throw new McdbDocNotFoundException("Docid " + accnum  +
                                " does not exist. Please check that you have also " +
                                "specified the revision number of the document.");
-                	 }
-                	 if(revFromTable > rev) {
-                		 logMetacat.info("DocumentImpl.delete - in the archive the user specified rev - "+rev +"is less than the version in xml_document table - "+revFromTable+
-                				 ". We will use the one from table.");
-                		 rev = revFromTable;             		 
-                	 }
-                	 rs.close();
+                     }
+                     if(revFromTable > rev) {
+                         logMetacat.info("DocumentImpl.delete - in the archive the user specified rev - "+rev +"is less than the version in xml_document table - "+revFromTable+
+                                 ". We will use the one from table.");
+                         rev = revFromTable;
+                     }
+                     rs.close();
                      pstmt.close();
                      conn.increaseUsageCount(1);
-                	 
+
                  }
-            } else {          	
-            	logMetacat.info("DocumentImp.delete - complete delete the document "+accnum);
-           	 	pstmt = conn.prepareStatement("SELECT * FROM xml_documents WHERE docid = ? and rev = ?");
-           	 	pstmt.setString(1, docid);
-           	 	pstmt.setInt(2, rev);
+            } else {
+                logMetacat.info("DocumentImp.delete - complete delete the document "+accnum);
+                    pstmt = conn.prepareStatement("SELECT * FROM xml_documents WHERE docid = ? and rev = ?");
+                    pstmt.setString(1, docid);
+                    pstmt.setInt(2, rev);
                 logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
                 pstmt.execute();
                 ResultSet rs = pstmt.getResultSet();
                 if(!rs.next()){
-                	//look at the xml_revisions table
-            		logMetacat.debug("DocumentImpl.delete - look at the docid "+ accnum+" in the xml_revision table");
-            		 pstmt = conn.prepareStatement("SELECT * FROM xml_revisions WHERE docid = ? AND rev = ?");
+                    //look at the xml_revisions table
+                    logMetacat.debug("DocumentImpl.delete - look at the docid "+ accnum+" in the xml_revision table");
+                     pstmt = conn.prepareStatement("SELECT * FROM xml_revisions WHERE docid = ? AND rev = ?");
                      pstmt.setString(1, docid);
                      pstmt.setInt(2, rev);
                      logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
                      pstmt.execute();
                      rs = pstmt.getResultSet();
                      if(!rs.next()) {
-                    	 rs.close();
+                         rs.close();
                          pstmt.close();
                          conn.increaseUsageCount(1);
-                         throw new McdbDocNotFoundException("Docid " + accnum  + 
+                         throw new McdbDocNotFoundException("Docid " + accnum  +
                                " does not exist. Please check and try to delete it again.");
                      } else {
-                    	 rs.close();
+                         rs.close();
                          pstmt.close();
                          conn.increaseUsageCount(1);
-                    	 inRevisionTable=true;
+                         inRevisionTable=true;
                      }
                 } else {
-                	 rs.close();
+                     rs.close();
                      pstmt.close();
-                     conn.increaseUsageCount(1);               	
+                     conn.increaseUsageCount(1);
                 }
-            }     
+            }
 
             // get the type of deleting docid, this will be used in forcereplication
             String type = null;
             if(!inRevisionTable) {
-            	type = getDocTypeFromDB(conn, "xml_documents", docid);
+                type = getDocTypeFromDB(conn, "xml_documents", docid);
             } else {
-            	type = getDocTypeFromDB(conn, "xml_revisions", docid);
+                type = getDocTypeFromDB(conn, "xml_revisions", docid);
             }
             logMetacat.info("DocumentImpl.delete - the deleting doc type is " + type+ "...");
             if (type != null && type.trim().equals("BIN")) {
-            	isXML = false;
+                isXML = false;
             }
 
             logMetacat.info("DocumentImpl.delete - Start deleting doc " + docid + "...");
@@ -2346,17 +2320,17 @@ public class DocumentImpl
             if (!hasAllPermission(user, groups, accnum)) {
                 if(!AuthUtil.isAdministrator(user, groups)){
                     throw new InsufficientKarmaException(
-                        "User " + user + 
-                        " does not have permission to delete XML Document #" + 
+                        "User " + user +
+                        " does not have permission to delete XML Document #" +
                         accnum);
                 }
             }
 
             conn.setAutoCommit(false);
             if(!inRevisionTable) {
-            	   // Copy the record to the xml_revisions table if not a full delete
+                   // Copy the record to the xml_revisions table if not a full delete
                 if (!removeAll) {
-                	DocumentImpl.moveDocToRevision(conn, docid, user, null);
+                    DocumentImpl.moveDocToRevision(conn, docid, user, null);
                     logMetacat.info("DocumentImpl.delete - calling archiveDocAndNodesRevision");
                 }
                 double afterArchiveDocAndNode = System.currentTimeMillis()/1000;
@@ -2372,7 +2346,7 @@ public class DocumentImpl
                 conn.increaseUsageCount(1);
                 double afterDeleteDoc = System.currentTimeMillis()/1000;
             } else {
-            	logMetacat.info("DocumentImpl.delete - deleting from xml_revisions");
+                logMetacat.info("DocumentImpl.delete - deleting from xml_revisions");
                 pstmt = conn.prepareStatement("DELETE FROM xml_revisions WHERE docid = ? AND rev = ?");
                 pstmt.setString(1, docid);
                 pstmt.setInt(2, rev);
@@ -2381,43 +2355,43 @@ public class DocumentImpl
                 pstmt.close();
                 conn.increaseUsageCount(1);
             }
-            
-                
+
+
             // set as archived in the systemMetadata  if it is not a complete removal
             String pid = IdentifierManager.getInstance().getGUID(docid, rev);
             Identifier guid = new Identifier();
-        	guid.setValue(pid);          
+            guid.setValue(pid);
 
             //update systemmetadata table and solr index
             SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
             if (sysMeta != null) {
-    				//sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-    				sysMeta.setArchived(true);
-                	//sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-                	if(!removeAll) {
-                		SystemMetadataManager.getInstance().store(sysMeta);
-                		MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
-                	} else { 
-                		try {
-                			SystemMetadataManager.getInstance().delete(guid);
-                			MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
-                		} catch (RuntimeException ee) {
-                			logMetacat.warn("we catch the run time exception in deleting system metadata "+ee.getMessage());
-                			throw new Exception("DocumentImpl.delete -"+ee.getMessage());
-                		}	
-                	}              	
-                    
+                    //sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+                    sysMeta.setArchived(true);
+                    //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                    if(!removeAll) {
+                        SystemMetadataManager.getInstance().store(sysMeta);
+                        MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
+                    } else {
+                        try {
+                            SystemMetadataManager.getInstance().delete(guid);
+                            MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
+                        } catch (RuntimeException ee) {
+                            logMetacat.warn("we catch the run time exception in deleting system metadata "+ee.getMessage());
+                            throw new Exception("DocumentImpl.delete -"+ee.getMessage());
+                        }
+                    }
+
             }
-            
+
             // only commit if all of this was successful
             conn.commit();
             conn.setAutoCommit(true);
-            
+
             // remove the file if called for
             if (removeAll) {
-            	deleteFromFileSystem(accnum, isXML);
+                deleteFromFileSystem(accnum, isXML);
             }
-                        
+
             // add force delete replication document here.
             String deleteAction = ReplicationService.FORCEREPLICATEDELETE;
             if (removeAll) {
@@ -2426,13 +2400,13 @@ public class DocumentImpl
             ForceReplicationHandler frh = new ForceReplicationHandler(
                              accnum, deleteAction, isXML, notifyServer);
             logMetacat.debug("DocumentImpl.delete - ForceReplicationHandler created: " + frh.toString());
-            
+
            double end = System.currentTimeMillis()/1000;
            logMetacat.info("DocumentImpl.delete - total delete time is:  " + (end - start));
 
         } catch ( Exception e ) {
-        	// rollback the delete if there was an error
-        	conn.rollback();
+            // rollback the delete if there was an error
+            conn.rollback();
             logMetacat.error("DocumentImpl.delete -  Error: " + e.getMessage());
             throw e;
         } finally {
@@ -2447,7 +2421,7 @@ public class DocumentImpl
                 DBConnectionPool.returnDBConnection(conn, serialNumber);
             }
         }
-       
+
 
     }
 
@@ -2517,7 +2491,7 @@ public class DocumentImpl
 
     /**
      * Set up the parser handlers for writing the document to the database
-     * @param writeAccessRules 
+     * @param writeAccessRules
      */
     private static XMLReader initializeParser(DBConnection dbconn,
             String action, String docid, Reader xml, String rev, String user,
@@ -2545,7 +2519,7 @@ public class DocumentImpl
             parser.setErrorHandler((ErrorHandler) chandler);
             parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
             parser.setProperty(LEXICALPROPERTY, chandler);
-            if (ruleBase != null && (ruleBase.equals(SCHEMA) || ruleBase.equals(EML200) 
+            if (ruleBase != null && (ruleBase.equals(SCHEMA) || ruleBase.equals(EML200)
                     || ruleBase.equals(EML210)) && needValidation) {
                 XMLSchemaService xmlss = XMLSchemaService.getInstance();
                 //xmlss.doRefresh();
@@ -2555,15 +2529,15 @@ public class DocumentImpl
                 parser.setFeature(NAMESPACEFEATURE, true);
                 //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
                 parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                
+
                 Vector<XMLSchema> schemaList = xmlss.findSchemasInXML((StringReader)xml);
-                boolean allSchemasRegistered = 
-                	xmlss.areAllSchemasRegistered(schemaList);
-                if (xmlss.useFullSchemaValidation() && !allSchemasRegistered &&  
+                boolean allSchemasRegistered =
+                    xmlss.areAllSchemasRegistered(schemaList);
+                if (xmlss.useFullSchemaValidation() && !allSchemasRegistered &&
                         !ruleBase.equals(EML210) && !ruleBase.equals(EML200)) {
-                	parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
+                    parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
                 }
-                logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: " + schemaLocation);              
+                logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: " + schemaLocation);
                 // Set external schemalocation.
                 if (schemaLocation != null
                         && !(schemaLocation.trim()).equals("")) {
@@ -2581,7 +2555,7 @@ public class DocumentImpl
                 parser.setFeature(NAMESPACEFEATURE, true);
                 //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
                 parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                logMetacat.info("DocumentImpl.initalizeParser - Generic external no-namespace schema location: " + schemaLocation);              
+                logMetacat.info("DocumentImpl.initalizeParser - Generic external no-namespace schema location: " + schemaLocation);
                 // Set external schemalocation.
                 if (schemaLocation != null
                         && !(schemaLocation.trim()).equals("")) {
@@ -2638,7 +2612,7 @@ public class DocumentImpl
                             + e.getMessage());
         }
     }
-    
+
     /**
      * This method will archive both xml_revision.
      * @param dbconn
@@ -2647,7 +2621,7 @@ public class DocumentImpl
      * @param rootNodeId
      * @throws Exception
      */
-    private static void archiveDocToRevision(DBConnection dbconn, String docid, 
+    private static void archiveDocToRevision(DBConnection dbconn, String docid,
                                      String user, long rootNodeId) throws Exception
     {
         String sysdate = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
@@ -2695,9 +2669,9 @@ public class DocumentImpl
                             + ee.getMessage());
         }
       }
-       
+
     }
-    
+
     /** Save a document entry in the xml_revisions table */
     private static void archiveDocRevision(String docid, String user, DBConnection conn) throws Exception
     {
@@ -2717,7 +2691,7 @@ public class DocumentImpl
                     + "user_owner, ?, date_created, date_updated, "
                     + "server_location, rev, public_access, catalog_id "
                     + "FROM xml_documents " + "WHERE docid = ?");
-            
+
             // Bind the values to the query and execute it
             conn.increaseUsageCount(1);
             pstmt.setString(1, docid);
@@ -2737,7 +2711,7 @@ public class DocumentImpl
                 logMetacat.error("DocumentImpl.archiveDocRevision - SQL Error: "
                                 + ee.getMessage());
                 throw ee;
-            } 
+            }
         }
     }
 
@@ -2906,7 +2880,7 @@ public class DocumentImpl
                  * 'MM/DD/YY'), '" + replicate +"', '"+dataReplicate+"','"+ hub +
                  * "')");
                  */
-                
+
                 Calendar cal = Calendar.getInstance();
                 cal.set(1980, 1, 1);
                 pStmt = dbConn
@@ -2914,7 +2888,7 @@ public class DocumentImpl
                                 + "(server, last_checked, replicate, datareplicate, hub) "
                                 + "VALUES (?, ?, ?, ?, ?)");
                 pStmt.setString(1, server);
-				pStmt.setTimestamp(2, new Timestamp(cal.getTimeInMillis()) );
+                pStmt.setTimestamp(2, new Timestamp(cal.getTimeInMillis()) );
                 pStmt.setInt(3, replicate);
                 pStmt.setInt(4, dataReplicate);
                 pStmt.setInt(5, hub);
@@ -2958,18 +2932,18 @@ public class DocumentImpl
      * info. The create date and update will be current time.
      * If rootNodeId < 0, this means it has not rootid
      */
-    private static void writeDocumentToRevisionTable(DBConnection con, String docId, 
-            String rev, String docType, String docName, String user, 
+    private static void writeDocumentToRevisionTable(DBConnection con, String docId,
+            String rev, String docType, String docName, String user,
             String catalogid, int serverCode, long rootNodeId, Date createDate, Date updateDate) throws SQLException, Exception
     {
-        
-        try 
+
+        try
         {
             Date today = Calendar.getInstance().getTime();
             if (createDate == null){
                 createDate = today;
             }
-            
+
             logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - the create date is "+createDate);
             if (updateDate == null){
                 updateDate = today;
@@ -2980,7 +2954,7 @@ public class DocumentImpl
             logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - the root node id is "+rootNodeId);
             if (rootNodeId <= 0)
             {
-            	// this is for data file, not rootnodeid need
+                // this is for data file, not rootnodeid need
                sql = "INSERT INTO xml_revisions "
                    + "(docid, docname, doctype, user_owner, "
                    + "user_updated, date_created, date_updated, "
@@ -2990,7 +2964,7 @@ public class DocumentImpl
             }
             else
             {
-            	if (catalogid != null)
+                if (catalogid != null)
                 {
                     sql = "INSERT INTO xml_revisions "
                     + "(docid, docname, doctype, user_owner, "
@@ -3026,14 +3000,14 @@ public class DocumentImpl
             logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - update user is "+user);
             pstmt.setTimestamp(6, new Timestamp(createDate.getTime()));
             pstmt.setTimestamp(7, new Timestamp(updateDate.getTime()));
-            
+
             pstmt.setInt(8, 0);
-            
+
             pstmt.setInt(9, serverCode);
             logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - server code is "+serverCode);
             pstmt.setInt(10, Integer.parseInt(rev));
             logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - rev is "+rev);
-            
+
             if (rootNodeId > 0 )
             {
               if (catalogid != null)
@@ -3046,7 +3020,7 @@ public class DocumentImpl
               else
               {
                  pstmt.setLong(11, rootNodeId);
-                 logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - root id is "+rootNodeId); 
+                 logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - root id is "+rootNodeId);
               }
             }
             // Do the insertion
@@ -3054,53 +3028,53 @@ public class DocumentImpl
             pstmt.execute();
             pstmt.close();
             logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - end of write into revisons");
-           
-        } 
-        catch (SQLException sqle) 
+
+        }
+        catch (SQLException sqle)
         {
-        	logMetacat.error("DocumentImpl.writeDocumentToRevisionTable - SQL error: " + sqle.getMessage());
-        	sqle.printStackTrace();
+            logMetacat.error("DocumentImpl.writeDocumentToRevisionTable - SQL error: " + sqle.getMessage());
+            sqle.printStackTrace();
             throw sqle;
-        } 
-        catch (Exception e) 
+        }
+        catch (Exception e)
         {
-        	logMetacat.error("DocumentImpl.writeDocumentToRevisionTable - General error: " + e.getMessage());
+            logMetacat.error("DocumentImpl.writeDocumentToRevisionTable - General error: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }
     }
-    
+
     /**
      * This method will generate record in xml_revision table for a data file
-     * The reason why we need this method is because data file would be parsed by 
+     * The reason why we need this method is because data file would be parsed by
      * xml parser. So the constructor would be called for data file and this
      * method will replace the function
      */
     static private void registerDeletedDataFile(String docname,
-            String doctype, String accnum, String user, int serverCode, 
+            String doctype, String accnum, String user, int serverCode,
             Date createDate, Date updateDate) throws Exception
     {
         DBConnection dbconn = null;
         int serialNumber = -1;
-        try 
+        try
         {
             //dbconn = util.openDBConnection();
             dbconn = DBConnectionPool.getDBConnection(
                     "DeletedDocumentImpl.registerDeletedDataFile");
             serialNumber = dbconn.getCheckOutSerialNumber();
-            String docIdWithoutRev = 
-            	DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            String docIdWithoutRev =
+                DocumentUtil.getDocIdFromAccessionNumber(accnum);
             String rev = DocumentUtil.getRevisionStringFromString(accnum);
-            writeDocumentToRevisionTable(dbconn, docIdWithoutRev, 
+            writeDocumentToRevisionTable(dbconn, docIdWithoutRev,
                     rev, doctype, docname, user,
-                    null, serverCode, -1, createDate, updateDate); 
+                    null, serverCode, -1, createDate, updateDate);
             dbconn.close();
-        } 
-        finally 
+        }
+        finally
         {
-            
+
             DBConnectionPool.returnDBConnection(dbconn, serialNumber);
         }
     }
-    
+
 }
