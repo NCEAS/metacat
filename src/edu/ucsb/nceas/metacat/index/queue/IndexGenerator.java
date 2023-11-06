@@ -1,6 +1,7 @@
 package edu.ucsb.nceas.metacat.index.queue;
 
 import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,7 +10,6 @@ import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.SystemMetadata;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -18,11 +18,10 @@ import com.rabbitmq.client.ConnectionFactory;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
-import edu.ucsb.nceas.metacat.dataone.D1NodeService;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
+import edu.ucsb.nceas.metacat.index.IndexEventDAO;
 import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
-import edu.ucsb.nceas.utilities.FileUtil;
 
 /**
  * The IndexGenerator class will publish (send) the index information
@@ -179,7 +178,7 @@ public class IndexGenerator extends BaseService {
      *
      * @return a singleton instance of the RabbitMQService class.
      */
-    public static IndexGenerator getInstance() {
+    public static IndexGenerator getInstance() throws ServiceException {
         if (instance == null) {
             synchronized (IndexGenerator.class) {
                 if (instance == null) {
@@ -192,6 +191,7 @@ public class IndexGenerator extends BaseService {
                                        + "to create the IndexGenerator instance" 
                                        + " and set it to null.");
                         instance = null;
+                        throw e;
                     }
                 }
             }
@@ -217,11 +217,26 @@ public class IndexGenerator extends BaseService {
             throw new InvalidRequest("0000", "IndexGenerator.publishToIndexQueue" 
                                  + " - the index type can't be null or blank.");
         }
+        String errorType = IndexEvent.CREATE_FAILURE_TO_QUEUE;
+        String additionErrorMessage = null;
+        if (index_type.equals(DELETE_INDEX_TYPE)) {
+            errorType = IndexEvent.DELETE_FAILURE_TO_QUEUE;
+        }
         if (RabbitMQchannel == null) {
-            throw new ServiceException("IndexGenerator.publishToIndexQueue - " 
-                                + "can't publish the index task for " 
-                                + id.getValue() + " since the RabbitMQ channel " 
-                + " is null, which means Metacat cannot connect with RabbitMQ.");
+            try {
+                saveFailedTaskToDB(errorType, id, "RabbitMQchannel is null");
+            } catch (SQLException e) {
+                additionErrorMessage = e.getMessage();
+            }
+            String error = "IndexGenerator.publishToIndexQueue - "
+                                    + "can't publish the index task for "
+                                    + id.getValue() + " since the RabbitMQ channel "
+                                    + " is null, which means Metacat cannot connect with RabbitMQ.";
+            if (additionErrorMessage != null) {
+                error = error + " And also Metacat can't save the faiure index task into DB since "
+                                + additionErrorMessage;
+            }
+            throw new ServiceException(error);
         }
         try {
             Map<String, Object> headers = new HashMap<String, Object>();
@@ -236,29 +251,56 @@ public class IndexGenerator extends BaseService {
             if (filePath != null) {
                 headers.put(HEADER_PATH, filePath);
             }
-            AMQP.BasicProperties basicProperties = 
+            AMQP.BasicProperties basicProperties =
                      new AMQP.BasicProperties.Builder()
                     .contentType("text/plain")
                     .deliveryMode(2) // set this message to persistent
                     .priority(priority)
                     .headers(headers)
                     .build();
-            RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY, 
+            RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY,
                                             basicProperties, null);
             logMetacat.info("IndexGenerator.publish - The index task with the "
-                            + "object dentifier " + id.getValue() 
-                            + ", the index type " + index_type 
-                            + ", the file path " + filePath 
-                            + " (null means Metacat doesn't have the object), " 
-                            + " the priority " + priority 
-                            + " was push into RabbitMQ with the exchange name " 
+                            + "object dentifier " + id.getValue()
+                            + ", the index type " + index_type
+                            + ", the file path " + filePath
+                            + " (null means Metacat doesn't have the object), "
+                            + " the priority " + priority
+                            + " was push into RabbitMQ with the exchange name "
                             + EXCHANGE_NAME);
         } catch (Exception e) {
-            throw new ServiceException("IndexGenerator.publishToIndexQueue - " 
-                                       + "can't publish the index task for " 
-                                       + id.getValue() + " since " 
-                                       + e.getMessage());
+            try {
+                saveFailedTaskToDB(errorType, id, e.getMessage());
+            } catch (SQLException sqle) {
+                additionErrorMessage = sqle.getMessage();
+            }
+            String error = "IndexGenerator.publishToIndexQueue - "
+                            + "can't publish the index task for "
+                            + id.getValue() + " since "
+                            + e.getMessage();
+            if (additionErrorMessage != null) {
+                error = error + ". And also Metacat can't save the faiure index task into DB since "
+                                + additionErrorMessage;
+            }
+            throw new ServiceException(error);
         }
+    }
+    
+    /**
+     * Save the failed index tasks into database
+     * @param action  the failed action
+     * @param id  the identifier of the object which needs to be indexed
+     * @param description  description of the failure
+     * @throws SQLException
+     */
+    private void saveFailedTaskToDB(String action, Identifier id, String description) 
+                                                                    throws SQLException {
+        IndexEvent event = new IndexEvent();
+        event.setAction(action);
+        event.setDate(Calendar.getInstance().getTime());
+        event.setDescription(description);
+        event.setIdentifier(id);
+        IndexEventDAO.getInstance().add(event);
     }
     
     /**

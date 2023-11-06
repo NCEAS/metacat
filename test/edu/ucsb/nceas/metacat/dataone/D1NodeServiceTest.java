@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -155,6 +156,14 @@ public class D1NodeServiceTest extends MCTestCase {
     public void tearDown() {
         // set back to force it to use defaults
         D1Client.setNodeLocator(null);
+    }
+    
+    /**
+     * Get the http servlet request
+     * @return the http servlet request
+     */
+    public HttpServletRequest getServletRequest() {
+        return request;
     }
 
     public void testExpandRighsHolder() throws Exception {
@@ -311,7 +320,7 @@ public class D1NodeServiceTest extends MCTestCase {
 
     /**
      * constructs a "fake" session with a test subject
-     * @return
+     * @return a Session object with the test subject
      */
     public Session getTestSession() throws Exception {
         Session session = new Session();
@@ -411,8 +420,14 @@ public class D1NodeServiceTest extends MCTestCase {
 
     /**
      * create system metadata with a specified id
+     * @param id  the identifier of the system metadata
+     * @param owner  the rights holder of the system metadata
+     * @param object  the object associated with the system metadata
+     * @return
+     * @throws Exception
      */
-    public SystemMetadata createSystemMetadata(Identifier id, Subject owner, InputStream object) throws Exception {
+    public static SystemMetadata createSystemMetadata(Identifier id, Subject owner,
+                                                        InputStream object) throws Exception {
         SystemMetadata sm = new SystemMetadata();
         addSystemMetadataInfo(sm, id, owner, object);
         return sm;
@@ -434,24 +449,25 @@ public class D1NodeServiceTest extends MCTestCase {
 
     /**
      * Add the system metadata information to a given system metadata object.
-     * @param id
-     * @param owner
-     * @param object
-     * @return
+     * @param sm  the system metadata object which have the given information
+     * @param id  the identifier of the system metadata
+     * @param owner  the rights holder of the system metadata
+     * @param object  the object associated with the system metadata
      * @throws Exception
      */
-    private void addSystemMetadataInfo(org.dataone.service.types.v1.SystemMetadata sm, Identifier id, Subject owner, InputStream object) throws Exception {
+    private static void addSystemMetadataInfo(org.dataone.service.types.v1.SystemMetadata sm, 
+                                Identifier id, Subject owner, InputStream object) throws Exception {
         sm.setSerialVersion(BigInteger.valueOf(1));
         // set the id
         sm.setIdentifier(id);
-        sm.setFormatId(ObjectFormatCache.getInstance().getFormat("application/octet-stream").getFormatId());
+        sm.setFormatId(ObjectFormatCache.getInstance()
+                                        .getFormat("application/octet-stream").getFormatId());
         byte[] array = IOUtils.toByteArray(object);
         if (object.markSupported()) {
             object.reset();
         }
         int size = array.length;
         String sizeStr = "" + size;
-        //System.out.println("the size of system metadata is ***********************" + sizeStr);
         sm.setSize(new BigInteger(sizeStr));
         // create the checksum
         InputStream input = new ByteArrayInputStream(array);
@@ -471,7 +487,8 @@ public class D1NodeServiceTest extends MCTestCase {
         sm.setDateSysMetadataModified(new Date());
         String currentNodeId = Settings.getConfiguration().getString("dataone.nodeId");
         if(currentNodeId == null || currentNodeId.trim().equals("")) {
-            throw new Exception("there should be value in the dataone.nodeId in the metacat.properties file.");
+            throw new Exception("there should be value in the dataone.nodeId "
+                                    + "in the metacat.properties file.");
         }
         NodeReference nr = new NodeReference();
         nr.setValue(currentNodeId);
