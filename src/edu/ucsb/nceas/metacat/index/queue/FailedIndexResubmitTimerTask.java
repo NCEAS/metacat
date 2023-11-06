@@ -20,10 +20,12 @@ import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
  * A timer to regenerate failed index tasks or index tasks in a given time frame.
  */
 public class FailedIndexResubmitTimerTask extends TimerTask {
+    protected static long maxAgeOfFailedIndexTask = 864000000; // 10 days
     private static Log log = LogFactory.getLog(FailedIndexResubmitTimerTask.class);
     //if this task need to reindex the previously failed index task
     private boolean needReindexFailedEvent = true;
-    protected static long maxAgeOfFailedIndexTask = 864000000; // 10 days
+    private IndexEventDAO indexEventDAO = IndexEventDAO.getInstance();
+    
     
     /**
      * Constructor
@@ -52,7 +54,7 @@ public class FailedIndexResubmitTimerTask extends TimerTask {
         //the default oldest age is 10 days earlier (older) than the current time
         Date oldestAge = new Date(now.getTime() - maxAgeOfFailedIndexTask);
         try {
-            List<IndexEvent> failedCreateEvents = IndexEventDAO.getInstance()
+            List<IndexEvent> failedCreateEvents = indexEventDAO
                                                 .get(IndexEvent.CREATE_FAILURE_TO_QUEUE, oldestAge);
             reindexFailedTasks(failedCreateEvents);
         } catch (SQLException e) {
@@ -61,7 +63,7 @@ public class FailedIndexResubmitTimerTask extends TimerTask {
         }
         
         try {
-            List<IndexEvent> failedDeleteEvents = IndexEventDAO.getInstance()
+            List<IndexEvent> failedDeleteEvents = indexEventDAO
                                                 .get(IndexEvent.DELETE_FAILURE_TO_QUEUE, oldestAge);
             reindexFailedTasks(failedDeleteEvents);
         } catch (SQLException e) {
@@ -93,11 +95,11 @@ public class FailedIndexResubmitTimerTask extends TimerTask {
                                 //this is a delete event
                                 deleteIndex(id);
                                 //Succeeded and remove it from the index event table
-                                IndexEventDAO.getInstance().remove(event.getIdentifier());
+                                indexEventDAO.remove(event.getIdentifier());
                             } else {
                                 IndexGeneratorTimerTask.submitIndex(id);
                                 //Succeeded and remove it from the index event table
-                                IndexEventDAO.getInstance().remove(event.getIdentifier());
+                                indexEventDAO.remove(event.getIdentifier());
                             }
                         } catch (Exception e) {
                             log.warn("FailedIndexResubmitTimerTask.reIndexFAiledTasks - failed "
@@ -140,6 +142,14 @@ public class FailedIndexResubmitTimerTask extends TimerTask {
      */
     public boolean cancel() {
         return true;
+    }
+
+    /**
+     * Set another IndexEventDAO object to this class. It is for testing.
+     * @param indexEventDAO  the new IndexEventDAO object will be set
+     */
+    public void setIndexEventDAO(IndexEventDAO indexEventDAO) {
+        this.indexEventDAO = indexEventDAO;
     }
 
 }
