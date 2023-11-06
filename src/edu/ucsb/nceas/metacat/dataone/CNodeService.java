@@ -1238,7 +1238,7 @@ public class CNodeService extends D1NodeService
                 "4861", "No Session - could not authorize for registration."
                 + "  If you are not logged in, please do so and retry the request.");
         } else {
-            //only CN is allwoed
+            //only CN is allowed
             D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861", "????");
             authDel.doCNOnlyAuthorization(session);
         }
@@ -2122,7 +2122,7 @@ public class CNodeService extends D1NodeService
                 "4861", "No Session - could not authorize for updating system metadata."
                 + "  If you are not logged in, please do so and retry the request.");
         } else {
-            //only CN is allwoed
+            //only CN is allowed
             D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861", "????");
             authDel.doCNOnlyAuthorization(session);
         }
@@ -2137,7 +2137,7 @@ public class CNodeService extends D1NodeService
                 "4863", "We can't find the current system metadata on the member node for the id "
                 + pid.getValue());
         }
-        // CN will ignore the comming serial version and replica list fields from the mn node.
+        // CN will ignore the coming serial version and replica list fields from the mn node.
         BigInteger currentSerialVersion = currentSysmeta.getSerialVersion();
         sysmeta.setSerialVersion(currentSerialVersion);
         List<Replica> replicas = currentSysmeta.getReplicaList();
