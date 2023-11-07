@@ -697,20 +697,6 @@ public class SystemUtil {
 		return System.getProperty("user.home");
 	}
 	
-	/**
-	 * Get a list of xml paths that need to be indexed
-	 */
-	public static Vector<String> getPathsForIndexing() throws MetacatUtilException {
-		Vector <String> indexPaths = null;
-		try {
-			indexPaths = 
-				StringUtil.toVector(PropertyService.getProperty("xml.indexPaths"), ',');
-		} catch (PropertyNotFoundException pnfe) {
-			throw new MetacatUtilException("could not get index paths: " + pnfe.getMessage());
-		}
-		
-		return indexPaths;
-	}
 	
 	/**
 	 * Get the url pointing to the user management page.

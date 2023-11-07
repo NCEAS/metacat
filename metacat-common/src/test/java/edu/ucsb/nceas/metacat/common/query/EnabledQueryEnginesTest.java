@@ -26,14 +26,17 @@ public class EnabledQueryEnginesTest extends MetacatCommonTestBase {
     @Test
     public void testGetEngines() {
         List<String> list = EnabledQueryEngines.getInstance().getEnabled();
-        assertTrue("testGetEngines - the first enabled engine should be "+EnabledQueryEngines.PATHQUERYENGINE+ "rather than "+list.get(0), list.get(0).equals(EnabledQueryEngines.PATHQUERYENGINE));
-        assertTrue("testGetEngines - the second enabled engine should be "+EnabledQueryEngines.SOLRENGINE+" rather than "+list.get(1), list.get(1).equals(EnabledQueryEngines.SOLRENGINE));
+        assertTrue("testGetEngines - the first enabled engine should be "
+                     + EnabledQueryEngines.SOLRENGINE+" rather than " + list.get(0),
+                     list.get(0).equals(EnabledQueryEngines.SOLRENGINE));
     }
     
     @Test
     public void testIfEnabled() {
-        assertTrue("testIfEnabled - the "+EnabledQueryEngines.SOLRENGINE+ " should be enabled", EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE));
-        assertTrue("testIfEnabled - the "+EnabledQueryEngines.PATHQUERYENGINE+ " should be enabled", EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE));
-        assertTrue("testIfEnabled - the engine \"yyy\" should not be enabled", !EnabledQueryEngines.getInstance().isEnabled("yyy"));
+        assertTrue("testIfEnabled - the " + EnabledQueryEngines.SOLRENGINE
+                      + " should be enabled",
+                       EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE));
+        assertTrue("testIfEnabled - the engine \"yyy\" should not be enabled",
+                                    !EnabledQueryEngines.getInstance().isEnabled("yyy"));
     }
 }

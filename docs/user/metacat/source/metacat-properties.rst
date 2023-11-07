@@ -332,46 +332,10 @@ are managed with the properties configuration utility.
 |                                            |                                                                               |                                                         |
 |                                            | Default Value: 30000                                                          |                                                         |
 +--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.queryignoredparams*               | Parameters to ignore in a structured XML query.                               | enableediting                                           |
-|                                            |                                                                               |                                                         |
-|                                            | Default Value: enableediting,foo                                              |                                                         |
-+--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.usexmlindex*                      | Determines whether to use XML indexes when finding                            | true                                                    |
-|                                            | documents. Possible values are true and false.                                |                                                         |
-|                                            |                                                                               |                                                         |
-|                                            | Default Value: true                                                           |                                                         |
-+--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.appResultsetSize*                 | Determines the number of results that can be returned to an application       | 7000                                                    |
-|                                            | from a query.                                                                 |                                                         |
-|                                            | Default Value: 7000                                                           |                                                         |
-+--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
 | database.webResultsetSize*                 | Determines the number of results that can be returned to a                    | 7000                                                    |
 |                                            | Web browser from a query.                                                     |                                                         |
 |                                            |                                                                               |                                                         |
 |                                            | Default Value: 7000                                                           |                                                         |
-+--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.xmlReturnfieldCount*              | If the query results of a query are returned more times                       | 0                                                       |
-|                                            | than this value, then those results will be inserted into the xml_queryresult |                                                         |
-|                                            | table in the database. For example, if you want results for                   |                                                         |
-|                                            | a query to be stored in xml_queryresult only when it has been requested       |                                                         |
-|                                            | 50 times, set this value to 50.                                               |                                                         |
-|                                            |                                                                               |                                                         |
-|                                            | Default Value: 0                                                              |                                                         |
-+--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.queryresultStringLength*          | The max size of the query result string in the queryresult table. This        | 500000                                                  |
-|                                            | should be set to some number less than 4000 if an Oracle                      |                                                         |
-|                                            | database is being used.                                                       |                                                         |
-|                                            |                                                                               |                                                         |
-|                                            | Default Value: 500000                                                         |                                                         |
-+--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.queryresultCacheSize*             | The number of query results that will be cached.                              | 500                                                     |
-|                                            |                                                                               |                                                         |
-|                                            | Default Value: 500                                                            |                                                         |
-+--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.queryCacheOn*                     | Determines whether query caching is turned on.                                | on                                                      |
-|                                            | Possible values are "on" and "off"                                            |                                                         |
-|                                            |                                                                               |                                                         |
-|                                            | Default Value: on                                                             |                                                         |
 +--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
 
 Authorization and Authentication Properties

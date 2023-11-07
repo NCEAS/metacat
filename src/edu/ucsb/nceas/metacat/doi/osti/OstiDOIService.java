@@ -203,9 +203,10 @@ public class OstiDOIService extends DOIService{
             throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
         }
         String siteUrl = getLandingPage(identifier);
-        logMetacat.debug("OstiDOIService.publishIdentifier - The site url for pid " + identifier.getValue() + " is: " + siteUrl);
+        logMetacat.info("OstiDOIService.publishIdentifier - The site url for pid " + identifier.getValue() + " is: " + siteUrl);
         try {
             String ostiMeta = generateXMLWithSiteURL(siteUrl);
+            logMetacat.info("OstiDOIService.publishIdentifier - the metadata is\n" + ostiMeta); 
             ostiClient.setMetadata(identifier.getValue(), ostiMeta);
         } catch (InterruptedException e) {
             throw new ServiceFailure("1030", e.getMessage());
@@ -243,6 +244,7 @@ public class OstiDOIService extends DOIService{
         }
         transformer.transform(new StreamSource(eml), result);
         meta = writer.toString();
+        logMetacat.error("OstiDOIService.generateOstiMetadata(after eml tranforming) - the metadata is\n" + meta);
         return meta;
     }
     
