@@ -355,3 +355,9 @@ Data Information Package (DIP) prototype
 See the [Data Info Package](https://github.com/mbjones/dip-noodling) repo for a quick proof-of-concept on some of these ideas.
 This includes shell script functions for basic operations, such as storing a blob as a new leaf node, tagging items
 by their CID, and listing and viewing various items in a package.
+
+
+Delta changes
+--------------
+
+- [markdown_doc](https://hackmd.io/@nenuji/B1mE5FG-6)
