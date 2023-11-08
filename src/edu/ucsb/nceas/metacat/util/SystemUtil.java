@@ -1,43 +1,12 @@
-/**
- *  '$RCSfile$'
- *    Purpose: A Class that implements system utility methods 
- *  Copyright: 2008 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Michael Daigle
- * 
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.util;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.sun.net.ssl.HttpsURLConnection;
 
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatVersion;
@@ -47,14 +16,12 @@ import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
-import edu.ucsb.nceas.utilities.StringUtil;
 import edu.ucsb.nceas.utilities.UtilException;
 
 public class SystemUtil {
 
     private static Log logMetacat = LogFactory.getLog(SystemUtil.class);
     private static String METACAT_SERVLET = "metacat";
-//    private static String METACAT_WEB_SERVLET = "metacatweb";
     private static int OS_CLASS = 0;
     private static boolean firstTimeTryInternalURL = true;
     private static boolean firstTryInternalURLAfterFullInit = true;
@@ -94,7 +61,7 @@ public class SystemUtil {
             OS_CLASS =  LINUX_OS;
         } else if (osName.startsWith("Mac")) {
             OS_CLASS =  MAC_OS;
-        } else if (osName.startsWith("Mac")) {
+        } else {
             OS_CLASS =  OTHER_OS;
         }
         
@@ -138,7 +105,7 @@ public class SystemUtil {
     /**
      * Attempt to discover the server ssl port. The ssl port is assumed using
      * the standard port. This is used by configuration routines before the port
-     * has been populated in metacat.properties. it is possible the prot that
+     * has been populated in metacat.properties. it is possible the port that
      * the user configures might be different than the port we get here. You
      * should use getServerSSLPort() instead of this method whenever possible.
      * 
@@ -286,7 +253,7 @@ public class SystemUtil {
                 if(connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                     throw new Exception("The local server " + internalURL + "/"
                                     + PropertyService.getProperty("application.context")
-                                    + " is not accessible since the http reponse code is "
+                                    + " is not accessible since the http response code is "
                                     + connection.getResponseCode());
                 }
             } catch (Exception e) {
@@ -294,7 +261,7 @@ public class SystemUtil {
                             + "Metacat can't access the local url - "
                                 + internalURL + "/"
                                 + PropertyService.getProperty("application.context")
-                                + " and it will use the exteranl url since " + e.getMessage(), e);
+                                + " and it will use the external url since " + e.getMessage(), e);
                 internalURLReplacedByExternal = true;
                 internalURL = getServerURL();
             }
@@ -667,12 +634,6 @@ public class SystemUtil {
         logMetacat.debug("realPath: " + realPath);
         logMetacat.debug("contextPath: " + contextPath);
 
-        /*Pattern pattern = Pattern.compile(contextPath + "/\\.$");
-        Matcher matcher = pattern.matcher(realPath);
-        
-        if (matcher.find()) {
-            realPath = matcher.replaceFirst("");
-        }*/
         int index = realPath.lastIndexOf(contextPath);
         if(index != -1) {
           realPath = realPath.substring(0,index);
