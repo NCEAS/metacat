@@ -34,12 +34,12 @@ dependencies:
     version: 11.9.13    # postgres version 14.5.0 is deployed by chart version 11.9.13
     condition: postgresql.enabled
 
-  - name: idxworker
-#    repository: ghcr.io/dataoneorg/dataone-index-worker
-    version: 0.4.1
-    condition: idxworker.enabled
+  - name: dataone-indexer
+    repository: oci://ghcr.io/dataoneorg/charts
+    version: 0.5.0
+    condition: dataone-indexer.enabled
     import-values:
       - child: solr
-        parent: idxworker.solr
+        parent: dataone-indexer.solr
       - child: rabbitmq
-        parent: idxworker.rabbitmq
+        parent: dataone-indexer.rabbitmq
