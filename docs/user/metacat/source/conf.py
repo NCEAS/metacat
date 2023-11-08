@@ -12,12 +12,14 @@
 # serve to show the default.
 
 import sys, os, configparser, io
+from itertools import chain
 
 #Read the release version from the metacat.properties file
-prop = '[dummy]\n' + open('../../../../lib/metacat.properties').read()
-config = configparser.SafeConfigParser()
-config.readfp(io.StringIO(prop))
-#print config.get('dummy', 'application.metacatVersion')
+config = configparser.ConfigParser()
+with open("../../../../lib/metacat.properties") as lines:
+    lines = chain(("[dummy]",), lines)
+    config.read_file(lines)
+#print("Metacat version: ", config.get('dummy', 'application.metacatVersion'))
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -28,6 +30,7 @@ config.readfp(io.StringIO(prop))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+#extensions = ['sphinxcontrib.mermaid']
 extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
@@ -44,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Metacat'
-copyright = u'2012, Regents of the University of California'
+copyright = u'2023, Regents of the University of California'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
