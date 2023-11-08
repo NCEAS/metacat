@@ -343,7 +343,7 @@ public class MetacatHandler {
                     throw pnf;
                 } // end try()
             } else {
-                // this is n metadata document
+                // this is a metadata document
                 // Get the xml (will try disk then DB)
                 try {
                     // force the InputStream to be returned
