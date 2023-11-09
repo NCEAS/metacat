@@ -113,6 +113,10 @@
                     <groupId>edu.uiuc.ncsa.myproxy</groupId>
                     <artifactId>oa4mp-client-oauth1</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>postgresql</groupId>
+                    <artifactId>postgresql</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -280,15 +284,10 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>postgresql</groupId>
+            <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>8.0-312.jdbc3</version>
+            <version>42.6.0</version>
         </dependency>
-        <!-- <dependency>
-            <groupId>org.apache.solr</groupId>
-            <artifactId>solr-core</artifactId>
-            <version>3.4.0</version>
-        </dependency>-->
         <dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-solrj</artifactId>

@@ -190,6 +190,13 @@ public class SystemMetadataManager {
                 } finally {
                     if (dbConn != null) {
                         // Return database connection to the pool
+                        try {
+                            dbConn.setAutoCommit(true);
+                        } catch (SQLException e) {
+                            logMetacat.warn("SystemMetadataManager.store - can't set the "
+                                            + "auto-commit back to true for the connection since "
+                                            + e.getMessage());
+                        }
                         DBConnectionPool.returnDBConnection(dbConn, serialNumber);
                     }
                 }
@@ -479,7 +486,6 @@ public class SystemMetadataManager {
             PreparedStatement stmt = null;
             PreparedStatement stmt2 = null;
         try {
-            dbConn.setAutoCommit(false);
             // Execute the insert statement
             String query = "update " + IdentifierManager.TYPE_SYSTEM_METADATA + 
                 " set (date_uploaded, rights_holder, checksum, checksum_algorithm, " +
@@ -542,12 +548,7 @@ public class SystemMetadataManager {
                     
                 }
             }
-            dbConn.commit();
-            dbConn.setAutoCommit(true);
         } catch (Exception e) {
-            dbConn.rollback();
-            dbConn.setAutoCommit(true);
-            e.printStackTrace();
             throw new SQLException(e.getMessage());
         } finally {
             if(stmt != null) {
