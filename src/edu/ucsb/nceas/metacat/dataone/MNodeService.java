@@ -2204,35 +2204,7 @@ public class MNodeService extends D1NodeService
     @Override
     public QueryEngineDescription getQueryEngineDescription(Session session, String engine)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, NotFound {
-        if (engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
-            if (!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
-                throw new NotImplemented("0000", "MNodeService.query - the query engine " + engine
-                    + " hasn't been implemented or has been disabled.");
-            }
-            QueryEngineDescription qed = new QueryEngineDescription();
-            qed.setName(EnabledQueryEngines.PATHQUERYENGINE);
-            qed.setQueryEngineVersion("1.0");
-            qed.addAdditionalInfo("This is the traditional structured query for Metacat");
-            Vector<String> pathsForIndexing = null;
-            try {
-                pathsForIndexing = SystemUtil.getPathsForIndexing();
-            } catch (MetacatUtilException e) {
-                logMetacat.warn("Could not get index paths", e);
-            }
-            for (String fieldName : pathsForIndexing) {
-                QueryField field = new QueryField();
-                field.addDescription("Indexed field for path '" + fieldName + "'");
-                field.setName(fieldName);
-                field.setReturnable(true);
-                field.setSearchable(true);
-                field.setSortable(false);
-                // TODO: determine type and multivaluedness
-                field.setType(String.class.getName());
-                //field.setMultivalued(true);
-                qed.addQueryField(field);
-            }
-            return qed;
-        } else if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
+        if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
             if (!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
                 throw new NotImplemented("0000",
                     "MNodeService.getQueryEngineDescription - the query engine " + engine
@@ -2270,12 +2242,7 @@ public class MNodeService extends D1NodeService
         NotFound {
         Set<Subject> subjects = getQuerySubjects(session);
         boolean isMNadmin = isMNOrCNAdminQuery(session);
-        if (engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
-            if (!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
-                throw new NotImplemented("0000", "MNodeService.query - the query engine " + engine
-                    + " is not supported any more.");
-            }
-        } else if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
+        if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
             if (!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine " + engine
                     + " hasn't been implemented or has been disabled.");
@@ -2289,8 +2256,10 @@ public class MNodeService extends D1NodeService
                 e.printStackTrace();
                 throw new ServiceFailure("Solr server error", e.getMessage());
             }
+        } else {
+            throw new NotImplemented("0000", "MNodeService.query - the query engine " + engine
+                    + " is not supported.");
         }
-        return null;
     }
 
 

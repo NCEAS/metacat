@@ -165,38 +165,6 @@ public class MetaCatServlet extends HttpServlet {
                                                             + "Finish to correct eml201 documents");
             }
 
-            /*
-             * If spatial option is turned on and set to regenerate the spatial
-             * cache on restart, trigger the harvester regeneratation method
-             */
-            if (PropertyService.getProperty("spatial.runSpatialOption").equals("true") &&
-                  PropertyService.getProperty("spatial.regenerateCacheOnRestart").equals("true")) {
-
-                // Begin timer
-                long before = System.currentTimeMillis();
-
-                // if either the point or polygon shape files do not exist, then regenerate the
-                // entire spatial cache this may be expensive with many documents
-                SpatialHarvester sh = new SpatialHarvester();
-                sh.regenerate();
-                sh.destroy();
-
-                // After running the first time, we want to to set
-                // regenerateCacheOnRestart to false
-                // so that it does not regenerate the cache every time tomcat is
-                // restarted
-                PropertyService.setProperty("spatial.regenerateCacheOnRestart", "false");
-
-                // End timer
-                long after = System.currentTimeMillis();
-                logMetacat.info("MetaCatServlet.initSecondHalf - Spatial Harvester Time "
-                        + (after - before) + "ms");
-
-            } else {
-                logMetacat.info("MetaCatServlet.initSecondHalf - Spatial cache is not set to "
-                                        + "regenerate on restart");
-            }
-        
             // Set up the replication log file by setting the "replication.logfile.name"
             // system property and reconfiguring the log4j property configurator.
             String replicationLogPath = PropertyService.getProperty("replication.logdir")
@@ -238,11 +206,6 @@ public class MetaCatServlet extends HttpServlet {
         } catch (SQLException e) {
             String errorMessage = "SQL problem while intializing MetaCat Servlet: "
                     + e.getMessage();
-            logMetacat.error("MetaCatServlet.initSecondHalf - " + errorMessage);
-            throw new ServletException(errorMessage);
-        } catch (IOException ie) {
-            String errorMessage = "IO problem while intializing MetaCat Servlet: "
-                    + ie.getMessage();
             logMetacat.error("MetaCatServlet.initSecondHalf - " + errorMessage);
             throw new ServletException(errorMessage);
         } catch (GeneralPropertyException gpe) {
