@@ -187,7 +187,6 @@
             <td class="unconfigured-tag">unconfigured </td>  
             <td class="property-title"> Solr Server Configuration </td>   
     <%
-            System.out.println("the dbconfigure value is "+dbConfigured);
             if (propsConfigured != null && propsConfigured ) {
                  if ( (dbConfigured != null && dbConfigured) || (metacatVersion != null && databaseVersion != null && metacatVersion.compareTo(databaseVersion) == 0)) {
     %>
