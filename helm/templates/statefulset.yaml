@@ -20,7 +20,7 @@ spec:
       labels:
         {{- include "metacat.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if .Values.idxworker.enabled }}
+      {{- if index .Values "dataone-indexer" "enabled" }}
       initContainers:
         - name: init-solr-metacat-dep
           image: busybox:latest
@@ -28,8 +28,8 @@ spec:
             - sh
             - -c
             - >
-              until nc -z {{ .Values.idxworker.solr.hostname}}{{ print " " -}}
-              {{ .Values.idxworker.solr.service.ports.http }} > /dev/null; do
+              until nc -z {{ index .Values "dataone-indexer" "solr" "hostname"}}{{ print " " -}}
+              {{ index .Values "dataone-indexer" "solr" "service" "ports" "http" }} > /dev/null; do
               echo waiting for Solr; sleep 1; done;
         - name: init-rabbitmq-metacat-dep
           image: busybox:latest
@@ -37,8 +37,8 @@ spec:
             - sh
             - -c
             - >
-              until nc -z {{ .Values.idxworker.rabbitmq.hostname }}{{ print " " -}}
-              {{ .Values.idxworker.rabbitmq.hostport}} > /dev/null; do
+              until nc -z {{ index .Values "dataone-indexer" "rabbitmq" "hostname" }}{{ print " " -}}
+              {{ index .Values "dataone-indexer" "rabbitmq" "hostport"}} > /dev/null; do
               echo waiting for RabbitMQ; sleep 1; done;
       {{ end }}
       {{- with .Values.imagePullSecrets }}

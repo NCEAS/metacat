@@ -16,7 +16,7 @@ metacat:
   index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
   index.rabbitmq.password: ${env:rabbitmq-password}
 
-idxworker:
+dataone-indexer:
   image:
     pullPolicy: Always
     tag: DEVELOP

@@ -678,7 +678,7 @@ tomcat:
     max: ""
 
 ## @section dataone_indexer Sub-Chart Configuration
-idxworker:
+dataone-indexer:
   enabled: true
   image:
     repository: ghcr.io/dataoneorg/dataone-index-worker
