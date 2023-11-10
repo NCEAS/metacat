@@ -1141,6 +1141,7 @@
         <junit printsummary="yes" haltonfailure="no" fork="yes"
                haltonerror="no">
             <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <jvmarg value="-Xshare:off"/>
             <classpath>
                 <path refid="test.classpath"/>
                 <fileset dir="${build.dir}">
