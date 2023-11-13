@@ -6,11 +6,10 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mockito.MockedStatic;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
@@ -106,9 +105,15 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         }
         String[] actual = orgList.toArray(new String[0]);
         Arrays.sort(actual);
-        Set<String> expectedSet = LeanTestUtils.getExpectedProperties().stringPropertyNames();
-        expectedSet.removeIf(prop -> !prop.startsWith(groupKey));
-        String[] expected = expectedSet.toArray(new String[0]);
+        Set<String> immutableExpectedSet =
+                                        LeanTestUtils.getExpectedProperties().stringPropertyNames();
+        // After we moved from java 1.8 to 17, the immutableExpectedSet object is unmodifiable since
+        // we use "--add-opens java.base/java.util=ALL-UNNAMED" to work around the issue that the
+        // env variables are not allowed to be modified. We have to copy it to another Set object to
+        // make it modifiable.
+        Set<String> modifiableExpectedSet = new HashSet<String>(immutableExpectedSet);
+        modifiableExpectedSet.removeIf(prop -> !prop.startsWith(groupKey));
+        String[] expected = modifiableExpectedSet.toArray(new String[0]);
         Arrays.sort(expected);
         assertArrayEquals("unexpected values returned from getPropertyNamesByGroup().", expected,
             actual);
@@ -128,10 +133,16 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         if (metacatProps == null || metacatProps.size() == 0) {
             fail("Empty map returned when reading property group names 'organization.org'");
         }
-        Set<String> expectedSet = LeanTestUtils.getExpectedProperties().stringPropertyNames();
-        expectedSet.removeIf(prop -> !prop.startsWith(groupKey));
+        Set<String> immutableExpectedSet =
+                                        LeanTestUtils.getExpectedProperties().stringPropertyNames();
+        // After we moved from java 1.8 to 17, the immutableExpectedSet object is unmodifiable since
+        // we use "--add-opens java.base/java.util=ALL-UNNAMED" to work around the issue that the
+        // env variables are not allowed to be modified. We have to copy it to another Set object to
+        // make it modifiable.
+        Set<String> modifiableExpectedSet = new HashSet<String>(immutableExpectedSet);
+        modifiableExpectedSet.removeIf(prop -> !prop.startsWith(groupKey));
 
-        assertEquals("unexpected number of properties found)", expectedSet.size(),
+        assertEquals("unexpected number of properties found)", modifiableExpectedSet.size(),
             metacatProps.size());
     }
 

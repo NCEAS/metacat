@@ -1141,6 +1141,9 @@
         <junit printsummary="yes" haltonfailure="no" fork="yes"
                haltonerror="no">
             <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <jvmarg value="-Xshare:off"/>
+            <jvmarg line="--add-opens java.base/java.util=ALL-UNNAMED"/>
+            <jvmarg line="--add-opens java.base/java.lang=ALL-UNNAMED"/>
             <classpath>
                 <path refid="test.classpath"/>
                 <fileset dir="${build.dir}">
@@ -1190,6 +1193,9 @@
         <junit printsummary="yes" haltonfailure="no" fork="yes"
                haltonerror="no">
             <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <jvmarg value="-Xshare:off"/>
+            <jvmarg line="--add-opens java.base/java.util=ALL-UNNAMED"/>
+            <jvmarg line="--add-opens java.base/java.lang=ALL-UNNAMED"/>
             <classpath>
                 <path refid="test.classpath"/>
                 <fileset dir="${build.dir}">
@@ -1257,6 +1263,9 @@
         <junit printsummary="yes" haltonfailure="no" fork="yes"
                haltonerror="no" showoutput="yes">
             <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <jvmarg value="-Xshare:off"/>
+            <jvmarg line="--add-opens java.base/java.util=ALL-UNNAMED"/>
+            <jvmarg line="--add-opens java.base/java.lang=ALL-UNNAMED"/>
             <classpath>
                 <path refid="test.classpath"/>
                 <fileset dir="${build.dir}">
