@@ -16,6 +16,140 @@ metacat:
   index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
   index.rabbitmq.password: ${env:rabbitmq-password}
 
+  ## @section OPTIONAL DataONE Member Node (MN) Parameters
+  ##
+  dataone.certificate.fromHttpHeader.enabled: true
+
+  ## @param metacat.dataone.autoRegisterMemberNode Automatically push MN updates to CN? (yyyy-MM-dd)
+  ## USE WITH CARE!
+  ## Metacat checks this value upon startup, and will attempt to push the current Member Node (MN)
+  ## configuration (either new registration or updated settings - see below) to the configured
+  ## Coordinating Node (CN), but ONLY if dataone.autoRegisterMemberNode MATCHES TODAY'S DATE (at
+  ## metacat startup), IN UTC (Coordinated Universal Time) ZONE.
+  ## Format: yyyy-MM-dd; e.g. 2023-02-28
+  ##
+  #  dataone.autoRegisterMemberNode: 2023-02-28
+
+  ## @param metacat.D1Client.CN_URL the url of the CN
+  ## (Default value shown - no need to uncomment unless changing from this)
+  ##
+  #  D1Client.CN_URL: https://cn.dataone.org/cn
+
+  ## @param metacat.dataone.nodeId The unique ID of your DataONE MN - must match client cert subject
+  ## The Node Identifier field is a unique identifier assigned by DataONE to identify this node even
+  ## when the node changes physical locations over time. After Metacat registers with the DataONE
+  ## Coordinating Nodes, the Node Identifier should not be changed. It is CRITICAL that you do NOT
+  ## change the Node Identifier after registration, since that would break the connection with the
+  ## DataONE network. Changing this field should only happen in the rare case in which a new
+  ## Metacat instance is being established to act as the provider for an existing DataONE Member
+  ## Node, in which case the field can be edited to set it to the value of a valid, existing Node
+  ## Identifier.
+  ##
+  #  dataone.nodeId: urn:node:CHANGE_ME_TO_YOUR_VALUE!
+
+  ## @param metacat.dataone.subject The "subject" string from your DataONE MN client certificate
+  ## The Node Subject is critical for proper operation of the node. To act as a Member Node in
+  ## DataONE, you must obtain an X.509 certificate that can be used to identify this node and allow
+  ## it to securely communicate using SSL with other nodes and client applications. This
+  ## certificate can be obtained from the DataONE Certificate Authority. Be sure to protect the
+  ## certificate file, since it contains the private key that is used to authenticate this node
+  ## within DataONE.
+  ## Once you have the certificate in hand, use a tool such as openssl to determine the exact
+  ## subject distinguished name in the certificate, and use that to set the Node Subject field.
+  ## NOTE: The actual subject string in your certificate may be in the format:
+  ##           Subject: DC = org, DC = dataone, CN = urn:node:YOUR_VALUE
+  ##       ...but the dataone.subject parameter needs to have this reversed, have all whitespace
+  ##       removed, and wrapped in double quotes, so it becomes:
+  ##           dataone.subject: "CN=urn:node:YOUR_VALUE,DC=dataone,DC=org"
+  ##
+  #  dataone.subject: "CN=urn:node:CHANGE_ME_TO_YOUR_VALUE!,DC=dataone,DC=org"
+
+  ## @param metacat.dataone.nodeName short name for the node that can be used in user interfaces
+  ## @param metacat.dataone.nodeDescription What is the node's intended scope and purpose?
+  #  dataone.nodeName: My Metacat Node
+  #  dataone.nodeDescription: Describe your Member Node briefly.
+
+  ## @param metacat.dataone.contactSubject registered contact for this MN
+  ## IMPORTANT NOTE: Before registering you MN, you will need to first register your contact subject
+  ## identity in the DataONE production environment. First, if you don't already have one, create an
+  ## ORCID (https://orcid.org/). Then use it to log in at https://search.dataone.org/signin, which
+  ## will register you automatically. Then you can use your registered ORCID when you apply for
+  ## an x509 client certificate, and use it as the value of dataone.contactSubject
+  ## NOTE: you must use 'http://...' and NOT 'https://...' for this ORCID value:
+  ##
+  #  dataone.contactSubject: http://orcid.org/0000-0002-8888-999X
+
+  ## @param metacat.dataone.nodeSynchronize Enable Synchronization of Metadata to DataONE
+  ## Allows the administrator to decide whether to turn on synchronization with the DataONE
+  ## network. When `false`, the DataONE Coordinating Nodes will not attempt to synchronize at all.
+  ## When `true`, DataONE will periodically contact this node to synchronize all metadata content.
+  ## To be part of the DataONE network, this must be set to `true`, since that allows DataONE to
+  ## receive a copy of the metadata associated with each object in this Metacat system. The switch
+  ## is provided for those rare cases when a node needs to be disconnected from DataONE for
+  ## maintenance or service outages.
+  ## (Default value shown - no need to uncomment unless changing from this)
+  ##
+  #  dataone.nodeSynchronize: false
+
+  ## metacat.dataone.nodeSynchronization.schedule: DataONE synchronization schedule (crontab format)
+  ##
+  ## @param metacat.dataone.nodeSynchronization.schedule.year sync schedule year
+  ## @param metacat.dataone.nodeSynchronization.schedule.mon sync schedule month
+  ## @param metacat.dataone.nodeSynchronization.schedule.mday sync schedule day of month
+  ## @param metacat.dataone.nodeSynchronization.schedule.wday sync schedule day of week
+  ## @param metacat.dataone.nodeSynchronization.schedule.hour sync schedule hour
+  ## @param metacat.dataone.nodeSynchronization.schedule.min sync schedule minute
+  ## @param metacat.dataone.nodeSynchronization.schedule.sec sync schedule second
+  ##
+  ## When dataone.nodeSynchronize is set to `true`, DataONE contacts this node using the schedule
+  ## provided in these Synchronization Schedule fields. The defaults below have synchronization
+  ## occurring once every third minute at the 10-second mark of those minutes. The syntax for these
+  ## schedules follows the Quartz Crontab Entry syntax, which provides for many flexible schedule
+  ## configurations. Less frequent updates, such as daily, can be configured by changing the '*' in
+  ## the 'Hours' field to be a concrete hour (such as 11) and the 'Minutes' field to a concrete
+  ## value like '15', which would change the schedule to synchronize at 11:15 am daily.
+  ## (Default values shown - no need to uncomment unless changing from these)
+  ##
+  #  dataone.nodeSynchronization.schedule.year: "*"
+  #  dataone.nodeSynchronization.schedule.mon: "*"
+  #  dataone.nodeSynchronization.schedule.mday: "*"
+  #  dataone.nodeSynchronization.schedule.wday: "?"
+  #  dataone.nodeSynchronization.schedule.hour: "*"
+  #  dataone.nodeSynchronization.schedule.min: "0/3"
+  #  dataone.nodeSynchronization.schedule.sec: "10"
+
+  ## @param metacat.dataone.nodeReplicate Accept and Store Replicas?
+  ## Used to indicate that the administrator of this node is willing to allow replica data and
+  ## metadata from other Member Nodes to be stored on this node. We encourage people to allow
+  ## replication to their nodes, thus increasing the scalability and flexibility of the network
+  ## overall.
+  ## (Default value shown - no need to uncomment unless changing from this)
+  ##
+  #  dataone.nodeReplicate: false
+
+  ## @param metacat.dataone.replicationpolicy.default.numreplicas # copies to store on other nodes
+  ## @param metacat.dataone.replicationpolicy.default.preferredNodeList Preferred replication nodes
+  ## @param metacat.dataone.replicationpolicy.default.blockedNodeList Nodes blocked from replication
+  ##
+  ## The above three “Default” fields set the default values for the replication policies for data
+  ## and metadata on this node that are generated when System Metadata is not available for an
+  ## object (such as when it originates from a client that is not DataONE compliant).
+  ##
+  ## The Default Number of Replicas determines how many replica copies of the object should be
+  ## stored on other Member Nodes. A value of 0 or less indicates that no replicas should be stored.
+  ##
+  ## In addition, you can specify a list of nodes that are either preferred for use when choosing
+  ## replica nodes, or that are blocked from use as replica nodes. This allows Member Nodes to
+  ## set up bidirectional agreements with partner nodes to replicate data across their sites. The
+  ## values for both Default Preferred Nodes and Default Blocked Nodes is a comma-separated list
+  ## of NodeReference identifiers that were assigned to the target nodes by DataONE.
+  ##
+  #  dataone.replicationpolicy.default.numreplicas: "0"
+  #  dataone.replicationpolicy.default.preferredNodeList:
+  #  dataone.replicationpolicy.default.blockedNodeList:
+
+
+
 dataone-indexer:
   image:
     pullPolicy: Always
@@ -79,6 +213,7 @@ ingress:
           pathType: Prefix
         - path: "/metacatui"
           pathType: Prefix
+  d1CaCertSecretName: metacat-ca-secret
 
 ####################################################################################################
 ## FOR DEBUGGING ONLY
