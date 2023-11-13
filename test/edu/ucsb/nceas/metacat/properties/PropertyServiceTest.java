@@ -107,9 +107,9 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         Arrays.sort(actual);
         Set<String> immutableExpectedSet =
                                         LeanTestUtils.getExpectedProperties().stringPropertyNames();
-        // After we moved from java 1.8 to 17, the exprectedSet object is unmodifiable since we use
-        // "--add-opens java.base/java.util=ALL-UNNAMED" to work around the issue that the env
-        // variables are not allowed to be modified. We have to copy it to another Set object to
+        // After we moved from java 1.8 to 17, the immutableExpectedSet object is unmodifiable since
+        // we use "--add-opens java.base/java.util=ALL-UNNAMED" to work around the issue that the
+        // env variables are not allowed to be modified. We have to copy it to another Set object to
         // make it modifiable.
         Set<String> modifiableExpectedSet = new HashSet<String>(immutableExpectedSet);
         modifiableExpectedSet.removeIf(prop -> !prop.startsWith(groupKey));
@@ -135,9 +135,9 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         }
         Set<String> immutableExpectedSet =
                                         LeanTestUtils.getExpectedProperties().stringPropertyNames();
-        // After we moved from java 1.8 to 17, the exprectedSet object is unmodifiable since we use
-        // "--add-opens java.base/java.util=ALL-UNNAMED" to work around the issue that the env
-        // variables are not allowed to be modified. We have to copy it to another Set object to
+        // After we moved from java 1.8 to 17, the immutableExpectedSet object is unmodifiable since
+        // we use "--add-opens java.base/java.util=ALL-UNNAMED" to work around the issue that the
+        // env variables are not allowed to be modified. We have to copy it to another Set object to
         // make it modifiable.
         Set<String> modifiableExpectedSet = new HashSet<String>(immutableExpectedSet);
         modifiableExpectedSet.removeIf(prop -> !prop.startsWith(groupKey));
