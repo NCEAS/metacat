@@ -1,4 +1,4 @@
-FROM tomcat:9.0.78-jre8-temurin-jammy
+FROM tomcat:9.0.82-jre17-temurin-jammy
 
 # ARG default values that can be overridden at build-time
 ARG DISTBIN=''
