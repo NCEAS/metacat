@@ -6,11 +6,10 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mockito.MockedStatic;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
@@ -107,8 +106,9 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         String[] actual = orgList.toArray(new String[0]);
         Arrays.sort(actual);
         Set<String> expectedSet = LeanTestUtils.getExpectedProperties().stringPropertyNames();
-        expectedSet.removeIf(prop -> !prop.startsWith(groupKey));
-        String[] expected = expectedSet.toArray(new String[0]);
+        Set<String> expectedSetCopy = new HashSet<String>(expectedSet);
+        expectedSetCopy.removeIf(prop -> !prop.startsWith(groupKey));
+        String[] expected = expectedSetCopy.toArray(new String[0]);
         Arrays.sort(expected);
         assertArrayEquals("unexpected values returned from getPropertyNamesByGroup().", expected,
             actual);
@@ -129,9 +129,10 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
             fail("Empty map returned when reading property group names 'organization.org'");
         }
         Set<String> expectedSet = LeanTestUtils.getExpectedProperties().stringPropertyNames();
-        expectedSet.removeIf(prop -> !prop.startsWith(groupKey));
+        Set<String> expectedSetCopy = new HashSet<String>(expectedSet);
+        expectedSetCopy.removeIf(prop -> !prop.startsWith(groupKey));
 
-        assertEquals("unexpected number of properties found)", expectedSet.size(),
+        assertEquals("unexpected number of properties found)", expectedSetCopy.size(),
             metacatProps.size());
     }
 
