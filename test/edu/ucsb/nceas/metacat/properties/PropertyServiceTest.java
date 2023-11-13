@@ -106,6 +106,10 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
         String[] actual = orgList.toArray(new String[0]);
         Arrays.sort(actual);
         Set<String> expectedSet = LeanTestUtils.getExpectedProperties().stringPropertyNames();
+        // After we moved from java 1.8 to 17, the exprectedSet object is unmodifiable since we use
+        // "--add-opens java.base/java.util=ALL-UNNAMED" to work around the issue that the env
+        // variables are not allowed to be modified. We have to copy it to another Set object to
+        // make it modifiable.
         Set<String> expectedSetCopy = new HashSet<String>(expectedSet);
         expectedSetCopy.removeIf(prop -> !prop.startsWith(groupKey));
         String[] expected = expectedSetCopy.toArray(new String[0]);
@@ -129,6 +133,10 @@ public class PropertyServiceTest { // don't extend MCTestCase for JUnit 4
             fail("Empty map returned when reading property group names 'organization.org'");
         }
         Set<String> expectedSet = LeanTestUtils.getExpectedProperties().stringPropertyNames();
+        // After we moved from java 1.8 to 17, the exprectedSet object is unmodifiable since we use
+        // "--add-opens java.base/java.util=ALL-UNNAMED" to work around the issue that the env
+        // variables are not allowed to be modified. We have to copy it to another Set object to
+        // make it modifiable.
         Set<String> expectedSetCopy = new HashSet<String>(expectedSet);
         expectedSetCopy.removeIf(prop -> !prop.startsWith(groupKey));
 
