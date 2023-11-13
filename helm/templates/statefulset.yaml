@@ -28,9 +28,14 @@ spec:
             - sh
             - -c
             - >
-              until nc -z {{ index .Values "dataone-indexer" "solr" "hostname"}}{{ print " " -}}
-              {{ index .Values "dataone-indexer" "solr" "service" "ports" "http" }} > /dev/null; do
-              echo waiting for Solr; sleep 1; done;
+              HOSTNAME={{ index .Values "dataone-indexer" "solr" "hostname" }};
+              HOSTPORT={{- index .Values "dataone-indexer" "solr" "service" "ports" "http" -}};
+              URI="/solr/{{- index .Values "dataone-indexer" "solr" "customCollection" -}}
+                   /admin/file?file=schema.xml&contentType=text/xml";
+              until [[ $(echo -e "GET $URI HTTP/1.1\r\nHost: $HOSTNAME\r\n\r\n"{{ print " " -}}
+              | nc $HOSTNAME $HOSTPORT | grep -c "<schema name=\"dataone") == 1 ]]; do
+              echo waiting for Solr Schema to be accessible at http://$HOSTNAME:$HOSTPORT$URI;
+              sleep 1; done;
         - name: init-rabbitmq-metacat-dep
           image: busybox:latest
           command:
