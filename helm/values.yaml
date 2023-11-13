@@ -569,7 +569,7 @@ service:
 ##
 livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
-  initialDelaySeconds: 30
+  initialDelaySeconds: 45
   periodSeconds: 15
   timeoutSeconds: 10
   httpGet:
@@ -595,7 +595,7 @@ livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck rou
 ##
 readinessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
-  initialDelaySeconds: 35
+  initialDelaySeconds: 45
   periodSeconds: 5
   timeoutSeconds: 5
   httpGet:
