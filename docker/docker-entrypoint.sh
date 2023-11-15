@@ -153,11 +153,6 @@ elif [[ $1 = "catalina.sh" ]]; then
     # if METACAT_DEBUG, set the root log level to "DEBUG" and enable
     # remote debugging connections to tomcat
     if [[ $METACAT_DEBUG == "true" ]]; then
-          sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' \
-              "${TC_HOME}"/webapps/metacat/WEB-INF/classes/log4j2.properties;
-          echo
-          echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
-          echo
           enableRemoteDebugging
     fi
 
