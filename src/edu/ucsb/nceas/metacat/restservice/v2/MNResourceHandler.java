@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -137,7 +138,10 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *
  *     MNReplication
  *         replicate() - POST /d1/mn/replicate
- *    getReplica() - GET /d1/mn/replica
+ *         getReplica() - GET /d1/mn/replica
+ *
+ *     MNAdmin
+ *         reindex() - GET /d1/mn/reindex
  *
  * ******************
  * @author leinfelder
@@ -159,6 +163,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_WHOAMI = "whoami";
     //make the status of identifier (e.g. DOI) public
     protected static final String RESOURCE_PUBLISH_IDENTIFIER = "publishIdentifier";
+    protected static final String RESOURCE_REINDEX = "reindex";
 
 
 
@@ -525,6 +530,14 @@ public class MNResourceHandler extends D1ResourceHandler {
                         extra = parseTrailing(resource, RESOURCE_PUBLISH_IDENTIFIER);
                         extra = decode(extra);
                         publishIdentifier(extra);
+                        status = true;
+                    }
+                } else if (resource.startsWith(RESOURCE_REINDEX)) {
+                    logMetacat.debug("Using resource: " + RESOURCE_REINDEX);
+                    // GET
+                    if (httpVerb == GET) {
+                        // after the command
+                        reindex();
                         status = true;
                     }
                 } else {
@@ -1843,6 +1856,48 @@ public class MNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("updating system metadata with pid " + pid.getValue());
 
         MNodeService.getInstance(request).updateSystemMetadata(session, pid, systemMetadata);
+    }
+
+    /**
+     * Handle the reindex request
+     * @throws InvalidRequest
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     */
+    protected void reindex() throws InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented {
+        boolean all = false;
+        List<Identifier> identifiers = new ArrayList<Identifier>();
+        String[] allValueArray = params.get("all");
+        logMetacat.debug("MNResourceHandler.reindex - the allValueArray in the request is "
+                                                                               + allValueArray);
+        if (allValueArray != null) {
+            if (allValueArray.length != 1) {
+                throw new InvalidRequest("5903", "The \"all\" should only have one vaule");
+            } else {
+                String allValue = allValueArray[0];
+                if (allValue != null && allValue.equalsIgnoreCase("true")) {
+                    all = true;
+                }
+            }
+        }
+        if (!all) {
+            String[] ids = params.get("pid");
+            logMetacat.debug("MNResourceHandler.reindex - the pid list in the request is " + ids);
+            if (ids != null) {
+                for (String id : ids) {
+                    if (id != null && !id.trim().equals("")) {
+                        Identifier identifier = new Identifier();
+                        identifier.setValue(id);
+                        identifiers.add(identifier);
+                    }
+                }
+            } else {
+                throw new InvalidRequest("5903", "Users should specify the \"pid\" vaule "
+                                                                            + "for reindexing");
+            }
+        }
+        MNodeService.getInstance(request).reindex(session, identifiers, all);
     }
 
 }

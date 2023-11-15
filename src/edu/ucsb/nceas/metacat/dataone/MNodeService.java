@@ -3509,8 +3509,8 @@ public class MNodeService extends D1NodeService
     public boolean reindex(Session session, List<Identifier> identifiers, boolean all)
                              throws ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest {
         boolean scheduled = true;
-        String serviceFailureCode = "5900";
-        String notAuthorizedCode = "5901";
+        String serviceFailureCode = "5901";
+        String notAuthorizedCode = "5902";
         String notAuthorizedError ="The provided identity does not have permission to reindex "
                                     + "objects on the Node.";
         if (session == null) {
@@ -3538,6 +3538,7 @@ public class MNodeService extends D1NodeService
      * @param pids  the list of identifier whose solr doc needs to be rebuilt
      */
     protected void handleReindexAction(List<Identifier> pids) {
+        logMetacat.debug("MNodeService.handleReindexAction - reindex some objects");
         if (pids == null) {
             return;
         }
@@ -3570,7 +3571,8 @@ public class MNodeService extends D1NodeService
      */
     protected void handleReindexAllAction() {
         // Process all of the documents
-        logMetacat.debug("MNodeService.handleReindexAllActionqueueing doc index for all documents");
+        logMetacat.debug("MNodeService.handleReindexAllAction - "
+                                               + "reindexl all objects in this Metacat instance");
         Runnable indexAll = new Runnable() {
             public void run() {
                 List<String> resourceMapFormats = ResourceMapNamespaces.getNamespaces();
