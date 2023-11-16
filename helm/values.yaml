@@ -363,19 +363,21 @@ serviceAccount:
 ##
 podAnnotations: {}
 
-## PodSecurityContext
+## PodSecurityContext - define common securityContext settings at the pod level for all containers
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ## @param podSecurityContext.enabled Enable security context
-## @param podSecurityContext.fsGroup Group ID for the pod
+## @param podSecurityContext.fsGroup numerical Group ID for the pod
 ##
 podSecurityContext:
   enabled: true
   fsGroup: 1000
 
-## @param securityContext Holds pod-level security attributes and common container settings
+## securityContext holds container-level security attributes that override those at pod level
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param securityContext.runAsNonRoot ensure containers run as a non-root user.
+##                                 Note users must be defined by numerical user id for this to work
 securityContext:
   runAsNonRoot: true
-#  readOnlyRootFilesystem: true
 
 ## @param resources Resource limits for the deployment
 ##  We usually recommend not to specify default resources and to leave this as a conscious
