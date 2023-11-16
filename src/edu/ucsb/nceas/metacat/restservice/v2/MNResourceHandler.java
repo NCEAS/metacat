@@ -1864,13 +1864,13 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws NotImplemented
+     * @throws IOException
      */
-    protected void reindex() throws InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented {
+    protected void reindex() throws InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented,
+                                                                                    IOException {
         boolean all = false;
         List<Identifier> identifiers = new ArrayList<Identifier>();
         String[] allValueArray = params.get("all");
-        logMetacat.debug("MNResourceHandler.reindex - the allValueArray in the request is "
-                                                                               + allValueArray);
         if (allValueArray != null) {
             if (allValueArray.length != 1) {
                 throw new InvalidRequest("5903", "The \"all\" should only have one vaule");
@@ -1881,9 +1881,9 @@ public class MNResourceHandler extends D1ResourceHandler {
                 }
             }
         }
+        logMetacat.debug("MNResourceHandler.reindex - the \"all\" value is " + all);
         if (!all) {
             String[] ids = params.get("pid");
-            logMetacat.debug("MNResourceHandler.reindex - the pid list in the request is " + ids);
             if (ids != null) {
                 for (String id : ids) {
                     if (id != null && !id.trim().equals("")) {
@@ -1897,7 +1897,19 @@ public class MNResourceHandler extends D1ResourceHandler {
                                                                             + "for reindexing");
             }
         }
-        MNodeService.getInstance(request).reindex(session, identifiers, all);
+        boolean success = MNodeService.getInstance(request).reindex(session, identifiers, all);
+        response.setStatus(200);
+        response.setContentType("text/xml");
+        OutputStream out = response.getOutputStream();
+        out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes());
+        out.write("<scheduled>".getBytes());
+        if (success) {
+            out.write("true".getBytes());
+        } else {
+            out.write("false".getBytes());
+        }
+        out.write("</scheduled>".getBytes());
+        IOUtils.closeQuietly(out);
     }
 
 }
