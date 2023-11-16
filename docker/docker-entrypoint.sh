@@ -52,6 +52,11 @@ setTomcatEnv() {
     LOG4J="-Dlog4j2.formatMsgNoLookups=true -Dlog4j2.configurationFile=$CONFIGMAP_DIR/log4j2.k8s.properties"
 
     echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -server ${MEMORY} ${LOG4J}\"" >> "${TC_OPTS}"
+
+    ## k8s mount automatically adds a "lost+found" subdir which causes tomcat to fail
+    if [ -e "${TC_HOME}/logs/lost+found" ]; then
+        rm -rf "${TC_HOME}"/logs/lost+found
+    fi
 }
 
 configMetacatUi() {

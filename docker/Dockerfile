@@ -3,6 +3,7 @@ FROM tomcat:9.0.82-jre17-temurin-jammy
 # ARG default values that can be overridden at build-time
 ARG DISTBIN=''
 ARG DEVTOOLS=''
+ARG MC_VERSION=''
 
 # ENV default key=value env vars shared with container at runtime
 ENV TC_HOME=/usr/local/tomcat
@@ -46,6 +47,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends  iputils-ping l
     ## Note that backslash (&\#x5c\;) is also needed here, despite setting ALLOW_BACKSLASH=true
     sed -i 's/port="8080"/port="8080" relaxedQueryChars="\[\]\|\{\}\^\&quot\;\&\#x5c\;"/g' \
             $TC_HOME/conf/server.xml
+
+## Replace file-based logging
+COPY --chown=metacat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging.properties
 
 COPY --chown=metacat apply_context.py     ${USRBINDIR}/
 COPY --chown=metacat docker-entrypoint.sh ${USRBINDIR}/
