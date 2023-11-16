@@ -68,15 +68,14 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: {{ .Release.Name }}-config-volume
-              mountPath: /var/metacat/config/metacat-site.properties
-              subPath: metacat-site.properties
-              readOnly: true
-              # can't do {release}-{function}-{instance} for statefulset, since k8s auto appends
-              # {podname}-{instance} (e.g. metacatknb-metacat-metacatknb-0)
+            # can't do {release}-{function}-{instance} for statefulset, since k8s auto appends
+            # {podname}-{instance} (e.g. metacatknb-metacat-metacatknb-0)
             - name: {{ .Release.Name }}-metacat
               mountPath: /var/metacat
               readOnly: false
+            - name: {{ .Release.Name }}-config-volume
+              mountPath: /usr/local/etc/metacat-configMap
+              readOnly: true
             - name: {{ .Release.Name }}-d1-cert-volume
               mountPath: /var/metacat/certs/
               readOnly: true

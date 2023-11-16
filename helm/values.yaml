@@ -369,18 +369,13 @@ podAnnotations: {}
 ## @param podSecurityContext.fsGroup Group ID for the pod
 ##
 podSecurityContext:
-  enabled: false
-  fsGroup:
+  enabled: true
+  fsGroup: 1000
 
 ## @param securityContext Holds pod-level security attributes and common container settings
-securityContext: {}    #TODO
-##  fsGroup: metacat
-##  runAsUser: metacat
-##  capabilities:
-##    readOnlyRootFilesystem: true
-##    runAsNonRoot: true
-##   drop:
-##   - ALL
+securityContext:
+  runAsNonRoot: true
+#  readOnlyRootFilesystem: true
 
 ## @param resources Resource limits for the deployment
 ##  We usually recommend not to specify default resources and to leave this as a conscious
