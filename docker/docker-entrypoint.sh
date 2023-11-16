@@ -75,7 +75,7 @@ setTomcatEnv() {
     } >> "${TC_SETENV}"
     echo
     echo "Added tomcat CATALINA_OPTS to ${TC_SETENV}: * * * * * *"
-    echo "      ${MEMORY}, ${LOG4J_SAFE} and ${LOG4J_CONSOLE}"
+    echo "      ${LOG4J_SAFE}; ${LOG4J_CONSOLE}; and MEMORY OPTIONS [${MEMORY}]"
     echo
 }
 
@@ -223,10 +223,9 @@ elif [[ $1 = "catalina.sh" ]]; then
     fi
 
     echo
-    echo '**************************************'
-    echo 'Starting Tomcat and tailing logs from:'
-    echo "$TC_HOME/logs/*"
-    echo '**************************************'
+    echo '****************************************************************************'
+    echo '****  Starting Tomcat'
+    echo '****************************************************************************'
     echo
     #   run the passed CMD to Start tomcat
     "$@"
