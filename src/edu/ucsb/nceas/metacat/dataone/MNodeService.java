@@ -3512,9 +3512,9 @@ public class MNodeService extends D1NodeService
         String serviceFailureCode = "5901";
         String notAuthorizedCode = "5902";
         String notAuthorizedError ="The provided identity does not have permission to reindex "
-                                    + "objects on the Node.";
+                                    + "objects on the Node: ";
         if (session == null) {
-            throw new NotAuthorized(notAuthorizedCode,notAuthorizedError);
+            throw new NotAuthorized(notAuthorizedCode,notAuthorizedError + "public");
         }
         try {
             Identifier identifier = null;
@@ -3522,7 +3522,12 @@ public class MNodeService extends D1NodeService
                 new D1AuthHelper(request, identifier, notAuthorizedCode, serviceFailureCode);
             authDel.doAdminAuthorization(session);
         } catch (NotAuthorized na) {
-            throw new NotAuthorized(notAuthorizedCode,notAuthorizedError);
+            if (session.getSubject() != null) {
+                throw new NotAuthorized(notAuthorizedCode,notAuthorizedError
+                        + session.getSubject().getValue());
+            } else {
+                throw new NotAuthorized(notAuthorizedCode,notAuthorizedError + "public");
+            }
         }
 
         if (all) {
