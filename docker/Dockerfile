@@ -6,6 +6,7 @@ ARG DEVTOOLS=''
 
 # ENV default key=value env vars shared with container at runtime
 ENV TC_HOME=/usr/local/tomcat
+ENV CONFIGMAP_DIR=/usr/local/etc/metacat-configMap
 ENV USRBINDIR=/usr/local/bin
 ENV PATH=${USRBINDIR}:$PATH
 ENV DEVTOOLS=${DEVTOOLS}
@@ -19,7 +20,8 @@ ENV DEVTOOLS=${DEVTOOLS}
 
 
 # Add a user with name 'metacat'
-RUN useradd metacat
+RUN groupadd -g 1000 metacat
+RUN useradd -u 1000 -g 1000 metacat
 
 ## ADD auto-inflates the .tar.gz
 ADD "$DISTBIN" /tmp
@@ -49,7 +51,7 @@ COPY --chown=metacat apply_context.py     ${USRBINDIR}/
 COPY --chown=metacat docker-entrypoint.sh ${USRBINDIR}/
 
 #Run Container as 'metacat'
-USER metacat
+USER 1000
 
 #Set working directory to tomcat's bin dir, to match legacy metacat relative paths
 WORKDIR "$TC_HOME"/bin

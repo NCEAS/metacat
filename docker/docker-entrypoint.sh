@@ -9,6 +9,7 @@
 #
 # Defined in Dockerfile:
 # TC_HOME       (tomcat home directory in container; typically /usr/local/tomcat)
+# CONFIGMAP_DIR (volume mount point for the metacat configMap)
 #
 # Optional:
 # DEVTOOLS      ("true" to run infinite loop and NOT start tomcat automatically)
@@ -45,9 +46,10 @@ setTomcatEnv() {
         MEMORY=" -Xms${TOMCAT_MEM_MIN} -Xmx${TOMCAT_MEM_MAX}"
         MEMORY="${MEMORY} -XX:PermSize=128m -XX:MaxPermSize=512m "
     fi
+
     # TODO - upgrade to log4j > 2.16 and remove `-Dlog4j2.formatMsgNoLookups=true` "safeguard",
     #  since it's not secure, See: https://logging.apache.org/log4j/2.x/security.html#history
-    LOG4J="-Dlog4j2.formatMsgNoLookups=true"
+    LOG4J="-Dlog4j2.formatMsgNoLookups=true -Dlog4j2.configurationFile=$CONFIGMAP_DIR/log4j2.k8s.properties"
 
     echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -server ${MEMORY} ${LOG4J}\"" >> "${TC_OPTS}"
 }
@@ -91,7 +93,6 @@ configMetacatUi() {
         echo "</web-app>"
     } > "${UI_HOME}"/WEB-INF/web.xml
 }
-
 
 ####################################################################################################
 ####   MAIN SCRIPT
@@ -147,6 +148,13 @@ elif [[ $1 = "catalina.sh" ]]; then
         /var/metacat/inline-data \
         /var/metacat/logs        \
         /var/metacat/temporary
+
+    # Metacat Site Properties
+    SITEPROPS_TARGET=/var/metacat/config/metacat-site.properties
+    if [ -e "$SITEPROPS_TARGET" ]; then
+        rm -f "$SITEPROPS_TARGET"
+    fi
+    ln -s "$CONFIGMAP_DIR"/metacat-site.properties "$SITEPROPS_TARGET"
 
     setTomcatEnv
 
