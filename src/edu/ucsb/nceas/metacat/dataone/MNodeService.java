@@ -3538,7 +3538,7 @@ public class MNodeService extends D1NodeService
      * @param pids  the list of identifier whose solr doc needs to be rebuilt
      */
     protected void handleReindexAction(List<Identifier> pids) {
-        logMetacat.debug("MNodeService.handleReindexAction - reindex some objects");
+        logMetacat.info("MNodeService.handleReindexAction - reindex some objects");
         if (pids == null) {
             return;
         }
