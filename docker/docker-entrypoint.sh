@@ -228,10 +228,8 @@ elif [[ $1 = "catalina.sh" ]]; then
     echo "$TC_HOME/logs/*"
     echo '**************************************'
     echo
-    #   Start tomcat
-    "$@" > /dev/null 2>&1
-
-    exec tail -n +0 -f "$TC_HOME"/logs/*
+    #   run the passed CMD to Start tomcat
+    "$@"
 
 else
   echo "* * *  DEVTOOLS = $DEVTOOLS and ARGS = $@ "

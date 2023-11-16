@@ -71,4 +71,5 @@ LABEL maintainer="NCEAS <https://github.com/NCEAS/metacat>"
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
+## IMPORTANT - use `catalina.sh run` for logging to stdout (not `catalina.sh start`)
 CMD ["catalina.sh","run"]
