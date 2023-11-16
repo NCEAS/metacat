@@ -3,9 +3,11 @@ FROM tomcat:9.0.82-jre17-temurin-jammy
 # ARG default values that can be overridden at build-time
 ARG DISTBIN=''
 ARG DEVTOOLS=''
+ARG MC_VERSION=''
 
 # ENV default key=value env vars shared with container at runtime
 ENV TC_HOME=/usr/local/tomcat
+ENV CONFIGMAP_DIR=/usr/local/etc/metacat-configMap
 ENV USRBINDIR=/usr/local/bin
 ENV PATH=${USRBINDIR}:$PATH
 ENV DEVTOOLS=${DEVTOOLS}
@@ -19,7 +21,8 @@ ENV DEVTOOLS=${DEVTOOLS}
 
 
 # Add a user with name 'metacat'
-RUN useradd metacat
+RUN groupadd -g 1000 metacat
+RUN useradd -u 1000 -g 1000 metacat
 
 ## ADD auto-inflates the .tar.gz
 ADD "$DISTBIN" /tmp
@@ -45,11 +48,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends  iputils-ping l
     sed -i 's/port="8080"/port="8080" relaxedQueryChars="\[\]\|\{\}\^\&quot\;\&\#x5c\;"/g' \
             $TC_HOME/conf/server.xml
 
+## Redirect file-based logging to stdout for access logs
+COPY --chown=metacat tomcat.k8s.server.xml ${TC_HOME}/conf/server.xml
+
+## Redirect file-based logging for all other logs
+COPY --chown=metacat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging.properties
+
 COPY --chown=metacat apply_context.py     ${USRBINDIR}/
 COPY --chown=metacat docker-entrypoint.sh ${USRBINDIR}/
 
 #Run Container as 'metacat'
-USER metacat
+USER 1000
 
 #Set working directory to tomcat's bin dir, to match legacy metacat relative paths
 WORKDIR "$TC_HOME"/bin
@@ -65,4 +74,5 @@ LABEL maintainer="NCEAS <https://github.com/NCEAS/metacat>"
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
-CMD ["catalina.sh","start"]
+## IMPORTANT - use `catalina.sh run` for logging to stdout (not `catalina.sh start`)
+CMD ["catalina.sh","run"]

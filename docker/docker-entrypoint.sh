@@ -9,6 +9,7 @@
 #
 # Defined in Dockerfile:
 # TC_HOME       (tomcat home directory in container; typically /usr/local/tomcat)
+# CONFIGMAP_DIR (volume mount point for the metacat configMap)
 #
 # Optional:
 # DEVTOOLS      ("true" to run infinite loop and NOT start tomcat automatically)
@@ -21,7 +22,7 @@ set -e
 ####   FUNCTION DEFINITIONS
 ####################################################################################################
 
-TC_OPTS="${TC_HOME}"/bin/setenv.sh
+TC_SETENV="${TC_HOME}"/bin/setenv.sh
 
 enableRemoteDebugging() {
     # Allow remote debugging via port 5005
@@ -31,13 +32,16 @@ enableRemoteDebugging() {
         echo "# Allow remote debugging connections to the port listed as \"address=\" below:"
         echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} \
                             -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005\""
-    } >> "${TC_OPTS}"
+    } >> "${TC_SETENV}"
     echo
     echo "* * * * * * Remote debugging connections enabled on port 5005 * * * * * *"
     echo
 }
 
 setTomcatEnv() {
+    ################################
+    ## MEMORY MANAGEMENT
+    ################################
     MEMORY=""
     if [[ -z ${TOMCAT_MEM_MIN} ]] || [[ -z ${TOMCAT_MEM_MAX} ]]; then
         echo "tomcat max or min memory size not found; skipping memory settings"
@@ -45,11 +49,30 @@ setTomcatEnv() {
         MEMORY=" -Xms${TOMCAT_MEM_MIN} -Xmx${TOMCAT_MEM_MAX}"
         MEMORY="${MEMORY} -XX:PermSize=128m -XX:MaxPermSize=512m "
     fi
+
+    ################################
+    ## LOGGING MODIFICATIONS
+    ################################
     # TODO - upgrade to log4j > 2.16 and remove `-Dlog4j2.formatMsgNoLookups=true` "safeguard",
     #  since it's not secure, See: https://logging.apache.org/log4j/2.x/security.html#history
-    LOG4J="-Dlog4j2.formatMsgNoLookups=true"
+    LOG4J_SAFE="-Dlog4j2.formatMsgNoLookups=true"
 
-    echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -server ${MEMORY} ${LOG4J}\"" >> "${TC_OPTS}"
+    # Log only to console, not to files
+    LOG4J_CONSOLE="-Dlog4j2.configurationFile=$CONFIGMAP_DIR/log4j2.k8s.properties"
+
+
+    ################################
+    ## MODIFY TOMCAT SETENV.SH FILE
+    ################################
+    {
+        echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -server ${MEMORY}\""
+        echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} ${LOG4J_SAFE}\""
+        echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} ${LOG4J_CONSOLE}\""
+    } >> "${TC_SETENV}"
+    echo
+    echo "Added tomcat CATALINA_OPTS to ${TC_SETENV}: * * * * * *"
+    echo "      ${LOG4J_SAFE}; ${LOG4J_CONSOLE}; and MEMORY OPTIONS [${MEMORY}]"
+    echo
 }
 
 configMetacatUi() {
@@ -91,7 +114,6 @@ configMetacatUi() {
         echo "</web-app>"
     } > "${UI_HOME}"/WEB-INF/web.xml
 }
-
 
 ####################################################################################################
 ####   MAIN SCRIPT
@@ -148,16 +170,18 @@ elif [[ $1 = "catalina.sh" ]]; then
         /var/metacat/logs        \
         /var/metacat/temporary
 
+    # Metacat Site Properties
+    SITEPROPS_TARGET=/var/metacat/config/metacat-site.properties
+    if [ -e "$SITEPROPS_TARGET" ]; then
+        rm -f "$SITEPROPS_TARGET"
+    fi
+    ln -s "$CONFIGMAP_DIR"/metacat-site.properties "$SITEPROPS_TARGET"
+
     setTomcatEnv
 
     # if METACAT_DEBUG, set the root log level to "DEBUG" and enable
     # remote debugging connections to tomcat
     if [[ $METACAT_DEBUG == "true" ]]; then
-          sed -i 's/rootLogger\.level[^\n]*/rootLogger\.level=DEBUG/g' \
-              "${TC_HOME}"/webapps/metacat/WEB-INF/classes/log4j2.properties;
-          echo
-          echo "* * * * * * set Log4J rootLogger level to DEBUG * * * * * *"
-          echo
           enableRemoteDebugging
     fi
 
@@ -195,15 +219,12 @@ elif [[ $1 = "catalina.sh" ]]; then
     fi
 
     echo
-    echo '**************************************'
-    echo 'Starting Tomcat and tailing logs from:'
-    echo "$TC_HOME/logs/*"
-    echo '**************************************'
+    echo '****************************************************************************'
+    echo '****  Starting Tomcat'
+    echo '****************************************************************************'
     echo
-    #   Start tomcat
-    "$@" > /dev/null 2>&1
-
-    exec tail -n +0 -f "$TC_HOME"/logs/*
+    #   run the passed CMD to Start tomcat
+    "$@"
 
 else
   echo "* * *  DEVTOOLS = $DEVTOOLS and ARGS = $@ "

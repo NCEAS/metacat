@@ -17,7 +17,7 @@
 ##   $ RLS=myrelease ; NS=mynamespace ; \
 ##     RELEASE_NAME=$RLS envsubst < ./helm/values.yaml | helm install $RLS -n $NS -f - ./helm
 ##
-##   # if this results in "command not found: envsubst", you can install envsubst (e.g. on Mac OS:
+##   # if this results in "command not found: envsubst", you can install envsubst (e.g. on macOS:
 ##        $  brew install gettext && brew link --force gettext
 ##
 
@@ -116,7 +116,7 @@ metacat:
   ## to allow connections from outside the k8s cluster (e.g. if you're using a loadBalancer
   ## service or kubectl proxy instead).
   ## If you ARE using the ingress (i.e. `.Values.ingress.enabled` is `true`), then leave this unset,
-  ## and it will be auto-populated, depending whether or not you have TLS set up for the ingress
+  ## and it will be autopopulated, depending upon whether you have TLS set up for the ingress
   ##
   server.httpPort: ""
 
@@ -128,11 +128,6 @@ metacat:
   ## host.docker.internal is equivalent to "localhost"
   ##
   solr.baseURL: http://host.docker.internal:8983/solr
-
-  ## @param metacat.solr.adminUser the username for connecting to the RabbitMQ instance
-  ## at `index.rabbitmq.hostname`.
-  ##
-  solr.adminUser: &solrAdminUsername metacat-solr-admin
 
   ## @param metacat.replication.logdir Location for the replication logs
   ##
@@ -363,24 +358,21 @@ serviceAccount:
 ##
 podAnnotations: {}
 
-## PodSecurityContext
+## PodSecurityContext - define common securityContext settings at the pod level for all containers
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ## @param podSecurityContext.enabled Enable security context
-## @param podSecurityContext.fsGroup Group ID for the pod
+## @param podSecurityContext.fsGroup numerical Group ID for the pod
 ##
 podSecurityContext:
-  enabled: false
-  fsGroup:
+  enabled: true
+  fsGroup: 1000
 
-## @param securityContext Holds pod-level security attributes and common container settings
-securityContext: {}    #TODO
-##  fsGroup: metacat
-##  runAsUser: metacat
-##  capabilities:
-##    readOnlyRootFilesystem: true
-##    runAsNonRoot: true
-##   drop:
-##   - ALL
+## securityContext holds container-level security attributes that override those at pod level
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param securityContext.runAsNonRoot ensure containers run as a non-root user.
+##                                 Note users must be defined by numerical user id for this to work
+securityContext:
+  runAsNonRoot: true
 
 ## @param resources Resource limits for the deployment
 ##  We usually recommend not to specify default resources and to leave this as a conscious
@@ -672,6 +664,13 @@ postgresql:
 ## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
 ## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
 ## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
+## setting memory limits using Kubernetes will have no effect on a Java application, unless you specifically set a maximimum heap size (using Java’s -Xmx setting).
+##
+## IMPORTANT NOTE
+## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
+## the memory limit set in Kubernetes. If you set a memory limit in Kubernetes, and Java exceeds
+## that, your container will be killed.
+##
 tomcat:
   heapMemory:
     min: ""
