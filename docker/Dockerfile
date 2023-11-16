@@ -48,7 +48,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends  iputils-ping l
     sed -i 's/port="8080"/port="8080" relaxedQueryChars="\[\]\|\{\}\^\&quot\;\&\#x5c\;"/g' \
             $TC_HOME/conf/server.xml
 
-## Replace file-based logging
+## Redirect file-based logging to stdout for access logs
+COPY --chown=metacat tomcat.k8s.server.xml ${TC_HOME}/conf/server.xml
+
+## Redirect file-based logging for all other logs
 COPY --chown=metacat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging.properties
 
 COPY --chown=metacat apply_context.py     ${USRBINDIR}/

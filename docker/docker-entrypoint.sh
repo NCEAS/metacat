@@ -60,10 +60,6 @@ setTomcatEnv() {
     # Log only to console, not to files
     LOG4J_CONSOLE="-Dlog4j2.configurationFile=$CONFIGMAP_DIR/log4j2.k8s.properties"
 
-    # k8s mount automatically adds a "lost+found" subdir which causes tomcat to fail
-    if [ -e "${TC_HOME}/logs/lost+found" ]; then
-        rm -rf "${TC_HOME}"/logs/lost+found
-    fi
 
     ################################
     ## MODIFY TOMCAT SETENV.SH FILE

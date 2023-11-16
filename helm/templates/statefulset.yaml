@@ -79,9 +79,6 @@ spec:
             - name: {{ .Release.Name }}-d1-cert-volume
               mountPath: /var/metacat/certs/
               readOnly: true
-            - name: {{ .Release.Name }}-tomcat-logs-volume
-              mountPath: /usr/local/tomcat/logs
-              readOnly: false
           env:
             - name: METACAT_IN_K8S
               value: "true"
@@ -121,15 +118,6 @@ spec:
         secret:
           secretName: {{ .Release.Name }}-d1-client-secret
           optional: true
-      - name: {{ .Release.Name }}-tomcat-logs-volume
-        ephemeral:
-          volumeClaimTemplate:
-            spec:
-              accessModes: [ "ReadWriteOnce" ]
-              {{ include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) }}
-              resources:
-                requests:
-                  storage: 1Gi
 {{- if not (.Values.persistence.enabled) }}
       - name: {{ .Release.Name }}-volume
         emptyDir: {}
