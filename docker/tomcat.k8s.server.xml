@@ -58,12 +58,20 @@
          Java AJP  Connector: /docs/config/ajp.html
          APR (HTTP/AJP) Connector: /docs/apr.html
          Define a non-SSL/TLS HTTP/1.1 Connector on port 8080
+         "relaxedQueryChars" is used to allow special characters:
+                           [ ] | { } ^ " \:
+         which are the intersection between what Solr uses:
+               + - && || ! ( ) { } [ ] \ ^ " ~ * ? :
+         (see https://solr.apache.org/guide/solr/latest/query-guide/standard-query-parser.html)
+         ...and what Tomcat doesn't usually allow:
+                        " < > [ \ ] ^ `{ | }
+         (see https://tomcat.apache.org/tomcat-9.0-doc/config/http.html) \
+         Note that backslash (&#x5c;) is also needed here, despite setting ALLOW_BACKSLASH=true
     -->
     <Connector port="8080" relaxedQueryChars="[]|{}^&quot;&#x5c;" protocol="HTTP/1.1"
                connectionTimeout="20000"
                redirectPort="8443"
-               maxParameterCount="1000"
-               />
+               maxParameterCount="1000" />
 
     <!-- An Engine represents the entry point (within Catalina) that processes
          every request.  The Engine implementation for Tomcat stand alone
