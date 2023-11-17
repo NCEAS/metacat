@@ -943,7 +943,7 @@
             </fileset>
             <fileset dir="${libdir.mvn}"/>
         </copy>
-        <copy file="lib/web.xml.tomcat6" tofile="${build.war}/web.xml"/>
+        <copy file="lib/web.xml" tofile="${build.war}/web.xml"/>
         <copy file="lib/metacat.properties" todir="${war.webinf}"
               filtering="yes"/>
         <copy todir="${war.webinf}" filtering="yes">
