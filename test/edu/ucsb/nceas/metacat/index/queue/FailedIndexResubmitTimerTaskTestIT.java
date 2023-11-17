@@ -252,7 +252,7 @@ public class FailedIndexResubmitTimerTaskTestIT {
      * @throws IOException
      * @throws XPathExpressionException
      */
-    private String getSolrDocVersion(String xml) throws ParserConfigurationException, SAXException,
+    public static String getSolrDocVersion(String xml) throws ParserConfigurationException, SAXException,
                                                     IOException, XPathExpressionException {
         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = builderFactory.newDocumentBuilder();

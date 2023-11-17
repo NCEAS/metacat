@@ -4,6 +4,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
+import edu.ucsb.nceas.metacat.index.queue.FailedIndexResubmitTimerTaskTestIT;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -56,6 +57,7 @@ import org.dataone.service.util.TypeMarshaller;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
+
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -178,6 +180,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataPermission"));
         suite.addTest(new MNodeServiceTest("testCreateAndUpdateWithDoiDisabled"));
         suite.addTest(new MNodeServiceTest("testCreateAndUpdateFGDC"));
+        suite.addTest(new MNodeServiceTest("testReindex"));
         return suite;
 
     }
@@ -4483,5 +4486,113 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         object = new FileInputStream("test/fgdc.xml");
         MNodeService.getInstance(request).update(session, guid, object, guid2, sysmeta2);
         object.close();
+    }
+
+
+    /**
+     * Test the reindex api
+     * @throws Exception
+     */
+    public void testReindex() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testReindex." + System.currentTimeMillis());
+        InputStream object =
+                        new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
+        object = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        mnCreate(session, guid, object, sysmeta);
+        //Make sure the metadata objects have been indexed
+        String query = "q=id:" + guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+                                                && count <= MNodeQueryTest.tryAcccounts) {
+            Thread.sleep(500);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+        }
+        String version = FailedIndexResubmitTimerTaskTestIT.getSolrDocVersion(resultStr);
+        //second object
+        Identifier guid1 = new Identifier();
+        guid1.setValue("testCreateFailure." + System.currentTimeMillis());
+        object = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        sysmeta = createSystemMetadata(guid1, session.getSubject(), object);
+        object.close();
+        sysmeta.setFormatId(formatId);
+        object = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        mnCreate(session, guid1, object, sysmeta);
+        //Make sure the metadata objects have been indexed
+        String query1 = "q=id:" + guid1.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query1);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+                                                && count <= MNodeQueryTest.tryAcccounts) {
+            Thread.sleep(500);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query1);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+        }
+        String version1 = FailedIndexResubmitTimerTaskTestIT.getSolrDocVersion(resultStr);
+
+        List<Identifier> identifiers = new ArrayList<Identifier>();
+        identifiers.add(guid);
+        identifiers.add(guid1);
+        boolean all = true;
+        try {
+            MNodeService.getInstance(request).reindex(session, null, all);
+            fail("We shouldn't get here since the session doesn't have permission to reindex.");
+        } catch (NotAuthorized e) {
+            assertTrue(e.getMessage().contains(session.getSubject().getValue()));
+        }
+
+        all = false;
+        try {
+            MNodeService.getInstance(request).reindex(session, identifiers, all);
+            fail("We shouldn't get here since the session doesn't have permission to reindex.");
+        } catch (NotAuthorized e) {
+            assertTrue(e.getMessage().contains(session.getSubject().getValue()));
+        }
+
+        all = false;
+        Session adminSession = getMNSession();
+        MNodeService.getInstance(request).reindex(adminSession, identifiers, all);
+
+        boolean versionChanged = false;
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        count = 0;
+        String newVersion = null;
+        while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
+            Thread.sleep(500);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+            newVersion = FailedIndexResubmitTimerTaskTestIT.getSolrDocVersion(resultStr);
+            versionChanged = !newVersion.equals(version);
+        }
+        assertTrue(versionChanged);
+
+        versionChanged = false;
+        stream = MNodeService.getInstance(request).query(session, "solr", query1);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        count = 0;
+        String newVersion1 = null;
+        while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
+            Thread.sleep(500);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query1);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+            newVersion1 = FailedIndexResubmitTimerTaskTestIT.getSolrDocVersion(resultStr);
+            versionChanged = !newVersion1.equals(version1);
+        }
+        assertTrue(versionChanged);
     }
 }
