@@ -38,15 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends  iputils-ping l
                                                >> ${TC_HOME}/conf/catalina.properties && \
     ## - Backslashes:
     echo "org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true" \
-                                               >> ${TC_HOME}/conf/catalina.properties && \
-    ## - Other special characters:  [ ] | { } ^ " \:
-    ## which are the intersection between what Solr uses:  + - && || ! ( ) { } [ ] \ ^ " ~ * ? :
-    ## (see https://solr.apache.org/guide/solr/latest/query-guide/standard-query-parser.html)
-    ## ...and what Tomcat doesn't usually allow:  " < > [ \ ] ^ `{ | }
-    ## (see https://tomcat.apache.org/tomcat-9.0-doc/config/http.html) \
-    ## Note that backslash (&\#x5c\;) is also needed here, despite setting ALLOW_BACKSLASH=true
-    sed -i 's/port="8080"/port="8080" relaxedQueryChars="\[\]\|\{\}\^\&quot\;\&\#x5c\;"/g' \
-            $TC_HOME/conf/server.xml
+                                               >> ${TC_HOME}/conf/catalina.properties
 
 ## Redirect file-based logging to stdout for access logs
 COPY --chown=metacat tomcat.k8s.server.xml ${TC_HOME}/conf/server.xml
