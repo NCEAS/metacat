@@ -68,10 +68,11 @@
          (see https://tomcat.apache.org/tomcat-9.0-doc/config/http.html) \
          Note that backslash (&#x5c;) is also needed here, despite setting ALLOW_BACKSLASH=true
     -->
-    <Connector port="8080" relaxedQueryChars="[]|{}^&quot;&#x5c;" protocol="HTTP/1.1"
+    <Connector port="8080"
                connectionTimeout="20000"
                redirectPort="8443"
-               maxParameterCount="1000" />
+               maxParameterCount="1000"
+               relaxedQueryChars="[]|{}^&quot;&#x5c;" protocol="HTTP/1.1" />
 
     <!-- An Engine represents the entry point (within Catalina) that processes
          every request.  The Engine implementation for Tomcat stand alone
@@ -79,9 +80,6 @@
          on to the appropriate Host (virtual host).
          Documentation at /docs/config/engine.html -->
 
-    <!-- You should set jvmRoute to support load-balancing via AJP ie :
-    <Engine name="Catalina" defaultHost="localhost" jvmRoute="jvm1">
-    -->
     <Engine name="Catalina" defaultHost="localhost">
 
       <!-- Use the LockOutRealm to prevent attempts to guess user passwords
