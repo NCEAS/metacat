@@ -119,6 +119,8 @@ configMetacatUi() {
 ####   MAIN SCRIPT
 ####################################################################################################
 
+figlet -ck Metacat
+
 if [[ $DEVTOOLS == "true" ]]; then
     echo '* * * Container "-devtools" mode'
     echo '* * * NOTE Tomcat does NOT get started in devtools mode!'
@@ -132,7 +134,7 @@ elif [[ $1 = "catalina.sh" ]]; then
 
     # Expand the metacatui.war
     if [ ! -d "${TC_HOME}"/webapps/metacatui ]; then
-        unzip "${TC_HOME}"/webapps/metacatui.war -d "${TC_HOME}"/webapps/metacatui
+        unzip -qq "${TC_HOME}"/webapps/metacatui.war -d "${TC_HOME}"/webapps/metacatui
     fi
 
     configMetacatUi
@@ -153,7 +155,7 @@ elif [[ $1 = "catalina.sh" ]]; then
 
     # Expand the WAR file
     if [ ! -d "$METACAT_DIR" ]; then
-        unzip "$METACAT_WAR" -d "$METACAT_DIR"
+        unzip -qq "$METACAT_WAR" -d "$METACAT_DIR"
     fi
 
     # change the context in the web.xml file

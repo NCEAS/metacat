@@ -27,11 +27,21 @@ RUN useradd -u 1000 -g 1000 metacat
 ## ADD auto-inflates the .tar.gz
 ADD "$DISTBIN" /tmp
 
-RUN apt-get update && apt-get install -y --no-install-recommends  iputils-ping lsof      \
-        netcat postgresql-client procps python3-bcrypt telnet unzip vim               && \
-    rm -rf /var/lib/apt/lists/  /tmp/metacat-index.war                                && \
-    mv /tmp/metacat.war  /tmp/metacatui.war ${TC_HOME}/webapps                        && \
-    chown -R metacat ${TC_HOME}                                                       && \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-bcrypt \
+    figlet \
+    unzip \
+    netcat \
+    # non-critical tools
+    iputils-ping \
+    lsof \
+    postgresql-client \
+    procps \
+    telnet \
+    vim                                                        && \
+    rm -rf /var/lib/apt/lists/  /tmp/metacat-index.war         && \
+    mv /tmp/metacat.war  /tmp/metacatui.war ${TC_HOME}/webapps && \
+    chown -R metacat ${TC_HOME}                                && \
     ## Tomcat Mods to Extend Allowed Character Set \
     ## - Encoded forward slashes (%2f):
     echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true" \
