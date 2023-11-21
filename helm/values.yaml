@@ -33,6 +33,22 @@ global:
   ##  &passwordSecretName)
   ##
   passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
+
+  ## @param global.storageClass default name of the storageClass to use for PVs
+  ##
+  ## If <storageClass> is defined,  storageClassName: <storageClass>
+  ##
+  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
+  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
+  ##   no class (no annotation, or one set equal to "")
+  ##
+  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
+  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
+  ## Instead, inspect your cluster to see what storageClass is set as default:
+  ##    $  kubectl get storageclass
+  ## ...and then explicitly set storageClass to match the name of the default storageclass
+  ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
+  ##
   storageClass: &storageClassName local-path
 
 ## @section Metacat Application-Specific Properties
@@ -679,8 +695,6 @@ tomcat:
 ## @section dataone_indexer Sub-Chart Configuration
 dataone-indexer:
   enabled: true
-  image:
-    repository: ghcr.io/dataoneorg/dataone-index-worker
   idxworker: {}
   solr: {}
   rabbitmq:

@@ -153,7 +153,6 @@ metacat:
 dataone-indexer:
   image:
     pullPolicy: Always
-    tag: DEVELOP
     debug: true
   persistence:
     ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
