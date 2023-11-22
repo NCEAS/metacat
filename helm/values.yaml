@@ -156,15 +156,22 @@ metacat:
   ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
   ##        e.g. http://host.docker.internal:8983/solr
   ##
-  ## 2. If you ARE using the included postgresql sub-chart (i.e. `dataone-indexer.enabled: true`),
-  ##    leave this value unset (`solr.baseURL: ""`). It will then be automatically populated, as
-  ##    follows:
+  ## 2. If you ARE using the included dataone-indexer sub-chart (i.e.
+  ##    `dataone-indexer.enabled: true`), leave this value unset (`solr.baseURL: ""`). It will
+  ##    then be automatically populated, as follows:
   ##    `<solr-hostname>` will be set to the current value of `.Release.Name`, prepended to
   ##                      `-solr-headless` (the name of the k8s headless solr service created
   ##                      by the dataone-indexer sub-chart)
   ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart)
   ##
   solr.baseURL: ""
+
+  ## @param metacat.solr.coreName The solr core (solr standalone) or collection name (solr cloud)
+  ## If you are using the included dataone-indexer sub-chart (i.e. `dataone-indexer.enabled: true`),
+  ## leave this value unset (`solr.coreName: ""`). It will then be automatically populated from the
+  ## subchart settings
+  ##
+  solr.coreName: ""
 
   ## @param metacat.replication.logdir Location for the replication logs
   ##

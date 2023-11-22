@@ -11,7 +11,6 @@ global:
 
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
-  solr.coreName: dataone_index
   index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
   index.rabbitmq.password: ${env:rabbitmq-password}
 
