@@ -7,11 +7,10 @@
 ##
 
 global:
-  storageClass: &storageClassName csi-rbd-sc
+  storageClass: &storageClassName csi-cephfs-sc
 
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
-  solr.baseURL: "http://metacatbrooke-solr-headless:8983/solr"
   solr.coreName: dataone_index
   index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
   index.rabbitmq.password: ${env:rabbitmq-password}
@@ -149,7 +148,6 @@ metacat:
   #  dataone.replicationpolicy.default.blockedNodeList:
 
 
-
 dataone-indexer:
   image:
     pullPolicy: Always
@@ -158,6 +156,7 @@ dataone-indexer:
     ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
     ## TODO: AUTO ASSIGN?
     claimName: metacatbrooke-metacat-metacatbrooke-0
+    ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
   idxworker:
     ## TODO: AUTO ASSIGN?
     ## the url of the metacat instance that indexer is working with. (Not necessarily a d1 MN)

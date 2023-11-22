@@ -140,10 +140,31 @@ metacat:
   ## and seen by end users outside the cluster
   server.name: &external-hostname localhost
 
-  ## @param metacat.solr.baseURL The url to access solr
-  ## host.docker.internal is equivalent to "localhost"
+  ## @param metacat.solr.baseURL The url to access solr (RELEASE PREFIX, or blank for sub-chart)
   ##
-  solr.baseURL: http://host.docker.internal:8983/solr
+  ## Format:    http://<solr-hostname>:<solr-port>/solr
+  ##
+  ## NOTES:
+  ## 1. If you are NOT using the included "dataone-indexer" sub-chart (i.e.
+  ##    `dataone-indexer.enabled: false`), ensure `<solr-port>` is set correctly, and use one of the
+  ##    following values for `<solr-hostname>`:
+  ##    *  The fully qualified domain name, for an existing solr instance hosted outside the
+  ##       current k8s cluster
+  ##    *  `<servicename>` for an existing postgresql instance within the same k8s cluster (hence
+  ##       the "RELEASE PREFIX" warning above; <servicename> likely contains the release name -
+  ##        e.g. "http://metacatbrooke-solr-headless:8983/solr")
+  ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
+  ##        e.g. http://host.docker.internal:8983/solr
+  ##
+  ## 2. If you ARE using the included postgresql sub-chart (i.e. `dataone-indexer.enabled: true`),
+  ##    leave this value unset (`solr.baseURL: ""`). It will then be automatically populated, as
+  ##    follows:
+  ##    `<solr-hostname>` will be set to the current value of `.Release.Name`, prepended to
+  ##                      `-solr-headless` (the name of the k8s headless solr service created
+  ##                      by the dataone-indexer sub-chart)
+  ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart)
+  ##
+  solr.baseURL: ""
 
   ## @param metacat.replication.logdir Location for the replication logs
   ##
