@@ -51,6 +51,8 @@ global:
   ##
   storageClass: &storageClassName local-path
 
+
+
 ## @section Metacat Application-Specific Properties
 ##
 ## The metacat section can contain any properties that metacat would expect to find in its
@@ -178,10 +180,12 @@ metacat:
   replication.logdir: /var/metacat/logs
 
   ## @param metacat.index.rabbitmq.hostname the hostname of the rabbitmq instance that will be used
-  ## <servicename>.<namespace>.svc.cluster.local
+  ## <servicename>.<namespace>.svc.cluster.local (e.g. metacatbrooke-rabbitmq-headless)
   ##
-  # TODO: Auto populate for subchart - see postgres url
-#  index.rabbitmq.hostname: brooke-rabbitmq-headless.default.svc.cluster.local
+
+  ## @param metacat.index.rabbitmq.hostname RabbitMQ hostname (RELEASE PREFIX)
+  ## Leave blank to auto-populate from indexer subchart
+  index.rabbitmq.hostname: ""
 
   ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
   ## at `index.rabbitmq.hostname`.

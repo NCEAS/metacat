@@ -96,3 +96,14 @@ nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
 # Specify if certificates are passed to upstream server
 nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
 {{- end }}
+
+{{/*
+set RabbitMQ HostName
+*/}}
+{{- define "metacat.rabbitmq.hostname" -}}
+{{- $rmqHost := (index .Values.metacat "index.rabbitmq.hostname") }}
+{{- if and (index .Values "dataone-indexer" "enabled") (not $rmqHost) -}}
+    {{- $rmqHost = printf "%s-rabbitmq-headless" .Release.Name -}}
+{{- end }}
+{{- $rmqHost }}
+{{- end }}

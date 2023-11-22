@@ -11,8 +11,6 @@ global:
 
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
-  index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
-  index.rabbitmq.password: ${env:rabbitmq-password}
 
   ## @section OPTIONAL DataONE Member Node (MN) Parameters
   ##
@@ -162,9 +160,6 @@ dataone-indexer:
     mn_url: "https://metacat-dev.test.dataone.org/metacat/d1/mn"
 
   rabbitmq:
-    ## TODO: AUTO ASSIGN?
-    hostname: metacatbrooke-rabbitmq-headless
-    ## TODO: AUTO ASSIGN?
     existingPasswordSecret: metacatbrooke-metacat-secrets
 
   solr:
