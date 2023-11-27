@@ -3598,10 +3598,14 @@ public class MNodeService extends D1NodeService
             for (String format : resourceMapFormatList) {
                 if (format != null && !format.trim().equals("")) {
                     if (firstTime) {
-                        sql.append(" where object_format !='" + format + "'");
+                        sql.append(" where object_format !='");
+                        sql.append(format);
+                        sql.append("'");
                         firstTime = false;
                     } else {
-                        sql.append(" and object_format !='" + format + "'");
+                        sql.append(" and object_format !='");
+                        sql.append(format);
+                        sql.append("'");
                     }
                 }
             }
@@ -3633,10 +3637,14 @@ public class MNodeService extends D1NodeService
             for (String format : resourceMapFormatList) {
                 if (format != null && !format.trim().equals("")) {
                     if (firstTime) {
-                        sql.append(" where object_format ='" + format + "'");
+                        sql.append(" where object_format ='");
+                        sql.append(format);
+                        sql.append("'");
                         firstTime = false;
                     } else {
-                        sql.append(" or object_format ='" + format + "'");
+                        sql.append(" or object_format ='");
+                        sql.append(format);
+                        sql.append("'");
                     }
                 }
             }
