@@ -4,7 +4,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
-import edu.ucsb.nceas.metacat.index.queue.FailedIndexResubmitTimerTaskTestIT;
+import edu.ucsb.nceas.metacat.index.queue.FailedIndexResubmitTimerTaskIT;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -4518,7 +4518,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
-        String version = FailedIndexResubmitTimerTaskTestIT.getSolrDocVersion(resultStr);
+        String version = FailedIndexResubmitTimerTaskIT.getSolrDocVersion(resultStr);
         //second object
         Identifier guid1 = new Identifier();
         guid1.setValue("testCreateFailure." + System.currentTimeMillis());
@@ -4540,7 +4540,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query1);
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
-        String version1 = FailedIndexResubmitTimerTaskTestIT.getSolrDocVersion(resultStr);
+        String version1 = FailedIndexResubmitTimerTaskIT.getSolrDocVersion(resultStr);
 
         List<Identifier> identifiers = new ArrayList<Identifier>();
         identifiers.add(guid);
@@ -4575,7 +4575,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
-            newVersion = FailedIndexResubmitTimerTaskTestIT.getSolrDocVersion(resultStr);
+            newVersion = FailedIndexResubmitTimerTaskIT.getSolrDocVersion(resultStr);
             versionChanged = !newVersion.equals(version);
         }
         assertTrue(versionChanged);
@@ -4590,7 +4590,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query1);
             resultStr = IOUtils.toString(stream, "UTF-8");
-            newVersion1 = FailedIndexResubmitTimerTaskTestIT.getSolrDocVersion(resultStr);
+            newVersion1 = FailedIndexResubmitTimerTaskIT.getSolrDocVersion(resultStr);
             versionChanged = !newVersion1.equals(version1);
         }
         assertTrue(versionChanged);

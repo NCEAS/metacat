@@ -48,7 +48,7 @@ import static org.junit.Assert.assertTrue;
  * @author tao
  *
  */
-public class FailedIndexResubmitTimerTaskTestIT {
+public class FailedIndexResubmitTimerTaskIT {
     private Session session = null;
     private Identifier guid = null;
     private String query = null;
