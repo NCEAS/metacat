@@ -78,6 +78,8 @@
         <load-on-startup>3</load-on-startup>
     </servlet>
 
+    <!-- This is an example for users who want to enable the OAI-PMH service - 
+         see: https://knb.ecoinformatics.org/knb/docs/oaipmh.html-->
     <!--
     <servlet>
       <servlet-name>DataProvider</servlet-name>
@@ -224,6 +226,8 @@
         <url-pattern>/d1/mn</url-pattern>
     </servlet-mapping> 
 
+    <!-- This is an example for users who want to enable the OAI-PMH service - 
+         see: https://knb.ecoinformatics.org/knb/docs/oaipmh.html-->
     <!-- 
     <servlet-mapping>
         <servlet-name>DataProvider</servlet-name>
