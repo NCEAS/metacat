@@ -1873,7 +1873,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         String[] allValueArray = params.get("all");
         if (allValueArray != null) {
             if (allValueArray.length != 1) {
-                throw new InvalidRequest("5903", "The \"all\" should only have one vaule");
+                throw new InvalidRequest("5903", "The \"all\" should only have one value");
             } else {
                 String allValue = allValueArray[0];
                 if (allValue != null && allValue.equalsIgnoreCase("true")) {
@@ -1893,7 +1893,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     }
                 }
             } else {
-                throw new InvalidRequest("5903", "Users should specify the \"pid\" vaule "
+                throw new InvalidRequest("5903", "Users should specify the \"pid\" value "
                                                                             + "for reindexing");
             }
         }
