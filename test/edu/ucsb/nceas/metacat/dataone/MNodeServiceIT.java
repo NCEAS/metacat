@@ -88,7 +88,7 @@ import java.util.zip.ZipFile;
  *
  * @author cjones
  */
-public class MNodeServiceTest extends D1NodeServiceTest {
+public class MNodeServiceIT extends D1NodeServiceTest {
 
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
 
@@ -119,68 +119,68 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     public static Test suite() {
 
         TestSuite suite = new TestSuite();
-        suite.addTest(new MNodeServiceTest("initialize"));
+        suite.addTest(new MNodeServiceIT("initialize"));
         // MNStorage tests
-        suite.addTest(new MNodeServiceTest("testMissMatchMetadataCreate"));
-        suite.addTest(new MNodeServiceTest("testMissMatchChecksumInCreate"));
-        suite.addTest(new MNodeServiceTest("testCreate"));
-        suite.addTest(new MNodeServiceTest("testCreateInvalidIdentifier"));
-        suite.addTest(new MNodeServiceTest("testUpdate"));
-        suite.addTest(new MNodeServiceTest("testMissMatchedCheckSumUpdate"));
-        suite.addTest(new MNodeServiceTest("testMissMatchedChecksumUpdateSciMetadata"));
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));
-        suite.addTest(new MNodeServiceTest("testUpdateObsoletesAndObsoletedBy"));
-        suite.addTest(new MNodeServiceTest("testArchive"));
-        suite.addTest(new MNodeServiceTest("testUpdateSciMetadata"));
+        suite.addTest(new MNodeServiceIT("testMissMatchMetadataCreate"));
+        suite.addTest(new MNodeServiceIT("testMissMatchChecksumInCreate"));
+        suite.addTest(new MNodeServiceIT("testCreate"));
+        suite.addTest(new MNodeServiceIT("testCreateInvalidIdentifier"));
+        suite.addTest(new MNodeServiceIT("testUpdate"));
+        suite.addTest(new MNodeServiceIT("testMissMatchedCheckSumUpdate"));
+        suite.addTest(new MNodeServiceIT("testMissMatchedChecksumUpdateSciMetadata"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadata"));
+        suite.addTest(new MNodeServiceIT("testUpdateObsoletesAndObsoletedBy"));
+        suite.addTest(new MNodeServiceIT("testArchive"));
+        suite.addTest(new MNodeServiceIT("testUpdateSciMetadata"));
         // this requires MN certificate
-        suite.addTest(new MNodeServiceTest("testDelete"));
+        suite.addTest(new MNodeServiceIT("testDelete"));
 
         // MNRead tests
-        suite.addTest(new MNodeServiceTest("testGet"));
-        suite.addTest(new MNodeServiceTest("testGetChecksum"));
-        suite.addTest(new MNodeServiceTest("testGetSystemMetadata"));
-        suite.addTest(new MNodeServiceTest("testDescribe"));
-        suite.addTest(new MNodeServiceTest("testListObjects"));
-        suite.addTest(new MNodeServiceTest("testGetSID"));
+        suite.addTest(new MNodeServiceIT("testGet"));
+        suite.addTest(new MNodeServiceIT("testGetChecksum"));
+        suite.addTest(new MNodeServiceIT("testGetSystemMetadata"));
+        suite.addTest(new MNodeServiceIT("testDescribe"));
+        suite.addTest(new MNodeServiceIT("testListObjects"));
+        suite.addTest(new MNodeServiceIT("testGetSID"));
         // this requires CN certificate
-        suite.addTest(new MNodeServiceTest("testSynchronizationFailed"));
+        suite.addTest(new MNodeServiceIT("testSynchronizationFailed"));
 
         // MNCore tests
-        suite.addTest(new MNodeServiceTest("testPing"));
-        suite.addTest(new MNodeServiceTest("testGetLogRecords"));
-        suite.addTest(new MNodeServiceTest("testGetCapabilities"));
+        suite.addTest(new MNodeServiceIT("testPing"));
+        suite.addTest(new MNodeServiceIT("testGetLogRecords"));
+        suite.addTest(new MNodeServiceIT("testGetCapabilities"));
 
         // MNAuthorization tests
-        suite.addTest(new MNodeServiceTest("testIsAuthorized"));
-        suite.addTest(new MNodeServiceTest("testIsEquivIdentityAuthorized"));
-        suite.addTest(new MNodeServiceTest("testSetAccessPolicy"));
+        suite.addTest(new MNodeServiceIT("testIsAuthorized"));
+        suite.addTest(new MNodeServiceIT("testIsEquivIdentityAuthorized"));
+        suite.addTest(new MNodeServiceIT("testSetAccessPolicy"));
         // MNreplication tests
-        suite.addTest(new MNodeServiceTest("testReplicate"));
+        suite.addTest(new MNodeServiceIT("testReplicate"));
         // MN packaging tests
-        suite.addTest(new MNodeServiceTest("testGetPackage"));
-        suite.addTest(new MNodeServiceTest("testGetOREPackage"));
-        suite.addTest(new MNodeServiceTest("testReadDeletedObject"));
-        suite.addTest(new MNodeServiceTest("testCreateAndUpdateXMLWithUnmatchingEncoding"));
-        suite.addTest(new MNodeServiceTest("testListViews"));
-        suite.addTest(new MNodeServiceTest("testCreateNOAAObject"));
+        suite.addTest(new MNodeServiceIT("testGetPackage"));
+        suite.addTest(new MNodeServiceIT("testGetOREPackage"));
+        suite.addTest(new MNodeServiceIT("testReadDeletedObject"));
+        suite.addTest(new MNodeServiceIT("testCreateAndUpdateXMLWithUnmatchingEncoding"));
+        suite.addTest(new MNodeServiceIT("testListViews"));
+        suite.addTest(new MNodeServiceIT("testCreateNOAAObject"));
 
-        suite.addTest(new MNodeServiceTest("testPermissionOfUpdateSystemmeta"));
+        suite.addTest(new MNodeServiceIT("testPermissionOfUpdateSystemmeta"));
 
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletesChain"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadataWithCircularObsoletesChain"));
 
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletedByChain"));
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataImmutableFields"));
-        suite.addTest(new MNodeServiceTest("testUpdateAuthoritativeMN"));
-        suite.addTest(new MNodeServiceTest("testInvalidIds"));
-        suite.addTest(new MNodeServiceTest("testPublishPackage"));
-        suite.addTest(new MNodeServiceTest("testPublishPrivatePackage"));
-        suite.addTest(new MNodeServiceTest("testAllowList"));
-        suite.addTest(new MNodeServiceTest("testInsertJson_LD"));
-        suite.addTest(new MNodeServiceTest("testCreateAndUpdateEventLog"));
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataPermission"));
-        suite.addTest(new MNodeServiceTest("testCreateAndUpdateWithDoiDisabled"));
-        suite.addTest(new MNodeServiceTest("testCreateAndUpdateFGDC"));
-        suite.addTest(new MNodeServiceTest("testReindex"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadataWithCircularObsoletedByChain"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadataImmutableFields"));
+        suite.addTest(new MNodeServiceIT("testUpdateAuthoritativeMN"));
+        suite.addTest(new MNodeServiceIT("testInvalidIds"));
+        suite.addTest(new MNodeServiceIT("testPublishPackage"));
+        suite.addTest(new MNodeServiceIT("testPublishPrivatePackage"));
+        suite.addTest(new MNodeServiceIT("testAllowList"));
+        suite.addTest(new MNodeServiceIT("testInsertJson_LD"));
+        suite.addTest(new MNodeServiceIT("testCreateAndUpdateEventLog"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadataPermission"));
+        suite.addTest(new MNodeServiceIT("testCreateAndUpdateWithDoiDisabled"));
+        suite.addTest(new MNodeServiceIT("testCreateAndUpdateFGDC"));
+        suite.addTest(new MNodeServiceIT("testReindex"));
         return suite;
 
     }
@@ -190,7 +190,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
      *
      * @param name - the name of the test
      */
-    public MNodeServiceTest(String name) {
+    public MNodeServiceIT(String name) {
         super(name);
 
     }
