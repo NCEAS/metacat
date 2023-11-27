@@ -3514,7 +3514,7 @@ public class MNodeService extends D1NodeService
         String notAuthorizedError ="The provided identity does not have permission to reindex "
                                     + "objects on the Node: ";
         if (session == null) {
-            throw new NotAuthorized(notAuthorizedCode,notAuthorizedError + "public");
+            throw new NotAuthorized(notAuthorizedCode, notAuthorizedError + "public");
         }
         try {
             Identifier identifier = null;
@@ -3523,10 +3523,10 @@ public class MNodeService extends D1NodeService
             authDel.doAdminAuthorization(session);
         } catch (NotAuthorized na) {
             if (session.getSubject() != null) {
-                throw new NotAuthorized(notAuthorizedCode,notAuthorizedError
+                throw new NotAuthorized(notAuthorizedCode, notAuthorizedError
                         + session.getSubject().getValue());
             } else {
-                throw new NotAuthorized(notAuthorizedCode,notAuthorizedError + "public");
+                throw new NotAuthorized(notAuthorizedCode, notAuthorizedError + "public");
             }
         }
 
@@ -3547,8 +3547,7 @@ public class MNodeService extends D1NodeService
         if (pids == null) {
             return;
         }
-        for (int i = 0; i < pids.size(); i++) {
-            Identifier identifier = pids.get(i);
+        for (Identifier identifier : pids) {
             if (identifier != null) {
                 logMetacat.debug("MNodeService.handleReindexAction: queueing doc index for pid "
                                                                     + identifier.getValue());
@@ -3564,7 +3563,6 @@ public class MNodeService extends D1NodeService
                 } catch (Exception e) {
                     logMetacat.info("MNodeService.handleReindexAction: Error submitting to "
                             + "index for pid " + identifier.getValue());
-                    continue;
                 }
             }
         }
@@ -3577,7 +3575,7 @@ public class MNodeService extends D1NodeService
     protected void handleReindexAllAction() {
         // Process all of the documents
         logMetacat.debug("MNodeService.handleReindexAllAction - "
-                                               + "reindexl all objects in this Metacat instance");
+                                               + "reindex all objects in this Metacat instance");
         Runnable indexAll = new Runnable() {
             public void run() {
                 List<String> resourceMapFormats = ResourceMapNamespaces.getNamespaces();
@@ -3595,23 +3593,24 @@ public class MNodeService extends D1NodeService
      */
     private void buildAllNonResourceMapIndex(List<String> resourceMapFormatList) {
         boolean firstTime = true;
-        String sql = "select guid from systemmetadata";
+        StringBuilder sql = new StringBuilder("select guid from systemmetadata");
         if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
             for (String format : resourceMapFormatList) {
                 if (format != null && !format.trim().equals("")) {
                     if (firstTime) {
-                        sql = sql + " where object_format !='" + format + "'";
+                        sql.append(" where object_format !='" + format + "'");
                         firstTime = false;
                     } else {
-                        sql = sql + " and object_format !='" + format + "'";
+                        sql.append(" and object_format !='" + format + "'");
                     }
                 }
             }
-            sql = sql + " order by date_uploaded asc";
+            sql.append(" order by date_uploaded asc");
         }
-        logMetacat.debug("MNodeService.buildAllNonResourceMapIndex - the final query is " + sql);
+        logMetacat.debug("MNodeService.buildAllNonResourceMapIndex - the final query is "
+                                                                        + sql.toString());
         try {
-            long size = buildIndexFromQuery(sql);
+            long size = buildIndexFromQuery(sql.toString());
             logMetacat.info(
                 "MNodeService.buildAllNonResourceMapIndex - the number of non-resource map "
                     + "objects is "
@@ -3628,24 +3627,25 @@ public class MNodeService extends D1NodeService
      * @param resourceMapFormatList
      */
     private void buildAllResourceMapIndex(List<String> resourceMapFormatList) {
-        String sql = "select guid from systemmetadata";
+        StringBuilder sql = new StringBuilder("select guid from systemmetadata");
         if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
             boolean firstTime = true;
             for (String format : resourceMapFormatList) {
                 if (format != null && !format.trim().equals("")) {
                     if (firstTime) {
-                        sql = sql + " where object_format ='" + format + "'";
+                        sql.append(" where object_format ='" + format + "'");
                         firstTime = false;
                     } else {
-                        sql = sql + " or object_format ='" + format + "'";
+                        sql.append(" or object_format ='" + format + "'");
                     }
                 }
             }
-            sql = sql + " order by date_uploaded asc";
+            sql.append(" order by date_uploaded asc");
         }
-        logMetacat.info("MNodeService.buildAllResourceMapIndex - the final query is " + sql);
+        logMetacat.info("MNodeService.buildAllResourceMapIndex - the final query is "
+                                                                    + sql.toString());
         try {
-            long size = buildIndexFromQuery(sql);
+            long size = buildIndexFromQuery(sql.toString());
             logMetacat.info(
                 "MNodeService.buildAllResourceMapIndex - the number of resource map objects is "
                     + size + " being submitted to the index queue.");
@@ -3699,8 +3699,6 @@ public class MNodeService extends D1NodeService
             }
             rs.close();
             stmt.close();
-        } catch (SQLException e) {
-            throw e;
         } finally {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
