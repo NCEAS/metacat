@@ -12,12 +12,14 @@
 # serve to show the default.
 
 import sys, os, configparser, io
+from itertools import chain
 
 #Read the release version from the metacat.properties file
-prop = '[dummy]\n' + open('../../../../lib/metacat.properties').read()
-config = configparser.SafeConfigParser()
-config.readfp(io.StringIO(prop))
-#print config.get('dummy', 'application.metacatVersion')
+config = configparser.ConfigParser()
+with open("../../../../lib/metacat.properties") as lines:
+    lines = chain(("[dummy]",), lines)
+    config.read_file(lines)
+#print("Metacat version: ", config.get('dummy', 'application.metacatVersion'))
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -28,6 +30,7 @@ config.readfp(io.StringIO(prop))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+#extensions = ['sphinxcontrib.mermaid']
 extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
@@ -107,7 +110,7 @@ html_theme = 'metacatui'
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ['themes',]
+html_theme_path = ['themes']
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

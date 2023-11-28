@@ -1426,11 +1426,10 @@
 
     <target name="admindoc" depends="prepare">
         <!-- Build the administrator's guide, which is a Sphinx RST project
-             For this to succeed, you must have sphinx-build version 6.2.1 installed on your
-             machine, eg: `python -m pip install -Iv sphinx==6.2.1`
-             (Later versions currently don't work, since the `style` key was removed in v7.0.0)
+             For this to succeed, you must have sphinx-build installed on your
+             machine, eg: `python -m pip install -Iv sphinx`
              See: https://www.sphinx-doc.org/en/master/usage/installation.html for details.
-             You must also have the 'make' build tool installed
+             You must also have the 'make' build tool installed, and a recent version of python3
         -->
         <exec dir="${docdir}/user/metacat" executable="make">
             <arg value="plantuml"/>

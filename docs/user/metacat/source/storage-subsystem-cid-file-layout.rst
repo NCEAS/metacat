@@ -260,8 +260,7 @@ for an overview. Some of the features that might be useful for us:
 - Given the root hash of a merkle tree, one can download the children blocks from any source (distributed, untrusted)
 - Given a complex set of objects, a single hash comparison of the root hash can quickly deduce whether two hash collections differ 
     - Proceeding down the tree and comparing sub-tree hashes can pinpoint where the trees differ
-- In addition to representing a single "object" as a tree, we can also create other composite
-trees that represent multi-object collections, such as data packages
+- In addition to representing a single "object" as a tree, we can also create other composite trees that represent multi-object collections, such as data packages
     - All of the benefits at the file level would also apply at the collection level
 
 These features are used within existing systems like Git and IPFS to build fully
@@ -338,7 +337,82 @@ Switch back again to hash identifiers, and add our folder structure back using a
    :align: center
 
 .. figure:: images/hash-trees/hash-trees-40-mermaid.png
-   :align: center   
+   :align: center
+
+.. mermaid:::
+   flowchart TD
+      H13["H13
+         H13 type PACKAGE
+         H13 contains H11
+         H13 contains H12
+         H13 contains H10"]
+      subgraph ORE
+         H12["H12
+               H12 type ANNO"]
+         H1["H1: ORE"]
+         P1["P1: Sysmeta"]
+         P1 --> H1
+         H12 --> H1
+      end
+      subgraph EML
+         H11["H11
+               H11 type ANNO"]
+         H2["H2: EML"]
+         P2["P2: Sysmeta"]
+         H11 --> H2
+         P2 --> H2
+      end
+      H10["H10
+         H10 type FOLDER
+         H10 contains H6
+         H10 contains H9"]
+      H13 --> H12
+      H13 --> H11
+      H13 --> H10
+      subgraph Blob1
+         H6["H6
+               H6 type ANNO
+               H6 contains H3"]
+         H3["H3: Data"]
+         P3["P3: Sysmeta"]
+         H6 --> H3
+         P3 --> H3
+      end    
+      H10 --> H6
+      H9["H9
+         H9 type FOLDER
+         H9 contains H8
+         H9 contains H8"]
+      H10 --> H9
+      subgraph Blob2
+         H7["H7
+               H7 type ANNO
+               H7 contains H4
+               H4 type BLOB"]
+         H4["H4: Data"]
+         P4["P4: Sysmeta"]
+         H7 --> H4
+         P4 --> H4
+      end
+      H9 --> H7
+      subgraph Blob3
+         H8["H8
+               H8 type ANNO
+               H8 contains H5
+               H5 type BLOB"]
+         H5["H5: Data"]
+         P5["P5: Sysmeta"]
+         H8 --> H5
+         P5 --> H5
+      end
+      H9 --> H8 
+      classDef cyan fill:#7ff;
+      class H13,H12,H11,H10,H6,H9,H7,H8 cyan
+      classDef mage fill:#ff7ffe;
+      class P1,P2,P3,P4,P5 mage
+      classDef lime fill:#dfffda;
+      class H1,H2 lime
+
 
 Back to CIDs, with folders as annotation objects.
 
