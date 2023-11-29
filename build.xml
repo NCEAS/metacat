@@ -1424,12 +1424,15 @@
             description="generates Javadoc API documentation and Admin Guide">
     </target>
 
-    <target name="admindoc" depends="prepare">
+    <target name="admindoc" depends="prepare"
+            description="build sphinx-RST-based admin guide - see inline comments for requirements">
         <!-- Build the administrator's guide, which is a Sphinx RST project
-             For this to succeed, you must have sphinx-build installed on your
-             machine, eg: `python -m pip install -Iv sphinx`
-             See: https://www.sphinx-doc.org/en/master/usage/installation.html for details.
-             You must also have the 'make' build tool installed, and a recent version of python3
+             For this to succeed, you must have the following installed on your machine:
+             * make
+             * python3
+             * graphviz      (e.g. `brew install graphviz`)
+             * sphinx-build  (e.g. `brew install sphinx-doc`)
+             See: https://www.sphinx-doc.org/en/master/usage/installation.html for more details.
         -->
         <exec dir="${docdir}/user/metacat" executable="make">
             <arg value="plantuml"/>
