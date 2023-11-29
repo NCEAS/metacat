@@ -613,13 +613,6 @@
              basedir="${build.dest}" includes="**/metacat/client/"/>
     </target>
 
-    <target name="advancedsearchjar" depends="compile"
-            description="Compiles and jars advanced search Java code to advancedsearch.jar in build dir">
-        <delete file="${build.dir}/advancedsearch.jar"/>
-        <jar jarfile="${build.dir}/advancedsearch.jar"
-             basedir="${build.dest}" includes="**/metacat/advancedsearch/"/>
-    </target>
-
     <target name="harvester" depends="client"
             description="Compiles harvester java code to build dir">
         <javac srcdir="${build.src}" destdir="${build.dest}"
