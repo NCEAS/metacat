@@ -4,6 +4,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
+import edu.ucsb.nceas.metacat.index.queue.FailedIndexResubmitTimerTaskIT;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -57,6 +58,7 @@ import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
 
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -86,7 +88,7 @@ import java.util.zip.ZipFile;
  *
  * @author cjones
  */
-public class MNodeServiceTest extends D1NodeServiceTest {
+public class MNodeServiceIT extends D1NodeServiceTest {
 
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
 
@@ -117,67 +119,68 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     public static Test suite() {
 
         TestSuite suite = new TestSuite();
-        suite.addTest(new MNodeServiceTest("initialize"));
+        suite.addTest(new MNodeServiceIT("initialize"));
         // MNStorage tests
-        suite.addTest(new MNodeServiceTest("testMissMatchMetadataCreate"));
-        suite.addTest(new MNodeServiceTest("testMissMatchChecksumInCreate"));
-        suite.addTest(new MNodeServiceTest("testCreate"));
-        suite.addTest(new MNodeServiceTest("testCreateInvalidIdentifier"));
-        suite.addTest(new MNodeServiceTest("testUpdate"));
-        suite.addTest(new MNodeServiceTest("testMissMatchedCheckSumUpdate"));
-        suite.addTest(new MNodeServiceTest("testMissMatchedChecksumUpdateSciMetadata"));
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));
-        suite.addTest(new MNodeServiceTest("testUpdateObsoletesAndObsoletedBy"));
-        suite.addTest(new MNodeServiceTest("testArchive"));
-        suite.addTest(new MNodeServiceTest("testUpdateSciMetadata"));
+        suite.addTest(new MNodeServiceIT("testMissMatchMetadataCreate"));
+        suite.addTest(new MNodeServiceIT("testMissMatchChecksumInCreate"));
+        suite.addTest(new MNodeServiceIT("testCreate"));
+        suite.addTest(new MNodeServiceIT("testCreateInvalidIdentifier"));
+        suite.addTest(new MNodeServiceIT("testUpdate"));
+        suite.addTest(new MNodeServiceIT("testMissMatchedCheckSumUpdate"));
+        suite.addTest(new MNodeServiceIT("testMissMatchedChecksumUpdateSciMetadata"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadata"));
+        suite.addTest(new MNodeServiceIT("testUpdateObsoletesAndObsoletedBy"));
+        suite.addTest(new MNodeServiceIT("testArchive"));
+        suite.addTest(new MNodeServiceIT("testUpdateSciMetadata"));
         // this requires MN certificate
-        suite.addTest(new MNodeServiceTest("testDelete"));
+        suite.addTest(new MNodeServiceIT("testDelete"));
 
         // MNRead tests
-        suite.addTest(new MNodeServiceTest("testGet"));
-        suite.addTest(new MNodeServiceTest("testGetChecksum"));
-        suite.addTest(new MNodeServiceTest("testGetSystemMetadata"));
-        suite.addTest(new MNodeServiceTest("testDescribe"));
-        suite.addTest(new MNodeServiceTest("testListObjects"));
-        suite.addTest(new MNodeServiceTest("testGetSID"));
+        suite.addTest(new MNodeServiceIT("testGet"));
+        suite.addTest(new MNodeServiceIT("testGetChecksum"));
+        suite.addTest(new MNodeServiceIT("testGetSystemMetadata"));
+        suite.addTest(new MNodeServiceIT("testDescribe"));
+        suite.addTest(new MNodeServiceIT("testListObjects"));
+        suite.addTest(new MNodeServiceIT("testGetSID"));
         // this requires CN certificate
-        suite.addTest(new MNodeServiceTest("testSynchronizationFailed"));
+        suite.addTest(new MNodeServiceIT("testSynchronizationFailed"));
 
         // MNCore tests
-        suite.addTest(new MNodeServiceTest("testPing"));
-        suite.addTest(new MNodeServiceTest("testGetLogRecords"));
-        suite.addTest(new MNodeServiceTest("testGetCapabilities"));
+        suite.addTest(new MNodeServiceIT("testPing"));
+        suite.addTest(new MNodeServiceIT("testGetLogRecords"));
+        suite.addTest(new MNodeServiceIT("testGetCapabilities"));
 
         // MNAuthorization tests
-        suite.addTest(new MNodeServiceTest("testIsAuthorized"));
-        suite.addTest(new MNodeServiceTest("testIsEquivIdentityAuthorized"));
-        suite.addTest(new MNodeServiceTest("testSetAccessPolicy"));
+        suite.addTest(new MNodeServiceIT("testIsAuthorized"));
+        suite.addTest(new MNodeServiceIT("testIsEquivIdentityAuthorized"));
+        suite.addTest(new MNodeServiceIT("testSetAccessPolicy"));
         // MNreplication tests
-        suite.addTest(new MNodeServiceTest("testReplicate"));
+        suite.addTest(new MNodeServiceIT("testReplicate"));
         // MN packaging tests
-        suite.addTest(new MNodeServiceTest("testGetPackage"));
-        suite.addTest(new MNodeServiceTest("testGetOREPackage"));
-        suite.addTest(new MNodeServiceTest("testReadDeletedObject"));
-        suite.addTest(new MNodeServiceTest("testCreateAndUpdateXMLWithUnmatchingEncoding"));
-        suite.addTest(new MNodeServiceTest("testListViews"));
-        suite.addTest(new MNodeServiceTest("testCreateNOAAObject"));
+        suite.addTest(new MNodeServiceIT("testGetPackage"));
+        suite.addTest(new MNodeServiceIT("testGetOREPackage"));
+        suite.addTest(new MNodeServiceIT("testReadDeletedObject"));
+        suite.addTest(new MNodeServiceIT("testCreateAndUpdateXMLWithUnmatchingEncoding"));
+        suite.addTest(new MNodeServiceIT("testListViews"));
+        suite.addTest(new MNodeServiceIT("testCreateNOAAObject"));
 
-        suite.addTest(new MNodeServiceTest("testPermissionOfUpdateSystemmeta"));
+        suite.addTest(new MNodeServiceIT("testPermissionOfUpdateSystemmeta"));
 
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletesChain"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadataWithCircularObsoletesChain"));
 
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletedByChain"));
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataImmutableFields"));
-        suite.addTest(new MNodeServiceTest("testUpdateAuthoritativeMN"));
-        suite.addTest(new MNodeServiceTest("testInvalidIds"));
-        suite.addTest(new MNodeServiceTest("testPublishPackage"));
-        suite.addTest(new MNodeServiceTest("testPublishPrivatePackage"));
-        suite.addTest(new MNodeServiceTest("testAllowList"));
-        suite.addTest(new MNodeServiceTest("testInsertJson_LD"));
-        suite.addTest(new MNodeServiceTest("testCreateAndUpdateEventLog"));
-        suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataPermission"));
-        suite.addTest(new MNodeServiceTest("testCreateAndUpdateWithDoiDisabled"));
-        suite.addTest(new MNodeServiceTest("testCreateAndUpdateFGDC"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadataWithCircularObsoletedByChain"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadataImmutableFields"));
+        suite.addTest(new MNodeServiceIT("testUpdateAuthoritativeMN"));
+        suite.addTest(new MNodeServiceIT("testInvalidIds"));
+        suite.addTest(new MNodeServiceIT("testPublishPackage"));
+        suite.addTest(new MNodeServiceIT("testPublishPrivatePackage"));
+        suite.addTest(new MNodeServiceIT("testAllowList"));
+        suite.addTest(new MNodeServiceIT("testInsertJson_LD"));
+        suite.addTest(new MNodeServiceIT("testCreateAndUpdateEventLog"));
+        suite.addTest(new MNodeServiceIT("testUpdateSystemMetadataPermission"));
+        suite.addTest(new MNodeServiceIT("testCreateAndUpdateWithDoiDisabled"));
+        suite.addTest(new MNodeServiceIT("testCreateAndUpdateFGDC"));
+        suite.addTest(new MNodeServiceIT("testReindex"));
         return suite;
 
     }
@@ -187,7 +190,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
      *
      * @param name - the name of the test
      */
-    public MNodeServiceTest(String name) {
+    public MNodeServiceIT(String name) {
         super(name);
 
     }
@@ -4483,5 +4486,113 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         object = new FileInputStream("test/fgdc.xml");
         MNodeService.getInstance(request).update(session, guid, object, guid2, sysmeta2);
         object.close();
+    }
+
+
+    /**
+     * Test the reindex api
+     * @throws Exception
+     */
+    public void testReindex() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testReindex." + System.currentTimeMillis());
+        InputStream object =
+                        new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
+        object = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        mnCreate(session, guid, object, sysmeta);
+        //Make sure the metadata objects have been indexed
+        String query = "q=id:" + guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+                                                && count <= MNodeQueryTest.tryAcccounts) {
+            Thread.sleep(500);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+        }
+        String version = FailedIndexResubmitTimerTaskIT.getSolrDocVersion(resultStr);
+        //second object
+        Identifier guid1 = new Identifier();
+        guid1.setValue("testCreateFailure." + System.currentTimeMillis());
+        object = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        sysmeta = createSystemMetadata(guid1, session.getSubject(), object);
+        object.close();
+        sysmeta.setFormatId(formatId);
+        object = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        mnCreate(session, guid1, object, sysmeta);
+        //Make sure the metadata objects have been indexed
+        String query1 = "q=id:" + guid1.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query1);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+                                                && count <= MNodeQueryTest.tryAcccounts) {
+            Thread.sleep(500);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query1);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+        }
+        String version1 = FailedIndexResubmitTimerTaskIT.getSolrDocVersion(resultStr);
+
+        List<Identifier> identifiers = new ArrayList<Identifier>();
+        identifiers.add(guid);
+        identifiers.add(guid1);
+        boolean all = true;
+        try {
+            MNodeService.getInstance(request).reindex(session, null, all);
+            fail("We shouldn't get here since the session doesn't have permission to reindex.");
+        } catch (NotAuthorized e) {
+            assertTrue(e.getMessage().contains(session.getSubject().getValue()));
+        }
+
+        all = false;
+        try {
+            MNodeService.getInstance(request).reindex(session, identifiers, all);
+            fail("We shouldn't get here since the session doesn't have permission to reindex.");
+        } catch (NotAuthorized e) {
+            assertTrue(e.getMessage().contains(session.getSubject().getValue()));
+        }
+
+        all = false;
+        Session adminSession = getMNSession();
+        MNodeService.getInstance(request).reindex(adminSession, identifiers, all);
+
+        boolean versionChanged = false;
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        count = 0;
+        String newVersion = null;
+        while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
+            Thread.sleep(500);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+            newVersion = FailedIndexResubmitTimerTaskIT.getSolrDocVersion(resultStr);
+            versionChanged = !newVersion.equals(version);
+        }
+        assertTrue(versionChanged);
+
+        versionChanged = false;
+        stream = MNodeService.getInstance(request).query(session, "solr", query1);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        count = 0;
+        String newVersion1 = null;
+        while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
+            Thread.sleep(500);
+            count++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query1);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+            newVersion1 = FailedIndexResubmitTimerTaskIT.getSolrDocVersion(resultStr);
+            versionChanged = !newVersion1.equals(version1);
+        }
+        assertTrue(versionChanged);
     }
 }

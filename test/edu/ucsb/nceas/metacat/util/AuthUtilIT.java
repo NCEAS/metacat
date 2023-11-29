@@ -41,7 +41,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
-import edu.ucsb.nceas.metacat.dataone.MNodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeServiceIT;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -57,7 +57,7 @@ import junit.framework.TestSuite;
  * @author tao
  *
  */
-public class AuthUtilIT extends MNodeServiceTest {
+public class AuthUtilIT extends MNodeServiceIT {
     
     private File tmpPasswordFile = null;
     private String thirdUser = null;

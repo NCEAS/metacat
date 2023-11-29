@@ -48,7 +48,7 @@ import static org.junit.Assert.assertTrue;
  * @author tao
  *
  */
-public class FailedIndexResubmitTimerTaskTestIT {
+public class FailedIndexResubmitTimerTaskIT {
     private Session session = null;
     private Identifier guid = null;
     private String query = null;
@@ -252,7 +252,7 @@ public class FailedIndexResubmitTimerTaskTestIT {
      * @throws IOException
      * @throws XPathExpressionException
      */
-    private String getSolrDocVersion(String xml) throws ParserConfigurationException, SAXException,
+    public static String getSolrDocVersion(String xml) throws ParserConfigurationException, SAXException,
                                                     IOException, XPathExpressionException {
         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = builderFactory.newDocumentBuilder();

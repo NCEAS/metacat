@@ -2,6 +2,7 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
@@ -10,6 +11,9 @@ import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
+import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.doi.DOIException;
@@ -18,6 +22,7 @@ import edu.ucsb.nceas.metacat.download.PackageDownloaderV1;
 import edu.ucsb.nceas.metacat.download.PackageDownloaderV2;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -85,7 +90,6 @@ import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
-import org.dataone.service.types.v1_1.QueryField;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v2.Property;
@@ -118,6 +122,8 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -157,6 +163,7 @@ import java.util.concurrent.Executors;
  * MNStorage.delete()
  * MNStorage.updateSystemMetadata()
  * MNReplication.replicate()
+ * MNAdmin.reindex()
  */
 public class MNodeService extends D1NodeService
     implements MNAuthorization, MNCore, MNRead, MNReplication, MNStorage, MNQuery, MNView,
@@ -3485,6 +3492,226 @@ public class MNodeService extends D1NodeService
             throw new ServiceFailure("3196",
                 "Can't publish the identifier since " + e.getMessage());
         }
+    }
+
+    /**
+     * The admin API call to reindex partial or all documents in the instance
+     * @param session  the identity of requester. It must have administrative permissions
+     * @param identifiers  the list of objects' identifier which will be reindexed. If the parameter
+     *                     all is true, this parameter will be ignored.
+     * @param all  indicator if we need to reindex all objects in this instance
+     * @return true if the reindex request is scheduled; otherwise false
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     */
+    public boolean reindex(Session session, List<Identifier> identifiers, boolean all)
+                             throws ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest {
+        boolean scheduled = true;
+        String serviceFailureCode = "5901";
+        String notAuthorizedCode = "5902";
+        String notAuthorizedError ="The provided identity does not have permission to reindex "
+                                    + "objects on the Node: ";
+        if (session == null) {
+            throw new NotAuthorized(notAuthorizedCode, notAuthorizedError + "public");
+        }
+        try {
+            Identifier identifier = null;
+            D1AuthHelper authDel =
+                new D1AuthHelper(request, identifier, notAuthorizedCode, serviceFailureCode);
+            authDel.doAdminAuthorization(session);
+        } catch (NotAuthorized na) {
+            if (session.getSubject() != null) {
+                throw new NotAuthorized(notAuthorizedCode, notAuthorizedError
+                        + session.getSubject().getValue());
+            } else {
+                throw new NotAuthorized(notAuthorizedCode, notAuthorizedError + "public");
+            }
+        }
+
+        if (all) {
+            handleReindexAllAction();
+        } else {
+            handleReindexAction(identifiers);
+        }
+        return scheduled;
+    }
+
+    /**
+     * Rebuild the index for one or more documents
+     * @param pids  the list of identifier whose solr doc needs to be rebuilt
+     */
+    protected void handleReindexAction(List<Identifier> pids) {
+        logMetacat.info("MNodeService.handleReindexAction - reindex some objects");
+        if (pids == null) {
+            return;
+        }
+        for (Identifier identifier : pids) {
+            if (identifier != null) {
+                logMetacat.debug("MNodeService.handleReindexAction: queueing doc index for pid "
+                                                                    + identifier.getValue());
+                try {
+                    SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(identifier);
+                    if (sysMeta == null) {
+                        logMetacat.debug("MNodeService.handleReindexAction: no system metadata was "
+                                                      + "found for pid " + identifier.getValue());
+                    } else {
+                        // submit for indexing
+                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, false);
+                    }
+                } catch (Exception e) {
+                    logMetacat.info("MNodeService.handleReindexAction: Error submitting to "
+                            + "index for pid " + identifier.getValue());
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Rebuild the index for all documents in the systemMetadata table.
+     */
+    protected void handleReindexAllAction() {
+        // Process all of the documents
+        logMetacat.debug("MNodeService.handleReindexAllAction - "
+                                               + "reindex all objects in this Metacat instance");
+        Runnable indexAll = new Runnable() {
+            public void run() {
+                List<String> resourceMapFormats = ResourceMapNamespaces.getNamespaces();
+                buildAllNonResourceMapIndex(resourceMapFormats);
+                buildAllResourceMapIndex(resourceMapFormats);
+            }
+        };
+        Thread thread = new Thread(indexAll);
+        thread.start();
+    }
+
+    /**
+     * Index all non-resourcemap objects first. We don't put the list of pids in a vector anymore.
+     * @param resourceMapFormatList  the list of the resource map format
+     */
+    private void buildAllNonResourceMapIndex(List<String> resourceMapFormatList) {
+        boolean firstTime = true;
+        StringBuilder sql = new StringBuilder("select guid from systemmetadata");
+        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
+            for (String format : resourceMapFormatList) {
+                if (format != null && !format.trim().equals("")) {
+                    if (firstTime) {
+                        sql.append(" where object_format !='");
+                        sql.append(format);
+                        sql.append("'");
+                        firstTime = false;
+                    } else {
+                        sql.append(" and object_format !='");
+                        sql.append(format);
+                        sql.append("'");
+                    }
+                }
+            }
+            sql.append(" order by date_uploaded asc");
+        }
+        logMetacat.debug("MNodeService.buildAllNonResourceMapIndex - the final query is "
+                                                                        + sql.toString());
+        try {
+            long size = buildIndexFromQuery(sql.toString());
+            logMetacat.info(
+                "MNodeService.buildAllNonResourceMapIndex - the number of non-resource map "
+                    + "objects is "
+                    + size + " being submitted to the index queue.");
+        } catch (SQLException e) {
+            logMetacat.error(
+                "MNodeService.buildAllNonResourceMapIndex - can't index the objects since: "
+                    + e.getMessage());
+        }
+    }
+
+    /**
+     * Index all resource map objects. We don't put the list of pids in a vector anymore.
+     * @param resourceMapFormatList
+     */
+    private void buildAllResourceMapIndex(List<String> resourceMapFormatList) {
+        StringBuilder sql = new StringBuilder("select guid from systemmetadata");
+        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
+            boolean firstTime = true;
+            for (String format : resourceMapFormatList) {
+                if (format != null && !format.trim().equals("")) {
+                    if (firstTime) {
+                        sql.append(" where object_format ='");
+                        sql.append(format);
+                        sql.append("'");
+                        firstTime = false;
+                    } else {
+                        sql.append(" or object_format ='");
+                        sql.append(format);
+                        sql.append("'");
+                    }
+                }
+            }
+            sql.append(" order by date_uploaded asc");
+        }
+        logMetacat.info("MNodeService.buildAllResourceMapIndex - the final query is "
+                                                                    + sql.toString());
+        try {
+            long size = buildIndexFromQuery(sql.toString());
+            logMetacat.info(
+                "MNodeService.buildAllResourceMapIndex - the number of resource map objects is "
+                    + size + " being submitted to the index queue.");
+        } catch (SQLException e) {
+            logMetacat.error(
+                "MNodeService.buildAllResourceMapIndex - can't index the objects since: "
+                    + e.getMessage());
+        }
+    }
+
+    /**
+     * Build index of objects selecting from the given sql query.
+     * @param sql  the query which will be used to executed to select identifiers for reindexing
+     * @return the number of objects which were reindexed
+     * @throws SQLException
+     */
+    private long buildIndexFromQuery(String sql) throws SQLException {
+        DBConnection dbConn = null;
+        long i = 0;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("MNodeService.buildIndexFromQuery");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            PreparedStatement stmt = dbConn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String guid = null;
+                try {
+                    guid = rs.getString(1);
+                    Identifier identifier = new Identifier();
+                    identifier.setValue(guid);
+                    SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(identifier);
+                    if (sysMeta != null) {
+                        // submit for indexing
+                        boolean isSysmetaChangeOnly = false;
+                        boolean followRevisions = false;
+                        MetacatSolrIndex.getInstance()
+                            .submit(identifier, sysMeta, isSysmetaChangeOnly, followRevisions,
+                                    IndexGenerator.LOW_PRIORITY);
+                        i++;
+                        logMetacat.debug("MNodeService.buildIndexFromQuery - queued "
+                                             + "SystemMetadata for indexing in the "
+                                             + "buildIndexFromQuery on pid: " + guid);
+                    }
+                } catch (Exception ee) {
+                    logMetacat.warn(
+                        "MNodeService.buildIndexFromQuery - can't queue the object " + guid
+                            + " for indexing since: " + ee.getMessage());
+                }
+            }
+            rs.close();
+            stmt.close();
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        return i;
     }
 
     /**
