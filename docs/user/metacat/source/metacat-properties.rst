@@ -23,19 +23,19 @@ More information on each is included below.
 |                           |                                                                                          |                        |
 |                           | Default Value: localhost                                                                 |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
-| .. _server-httpPort:      |                                                                                          |                        |
+| .. _server-port:          |                                                                                          |                        |
 |                           |                                                                                          |                        |
-| server.httpPort           | The network port used to access Metacat for non-secure (standard) connections.           | 80                     |
-|                           | This is usually 80 if Apache Web server is running, and 8080 if Tomcat is running alone. |                        |
-|                           |                                                                                          |                        |
-|                           | Default Value: 80                                                                        |                        |
-+---------------------------+------------------------------------------------------------------------------------------+------------------------+
-| .. _server-httpSSLPort:   |                                                                                          |                        |
-|                           |                                                                                          |                        |
-| server.httpSSLPort        | The network port used to access Metacat for secure connections. This is usually          | 443                    |
-|                           | 443 if Apache Web server is running, and 8443 if Tomcat is running alone.                |                        |
+| server.port               | The network port used to access Metacat for connections.                                 | 443                    |
+|                           | This can be either an https port, such as 443, or an http port, such as 80.              |                        |
 |                           |                                                                                          |                        |
 |                           | Default Value: 443                                                                       |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
+| .. _server-https:         |                                                                                          |                        |
+|                           |                                                                                          |                        |
+| server.https              | To indicate the server port is an https one or an http one.                              | true                   |
+|                           | True means an https port; false means an http port.                                      |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: true                                                                      |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
 | .. _server-internalName:  |                                                                                          |                        |
 |                           |                                                                                          |                        |
