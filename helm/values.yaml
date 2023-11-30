@@ -33,7 +33,38 @@ global:
   ##  &passwordSecretName)
   ##
   passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
+
+  ## @param global.storageClass default name of the storageClass to use for PVs
+  ##
+  ## If <storageClass> is defined,  storageClassName: <storageClass>
+  ##
+  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
+  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
+  ##   no class (no annotation, or one set equal to "")
+  ##
+  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
+  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
+  ## Instead, inspect your cluster to see what storageClass is set as default:
+  ##    $  kubectl get storageclass
+  ## ...and then explicitly set storageClass to match the name of the default storageclass
+  ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
+  ##
   storageClass: &storageClassName local-path
+
+  ## @param global.ephemeralVolumeStorageClass Optional override of global.storageClass.
+  ## Can be used to assign a storageClass that has a 'Delete' Reclaim Policy, thus allowing
+  ## ephemeral volumes to be cleaned up automatically (eg "csi-cephfs-sc-ephemeral")
+  ##
+  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
+
+  ## @param metacat.application.context The application context to use
+  ## - for example, if your application is hosted at
+  ## https://mydomain.org, and you define the context to be "metacat", then the url to access the
+  ## application will be https://mydomain.org/metacat/
+  ## IMPORTANT NOTE: if changing this value, ensure the following paths are also updated to match:
+  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path; ingress.hosts.paths
+  ##
+  metacatAppContext: &metacatAppContext metacat
 
 ## @section Metacat Application-Specific Properties
 ##
@@ -50,14 +81,9 @@ global:
 ## property corresponds to each of these environment variables
 ##
 metacat:
-  ## @param metacat.application.context The application context to use
-  ## - for example, if your application is hosted at
-  ## https://mydomain.org, and you define the context to be "metacat", then the url to access the
-  ## application will be https://mydomain.org/metacat/
-  ## NOTE: if changing this value, ensure the following paths are also updated to match:
-  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path; ingress.hosts.paths
+  ## @param metacat.application.context see global.metacatAppContext
   ##
-  application.context: metacat
+  application.context: *metacatAppContext
 
   ## @param metacat.administrator.username The admin username that will be used to authenticate
   ## with the new metacat instance and apply any necessary setup steps, database upgrades etc.
@@ -124,20 +150,48 @@ metacat:
   ## and seen by end users outside the cluster
   server.name: &external-hostname localhost
 
-  ## @param metacat.solr.baseURL The url to access solr
-  ## host.docker.internal is equivalent to "localhost"
+  ## @param metacat.solr.baseURL The url to access solr (RELEASE PREFIX, or blank for sub-chart)
   ##
-  solr.baseURL: http://host.docker.internal:8983/solr
+  ## Format:    http://<solr-hostname>:<solr-port>/solr
+  ##
+  ## NOTES:
+  ## 1. If you are NOT using the included "dataone-indexer" sub-chart (i.e.
+  ##    `dataone-indexer.enabled: false`), ensure `<solr-port>` is set correctly, and use one of the
+  ##    following values for `<solr-hostname>`:
+  ##    *  The fully qualified domain name, for an existing solr instance hosted outside the
+  ##       current k8s cluster
+  ##    *  `<servicename>` for an existing postgresql instance within the same k8s cluster (hence
+  ##       the "RELEASE PREFIX" warning above; <servicename> likely contains the release name -
+  ##        e.g. "http://metacatbrooke-solr-headless:8983/solr")
+  ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
+  ##        e.g. http://host.docker.internal:8983/solr
+  ##
+  ## 2. If you ARE using the included dataone-indexer sub-chart (i.e.
+  ##    `dataone-indexer.enabled: true`), leave this value unset (`solr.baseURL: ""`). It will
+  ##    then be automatically populated, as follows:
+  ##    `<solr-hostname>` will be set to the current value of `.Release.Name`, prepended to
+  ##                      `-solr-headless` (the name of the k8s headless solr service created
+  ##                      by the dataone-indexer sub-chart)
+  ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart)
+  ##
+  solr.baseURL: ""
+
+  ## @param metacat.solr.coreName The solr core (solr standalone) or collection name (solr cloud)
+  ## If you are using the included dataone-indexer sub-chart (i.e. `dataone-indexer.enabled: true`),
+  ## leave this value unset (`solr.coreName: ""`). It will then be automatically populated from the
+  ## subchart settings
+  ##
+  solr.coreName: ""
 
   ## @param metacat.replication.logdir Location for the replication logs
   ##
   replication.logdir: /var/metacat/logs
 
   ## @param metacat.index.rabbitmq.hostname the hostname of the rabbitmq instance that will be used
-  ## <servicename>.<namespace>.svc.cluster.local
   ##
-  # TODO: Auto populate for subchart - see postgres url
-#  index.rabbitmq.hostname: brooke-rabbitmq-headless.default.svc.cluster.local
+  ## Leave blank to autopopulate for use with indexer sub-chart
+  ##
+  index.rabbitmq.hostname: ""
 
   ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
   ## at `index.rabbitmq.hostname`.
@@ -419,6 +473,13 @@ persistence:
   ##
   existingClaim: ""
 
+  ## @param persistence.volumeName Name of an existing Volume to use for volumeClaimTemplate
+  ## Set a value for 'volumeName' only if you want to re-use a Volume that has already been set up
+  ## by a k8s admin ahead of time.
+  ## Leaving it blank will cause a pvc to be created dynamically using volumeClaimTemplates.
+  ##
+  volumeName: ""
+
   ## @param persistence.accessModes PVC Access Mode for metacat volume
   ## Metacat always requires read&write access, and dataone_indexer requires read access to the
   ## same PVC, so the ideal setup is:
@@ -679,8 +740,6 @@ tomcat:
 ## @section dataone_indexer Sub-Chart Configuration
 dataone-indexer:
   enabled: true
-  image:
-    repository: ghcr.io/dataoneorg/dataone-index-worker
   idxworker: {}
   solr: {}
   rabbitmq:

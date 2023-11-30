@@ -7,14 +7,11 @@
 ##
 
 global:
-  storageClass: &storageClassName csi-rbd-sc
+  storageClass: &storageClassName csi-cephfs-sc
+  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
 
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
-  solr.baseURL: "http://metacatbrooke-solr-headless:8983/solr"
-  solr.coreName: dataone_index
-  index.rabbitmq.hostname: metacatbrooke-rabbitmq-headless.brooke.svc.cluster.local
-  index.rabbitmq.password: ${env:rabbitmq-password}
 
   ## @section OPTIONAL DataONE Member Node (MN) Parameters
   ##
@@ -149,35 +146,21 @@ metacat:
   #  dataone.replicationpolicy.default.blockedNodeList:
 
 
-
 dataone-indexer:
   image:
     pullPolicy: Always
-    tag: DEVELOP
     debug: true
   persistence:
-    ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
-    ## TODO: AUTO ASSIGN?
-    claimName: metacatbrooke-metacat-metacatbrooke-0
-  idxworker:
-    ## TODO: AUTO ASSIGN?
-    ## the url of the metacat instance that indexer is working with. (Not necessarily a d1 MN)
-    mn_url: "https://metacat-dev.test.dataone.org/metacat/d1/mn"
 
   rabbitmq:
-    ## TODO: AUTO ASSIGN?
-    hostname: metacatbrooke-rabbitmq-headless
-    ## TODO: AUTO ASSIGN?
     existingPasswordSecret: metacatbrooke-metacat-secrets
 
   solr:
-    ##  NOTE: uses deployment name; TODO: AUTO ASSIGN?
-    hostname: metacatbrooke-solr-headless.brooke.svc.cluster.local
     extraVolumes:
       - name: solr-config
         configMap:
           #  NOTE: uses deployment name  TODO: AUTO ASSIGN?
-          name: metacatbrooke-configfiles
+          name: metacatbrooke-indexer-configfiles
           defaultMode: 0777
 
 persistence:
@@ -185,7 +168,6 @@ persistence:
   size: 100Gi
   accessModes:
     - ReadWriteMany
-  ## TODO: add to values.yaml or auto-populate
   volumeName: cephfs-metacatbrooke-metacat
 
 postgresql:
