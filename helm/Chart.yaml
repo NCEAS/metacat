@@ -1,6 +1,12 @@
 apiVersion: v2
 name: metacat
-description: A Helm chart for Kubernetes
+description: |
+  Helm chart for Kubernetes Deployment of MetaCat 
+  (https://github.com/NCEAS/metacat)
+
+# OCI Annotations - see https://github.com/helm/helm/pull/11204
+sources:
+  - https://github.com/NCEAS/metacat
 
 # A chart can be either an 'application' or a 'library' chart.
 #
