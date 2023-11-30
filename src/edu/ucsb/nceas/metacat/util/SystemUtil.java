@@ -98,7 +98,7 @@ public class SystemUtil {
      * 
      * @return a string holding the server port
      */
-    public static String discoverServerPort(HttpServletRequest request) {
+    protected static String discoverServerPort(HttpServletRequest request) {
         return Integer.toString(request.getServerPort());
     }
     
@@ -131,20 +131,17 @@ public class SystemUtil {
      * @return string holding the server URL
      */
     public static String getServerURL() throws PropertyNotFoundException {
-        String httpPort = PropertyService.getProperty("server.httpPort");
-        
-        String serverURL = "http://";
-        if(httpPort.equals("443") || httpPort.equals("8443"))
-        {
-            serverURL = "https://";
+        String serverURL = "https://";
+        String httpPort = PropertyService.getProperty("server.port");
+        String serverHttps = PropertyService.getProperty("server.https");
+        if (serverHttps != null && serverHttps.equalsIgnoreCase("false")) {
+            serverURL = "http://";
         }
-        
         serverURL += PropertyService.getProperty("server.name");
-        
         if (!httpPort.equals("80") && !httpPort.equals("443")) {
             serverURL += ":" + httpPort;
         }
-
+        logMetacat.debug("SystemUtil.getServerURL - " + serverURL);
         return serverURL;
     }
 

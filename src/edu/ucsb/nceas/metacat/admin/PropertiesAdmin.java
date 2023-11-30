@@ -98,15 +98,14 @@ public class PropertiesAdmin extends MetacatAdmin {
                     PropertyService.setPropertyNoPersist(serverName, SystemUtil
                             .discoverServerName(request));
                 }
-                final String serverHttpPort = "server.httpPort";
-                if (isNotSet(serverHttpPort)) {
-                    PropertyService.setPropertyNoPersist(serverHttpPort, SystemUtil
-                            .discoverServerPort(request));
-                }
-                final String serverHttpSSLPort = "server.httpSSLPort";
-                if (isNotSet(serverHttpSSLPort)) {
-                    PropertyService.setPropertyNoPersist(serverHttpSSLPort,
+                final String serverPort = "server.port";
+                if (isNotSet(serverPort)) {
+                    PropertyService.setPropertyNoPersist(serverPort,
                             SystemUtil.discoverServerSSLPort(request));
+                }
+                final String serverHTTPS = "server.https";
+                if (isNotSet(serverHTTPS)) {
+                    PropertyService.setPropertyNoPersist(serverHTTPS, "true");
                 }
                 final String applicationDeployDir = "application.deployDir";
                 if (isNotSet(applicationDeployDir)) {
