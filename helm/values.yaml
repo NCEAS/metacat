@@ -30,11 +30,26 @@ global:
   ## the value of passwordsSecret: would be 'myrelease-metacat-secrets'.
   ##
   ## (Note the actual key passwordsSecret is not used anywhere; only the yaml anchor/alias
-  ##  &passwordSecretName)
+  ##  &passwordSecretName. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
+  ## NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this file for 'passwordSecretName')
   ##
   passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
 
-  ## @param global.storageClass default name of the storageClass to use for PVs
+  ## @param metacat.application.context The application context to use
+  ## - for example, if your application is hosted at
+  ## https://mydomain.org, and you define the context to be "metacat", then the url to access the
+  ## application will be https://mydomain.org/metacat/
+  ## IMPORTANT NOTE: if changing this value, ensure the following paths are also updated to match:
+  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path; ingress.hosts.paths
+  ##
+  ## (Note the actual key metacatAppContext is used by the indexer sub-chart, and the anchor
+  ##  &passwordSecretName is used elsewhere in this file. IF YOU OVERRIDE THIS VALUE IN ANOTHER
+  ## VALUES-OVERLAY FILE, YOU ALSO NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this
+  ## file for 'metacatAppContext')
+  ##
+  metacatAppContext: &metacatAppContext metacat
+
+  ## @param global.persistence.storageClass default name of the storageClass to use for PVs
   ##
   ## If <storageClass> is defined,  storageClassName: <storageClass>
   ##
@@ -49,22 +64,20 @@ global:
   ## ...and then explicitly set storageClass to match the name of the default storageclass
   ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
   ##
+  ## (Note the actual key storageClass is used by the postgres bitnami sub-chart, and the anchor
+  ##  &storageClassName is used elsewhere in this file. IF YOU OVERRIDE THIS VALUE IN ANOTHER
+  ## VALUES-OVERLAY FILE, YOU ALSO NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this
+  ## file for 'storageClassName')
+  ##
   storageClass: &storageClassName local-path
 
-  ## @param global.ephemeralVolumeStorageClass Optional override of global.storageClass.
+  ## @param global.persistence.ephemeralVolumeStorageClass Optional global storageClass override
   ## Can be used to assign a storageClass that has a 'Delete' Reclaim Policy, thus allowing
   ## ephemeral volumes to be cleaned up automatically (eg "csi-cephfs-sc-ephemeral")
+  ## Comment out to use default StorageClass, if one is set on your cluster
   ##
-  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
+  #ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
 
-  ## @param metacat.application.context The application context to use
-  ## - for example, if your application is hosted at
-  ## https://mydomain.org, and you define the context to be "metacat", then the url to access the
-  ## application will be https://mydomain.org/metacat/
-  ## IMPORTANT NOTE: if changing this value, ensure the following paths are also updated to match:
-  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path; ingress.hosts.paths
-  ##
-  metacatAppContext: &metacatAppContext metacat
 
 ## @section Metacat Application-Specific Properties
 ##
@@ -741,9 +754,21 @@ tomcat:
 dataone-indexer:
   enabled: true
   idxworker: {}
-  solr: {}
   rabbitmq:
     auth:
       username: *rmqUsername
       ## (must contain a value for `rabbitmq-password` key)
       existingPasswordSecret: *passwordSecretName
+  solr:
+    extraVolumes:
+      - name: solr-config
+        configMap:
+          ## @param dataone-indexer.solr.extraVolumes.configMap.name INDEXER configmap name (EDIT!)
+          ## This is the name of the configMap created by the dataone-indexer. It has to be here
+          ## because it is passed directly to the dataone-indexer subchart's own solr subchart via
+          ## .Values, so cannot be set automatically. Unfortunate but true.
+          ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
+          ## example, if the release name is 'myrelease', the value of name: would be
+          ## 'myrelease-indexer-configfiles'.
+          name: ${RELEASE_NAME}-indexer-configfiles
+          defaultMode: 0777
