@@ -28,8 +28,10 @@ spec:
             - sh
             - -c
             - >
-              until nc -z {{ index .Values "dataone-indexer" "rabbitmq" "hostname" }}{{ print " " -}}
-              {{ index .Values "dataone-indexer" "rabbitmq" "hostport"}} > /dev/null; do
+              HOSTNAME={{ include "metacat.rabbitmq.hostname" . }};
+              {{- $amqp := index .Values "dataone-indexer" "rabbitmq" "service" "ports" "amqp" }}
+              PORT={{ index .Values "dataone-indexer" "rabbitmq" "hostport" | default $amqp -}};
+              until nc -z $HOSTNAME $PORT > /dev/null; do
               echo waiting for RabbitMQ; sleep 1; done;
         - name: init-solr-metacat-dep
           image: busybox:latest
@@ -37,15 +39,15 @@ spec:
             - sh
             - -c
             - >
-              HOSTNAME={{ index .Values "dataone-indexer" "solr" "hostname" }};
-              HOSTPORT={{- index .Values "dataone-indexer" "solr" "service" "ports" "http" -}};
+              HOSTNAME={{ include "metacat.solr.hostname" . }};
+              PORT={{- index .Values "dataone-indexer" "solr" "service" "ports" "http" -}};
               URI="/solr/{{- index .Values "dataone-indexer" "solr" "customCollection" -}}
                    /admin/file?file=schema.xml&contentType=text/xml";
               until [[ $(echo -e "GET $URI HTTP/1.1\r\nHost: $HOSTNAME\r\n\r\n"{{ print " " -}}
-              | nc $HOSTNAME $HOSTPORT | grep -c "<schema name=\"dataone") == 1 ]]; do
-              echo waiting for Solr Schema to be accessible at http://$HOSTNAME:$HOSTPORT$URI;
+              | nc $HOSTNAME $PORT | grep -c "<schema name=\"dataone") == 1 ]]; do
+              echo waiting for Solr Schema to be accessible at http://$HOSTNAME:$PORT$URI;
               sleep 1; done;
-      {{ end }}
+      {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -133,7 +135,9 @@ spec:
       # {podname}-{instance} (e.g. metacatknb-metacat-metacatknb-0)
       name: {{ .Release.Name }}-metacat
     spec:
+      {{- if .Values.persistence.volumeName }}
       volumeName: {{ .Values.persistence.volumeName }}
+      {{ end }}
       accessModes:
         {{- range .Values.persistence.accessModes }}
         - {{ . | quote }}

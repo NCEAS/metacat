@@ -8,6 +8,7 @@
 
 global:
   storageClass: &storageClassName csi-cephfs-sc
+  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
 
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
@@ -150,26 +151,16 @@ dataone-indexer:
     pullPolicy: Always
     debug: true
   persistence:
-    ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
-    ## TODO: AUTO ASSIGN?
-    claimName: metacatbrooke-metacat-metacatbrooke-0
-    ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
-  idxworker:
-    ## TODO: AUTO ASSIGN?
-    ## the url of the metacat instance that indexer is working with. (Not necessarily a d1 MN)
-    mn_url: "https://metacat-dev.test.dataone.org/metacat/d1/mn"
 
   rabbitmq:
     existingPasswordSecret: metacatbrooke-metacat-secrets
 
   solr:
-    ##  NOTE: uses deployment name; TODO: AUTO ASSIGN?
-    hostname: metacatbrooke-solr-headless.brooke.svc.cluster.local
     extraVolumes:
       - name: solr-config
         configMap:
           #  NOTE: uses deployment name  TODO: AUTO ASSIGN?
-          name: metacatbrooke-configfiles
+          name: metacatbrooke-indexer-configfiles
           defaultMode: 0777
 
 persistence:
@@ -177,7 +168,6 @@ persistence:
   size: 100Gi
   accessModes:
     - ReadWriteMany
-  ## TODO: add to values.yaml or auto-populate
   volumeName: cephfs-metacatbrooke-metacat
 
 postgresql:
