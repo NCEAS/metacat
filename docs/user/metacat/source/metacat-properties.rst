@@ -490,36 +490,6 @@ edited manually in the ``metacat-site.properties`` file.
 |                       | Default Value: -//ecoinformatics.org//eml-access-2.0.0beta6//EN  |                                                   |
 +-----------------------+------------------------------------------------------------------+---------------------------------------------------+
 
-
-Data Manager Properties
-------------------------
-The EML Data Manager is also included for extended data-query operations. Note that this feature is still experimental. 
-
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| Property                          | Description                                                                   | Example                                       |
-+===================================+===============================================================================+===============================================+
-| .. _datamanager.server:           |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.server                | The server for the Datamanager library to use for temporary db storage        | localhost                                     |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| .. _datamanager.database:         |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.database              | The database name for the Datamanager                                         | datamananger                                  |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| .. _datamanager.user:             |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.user                  | The username for the Datamanager DB                                           | datamananger                                  |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| .. _datamanager.password:         |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.password              | The password for the Datamanager user                                         | datamananger                                  |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-
-
 EZID Properties
 ---------------
 The EZID service assigning Digital Object Identifiers (DOIs) is included in the Metacat service. 

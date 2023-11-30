@@ -902,7 +902,7 @@
     
     <target name="warPrepare" depends="documentation,warPrepareNoDocs" />
     
-    <target name="warPrepareNoDocs" depends="cgiPrepare,jar,clientjar,harvesterjar,testPrepare">
+    <target name="warPrepareNoDocs" depends="jar,clientjar,harvesterjar,testPrepare">
         <property name="war.lib" value="${build.war}/lib"/>
         <property name="war.classes" value="${build.war}/classes"/>
         <property name="war.webinf" value="${build.war}/WEB-INF"/>
@@ -1006,10 +1006,7 @@
               file="src/perl/Metacat/blib/lib/auto/Metacat/autosplit.ix"
               failonerror="false"/>
 
-        <copy file="src/perl/register-dataset.cgi"
-              todir="${war.context.cgi}"/>
         <copy file="src/perl/ldapweb.cgi" todir="${war.context.cgi}"/>
-        <copy file="src/perl/Metacat/Metacat.pm" todir="${war.lib}"/>
 
         <!-- registry cgi section -->
         <!-- TODO SCW: use relative paths to grab these instead of copying to tmp,
@@ -1030,16 +1027,6 @@
                 <!-- SCW: Copy all files -->
             </fileset>
         </copy>
-    </target>
-
-    <target name="cgiPrepare" if="build.perl">
-        <exec dir="src/perl/Metacat/" executable="make">
-            <arg value="clean"/>
-        </exec>
-        <exec dir="src/perl/Metacat/" executable="perl">
-            <arg value="Makefile.PL"/>
-        </exec>
-        <exec dir="src/perl/Metacat/" executable="make"/>
     </target>
 
     <target name="testPrepare"

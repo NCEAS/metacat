@@ -34,11 +34,6 @@
         <description>Application Configuration Values.</description>
     </group>
     <group>
-        <index>5</index>
-        <name>Data Manager Configuration</name>
-        <description>Data Manager Configuration Values.</description>
-    </group>
-    <group>
         <index>6</index>
         <name>Handler Plugin Configuration</name>
         <description>Register Handler Plugin extensions</description>
@@ -388,51 +383,6 @@
         </description>
         <helpFile>docs/metacat-properties.html#ui-context</helpFile>
     </config>
-
-    <!-- START Data Manager configuration -->
-    <config>
-        <key>datamanager.server</key>
-        <label>Database Server</label>
-        <group>5</group>
-        <index>1</index>
-        <description>
-            Host or IP of database server
-        </description>
-        <helpFile>docs/metacat-properties.html#datamanager-server</helpFile>
-    </config>
-
-    <config>
-        <key>datamanager.database</key>
-        <label>Database Name</label>
-        <group>5</group>
-        <index>2</index>
-        <description>
-            Name of the data manager database
-        </description>
-        <helpFile>docs/metacat-properties.html#datamanager-database</helpFile>
-    </config>
-
-    <config>
-        <key>datamanager.user</key>
-        <label>Database Username</label>
-        <group>5</group>
-        <index>3</index>
-        <description>
-            Name of database user to own all tables.
-        </description>
-        <helpFile>docs/metacat-properties.html#datamanager-user</helpFile>
-    </config>
-
-    <config>
-        <key>datamanager.password</key>
-        <label>Database Password</label>
-        <group>5</group>
-        <index>4</index>
-        <fieldType>password</fieldType>
-        <description>Password for database user.</description>
-        <helpFile>docs/metacat-properties.html#datamanager-password</helpFile>
-    </config>
-    <!-- END Data Manager configuration -->
 
     <!-- handler plugin -->
     <config>
