@@ -145,36 +145,12 @@ metacat:
   #  dataone.replicationpolicy.default.preferredNodeList:
   #  dataone.replicationpolicy.default.blockedNodeList:
 
-
-dataone-indexer:
-  image:
-    pullPolicy: Always
-    debug: true
-  persistence:
-
-  rabbitmq:
-    existingPasswordSecret: metacatbrooke-metacat-secrets
-
-  solr:
-    extraVolumes:
-      - name: solr-config
-        configMap:
-          #  NOTE: uses deployment name  TODO: AUTO ASSIGN?
-          name: metacatbrooke-indexer-configfiles
-          defaultMode: 0777
-
 persistence:
-  storageClass: "-"
+  storageClass: *storageClassName
   size: 100Gi
   accessModes:
     - ReadWriteMany
   volumeName: cephfs-metacatbrooke-metacat
-
-postgresql:
-  primary:
-    persistence:
-      size: 1Gi
-      storageClass: *storageClassName
 
 image:
   debug: true
@@ -196,6 +172,11 @@ ingress:
         - path: "/metacatui"
           pathType: Prefix
   d1CaCertSecretName: metacat-ca-secret
+
+dataone-indexer:
+  image:
+    pullPolicy: Always
+    debug: true
 
 ####################################################################################################
 ## FOR DEBUGGING ONLY
