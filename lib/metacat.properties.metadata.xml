@@ -222,7 +222,8 @@
             <value>false</value>
         </option>
         <description>
-            Does the Metacat server use the HTTPS connection?
+            Does the Metacat server use the HTTPS connection? &lt;font color="red"&gt;
+            Strongly recommend the HTTPS connections.&lt;/font&gt;
         </description>
         <helpFile>docs/metacat-properties.html#server-https</helpFile>
     </config>
