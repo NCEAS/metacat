@@ -30,18 +30,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.util.Hashtable;
 import java.util.Vector;
 
 import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.oreilly.servlet.multipart.FilePart;
 
 import edu.ucsb.nceas.dbadapter.AbstractDatabase;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -51,10 +47,9 @@ import edu.ucsb.nceas.utilities.FileUtil;
 /**
  * A suite of utility classes for the metadata catalog server
  */
-public class MetacatUtil
-{
+public class MetacatUtil {
 
-    public static final String XMLFORMAT = "xml";   
+    public static final String XMLFORMAT = "xml";
     public static AbstractDatabase dbAdapter;
 
     private static boolean debugErrorDisplayed = false;
@@ -69,8 +64,7 @@ public class MetacatUtil
      * value pairs, hashed on name.
      */
     public static Hashtable<String,String> parseQuery(String query)
-            throws MalformedURLException
-    {
+            throws MalformedURLException {
         String[][] params = new String[200][2];
         Hashtable<String,String> parameters = new Hashtable<String,String>();
 
@@ -82,8 +76,7 @@ public class MetacatUtil
         if (query != null) {
             for (int i = 0; i < query.length(); i++) {
 
-                // go throught the remainder of the query one character at a
-                // time.
+                // go throught the remainder of the query one character at a time.
                 if (query.charAt(i) == '=') {
                     // if the current char is a # then the preceding should be
                     // a name
@@ -134,8 +127,12 @@ public class MetacatUtil
         return parameters;
     }
 
-    public static Vector<String> getOptionList(String optiontext)
-    {
+    /**
+     * Transform a string of options to a vector object which contains those options
+     * @param optiontext  the string contains the options
+     * @return a vector object which contains those options
+     */
+    public static Vector<String> getOptionList(String optiontext) {
         Vector<String> optionsVector = new Vector<String>();
         if (optiontext.indexOf(",") == -1) {
             optionsVector.addElement(optiontext);
@@ -155,8 +152,7 @@ public class MetacatUtil
     }
 
     /** Normalizes a string read from DB. So it will be compatible to HTML */
-    public static String normalize(String s)
-    {
+    public static String normalize(String s) {
         StringBuffer str = new StringBuffer();
 
              int len = (s != null) ? s.length() : 0;
@@ -187,57 +183,49 @@ public class MetacatUtil
                                  ch = s.charAt(i);
                              }
                              str.append(';');
-                         } else 
-                         // check if & is in front of amp; 
-                         // (we dont yet check for other HTML 4.0 Character entities) 
-                         if (i + 4 < len  && s.charAt(i + 1) == 'a' 
-                            && s.charAt(i + 2) == 'm' 
-                               && s.charAt(i + 3) == 'p' 
-                                  && s.charAt(i + 4) == ';'){
+                         } else if (i + 4 < len && s.charAt(i + 1) == 'a'
+                            && s.charAt(i + 2) == 'm'
+                               && s.charAt(i + 3) == 'p'
+                                  && s.charAt(i + 4) == ';') {
+                             // check if & is in front of amp;
+                             // (we dont yet check for other HTML 4.0 Character entities)
                              str.append("&amp;");
-                             i += 4;                            
-                         }
-                         else  if (i + 3 < len && s.charAt(i + 1) == 'l' 
-                            && s.charAt(i + 2) == 't' 
-                               && s.charAt(i + 3) == ';' ){
-                         // check if & is in front of it; 
+                             i += 4;
+                         } else if (i + 3 < len && s.charAt(i + 1) == 'l'
+                            && s.charAt(i + 2) == 't'
+                               && s.charAt(i + 3) == ';' ) {
+                             // check if & is in front of it;
                              str.append("&lt;");
-                             i += 3;                            
-                         } 
-                         else  if (i + 3 < len && s.charAt(i + 1) == 'g' 
-                            && s.charAt(i + 2) == 't' 
-                               && s.charAt(i + 3) == ';' ){
-                         // check if & is in front of gt; 
-                           // (we dont yet check for other HTML 4.0 Character entities) 
+                             i += 3;
+                         }  else if (i + 3 < len && s.charAt(i + 1) == 'g'
+                            && s.charAt(i + 2) == 't'
+                               && s.charAt(i + 3) == ';' ) {
+                             // check if & is in front of gt;
+                             // (we dont yet check for other HTML 4.0 Character entities)
                              str.append("&gt;");
-                             i += 3;                            
-                         } 
-                         else  if (i + 5 < len && s.charAt(i + 1) == 'q' 
-                            && s.charAt(i + 2) == 'u' 
-                               && s.charAt(i + 3) == 'o' 
+                             i += 3;
+                         } else if (i + 5 < len && s.charAt(i + 1) == 'q'
+                            && s.charAt(i + 2) == 'u'
+                               && s.charAt(i + 3) == 'o'
                             && s.charAt(i + 4) == 't'
-                            && s.charAt(i + 5) == ';')
-                             {
-                          // check if & is in front of quot; 
-                           // (we dont yet check for other HTML 4.0 Character entities) 
+                            && s.charAt(i + 5) == ';') {
+                             // check if & is in front of quot;
+                             // (we dont yet check for other HTML 4.0 Character entities)
                              str.append("&quot;");
-                             i += 5;                            
-                         } 
-                         else  if (i + 5 < len && s.charAt(i + 1) == 'a' 
-                            && s.charAt(i + 2) == 'p' 
-                               && s.charAt(i + 3) == 'o' 
+                             i += 5;
+                         } else if (i + 5 < len && s.charAt(i + 1) == 'a'
+                            && s.charAt(i + 2) == 'p'
+                               && s.charAt(i + 3) == 'o'
                             && s.charAt(i + 4) == 's'
-                            && s.charAt(i + 5) == ';')
-                             {
-                          // check if & is in front of apostrophe; 
-                           // (we dont yet check for other HTML 4.0 Character entities) 
+                            && s.charAt(i + 5) == ';') {
+                             // check if & is in front of apostrophe;
+                             // (we dont yet check for other HTML 4.0 Character entities)
                              str.append("&apos;");
-                             i += 5;                            
+                             i += 5;
                          } 
-                         else{
+                         else {
                              str.append("&amp;");
                          }
-                         /////////
                          break;
                      }
                      case '"':
@@ -246,11 +234,10 @@ public class MetacatUtil
                      case '\'':
                         str.append("&apos;");
                          break;
-                    default: {
+                     default: {
                          if ( (ch<128) && (ch>31) ) {
                              str.append(ch);
-                         }
-                         else if (ch<32) {
+                         } else if (ch<32) {
                              if (ch == 10) { // new line
                                  str.append(ch);
                              }
@@ -261,12 +248,8 @@ public class MetacatUtil
                                  str.append(ch);
                              }
                              // otherwise skip
-                         }
-                         else {
+                         } else {
                             //Don't transfer special character to numeric entity
-                             /*str.append("&#");
-                             str.append(Integer.toString(ch));
-                             str.append(';');*/
                              str.append(ch);
                          }
                      }
@@ -278,18 +261,15 @@ public class MetacatUtil
     /**
      * Method to get the name of local replication server
      */
-    public static String getLocalReplicationServerName()
-    {
+    public static String getLocalReplicationServerName() {
         String replicationServerName = null;
-        // String serverHost = null;
-        // serverHost = getProperty("server");
         // append "context/servlet/replication" to the host name
         try {
         replicationServerName = 
            SystemUtil.getServer() + "/" + PropertyService.getProperty("application.context")
                + "/servlet/replication";
         } catch (PropertyNotFoundException pnfe) {
-           logMetacat.error("Could not get local replication server name " 
+           logMetacat.error("Could not get local replication server name "
                  + "because property could not be found: " + pnfe.getMessage());
         }
         return replicationServerName;
@@ -297,8 +277,7 @@ public class MetacatUtil
     }
 
     /** A method to replace whitespace in url */
-    public static String replaceWhiteSpaceForURL(String urlHasWhiteSpace)
-    {
+    public static String replaceWhiteSpaceForURL(String urlHasWhiteSpace) {
         StringBuffer newUrl = new StringBuffer();
         String whiteSpaceReplace = "%20";
         if (urlHasWhiteSpace == null || urlHasWhiteSpace.trim().equals("")) { return null; }
@@ -324,14 +303,14 @@ public class MetacatUtil
     * application.writeDebugToFile is set to true, the debug information will be written to
     * debug file, which value is the property application.debugOutputFile in
     * metacat.properties.
-    * 
+    *
     */
    public static void writeDebugToFile(String debugInfo) {
       String debug = "false";
       try {
          debug = PropertyService.getProperty("application.writeDebugToFile");
          if (debug != null && debug.equalsIgnoreCase("true")) {
-            File outputFile = 
+            File outputFile =
                new File(PropertyService.getProperty("application.debugOutputFile"));
             FileOutputStream fos = new FileOutputStream(outputFile, true);
             PrintWriter pw = new PrintWriter(fos);
@@ -343,7 +322,7 @@ public class MetacatUtil
       } catch (PropertyNotFoundException pnfe) {
          // only log debug to file warning once
          if (!debugErrorDisplayed) {
-            logMetacat.warn("Could not get debug property.  Write debug to " 
+            logMetacat.warn("Could not get debug property.  Write debug to "
                   + "file is set to false: " + pnfe.getMessage());
             debugErrorDisplayed = true;
          }
@@ -355,7 +334,7 @@ public class MetacatUtil
 
    /**
     * Writes debug information into a file in delimitered format
-    * 
+    *
     * @param debugInfo
     *            the debug information
     * @param newLine
@@ -382,7 +361,7 @@ public class MetacatUtil
       } catch (PropertyNotFoundException pnfe) {
          // only log debug to file warning once
          if (!debugErrorDisplayed) {
-            logMetacat.warn("Could not get delimited debug property. Write debug to " 
+            logMetacat.warn("Could not get delimited debug property. Write debug to "
                   + "file is set to false: " + pnfe.getMessage());
             debugErrorDisplayed = true;
          }
@@ -395,7 +374,7 @@ public class MetacatUtil
    /**
     * Write the uploaded file to disk for temporary storage before moving it to
     * its final Metacat location.
-    * 
+    *
     * @param filePart
     *            the FilePart object containing the file form element
     * @param fileName
@@ -406,9 +385,10 @@ public class MetacatUtil
         File tempFile = null;
         String tempDirPath = null;
         try {
-           tempDirPath = PropertyService.getProperty("application.tempDir") + FileUtil.getFS() + "uploads";
+           tempDirPath = PropertyService.getProperty("application.tempDir") + FileUtil.getFS()
+                               + "uploads";
         } catch (PropertyNotFoundException pnfe) {
-           logMetacat.warn("Temp property not found.  An attempt will be made " 
+           logMetacat.warn("Temp property not found.  An attempt will be made "
                  + "to use system temp directory: " + pnfe.getMessage());
         }
         long fileSize;
@@ -441,7 +421,6 @@ public class MetacatUtil
                + e.getMessage());
       }
 
-      //tempFile = new File(tempDirPath, fileName);
       tempFile = File.createTempFile("upload", ".tmp", tempDir);
       fi.write(tempFile);
       fileSize = fi.getSize();
@@ -456,11 +435,11 @@ public class MetacatUtil
     }
 
     /**
-    * 
+    *
     * Copy a file between two locations specified as strings. Fails if either
     * path cannot be created. Based on the public domain FileCopy class in
     * _Java in a Nutshell_.
-    * 
+    *
     * @param sourceName
     *            the source file to read from disk
     * @param destName
@@ -532,6 +511,11 @@ public class MetacatUtil
         }
     }
 
+    /**
+     * Get the parent file of the given file
+     * @param f  the file which will be checked
+     * @return the parent file of the given file
+     */
     private static File parent(File f) {
         String dirname = f.getParent();
         if (dirname == null) {
