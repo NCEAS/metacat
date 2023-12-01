@@ -96,39 +96,39 @@ import edu.ucsb.nceas.utilities.StringUtil;
 public class EzidDOIService extends DOIService {
 
     public static final String DATACITE = "datacite";
-    
+
     private static final int MAX_ATTEMPT = 2;
 
-	private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
+    private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
 
-	private EZIDClient ezid = null;
-	
-	private EZIDService ezidService = null;
+    private EZIDClient ezid = null;
 
-	private Date lastLogin = null;
+    private EZIDService ezidService = null;
 
-	private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
-	
-	private Vector<DataCiteMetadataFactory> dataCiteFactories = new Vector<DataCiteMetadataFactory>();
+    private Date lastLogin = null;
+
+    private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
+
+    private Vector<DataCiteMetadataFactory> dataCiteFactories = new Vector<DataCiteMetadataFactory>();
 
 
-	/**
-	 * Constructor
-	 */
-	public EzidDOIService() {
-	    super();
-		// for DOIs
-		ezid = new EZIDClient(serviceBaseUrl);
-		ezidService = new EZIDService(serviceBaseUrl);
-		initDataCiteFactories();
-	}
+    /**
+     * Constructor
+     */
+    public EzidDOIService() {
+        super();
+        // for DOIs
+        ezid = new EZIDClient(serviceBaseUrl);
+        ezidService = new EZIDService(serviceBaseUrl);
+        initDataCiteFactories();
+    }
 
-	/*
-	 * Initialize the datacite factory by reading the property guid.ezid.datacite.factories from the metacat.properties file.
-	 */
-	private void initDataCiteFactories() {
-	    String factoriesStr = null;
-	    try {
+    /*
+     * Initialize the datacite factory by reading the property guid.ezid.datacite.factories from the metacat.properties file.
+     */
+    private void initDataCiteFactories() {
+        String factoriesStr = null;
+        try {
             factoriesStr = PropertyService.getProperty("guid.ezid.datacite.factories");
         } catch (PropertyNotFoundException pnfe) {
             logMetacat.warn("DOIService.generateDataCiteXML - could not get a metacat property - guid.ezid.datacite.factories in the metacat.properties file - "
@@ -151,21 +151,21 @@ public class EzidDOIService extends DOIService {
                 }
             }
         }
-	}
+    }
 
-	/**
-	 * Make sure we have a current login before making any calls
-	 * @throws EZIDException
-	 */
-	private void refreshLogin() throws EZIDException {
-		Date now = Calendar.getInstance().getTime();
-		if (lastLogin == null || now.getTime() - lastLogin.getTime() > loginPeriod) {
-			ezid.login(username, password);
-			lastLogin = now;
-		}
-	}
+    /**
+     * Make sure we have a current login before making any calls
+     * @throws EZIDException
+     */
+    private void refreshLogin() throws EZIDException {
+        Date now = Calendar.getInstance().getTime();
+        if (lastLogin == null || now.getTime() - lastLogin.getTime() > loginPeriod) {
+            ezid.login(username, password);
+            lastLogin = now;
+        }
+    }
 
-	/**
+    /**
      * Submit the metadata to the EZID service for a specific identifier(DOI). 
      * This implementation will be call by the registerMetadata on the super class.
      * @param identifier  the identifier to identify the metadata which will be updated
@@ -178,7 +178,7 @@ public class EzidDOIService extends DOIService {
      */
     protected void submitDOIMetadata(Identifier identifier, SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
                                                         ServiceFailure, InterruptedException, InvalidToken, NotAuthorized, NotFound, IOException {
-	    // enter metadata about this identifier
+        // enter metadata about this identifier
         HashMap<String, String> metadata = new HashMap<String, String>();
         Node node = MNodeService.getInstance(null).getCapabilities();
 
@@ -197,7 +197,7 @@ public class EzidDOIService extends DOIService {
         }
         try {
             uriTemplate = PropertyService.getProperty(uriTemplateKey);
-            target =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
+            target =  SystemUtil.getServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
         } catch (PropertyNotFoundException e) {
             logMetacat.warn("No target URI template found in the configuration for: " + uriTemplateKey);
         }
@@ -260,55 +260,55 @@ public class EzidDOIService extends DOIService {
                 }
             } 
         }
-	}
+    }
 
-	/**
-	 * Generate the datacite xml document for the given information.
-	 * This method will look at the registered datacite factories to find a proper one for the given meta data standard.
-	 * If it can't find it, the default factory will be used.
-	 * @param identifier
-	 * @param sysmeta
-	 * @return
-	 * @throws ServiceFailure
-	 */
-	private String generateDataCiteXML(String identifier, SystemMetadata sysMeta) throws InvalidRequest, ServiceFailure {
-	    Identifier id = new Identifier();
+    /**
+     * Generate the datacite xml document for the given information.
+     * This method will look at the registered datacite factories to find a proper one for the given meta data standard.
+     * If it can't find it, the default factory will be used.
+     * @param identifier
+     * @param sysmeta
+     * @return
+     * @throws ServiceFailure
+     */
+    private String generateDataCiteXML(String identifier, SystemMetadata sysMeta) throws InvalidRequest, ServiceFailure {
+        Identifier id = new Identifier();
         id.setValue(identifier);
-	    for(DataCiteMetadataFactory factory : dataCiteFactories) {
-	        if(factory != null && factory.canProcess(sysMeta.getFormatId().getValue())) {
-	            return factory.generateMetadata(id, sysMeta);
-	        }
-	    }
-	    //Can't find any factory for the given meta data standard, use the default one.
-	    DefaultDataCiteFactory defaultFactory = new DefaultDataCiteFactory();
-	    return defaultFactory.generateMetadata(id, sysMeta);
-	}
+        for(DataCiteMetadataFactory factory : dataCiteFactories) {
+            if(factory != null && factory.canProcess(sysMeta.getFormatId().getValue())) {
+                return factory.generateMetadata(id, sysMeta);
+            }
+        }
+        //Can't find any factory for the given meta data standard, use the default one.
+        DefaultDataCiteFactory defaultFactory = new DefaultDataCiteFactory();
+        return defaultFactory.generateMetadata(id, sysMeta);
+    }
 
-	/**
-	 * Generate a DOI using the EZID service as configured
-	 * @return
-	 * @throws EZIDException
-	 * @throws InvalidRequest
-	 */
-	public Identifier generateDOI() throws DOIException, InvalidRequest {
-	    Identifier doi = null;
-	    //Try to generate a doi again after re-login if the first time failed.
-	    //See https://github.com/NCEAS/metacat/issues/1545
-	    for (int i=1; i <= MAX_ATTEMPT; i++) {
-	        logMetacat.debug("EzidDOIService.generateDOI - the " + i + " time try to generate a DOI.");
-	        try {
-	            doi = generateDOIFromEZID();
-	            break;
-	        } catch (DOIException e) {
-	            if (i == MAX_ATTEMPT) {
-	                throw e; //Metacat throws an exception (stops trying) if the max_attempt tries failed
-	            } else {
-	                logMetacat.debug("EzidDOIService.generateDOI - the " + i + " time generating a DOI failed since a DOIExcpetion " +
-	                                  e.getMessage() + ". Metacat is going to log-in the EZID service and try to generate a DOI again.");
-	                ezid.login(username, password);
-	                lastLogin = Calendar.getInstance().getTime();
-	            }
-	        } catch (InvalidRequest e) {
+    /**
+     * Generate a DOI using the EZID service as configured
+     * @return
+     * @throws EZIDException
+     * @throws InvalidRequest
+     */
+    public Identifier generateDOI() throws DOIException, InvalidRequest {
+        Identifier doi = null;
+        //Try to generate a doi again after re-login if the first time failed.
+        //See https://github.com/NCEAS/metacat/issues/1545
+        for (int i=1; i <= MAX_ATTEMPT; i++) {
+            logMetacat.debug("EzidDOIService.generateDOI - the " + i + " time try to generate a DOI.");
+            try {
+                doi = generateDOIFromEZID();
+                break;
+            } catch (DOIException e) {
+                if (i == MAX_ATTEMPT) {
+                    throw e; //Metacat throws an exception (stops trying) if the max_attempt tries failed
+                } else {
+                    logMetacat.debug("EzidDOIService.generateDOI - the " + i + " time generating a DOI failed since a DOIExcpetion " +
+                                      e.getMessage() + ". Metacat is going to log-in the EZID service and try to generate a DOI again.");
+                    ezid.login(username, password);
+                    lastLogin = Calendar.getInstance().getTime();
+                }
+            } catch (InvalidRequest e) {
                 if (i == MAX_ATTEMPT) {
                     throw e;
                 } else {
@@ -328,42 +328,41 @@ public class EzidDOIService extends DOIService {
      * @throws EZIDException
      * @throws InvalidRequest
      */
-	private Identifier generateDOIFromEZID() throws DOIException, InvalidRequest {
-	    Identifier identifier = new Identifier();
-	    try {
-    		// only continue if we have the feature turned on
-    		if (!doiEnabled) {
-    			throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
-    		}
-    
-    		// add only the minimal metadata required for this DOI
-    		HashMap<String, String> metadata = new HashMap<String, String>();
-    		metadata.put(DataCiteProfile.TITLE.toString(), ErcMissingValueCode.UNKNOWN.toString());
-    		metadata.put(DataCiteProfile.CREATOR.toString(), ErcMissingValueCode.UNKNOWN.toString());
-    		metadata.put(DataCiteProfile.PUBLISHER.toString(), ErcMissingValueCode.UNKNOWN.toString());
-    		metadata.put(DataCiteProfile.PUBLICATION_YEAR.toString(), ErcMissingValueCode.UNKNOWN.toString());
-    		metadata.put(InternalProfile.STATUS.toString(), InternalProfileValues.RESERVED.toString());
-    		metadata.put(InternalProfile.EXPORT.toString(), InternalProfileValues.NO.toString());
-    
-    		// make sure we have a current login
-    		this.refreshLogin();
-    
+    private Identifier generateDOIFromEZID() throws DOIException, InvalidRequest {
+        Identifier identifier = new Identifier();
+        try {
+            // only continue if we have the feature turned on
+            if (!doiEnabled) {
+                throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
+            }
+
+            // add only the minimal metadata required for this DOI
+            HashMap<String, String> metadata = new HashMap<String, String>();
+            metadata.put(DataCiteProfile.TITLE.toString(), ErcMissingValueCode.UNKNOWN.toString());
+            metadata.put(DataCiteProfile.CREATOR.toString(), ErcMissingValueCode.UNKNOWN.toString());
+            metadata.put(DataCiteProfile.PUBLISHER.toString(), ErcMissingValueCode.UNKNOWN.toString());
+            metadata.put(DataCiteProfile.PUBLICATION_YEAR.toString(), ErcMissingValueCode.UNKNOWN.toString());
+            metadata.put(InternalProfile.STATUS.toString(), InternalProfileValues.RESERVED.toString());
+            metadata.put(InternalProfile.EXPORT.toString(), InternalProfileValues.NO.toString());
+
+            // make sure we have a current login
+            this.refreshLogin();
+
             // Make sure we have a primary shoulder configured (which should enable mint operations)
             if (!shoulderMap.containsKey(new Integer(PRIMARY_SHOULDER_INDEX))) {
                 throw new InvalidRequest("2193", "DOI scheme is not enabled at this node because primary shoulder unconfigured.");
             }
-    
-    		// call the EZID service
-    		String doi = ezid.mintIdentifier(shoulderMap.get(new Integer(PRIMARY_SHOULDER_INDEX)), metadata);
-    		
-    		identifier.setValue(doi);
-	    } catch (EZIDException e) {
-	        throw new DOIException(e.getMessage());
-	    }
-		return identifier;
-	}
-	
-    
+
+            // call the EZID service
+            String doi = ezid.mintIdentifier(shoulderMap.get(new Integer(PRIMARY_SHOULDER_INDEX)), metadata);
+
+            identifier.setValue(doi);
+        } catch (EZIDException e) {
+            throw new DOIException(e.getMessage());
+        }
+        return identifier;
+    }
+
     /**
      * Make the status of the identifier to be public 
      * @param session  the subjects call the method

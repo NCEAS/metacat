@@ -117,7 +117,7 @@ public abstract class DOIService {
         String siteUrl = null;
         try {
             if (uriTemplate != null) {
-                siteUrl =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
+                siteUrl =  SystemUtil.getServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
             } else {
                 siteUrl =  SystemUtil.getContextURL() + "/d1/mn/v2/object/" + identifier.getValue();
             }

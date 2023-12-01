@@ -1007,7 +1007,7 @@ public class MetacatHandler {
         List<String> portalFormats = new ArrayList<>();
 
         try {
-            serverUrl = SystemUtil.getSecureServerURL();
+            serverUrl = SystemUtil.getServerURL();
             locationBase = PropertyService.getProperty("sitemap.location.base");
             entryBase = PropertyService.getProperty("sitemap.entry.base");
         } catch (PropertyNotFoundException pnfe) {

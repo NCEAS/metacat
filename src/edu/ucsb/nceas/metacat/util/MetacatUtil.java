@@ -54,11 +54,11 @@ import edu.ucsb.nceas.utilities.FileUtil;
 public class MetacatUtil
 {
 
-    public static final String XMLFORMAT = "xml";	
+    public static final String XMLFORMAT = "xml";   
     public static AbstractDatabase dbAdapter;
-    
+
     private static boolean debugErrorDisplayed = false;
-    
+
     private static Log logMetacat = LogFactory.getLog(MetacatUtil.class);
 
     /**
@@ -133,7 +133,7 @@ public class MetacatUtil
         }
         return parameters;
     }
-  
+
     public static Vector<String> getOptionList(String optiontext)
     {
         Vector<String> optionsVector = new Vector<String>();
@@ -191,48 +191,48 @@ public class MetacatUtil
                          // check if & is in front of amp; 
                          // (we dont yet check for other HTML 4.0 Character entities) 
                          if (i + 4 < len  && s.charAt(i + 1) == 'a' 
-                        	 && s.charAt(i + 2) == 'm' 
-                        		 && s.charAt(i + 3) == 'p' 
-                        			 && s.charAt(i + 4) == ';'){
+                            && s.charAt(i + 2) == 'm' 
+                               && s.charAt(i + 3) == 'p' 
+                                  && s.charAt(i + 4) == ';'){
                              str.append("&amp;");
-                             i += 4;                        	 
+                             i += 4;                            
                          }
                          else  if (i + 3 < len && s.charAt(i + 1) == 'l' 
-                        	 && s.charAt(i + 2) == 't' 
-                        		 && s.charAt(i + 3) == ';' ){
-                    	  // check if & is in front of it; 
+                            && s.charAt(i + 2) == 't' 
+                               && s.charAt(i + 3) == ';' ){
+                         // check if & is in front of it; 
                              str.append("&lt;");
-                             i += 3;                        	 
+                             i += 3;                            
                          } 
                          else  if (i + 3 < len && s.charAt(i + 1) == 'g' 
-                        	 && s.charAt(i + 2) == 't' 
-                        		 && s.charAt(i + 3) == ';' ){
-                    	  // check if & is in front of gt; 
+                            && s.charAt(i + 2) == 't' 
+                               && s.charAt(i + 3) == ';' ){
+                         // check if & is in front of gt; 
                            // (we dont yet check for other HTML 4.0 Character entities) 
                              str.append("&gt;");
-                             i += 3;                        	 
+                             i += 3;                            
                          } 
                          else  if (i + 5 < len && s.charAt(i + 1) == 'q' 
-                        	 && s.charAt(i + 2) == 'u' 
-                        		 && s.charAt(i + 3) == 'o' 
-                        	 && s.charAt(i + 4) == 't'
-                        	 && s.charAt(i + 5) == ';')
+                            && s.charAt(i + 2) == 'u' 
+                               && s.charAt(i + 3) == 'o' 
+                            && s.charAt(i + 4) == 't'
+                            && s.charAt(i + 5) == ';')
                              {
-                    	   // check if & is in front of quot; 
+                          // check if & is in front of quot; 
                            // (we dont yet check for other HTML 4.0 Character entities) 
                              str.append("&quot;");
-                             i += 5;                        	 
+                             i += 5;                            
                          } 
                          else  if (i + 5 < len && s.charAt(i + 1) == 'a' 
-                        	 && s.charAt(i + 2) == 'p' 
-                        		 && s.charAt(i + 3) == 'o' 
-                        	 && s.charAt(i + 4) == 's'
-                        	 && s.charAt(i + 5) == ';')
+                            && s.charAt(i + 2) == 'p' 
+                               && s.charAt(i + 3) == 'o' 
+                            && s.charAt(i + 4) == 's'
+                            && s.charAt(i + 5) == ';')
                              {
-                    	   // check if & is in front of apostrophe; 
+                          // check if & is in front of apostrophe; 
                            // (we dont yet check for other HTML 4.0 Character entities) 
                              str.append("&apos;");
-                             i += 5;                        	 
+                             i += 5;                            
                          } 
                          else{
                              str.append("&amp;");
@@ -241,10 +241,10 @@ public class MetacatUtil
                          break;
                      }
                      case '"':
-                    	 str.append("&quot;");
+                        str.append("&quot;");
                          break;
                      case '\'':
-                    	 str.append("&apos;");
+                        str.append("&apos;");
                          break;
                     default: {
                          if ( (ch<128) && (ch>31) ) {
@@ -263,7 +263,7 @@ public class MetacatUtil
                              // otherwise skip
                          }
                          else {
-                        	 //Don't transfer special character to numeric entity
+                            //Don't transfer special character to numeric entity
                              /*str.append("&#");
                              str.append(Integer.toString(ch));
                              str.append(';');*/
@@ -286,13 +286,11 @@ public class MetacatUtil
         // append "context/servlet/replication" to the host name
         try {
         replicationServerName = 
-        	SystemUtil.getSecureServer() 
-        	+ "/" 
-			+ PropertyService.getProperty("application.context")
-			+ "/servlet/replication";
+           SystemUtil.getServer() + "/" + PropertyService.getProperty("application.context")
+               + "/servlet/replication";
         } catch (PropertyNotFoundException pnfe) {
-        	logMetacat.error("Could not get local replication server name " 
-        			+ "because property could not be found: " + pnfe.getMessage());
+           logMetacat.error("Could not get local replication server name " 
+                 + "because property could not be found: " + pnfe.getMessage());
         }
         return replicationServerName;
 
@@ -322,96 +320,96 @@ public class MetacatUtil
     }// replaceWhiteSpaceForUR
 
     /**
-	 * Writes debug information into a file. In metacat.properties, if property
-	 * application.writeDebugToFile is set to true, the debug information will be written to
-	 * debug file, which value is the property application.debugOutputFile in
-	 * metacat.properties.
-	 * 
-	 */
-	public static void writeDebugToFile(String debugInfo) {
-		String debug = "false";
-		try {
-			debug = PropertyService.getProperty("application.writeDebugToFile");
-			if (debug != null && debug.equalsIgnoreCase("true")) {
-				File outputFile = 
-					new File(PropertyService.getProperty("application.debugOutputFile"));
-				FileOutputStream fos = new FileOutputStream(outputFile, true);
-				PrintWriter pw = new PrintWriter(fos);
-				pw.println(debugInfo);
-				pw.flush();
-				pw.close();
-				fos.close();
-			}
-		} catch (PropertyNotFoundException pnfe) {
-			// only log debug to file warning once
-			if (!debugErrorDisplayed) {
-				logMetacat.warn("Could not get debug property.  Write debug to " 
-						+ "file is set to false: " + pnfe.getMessage());
-				debugErrorDisplayed = true;
-			}
-		} catch (Exception io) {
-			logMetacat.warn("Error in MetacatUtil.writeDebugToFile "
-					+ io.getMessage());
-		}
-	}
-    
-   /**
-	 * Writes debug information into a file in delimitered format
-	 * 
-	 * @param debugInfo
-	 *            the debug information
-	 * @param newLine
-	 *            append the debug info to a line or not
-	 */
-	public static void writeDebugToDelimiteredFile(String debugInfo, boolean newLine) {
-		String debug = "false";
-		try {
-			debug = PropertyService.getProperty("application.writeDebugToFile");
-			if (debug != null && debug.equalsIgnoreCase("true")) {
-				File outputFile = new File(PropertyService
-						.getProperty("application.delimiteredOutputFile"));
-				FileOutputStream fos = new FileOutputStream(outputFile, true);
-				PrintWriter pw = new PrintWriter(fos);
-				if (newLine) {
-					pw.println(debugInfo);
-				} else {
-					pw.print(debugInfo);
-				}
-				pw.flush();
-				pw.close();
-				fos.close();
-			}
-		} catch (PropertyNotFoundException pnfe) {
-			// only log debug to file warning once
-			if (!debugErrorDisplayed) {
-				logMetacat.warn("Could not get delimited debug property. Write debug to " 
-						+ "file is set to false: " + pnfe.getMessage());
-				debugErrorDisplayed = true;
-			}
-		} catch (Exception io) {
-			logMetacat.warn("Eorr in writeDebugToDelimiteredFile "
-					+ io.getMessage());
-		}
-	}
+    * Writes debug information into a file. In metacat.properties, if property
+    * application.writeDebugToFile is set to true, the debug information will be written to
+    * debug file, which value is the property application.debugOutputFile in
+    * metacat.properties.
+    * 
+    */
+   public static void writeDebugToFile(String debugInfo) {
+      String debug = "false";
+      try {
+         debug = PropertyService.getProperty("application.writeDebugToFile");
+         if (debug != null && debug.equalsIgnoreCase("true")) {
+            File outputFile = 
+               new File(PropertyService.getProperty("application.debugOutputFile"));
+            FileOutputStream fos = new FileOutputStream(outputFile, true);
+            PrintWriter pw = new PrintWriter(fos);
+            pw.println(debugInfo);
+            pw.flush();
+            pw.close();
+            fos.close();
+         }
+      } catch (PropertyNotFoundException pnfe) {
+         // only log debug to file warning once
+         if (!debugErrorDisplayed) {
+            logMetacat.warn("Could not get debug property.  Write debug to " 
+                  + "file is set to false: " + pnfe.getMessage());
+            debugErrorDisplayed = true;
+         }
+      } catch (Exception io) {
+         logMetacat.warn("Error in MetacatUtil.writeDebugToFile "
+               + io.getMessage());
+      }
+   }
 
-	/**
-	 * Write the uploaded file to disk for temporary storage before moving it to
-	 * its final Metacat location.
-	 * 
-	 * @param filePart
-	 *            the FilePart object containing the file form element
-	 * @param fileName
-	 *            the name of the file to be written to disk
-	 * @return tempFilePath a String containing location of temporary file
-	 */
+   /**
+    * Writes debug information into a file in delimitered format
+    * 
+    * @param debugInfo
+    *            the debug information
+    * @param newLine
+    *            append the debug info to a line or not
+    */
+   public static void writeDebugToDelimiteredFile(String debugInfo, boolean newLine) {
+      String debug = "false";
+      try {
+         debug = PropertyService.getProperty("application.writeDebugToFile");
+         if (debug != null && debug.equalsIgnoreCase("true")) {
+            File outputFile = new File(PropertyService
+                  .getProperty("application.delimiteredOutputFile"));
+            FileOutputStream fos = new FileOutputStream(outputFile, true);
+            PrintWriter pw = new PrintWriter(fos);
+            if (newLine) {
+               pw.println(debugInfo);
+            } else {
+               pw.print(debugInfo);
+            }
+            pw.flush();
+            pw.close();
+            fos.close();
+         }
+      } catch (PropertyNotFoundException pnfe) {
+         // only log debug to file warning once
+         if (!debugErrorDisplayed) {
+            logMetacat.warn("Could not get delimited debug property. Write debug to " 
+                  + "file is set to false: " + pnfe.getMessage());
+            debugErrorDisplayed = true;
+         }
+      } catch (Exception io) {
+         logMetacat.warn("Eorr in writeDebugToDelimiteredFile "
+               + io.getMessage());
+      }
+   }
+
+   /**
+    * Write the uploaded file to disk for temporary storage before moving it to
+    * its final Metacat location.
+    * 
+    * @param filePart
+    *            the FilePart object containing the file form element
+    * @param fileName
+    *            the name of the file to be written to disk
+    * @return tempFilePath a String containing location of temporary file
+    */
     public static File writeTempUploadFile (FileItem fi, String fileName) throws Exception {
         File tempFile = null;
         String tempDirPath = null;
         try {
-        	tempDirPath = PropertyService.getProperty("application.tempDir") + FileUtil.getFS() + "uploads";
+           tempDirPath = PropertyService.getProperty("application.tempDir") + FileUtil.getFS() + "uploads";
         } catch (PropertyNotFoundException pnfe) {
-        	logMetacat.warn("Temp property not found.  An attempt will be made " 
-        			+ "to use system temp directory: " + pnfe.getMessage());
+           logMetacat.warn("Temp property not found.  An attempt will be made " 
+                 + "to use system temp directory: " + pnfe.getMessage());
         }
         long fileSize;
         File tempDir;
@@ -419,38 +417,38 @@ public class MetacatUtil
         if ((fileName == null) || fileName.equals("")) {
             return tempFile;
         }
-				
+
         // the tempfilepath token isn't set, use Java default
-		if (tempDirPath == null) {
-			String javaTempDir = System.getProperty("java.io.tempdir");
-			if (javaTempDir == null) {
-				// no paths set, use unix default
-				tempDirPath = "/tmp";
-			} else {
-				tempDirPath = javaTempDir;
-			}
-		}
+      if (tempDirPath == null) {
+         String javaTempDir = System.getProperty("java.io.tempdir");
+         if (javaTempDir == null) {
+            // no paths set, use unix default
+            tempDirPath = "/tmp";
+         } else {
+            tempDirPath = javaTempDir;
+         }
+      }
 
         tempDir = new File(tempDirPath);
 
-		// Create the temporary directory if it doesn't exist
-		try {
-			if (!tempDir.exists()) {
-				tempDir.mkdirs();
-			}
-		} catch (SecurityException e) {
-			throw new IOException("Can't create directory: " + tempDir.getPath() + ". Error: "
-					+ e.getMessage());
-		}
+      // Create the temporary directory if it doesn't exist
+      try {
+         if (!tempDir.exists()) {
+            tempDir.mkdirs();
+         }
+      } catch (SecurityException e) {
+         throw new IOException("Can't create directory: " + tempDir.getPath() + ". Error: "
+               + e.getMessage());
+      }
 
-		//tempFile = new File(tempDirPath, fileName);
-		tempFile = File.createTempFile("upload", ".tmp", tempDir);
-		fi.write(tempFile);
-		fileSize = fi.getSize();
+      //tempFile = new File(tempDirPath, fileName);
+      tempFile = File.createTempFile("upload", ".tmp", tempDir);
+      fi.write(tempFile);
+      fileSize = fi.getSize();
 
-		if (fileSize == 0) {
-			logMetacat.warn("Uploaded file '" + fileName + "'is empty!");
-		}
+      if (fileSize == 0) {
+         logMetacat.warn("Uploaded file '" + fileName + "'is empty!");
+      }
 
         logMetacat.debug("Temporary file is: " + tempFile.getAbsolutePath());
 
@@ -458,16 +456,16 @@ public class MetacatUtil
     }
 
     /**
-	 * 
-	 * Copy a file between two locations specified as strings. Fails if either
-	 * path cannot be created. Based on the public domain FileCopy class in
-	 * _Java in a Nutshell_.
-	 * 
-	 * @param sourceName
-	 *            the source file to read from disk
-	 * @param destName
-	 *            the destination file on disk
-	 */
+    * 
+    * Copy a file between two locations specified as strings. Fails if either
+    * path cannot be created. Based on the public domain FileCopy class in
+    * _Java in a Nutshell_.
+    * 
+    * @param sourceName
+    *            the source file to read from disk
+    * @param destName
+    *            the destination file on disk
+    */
     public static void copyFile(String sourceName, String destName) throws IOException {
 
         File sourceFile = new File(sourceName);

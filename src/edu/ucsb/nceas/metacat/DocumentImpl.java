@@ -591,7 +591,7 @@ public class DocumentImpl {
         // local server has newer version, then notify the remote server
         else if (userSpecifyRev < revInDataBase && revInDataBase > 0) {
             throw new Exception(
-                "Local server: " + SystemUtil.getSecureServerURL() + " has newer revision of doc: "
+                "Local server: " + SystemUtil.getServerURL() + " has newer revision of doc: "
                     + docid + "." + revInDataBase + ". Please notify it.");
         }
         //other situation
