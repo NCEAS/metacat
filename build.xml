@@ -114,11 +114,6 @@
     <taskdef resource="axis-tasks.properties"
              classpathref="axis.ant.classpath"/>
 
-    <!-- Determine if perl should be built-->
-    <condition property="build.perl">
-        <equals arg1="${make.perl.code}" arg2="true"/>
-    </condition>
-
     <available file="${build.tomcat.dir}/common/lib/servlet-api.jar"
                property="tomcat.common.exists"/>
 
