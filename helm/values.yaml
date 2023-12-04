@@ -1,24 +1,26 @@
 ## Default values for metacat.
 ## This is a YAML-formatted file.
 ##
-##     * * * * * * NOTE: SOME VALUES INCLUDE A ${RELEASE_NAME} PLACEHOLDER * * * * * *
-##     * * * * * *       THAT MUST BE REPLACED BY THE ACTUAL RELEASE NAME! * * * * * *
+##     * * *  NOTE: SOME VALUES INCLUDE THE PLACEHOLDER "${RELEASE_NAME}", WHICH  * * *
+##     * * *        MUST BE REPLACED BY THE ACTUAL RELEASE NAME, AS FOLLOWS...    * * *
 ##
-## This can be done by manually finding and replacing, or by using utilities such as `sed` or
-## `envsubst` as follows: (assuming your release name is "myrelease" and you're installing into
-##  namespace "mynamespace")
+## EASY OPTION: use the 'helm-install.sh' (or the 'helm-upgrade.sh') shell script.
+##     e.g. (from the metacat repo root directory):
 ##
-## OPTION 1: use `sed` to permanently edit in place (or could redirect to a different output file):
-##   $ RELEASE_NAME=myrelease \
-##     sed -i -e "s/\${RELEASE_NAME}/$RELEASE_NAME/g" values.yaml
-##   ...then `helm install` as usual
+##     $  ./helm-install.sh  myrelease   mynamespace  [other optional helm command flags]
 ##
-## OPTION 2: use `envsubst` to helm install, leaving values.yaml intact:
-##   $ RLS=myrelease ; NS=mynamespace ; \
-##     RELEASE_NAME=$RLS envsubst < ./helm/values.yaml | helm install $RLS -n $NS -f - ./helm
+##     # NOTE: If you see: "command not found: envsubst", you'll need to install Gnu 'gettext'
+##             (https://www.gnu.org/software/gettext/).  For example, on macOS:
 ##
-##   # if this results in "command not found: envsubst", you can install envsubst (e.g. on macOS:
-##        $  brew install gettext && brew link --force gettext
+##             $  brew install gettext && brew link --force gettext
+##
+## PERMANENT OPTION: either manually search and replace "${RELEASE_NAME}" with your release name, or
+##     use a command-line tool to do so - e.g. `sed`:
+##
+##     $ cp values.yaml values.yaml_ORIG
+##     $ sed -i -e "s/\${RELEASE_NAME}/myrelease/g" values.yaml
+##
+##     ...then `helm install` as usual
 ##
 
 ## @section Global Properties Shared Across Sub-Charts Within This Deployment
