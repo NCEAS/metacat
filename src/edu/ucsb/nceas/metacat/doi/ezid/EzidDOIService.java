@@ -351,14 +351,14 @@ public class EzidDOIService extends DOIService {
             this.refreshLogin();
 
             // Make sure we have a primary shoulder configured (which should enable mint operations)
-            if (!shoulderMap.containsKey(new Integer(PRIMARY_SHOULDER_INDEX))) {
+            if (!shoulderMap.containsKey(Integer.valueOf(PRIMARY_SHOULDER_INDEX))) {
                 throw new InvalidRequest("2193", "DOI scheme is not enabled at this node because "
                                                             + "primary shoulder unconfigured.");
             }
 
             // call the EZID service
             String doi =
-                ezid.mintIdentifier(shoulderMap.get(new Integer(PRIMARY_SHOULDER_INDEX)), metadata);
+                ezid.mintIdentifier(shoulderMap.get(Integer.valueOf(PRIMARY_SHOULDER_INDEX)), metadata);
 
             identifier.setValue(doi);
         } catch (EZIDException e) {
