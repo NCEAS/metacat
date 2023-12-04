@@ -299,88 +299,88 @@ public class MetacatUtil {
     }// replaceWhiteSpaceForUR
 
     /**
-    * Writes debug information into a file. In metacat.properties, if property
-    * application.writeDebugToFile is set to true, the debug information will be written to
-    * debug file, which value is the property application.debugOutputFile in
-    * metacat.properties.
-    *
-    */
-   public static void writeDebugToFile(String debugInfo) {
-      String debug = "false";
-      try {
-         debug = PropertyService.getProperty("application.writeDebugToFile");
-         if (debug != null && debug.equalsIgnoreCase("true")) {
-            File outputFile =
-               new File(PropertyService.getProperty("application.debugOutputFile"));
-            FileOutputStream fos = new FileOutputStream(outputFile, true);
-            PrintWriter pw = new PrintWriter(fos);
-            pw.println(debugInfo);
-            pw.flush();
-            pw.close();
-            fos.close();
-         }
-      } catch (PropertyNotFoundException pnfe) {
-         // only log debug to file warning once
-         if (!debugErrorDisplayed) {
-            logMetacat.warn("Could not get debug property.  Write debug to "
-                  + "file is set to false: " + pnfe.getMessage());
-            debugErrorDisplayed = true;
-         }
-      } catch (Exception io) {
-         logMetacat.warn("Error in MetacatUtil.writeDebugToFile "
-               + io.getMessage());
-      }
-   }
-
-   /**
-    * Writes debug information into a file in delimitered format
-    *
-    * @param debugInfo
-    *            the debug information
-    * @param newLine
-    *            append the debug info to a line or not
-    */
-   public static void writeDebugToDelimiteredFile(String debugInfo, boolean newLine) {
-      String debug = "false";
-      try {
-         debug = PropertyService.getProperty("application.writeDebugToFile");
-         if (debug != null && debug.equalsIgnoreCase("true")) {
-            File outputFile = new File(PropertyService
-                  .getProperty("application.delimiteredOutputFile"));
-            FileOutputStream fos = new FileOutputStream(outputFile, true);
-            PrintWriter pw = new PrintWriter(fos);
-            if (newLine) {
-               pw.println(debugInfo);
-            } else {
-               pw.print(debugInfo);
+     * Writes debug information into a file. In metacat.properties, if property
+     * application.writeDebugToFile is set to true, the debug information will be written to
+     * debug file, which value is the property application.debugOutputFile in
+     * metacat.properties.
+     *
+     */
+    public static void writeDebugToFile(String debugInfo) {
+        String debug = "false";
+        try {
+            debug = PropertyService.getProperty("application.writeDebugToFile");
+            if (debug != null && debug.equalsIgnoreCase("true")) {
+                File outputFile =
+                        new File(PropertyService.getProperty("application.debugOutputFile"));
+                FileOutputStream fos = new FileOutputStream(outputFile, true);
+                PrintWriter pw = new PrintWriter(fos);
+                pw.println(debugInfo);
+                pw.flush();
+                pw.close();
+                fos.close();
             }
-            pw.flush();
-            pw.close();
-            fos.close();
-         }
-      } catch (PropertyNotFoundException pnfe) {
-         // only log debug to file warning once
-         if (!debugErrorDisplayed) {
-            logMetacat.warn("Could not get delimited debug property. Write debug to "
+        } catch (PropertyNotFoundException pnfe) {
+            // only log debug to file warning once
+            if (!debugErrorDisplayed) {
+                logMetacat.warn("Could not get debug property.  Write debug to "
                   + "file is set to false: " + pnfe.getMessage());
-            debugErrorDisplayed = true;
-         }
-      } catch (Exception io) {
-         logMetacat.warn("Eorr in writeDebugToDelimiteredFile "
+                debugErrorDisplayed = true;
+            }
+        } catch (Exception io) {
+            logMetacat.warn("Error in MetacatUtil.writeDebugToFile "
                + io.getMessage());
-      }
-   }
+        }
+    }
 
-   /**
-    * Write the uploaded file to disk for temporary storage before moving it to
-    * its final Metacat location.
-    *
-    * @param filePart
-    *            the FilePart object containing the file form element
-    * @param fileName
-    *            the name of the file to be written to disk
-    * @return tempFilePath a String containing location of temporary file
-    */
+    /**
+     * Writes debug information into a file in delimitered format
+     *
+     * @param debugInfo
+     *            the debug information
+     * @param newLine
+     *            append the debug info to a line or not
+     */
+    public static void writeDebugToDelimiteredFile(String debugInfo, boolean newLine) {
+        String debug = "false";
+        try {
+            debug = PropertyService.getProperty("application.writeDebugToFile");
+            if (debug != null && debug.equalsIgnoreCase("true")) {
+                File outputFile = new File(PropertyService
+                  .getProperty("application.delimiteredOutputFile"));
+                FileOutputStream fos = new FileOutputStream(outputFile, true);
+                PrintWriter pw = new PrintWriter(fos);
+                if (newLine) {
+                    pw.println(debugInfo);
+                } else {
+                    pw.print(debugInfo);
+                }
+                pw.flush();
+                pw.close();
+                fos.close();
+            }
+        } catch (PropertyNotFoundException pnfe) {
+            // only log debug to file warning once
+            if (!debugErrorDisplayed) {
+                logMetacat.warn("Could not get delimited debug property. Write debug to "
+                  + "file is set to false: " + pnfe.getMessage());
+                debugErrorDisplayed = true;
+            }
+        } catch (Exception io) {
+            logMetacat.warn("Eorr in writeDebugToDelimiteredFile "
+               + io.getMessage());
+        }
+    }
+
+    /**
+     * Write the uploaded file to disk for temporary storage before moving it to
+     * its final Metacat location.
+     *
+     * @param filePart
+     *            the FilePart object containing the file form element
+     * @param fileName
+     *            the name of the file to be written to disk
+     * @return tempFilePath a String containing location of temporary file
+     */
     public static File writeTempUploadFile (FileItem fi, String fileName) throws Exception {
         File tempFile = null;
         String tempDirPath = null;
@@ -399,35 +399,35 @@ public class MetacatUtil {
         }
 
         // the tempfilepath token isn't set, use Java default
-      if (tempDirPath == null) {
-         String javaTempDir = System.getProperty("java.io.tempdir");
-         if (javaTempDir == null) {
-            // no paths set, use unix default
-            tempDirPath = "/tmp";
-         } else {
-            tempDirPath = javaTempDir;
-         }
-      }
+        if (tempDirPath == null) {
+            String javaTempDir = System.getProperty("java.io.tempdir");
+            if (javaTempDir == null) {
+                // no paths set, use unix default
+                tempDirPath = "/tmp";
+            } else {
+                tempDirPath = javaTempDir;
+            }
+        }
 
         tempDir = new File(tempDirPath);
 
-      // Create the temporary directory if it doesn't exist
-      try {
-         if (!tempDir.exists()) {
-            tempDir.mkdirs();
-         }
-      } catch (SecurityException e) {
-         throw new IOException("Can't create directory: " + tempDir.getPath() + ". Error: "
+        // Create the temporary directory if it doesn't exist
+        try {
+            if (!tempDir.exists()) {
+                tempDir.mkdirs();
+            }
+        } catch (SecurityException e) {
+            throw new IOException("Can't create directory: " + tempDir.getPath() + ". Error: "
                + e.getMessage());
-      }
+        }
 
-      tempFile = File.createTempFile("upload", ".tmp", tempDir);
-      fi.write(tempFile);
-      fileSize = fi.getSize();
+        tempFile = File.createTempFile("upload", ".tmp", tempDir);
+        fi.write(tempFile);
+        fileSize = fi.getSize();
 
-      if (fileSize == 0) {
-         logMetacat.warn("Uploaded file '" + fileName + "'is empty!");
-      }
+        if (fileSize == 0) {
+            logMetacat.warn("Uploaded file '" + fileName + "'is empty!");
+        }
 
         logMetacat.debug("Temporary file is: " + tempFile.getAbsolutePath());
 
