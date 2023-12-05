@@ -146,7 +146,7 @@ public class SystemUtil {
      * port number. Note that if the port is 443 or 80, it is left off.
      * NOTE: does NOT include "https://"
      * 
-     * @return string holding the server
+     * @return String representation of the server host:port
      */
     public static String getServer() throws PropertyNotFoundException {
         String server = PropertyService.getProperty("server.name");
