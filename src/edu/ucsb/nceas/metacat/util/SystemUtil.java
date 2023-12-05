@@ -133,7 +133,7 @@ public class SystemUtil {
     public static String getServerURL() throws PropertyNotFoundException {
         String serverURL = "https://";
         String serverHttps = PropertyService.getProperty("server.https");
-        if (serverHttps != null && serverHttps.equalsIgnoreCase("false")) {
+        if (serverHttps.equalsIgnoreCase("false")) {
             serverURL = "http://";
         }
         serverURL += getServer();
