@@ -132,20 +132,20 @@ public class MetacatUtil {
      * @param optiontext  the string contains the options
      * @return a vector object which contains those options
      */
-    public static Vector<String> getOptionList(String optiontext) {
+    public static Vector<String> getOptionList(String optionText) {
         Vector<String> optionsVector = new Vector<String>();
-        if (optiontext.indexOf(",") == -1) {
-            optionsVector.addElement(optiontext);
+        if (optionText.indexOf(",") == -1) {
+            optionsVector.addElement(optionText);
             return optionsVector;
         }
 
-        while (optiontext.indexOf(",") != -1) {
-            String s = optiontext.substring(0, optiontext.indexOf(","));
+        while (optionText.indexOf(",") != -1) {
+            String s = optionText.substring(0, optionText.indexOf(","));
             optionsVector.addElement(s.trim());
-            optiontext = optiontext.substring(optiontext.indexOf(",") + 1,
-                    optiontext.length());
-            if (optiontext.indexOf(",") == -1) { //catch the last list entry
-                optionsVector.addElement(optiontext.trim());
+            optionText = optionText.substring(optionText.indexOf(",") + 1,
+                    optionText.length());
+            if (optionText.indexOf(",") == -1) { //catch the last list entry
+                optionsVector.addElement(optionText.trim());
             }
         }
         return optionsVector;
