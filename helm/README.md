@@ -4,37 +4,32 @@ Metacat is repository software for preserving data and metadata (documentation a
 helps scientists find, understand and effectively use data sets they manage or that have been
 created by others. For more details, see https://github.com/NCEAS/metacat
 
+> **Warning**: this deployment does not currently work on Apple Silicon machines (e.g in Rancher
+> Desktop), because at least one of the dependencies (RabbitMQ) doesn't work in that environment.
+
 ## TL;DR
 Starting in the root directory of the `metacat` repo:
 
 ```shell
-# 1. build metacat's binary distribution
-$  ant distbin
-
-# 2. build the docker image
-$ pushd docker ; ./build.sh ; popd
-
-# 3. FIRST TIME ONLY: add your credentials to helm/admin/secrets.yaml, and add to cluster
+# 1. FIRST TIME ONLY: add your credentials to helm/admin/secrets.yaml, and add to cluster
 $ vim helm/admin/secrets.yaml    ## follow the instructions in this file
 
-# 4. Replace the occurrences of ${RELEASE_NAME} in values.yaml
-#    (see comments at beginning of values.yaml for easy ways to do this)
-
-# 5. deploy and enjoy! Assuming your release name is "mc" (see Note below):
-$ helm install mc ./helm
+# 2. deploy and enjoy!
+#    * * * from the metacat repo root directory: * * *
+$ ./helm-install.sh  myreleasename  mynamespace  ./helm
 ```
 
 You should then be able to access the application via http://localhost/metacat! **Note** you should
-not need to edit anything in [values.yaml](./values.yaml), if you have used the release name
-"mc" and your dev setup is fairly standard. If things don't work as expected, check the value of
-`postgres.auth.existingSecret` (which should include the release name) and also check the
-properties in the `metacat` section, such as `solr.baseURL`.
+not need to edit anything in [values.yaml](./values.yaml), if your dev setup is fairly standard.
+You can also look at the contents of values overlay files
+[./values-dev-local.yaml](./values-dev-local.yaml) and
+[./values-dev-cluster.yaml](./values-dev-cluster.yaml), to see which settings typically need to be
+changed.
 
 ## Introduction
 
-This chart deploys a [Metacat](https://github.com/NCEAS/metacat) deployment on a
-[Kubernetes](https://kubernetes.io) cluster using the
-[Helm](https://helm.sh) package manager.
+This chart deploys a [Metacat](https://github.com/NCEAS/metacat) deployment on a [Kubernetes](https://kubernetes.io) cluster,
+using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
