@@ -222,8 +222,8 @@
             <value>false</value>
         </option>
         <description>
-            Does the Metacat server use the HTTPS connection? &lt;font color="red"&gt;
-            Strongly recommend the HTTPS connections.&lt;/font&gt;
+            Is the Metacat server configured to use secure HTTPS connections?
+            HTTPS connections are strongly recommended.
         </description>
         <helpFile>docs/metacat-properties.html#server-https</helpFile>
     </config>
@@ -524,7 +524,7 @@
     </config>
 
     <!-- EZID and DOI configurations -->
-  <config>
+    <config>
         <key>guid.doi.enabled</key>
         <label>Enable DOI Service</label>
         <group>8</group>
@@ -532,7 +532,7 @@
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
-  </config>
+    </config>
     <config>
         <key>guid.doiservice.plugin.class</key>
         <label>DOI Service</label>
@@ -576,66 +576,65 @@
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
-        </config>
-        
-        <!-- Sitemaps -->
-        <config>
-            <key>sitemap.enabled</key>
-            <label>Sitemaps Enabled</label>
-            <fieldType>select</fieldType>
-            <option>
-                <name>Enabled</name>
-                <value>true</value>
-            </option>
-            <option>
-                <name>Disabled</name>
-                <value>false</value>
-            </option>
-            <group>7</group>
-            <index>1</index>
-            <description>
-                Whether sitemaps are enabled or not.
-            </description>
-            <helpFile>docs/metacat-properties.html#sitemap-enabled</helpFile>
-        </config>
-        <config>
-            <key>sitemap.interval</key>
-            <label>Interval</label>
-            <group>7</group>
-            <index>2</index>
-            <description>
-                How often sitemaps are generated. Enter an integer in milliseconds. 
-                e.g., 86400000 for daily, 3600000 for hourly.
-            </description>
-            <helpFile>docs/metacat-properties.html#sitemap-interval</helpFile>
-        </config>
-        <config>
-            <key>sitemap.location.base</key>
-            <label>Location Base</label>
-            <group>7</group>
-            <index>3</index>
-            <description>
-                Base URL for where the sitemap index and individual sitemap files are 
-                served. i.e., sitemap_index.xml should be available at 
-                {sitemap.location.base}/sitemap_index.xml. Trailing slash is optional.
-            </description>
-            <helpFile>docs/metacat-properties.html#sitemap-location-base</helpFile>
-        </config>
-        <config>
-            <key>sitemap.entry.base</key>
-            <label>Entry Base</label>
-            <group>7</group>
-            <index>4</index>
-            <description>
-                Base URL for each entry listed in each sitemap. The identifier of each
-                record is appended to this value to determine the full URL. e.g., a
-                dataset with an identiifer of "mydataset" would show up as 
-                "{sitemap.entry.base}/mydataset" in its respective sitemap. Trailing 
-                slash is optional.
-            </description>
-            <helpFile>docs/metacat-properties.html#sitemap-entry-base</helpFile>
-        </config>
-        
+    </config>
+    <!-- Sitemaps -->
+    <config>
+        <key>sitemap.enabled</key>
+        <label>Sitemaps Enabled</label>
+        <fieldType>select</fieldType>
+        <option>
+            <name>Enabled</name>
+            <value>true</value>
+        </option>
+        <option>
+            <name>Disabled</name>
+            <value>false</value>
+        </option>
+        <group>7</group>
+        <index>1</index>
+        <description>
+            Whether sitemaps are enabled or not.
+        </description>
+        <helpFile>docs/metacat-properties.html#sitemap-enabled</helpFile>
+    </config>
+    <config>
+        <key>sitemap.interval</key>
+        <label>Interval</label>
+        <group>7</group>
+        <index>2</index>
+        <description>
+            How often sitemaps are generated. Enter an integer in milliseconds.
+            e.g., 86400000 for daily, 3600000 for hourly.
+        </description>
+        <helpFile>docs/metacat-properties.html#sitemap-interval</helpFile>
+    </config>
+    <config>
+        <key>sitemap.location.base</key>
+        <label>Location Base</label>
+        <group>7</group>
+        <index>3</index>
+        <description>
+            Base URL for where the sitemap index and individual sitemap files are
+            served. i.e., sitemap_index.xml should be available at
+            {sitemap.location.base}/sitemap_index.xml. Trailing slash is optional.
+        </description>
+        <helpFile>docs/metacat-properties.html#sitemap-location-base</helpFile>
+    </config>
+    <config>
+        <key>sitemap.entry.base</key>
+        <label>Entry Base</label>
+        <group>7</group>
+        <index>4</index>
+        <description>
+            Base URL for each entry listed in each sitemap. The identifier of each
+            record is appended to this value to determine the full URL. e.g., a
+            dataset with an identiifer of "mydataset" would show up as
+            "{sitemap.entry.base}/mydataset" in its respective sitemap. Trailing
+            slash is optional.
+        </description>
+        <helpFile>docs/metacat-properties.html#sitemap-entry-base</helpFile>
+    </config>
+
     <!-- quota configurations -->
     <config>
         <key>dataone.quotas.portals.enabled</key>
