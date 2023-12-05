@@ -98,7 +98,7 @@ public class SystemUtil {
      * 
      * @return a string holding the server port
      */
-    public static String discoverServerPort(HttpServletRequest request) {
+    protected static String discoverServerPort(HttpServletRequest request) {
         return Integer.toString(request.getServerPort());
     }
     
@@ -125,55 +125,36 @@ public class SystemUtil {
     }
 
     /**
-     * Get the server URL which is made up of the server name + : + the http
-     * port number. Note that if the port is 80, it is left off.
+     * Get the server URL which is made up of the http or https + :// + the server name + : + the 
+     * port number. Note that if the port is 80 or 443, it is left off.
      * 
      * @return string holding the server URL
      */
     public static String getServerURL() throws PropertyNotFoundException {
-        String httpPort = PropertyService.getProperty("server.httpPort");
-        
-        String serverURL = "http://";
-        if(httpPort.equals("443") || httpPort.equals("8443"))
-        {
-            serverURL = "https://";
+        String serverURL = "https://";
+        String serverHttps = PropertyService.getProperty("server.https");
+        if (serverHttps.equalsIgnoreCase("false")) {
+            serverURL = "http://";
         }
-        
-        serverURL += PropertyService.getProperty("server.name");
-        
-        if (!httpPort.equals("80") && !httpPort.equals("443")) {
-            serverURL += ":" + httpPort;
-        }
-
+        serverURL += getServer();
+        logMetacat.debug("SystemUtil.getServerURL - " + serverURL);
         return serverURL;
     }
 
     /**
-     * Get the secure server URL which is made up of the server name + : + the
-     * https port number. Note that if the port is 443, it is left off.
-     * 
-     * @return string holding the server URL
-     */
-    public static String getSecureServerURL() throws PropertyNotFoundException {
-        String ServerURL = "https://" + getSecureServer();
-        return ServerURL;
-    }
-    
-    /**
-     * Get the secure server  which is made up of the server name + : + the
-     * https port number. Note that if the port is 443, it is left off.
+     * Get the server  which is made up of the server name + : + the
+     * port number. Note that if the port is 443 or 80, it is left off.
      * NOTE: does NOT include "https://"
-     * @see getSecureServerURL()
      * 
-     * @return string holding the secure server
+     * @return String representation of the server host:port
      */
-    public static String getSecureServer() throws PropertyNotFoundException {
+    public static String getServer() throws PropertyNotFoundException {
         String server = PropertyService.getProperty("server.name");
-        String httpPort = PropertyService.getProperty("server.httpSSLPort");
-        if (!httpPort.equals("443")) {
-            server = server + ":" + httpPort;
+        String port = PropertyService.getProperty("server.port");
+        if (!port.equals("80") && !port.equals("443")) {
+            server = server + ":" + port;
         }
-
+        logMetacat.debug("SystemUtil.getServer - " + server);
         return server;
     }
 
@@ -196,17 +177,6 @@ public class SystemUtil {
      */
     public static String getContextURL() throws PropertyNotFoundException {
         return getServerURL() + "/"
-                + PropertyService.getProperty("application.context");
-    }
-    
-    /**
-     * Get the secure server URL with the context. This is made up of the secure server URL +
-     * file separator + the context
-     * 
-     * @return string holding the server URL with context
-     */
-    public static String getSecureContextURL() throws PropertyNotFoundException {
-        return getSecureServerURL() + "/"
                 + PropertyService.getProperty("application.context");
     }
 

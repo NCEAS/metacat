@@ -33,12 +33,12 @@ use Template;           # load the template-toolkit module
 use CGI qw/:standard :html3/; # load the CGI module 
 use Net::LDAP;          # load the LDAP net libraries
 use Net::SMTP;          # load the SMTP net libraries
-use Digest::SHA;       # for creating the password hash
+use Digest::SHA1;       # for creating the password hash
 use MIME::Base64;       # for creating the password hash
 use URI;                # for parsing URL syntax
 use Config::Properties; # for parsing Java .properties files
 use File::Basename;     # for path name parsing
-use DateTime;			# for parsing dates
+use DateTime;           # for parsing dates
 use DateTime::Duration; # for substracting
 use Captcha::reCAPTCHA; # for protection against spams
 use Cwd 'abs_path';
@@ -67,16 +67,18 @@ my $tempDir = $properties->getProperty('application.tempDir');
 # url configuration
 my $server = $properties->splitToTree(qr/\./, 'server');
 my $protocol = 'http://';
-if ( $properties->getProperty('server.httpPort') eq '443' ) {
-	$protocol = 'https://';
+if ($properties->getProperty('server.https') eq 'true') {
+    $protocol = 'https://';
 }
 my $serverUrl = $protocol . $properties->getProperty('server.name');
-if ($properties->getProperty('server.httpPort') ne '80') {
-        $serverUrl = $serverUrl . ':' . $properties->getProperty('server.httpPort');
+my $port = $properties->getProperty('server.port');
+if ($port ne '80' && $port ne '443') {
+        $serverUrl = $serverUrl . ':' . $port;
 }
 my $context = $properties->getProperty('application.context');
 my $contextUrl = $serverUrl . '/' .  $context;
 
+debug("The context url is: " . $contextUrl);
 my $metacatUrl = $contextUrl . "/metacat";
 my $cgiPrefix = "/" . $context . "/cgi-bin";
 my $styleSkinsPath = $contextUrl . "/style/skins";

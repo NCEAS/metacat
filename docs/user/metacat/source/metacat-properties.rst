@@ -23,19 +23,19 @@ More information on each is included below.
 |                           |                                                                                          |                        |
 |                           | Default Value: localhost                                                                 |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
-| .. _server-httpPort:      |                                                                                          |                        |
+| .. _server-port:          |                                                                                          |                        |
 |                           |                                                                                          |                        |
-| server.httpPort           | The network port used to access Metacat for non-secure (standard) connections.           | 80                     |
-|                           | This is usually 80 if Apache Web server is running, and 8080 if Tomcat is running alone. |                        |
-|                           |                                                                                          |                        |
-|                           | Default Value: 80                                                                        |                        |
-+---------------------------+------------------------------------------------------------------------------------------+------------------------+
-| .. _server-httpSSLPort:   |                                                                                          |                        |
-|                           |                                                                                          |                        |
-| server.httpSSLPort        | The network port used to access Metacat for secure connections. This is usually          | 443                    |
-|                           | 443 if Apache Web server is running, and 8443 if Tomcat is running alone.                |                        |
+| server.port               | The network port used to access Metacat for connections.                                 | 443                    |
+|                           | This can be either an https port, such as 443, or an http port, such as 80.              |                        |
 |                           |                                                                                          |                        |
 |                           | Default Value: 443                                                                       |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
+| .. _server-https:         |                                                                                          |                        |
+|                           |                                                                                          |                        |
+| server.https              | To indicate the server port is an https one or an http one.                              | true                   |
+|                           | True means an https port; false means an http port.                                      |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: true                                                                      |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
 | .. _server-internalName:  |                                                                                          |                        |
 |                           |                                                                                          |                        |
@@ -489,36 +489,6 @@ edited manually in the ``metacat-site.properties`` file.
 |                       |                                                                  |                                                   |
 |                       | Default Value: -//ecoinformatics.org//eml-access-2.0.0beta6//EN  |                                                   |
 +-----------------------+------------------------------------------------------------------+---------------------------------------------------+
-
-
-Data Manager Properties
-------------------------
-The EML Data Manager is also included for extended data-query operations. Note that this feature is still experimental. 
-
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| Property                          | Description                                                                   | Example                                       |
-+===================================+===============================================================================+===============================================+
-| .. _datamanager.server:           |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.server                | The server for the Datamanager library to use for temporary db storage        | localhost                                     |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| .. _datamanager.database:         |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.database              | The database name for the Datamanager                                         | datamananger                                  |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| .. _datamanager.user:             |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.user                  | The username for the Datamanager DB                                           | datamananger                                  |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| .. _datamanager.password:         |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.password              | The password for the Datamanager user                                         | datamananger                                  |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-
 
 EZID Properties
 ---------------

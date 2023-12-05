@@ -245,8 +245,7 @@ public class DocumentImpl {
         this.docname = docName;
         this.doctype = docType;
         this.docid = docId;
-        this.rev = (new Integer(newRevision)).intValue();
-        //this.updatedVersion = newRevision;
+        this.rev = Integer.parseInt(newRevision);
         writeDocumentToDB(action, user, pub, catalogId, serverCode, createDate, updateDate);
     }
 
@@ -401,7 +400,7 @@ public class DocumentImpl {
         throws Exception {
 
         PreparedStatement pstmt = null;
-        int revision = (new Integer(rev)).intValue();
+        int revision = Integer.parseInt(rev);
         String sqlDateString = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
         Date today = new Date(Calendar.getInstance().getTimeInMillis());
 
@@ -591,8 +590,9 @@ public class DocumentImpl {
         // local server has newer version, then notify the remote server
         else if (userSpecifyRev < revInDataBase && revInDataBase > 0) {
             throw new Exception(
-                "Local server: " + SystemUtil.getSecureServerURL() + " has newer revision of doc: "
-                    + docid + "." + revInDataBase + ". Please notify it.");
+                "Local server: " + SystemUtil.getServerURL() + " has newer revision of doc: "
+                    + docid + "." + revInDataBase
+                    + ". Please notify the remote server's administrator.");
         }
         //other situation
         else {
@@ -624,7 +624,7 @@ public class DocumentImpl {
             "rev list in xml_revision table for docid " + docid + " is " + localrev.toString());
 
         // if the rev is in the xml_revision, it throws a exception
-        if (localrev.contains(new Integer(rev))) {
+        if (localrev.contains(Integer.valueOf(rev))) {
             throw new Exception("The docid and rev is already in xml_revision table");
         }
 
@@ -1336,7 +1336,7 @@ public class DocumentImpl {
             }
             // Get miss docid and rev, throw to McdDocNotFoundException
             String missDocId = docid;
-            String missRevision = (new Integer(revision)).toString();
+            String missRevision = Integer.toString(revision);
             throw new McdbDocNotFoundException(
                 "the requested docid '" + docid.toString() + "' does not exist", missDocId,
                 missRevision);
@@ -1473,7 +1473,7 @@ public class DocumentImpl {
 
         if (this.docname == null) {
             throw new McdbDocNotFoundException(
-                "Document not found: " + docid, docid, (new Integer(revision)).toString());
+                "Document not found: " + docid, docid, Integer.toString(revision));
         }
     }
 
@@ -1536,7 +1536,7 @@ public class DocumentImpl {
                 pstmt.setInt(11, rev);
 
                 if (catalogid != null) {
-                    pstmt.setInt(12, (new Integer(catalogid)).intValue());
+                    pstmt.setInt(12, Integer.parseInt(catalogid));
                 }
 
             } else if (action.equals("UPDATE")) {
@@ -1592,7 +1592,7 @@ public class DocumentImpl {
                  * pub.equals("0") ) { pstmt.setInt(7, 0); }
                  */
                 if (catalogid != null) {
-                    pstmt.setInt(9, (new Integer(catalogid)).intValue());
+                    pstmt.setInt(9, Integer.parseInt(catalogid));
                     pstmt.setString(10, this.docid);
                 } else {
                     pstmt.setString(9, this.docid);
@@ -1724,16 +1724,13 @@ public class DocumentImpl {
                 throw new Exception(
                     "User " + user + " does not have permission to update XML Document #" + accnum);
             }
-
-            //DocumentIdentifier id = new DocumentIdentifier(accnum);
             int revision = DocumentUtil.getRevisionFromAccessionNumber(accnum);
-            String updaterev = (new Integer(revision)).toString();
+            String updaterev = Integer.toString(revision);
             String server = ReplicationService.getServerNameForServerCode(serverCode);
             logReplication.info("attempting to lock " + accnum);
             URL u = new URL(
                 "https://" + server + "?server=" + MetacatUtil.getLocalReplicationServerName()
                     + "&action=getlock&updaterev=" + updaterev + "&docid=" + docid);
-            //System.out.println("sending message: " + u.toString());
             String openingtag = null;
             try {
                 String serverResStr = ReplicationService.getURLContent(u);
@@ -1942,7 +1939,7 @@ public class DocumentImpl {
         int revInDataBase = DBUtil.getLatestRevisionInDocumentTable(docid);
         logMetacat.debug("DocumentImpl.writeReplication - The rev in data base: " + revInDataBase);
         // String to store the revision
-        String rev = (new Integer(userSpecifyRev)).toString();
+        String rev = Integer.toString(userSpecifyRev);
 
         if (tableName.equals(DOCUMENTTABLE)) {
             action = checkRevInXMLDocuments(docid, userSpecifyRev);
@@ -2876,7 +2873,7 @@ public class DocumentImpl {
 
             if (rootNodeId > 0) {
                 if (catalogid != null) {
-                    pstmt.setInt(11, (new Integer(catalogid)).intValue());
+                    pstmt.setInt(11, Integer.parseInt(catalogid));
                     logMetacat.debug(
                         "DocumentImpl.writeDocumentToRevisionTable - catalog id is " + catalogid);
                     pstmt.setLong(12, rootNodeId);
