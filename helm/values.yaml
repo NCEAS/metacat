@@ -26,10 +26,8 @@
 ## @section Global Properties Shared Across Sub-Charts Within This Deployment
 ##
 global:
-  ## @param global.passwordsSecret The name of the Secret containing passwords (RELEASE PREFIX)
-  ## This is the secret deployed using `../admin/secrets.yaml`. IMPORTANT NOTE: make sure you edit
-  ## this, since IT INCLUDES THE RELEASE NAME! For example, if the release name is 'myrelease',
-  ## the value of passwordsSecret: would be 'myrelease-metacat-secrets'.
+  ## @param global.passwordsSecret The name of the Secret containing application passwords
+  ## This is the secret deployed using your own private, edited version of `../admin/secrets.yaml`.
   ##
   ## (Note the actual key passwordsSecret is not used anywhere; only the yaml anchor/alias
   ##  &passwordSecretName. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
@@ -37,10 +35,9 @@ global:
   ##
   passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
 
-  ## @param metacat.application.context The application context to use
-  ## - for example, if your application is hosted at
-  ## https://mydomain.org, and you define the context to be "metacat", then the url to access the
-  ## application will be https://mydomain.org/metacat/
+  ## @param global.metacatAppContext The application context to use
+  ## - for example, if your application is hosted at https://mydomain.org, and you define the
+  ## context to be "metacat", then the application may be accessed at: https://mydomain.org/metacat/
   ## IMPORTANT NOTE: if changing this value, ensure the following paths are also updated to match:
   ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path; ingress.hosts.paths
   ##
@@ -51,7 +48,7 @@ global:
   ##
   metacatAppContext: &metacatAppContext metacat
 
-  ## @param global.persistence.storageClass default name of the storageClass to use for PVs
+  ## @param global.storageClass default name of the storageClass to use for PVs
   ##
   ## If <storageClass> is defined,  storageClassName: <storageClass>
   ##
@@ -73,12 +70,12 @@ global:
   ##
   storageClass: &storageClassName local-path
 
-  ## @param global.persistence.ephemeralVolumeStorageClass Optional global storageClass override
+  ## @param global.ephemeralVolumeStorageClass Optional global storageClass override
   ## Can be used to assign a storageClass that has a 'Delete' Reclaim Policy, thus allowing
   ## ephemeral volumes to be cleaned up automatically (eg "csi-cephfs-sc-ephemeral")
-  ## Comment out to use default StorageClass, if one is set on your cluster
+  ## Set ephemeralVolumeStorageClass: "" to use default StorageClass, if one is set on your cluster
   ##
-  #ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
+  ephemeralVolumeStorageClass: ""
 
 
 ## @section Metacat Application-Specific Properties
@@ -117,9 +114,9 @@ metacat:
   ## (Distinguished Names) denoting the users who may log into metacat with administrator
   ## privileges.
   ##
-  auth.administrators: admin@localhost:uid=jones,ou=Account,dc=ecoinformatics,dc=org
+  auth.administrators: admin@localhost
 
-  ## @param metacat.database.connectionURI postgres DB URI (RELEASE PREFIX, or blank for sub-chart)
+  ## @param metacat.database.connectionURI postgres database URI, or lave blank to use sub-chart
   ##
   ## Format:    jdbc:postgresql://<postgres-hostname>/<database-name>
   ##
@@ -130,8 +127,7 @@ metacat:
   ##    *  The fully qualified domain name, for an existing postgresql instance hosted outside the
   ##       current k8s cluster
   ##    *  `<servicename>.<namespace>.svc.cluster.local` for an existing postgresql instance within
-  ##       the same k8s cluster (hence "RELEASE PREFIX" warning above; <servicename> likely is
-  ##       prepended by the release name)
+  ##       the same k8s cluster
   ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
   ##
   ## 2. If you ARE using the included postgresql sub-chart (i.e. `postgresql.enabled: true`),
@@ -165,7 +161,7 @@ metacat:
   ## and seen by end users outside the cluster
   server.name: &external-hostname localhost
 
-  ## @param metacat.solr.baseURL The url to access solr (RELEASE PREFIX, or blank for sub-chart)
+  ## @param metacat.solr.baseURL The url to access solr, or leave blank to use sub-chart
   ##
   ## Format:    http://<solr-hostname>:<solr-port>/solr
   ##
@@ -175,9 +171,8 @@ metacat:
   ##    following values for `<solr-hostname>`:
   ##    *  The fully qualified domain name, for an existing solr instance hosted outside the
   ##       current k8s cluster
-  ##    *  `<servicename>` for an existing postgresql instance within the same k8s cluster (hence
-  ##       the "RELEASE PREFIX" warning above; <servicename> likely contains the release name -
-  ##        e.g. "http://metacatbrooke-solr-headless:8983/solr")
+  ##    *  `<servicename>` for an existing postgresql instance within the same k8s cluster
+  ##        e.g. "http://metacatbrooke-solr-headless:8983/solr"
   ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
   ##        e.g. http://host.docker.internal:8983/solr
   ##
@@ -628,12 +623,9 @@ service:
 ## @param livenessProbe.httpGet.port The named containerPort to probe
 ##                as defined in ./templates/statefulset.yaml
 ## Optional values:
-##        livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
-##        livenessProbe.periodSeconds Period seconds for livenessProbe
-##        livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
-##        livenessProbe.failureThreshold Failure threshold for livenessProbe
-##        livenessProbe.successThreshold Success threshold for livenessProbe
-##
+## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
 ##
 livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
@@ -655,11 +647,9 @@ livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck rou
 ## @param readinessProbe.httpGet.port The named containerPort to probe
 ##                as defined in ./templates/statefulset.yaml
 ## Optional values:
-##        readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
-##        readinessProbe.periodSeconds Period seconds for readinessProbe
-##        readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
-##        readinessProbe.failureThreshold Failure threshold for readinessProbe
-##        readinessProbe.successThreshold Success threshold for readinessProbe
+## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
 ##
 readinessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
   enabled: true
@@ -752,20 +742,29 @@ tomcat:
     min: ""
     max: ""
 
-## @section dataone_indexer Sub-Chart Configuration
+## @section dataone_indexer Sub-Chart
 dataone-indexer:
+  ## @param dataone-indexer.enabled enable the dataone-indexer sub-chart
+  ## set to false if you want to connect to your own existing dataone-indexer deployment
+  ##
   enabled: true
-  idxworker: {}
+
   rabbitmq:
     auth:
+      ## @param dataone-indexer.rabbitmq.auth.username set the username that rabbitmq will use
+      ##
       username: *rmqUsername
+      ## @param dataone-indexer.rabbitmq.auth.existingPasswordSecret location of rabbitmq password
       ## (must contain a value for `rabbitmq-password` key)
+      ##
       existingPasswordSecret: *passwordSecretName
+
   solr:
     extraVolumes:
+      ## @param dataone-indexer.solr.extraVolumes[0].name DO NOT EDIT - referenced by sub-chart
       - name: solr-config
         configMap:
-          ## @param dataone-indexer.solr.extraVolumes.configMap.name INDEXER configmap name (EDIT!)
+          ## @param dataone-indexer.solr.extraVolumes[0].configMap.name see notes in values.yaml
           ## This is the name of the configMap created by the dataone-indexer. It has to be here
           ## because it is passed directly to the dataone-indexer subchart's own solr subchart via
           ## .Values, so cannot be set automatically. Unfortunate but true.
@@ -773,4 +772,5 @@ dataone-indexer:
           ## example, if the release name is 'myrelease', the value of name: would be
           ## 'myrelease-indexer-configfiles'.
           name: ${RELEASE_NAME}-indexer-configfiles
+          ## @param dataone-indexer.solr.extraVolumes[0].configMap.defaultMode DO NOT EDIT
           defaultMode: 0777

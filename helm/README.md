@@ -87,19 +87,31 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 
 ## Parameters
 
+### Global Properties Shared Across Sub-Charts Within This Deployment
+
+| Name                                 | Description                                             | Value                             |
+| ------------------------------------ | ------------------------------------------------------- | --------------------------------- |
+| `global.passwordsSecret`             | The name of the Secret containing application passwords | `${RELEASE_NAME}-metacat-secrets` |
+| `global.metacatAppContext`           | The application context to use                          | `metacat`                         |
+| `global.storageClass`                | default name of the storageClass to use for PVs         | `local-path`                      |
+| `global.ephemeralVolumeStorageClass` | Optional global storageClass override                   | `""`                              |
+
 ### Metacat Application-Specific Properties
 
-| Name                             | Description                                                   | Value                                                           |
-| -------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- |
-| `metacat.application.context`    | The application context to use                                | `metacat`                                                       |
-| `metacat.administrator.username` | The admin username that will be used to authenticate          | `admin@localhost`                                               |
-| `metacat.auth.administrators`    | A colon-separated list of admin usernames or LDAP-style DN    | `admin@localhost:uid=jones,ou=Account,dc=ecoinformatics,dc=org` |
-| `metacat.database.connectionURI` | postgres DB URI (RELEASE PREFIX, or blank for sub-chart)      | `""`                                                            |
-| `metacat.guid.doi.enabled`       | Allow users to publish Digital Object Identifiers at doi.org? | `true`                                                          |
-| `metacat.server.httpPort`        | The http port exposed externally, if NOT using the ingress    | `""`                                                            |
-| `metacat.server.name`            | The hostname for the server, as exposed by the ingress        | `localhost`                                                     |
-| `metacat.solr.baseURL`           | The url to access solr                                        | `http://host.docker.internal:8983/solr`                         |
-| `metacat.replication.logdir`     | Location for the replication logs                             | `/var/metacat/logs`                                             |
+| Name                              | Description                                                     | Value               |
+| --------------------------------- | --------------------------------------------------------------- | ------------------- |
+| `metacat.application.context`     | see global.metacatAppContext                                    | `metacat`           |
+| `metacat.administrator.username`  | The admin username that will be used to authenticate            | `admin@localhost`   |
+| `metacat.auth.administrators`     | A colon-separated list of admin usernames or LDAP-style DN      | `admin@localhost`   |
+| `metacat.database.connectionURI`  | postgres database URI, or lave blank to use sub-chart           | `""`                |
+| `metacat.guid.doi.enabled`        | Allow users to publish Digital Object Identifiers at doi.org?   | `true`              |
+| `metacat.server.httpPort`         | The http port exposed externally, if NOT using the ingress      | `""`                |
+| `metacat.server.name`             | The hostname for the server, as exposed by the ingress          | `localhost`         |
+| `metacat.solr.baseURL`            | The url to access solr, or leave blank to use sub-chart         | `""`                |
+| `metacat.solr.coreName`           | The solr core (solr standalone) or collection name (solr cloud) | `""`                |
+| `metacat.replication.logdir`      | Location for the replication logs                               | `/var/metacat/logs` |
+| `metacat.index.rabbitmq.hostname` | the hostname of the rabbitmq instance that will be used         | `""`                |
+| `metacat.index.rabbitmq.username` | the username for connecting to the RabbitMQ instance            | `metacat-rmq-guest` |
 
 ### OPTIONAL DataONE Member Node (MN) Parameters
 
@@ -128,24 +140,24 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 
 ### Metacat Image, Container & Pod Parameters
 
-| Name                         | Description                                                                  | Value          |
-| ---------------------------- | ---------------------------------------------------------------------------- | -------------- |
-| `image.repository`           | Metacat image repository                                                     | `metacat`      |
-| `image.tag`                  | Metacat image tag (immutable tags are recommended)                           | `DEVELOP`      |
-| `image.pullPolicy`           | Metacat image pull policy                                                    | `IfNotPresent` |
-| `image.tag`                  | Overrides the image tag. Will default to the chart appVersion if set to ""   | `DEVELOP`      |
-| `image.debug`                | Specify if container debugging should be enabled (sets log level to "DEBUG") | `false`        |
-| `imagePullSecrets`           | Optional list of references to secrets in the same namespace                 | `[]`           |
-| `container.ports`            | Optional list of additional container ports to expose within the cluster     | `[]`           |
-| `serviceAccount.create`      | Should a service account be created to run Metacat?                          | `false`        |
-| `serviceAccount.annotations` | Annotations to add to the service account                                    | `{}`           |
-| `serviceAccount.name`        | The name to use for the service account.                                     | `""`           |
-| `podAnnotations`             | Map of annotations to add to the pods                                        | `{}`           |
-| `podSecurityContext.enabled` | Enable security context                                                      | `false`        |
-| `podSecurityContext.fsGroup` | Group ID for the pod                                                         | `nil`          |
-| `securityContext`            | Holds pod-level security attributes and common container settings            | `{}`           |
-| `resources`                  | Resource limits for the deployment                                           | `{}`           |
-| `tolerations`                | Tolerations for pod assigment                                                | `[]`           |
+| Name                           | Description                                                                  | Value                   |
+| ------------------------------ | ---------------------------------------------------------------------------- | ----------------------- |
+| `image.repository`             | Metacat image repository                                                     | `ghcr.io/nceas/metacat` |
+| `image.tag`                    | Metacat image tag (immutable tags are recommended)                           | `DEVELOP`               |
+| `image.pullPolicy`             | Metacat image pull policy                                                    | `IfNotPresent`          |
+| `image.tag`                    | Overrides the image tag. Will default to the chart appVersion if set to ""   | `DEVELOP`               |
+| `image.debug`                  | Specify if container debugging should be enabled (sets log level to "DEBUG") | `false`                 |
+| `imagePullSecrets`             | Optional list of references to secrets in the same namespace                 | `[]`                    |
+| `container.ports`              | Optional list of additional container ports to expose within the cluster     | `[]`                    |
+| `serviceAccount.create`        | Should a service account be created to run Metacat?                          | `false`                 |
+| `serviceAccount.annotations`   | Annotations to add to the service account                                    | `{}`                    |
+| `serviceAccount.name`          | The name to use for the service account.                                     | `""`                    |
+| `podAnnotations`               | Map of annotations to add to the pods                                        | `{}`                    |
+| `podSecurityContext.enabled`   | Enable security context                                                      | `true`                  |
+| `podSecurityContext.fsGroup`   | numerical Group ID for the pod                                               | `1000`                  |
+| `securityContext.runAsNonRoot` | ensure containers run as a non-root user.                                    | `true`                  |
+| `resources`                    | Resource limits for the deployment                                           | `{}`                    |
+| `tolerations`                  | Tolerations for pod assigment                                                | `[]`                    |
 
 ### Metacat Persistence
 
@@ -154,45 +166,52 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims | `true`              |
 | `persistence.storageClass`  | Storage class of backing PV                                    | `local-path`        |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use          | `""`                |
-| `persistence.accessModes`   | PVC Access Mode for metacat volume                             | `["ReadWriteOnce"]` |
+| `persistence.volumeName`    | Name of an existing Volume to use for volumeClaimTemplate      | `""`                |
+| `persistence.accessModes`   | PVC Access Mode for metacat volume                             | `["ReadWriteMany"]` |
 | `persistence.size`          | PVC Storage Request for metacat volume                         | `1Gi`               |
 
 ### Networking & Monitoring
 
-| Name                          | Description                                                   | Value            |
-| ----------------------------- | ------------------------------------------------------------- | ---------------- |
-| `ingress.enabled`             | Enable or disable the ingress                                 | `true`           |
-| `ingress.className`           | ClassName of the ingress provider in your cluster             | `traefik`        |
-| `ingress.hosts`               | A collection of rules mapping different hosts to the backend. | `[]`             |
-| `ingress.annotations`         | Annotations for the ingress                                   | `{}`             |
-| `ingress.tls`                 | The TLS configuration                                         | `[]`             |
-| `ingress.d1CaCertSecretName`  | Name of Secret containing DataONE CA certificate              | `ca-secret`      |
-| `service.enabled`             | Enable another optional service in addition to headless svc   | `false`          |
-| `service.type`                | Kubernetes Service type. Defaults to ClusterIP if not set     | `LoadBalancer`   |
-| `service.clusterIP`           | IP address of the service. Auto-generated if not set          | `""`             |
-| `service.ports`               | The port(s) to be exposed                                     | `[]`             |
-| `livenessProbe.enabled`       | Enable livenessProbe for Metacat container                    | `true`           |
-| `livenessProbe.httpGet.path`  | The url path to probe.                                        | `/metacat/`      |
-| `livenessProbe.httpGet.port`  | The named containerPort to probe                              | `metacat-web`    |
-| `readinessProbe.enabled`      | Enable readinessProbe for Metacat container                   | `true`           |
-| `readinessProbe.httpGet.path` | The url path to probe.                                        | `/metacat/admin` |
-| `readinessProbe.httpGet.port` | The named containerPort to probe                              | `metacat-web`    |
+| Name                                 | Description                                                   | Value            |
+| ------------------------------------ | ------------------------------------------------------------- | ---------------- |
+| `ingress.enabled`                    | Enable or disable the ingress                                 | `true`           |
+| `ingress.className`                  | ClassName of the ingress provider in your cluster             | `traefik`        |
+| `ingress.hosts`                      | A collection of rules mapping different hosts to the backend. | `[]`             |
+| `ingress.annotations`                | Annotations for the ingress                                   | `{}`             |
+| `ingress.tls`                        | The TLS configuration                                         | `[]`             |
+| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate              | `ca-secret`      |
+| `service.enabled`                    | Enable another optional service in addition to headless svc   | `false`          |
+| `service.type`                       | Kubernetes Service type. Defaults to ClusterIP if not set     | `LoadBalancer`   |
+| `service.clusterIP`                  | IP address of the service. Auto-generated if not set          | `""`             |
+| `service.ports`                      | The port(s) to be exposed                                     | `[]`             |
+| `livenessProbe.enabled`              | Enable livenessProbe for Metacat container                    | `true`           |
+| `livenessProbe.httpGet.path`         | The url path to probe.                                        | `/metacat/`      |
+| `livenessProbe.httpGet.port`         | The named containerPort to probe                              | `metacat-web`    |
+| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe                       | `45`             |
+| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe                              | `15`             |
+| `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe                             | `10`             |
+| `readinessProbe.enabled`             | Enable readinessProbe for Metacat container                   | `true`           |
+| `readinessProbe.httpGet.path`        | The url path to probe.                                        | `/metacat/admin` |
+| `readinessProbe.httpGet.port`        | The named containerPort to probe                              | `metacat-web`    |
+| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe                      | `45`             |
+| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe                             | `5`              |
+| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe                            | `5`              |
 
 ### Postgresql Sub-Chart
 
-| Name                                           | Description                                             | Value                              |
-| ---------------------------------------------- | ------------------------------------------------------- | ---------------------------------- |
-| `postgresql.enabled`                           | enable the postgresql sub-chart                         | `true`                             |
-| `postgresql.auth.username`                     | Username for accessing the database used by metacat     | `metacat`                          |
-| `postgresql.auth.database`                     | The name of the database used by metacat.               | `metacat`                          |
-| `postgresql.auth.existingSecret`               | Secrets location for postgres password (RELEASE PREFIX) | `${RELEASE_NAME}-metacat-secrets`  |
-| `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password                | `POSTGRES_PASSWORD`                |
-| `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                     | `POSTGRES_PASSWORD`                |
-| `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication                | (See [values.yaml](./values.yaml)) |
-| `postgresql.primary.persistence.enabled`       | Enable data persistence using PVC                       | `true`                             |
-| `postgresql.primary.persistence.existingClaim` | Existing PVC to re-use                                  | `""`                               |
-| `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                             | `""`                               |
-| `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume                 | `1Gi`                              |
+| Name                                           | Description                                         | Value                                |
+| ---------------------------------------------- | --------------------------------------------------- | ------------------------------------ |
+| `postgresql.enabled`                           | enable the postgresql sub-chart                     | `true`                               |
+| `postgresql.auth.username`                     | Username for accessing the database used by metacat | `metacat`                            |
+| `postgresql.auth.database`                     | The name of the database used by metacat.           | `metacat`                            |
+| `postgresql.auth.existingSecret`               | Secrets location for postgres password              | `${RELEASE_NAME}-metacat-secrets`    |
+| `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password            | `POSTGRES_PASSWORD`                  |
+| `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD`                  |
+| `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication            | (See [values.yaml](./values.yaml))   |
+| `postgresql.primary.persistence.enabled`       | Enable data persistence using PVC                   | `true`                               |
+| `postgresql.primary.persistence.existingClaim` | Existing PVC to re-use                              | `""`                                 |
+| `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                         | `""`                                 |
+| `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume             | `1Gi`                                |
 
 ### Tomcat Configuration
 
@@ -201,6 +220,16 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
 | `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
 
+### dataone_indexer Sub-Chart
+
+| Name                                                         | Description                               | Value                                 |
+| ------------------------------------------------------------ | ----------------------------------------- | ------------------------------------- |
+| `dataone-indexer.enabled`                                    | enable the dataone-indexer sub-chart      | `true`                                |
+| `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use   | `metacat-rmq-guest`                   |
+| `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password             | `${RELEASE_NAME}-metacat-secrets`     |
+| `dataone-indexer.solr.extraVolumes[0].name`                  | DO NOT EDIT - referenced by sub-chart     | `solr-config`                         |
+| `dataone-indexer.solr.extraVolumes[0].configMap.name`        | See notes in [values.yaml](./values.yaml) | `${RELEASE_NAME}-indexer-configfiles` |
+| `dataone-indexer.solr.extraVolumes[0].configMap.defaultMode` | DO NOT EDIT                               | `777`                                 |
 
 Specify non-secret parameters in the default [values.yaml](./values.yaml), which will be used
 automatically each time you deploy.
