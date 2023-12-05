@@ -80,7 +80,7 @@ public class EzidDOIService extends DOIService {
 
     private static final int MAX_ATTEMPT = 2;
 
-    private static final long loginPeriod = 1 * 24 * 60 * 60 * 1000;
+    private static final int LOGIN_PERIOD_HOURS = 24;
 
     private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
 
@@ -145,7 +145,8 @@ public class EzidDOIService extends DOIService {
      */
     private void refreshLogin() throws EZIDException {
         Date now = Calendar.getInstance().getTime();
-        if (lastLogin == null || now.getTime() - lastLogin.getTime() > loginPeriod) {
+        if (lastLogin == null
+                || (now.getTime() - lastLogin.getTime()) > LOGIN_PERIOD_HOURS * 60 * 60 * 1000) {
             ezid.login(username, password);
             lastLogin = now;
         }
