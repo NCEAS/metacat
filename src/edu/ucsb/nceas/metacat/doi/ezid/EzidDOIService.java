@@ -80,6 +80,8 @@ public class EzidDOIService extends DOIService {
 
     private static final int MAX_ATTEMPT = 2;
 
+    private static final long loginPeriod = 1 * 24 * 60 * 60 * 1000;
+
     private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
 
     private EZIDClient ezid = null;
@@ -87,8 +89,6 @@ public class EzidDOIService extends DOIService {
     private EZIDService ezidService = null;
 
     private Date lastLogin = null;
-
-    private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
 
     private Vector<DataCiteMetadataFactory> dataCiteFactories =
                                                             new Vector<DataCiteMetadataFactory>();
