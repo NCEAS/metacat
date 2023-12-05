@@ -128,7 +128,7 @@ public class MetacatUtil {
     }
 
     /**
-     * Transform a comma-delimited of options to a vector object which contains those options
+     * Transform a comma-delimited string of options to a vector object which contains those options
      * @param optiontext  the string contains the options
      * @return a vector object which contains those options
      */
