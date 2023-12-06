@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat.startup;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +34,9 @@ public class StartupRequirementsListenerTest {
 
     public static final String SOLR_BASE_URL_PROP_KEY = "solr.baseURL";
     public static final String SOLR_BASE_URL_PROP_VAL = "http://localhost:8983/solr";
+
+    private static final String EXPECTED_EXCEPTION_MESSAGE = "STARTUP ABORTED";
+
     private Path rootPath;
     private Path defaultPropsFilePath;
     private Path sitePropsFilePath;
@@ -282,20 +286,26 @@ public class StartupRequirementsListenerTest {
         startupRequirementsListener.validateSolrAvailable();
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void validateSolrAvailable_propertyNotSet() {
 
+        startupRequirementsListener.runtimeProperties = this.defaultProperties;
         startupRequirementsListener.runtimeProperties.remove(SOLR_BASE_URL_PROP_KEY);
-        startupRequirementsListener.validateSolrAvailable();
+        RuntimeException exception = Assert.assertThrows(RuntimeException.class,
+                                                         () -> startupRequirementsListener.validateSolrAvailable());
+        assertMessage(exception);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void validateSolrAvailable_propertySetInvalidUrl() {
 
+        startupRequirementsListener.runtimeProperties = this.defaultProperties;
         startupRequirementsListener.runtimeProperties.setProperty(SOLR_BASE_URL_PROP_KEY,
                                                                   "Ain't no solr here!");
         startupRequirementsListener.mockSolrTestUrl = null;
-        startupRequirementsListener.validateSolrAvailable();
+        RuntimeException exception = Assert.assertThrows(RuntimeException.class,
+                                                         () -> startupRequirementsListener.validateSolrAvailable());
+        assertMessage(exception);
     }
 
     @Test(expected = RuntimeException.class)
@@ -368,5 +378,9 @@ public class StartupRequirementsListenerTest {
         ServletContextEvent servletContextEventMock = Mockito.mock(ServletContextEvent.class);
         Mockito.when(servletContextEventMock.getServletContext()).thenReturn(scMock);
         return servletContextEventMock;
+    }
+
+    private void assertMessage(RuntimeException exception) {
+        assertTrue(exception.getMessage().contains(EXPECTED_EXCEPTION_MESSAGE));
     }
 }
