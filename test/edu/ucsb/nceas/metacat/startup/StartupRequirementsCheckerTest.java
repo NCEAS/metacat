@@ -2,7 +2,9 @@ package edu.ucsb.nceas.metacat.startup;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import org.apache.jena.atlas.lib.Bytes;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,7 +13,9 @@ import org.mockito.Mockito;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
@@ -29,16 +33,20 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 
-public class StartupRequirementsListenerTest {
+public class StartupRequirementsCheckerTest {
 
-    public static final String SOLR_BASE_URL_PROP_KEY = "solr.baseURL";
     public static final String SOLR_BASE_URL_PROP_VAL = "http://localhost:8983/solr";
+    private static final String SOLR_CORE_NAME_PROP_VAL = "test_core";
+    public static final String TRUE = "true";
+    public static final String FALSE = "false";
+    private static final String EXPECTED_EXCEPTION_MESSAGE = "STARTUP ABORTED";
+
     private Path rootPath;
     private Path defaultPropsFilePath;
     private Path sitePropsFilePath;
 
     private final Properties defaultProperties = new Properties();
-    private StartupRequirementsListener startupRequirementsListener;
+    private StartupRequirementsChecker startupRequirementsChecker;
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -65,10 +73,18 @@ public class StartupRequirementsListenerTest {
         this.defaultProperties.load(Files.newBufferedReader(defaultPropsFilePath));
         this.defaultProperties.setProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY,
                                            sitePropsDirStr);
-        this.defaultProperties.setProperty(SOLR_BASE_URL_PROP_KEY, SOLR_BASE_URL_PROP_VAL);
+        this.defaultProperties.setProperty(
+            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY,
+            SOLR_BASE_URL_PROP_VAL);
+        this.defaultProperties.setProperty(
+            StartupRequirementsChecker.SOLR_CORE_NAME_PROP_KEY,
+            SOLR_CORE_NAME_PROP_VAL);
+        this.defaultProperties.setProperty(
+            StartupRequirementsChecker.SOLR_CONFIGURED_PROP_KEY,
+            TRUE);
         this.defaultProperties.store(Files.newBufferedWriter(defaultPropsFilePath), "");
 
-        this.startupRequirementsListener = new StartupRequirementsListener();
+        this.startupRequirementsChecker = new StartupRequirementsChecker();
     }
 
     @After
@@ -79,7 +95,7 @@ public class StartupRequirementsListenerTest {
     public void contextInitialized() throws IOException {
 
         mockSolrSetup(HttpURLConnection.HTTP_OK);
-        startupRequirementsListener.contextInitialized(getMockServletContextEvent());
+        startupRequirementsChecker.contextInitialized(getMockServletContextEvent());
     }
 
     // validateDefaultProperties() test cases //////////////////////////////////////////////////////
@@ -88,7 +104,7 @@ public class StartupRequirementsListenerTest {
     public void validateDefaultProperties_valid() {
 
         LeanTestUtils.debug("validateDefaultProperties_valid()");
-        startupRequirementsListener.validateDefaultProperties(getMockServletContextEvent());
+        startupRequirementsChecker.validateDefaultProperties(getMockServletContextEvent());
     }
 
     @Test(expected = RuntimeException.class)
@@ -103,7 +119,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateDefaultProperties(getMockServletContextEvent());
+        startupRequirementsChecker.validateDefaultProperties(getMockServletContextEvent());
     }
 
     @Test(expected = RuntimeException.class)
@@ -111,7 +127,7 @@ public class StartupRequirementsListenerTest {
 
         LeanTestUtils.debug("validateDefaultProperties_malFormedEscape()");
         createTestProperties_malFormedEscape(defaultPropsFilePath);
-        startupRequirementsListener.validateDefaultProperties(getMockServletContextEvent());
+        startupRequirementsChecker.validateDefaultProperties(getMockServletContextEvent());
     }
 
     @Test(expected = RuntimeException.class)
@@ -119,7 +135,7 @@ public class StartupRequirementsListenerTest {
 
         LeanTestUtils.debug("validateDefaultProperties_nonStringProps()");
         createTestProperties_nonStringProps(defaultPropsFilePath);
-        startupRequirementsListener.validateDefaultProperties(getMockServletContextEvent());
+        startupRequirementsChecker.validateDefaultProperties(getMockServletContextEvent());
     }
 
     // validateSiteProperties() test cases /////////////////////////////////////////////////////////
@@ -131,7 +147,7 @@ public class StartupRequirementsListenerTest {
         Path sitePropsDir = sitePropsFilePath.getParent();
         assertFalse(Files.isDirectory(sitePropsDir));
         try {
-            startupRequirementsListener.validateSiteProperties(defaultProperties);
+            startupRequirementsChecker.validateSiteProperties(defaultProperties);
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
@@ -157,7 +173,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test(expected = RuntimeException.class)
@@ -179,7 +195,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test
@@ -193,7 +209,7 @@ public class StartupRequirementsListenerTest {
             assertTrue(Files.isRegularFile(dummyProps));
             assertTrue(Files.isReadable(dummyProps));
             assertTrue(Files.isWritable(dummyProps));
-            startupRequirementsListener.validateSiteProperties(defaultProperties);
+            startupRequirementsChecker.validateSiteProperties(defaultProperties);
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
@@ -215,7 +231,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test
@@ -234,8 +250,8 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.RUNNING_IN_CONTAINER = true;
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.RUNNING_IN_CONTAINER = true;
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test(expected = RuntimeException.class)
@@ -254,7 +270,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test(expected = RuntimeException.class)
@@ -262,7 +278,7 @@ public class StartupRequirementsListenerTest {
 
         LeanTestUtils.debug("validateSiteProperties_existingMalFormedEscape()");
         createTestProperties_malFormedEscape(sitePropsFilePath);
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test(expected = RuntimeException.class)
@@ -271,38 +287,55 @@ public class StartupRequirementsListenerTest {
         LeanTestUtils.debug("validateSiteProperties_existingNonStringProps()");
         createTestProperties_nonStringProps(sitePropsFilePath);
         mockSolrSetup(HttpURLConnection.HTTP_OK);
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test
-    public void validateSolrAvailable_valid() throws IOException {
+    public void validateSolrAvailable_valid_SolrConfigured() throws IOException {
 
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
         mockSolrSetup(HttpURLConnection.HTTP_OK);
-        startupRequirementsListener.runtimeProperties = this.defaultProperties;
-        startupRequirementsListener.validateSolrAvailable();
+        startupRequirementsChecker.validateSolrAvailable();
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
+    public void validateSolrAvailable_valid_SolrNotConfigured() throws IOException {
+
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
+        startupRequirementsChecker.runtimeProperties.setProperty(
+            StartupRequirementsChecker.SOLR_CONFIGURED_PROP_KEY, FALSE);
+        mockSolrSetup(HttpURLConnection.HTTP_OK);
+        startupRequirementsChecker.validateSolrAvailable();
+    }
+
+    @Test
     public void validateSolrAvailable_propertyNotSet() {
 
-        startupRequirementsListener.runtimeProperties.remove(SOLR_BASE_URL_PROP_KEY);
-        startupRequirementsListener.validateSolrAvailable();
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
+        startupRequirementsChecker.runtimeProperties.remove(
+            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY);
+        RuntimeException exception = Assert.assertThrows(RuntimeException.class,
+                                                         () -> startupRequirementsChecker.validateSolrAvailable());
+        assertMessage(exception);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void validateSolrAvailable_propertySetInvalidUrl() {
 
-        startupRequirementsListener.runtimeProperties.setProperty(SOLR_BASE_URL_PROP_KEY,
-                                                                  "Ain't no solr here!");
-        startupRequirementsListener.mockSolrTestUrl = null;
-        startupRequirementsListener.validateSolrAvailable();
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
+        startupRequirementsChecker.runtimeProperties.setProperty(
+            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY, "Ain't no solr here!");
+        startupRequirementsChecker.mockSolrTestUrl = null;
+        RuntimeException exception = Assert.assertThrows(RuntimeException.class,
+                                                         () -> startupRequirementsChecker.validateSolrAvailable());
+        assertMessage(exception);
     }
 
     @Test(expected = RuntimeException.class)
     public void validateSolrAvailable_httpError() throws IOException {
 
         mockSolrSetup(HttpURLConnection.HTTP_NOT_FOUND);
-        startupRequirementsListener.validateSolrAvailable();
+        startupRequirementsChecker.validateSolrAvailable();
     }
 
 
@@ -321,7 +354,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     private void createTestProperties_malFormedEscape(Path pathToPropsFile) {
@@ -341,20 +374,28 @@ public class StartupRequirementsListenerTest {
 
     /**
      * mock the HttpURLConnection to return the passed HTTP status code, and inject it via
-     * <code>startupRequirementsListener.mockSolrTestUrl</code>
+     * <code>startupRequirementsChecker.mockSolrTestUrl</code>
      * @param code the HTTP status code to return when getResponseCode() is called
      * @throws IOException from HttpURLConnection but shouldn't happen with the mock
      */
     private void mockSolrSetup(int code) throws IOException {
 
+        String solrConfigured = this.defaultProperties.getProperty(
+            StartupRequirementsChecker.SOLR_CONFIGURED_PROP_KEY);
+        if (solrConfigured != null && !solrConfigured.equals(TRUE)) {
+            return;
+        }
+        InputStream inputStream = new ByteArrayInputStream(Bytes.string2bytes(SOLR_SCHEMA_OPENING));
         HttpURLConnection connMock = Mockito.mock(HttpURLConnection.class);
         Mockito.when(connMock.getResponseCode()).thenReturn(code);
+        Mockito.when(connMock.getInputStream()).thenReturn(inputStream);
+
         doNothing().when(connMock).connect();
 
         URL urlMock = Mockito.mock(URL.class);
         Mockito.when(urlMock.openConnection()).thenReturn(connMock);
 
-        startupRequirementsListener.mockSolrTestUrl = urlMock;
+        startupRequirementsChecker.mockSolrTestUrl = urlMock;
     }
 
     /**
@@ -369,4 +410,67 @@ public class StartupRequirementsListenerTest {
         Mockito.when(servletContextEventMock.getServletContext()).thenReturn(scMock);
         return servletContextEventMock;
     }
+
+    private void assertMessage(RuntimeException exception) {
+        assertTrue(exception.getMessage().contains(EXPECTED_EXCEPTION_MESSAGE));
+    }
+
+    private static final String SOLR_SCHEMA_OPENING =
+          """
+          <?xml version="1.0" encoding="UTF-8" ?>
+          <!--
+          THE OFFICIAL DataONE Index Solr Schema definition file.
+          This schema is copied into the dataone-cn-index buildout for deployment on cn nodes.
+          -->
+
+          <!--
+           Licensed to the Apache Software Foundation (ASF) under one or more
+           contributor license agreements.  See the NOTICE file distributed with
+           this work for additional information regarding copyright ownership.
+           The ASF licenses this file to You under the Apache License, Version 2.0
+           (the "License"); you may not use this file except in compliance with
+           the License.  You may obtain a copy of the License at
+
+               http://www.apache.org/licenses/LICENSE-2.0
+
+           Unless required by applicable law or agreed to in writing, software
+           distributed under the License is distributed on an "AS IS" BASIS,
+           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           See the License for the specific language governing permissions and
+           limitations under the License.
+          -->
+
+          <!--
+           This is the Solr schema file. This file should be named "schema.xml" and
+           should be in the conf directory under the solr home
+           (i.e. ./solr/conf/schema.xml by default)
+           or located where the classloader for the Solr webapp can find it.
+
+           This example schema is the recommended starting point for users.
+           It should be kept correct and concise, usable out-of-the-box.
+
+           For more information, on how to customize this file, please see
+           http://wiki.apache.org/solr/SchemaXml
+
+           PERFORMANCE NOTE: this schema includes many optional features and should not
+           be used for benchmarking.  To improve performance one could
+            - set stored="false" for all fields possible (esp large fields) when you
+              only need to search on the field but don't need to return the original
+              value.
+            - set indexed="false" if you don't need to search on the field, but only
+              return the field as a result of searching on other indexed fields.
+            - remove all unneeded copyField statements
+            - for best index size and searching performance, set "index" to false
+              for all general text fields, use copyField to copy them to the
+              catchall "text" field, and use that for searching.
+            - For maximum indexing performance, use the ConcurrentUpdateSolrServer
+              java client.
+            - Remember to run the JVM in server mode, and use a higher logging level
+              that avoids logging every request
+          -->
+
+          <schema name="dataone" version="1.5">
+            <!-- attribute "name" is the name of this schema and is only used for display purposes.
+                 version="x.y" is Solr's version number for the schema syntax and
+                 semantics.  It should not normally be changed by applications.""";
 }

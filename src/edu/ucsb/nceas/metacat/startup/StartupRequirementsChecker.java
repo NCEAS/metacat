@@ -4,14 +4,14 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.MalformedInputException;
 
 import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -24,6 +24,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -56,19 +57,25 @@ import java.util.Set;
  * </p>
  * @see javax.servlet.ServletContextListener
  */
-@WebListener
-public class StartupRequirementsListener implements ServletContextListener {
+public class StartupRequirementsChecker {
 
+    protected static final String SOLR_BASE_URL_PROP_KEY = "solr.baseURL";
     protected boolean RUNNING_IN_CONTAINER =
         Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
-    private static final Log logMetacat = LogFactory.getLog(StartupRequirementsListener.class);
+    protected static final String SOLR_CONFIGURED_PROP_KEY = "configutil.solrserverConfigured";
+    protected static final String SOLR_CORE_NAME_PROP_KEY = "solr.coreName";
+    private static final String SOLR_CONTEXT = "/solr/";
+    private static final String SOLR_SCHEMA_LOCATOR =
+        "/admin/file?file=schema.xml&contentType=text/xml";
+    private static final String SCHEMA_NAME_DATAONE = "<schema name=\"dataone";
+
+    private static final Log logMetacat = LogFactory.getLog(StartupRequirementsChecker.class);
     protected Properties runtimeProperties;
 
     // Used only for testing, as a way of injecting the mock
     protected URL mockSolrTestUrl = null;
 
 
-    @Override
     public void contextInitialized(ServletContextEvent sce) {
         //call all validation methods here. If there's an unrecoverable problem, call abort()
 
@@ -83,11 +90,6 @@ public class StartupRequirementsListener implements ServletContextListener {
 
         // Verify that there is a solr instance available
         validateSolrAvailable();
-    }
-
-    @Override
-    public void contextDestroyed(ServletContextEvent sce) {
-        // no cleanup needed
     }
 
     /**
@@ -163,14 +165,15 @@ public class StartupRequirementsListener implements ServletContextListener {
             defaultProperties.getProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY);
 
         if (sitePropsDir == null) {
-            abort("'metacat.properties' file does not contain a required property:\n"
-                    + "'application.sitePropertiesDir'. Add this property, setting the value\n"
-                    + "to either:\n"
-                    + "  1. the full path for the parent directory where\n"
-                    + "     'metacat-site.properties' is located, or\n"
-                    + "  2. if this is a new installation, the default location\n"
-                    + "     '/var/metacat/config', if that is readable/writeable by the\n"
-                    + "     tomcat user ", null);
+            abort("""
+                  'metacat.properties' file does not contain a required property:
+                  'application.sitePropertiesDir'. Add this property, setting the value
+                  to either:
+                    1. the full path for the parent directory where
+                       'metacat-site.properties' is located, or
+                    2. if this is a new installation, the default location
+                       '/var/metacat/config', if that is readable/writeable by the
+                       tomcat user""", null);
         }
 
         Path sitePropsFilePath =
@@ -202,37 +205,58 @@ public class StartupRequirementsListener implements ServletContextListener {
     }
 
     /**
-     * Ensure we get an HTTP 200 OK response from the solr service that is configured in the
-     * properties file
+     * Ensure we get an HTTP 200 OK response and can retrieve the schema doc from the solr service
+     * that is configured in the properties file.
+     * NOTE: If this is a non-k8s deployment and metacat has not yet been properly configured, skip
+     * this validation, since the admin config pages require metacat to be able to run without
+     * solr being available (so the admin can enter the correct solr properties).
      *
      * @throws RuntimeException if any unrecoverable problems are found that should cause startup
      *                          to be aborted
      */
     protected void validateSolrAvailable() throws RuntimeException {
 
-        final String solrConfigErrorMsg =
-            "\nPlease ensure that the 'solr.baseURL' property points to a running solr instance,\n"
-                + "which has been properly configured for use with metacat. It should be a URL of\n"
-                + "the form: solr.baseURL=http://myhostname:8983/solr.\n"
-                + "See the Metacat Administrator's Guide for further details:"
-                + "    https://knb.ecoinformatics.org/knb/docs/install.html#solr-server";
-
-        String solrUrlStr = runtimeProperties.getProperty("solr.baseURL");
-
-        if (solrUrlStr == null || solrUrlStr.isEmpty()) {
-            abort("Unable to find required property: 'solr.baseURL'" + solrConfigErrorMsg,null);
+        String solrConfigured = runtimeProperties.getProperty(SOLR_CONFIGURED_PROP_KEY);
+        if (solrConfigured != null && solrConfigured.equalsIgnoreCase("false")) {
+            // skip this validation, since the admin config pages require metacat to be able to run
+            // without solr being available (so the admin can set the correct solr properties)
+            return;
         }
+
+        final String solrConfigErrorMsg =
+              """
+              \nPlease ensure that the 'solr.baseURL' property points to a running solr instance,
+              which has been properly configured for use with metacat. It should have the
+              dataone schema installed in the core/collection matching the 'solr.coreName'
+              property. You should be able to retrieve the schema manually, via the url:
+              {solr.baseURL}/solr/{solr.coreName}/admin/file?file=schema.xml&contentType=text/xml\n
+              See the Metacat Administrator's Guide for further details:
+              https://knb.ecoinformatics.org/knb/docs/install.html#solr-server""";
+
+        String solrBaseUrl = runtimeProperties.getProperty(SOLR_BASE_URL_PROP_KEY);
+        if (isBlank(solrBaseUrl)) {
+            abort("Unable to find required property: " + SOLR_BASE_URL_PROP_KEY
+                      + " -- " + solrConfigErrorMsg,null);
+        }
+        String solrCoreName = runtimeProperties.getProperty(SOLR_CORE_NAME_PROP_KEY);
+        if (isBlank(solrCoreName)) {
+            abort("Unable to find required property: " + SOLR_CORE_NAME_PROP_KEY
+                      + " -- " + solrConfigErrorMsg,null);
+        }
+        String solrUrlStr = solrBaseUrl + SOLR_CONTEXT + solrCoreName + SOLR_SCHEMA_LOCATOR;
 
         URL solrUrl = null;
         if (mockSolrTestUrl == null) {
             try {
                 solrUrl = new URL(solrUrlStr);
             } catch (MalformedURLException e) {
-                abort("Unable to parse a URL from the 'solr.baseURL' property: " + solrUrlStr + solrConfigErrorMsg, null);
+                abort("Unable to parse a URL from the String: "
+                          + solrUrlStr + solrConfigErrorMsg, null);
             }
         } else {
             solrUrl = mockSolrTestUrl;
         }
+        String responseString = "";
         int responseCode = 418;    // look it up ;-)
         try {
             HttpURLConnection connection = (HttpURLConnection) solrUrl.openConnection();
@@ -240,14 +264,27 @@ public class StartupRequirementsListener implements ServletContextListener {
             connection.connect();
 
             responseCode = connection.getResponseCode();
+
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            responseString = br.lines().collect(Collectors.joining("\n"));
+
         } catch (IOException e) {
             abort("An error occurred while attempting a connection to the solr service at:\n"
                       + solrUrlStr + solrConfigErrorMsg, null);
         }
         if (responseCode != HttpURLConnection.HTTP_OK) {
-            abort("The solr service was contacted successfully at: " + solrUrlStr + "\n"
-                      + ", but it returned an unexpected response. Expected: HTTP 200 OK;\n"
+            abort("The solr service was contacted successfully at:\n" + solrUrlStr + ",\n"
+                      + ",but it returned an unexpected response. Expected: HTTP 200 OK;\n"
                       + "received: HTTP " + responseCode + solrConfigErrorMsg, null);
+        }
+        if (!responseString.contains(SCHEMA_NAME_DATAONE)) {
+            abort("The solr service was contacted successfully at:\n" + solrUrlStr + ",\n"
+                      + "but it did not return the expected schema document;\n"
+                      + "received response body:\n\n******************************\n\n"
+                      + responseString
+                      + "\n\n******************************\n"
+                      + solrConfigErrorMsg, null);
         }
     }
 
@@ -394,5 +431,9 @@ public class StartupRequirementsListener implements ServletContextListener {
                       + "  2. edit the property named 'application.sitePropertiesDir' in the \n"
                       + "     'metacat.properties' file, to point to the desired location.", e);
         }
+    }
+
+    private boolean isBlank(String str) {
+        return str == null || str.trim().isEmpty();
     }
 }
