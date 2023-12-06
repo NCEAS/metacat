@@ -82,24 +82,21 @@ public class MetacatHandler {
             + "Equivalent API methods now are available through "
             + "the DataONE API (see <https://knb.ecoinformatics.org/api>)." + ERRORCLOSE;
 
-    private static Timer timer;
+    private static Timer timer = new Timer();
 
     /**
-     * Constructor with a timer object. This constructor will be used in the MetacatServlet class
-     * which is the only place to handle the site map generation.
-     *
-     * @param timer the timer used to schedule the site map generation
-     */
-    public MetacatHandler(Timer timer) {
-        this.timer = timer;
-    }
-
-    /**
-     * Default constructor. It will be used in the DataONE API, which doesn't need to handle the
-     * timer.
+     * Default constructor.
      */
     public MetacatHandler() {
 
+    }
+    
+    /**
+     * Get the Timer associated with this object
+     * @return  the Timer object
+     */
+    public static Timer getTimer() {
+        return timer;
     }
 
     /**
@@ -980,7 +977,7 @@ public class MetacatHandler {
      * Schedule the sitemap generator to run periodically and update all of the sitemap files for
      * search indexing engines
      */
-    public void scheduleSitemapGeneration() {
+    public static void scheduleSitemapGeneration() {
         if (_sitemapScheduled) {
             logMetacat.debug("MetacatHandler.scheduleSitemapGeneration: Tried to call "
                                  + "scheduleSitemapGeneration() when a sitemap was already "
@@ -1060,7 +1057,7 @@ public class MetacatHandler {
      * It will create a timer to run this task periodically.
      * If the property of "index.regenerate.interval" is less than 0, the thread would NOT run.
      */
-    public void startIndexReGenerator() {
+    public static void startIndexReGenerator() {
         boolean regenerateIndex = false;
         try {
             regenerateIndex = (new Boolean(PropertyService

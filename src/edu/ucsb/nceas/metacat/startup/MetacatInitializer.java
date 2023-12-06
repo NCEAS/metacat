@@ -3,7 +3,10 @@ package edu.ucsb.nceas.metacat.startup;
 import java.sql.SQLException;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebListener;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,8 +37,10 @@ import edu.ucsb.nceas.utilities.UtilException;
  * @author tao
  *
  */
-public class MetacatInitializer {
+@WebListener
+public class MetacatInitializer implements ServletContextListener{
     public static final String APPLICATION_NAME = "metacat";
+    private static boolean fullInit = false;
     private static Log logMetacat = LogFactory.getLog(MetacatInitializer.class);
 
     /**
@@ -45,10 +50,10 @@ public class MetacatInitializer {
      * @return true if it is fully initialized; false otherwise.
      * @throws ServletException
      */
-    public static boolean init(ServletContext context, MetacatHandler handler)
-                                                                        throws ServletException {
-        boolean fullInit = false;
+    @Override
+    public void contextInitialized(ServletContextEvent sce) {
         try {
+            ServletContext context = sce.getServletContext();
             context.setAttribute("APPLICATION_NAME", APPLICATION_NAME);
             ServiceService serviceService = ServiceService.getInstance(context);
             logMetacat.debug("MetacatInitializer.init - ServiceService singleton created "
@@ -65,34 +70,60 @@ public class MetacatInitializer {
             // If both are false then stop the initialization
             if (!ConfigurationUtil.bypassConfiguration() &&
                                     !ConfigurationUtil.isMetacatConfigured()) {
-                return fullInit;
+                return;
             }
-            initAfterMetacatConfig(context,handler);
+            initAfterMetacatConfig(context);
             fullInit = true;
-            return fullInit;
+        } catch (SQLException e) {
+            String errorMessage = "SQL problem while intializing MetaCat Servlet: "
+                    + e.getMessage();
+            StartupRequirementsListener.abort(errorMessage, e);
+        } catch (GeneralPropertyException gpe) {
+            String errorMessage = "Could not retrieve property while intializing MetaCat Servlet: "
+                    + gpe.getMessage();
+            StartupRequirementsListener.abort(errorMessage, gpe);
         } catch (ServiceException se) {
-            String errorMessage =
-                "Service problem while intializing MetaCat Servlet: " + se.getMessage();
-            logMetacat.error("MetacatInitializer.init - " + errorMessage);
-            throw new ServletException(errorMessage);
-        } catch (MetacatUtilException mue) {
-            String errorMessage = "Metacat utility problem while intializing MetaCat Servlet: "
-                + mue.getMessage();
-            logMetacat.error("MetacatInitializer.init - " + errorMessage);
-            throw new ServletException(errorMessage);
+            String errorMessage = "Service problem while intializing MetaCat Servlet: "
+                + se.getMessage();
+            StartupRequirementsListener.abort(errorMessage, se);
+        } catch (UtilException ue) {
+            String errorMessage = "Utility problem while intializing MetaCat Servlet: "
+                + ue.getMessage();
+            StartupRequirementsListener.abort(errorMessage, ue);
+        } catch (ServletException e) {
+            String errorMessage = "Problem to intialize K8s cluster: " + e.getMessage();
+            StartupRequirementsListener.abort(errorMessage, e);
+        } catch (MetacatUtilException e) {
+            String errorMessage = "Problem to check if the Metacat instance is configured : "
+                    + e.getMessage();
+            StartupRequirementsListener.abort(errorMessage, e);
         }
     }
     
+    @Override
+    public void contextDestroyed(ServletContextEvent sce) {
+        try {
+            ServiceService.stopAllServices();
+            logMetacat.warn("MetacatInitializer.destroy - Destroying MetacatServlet");
+        } finally {
+            MetacatHandler.getTimer().cancel();
+            DBConnectionPool.release();
+        }
+    }
+
     /**
      * Initialize the remainder of the servlet. This is the part that can only
      * be initialized after metacat properties have been configured
      *
      * @param context  the servlet context of MetaCatServlet
      * @param handler   the MetacatHandler object which will be used in Metacat
+     * @throws ServiceException
+     * @throws ServletException
+     * @throws PropertyNotFoundException
+     * @throws SQLException
+     * @throws UtilException
      */
-    public static void initAfterMetacatConfig(ServletContext context, MetacatHandler handler)
-                                                                    throws ServletException {
-        try {
+    public static void initAfterMetacatConfig(ServletContext context) throws ServiceException, ServletException, PropertyNotFoundException, SQLException, UtilException {
             ServiceService.registerService("DatabaseService", DatabaseService.getInstance());
             // initialize DBConnection pool
             DBConnectionPool connPool = DBConnectionPool.getInstance();
@@ -117,7 +148,7 @@ public class MetacatInitializer {
             }
 
             if (FileUtil.getFileStatus(replicationLogPath) < FileUtil.EXISTS_READ_WRITABLE) {
-                logMetacat.error("MetacatInitializer.initAfterMetacatConfig- Replication log file: "
+                logMetacat.warn("MetacatInitializer.initAfterMetacatConfig- Replication log file: "
                                     + replicationLogPath + " does not exist read/writable.");
             }
 
@@ -126,7 +157,7 @@ public class MetacatInitializer {
             SessionService.getInstance().unRegisterAllSessions();
 
             // Turn on sitemaps if appropriate
-            initializeSitemapTask(handler);
+            initializeSitemapTask();
 
             // initialize the plugins
             MetacatHandlerPluginManager.getInstance();
@@ -135,31 +166,10 @@ public class MetacatInitializer {
             ServiceService.registerService("IndexQueueService", IndexGenerator.getInstance());
 
             // set up the time task to reindex objects (for the dataone api)
-            handler.startIndexReGenerator();
+            MetacatHandler.startIndexReGenerator();
 
             logMetacat.info("MetacatInitializer.initAfterMetacatConfig - Metacat ("
-                            + MetacatVersion.getVersionID() + ") initialized.");
-        } catch (SQLException e) {
-            String errorMessage = "SQL problem while intializing MetaCat Servlet: "
-                    + e.getMessage();
-            logMetacat.error("MetacatInitializer.initAfterMetacatConfig - " + errorMessage);
-            throw new ServletException(errorMessage);
-        } catch (GeneralPropertyException gpe) {
-            String errorMessage = "Could not retrieve property while intializing MetaCat Servlet: "
-                    + gpe.getMessage();
-            logMetacat.error("MetacatInitializer.initAfterMetacatConfig - " + errorMessage);
-            throw new ServletException(errorMessage);
-        } catch (ServiceException se) {
-            String errorMessage = "Service problem while intializing MetaCat Servlet: "
-                + se.getMessage();
-            logMetacat.error("MetacatInitializer.initAfterMetacatConfig - " + errorMessage);
-            throw new ServletException(errorMessage);
-        } catch (UtilException ue) {
-            String errorMessage = "Utility problem while intializing MetaCat Servlet: "
-                + ue.getMessage();
-            logMetacat.error("MetacatInitializer.initAfterMetacatConfig - " + errorMessage);
-            throw new ServletException(errorMessage);
-        }
+                                      + MetacatVersion.getVersionID() + ") initialized.");
     }
 
 
@@ -167,7 +177,7 @@ public class MetacatInitializer {
      * Schedule a site map task
      * @param handler  the MetacatHandler object will be in the site map task
      */
-    public static void initializeSitemapTask(MetacatHandler handler) {
+    public static void initializeSitemapTask() {
         Boolean sitemap_enabled = false;
         try {
             sitemap_enabled = Boolean
@@ -176,7 +186,15 @@ public class MetacatInitializer {
             logMetacat.info("sitemap.enabled property not found so sitemaps are disabled");
         }
         // Schedule the sitemap generator to run periodically
-        handler.scheduleSitemapGeneration();
+        MetacatHandler.scheduleSitemapGeneration();
+    }
+
+    /**
+     * Get the status of full-initialization.
+     * @return true if the Metacat instance is fully initialized; false otherwise.
+     */
+    public static boolean isFullyInitialized() {
+        return fullInit;
     }
 
 }

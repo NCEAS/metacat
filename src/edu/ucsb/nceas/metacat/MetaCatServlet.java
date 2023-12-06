@@ -6,7 +6,6 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Timer;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -19,9 +18,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.service.SessionService;
-import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SessionData;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -34,9 +31,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public class MetaCatServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-    private static Timer timer = null;
     private MetacatHandler handler = null;
-    private static boolean fullyInitialized = false;
     private static Log logMetacat = LogFactory.getLog(MetaCatServlet.class);
 
     // Constants -- these should be final in a servlet
@@ -46,27 +41,21 @@ public class MetaCatServlet extends HttpServlet {
     public static final String DEFAULT_ENCODING = "UTF-8";
     
     /**
-     * Initialize the servlet by creating appropriate database connections
+     * Initialize the servlet. 
+     * The job of initializing Metacat is delegated to the MetacatInitializer class 
      */
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        //Initialize Metacat Handler
-       timer = new Timer();
-       handler = new MetacatHandler(timer);
-       fullyInitialized = MetacatInitializer.init(config.getServletContext(), handler);
+        // Initialize Metacat Handler
+       handler = new MetacatHandler();
+       
     }
 
     /**
-     * Close all db connections from the pool
+     * Destroy the servlet
      */
     public void destroy() {
-        try {
-            ServiceService.stopAllServices();
-            logMetacat.warn("MetaCatServlet.destroy - Destroying MetacatServlet");
-        } finally {
-            timer.cancel();
-            DBConnectionPool.release();
-        }
+
     }
     
     /** Handle "GET" method requests from HTTP clients */
@@ -294,16 +283,7 @@ public class MetaCatServlet extends HttpServlet {
             throw new ServletException(errorString);
         } 
     }
-    
-    /**
-     * Reports whether the MetaCatServlet has been fully initialized
-     * 
-     * @return true if fully initialized; false otherwise
-     */
-    public static boolean isFullyInitialized() {
-        return fullyInitialized;
-    }
-    
+
     /**
      * Check if the Metacat instance is in ready-only mode
      * @param response  the response will be used to write back message
