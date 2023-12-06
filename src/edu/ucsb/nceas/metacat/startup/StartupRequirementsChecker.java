@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
  * </p>
  * @see javax.servlet.ServletContextListener
  */
-public class StartupRequirementsListener {
+public class StartupRequirementsChecker {
 
     protected static final String SOLR_BASE_URL_PROP_KEY = "solr.baseURL";
     protected boolean RUNNING_IN_CONTAINER =
@@ -69,7 +69,7 @@ public class StartupRequirementsListener {
         "/admin/file?file=schema.xml&contentType=text/xml";
     private static final String SCHEMA_NAME_DATAONE = "<schema name=\"dataone";
 
-    private static final Log logMetacat = LogFactory.getLog(StartupRequirementsListener.class);
+    private static final Log logMetacat = LogFactory.getLog(StartupRequirementsChecker.class);
     protected Properties runtimeProperties;
 
     // Used only for testing, as a way of injecting the mock

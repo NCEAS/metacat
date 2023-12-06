@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 
-public class StartupRequirementsListenerTest {
+public class StartupRequirementsCheckerTest {
 
     public static final String SOLR_BASE_URL_PROP_VAL = "http://localhost:8983/solr";
     private static final String SOLR_CORE_NAME_PROP_VAL = "test_core";
@@ -46,7 +46,7 @@ public class StartupRequirementsListenerTest {
     private Path sitePropsFilePath;
 
     private final Properties defaultProperties = new Properties();
-    private StartupRequirementsListener startupRequirementsListener;
+    private StartupRequirementsChecker startupRequirementsChecker;
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -73,15 +73,18 @@ public class StartupRequirementsListenerTest {
         this.defaultProperties.load(Files.newBufferedReader(defaultPropsFilePath));
         this.defaultProperties.setProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY,
                                            sitePropsDirStr);
-        this.defaultProperties.setProperty(StartupRequirementsListener.SOLR_BASE_URL_PROP_KEY,
-                                           SOLR_BASE_URL_PROP_VAL);
-        this.defaultProperties.setProperty(StartupRequirementsListener.SOLR_CORE_NAME_PROP_KEY,
-                                           SOLR_CORE_NAME_PROP_VAL);
-        this.defaultProperties.setProperty(StartupRequirementsListener.SOLR_CONFIGURED_PROP_KEY,
-                                           TRUE);
+        this.defaultProperties.setProperty(
+            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY,
+            SOLR_BASE_URL_PROP_VAL);
+        this.defaultProperties.setProperty(
+            StartupRequirementsChecker.SOLR_CORE_NAME_PROP_KEY,
+            SOLR_CORE_NAME_PROP_VAL);
+        this.defaultProperties.setProperty(
+            StartupRequirementsChecker.SOLR_CONFIGURED_PROP_KEY,
+            TRUE);
         this.defaultProperties.store(Files.newBufferedWriter(defaultPropsFilePath), "");
 
-        this.startupRequirementsListener = new StartupRequirementsListener();
+        this.startupRequirementsChecker = new StartupRequirementsChecker();
     }
 
     @After
@@ -92,7 +95,7 @@ public class StartupRequirementsListenerTest {
     public void contextInitialized() throws IOException {
 
         mockSolrSetup(HttpURLConnection.HTTP_OK);
-        startupRequirementsListener.contextInitialized(getMockServletContextEvent());
+        startupRequirementsChecker.contextInitialized(getMockServletContextEvent());
     }
 
     // validateDefaultProperties() test cases //////////////////////////////////////////////////////
@@ -101,7 +104,7 @@ public class StartupRequirementsListenerTest {
     public void validateDefaultProperties_valid() {
 
         LeanTestUtils.debug("validateDefaultProperties_valid()");
-        startupRequirementsListener.validateDefaultProperties(getMockServletContextEvent());
+        startupRequirementsChecker.validateDefaultProperties(getMockServletContextEvent());
     }
 
     @Test(expected = RuntimeException.class)
@@ -116,7 +119,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateDefaultProperties(getMockServletContextEvent());
+        startupRequirementsChecker.validateDefaultProperties(getMockServletContextEvent());
     }
 
     @Test(expected = RuntimeException.class)
@@ -124,7 +127,7 @@ public class StartupRequirementsListenerTest {
 
         LeanTestUtils.debug("validateDefaultProperties_malFormedEscape()");
         createTestProperties_malFormedEscape(defaultPropsFilePath);
-        startupRequirementsListener.validateDefaultProperties(getMockServletContextEvent());
+        startupRequirementsChecker.validateDefaultProperties(getMockServletContextEvent());
     }
 
     @Test(expected = RuntimeException.class)
@@ -132,7 +135,7 @@ public class StartupRequirementsListenerTest {
 
         LeanTestUtils.debug("validateDefaultProperties_nonStringProps()");
         createTestProperties_nonStringProps(defaultPropsFilePath);
-        startupRequirementsListener.validateDefaultProperties(getMockServletContextEvent());
+        startupRequirementsChecker.validateDefaultProperties(getMockServletContextEvent());
     }
 
     // validateSiteProperties() test cases /////////////////////////////////////////////////////////
@@ -144,7 +147,7 @@ public class StartupRequirementsListenerTest {
         Path sitePropsDir = sitePropsFilePath.getParent();
         assertFalse(Files.isDirectory(sitePropsDir));
         try {
-            startupRequirementsListener.validateSiteProperties(defaultProperties);
+            startupRequirementsChecker.validateSiteProperties(defaultProperties);
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
@@ -170,7 +173,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test(expected = RuntimeException.class)
@@ -192,7 +195,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test
@@ -206,7 +209,7 @@ public class StartupRequirementsListenerTest {
             assertTrue(Files.isRegularFile(dummyProps));
             assertTrue(Files.isReadable(dummyProps));
             assertTrue(Files.isWritable(dummyProps));
-            startupRequirementsListener.validateSiteProperties(defaultProperties);
+            startupRequirementsChecker.validateSiteProperties(defaultProperties);
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
@@ -228,7 +231,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test
@@ -247,8 +250,8 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.RUNNING_IN_CONTAINER = true;
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.RUNNING_IN_CONTAINER = true;
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test(expected = RuntimeException.class)
@@ -267,7 +270,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test(expected = RuntimeException.class)
@@ -275,7 +278,7 @@ public class StartupRequirementsListenerTest {
 
         LeanTestUtils.debug("validateSiteProperties_existingMalFormedEscape()");
         createTestProperties_malFormedEscape(sitePropsFilePath);
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test(expected = RuntimeException.class)
@@ -284,47 +287,47 @@ public class StartupRequirementsListenerTest {
         LeanTestUtils.debug("validateSiteProperties_existingNonStringProps()");
         createTestProperties_nonStringProps(sitePropsFilePath);
         mockSolrSetup(HttpURLConnection.HTTP_OK);
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     @Test
     public void validateSolrAvailable_valid_SolrConfigured() throws IOException {
 
-        startupRequirementsListener.runtimeProperties = this.defaultProperties;
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
         mockSolrSetup(HttpURLConnection.HTTP_OK);
-        startupRequirementsListener.validateSolrAvailable();
+        startupRequirementsChecker.validateSolrAvailable();
     }
 
     @Test
     public void validateSolrAvailable_valid_SolrNotConfigured() throws IOException {
 
-        startupRequirementsListener.runtimeProperties = this.defaultProperties;
-        startupRequirementsListener.runtimeProperties.setProperty(
-            StartupRequirementsListener.SOLR_CONFIGURED_PROP_KEY, FALSE);
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
+        startupRequirementsChecker.runtimeProperties.setProperty(
+            StartupRequirementsChecker.SOLR_CONFIGURED_PROP_KEY, FALSE);
         mockSolrSetup(HttpURLConnection.HTTP_OK);
-        startupRequirementsListener.validateSolrAvailable();
+        startupRequirementsChecker.validateSolrAvailable();
     }
 
     @Test
     public void validateSolrAvailable_propertyNotSet() {
 
-        startupRequirementsListener.runtimeProperties = this.defaultProperties;
-        startupRequirementsListener.runtimeProperties.remove(
-            StartupRequirementsListener.SOLR_BASE_URL_PROP_KEY);
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
+        startupRequirementsChecker.runtimeProperties.remove(
+            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY);
         RuntimeException exception = Assert.assertThrows(RuntimeException.class,
-                                                         () -> startupRequirementsListener.validateSolrAvailable());
+                                                         () -> startupRequirementsChecker.validateSolrAvailable());
         assertMessage(exception);
     }
 
     @Test
     public void validateSolrAvailable_propertySetInvalidUrl() {
 
-        startupRequirementsListener.runtimeProperties = this.defaultProperties;
-        startupRequirementsListener.runtimeProperties.setProperty(
-            StartupRequirementsListener.SOLR_BASE_URL_PROP_KEY, "Ain't no solr here!");
-        startupRequirementsListener.mockSolrTestUrl = null;
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
+        startupRequirementsChecker.runtimeProperties.setProperty(
+            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY, "Ain't no solr here!");
+        startupRequirementsChecker.mockSolrTestUrl = null;
         RuntimeException exception = Assert.assertThrows(RuntimeException.class,
-                                                         () -> startupRequirementsListener.validateSolrAvailable());
+                                                         () -> startupRequirementsChecker.validateSolrAvailable());
         assertMessage(exception);
     }
 
@@ -332,7 +335,7 @@ public class StartupRequirementsListenerTest {
     public void validateSolrAvailable_httpError() throws IOException {
 
         mockSolrSetup(HttpURLConnection.HTTP_NOT_FOUND);
-        startupRequirementsListener.validateSolrAvailable();
+        startupRequirementsChecker.validateSolrAvailable();
     }
 
 
@@ -351,7 +354,7 @@ public class StartupRequirementsListenerTest {
         } catch (Exception e) {
             fail("Unexpected exception: " + e.getMessage());
         }
-        startupRequirementsListener.validateSiteProperties(defaultProperties);
+        startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
     private void createTestProperties_malFormedEscape(Path pathToPropsFile) {
@@ -371,14 +374,14 @@ public class StartupRequirementsListenerTest {
 
     /**
      * mock the HttpURLConnection to return the passed HTTP status code, and inject it via
-     * <code>startupRequirementsListener.mockSolrTestUrl</code>
+     * <code>startupRequirementsChecker.mockSolrTestUrl</code>
      * @param code the HTTP status code to return when getResponseCode() is called
      * @throws IOException from HttpURLConnection but shouldn't happen with the mock
      */
     private void mockSolrSetup(int code) throws IOException {
 
         String solrConfigured = this.defaultProperties.getProperty(
-            StartupRequirementsListener.SOLR_CONFIGURED_PROP_KEY);
+            StartupRequirementsChecker.SOLR_CONFIGURED_PROP_KEY);
         if (solrConfigured != null && !solrConfigured.equals(TRUE)) {
             return;
         }
@@ -392,7 +395,7 @@ public class StartupRequirementsListenerTest {
         URL urlMock = Mockito.mock(URL.class);
         Mockito.when(urlMock.openConnection()).thenReturn(connMock);
 
-        startupRequirementsListener.mockSolrTestUrl = urlMock;
+        startupRequirementsChecker.mockSolrTestUrl = urlMock;
     }
 
     /**
