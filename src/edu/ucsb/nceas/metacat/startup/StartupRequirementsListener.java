@@ -4,6 +4,8 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -22,6 +24,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -56,9 +59,15 @@ import java.util.Set;
  */
 public class StartupRequirementsListener {
 
+    protected static final String SOLR_BASE_URL_PROP_KEY = "solr.baseURL";
     protected boolean RUNNING_IN_CONTAINER =
         Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
     protected static final String SOLR_CONFIGURED_PROP_KEY = "configutil.solrserverConfigured";
+    protected static final String SOLR_CORE_NAME_PROP_KEY = "solr.coreName";
+    private static final String SOLR_CONTEXT = "/solr/";
+    private static final String SOLR_SCHEMA_LOCATOR =
+        "/admin/file?file=schema.xml&contentType=text/xml";
+    private static final String SCHEMA_NAME_DATAONE = "<schema name=\"dataone";
 
     private static final Log logMetacat = LogFactory.getLog(StartupRequirementsListener.class);
     protected Properties runtimeProperties;
@@ -164,7 +173,7 @@ public class StartupRequirementsListener {
                        'metacat-site.properties' is located, or
                     2. if this is a new installation, the default location
                        '/var/metacat/config', if that is readable/writeable by the
-                       tomcat user\s""", null);
+                       tomcat user""", null);
         }
 
         Path sitePropsFilePath =
@@ -216,29 +225,38 @@ public class StartupRequirementsListener {
 
         final String solrConfigErrorMsg =
               """
-    
-              Please ensure that the 'solr.baseURL' property points to a running solr instance,
-              which has been properly configured for use with metacat. It should be a URL of
-              the form: solr.baseURL=http://myhostname:8983/solr.
+              \nPlease ensure that the 'solr.baseURL' property points to a running solr instance,
+              which has been properly configured for use with metacat. It should have the
+              dataone schema installed in the core/collection matching the 'solr.coreName'
+              property. You should be able to retrieve the schema manually, via the url:
+              {solr.baseURL}/solr/{solr.coreName}/admin/file?file=schema.xml&contentType=text/xml\n
               See the Metacat Administrator's Guide for further details:
               https://knb.ecoinformatics.org/knb/docs/install.html#solr-server""";
 
-        String solrUrlStr = runtimeProperties.getProperty("solr.baseURL");
-
-        if (solrUrlStr == null || solrUrlStr.isEmpty()) {
-            abort("Unable to find required property: 'solr.baseURL'" + solrConfigErrorMsg,null);
+        String solrBaseUrl = runtimeProperties.getProperty(SOLR_BASE_URL_PROP_KEY);
+        if (isBlank(solrBaseUrl)) {
+            abort("Unable to find required property: " + SOLR_BASE_URL_PROP_KEY
+                      + " -- " + solrConfigErrorMsg,null);
         }
+        String solrCoreName = runtimeProperties.getProperty(SOLR_CORE_NAME_PROP_KEY);
+        if (isBlank(solrCoreName)) {
+            abort("Unable to find required property: " + SOLR_CORE_NAME_PROP_KEY
+                      + " -- " + solrConfigErrorMsg,null);
+        }
+        String solrUrlStr = solrBaseUrl + SOLR_CONTEXT + solrCoreName + SOLR_SCHEMA_LOCATOR;
 
         URL solrUrl = null;
         if (mockSolrTestUrl == null) {
             try {
                 solrUrl = new URL(solrUrlStr);
             } catch (MalformedURLException e) {
-                abort("Unable to parse a URL from the 'solr.baseURL' property: " + solrUrlStr + solrConfigErrorMsg, null);
+                abort("Unable to parse a URL from the String: "
+                          + solrUrlStr + solrConfigErrorMsg, null);
             }
         } else {
             solrUrl = mockSolrTestUrl;
         }
+        String responseString = "";
         int responseCode = 418;    // look it up ;-)
         try {
             HttpURLConnection connection = (HttpURLConnection) solrUrl.openConnection();
@@ -246,14 +264,27 @@ public class StartupRequirementsListener {
             connection.connect();
 
             responseCode = connection.getResponseCode();
+
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            responseString = br.lines().collect(Collectors.joining("\n"));
+
         } catch (IOException e) {
             abort("An error occurred while attempting a connection to the solr service at:\n"
                       + solrUrlStr + solrConfigErrorMsg, null);
         }
         if (responseCode != HttpURLConnection.HTTP_OK) {
-            abort("The solr service was contacted successfully at: " + solrUrlStr + "\n"
-                      + ", but it returned an unexpected response. Expected: HTTP 200 OK;\n"
+            abort("The solr service was contacted successfully at:\n" + solrUrlStr + ",\n"
+                      + ",but it returned an unexpected response. Expected: HTTP 200 OK;\n"
                       + "received: HTTP " + responseCode + solrConfigErrorMsg, null);
+        }
+        if (!responseString.contains(SCHEMA_NAME_DATAONE)) {
+            abort("The solr service was contacted successfully at:\n" + solrUrlStr + ",\n"
+                      + "but it did not return the expected schema document;\n"
+                      + "received response body:\n\n******************************\n\n"
+                      + responseString
+                      + "\n\n******************************\n"
+                      + solrConfigErrorMsg, null);
         }
     }
 
@@ -400,5 +431,9 @@ public class StartupRequirementsListener {
                       + "  2. edit the property named 'application.sitePropertiesDir' in the \n"
                       + "     'metacat.properties' file, to point to the desired location.", e);
         }
+    }
+
+    private boolean isBlank(String str) {
+        return str == null || str.trim().isEmpty();
     }
 }

@@ -2,6 +2,7 @@ package edu.ucsb.nceas.metacat.startup;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import org.apache.jena.atlas.lib.Bytes;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -12,7 +13,9 @@ import org.mockito.Mockito;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
@@ -32,11 +35,10 @@ import static org.mockito.Mockito.doNothing;
 
 public class StartupRequirementsListenerTest {
 
-    public static final String SOLR_BASE_URL_PROP_KEY = "solr.baseURL";
     public static final String SOLR_BASE_URL_PROP_VAL = "http://localhost:8983/solr";
+    private static final String SOLR_CORE_NAME_PROP_VAL = "test_core";
     public static final String TRUE = "true";
     public static final String FALSE = "false";
-
     private static final String EXPECTED_EXCEPTION_MESSAGE = "STARTUP ABORTED";
 
     private Path rootPath;
@@ -71,7 +73,12 @@ public class StartupRequirementsListenerTest {
         this.defaultProperties.load(Files.newBufferedReader(defaultPropsFilePath));
         this.defaultProperties.setProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY,
                                            sitePropsDirStr);
-        this.defaultProperties.setProperty(SOLR_BASE_URL_PROP_KEY, SOLR_BASE_URL_PROP_VAL);
+        this.defaultProperties.setProperty(StartupRequirementsListener.SOLR_BASE_URL_PROP_KEY,
+                                           SOLR_BASE_URL_PROP_VAL);
+        this.defaultProperties.setProperty(StartupRequirementsListener.SOLR_CORE_NAME_PROP_KEY,
+                                           SOLR_CORE_NAME_PROP_VAL);
+        this.defaultProperties.setProperty(StartupRequirementsListener.SOLR_CONFIGURED_PROP_KEY,
+                                           TRUE);
         this.defaultProperties.store(Files.newBufferedWriter(defaultPropsFilePath), "");
 
         this.startupRequirementsListener = new StartupRequirementsListener();
@@ -284,8 +291,6 @@ public class StartupRequirementsListenerTest {
     public void validateSolrAvailable_valid_SolrConfigured() throws IOException {
 
         startupRequirementsListener.runtimeProperties = this.defaultProperties;
-        startupRequirementsListener.runtimeProperties.setProperty(
-            StartupRequirementsListener.SOLR_CONFIGURED_PROP_KEY, TRUE);
         mockSolrSetup(HttpURLConnection.HTTP_OK);
         startupRequirementsListener.validateSolrAvailable();
     }
@@ -304,7 +309,8 @@ public class StartupRequirementsListenerTest {
     public void validateSolrAvailable_propertyNotSet() {
 
         startupRequirementsListener.runtimeProperties = this.defaultProperties;
-        startupRequirementsListener.runtimeProperties.remove(SOLR_BASE_URL_PROP_KEY);
+        startupRequirementsListener.runtimeProperties.remove(
+            StartupRequirementsListener.SOLR_BASE_URL_PROP_KEY);
         RuntimeException exception = Assert.assertThrows(RuntimeException.class,
                                                          () -> startupRequirementsListener.validateSolrAvailable());
         assertMessage(exception);
@@ -314,8 +320,8 @@ public class StartupRequirementsListenerTest {
     public void validateSolrAvailable_propertySetInvalidUrl() {
 
         startupRequirementsListener.runtimeProperties = this.defaultProperties;
-        startupRequirementsListener.runtimeProperties.setProperty(SOLR_BASE_URL_PROP_KEY,
-                                                                  "Ain't no solr here!");
+        startupRequirementsListener.runtimeProperties.setProperty(
+            StartupRequirementsListener.SOLR_BASE_URL_PROP_KEY, "Ain't no solr here!");
         startupRequirementsListener.mockSolrTestUrl = null;
         RuntimeException exception = Assert.assertThrows(RuntimeException.class,
                                                          () -> startupRequirementsListener.validateSolrAvailable());
@@ -376,8 +382,11 @@ public class StartupRequirementsListenerTest {
         if (solrConfigured != null && !solrConfigured.equals(TRUE)) {
             return;
         }
+        InputStream inputStream = new ByteArrayInputStream(Bytes.string2bytes(SOLR_SCHEMA_OPENING));
         HttpURLConnection connMock = Mockito.mock(HttpURLConnection.class);
         Mockito.when(connMock.getResponseCode()).thenReturn(code);
+        Mockito.when(connMock.getInputStream()).thenReturn(inputStream);
+
         doNothing().when(connMock).connect();
 
         URL urlMock = Mockito.mock(URL.class);
@@ -402,4 +411,63 @@ public class StartupRequirementsListenerTest {
     private void assertMessage(RuntimeException exception) {
         assertTrue(exception.getMessage().contains(EXPECTED_EXCEPTION_MESSAGE));
     }
+
+    private static final String SOLR_SCHEMA_OPENING =
+          """
+          <?xml version="1.0" encoding="UTF-8" ?>
+          <!--
+          THE OFFICIAL DataONE Index Solr Schema definition file.
+          This schema is copied into the dataone-cn-index buildout for deployment on cn nodes.
+          -->
+
+          <!--
+           Licensed to the Apache Software Foundation (ASF) under one or more
+           contributor license agreements.  See the NOTICE file distributed with
+           this work for additional information regarding copyright ownership.
+           The ASF licenses this file to You under the Apache License, Version 2.0
+           (the "License"); you may not use this file except in compliance with
+           the License.  You may obtain a copy of the License at
+
+               http://www.apache.org/licenses/LICENSE-2.0
+
+           Unless required by applicable law or agreed to in writing, software
+           distributed under the License is distributed on an "AS IS" BASIS,
+           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           See the License for the specific language governing permissions and
+           limitations under the License.
+          -->
+
+          <!--
+           This is the Solr schema file. This file should be named "schema.xml" and
+           should be in the conf directory under the solr home
+           (i.e. ./solr/conf/schema.xml by default)
+           or located where the classloader for the Solr webapp can find it.
+
+           This example schema is the recommended starting point for users.
+           It should be kept correct and concise, usable out-of-the-box.
+
+           For more information, on how to customize this file, please see
+           http://wiki.apache.org/solr/SchemaXml
+
+           PERFORMANCE NOTE: this schema includes many optional features and should not
+           be used for benchmarking.  To improve performance one could
+            - set stored="false" for all fields possible (esp large fields) when you
+              only need to search on the field but don't need to return the original
+              value.
+            - set indexed="false" if you don't need to search on the field, but only
+              return the field as a result of searching on other indexed fields.
+            - remove all unneeded copyField statements
+            - for best index size and searching performance, set "index" to false
+              for all general text fields, use copyField to copy them to the
+              catchall "text" field, and use that for searching.
+            - For maximum indexing performance, use the ConcurrentUpdateSolrServer
+              java client.
+            - Remember to run the JVM in server mode, and use a higher logging level
+              that avoids logging every request
+          -->
+
+          <schema name="dataone" version="1.5">
+            <!-- attribute "name" is the name of this schema and is only used for display purposes.
+                 version="x.y" is Solr's version number for the schema syntax and
+                 semantics.  It should not normally be changed by applications.""";
 }
