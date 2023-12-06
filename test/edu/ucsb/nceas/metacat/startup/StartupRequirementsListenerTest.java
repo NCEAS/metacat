@@ -34,6 +34,8 @@ public class StartupRequirementsListenerTest {
 
     public static final String SOLR_BASE_URL_PROP_KEY = "solr.baseURL";
     public static final String SOLR_BASE_URL_PROP_VAL = "http://localhost:8983/solr";
+    public static final String TRUE = "true";
+    public static final String FALSE = "false";
 
     private static final String EXPECTED_EXCEPTION_MESSAGE = "STARTUP ABORTED";
 
@@ -279,10 +281,22 @@ public class StartupRequirementsListenerTest {
     }
 
     @Test
-    public void validateSolrAvailable_valid() throws IOException {
+    public void validateSolrAvailable_valid_SolrConfigured() throws IOException {
 
-        mockSolrSetup(HttpURLConnection.HTTP_OK);
         startupRequirementsListener.runtimeProperties = this.defaultProperties;
+        startupRequirementsListener.runtimeProperties.setProperty(
+            StartupRequirementsListener.SOLR_CONFIGURED_PROP_KEY, TRUE);
+        mockSolrSetup(HttpURLConnection.HTTP_OK);
+        startupRequirementsListener.validateSolrAvailable();
+    }
+
+    @Test
+    public void validateSolrAvailable_valid_SolrNotConfigured() throws IOException {
+
+        startupRequirementsListener.runtimeProperties = this.defaultProperties;
+        startupRequirementsListener.runtimeProperties.setProperty(
+            StartupRequirementsListener.SOLR_CONFIGURED_PROP_KEY, FALSE);
+        mockSolrSetup(HttpURLConnection.HTTP_OK);
         startupRequirementsListener.validateSolrAvailable();
     }
 
@@ -357,6 +371,11 @@ public class StartupRequirementsListenerTest {
      */
     private void mockSolrSetup(int code) throws IOException {
 
+        String solrConfigured = this.defaultProperties.getProperty(
+            StartupRequirementsListener.SOLR_CONFIGURED_PROP_KEY);
+        if (solrConfigured != null && !solrConfigured.equals(TRUE)) {
+            return;
+        }
         HttpURLConnection connMock = Mockito.mock(HttpURLConnection.class);
         Mockito.when(connMock.getResponseCode()).thenReturn(code);
         doNothing().when(connMock).connect();

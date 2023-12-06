@@ -58,6 +58,8 @@ public class StartupRequirementsListener {
 
     protected boolean RUNNING_IN_CONTAINER =
         Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
+    protected static final String SOLR_CONFIGURED_PROP_KEY = "configutil.solrserverConfigured";
+
     private static final Log logMetacat = LogFactory.getLog(StartupRequirementsListener.class);
     protected Properties runtimeProperties;
 
@@ -194,13 +196,23 @@ public class StartupRequirementsListener {
     }
 
     /**
-     * Ensure we get an HTTP 200 OK response from the solr service that is configured in the
-     * properties file
+     * Ensure we get an HTTP 200 OK response and can retrieve the schema doc from the solr service
+     * that is configured in the properties file.
+     * NOTE: If this is a non-k8s deployment and metacat has not yet been properly configured, skip
+     * this validation, since the admin config pages require metacat to be able to run without
+     * solr being available (so the admin can enter the correct solr properties).
      *
      * @throws RuntimeException if any unrecoverable problems are found that should cause startup
      *                          to be aborted
      */
     protected void validateSolrAvailable() throws RuntimeException {
+
+        String solrConfigured = runtimeProperties.getProperty(SOLR_CONFIGURED_PROP_KEY);
+        if (solrConfigured != null && solrConfigured.equalsIgnoreCase("false")) {
+            // skip this validation, since the admin config pages require metacat to be able to run
+            // without solr being available (so the admin can set the correct solr properties)
+            return;
+        }
 
         final String solrConfigErrorMsg =
               """
