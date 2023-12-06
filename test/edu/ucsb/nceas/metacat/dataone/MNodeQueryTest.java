@@ -738,11 +738,13 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId2.getValue()));
         
-        query = "q=id:"+resourceMapId2.getValue();
+        query = "q=id:" + resourceMapId2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains(resourceMapId2.getValue())) && account <= tryAcccounts) {
+        while ( (resultStr == null ||
+                    !resultStr.contains("<str name=\"id\">"
+                    + resourceMapId2.getValue() + "</str>")) && account <= tryAcccounts) {
             Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
