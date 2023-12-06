@@ -58,7 +58,6 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
-import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
 import org.dataone.vocabulary.CITO;
 import org.dspace.foresite.ResourceMap;
@@ -345,11 +344,18 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
-        
-        query = "q=id:"+guid2.getValue();
+
+        query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("documents"))
+                                                                    && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+        }
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
@@ -364,10 +370,17 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains(guid.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
-        
-        query = "q=id:"+resourceMapId.getValue();
+        // query the resource map object
+        query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+        }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId.getValue()+"</str>"));
         //postquery
@@ -457,11 +470,12 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         }
         assertTrue(resultStr.contains("name=\"obsoletes\">" + resourceMapId.getValue()));
         //make sure the new metadata object was reindexed and have the new resource map
-        query = "q=id:"+guid4.getValue();
+        query = "q=id:" + guid4.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("obsoletes")) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("resourceMap"))
+                                                                && account <= tryAcccounts) {
             Thread.sleep(1000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -611,11 +625,11 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
         
-        query = "q=id:"+resourceMapId.getValue();
+        query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains(resourceMapId.getValue())) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
             Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
