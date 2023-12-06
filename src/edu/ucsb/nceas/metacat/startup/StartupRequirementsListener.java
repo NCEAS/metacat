@@ -10,8 +10,6 @@ import java.net.URL;
 import java.nio.charset.MalformedInputException;
 
 import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -56,8 +54,7 @@ import java.util.Set;
  * </p>
  * @see javax.servlet.ServletContextListener
  */
-@WebListener
-public class StartupRequirementsListener implements ServletContextListener {
+public class StartupRequirementsListener {
 
     protected boolean RUNNING_IN_CONTAINER =
         Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
@@ -68,7 +65,6 @@ public class StartupRequirementsListener implements ServletContextListener {
     protected URL mockSolrTestUrl = null;
 
 
-    @Override
     public void contextInitialized(ServletContextEvent sce) {
         //call all validation methods here. If there's an unrecoverable problem, call abort()
 
@@ -83,11 +79,6 @@ public class StartupRequirementsListener implements ServletContextListener {
 
         // Verify that there is a solr instance available
         validateSolrAvailable();
-    }
-
-    @Override
-    public void contextDestroyed(ServletContextEvent sce) {
-        // no cleanup needed
     }
 
     /**
@@ -163,14 +154,15 @@ public class StartupRequirementsListener implements ServletContextListener {
             defaultProperties.getProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY);
 
         if (sitePropsDir == null) {
-            abort("'metacat.properties' file does not contain a required property:\n"
-                    + "'application.sitePropertiesDir'. Add this property, setting the value\n"
-                    + "to either:\n"
-                    + "  1. the full path for the parent directory where\n"
-                    + "     'metacat-site.properties' is located, or\n"
-                    + "  2. if this is a new installation, the default location\n"
-                    + "     '/var/metacat/config', if that is readable/writeable by the\n"
-                    + "     tomcat user ", null);
+            abort("""
+                  'metacat.properties' file does not contain a required property:
+                  'application.sitePropertiesDir'. Add this property, setting the value
+                  to either:
+                    1. the full path for the parent directory where
+                       'metacat-site.properties' is located, or
+                    2. if this is a new installation, the default location
+                       '/var/metacat/config', if that is readable/writeable by the
+                       tomcat user\s""", null);
         }
 
         Path sitePropsFilePath =
@@ -211,11 +203,13 @@ public class StartupRequirementsListener implements ServletContextListener {
     protected void validateSolrAvailable() throws RuntimeException {
 
         final String solrConfigErrorMsg =
-            "\nPlease ensure that the 'solr.baseURL' property points to a running solr instance,\n"
-                + "which has been properly configured for use with metacat. It should be a URL of\n"
-                + "the form: solr.baseURL=http://myhostname:8983/solr.\n"
-                + "See the Metacat Administrator's Guide for further details:"
-                + "    https://knb.ecoinformatics.org/knb/docs/install.html#solr-server";
+              """
+    
+              Please ensure that the 'solr.baseURL' property points to a running solr instance,
+              which has been properly configured for use with metacat. It should be a URL of
+              the form: solr.baseURL=http://myhostname:8983/solr.
+              See the Metacat Administrator's Guide for further details:
+              https://knb.ecoinformatics.org/knb/docs/install.html#solr-server""";
 
         String solrUrlStr = runtimeProperties.getProperty("solr.baseURL");
 
