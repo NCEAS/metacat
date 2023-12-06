@@ -44,11 +44,10 @@ public class MetacatInitializer implements ServletContextListener{
     private static Log logMetacat = LogFactory.getLog(MetacatInitializer.class);
 
     /**
-     * Initialize Metacat
-     * @param context  the ServletContext object will be used in Metacat
-     * @param handler  the MetacatHandler object will be used in Metacat
-     * @return true if it is fully initialized; false otherwise.
-     * @throws ServletException
+     * An implementation of ServletContextListener that is called automatically by the servlet
+     * container on startup, and used to verify that we have the essential components in place
+     * and Metacat is initialized. So it can run successfully.
+     * @param ServletContextEvent  the ServletContextEvent object will be used in Metacat
      */
     @Override
     public void contextInitialized(ServletContextEvent sce) {
@@ -102,21 +101,16 @@ public class MetacatInitializer implements ServletContextListener{
     
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        try {
-            ServiceService.stopAllServices();
-            logMetacat.warn("MetacatInitializer.destroy - Destroying MetacatServlet");
-        } finally {
-            MetacatHandler.getTimer().cancel();
-            DBConnectionPool.release();
-        }
+        logMetacat.info("MetacatInitializer.destroy - Destroying MetacatServlet");
+        ServiceService.stopAllServices();
+        MetacatHandler.getTimer().cancel();
+        DBConnectionPool.release();
     }
 
     /**
-     * Initialize the remainder of the servlet. This is the part that can only
+     * Initialize the remainder of Metacat. This is the part that can only
      * be initialized after metacat properties have been configured
-     *
      * @param context  the servlet context of MetaCatServlet
-     * @param handler   the MetacatHandler object which will be used in Metacat
      * @throws ServiceException
      * @throws ServletException
      * @throws PropertyNotFoundException
