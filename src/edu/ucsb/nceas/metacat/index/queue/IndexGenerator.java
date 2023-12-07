@@ -145,9 +145,10 @@ public class IndexGenerator extends BaseService {
             logMetacat.info("IndexGenerator.init - Connected to RabbitMQ queue " 
                             + INDEX_QUEUE_NAME);
         } catch (Exception e) {
-            logMetacat.error("IndexGenerator.init - Error connecting to RabbitMQ queue "
-                            + INDEX_QUEUE_NAME + " since " + e.getMessage());
-            throw new ServiceException(e.getMessage());
+            String error = "IndexGenerator.init - Cannot connect to the RabbitMQ queue: "
+                            + INDEX_QUEUE_NAME + " at " + RabbitMQhost + " with port "
+                            + RabbitMQport + " since " + e.getMessage();
+            throw new ServiceException(error);
         }
        
     }
