@@ -2117,6 +2117,12 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             assertTrue(oreIds.size() == 1);
             List<Identifier> oreId2 =
                 MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+            account = 0;
+            while (oreId2.size() != 2 && account <= MNodeQueryIT.tryAcccounts) {
+                Thread.sleep(1000);
+                account++;
+                oreId2 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+            }
             assertTrue(oreId2.size() == 2);
         } catch (Exception e) {
             e.printStackTrace();
