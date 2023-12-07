@@ -40,8 +40,10 @@ public class StartupRequirementsCheckerTest {
     private static final String FALSE = "false";
     private static final String EXCEPTION_ABORT_MESSAGE = "STARTUP ABORTED";
     private static final String SOLR_TEST_BASE_URL = "http://metacat-test.org:8983/solr";
+    private static final String SOLR_SCHEMA_LOCATOR =
+        "/admin/file/?contentType=text/xml%3Bcharset=utf-8&file=schema.xml";
     private static final String SOLR_TEST_FULL_SCHEMA_URL = SOLR_TEST_BASE_URL
-        + "/" + SOLR_TEST_CORE_NAME + StartupRequirementsChecker.SOLR_SCHEMA_LOCATOR;
+        + "/" + SOLR_TEST_CORE_NAME + SOLR_SCHEMA_LOCATOR;
 
     private Path rootPath;
     private Path defaultPropsFilePath;
@@ -80,8 +82,9 @@ public class StartupRequirementsCheckerTest {
         this.defaultProperties.setProperty(
             StartupRequirementsChecker.SOLR_CORE_NAME_PROP_KEY, SOLR_TEST_CORE_NAME);
         this.defaultProperties.setProperty(
-            StartupRequirementsChecker.SOLR_CONFIGURED_PROP_KEY,
-            TRUE);
+            StartupRequirementsChecker.SOLR_SCHEMA_LOCATOR_PROP_KEY, SOLR_SCHEMA_LOCATOR);
+        this.defaultProperties.setProperty(
+            StartupRequirementsChecker.SOLR_CONFIGURED_PROP_KEY, TRUE);
         this.defaultProperties.store(Files.newBufferedWriter(defaultPropsFilePath), "");
 
         this.startupRequirementsChecker = new StartupRequirementsChecker();
@@ -313,8 +316,9 @@ public class StartupRequirementsCheckerTest {
         startupRequirementsChecker.runtimeProperties = this.defaultProperties;
         startupRequirementsChecker.runtimeProperties.remove(
             StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY);
-        RuntimeException exception = Assert.assertThrows(RuntimeException.class,
-                                                         () -> startupRequirementsChecker.validateSolrAvailable());
+        RuntimeException exception =
+            Assert.assertThrows(RuntimeException.class,
+                                () -> startupRequirementsChecker.validateSolrAvailable());
         assertExceptionContains(exception, EXCEPTION_ABORT_MESSAGE);
     }
 
@@ -328,19 +332,30 @@ public class StartupRequirementsCheckerTest {
         startupRequirementsChecker.mockSolrTestUrl = null;
         startupRequirementsChecker.runtimeProperties = this.defaultProperties;
 
-        // 1. valid base url with NO trailing slash
-        RuntimeException e1 = Assert.assertThrows(RuntimeException.class,
-                                                         () -> startupRequirementsChecker.validateSolrAvailable());
+        // 1. valid base url with NO trailing slash; valid SOLR_SCHEMA_LOCATOR
+        RuntimeException e1 =
+            Assert.assertThrows(RuntimeException.class,
+                                () -> startupRequirementsChecker.validateSolrAvailable());
         assertExceptionContains(e1, SOLR_TEST_FULL_SCHEMA_URL);
 
-        // 2. valid base url WITH trailing slash
+        // 2. valid base url WITH trailing slash; valid SOLR_SCHEMA_LOCATOR
         this.defaultProperties.setProperty(
             StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY, SOLR_TEST_BASE_URL + "/");
-        RuntimeException e2 = Assert.assertThrows(RuntimeException.class,
-                                                  () -> startupRequirementsChecker.validateSolrAvailable());
+        RuntimeException e2 =
+            Assert.assertThrows(RuntimeException.class,
+                                () -> startupRequirementsChecker.validateSolrAvailable());
         assertExceptionContains(e2, SOLR_TEST_FULL_SCHEMA_URL);
+
+        // 3. valid base url; valid SOLR_SCHEMA_LOCATOR WITHOUT leading slash
+        this.defaultProperties.setProperty(StartupRequirementsChecker.SOLR_SCHEMA_LOCATOR_PROP_KEY,
+                                           SOLR_SCHEMA_LOCATOR.substring(1));
+        RuntimeException e3 =
+            Assert.assertThrows(RuntimeException.class,
+                                () -> startupRequirementsChecker.validateSolrAvailable());
+        assertExceptionContains(e3, SOLR_TEST_FULL_SCHEMA_URL);
     }
 
+    @Test
     public void validateSolrAvailable_invalidUrls() {
         startupRequirementsChecker.mockSolrTestUrl = null;
         startupRequirementsChecker.runtimeProperties = this.defaultProperties;
@@ -359,17 +374,23 @@ public class StartupRequirementsCheckerTest {
         startupRequirementsChecker.runtimeProperties.setProperty(
             StartupRequirementsChecker.SOLR_CORE_NAME_PROP_KEY, invalidCoreName);
         startupRequirementsChecker.mockSolrTestUrl = null;
-        RuntimeException e2 = Assert.assertThrows(RuntimeException.class,
-                                                         () -> startupRequirementsChecker.validateSolrAvailable());
+        RuntimeException e2 =
+            Assert.assertThrows(RuntimeException.class,
+                                () -> startupRequirementsChecker.validateSolrAvailable());
         assertExceptionContains(e2, EXCEPTION_ABORT_MESSAGE);
         assertExceptionContains(e2, invalidCoreName);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void validateSolrAvailable_httpError() throws IOException {
 
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
         mockSolrSetup(HttpURLConnection.HTTP_NOT_FOUND);
-        startupRequirementsChecker.validateSolrAvailable();
+        RuntimeException e1 =
+            Assert.assertThrows(RuntimeException.class,
+                                () -> startupRequirementsChecker.validateSolrAvailable());
+        assertExceptionContains(e1, EXCEPTION_ABORT_MESSAGE);
+        assertExceptionContains(e1, String.valueOf(HttpURLConnection.HTTP_NOT_FOUND));
     }
 
 
@@ -447,7 +468,9 @@ public class StartupRequirementsCheckerTest {
     }
 
     private void assertExceptionContains(RuntimeException exception, String msgSubString) {
-        assertTrue("", exception.getMessage().contains(msgSubString));
+        assertTrue("Assertion failed! Expected substring <" + msgSubString
+                + "> not found in following exception message: " + exception.getMessage(),
+            exception.getMessage().contains(msgSubString));
     }
 
     private static final String SOLR_SCHEMA_OPENING =

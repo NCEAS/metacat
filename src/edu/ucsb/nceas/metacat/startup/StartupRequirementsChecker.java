@@ -64,8 +64,7 @@ public class StartupRequirementsChecker {
         Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
     protected static final String SOLR_CONFIGURED_PROP_KEY = "configutil.solrserverConfigured";
     protected static final String SOLR_CORE_NAME_PROP_KEY = "solr.coreName";
-    protected static final String SOLR_SCHEMA_LOCATOR =
-        "/admin/file?file=schema.xml&contentType=text/xml";
+    protected static final String SOLR_SCHEMA_LOCATOR_PROP_KEY = "solr.schema.urlappendix";
     private static final String SCHEMA_NAME_DATAONE = "<schema name=\"dataone";
 
     private static final Log logMetacat = LogFactory.getLog(StartupRequirementsChecker.class);
@@ -217,35 +216,52 @@ public class StartupRequirementsChecker {
 
         String solrConfigured = runtimeProperties.getProperty(SOLR_CONFIGURED_PROP_KEY);
         if (solrConfigured != null && solrConfigured.equalsIgnoreCase("false")) {
-            // skip this validation, since the admin config pages require metacat to be able to run
+            // if solr configuration has not been completed, or has been bypassed,
+            // skip this validation, since the admin config pages require metacat to run
             // without solr being available (so the admin can set the correct solr properties)
             return;
         }
 
         final String solrConfigErrorMsg =
               """
-              \nPlease ensure that the 'solr.baseURL' property points to a running solr instance,
+              \n
+              Please ensure that the 'solr.baseURL' property points to a running solr instance,
               which has been properly configured for use with metacat. It should have the
               dataone schema installed in the core/collection matching the 'solr.coreName'
               property. You should be able to retrieve the schema manually, via the url:
-              {solr.baseURL}/solr/{solr.coreName}/admin/file?file=schema.xml&contentType=text/xml\n
+                {solr.baseURL}/{solr.coreName}/admin/file?file=schema.xml&contentType=text/xml
+              
               See the Metacat Administrator's Guide for further details:
               https://knb.ecoinformatics.org/knb/docs/install.html#solr-server""";
 
+        // solrBaseUrl example: http://localhost:8983/solr
         String solrBaseUrl = runtimeProperties.getProperty(SOLR_BASE_URL_PROP_KEY);
         if (isBlank(solrBaseUrl)) {
             abort("Unable to find required property: " + SOLR_BASE_URL_PROP_KEY
                       + " -- " + solrConfigErrorMsg,null);
         }
+        if (!solrBaseUrl.endsWith("/")) {
+            solrBaseUrl = solrBaseUrl.concat("/");
+        }
+
+        // solrCoreName example: dataone-indexer
         String solrCoreName = runtimeProperties.getProperty(SOLR_CORE_NAME_PROP_KEY);
         if (isBlank(solrCoreName)) {
             abort("Unable to find required property: " + SOLR_CORE_NAME_PROP_KEY
                       + " -- " + solrConfigErrorMsg,null);
         }
-        if (!solrBaseUrl.endsWith("/")) {
-            solrBaseUrl = solrBaseUrl.concat("/");
+
+        // solrSchemaLoc example:  /admin/file/?contentType=text/xml%3Bcharset=utf-8&file=schema.xml
+        String solrSchemaLoc = runtimeProperties.getProperty(SOLR_SCHEMA_LOCATOR_PROP_KEY);
+        if (isBlank(solrSchemaLoc)) {
+            abort("Unable to find required property: " + SOLR_SCHEMA_LOCATOR_PROP_KEY
+                      + " -- " + solrConfigErrorMsg,null);
         }
-        String solrUrlStr = solrBaseUrl + solrCoreName + SOLR_SCHEMA_LOCATOR;
+        if (!solrSchemaLoc.startsWith("/")) {
+            solrSchemaLoc = "/".concat(solrSchemaLoc);
+        }
+
+        String solrUrlStr = solrBaseUrl + solrCoreName + solrSchemaLoc;
 
         URL solrUrl = null;
         if (mockSolrTestUrl == null) {
@@ -272,8 +288,10 @@ public class StartupRequirementsChecker {
             responseString = br.lines().collect(Collectors.joining("\n"));
 
         } catch (IOException e) {
-            abort("An error occurred while attempting a connection to the solr service at:\n"
-                      + solrUrlStr + solrConfigErrorMsg, null);
+            String msg = "An error occurred while attempting a connection to the solr service at:\n"
+                + solrUrlStr;
+            logMetacat.error(msg + " -- " + e.getMessage(), e);
+            abort(msg + solrConfigErrorMsg, e);
         }
         if (responseCode != HttpURLConnection.HTTP_OK) {
             abort("The solr service was contacted successfully at:\n" + solrUrlStr + ",\n"
@@ -309,7 +327,7 @@ public class StartupRequirementsChecker {
      */
     protected void abort(String message, Exception e) throws RuntimeException {
 
-        String exception_details = (e == null)?  "" : "\n\nException Details: " + e.getMessage();
+        String exception_details =  (e == null)?  "" : "\n\n* * * Exception Details: * * *\n" + e;
         String abortMsg =
             "\n\n\n\n"
                 + "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n"
