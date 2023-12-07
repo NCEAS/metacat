@@ -51,6 +51,9 @@ public class MetacatInitializer implements ServletContextListener{
      */
     @Override
     public void contextInitialized(ServletContextEvent sce) {
+        StartupRequirementsChecker checker = new StartupRequirementsChecker();
+        // make sure the required components are ready
+        checker.contextInitialized(sce);
         try {
             ServletContext context = sce.getServletContext();
             context.setAttribute("APPLICATION_NAME", APPLICATION_NAME);
@@ -76,26 +79,26 @@ public class MetacatInitializer implements ServletContextListener{
         } catch (SQLException e) {
             String errorMessage = "SQL problem while intializing MetaCat Servlet: "
                     + e.getMessage();
-            StartupRequirementsListener.abort(errorMessage, e);
+            checker.abort(errorMessage, e);
         } catch (GeneralPropertyException gpe) {
             String errorMessage = "Could not retrieve property while intializing MetaCat Servlet: "
                     + gpe.getMessage();
-            StartupRequirementsListener.abort(errorMessage, gpe);
+            checker.abort(errorMessage, gpe);
         } catch (ServiceException se) {
             String errorMessage = "Service problem while intializing MetaCat Servlet: "
                 + se.getMessage();
-            StartupRequirementsListener.abort(errorMessage, se);
+            checker.abort(errorMessage, se);
         } catch (UtilException ue) {
             String errorMessage = "Utility problem while intializing MetaCat Servlet: "
                 + ue.getMessage();
-            StartupRequirementsListener.abort(errorMessage, ue);
+            checker.abort(errorMessage, ue);
         } catch (ServletException e) {
             String errorMessage = "Problem to intialize K8s cluster: " + e.getMessage();
-            StartupRequirementsListener.abort(errorMessage, e);
+            checker.abort(errorMessage, e);
         } catch (MetacatUtilException e) {
             String errorMessage = "Problem to check if the Metacat instance is configured : "
                     + e.getMessage();
-            StartupRequirementsListener.abort(errorMessage, e);
+            checker.abort(errorMessage, e);
         }
     }
     
