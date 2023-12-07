@@ -35,11 +35,13 @@ import static org.mockito.Mockito.doNothing;
 
 public class StartupRequirementsCheckerTest {
 
-    public static final String SOLR_BASE_URL_PROP_VAL = "http://localhost:8983/solr";
-    private static final String SOLR_CORE_NAME_PROP_VAL = "test_core";
-    public static final String TRUE = "true";
-    public static final String FALSE = "false";
-    private static final String EXPECTED_EXCEPTION_MESSAGE = "STARTUP ABORTED";
+    private static final String SOLR_TEST_CORE_NAME = "test_core";
+    private static final String TRUE = "true";
+    private static final String FALSE = "false";
+    private static final String EXCEPTION_ABORT_MESSAGE = "STARTUP ABORTED";
+    private static final String SOLR_TEST_BASE_URL = "http://metacat-test.org:8983/solr";
+    private static final String SOLR_TEST_FULL_SCHEMA_URL = SOLR_TEST_BASE_URL
+        + "/" + SOLR_TEST_CORE_NAME + StartupRequirementsChecker.SOLR_SCHEMA_LOCATOR;
 
     private Path rootPath;
     private Path defaultPropsFilePath;
@@ -74,11 +76,9 @@ public class StartupRequirementsCheckerTest {
         this.defaultProperties.setProperty(PropertyService.SITE_PROPERTIES_DIR_PATH_KEY,
                                            sitePropsDirStr);
         this.defaultProperties.setProperty(
-            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY,
-            SOLR_BASE_URL_PROP_VAL);
+            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY, SOLR_TEST_BASE_URL);
         this.defaultProperties.setProperty(
-            StartupRequirementsChecker.SOLR_CORE_NAME_PROP_KEY,
-            SOLR_CORE_NAME_PROP_VAL);
+            StartupRequirementsChecker.SOLR_CORE_NAME_PROP_KEY, SOLR_TEST_CORE_NAME);
         this.defaultProperties.setProperty(
             StartupRequirementsChecker.SOLR_CONFIGURED_PROP_KEY,
             TRUE);
@@ -282,11 +282,10 @@ public class StartupRequirementsCheckerTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void validateSiteProperties_existingNonStringProps() throws IOException {
+    public void validateSiteProperties_existingNonStringProps() {
 
         LeanTestUtils.debug("validateSiteProperties_existingNonStringProps()");
         createTestProperties_nonStringProps(sitePropsFilePath);
-        mockSolrSetup(HttpURLConnection.HTTP_OK);
         startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
@@ -309,26 +308,61 @@ public class StartupRequirementsCheckerTest {
     }
 
     @Test
-    public void validateSolrAvailable_propertyNotSet() {
+    public void validateSolrAvailable_baseUrlPropertyNotSet() {
 
         startupRequirementsChecker.runtimeProperties = this.defaultProperties;
         startupRequirementsChecker.runtimeProperties.remove(
             StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY);
         RuntimeException exception = Assert.assertThrows(RuntimeException.class,
                                                          () -> startupRequirementsChecker.validateSolrAvailable());
-        assertMessage(exception);
+        assertExceptionContains(exception, EXCEPTION_ABORT_MESSAGE);
     }
 
     @Test
-    public void validateSolrAvailable_propertySetInvalidUrl() {
+    public void validateSolrAvailable_validBaseUrls() {
 
-        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
-        startupRequirementsChecker.runtimeProperties.setProperty(
-            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY, "Ain't no solr here!");
+        // NOTE For all the tests in this method, an exception will be thrown because the url is
+        // unreachable, by design (even though it's "valid". We use the exception message to verify
+        // the url was constructed correctly)
+
         startupRequirementsChecker.mockSolrTestUrl = null;
-        RuntimeException exception = Assert.assertThrows(RuntimeException.class,
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
+
+        // 1. valid base url with NO trailing slash
+        RuntimeException e1 = Assert.assertThrows(RuntimeException.class,
                                                          () -> startupRequirementsChecker.validateSolrAvailable());
-        assertMessage(exception);
+        assertExceptionContains(e1, SOLR_TEST_FULL_SCHEMA_URL);
+
+        // 2. valid base url WITH trailing slash
+        this.defaultProperties.setProperty(
+            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY, SOLR_TEST_BASE_URL + "/");
+        RuntimeException e2 = Assert.assertThrows(RuntimeException.class,
+                                                  () -> startupRequirementsChecker.validateSolrAvailable());
+        assertExceptionContains(e2, SOLR_TEST_FULL_SCHEMA_URL);
+    }
+
+    public void validateSolrAvailable_invalidUrls() {
+        startupRequirementsChecker.mockSolrTestUrl = null;
+        startupRequirementsChecker.runtimeProperties = this.defaultProperties;
+
+        // 1. non-existent base url
+        final String invalidBaseUrl = "Ain't-no-solr.here:9999/soz";
+        startupRequirementsChecker.runtimeProperties.setProperty(
+            StartupRequirementsChecker.SOLR_BASE_URL_PROP_KEY, invalidBaseUrl);
+        RuntimeException e1 = Assert.assertThrows(RuntimeException.class,
+                                                         () -> startupRequirementsChecker.validateSolrAvailable());
+        assertExceptionContains(e1, EXCEPTION_ABORT_MESSAGE);
+        assertExceptionContains(e1, invalidBaseUrl);
+
+        // 2. non-valid core name
+        final String invalidCoreName = "non-existent-core";
+        startupRequirementsChecker.runtimeProperties.setProperty(
+            StartupRequirementsChecker.SOLR_CORE_NAME_PROP_KEY, invalidCoreName);
+        startupRequirementsChecker.mockSolrTestUrl = null;
+        RuntimeException e2 = Assert.assertThrows(RuntimeException.class,
+                                                         () -> startupRequirementsChecker.validateSolrAvailable());
+        assertExceptionContains(e2, EXCEPTION_ABORT_MESSAGE);
+        assertExceptionContains(e2, invalidCoreName);
     }
 
     @Test(expected = RuntimeException.class)
@@ -385,6 +419,7 @@ public class StartupRequirementsCheckerTest {
         if (solrConfigured != null && !solrConfigured.equals(TRUE)) {
             return;
         }
+
         InputStream inputStream = new ByteArrayInputStream(Bytes.string2bytes(SOLR_SCHEMA_OPENING));
         HttpURLConnection connMock = Mockito.mock(HttpURLConnection.class);
         Mockito.when(connMock.getResponseCode()).thenReturn(code);
@@ -411,8 +446,8 @@ public class StartupRequirementsCheckerTest {
         return servletContextEventMock;
     }
 
-    private void assertMessage(RuntimeException exception) {
-        assertTrue(exception.getMessage().contains(EXPECTED_EXCEPTION_MESSAGE));
+    private void assertExceptionContains(RuntimeException exception, String msgSubString) {
+        assertTrue("", exception.getMessage().contains(msgSubString));
     }
 
     private static final String SOLR_SCHEMA_OPENING =

@@ -64,8 +64,7 @@ public class StartupRequirementsChecker {
         Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
     protected static final String SOLR_CONFIGURED_PROP_KEY = "configutil.solrserverConfigured";
     protected static final String SOLR_CORE_NAME_PROP_KEY = "solr.coreName";
-    private static final String SOLR_CONTEXT = "/solr/";
-    private static final String SOLR_SCHEMA_LOCATOR =
+    protected static final String SOLR_SCHEMA_LOCATOR =
         "/admin/file?file=schema.xml&contentType=text/xml";
     private static final String SCHEMA_NAME_DATAONE = "<schema name=\"dataone";
 
@@ -243,7 +242,10 @@ public class StartupRequirementsChecker {
             abort("Unable to find required property: " + SOLR_CORE_NAME_PROP_KEY
                       + " -- " + solrConfigErrorMsg,null);
         }
-        String solrUrlStr = solrBaseUrl + SOLR_CONTEXT + solrCoreName + SOLR_SCHEMA_LOCATOR;
+        if (!solrBaseUrl.endsWith("/")) {
+            solrBaseUrl = solrBaseUrl.concat("/");
+        }
+        String solrUrlStr = solrBaseUrl + solrCoreName + SOLR_SCHEMA_LOCATOR;
 
         URL solrUrl = null;
         if (mockSolrTestUrl == null) {
@@ -275,7 +277,7 @@ public class StartupRequirementsChecker {
         }
         if (responseCode != HttpURLConnection.HTTP_OK) {
             abort("The solr service was contacted successfully at:\n" + solrUrlStr + ",\n"
-                      + ",but it returned an unexpected response. Expected: HTTP 200 OK;\n"
+                      + "but it returned an unexpected response. Expected: HTTP 200 OK;\n"
                       + "received: HTTP " + responseCode + solrConfigErrorMsg, null);
         }
         if (!responseString.contains(SCHEMA_NAME_DATAONE)) {
