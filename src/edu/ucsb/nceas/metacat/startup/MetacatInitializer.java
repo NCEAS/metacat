@@ -72,9 +72,10 @@ public class MetacatInitializer implements ServletContextListener{
             // If both are false then stop the initialization
             if (!ConfigurationUtil.bypassConfiguration() &&
                                     !ConfigurationUtil.isMetacatConfigured()) {
+                fullInit = false;
                 return;
             }
-            initAfterMetacatConfig(context);
+            initAfterMetacatConfig();
             fullInit = true;
         } catch (SQLException e) {
             String errorMessage = "SQL problem while intializing MetaCat Servlet: "
@@ -101,7 +102,7 @@ public class MetacatInitializer implements ServletContextListener{
             checker.abort(errorMessage, e);
         }
     }
-    
+
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
         logMetacat.info("MetacatInitializer.destroy - Destroying MetacatServlet");
@@ -112,15 +113,15 @@ public class MetacatInitializer implements ServletContextListener{
 
     /**
      * Initialize the remainder of Metacat. This is the part that can only
-     * be initialized after metacat properties have been configured
-     * @param context  the servlet context of MetaCatServlet
+     * be initialized after metacat properties have been configured.
      * @throws ServiceException
      * @throws ServletException
      * @throws PropertyNotFoundException
      * @throws SQLException
      * @throws UtilException
      */
-    public static void initAfterMetacatConfig(ServletContext context) throws ServiceException, ServletException, PropertyNotFoundException, SQLException, UtilException {
+    protected void initAfterMetacatConfig() throws ServiceException, ServletException,
+                                        PropertyNotFoundException, SQLException, UtilException {
             ServiceService.registerService("DatabaseService", DatabaseService.getInstance());
             // initialize DBConnection pool
             DBConnectionPool connPool = DBConnectionPool.getInstance();

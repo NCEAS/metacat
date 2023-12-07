@@ -57,26 +57,10 @@ public class IndexGenerator extends BaseService {
     private final static String HEADER_PATH = "path"; 
     //The header name in the message to store the index type
     private final static String HEADER_INDEX_TYPE = "index_type"; 
-    
     private final static String EXCHANGE_NAME = "dataone-index";
     private final static String INDEX_QUEUE_NAME = "index";
     private final static String INDEX_ROUTING_KEY = "index";
-    
-    // Default values for the RabbitMQ message broker server. The value of 
-    //'localhost' is valid for a RabbitMQ server running on a 'bare metal' 
-    //server, inside a VM, or within a Kubernetes where Mmetacat and the 
-    //RabbitMQ server are running in containers that belong to the same Pod. 
-    //These defaults will be used if the properties file cannot be read.
-    private static String RabbitMQhost = Settings.getConfiguration().
-                              getString("index.rabbitmq.hostname", "localhost");
-    private static int RabbitMQport = Settings.getConfiguration().
-                                      getInt("index.rabbitmq.hostport", 5672);
-    private static String RabbitMQusername = Settings.getConfiguration().
-                                  getString("index.rabbitmq.username", "guest");
-    private static String RabbitMQpassword = Settings.getConfiguration().
-                                getString("index.rabbitmq.password", "guest");
-    private static int RabbitMQMaxPriority = Settings.getConfiguration().
-                                        getInt("index.rabbitmq.max.priority");
+
     private static Connection RabbitMQconnection = null;
     private static Channel RabbitMQchannel = null;
     private static IndexGenerator instance = null;
@@ -104,6 +88,21 @@ public class IndexGenerator extends BaseService {
      * @throws ServiceException
      */
     private void init() throws ServiceException {
+        // Default values for the RabbitMQ message broker server. The value of
+        //'localhost' is valid for a RabbitMQ server running on a 'bare metal'
+        //server, inside a VM, or within a Kubernetes where Mmetacat and the
+        //RabbitMQ server are running in containers that belong to the same Pod.
+        //These defaults will be used if the properties file cannot be read.
+        String RabbitMQhost = Settings.getConfiguration().
+                                  getString("index.rabbitmq.hostname", "localhost");
+        int RabbitMQport = Settings.getConfiguration().
+                                          getInt("index.rabbitmq.hostport", 5672);
+        String RabbitMQusername = Settings.getConfiguration().
+                                      getString("index.rabbitmq.username", "guest");
+        String RabbitMQpassword = Settings.getConfiguration().
+                                    getString("index.rabbitmq.password", "guest");
+        int RabbitMQMaxPriority = Settings.getConfiguration().
+                                            getInt("index.rabbitmq.max.priority");
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(RabbitMQhost);
         factory.setPort(RabbitMQport);
@@ -199,7 +198,18 @@ public class IndexGenerator extends BaseService {
         }
         return instance;
     }
-    
+
+    /**
+     * This method sets the instance to null and forces the getInstance method
+     * to create a new instance.
+     * This method is only used for a testing purpose!
+     */
+    public static void refreshInstance() {
+        synchronized (IndexGenerator.class) {
+            instance = null;
+        }
+    }
+
     /**
      * Publish the given information to the index queue
      * @param id  the identifier of the object which will be indexed
