@@ -39,7 +39,7 @@ public class MetaCatServlet extends HttpServlet {
     public static final String NONAMESPACELOCATION = ":noNamespaceSchemaLocation";
     public static final String EML2KEYWORD = ":eml";
     public static final String DEFAULT_ENCODING = "UTF-8";
-    
+
     /**
      * Initialize the servlet. 
      * The job of initializing Metacat is delegated to the MetacatInitializer class 
@@ -48,7 +48,6 @@ public class MetaCatServlet extends HttpServlet {
         super.init(config);
         // Initialize Metacat Handler
        handler = new MetacatHandler();
-       
     }
 
     /**
@@ -61,19 +60,17 @@ public class MetaCatServlet extends HttpServlet {
     /** Handle "GET" method requests from HTTP clients */
     public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        
         // Process the data and send back the response
         handleGetOrPost(request, response);
     }
-    
+
     /** Handle "POST" method requests from HTTP clients */
     public void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        
         // Process the data and send back the response
         handleGetOrPost(request, response);
     }
-    
+
     /**
      * Control servlet response depending on the action parameter specified
      */
@@ -195,7 +192,6 @@ public class MetaCatServlet extends HttpServlet {
                 // aware of session expiration on every request
             } else {
                 SessionData sessionData = RequestUtil.getSessionData(request);
-                
                 if (sessionData != null) {
                     userName = sessionData.getUserName();
                     password = sessionData.getPassword();
@@ -205,7 +201,7 @@ public class MetaCatServlet extends HttpServlet {
 
                 logMetacat.info("MetaCatServlet.handleGetOrPost - The user is : " + userName);
             }
-            
+
             // Now that we know the session is valid, we can delegate the
             // request to a particular action handler
             if (action.equals("query")) {
@@ -224,7 +220,7 @@ public class MetaCatServlet extends HttpServlet {
             } else if (action.equals("read")) {
                 handler.handleReadAction(params, request, response, userName, password,
                             groupNames);
-                
+
             } else if (action.equals("readinlinedata")) {
                 handler.handleReadInlineDataAction(params, request, response, userName, password,
                         groupNames);
