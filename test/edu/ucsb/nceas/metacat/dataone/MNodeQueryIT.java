@@ -381,8 +381,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
-        assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<str name=\"id\">" + resourceMapId.getValue() + "</str>"));
         //postquery
         params = new HashMap<String, String[]>();
         String[] qValue3 = {"id:"+resourceMapId.getValue()};
