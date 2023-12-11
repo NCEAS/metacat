@@ -130,8 +130,8 @@ public class MetacatAdminServlet extends HttpServlet {
                 // If auth is configured, see if the user is logged in
                 // as an administrator.  If not, they need to log in before
                 // they can continue with configuration.
-                processingMessage.add("You must log in as an administrative " + "" +
-                        "user before you can continue with MetaCat configuration.");
+                processingMessage.add("You must log in as an administrative "
+                                 + "user before you can continue with Metacat configuration.");
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "login";
                 logMetacat.debug("MetacatAdminServlet.handleGetOrPost - "
@@ -140,7 +140,7 @@ public class MetacatAdminServlet extends HttpServlet {
 
             if (action == null || action.equals("configure")) {
                 // Forward the request main configuration page
-                intitialConfigurationParameters(request);
+                initialConfigurationParameters(request);
                 RequestUtil.forwardRequest(request, response,
                         "/admin/metacat-configuration.jsp?configureType=configure", null);
                 return;
@@ -228,12 +228,12 @@ public class MetacatAdminServlet extends HttpServlet {
         if (processingErrors.size() > 0) {
             RequestUtil.clearRequestMessages(request);
             RequestUtil.setRequestErrors(request,processingErrors);
-            //something badly happened. We need to go to back to the configuration
+            //something bad happened. We need to go back to the configuration
             //page and display the error message.
-            //directly forwarding to the metacat-configuration.jsp page rather
-            //than /admin, which will go through the servlet class again, can avoid a infinite loop.
+            //directly forwarding to the metacat-configuration.jsp page rather than
+            // /admin, which will go through the servlet class again, can avoid an infinite loop.
             try {
-                intitialConfigurationParameters(request);
+                initialConfigurationParameters(request);
                 RequestUtil.forwardRequest(request, response,
                             "/admin/metacat-configuration.jsp?configureType=configure", null);
             } catch (Exception e) {
@@ -249,7 +249,7 @@ public class MetacatAdminServlet extends HttpServlet {
      * Method to set up the forceBuild true which will clear the style sheet map.
      */
     private void clearStylesheetCache(HttpServletResponse response) throws IOException {
-        Boolean forceRebuild = true;
+        boolean forceRebuild = true;
         DBTransform.setForceRebuild(forceRebuild);
         response.setContentType("text/xml");
         PrintWriter out = response.getWriter();
@@ -266,7 +266,7 @@ public class MetacatAdminServlet extends HttpServlet {
      * @throws AdminException
      * @throws MetacatUtilException
      */
-    private void intitialConfigurationParameters(HttpServletRequest request)
+    private void initialConfigurationParameters(HttpServletRequest request)
                            throws GeneralPropertyException, AdminException, MetacatUtilException {
         if (request != null) {
             request.setAttribute("metaCatVersion", SystemUtil.getMetacatVersion());
@@ -284,7 +284,7 @@ public class MetacatAdminServlet extends HttpServlet {
                     PropertyService.getProperty("configutil.quotaConfigured"));
             request.setAttribute("solrserverConfigured",
                     PropertyService.getProperty("configutil.solrserverConfigured"));
-            request.setAttribute("metcatServletInitialized",
+            request.setAttribute("metacatServletInitialized",
                                             MetacatInitializer.isFullyInitialized());
             if (PropertyService.arePropertiesConfigured()) {
                 request.setAttribute("databaseVersion", 
