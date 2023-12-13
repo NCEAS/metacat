@@ -90,7 +90,7 @@ public class IndexGenerator extends BaseService {
     private void init() throws ServiceException {
         // Default values for the RabbitMQ message broker server. The value of
         //'localhost' is valid for a RabbitMQ server running on a 'bare metal'
-        //server, inside a VM, or within a Kubernetes where Mmetacat and the
+        //server, inside a VM, or within a Kubernetes where Metacat and the
         //RabbitMQ server are running in containers that belong to the same Pod.
         //These defaults will be used if the properties file cannot be read.
         String RabbitMQhost = Settings.getConfiguration().
@@ -244,7 +244,7 @@ public class IndexGenerator extends BaseService {
                                     + id.getValue() + " since the RabbitMQ channel "
                                     + " is null, which means Metacat cannot connect with RabbitMQ.";
             if (additionErrorMessage != null) {
-                error = error + " And also Metacat can't save the faiure index task into DB since "
+                error = error + " And also Metacat can't save the failure index task into DB since "
                                 + additionErrorMessage;
             }
             throw new ServiceException(error);
@@ -272,7 +272,7 @@ public class IndexGenerator extends BaseService {
             RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY,
                                             basicProperties, null);
             logMetacat.info("IndexGenerator.publish - The index task with the "
-                            + "object dentifier " + id.getValue()
+                            + "object identifier " + id.getValue()
                             + ", the index type " + index_type
                             + ", the file path " + filePath
                             + " (null means Metacat doesn't have the object), "
@@ -290,7 +290,7 @@ public class IndexGenerator extends BaseService {
                             + id.getValue() + " since "
                             + e.getMessage();
             if (additionErrorMessage != null) {
-                error = error + ". And also Metacat can't save the faiure index task into DB since "
+                error = error + ". And also Metacat can't save the failure index task into DB since "
                                 + additionErrorMessage;
             }
             throw new ServiceException(error);
