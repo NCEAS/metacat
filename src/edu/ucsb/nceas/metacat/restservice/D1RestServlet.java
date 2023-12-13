@@ -41,14 +41,14 @@ import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 
 /**
- * Metacat implemantation of Earthgrid (Ecogrid) REST API as a servlet. In each request
- * REST Servlet initialize a D1ResourceHandler object and then D1ResourceHandler object 
- * handles with request and writes approriate response. 
+ * Metacat implementation of DataONE REST API as a servlet. In each request
+ * REST Servlet initialize a D1ResourceHandler object and then D1ResourceHandler object
+ * handles request and writes appropriate response.
  *  
  */
 public class D1RestServlet extends HttpServlet {
 
-    protected Log logMetacat = LogFactory.getLog(this.getClass());;
+    protected Log logMetacat = LogFactory.getLog(this.getClass());
     protected D1ResourceHandler handler;
     protected static boolean isMetacatConfigured = false;
 
@@ -152,9 +152,9 @@ public class D1RestServlet extends HttpServlet {
                 response.setContentType("text/xml");
                 response.setStatus(error.getCode());
                 try (OutputStream out = response.getOutputStream()) {
-                    IOUtils.write(error.serialize(BaseException.FMT_XML), out);
+                    IOUtils.write(error.serialize(BaseException.FMT_XML), out, "UTF-8");
                 } catch (IOException e) {
-                    logMetacat.error("D1RestServlet.checkIfConfiged - Error writing exception "
+                    logMetacat.error("D1RestServlet.checkIfConfigured - Error writing exception "
                                         + "to stream. " + e.getMessage());
                 }
             }
