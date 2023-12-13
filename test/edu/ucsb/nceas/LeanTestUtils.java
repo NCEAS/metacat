@@ -147,7 +147,7 @@ public class LeanTestUtils {
         } catch (ServiceException e) {
             debug("LeanTestUtils: Unexpected problem initializing PropertyService in " + mode
                 + " mode: " + e.getMessage() + " -- defaultPropsFilePath was: "
-                + defaultPropsFilePath + "and sitePropsFilePath was: " + sitePropsFilePath);
+                + defaultPropsFilePath + ", and sitePropsFilePath was: " + sitePropsFilePath);
             e.printStackTrace();
             success = false;
         }

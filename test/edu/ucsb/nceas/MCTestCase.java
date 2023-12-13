@@ -82,7 +82,7 @@ public class MCTestCase
             metacatContextDir =
                 LeanTestUtils.getExpectedProperties().getProperty("metacat.contextDir");
             String printDebugString =
-                LeanTestUtils.getExpectedProperties().getProperty("test" + ".printdebug");
+                LeanTestUtils.getExpectedProperties().getProperty("test.printdebug");
             printDebug = Boolean.parseBoolean(printDebugString);
             metacatUrl = SystemUtil.getServletURL();
             username = PropertyService.getProperty("test.mcUser");
