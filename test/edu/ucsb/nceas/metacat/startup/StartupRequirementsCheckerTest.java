@@ -3,7 +3,6 @@ package edu.ucsb.nceas.metacat.startup;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.apache.jena.atlas.lib.Bytes;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -45,7 +44,7 @@ public class StartupRequirementsCheckerTest {
     private static final String SOLR_TEST_FULL_SCHEMA_URL = SOLR_TEST_BASE_URL
         + "/" + SOLR_TEST_CORE_NAME + SOLR_SCHEMA_LOCATOR;
 
-    private Path rootPath;
+    private Path testRootPath;
     private Path defaultPropsFilePath;
     private Path sitePropsFilePath;
 
@@ -61,17 +60,16 @@ public class StartupRequirementsCheckerTest {
         assertTrue(Files.isDirectory(rootDirectory));
         assertTrue(Files.isReadable(rootDirectory));
         assertTrue(Files.isWritable(rootDirectory));
-        this.rootPath = Paths.get(rootDirectory.toString(), "/var");
-        LeanTestUtils.debug("using temp dir at: " + rootPath);
+        this.testRootPath = Paths.get(rootDirectory.toString(), "/var");
+        LeanTestUtils.debug("using temp dir at: " + testRootPath);
 
-        String sitePropsDirStr = Paths.get(rootPath.toString(), "metacat", "config").toString();
-
+        String sitePropsDirStr = Paths.get(testRootPath.toString(), "metacat", "config").toString();
         this.sitePropsFilePath =
             Paths.get(sitePropsDirStr, "metacat-site.properties");
 
-        assertNotNull(Files.createDirectories(rootPath));
+        assertNotNull(Files.createDirectories(testRootPath));
         this.defaultPropsFilePath =
-            Files.createFile(Paths.get(rootPath.toString(), "metacat.properties"));
+            Files.createFile(Paths.get(testRootPath.toString(), "metacat.properties"));
         assertTrue(Files.isRegularFile(defaultPropsFilePath));
 
         this.defaultProperties.load(Files.newBufferedReader(defaultPropsFilePath));
@@ -90,14 +88,22 @@ public class StartupRequirementsCheckerTest {
         this.startupRequirementsChecker = new StartupRequirementsChecker();
     }
 
-    @After
-    public void tearDown() {
+    @Test
+    public void contextInitialized_nonK8s() throws IOException {
+
+        LeanTestUtils.debug("contextInitialized_nonK8s()");
+        startupRequirementsChecker.RUNNING_IN_CONTAINER = false;
+        mockSolrSetup(HttpURLConnection.HTTP_OK);
+        startupRequirementsChecker.contextInitialized(getMockServletContextEvent());
     }
 
     @Test
-    public void contextInitialized() throws IOException {
+    public void contextInitialized_k8s() throws IOException {
 
+        LeanTestUtils.debug("contextInitialized_k8s()");
+        startupRequirementsChecker.RUNNING_IN_CONTAINER = true;
         mockSolrSetup(HttpURLConnection.HTTP_OK);
+        setUpK8sSiteProps();
         startupRequirementsChecker.contextInitialized(getMockServletContextEvent());
     }
 
@@ -143,16 +149,19 @@ public class StartupRequirementsCheckerTest {
 
     // validateSiteProperties() test cases /////////////////////////////////////////////////////////
 
-    @Test
-    public void validateSiteProperties_notExistingValid() {
 
-        LeanTestUtils.debug("validateSiteProperties_notExistingValid()");
+    // validateSiteProperties for notExisting needs a nonK8s test only, because in k8s, the site
+    // properties will always be available as a mounted RO configMap, before the pod will start up.
+    @Test
+    public void validateSiteProperties_notExistingValid_nonK8s() {
+        LeanTestUtils.debug("validateSiteProperties_notExistingValid_nonK8s()");
+        startupRequirementsChecker.RUNNING_IN_CONTAINER = false;
         Path sitePropsDir = sitePropsFilePath.getParent();
         assertFalse(Files.isDirectory(sitePropsDir));
         try {
             startupRequirementsChecker.validateSiteProperties(defaultProperties);
         } catch (Exception e) {
-            fail("Unexpected exception: " + e.getMessage());
+            fail("Unexpected exception: " + e);
         }
         assertTrue(Files.isDirectory(sitePropsDir));
         assertTrue(Files.isReadable(sitePropsDir));
@@ -165,7 +174,7 @@ public class StartupRequirementsCheckerTest {
         LeanTestUtils.debug("validateSiteProperties_notExistingRoRoot()");
         try {
             Set<PosixFilePermission> roAttr = PosixFilePermissions.fromString("r--r--r--");
-            Path dummyRootDir = Files.setPosixFilePermissions(rootPath, roAttr);
+            Path dummyRootDir = Files.setPosixFilePermissions(testRootPath, roAttr);
             assertNotNull(dummyRootDir);
             //ensure root dir exists and is RO...
             assertTrue(Files.isDirectory(dummyRootDir));
@@ -184,12 +193,12 @@ public class StartupRequirementsCheckerTest {
 
         LeanTestUtils.debug("validateSiteProperties_notExistingObstructingFile()");
         try {
-            Path dummyRootDir = Files.createDirectories(rootPath);
+            Path dummyRootDir = Files.createDirectories(testRootPath);
             assertNotNull(dummyRootDir);
             //ensure root dir exists and is RO...
             assertTrue(Files.isDirectory(dummyRootDir));
             Path filePath =
-                Paths.get(rootPath.toString(), "metacat");
+                Paths.get(testRootPath.toString(), "metacat");
             Path dummyProps = Files.createFile(filePath);
             assertTrue(Files.exists(dummyProps));
             assertTrue(Files.isRegularFile(dummyProps));
@@ -218,10 +227,13 @@ public class StartupRequirementsCheckerTest {
         }
     }
 
+    // checks the error case where site props file is read-only on a non-k8s system.
+    // (It's always RO on k8s)
     @Test(expected = RuntimeException.class)
-    public void validateSiteProperties_existingRoNonContainerized() {
+    public void validateSiteProperties_existingRo_nonK8s() {
 
-        LeanTestUtils.debug("validateSiteProperties_existingRoNonContainerized()");
+        LeanTestUtils.debug("validateSiteProperties_existingRo_nonK8s()");
+        startupRequirementsChecker.RUNNING_IN_CONTAINER = false;
         try {
             assertNotNull(Files.createDirectories(sitePropsFilePath.getParent()));
             FileAttribute<Set<PosixFilePermission>> roAttr =
@@ -237,10 +249,12 @@ public class StartupRequirementsCheckerTest {
         startupRequirementsChecker.validateSiteProperties(defaultProperties);
     }
 
+    // checks the valid case where site props file is available and read-only, on a k8s system.
     @Test
-    public void validateSiteProperties_existingRoContainerized() {
+    public void validateSiteProperties_existingRo_k8s() {
 
-        LeanTestUtils.debug("validateSiteProperties_existingRo()");
+        LeanTestUtils.debug("validateSiteProperties_existingRo()_k8s");
+        startupRequirementsChecker.RUNNING_IN_CONTAINER = true;
         try {
             assertNotNull(Files.createDirectories(sitePropsFilePath.getParent()));
             FileAttribute<Set<PosixFilePermission>> roAttr =
@@ -393,6 +407,20 @@ public class StartupRequirementsCheckerTest {
         assertExceptionContains(e1, String.valueOf(HttpURLConnection.HTTP_NOT_FOUND));
     }
 
+    private void setUpK8sSiteProps() throws IOException {
+        assertNotNull(Files.createDirectories(this.sitePropsFilePath.getParent()));
+        Path sitePropsFile = Files.createFile(this.sitePropsFilePath);
+        assertTrue(sitePropsFile.toFile().exists());
+        try {
+            Set<PosixFilePermission> roAttr = PosixFilePermissions.fromString("r--r--r--");
+            Files.setPosixFilePermissions(sitePropsFile, roAttr);
+            //ensure site props file is now RO...
+            assertTrue(Files.isReadable(sitePropsFile));
+            assertFalse(Files.isWritable(sitePropsFile));
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getMessage());
+        }
+    }
 
     private void createTestProperties_nonStringProps(Path pathToPropsFile) {
         try {
@@ -460,7 +488,7 @@ public class StartupRequirementsCheckerTest {
      */
     private ServletContextEvent getMockServletContextEvent() {
         ServletContext scMock = Mockito.mock(ServletContext.class);
-        Mockito.when(scMock.getRealPath(anyString())).thenReturn(rootPath.toString());
+        Mockito.when(scMock.getRealPath(anyString())).thenReturn(testRootPath.toString());
 
         ServletContextEvent servletContextEventMock = Mockito.mock(ServletContextEvent.class);
         Mockito.when(servletContextEventMock.getServletContext()).thenReturn(scMock);
