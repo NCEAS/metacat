@@ -62,22 +62,37 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Metacat setup quirk - will not use https unless server.httpPort AND httpSSLPort are BOTH set
-to 443. Automating this here, so operator doesn't need to mess with this confusing config:
-* If .Values.metacat.server.httpPort is set explicitly, use it.
+* If .Values.metacat.server.port is set explicitly, use it.
 Otherwise:
-* If using the ingress, set server.httpPort correctly to 80 or 443, depending if TLS is set up
+* If using the ingress, set server.port correctly to 80 or 443, depending if TLS is set up
 */}}
-{{- define "metacat.httpPort" -}}
-{{- $metacatHttpPort := (index .Values.metacat "server.httpPort") -}}
-{{- if not $metacatHttpPort -}}
+{{- define "metacat.serverPort" -}}
+{{- $metacatServerPort := (index .Values.metacat "server.port") -}}
+{{- if not $metacatServerPort -}}
 {{- if .Values.ingress.enabled -}}
-    {{- $metacatHttpPort = ternary "80" "443" ( eq (len .Values.ingress.tls) 0 ) -}}
+    {{- $metacatServerPort = ternary "80" "443" ( eq (len .Values.ingress.tls) 0 ) -}}
 {{- else -}}
-    {{- $metacatHttpPort = "80" -}}
+    {{- $metacatServerPort = "80" -}}
 {{- end -}}
 {{- end -}}
-{{- $metacatHttpPort }}
+{{- $metacatServerPort }}
+{{- end }}
+
+{{/*
+* If .Values.metacat.server.https is set explicitly, use it.
+Otherwise:
+* If using the ingress, set server.https correctly to true or false, depending if TLS is set up
+*/}}
+{{- define "metacat.serverHttps" -}}
+{{- $metacatServerHttps := (index .Values.metacat "server.https") -}}
+{{- if not $metacatServerHttps -}}
+{{- if .Values.ingress.enabled -}}
+    {{- $metacatServerHttps = ternary "false" "true" ( eq (len .Values.ingress.tls) 0 ) -}}
+{{- else -}}
+    {{- $metacatServerHttps = "false" -}}
+{{- end -}}
+{{- end -}}
+{{- $metacatServerHttps }}
 {{- end }}
 
 {{/*
