@@ -2119,7 +2119,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
             account = 0;
             while (oreId2.size() != 2 && account <= MNodeQueryIT.tryAcccounts) {
-                Thread.sleep(1000);
+                Thread.sleep(500);
                 account++;
                 oreId2 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
             }
