@@ -18,6 +18,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import edu.ucsb.nceas.LeanTestUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -88,8 +89,14 @@ public class FailedIndexResubmitTimerTaskIT {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, "UTF-8");
         }
+        assertNotNull("Couldn't initialize resultStr from solr query (" + query + ") - still null",
+                      resultStr);
+        assertTrue(
+            "Couldn't initialize resultStr from solr query (" + query
+                + "). resultStr does not contain `checksum`",
+            resultStr.contains("checksum"));
     }
     
     

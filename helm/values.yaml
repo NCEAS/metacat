@@ -149,13 +149,16 @@ metacat:
   ##
   guid.doi.enabled: true
 
-  ## @param metacat.server.httpPort The http port exposed externally, if NOT using the ingress
+  ## @param metacat.server.port The http port exposed externally, if NOT using the ingress
   ## to allow connections from outside the k8s cluster (e.g. if you're using a loadBalancer
-  ## service or kubectl proxy instead).
-  ## If you ARE using the ingress (i.e. `.Values.ingress.enabled` is `true`), then leave this unset,
-  ## and it will be autopopulated, depending upon whether you have TLS set up for the ingress
+  ## service or kubectl proxy instead). If not using the ingress, you will also need to specify a
+  ## value for server.https: (either "true" or "false"), depending on whether you're using TLS.
   ##
-  server.httpPort: ""
+  ## If you ARE using the ingress (i.e. `.Values.ingress.enabled` is `true`), then leave both
+  ## 'server.port' and 'server.https' unset, and they will both be autopopulated, depending upon
+  ## whether you have TLS set up for the ingress
+  ##
+  server.port: ""
 
   ## @param metacat.server.name The hostname for the server, as exposed by the ingress
   ## and seen by end users outside the cluster

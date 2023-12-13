@@ -91,7 +91,7 @@ spec:
             - name: METACAT_EXTERNAL_HOSTNAME
               value: {{ index .Values.metacat "server.name" }}
             - name: METACAT_EXTERNAL_PORT
-              value: {{ include "metacat.httpPort" . | quote }}
+              value: {{ include "metacat.serverPort" . | quote }}
             - name: METACAT_APP_CONTEXT
               value: {{ index .Values.metacat "application.context" }}
             - name: TOMCAT_MEM_MIN

@@ -105,7 +105,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `metacat.auth.administrators`     | A colon-separated list of admin usernames or LDAP-style DN      | `admin@localhost`   |
 | `metacat.database.connectionURI`  | postgres database URI, or lave blank to use sub-chart           | `""`                |
 | `metacat.guid.doi.enabled`        | Allow users to publish Digital Object Identifiers at doi.org?   | `true`              |
-| `metacat.server.httpPort`         | The http port exposed externally, if NOT using the ingress      | `""`                |
+| `metacat.server.port`             | The http port exposed externally, if NOT using the ingress      | `""`                |
 | `metacat.server.name`             | The hostname for the server, as exposed by the ingress          | `localhost`         |
 | `metacat.solr.baseURL`            | The url to access solr, or leave blank to use sub-chart         | `""`                |
 | `metacat.solr.coreName`           | The solr core (solr standalone) or collection name (solr cloud) | `""`                |
