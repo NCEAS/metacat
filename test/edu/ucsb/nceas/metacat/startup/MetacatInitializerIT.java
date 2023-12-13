@@ -10,6 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -48,14 +49,14 @@ public class MetacatInitializerIT {
         //This should be a full-configured Metacat
         MetacatInitializer metacatInitializer = new MetacatInitializer();
         metacatInitializer.contextInitialized(event);
-        assertTrue(metacatInitializer.isFullyInitialized() == true);
+        assertTrue(metacatInitializer.isFullyInitialized());
         // set Metacat non-configured temporarily.
         PropertyService
              .setPropertyNoPersist("configutil.authConfigured", PropertyService.UNCONFIGURED);
         //reset the fully-initialized flag to be false by creating a new instance
         metacatInitializer = new MetacatInitializer();
         metacatInitializer.contextInitialized(event);
-        assertTrue(metacatInitializer.isFullyInitialized() == false);
+        assertFalse(metacatInitializer.isFullyInitialized());
         PropertyService
                     .setPropertyNoPersist("configutil.authConfigured", PropertyService.CONFIGURED);
     }
@@ -85,7 +86,7 @@ public class MetacatInitializerIT {
              .setPropertyNoPersist("configutil.databaseConfigured", PropertyService.UNCONFIGURED);
         metacatInitializer = new MetacatInitializer();
         metacatInitializer.contextInitialized(event);
-        assertTrue(metacatInitializer.isFullyInitialized() == false);
+        assertFalse(metacatInitializer.isFullyInitialized());
 
         // set the original properties back
         PropertyService.setPropertyNoPersist("database.connectionURI", originUri);
@@ -119,7 +120,7 @@ public class MetacatInitializerIT {
              .setPropertyNoPersist("configutil.skinsConfigured", PropertyService.UNCONFIGURED);
         metacatInitializer = new MetacatInitializer();
         metacatInitializer.contextInitialized(event);
-        assertTrue(metacatInitializer.isFullyInitialized() == false);
+        assertFalse(metacatInitializer.isFullyInitialized());
 
         // set the original properties back
         Settings.getConfiguration().setProperty("index.rabbitmq.hostname", originHost);
