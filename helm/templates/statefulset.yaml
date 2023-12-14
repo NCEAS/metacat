@@ -100,6 +100,12 @@ spec:
               value: {{ .Values.tomcat.heapMemory.max }}
             - name: POSTGRES_USER
               value: {{ .Values.postgresql.auth.username }}
+            - name: METACAT_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-metacat-secrets
+                  key: rabbitmq-password
+                  optional: false
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-metacat-secrets
