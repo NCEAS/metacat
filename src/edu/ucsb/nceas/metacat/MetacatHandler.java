@@ -8,15 +8,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Hashtable;
-import java.util.List;
-import java.util.Timer;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
@@ -37,13 +31,10 @@ import edu.ucsb.nceas.metacat.event.MetacatEventService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
-import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.metacat.util.SystemUtil;
-import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.LSIDUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -58,9 +49,6 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * @author Matthew Jones
  */
 public class MetacatHandler {
-
-    private static boolean _sitemapScheduled = false;
-
     private static Log logMetacat = LogFactory.getLog(MetacatHandler.class);
 
     // Constants -- these should be final in a servlet
@@ -75,21 +63,9 @@ public class MetacatHandler {
             + "Equivalent API methods now are available through "
             + "the DataONE API (see <https://knb.ecoinformatics.org/api>)." + ERRORCLOSE;
 
-    private static Timer timer;
 
     /**
-     * Constructor with a timer object. This constructor will be used in the MetacatServlet class
-     * which is the only place to handle the site map generation.
-     *
-     * @param timer the timer used to schedule the site map generation
-     */
-    public MetacatHandler(Timer timer) {
-        this.timer = timer;
-    }
-
-    /**
-     * Default constructor. It will be used in the DataONE API, which doesn't need to handle the
-     * timer.
+     * Default constructor.
      */
     public MetacatHandler() {
 
@@ -102,155 +78,10 @@ public class MetacatHandler {
      * @throws IOException
      */
     protected void sendNotSupportMessage(HttpServletResponse response) throws IOException {
-        PrintWriter out = null;
-        try {
-            out = response.getWriter();
+        try (PrintWriter out = response.getWriter()) {
+            response.setStatus(301);
             out.println(NOT_SUPPORT_MESSAGE);
-        } finally {
-            if (out != null) {
-                out.close();
-            }
         }
-    }
-
-    protected void handleDataquery(
-        Hashtable<String, String[]> params, HttpServletResponse response, String sessionId)
-        throws PropertyNotFoundException, IOException {
-        sendNotSupportMessage(response);
-    }
-
-    protected void handleEditCart(
-        Hashtable<String, String[]> params, HttpServletResponse response, String sessionId)
-        throws PropertyNotFoundException, IOException {
-        sendNotSupportMessage(response);
-    }
-    // ///////////////////////////// METACAT SPATIAL ///////////////////////////
-
-    /**
-     * handles all spatial queries -- these queries may include any of the queries supported by the
-     * WFS / WMS standards
-     *
-     * handleSQuery(out, params, response, username, groupnames, sess_id);
-     *
-     * @throws HandlerException
-     */
-    protected void handleSpatialQuery(
-        Hashtable<String, String[]> params, HttpServletResponse response, String username,
-        String[] groupnames, String sess_id) throws PropertyNotFoundException, IOException {
-        sendNotSupportMessage(response);
-    }
-
-    // LOGIN & LOGOUT SECTION
-
-    /**
-     * Handle the login request. Create a new session object. Do user authentication through the
-     * session.
-     *
-     * @throws IOException
-     */
-    public void handleLoginAction(
-        Hashtable<String, String[]> params, HttpServletRequest request,
-        HttpServletResponse response) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle the logout request. Close the connection.
-     *
-     * @throws IOException
-     */
-    public void handleLogoutAction(
-        Hashtable<String, String[]> params, HttpServletRequest request,
-        HttpServletResponse response) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    // END OF LOGIN & LOGOUT SECTION
-
-    // SQUERY & QUERY SECTION
-
-    /**
-     * Retrieve the squery xml, execute it and display it
-     *
-     * @param out       the output stream to the client
-     * @param params    the Hashtable of parameters that should be included in the squery.
-     * @param response  the response object linked to the client
-     * @param user      the username (it maybe different to the one in param)
-     * @param groups    the group array
-     * @param sessionid the sessionid
-     */
-    protected void handleSQuery(
-        Hashtable<String, String[]> params, HttpServletResponse response, String user,
-        String[] groups, String sessionid) throws PropertyNotFoundException, IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Create the xml query, execute it and display the results.
-     *
-     * @param out      the output stream to the client
-     * @param params   the Hashtable of parameters that should be included in the squery.
-     * @param response the response object linked to the client
-     * @throws IOException
-     * @throws UnsupportedEncodingException
-     */
-    protected void handleQuery(
-        Hashtable<String, String[]> params, HttpServletResponse response, String user,
-        String[] groups, String sessionid)
-        throws PropertyNotFoundException, IOException {
-        sendNotSupportMessage(response);
-    }
-
-    // END OF SQUERY & QUERY SECTION
-
-    //Export section
-
-    /**
-     * Handle the "export" request of data package from Metacat in zip format
-     *
-     * @param params   the Hashtable of HTTP request parameters
-     * @param response the HTTP response object linked to the client
-     * @param user     the username sent the request
-     * @param groups   the user's groupnames
-     */
-    protected void handleExportAction(
-        Hashtable<String, String[]> params, HttpServletResponse response, String user,
-        String[] groups, String passWord) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * In eml2 document, the xml can have inline data and data was stripped off and store in file
-     * system. This action can be used to read inline data only
-     *
-     * @param params   the Hashtable of HTTP request parameters
-     * @param response the HTTP response object linked to the client
-     * @param user     the username sent the request
-     * @param groups   the user's groupnames
-     */
-    protected void handleReadInlineDataAction(
-        Hashtable<String, String[]> params, HttpServletRequest request,
-        HttpServletResponse response, String user, String passWord, String[] groups)
-        throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle the "read" request of metadata/data files from Metacat or any files from Internet;
-     * transformed metadata XML document into HTML presentation if requested; zip files when more
-     * than one were requested.
-     *
-     * @param params   the Hashtable of HTTP request parameters
-     * @param request  the HTTP request object linked to the client
-     * @param response the HTTP response object linked to the client
-     * @param user     the username sent the request
-     * @param groups   the user's groupnames
-     */
-    public void handleReadAction(
-        Hashtable<String, String[]> params, HttpServletRequest request,
-        HttpServletResponse response, String user, String passWord, String[] groups)
-        throws IOException {
-        sendNotSupportMessage(response);
     }
 
     /**
@@ -588,14 +419,6 @@ public class MetacatHandler {
                         throw new Exception(error);
                     }
 
-              /*if (accNumber == null || accNumber.equals("")) {
-                  logMetacat.warn("MetacatHandler.handleInsertOrUpdateAction - " +
-                                  "writing with null acnumber");
-                  newdocid = documentWrapper.write(dbConn, doctext[0], pub, dtd,
-                          doAction, null, user, groups);
-                  EventLog.getInstance().log(ipAddress, userAgent, user, "", action[0]);
-
-              } else {*/
                     newdocid =
                         documentWrapper.write(dbConn, doctext[0], pub, dtd, doAction, accNumber,
                                               user, groups, xmlBytes, schemaLocation, checksum,
@@ -603,7 +426,6 @@ public class MetacatHandler {
 
                     EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action[0]);
 
-                    //}
 
                     // alert listeners of this event
                     MetacatDocumentEvent mde = new MetacatDocumentEvent();
@@ -812,239 +634,5 @@ public class MetacatHandler {
         return validate;
     }
 
-    // END OF INSERT/UPDATE SECTION
 
-    /**
-     * Handle the database delete request and delete an XML document from the database connection
-     */
-    public void handleDeleteAction(
-        Hashtable<String, String[]> params, HttpServletRequest request,
-        HttpServletResponse response, String user, String[] groups) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle the validation request and return the results to the requestor
-     */
-    protected void handleValidateAction(
-        HttpServletResponse response, Hashtable<String, String[]> params) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Look up the pid (guid)-to-docid mapping. Returns XML on the response, e.g.:
-     * <docid>sample.1.1</docid>
-     *
-     * @param params
-     * @param response
-     * @throws IOException
-     */
-    protected void handleGetDocid(Hashtable<String, String[]> params, HttpServletResponse response)
-        throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle "getrevsionanddoctype" action Given a docid, return it's current revision and doctype
-     * from data base The output is String look like "rev;doctype"
-     */
-    protected void handleGetRevisionAndDocTypeAction(
-        HttpServletResponse response, Hashtable<String, String[]> params) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle "getaccesscontrol" action. Read Access Control List from db connection in XML format
-     */
-    protected void handleGetAccessControlAction(
-        Hashtable<String, String[]> params, HttpServletResponse response, String username,
-        String[] groupnames) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle the "getprincipals" action. Read all principals from authentication scheme in XML
-     * format
-     *
-     * @throws IOException
-     */
-    protected void handleGetPrincipalsAction(
-        HttpServletResponse response, String user, String password) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle "getdoctypes" action. Read all doctypes from db connection in XML format
-     */
-    protected void handleGetDoctypesAction(
-        Hashtable<String, String[]> params, HttpServletResponse response) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle the "getdtdschema" action. Read DTD or Schema file for a given doctype from Metacat
-     * catalog system
-     */
-    protected void handleGetDTDSchemaAction(
-        Hashtable<String, String[]> params, HttpServletResponse response) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Check if the document is registered in either the xml_documents or xml_revisions table
-     *
-     * @param out      the writer to write the xml results to
-     * @param params   request parameters
-     * @param response the http servlet response
-     */
-    public void handleIdIsRegisteredAction(
-        Hashtable<String, String[]> params, HttpServletResponse response) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle the "getalldocids" action. return a list of all docids registered in the system
-     */
-    public void handleGetAllDocidsAction(
-        Hashtable<String, String[]> params, HttpServletResponse response) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle the "getlastdocid" action. Get the latest docid with rev number from db connection in
-     * XML format
-     */
-    public void handleGetMaxDocidAction(
-        Hashtable<String, String[]> params, HttpServletResponse response) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Print a report from the event log based on filter parameters passed in from the web.
-     *
-     * @param params   the parameters from the web request
-     * @param request  the http request object for getting request details
-     * @param response the http response object for writing output
-     */
-    protected void handleGetLogAction(
-        Hashtable<String, String[]> params, HttpServletRequest request,
-        HttpServletResponse response, String username, String[] groups, String sessionId)
-        throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Rebuild the index for one or more documents. If the docid parameter is provided, rebuild for
-     * just that one document or list of documents. If not, then rebuild the index for all documents
-     * in the xml_documents table.
-     *
-     * @param params   the parameters from the web request
-     * @param request  the http request object for getting request details
-     * @param response the http response object for writing output
-     * @param username the username of the authenticated user
-     */
-    protected void handleBuildIndexAction(
-        Hashtable<String, String[]> params, HttpServletRequest request,
-        HttpServletResponse response, String username, String[] groups) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-    /**
-     * Handle documents passed to metacat that are encoded using the "multipart/form-data" mime
-     * type. This is typically used for uploading data files which may be binary and large.
-     */
-    protected void handleMultipartForm(HttpServletRequest request, HttpServletResponse response)
-        throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-
-    /*
-     * A method to handle set access action
-     */
-    protected void handleSetAccessAction(
-        Hashtable<String, String[]> params, String username, HttpServletRequest request,
-        HttpServletResponse response) throws IOException {
-        sendNotSupportMessage(response);
-    }
-
-
-    /**
-     * Schedule the sitemap generator to run periodically and update all of the sitemap files for
-     * search indexing engines
-     */
-    protected void scheduleSitemapGeneration() {
-        if (_sitemapScheduled) {
-            logMetacat.debug("MetacatHandler.scheduleSitemapGeneration: Tried to call "
-                                 + "scheduleSitemapGeneration() when a sitemap was already "
-                                 + "scheduled. Doing nothing.");
-
-            return;
-        }
-
-        String directoryName = null;
-        long sitemapInterval = 0;
-
-        try {
-            directoryName = SystemUtil.getContextDir() + FileUtil.getFS() + "sitemaps";
-            sitemapInterval = Integer.parseInt(PropertyService.getProperty("sitemap.interval"));
-        } catch (PropertyNotFoundException pnfe) {
-            logMetacat.error("MetacatHandler.scheduleSitemapGeneration - "
-                                 + "Could not run site map generation because property "
-                                 + "could not be found: " + pnfe.getMessage());
-        }
-
-        File directory = new File(directoryName);
-        directory.mkdirs();
-
-        // Determine sitemap location and entry base URLs. Prepends the
-        // secure server URL from the metacat configuration if the
-        // values in the properties don't start with 'http' (e.g., '/view')
-        String serverUrl = "";
-        String locationBase = "";
-        String entryBase = "";
-        String portalBase = "";
-        List<String> portalFormats = new ArrayList<>();
-
-        try {
-            serverUrl = SystemUtil.getServerURL();
-            locationBase = PropertyService.getProperty("sitemap.location.base");
-            entryBase = PropertyService.getProperty("sitemap.entry.base");
-        } catch (PropertyNotFoundException pnfe) {
-            logMetacat.error("MetacatHandler.scheduleSitemapGeneration - "
-                                 + "Could not run site map generation because property "
-                                 + "could not be found: " + pnfe.getMessage());
-        }
-
-        try {
-            portalBase = PropertyService.getProperty("sitemap.entry.portal.base");
-            portalFormats.addAll(Arrays.asList(
-                PropertyService.getProperty("sitemap.entry.portal.formats").split(";")));
-        } catch (PropertyNotFoundException pnfe) {
-            logMetacat.info("MetacatHandler.scheduleSitemapGeneration - "
-                                + "Could not get portal-specific sitemap properties: "
-                                + pnfe.getMessage());
-        }
-
-        // Prepend server URL to locationBase if needed
-        if (!locationBase.startsWith("http")) {
-            locationBase = serverUrl + locationBase;
-        }
-
-        // Prepend server URL to entryBase if needed
-        if (!entryBase.startsWith("http")) {
-            entryBase = serverUrl + entryBase;
-        }
-
-        // Prepend server URL to portalBase if needed
-        if (!portalBase.startsWith("http")) {
-            portalBase = serverUrl + portalBase;
-        }
-
-        Sitemap smap = new Sitemap(directory, locationBase, entryBase, portalBase, portalFormats);
-        long firstDelay = 10000; // in milliseconds
-
-        timer.schedule(smap, firstDelay, sitemapInterval);
-        _sitemapScheduled = true;
-    }
 }

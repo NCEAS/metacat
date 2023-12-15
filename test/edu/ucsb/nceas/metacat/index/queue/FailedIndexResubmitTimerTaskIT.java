@@ -34,7 +34,7 @@ import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import edu.ucsb.nceas.metacat.dataone.MNodeQueryTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeQueryIT;
 import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.index.IndexEventDAO;
@@ -85,7 +85,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-                                                && count <= MNodeQueryTest.tryAcccounts) {
+                                                && count <= MNodeQueryIT.tryAcccounts) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -133,7 +133,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         String newVersion = null;
-        while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
+        while (!versionChanged && count <= MNodeQueryIT.tryAcccounts) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -186,7 +186,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         String newVersion = null;
-        while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
+        while (!versionChanged && count <= MNodeQueryIT.tryAcccounts) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -237,7 +237,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         while ((resultStr != null && resultStr.contains("checksum"))
-                                                && count <= MNodeQueryTest.tryAcccounts) {
+                                                && count <= MNodeQueryIT.tryAcccounts) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);

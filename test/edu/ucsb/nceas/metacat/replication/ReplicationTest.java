@@ -1,21 +1,33 @@
 package edu.ucsb.nceas.metacat.replication;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.Hashtable;
+
+import javax.servlet.http.HttpServletResponse;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
+import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
@@ -92,6 +104,7 @@ public class ReplicationTest extends D1NodeServiceTest {
         suite.addTest(new ReplicationTest("testReplicateDataLocking"));
         suite.addTest(new ReplicationTest("testDocumentInfo"));
         suite.addTest(new ReplicationTest("testReplicateJsonLD_AtoB"));
+        suite.addTest(new ReplicationTest("isReadOnly"));
         return suite;
     }
 
@@ -426,5 +439,31 @@ public class ReplicationTest extends D1NodeServiceTest {
             "\"name\": \"Removal of organic carbon by natural bacterioplankton "
                 + "communities as a function of pCO2 from laboratory experiments between 2012 and"
                 + " 2016\""));
+    }
+
+    /**
+     * Test the isReadOnly method
+     * @throws IOException
+     */
+    public void isReadOnly() throws IOException {
+        HttpServletResponse mockResponse = Mockito.mock(HttpServletResponse.class);
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter writer = new PrintWriter(stringWriter);
+        Mockito.when(mockResponse.getWriter()).thenReturn(writer);
+        Configuration mockD1Config = Mockito.mock(Configuration.class);
+        try (MockedStatic<Settings> ignored = Mockito.mockStatic(Settings.class)) {
+            Mockito.when(Settings.getConfiguration()).thenReturn(mockD1Config);
+
+            // NOT read-only
+            Mockito.when(mockD1Config.getString("application.readOnlyMode")).thenReturn("false");
+            assertFalse(ReplicationServlet.isReadOnly(mockResponse));
+            assertFalse(stringWriter.toString().contains("Metacat is in read-only mode"));
+
+            // read-only
+            Mockito.when(mockD1Config.getString("application.readOnlyMode")).thenReturn("true");
+            assertTrue(ReplicationServlet.isReadOnly(mockResponse));
+            assertTrue("Actual response was: " + stringWriter.toString(),
+                       stringWriter.toString().contains("Metacat is in read-only mode"));
+        }
     }
 }

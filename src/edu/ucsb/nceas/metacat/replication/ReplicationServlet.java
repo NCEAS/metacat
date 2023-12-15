@@ -49,6 +49,7 @@ import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
 
 import edu.ucsb.nceas.metacat.MetaCatServlet;
+import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 
@@ -151,36 +152,36 @@ public class ReplicationServlet extends HttpServlet {
 				ReplicationService.handleGetDataFileRequest(outStream, params, response);
 				outStream.close();
 			} else if (action.equals("forcereplicatedatafile")) {
-			    if(MetaCatServlet.isReadOnly(response)) {
+			    if(isReadOnly(response)) {
                     return;
                 }
 				//read a specific docid from remote host, and store it into local host
 				ReplicationService.handleForceReplicateDataFileRequest(params, request);
 			} else if (action.equals("forcereplicate")) {
-			    if(MetaCatServlet.isReadOnly(response)) {
+			    if(isReadOnly(response)) {
                     return;
                 }
 				// read a specific docid from remote host, and store it into local host
 				ReplicationService.handleForceReplicateRequest(params, response, request);
 			} else if (action.equals("forcereplicatesystemmetadata")) {
-			    if(MetaCatServlet.isReadOnly(response)) {
+			    if(isReadOnly(response)) {
                     return;
                 }
 				ReplicationService.handleForceReplicateSystemMetadataRequest(params, response, request);
 			} else if (action.equals(ReplicationService.FORCEREPLICATEDELETE)) {
-			    if(MetaCatServlet.isReadOnly(response)) {
+			    if(isReadOnly(response)) {
                     return;
                 }
 				// read a specific docid from remote host, and store it into local host
 				ReplicationService.handleForceReplicateDeleteRequest(params, response, request, false);
 			} else if (action.equals(ReplicationService.FORCEREPLICATEDELETEALL)) {
-			    if(MetaCatServlet.isReadOnly(response)) {
+			    if(isReadOnly(response)) {
                     return;
                 }
 				// read a specific docid from remote host, and store it into local host
 				ReplicationService.handleForceReplicateDeleteRequest(params, response, request, true);
 			} else if (action.equals("update")) {
-			    if(MetaCatServlet.isReadOnly(response)) {
+			    if(isReadOnly(response)) {
                     return;
                 }
 				// request an update list from the server
@@ -253,4 +254,27 @@ public class ReplicationServlet extends HttpServlet {
 		}
  		return false;
 	}
+	
+    /**
+     * Check if the Metacat instance is in ready-only mode
+     * @param response  the response will be used to write back message
+     * @return true if it is in read-only mode; false otherwise.
+     * @throws IOException
+     */
+    public static boolean isReadOnly(HttpServletResponse response) throws IOException {
+        boolean readOnly = false;
+        ReadOnlyChecker checker = new ReadOnlyChecker();
+        readOnly = checker.isReadOnly();
+        if(readOnly) {
+            PrintWriter out = response.getWriter();
+            response.setContentType("text/xml");
+            out.println("<?xml version=\"1.0\"?>");
+            out.println("<error>");
+            out.println("Metacat is in read-only mode and your request can't be fulfilled. "
+                                + "Please try again later.");
+            out.println("</error>");
+            out.close();
+        }
+        return readOnly;
+    }
 }

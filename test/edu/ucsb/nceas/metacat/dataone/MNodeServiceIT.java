@@ -1997,7 +1997,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             String resultStr = IOUtils.toString(stream, "UTF-8");
             int account = 0;
             while ( (resultStr == null || !resultStr.contains("checksum")) 
-                    && account <= MNodeQueryTest.tryAcccounts) {
+                    && account <= MNodeQueryIT.tryAcccounts) {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2013,7 +2013,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8");
             account = 0;
             while ( (resultStr == null || !resultStr.contains("checksum")) 
-                    && account <= MNodeQueryTest.tryAcccounts) {
+                    && account <= MNodeQueryIT.tryAcccounts) {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2030,7 +2030,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8");
             account = 0;
             while ( (resultStr == null || !resultStr.contains("checksum")) 
-                    && account <= MNodeQueryTest.tryAcccounts) {
+                    && account <= MNodeQueryIT.tryAcccounts) {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2050,7 +2050,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8");
             account = 0;
             while ( (resultStr == null || !resultStr.contains("checksum")) 
-                    && account <= MNodeQueryTest.tryAcccounts) {
+                    && account <= MNodeQueryIT.tryAcccounts) {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2104,7 +2104,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8");
             account = 0;
             while ( (resultStr == null || !resultStr.contains("resourceMap")) 
-                    && account <= MNodeQueryTest.tryAcccounts) {
+                    && account <= MNodeQueryIT.tryAcccounts) {
                 Thread.sleep(1000);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2117,6 +2117,12 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             assertTrue(oreIds.size() == 1);
             List<Identifier> oreId2 =
                 MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+            account = 0;
+            while (oreId2.size() != 2 && account <= MNodeQueryIT.tryAcccounts) {
+                Thread.sleep(500);
+                account++;
+                oreId2 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+            }
             assertTrue(oreId2.size() == 2);
         } catch (Exception e) {
             e.printStackTrace();
@@ -4512,7 +4518,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         String resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-                                                && count <= MNodeQueryTest.tryAcccounts) {
+                                                && count <= MNodeQueryIT.tryAcccounts) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -4534,7 +4540,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-                                                && count <= MNodeQueryTest.tryAcccounts) {
+                                                && count <= MNodeQueryIT.tryAcccounts) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query1);
@@ -4570,7 +4576,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         count = 0;
         String newVersion = null;
-        while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
+        while (!versionChanged && count <= MNodeQueryIT.tryAcccounts) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -4585,7 +4591,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         count = 0;
         String newVersion1 = null;
-        while (!versionChanged && count <= MNodeQueryTest.tryAcccounts) {
+        while (!versionChanged && count <= MNodeQueryIT.tryAcccounts) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query1);
