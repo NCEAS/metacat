@@ -8,12 +8,12 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.UtilException;
@@ -211,7 +211,7 @@ public class SystemUtil {
         if(firstTimeTryInternalURL) {
             firstTimeTryInternalURL = false;
             internalURL = getInternalServerFromProp();
-        } else if(firstTryInternalURLAfterFullInit && MetaCatServlet.isFullyInitialized()) {
+        } else if(firstTryInternalURLAfterFullInit && MetacatInitializer.isFullyInitialized()) {
             firstTryInternalURLAfterFullInit = false;
             internalURL = getInternalServerFromProp();
             try {

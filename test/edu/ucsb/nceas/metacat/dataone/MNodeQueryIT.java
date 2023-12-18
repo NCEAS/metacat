@@ -58,7 +58,6 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
-import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
 import org.dataone.vocabulary.CITO;
 import org.dspace.foresite.ResourceMap;
@@ -84,7 +83,7 @@ import edu.ucsb.nceas.metacat.util.SystemUtil;
  * @author cjones
  *
  */
-public class MNodeQueryTest extends D1NodeServiceTest {
+public class MNodeQueryIT extends D1NodeServiceTest {
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
     private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
     private static String portalFilePath = "metacat-index/src/test/resources/collection/portal-example-simple.xml";
@@ -128,28 +127,28 @@ public class MNodeQueryTest extends D1NodeServiceTest {
   public static Test suite() {
     
     TestSuite suite = new TestSuite();
-    suite.addTest(new MNodeQueryTest("initialize"));
-    suite.addTest(new MNodeQueryTest("testQueryOfArchivedObjects"));
-    suite.addTest(new MNodeQueryTest("testPackage"));
-    suite.addTest(new MNodeQueryTest("testPackageWithSID"));
-    suite.addTest(new MNodeQueryTest("testQueryAccessControlAgainstPrivateObject"));
-    suite.addTest(new MNodeQueryTest("testQueryAccessControlAgainstPublicObject"));
-    suite.addTest(new MNodeQueryTest("testQueryEMLTaxonomy"));
-    suite.addTest(new MNodeQueryTest("testISO211"));
-    suite.addTest(new MNodeQueryTest("testPortalDocument"));
-    suite.addTest(new MNodeQueryTest("testPackageWithParts"));
-    suite.addTest(new MNodeQueryTest("testPostLongQuery"));
-    suite.addTest(new MNodeQueryTest("testChineseCharacters"));
-    suite.addTest(new MNodeQueryTest("testAccess"));
-    suite.addTest(new MNodeQueryTest("testPortal110"));
-    suite.addTest(new MNodeQueryTest("testCollectionl110"));
-    suite.addTest(new MNodeQueryTest("testSchemaOrg"));
-    suite.addTest(new MNodeQueryTest("testSchemaOrgWithContexts"));
-    suite.addTest(new MNodeQueryTest("testUpdateSystemmetadataToMakeObsolescentChain"));
-    suite.addTest(new MNodeQueryTest("testEmlWithAnnotation"));
-    suite.addTest(new MNodeQueryTest("testDelete"));
-    suite.addTest(new MNodeQueryTest("testDeletePackage"));
-    suite.addTest(new MNodeQueryTest("testDeletePackage2"));
+    suite.addTest(new MNodeQueryIT("initialize"));
+    suite.addTest(new MNodeQueryIT("testQueryOfArchivedObjects"));
+    suite.addTest(new MNodeQueryIT("testPackage"));
+    suite.addTest(new MNodeQueryIT("testPackageWithSID"));
+    suite.addTest(new MNodeQueryIT("testQueryAccessControlAgainstPrivateObject"));
+    suite.addTest(new MNodeQueryIT("testQueryAccessControlAgainstPublicObject"));
+    suite.addTest(new MNodeQueryIT("testQueryEMLTaxonomy"));
+    suite.addTest(new MNodeQueryIT("testISO211"));
+    suite.addTest(new MNodeQueryIT("testPortalDocument"));
+    suite.addTest(new MNodeQueryIT("testPackageWithParts"));
+    suite.addTest(new MNodeQueryIT("testPostLongQuery"));
+    suite.addTest(new MNodeQueryIT("testChineseCharacters"));
+    suite.addTest(new MNodeQueryIT("testAccess"));
+    suite.addTest(new MNodeQueryIT("testPortal110"));
+    suite.addTest(new MNodeQueryIT("testCollectionl110"));
+    suite.addTest(new MNodeQueryIT("testSchemaOrg"));
+    suite.addTest(new MNodeQueryIT("testSchemaOrgWithContexts"));
+    suite.addTest(new MNodeQueryIT("testUpdateSystemmetadataToMakeObsolescentChain"));
+    suite.addTest(new MNodeQueryIT("testEmlWithAnnotation"));
+    suite.addTest(new MNodeQueryIT("testDelete"));
+    suite.addTest(new MNodeQueryIT("testDeletePackage"));
+    suite.addTest(new MNodeQueryIT("testDeletePackage2"));
     return suite;
     
   }
@@ -159,7 +158,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
    * 
    * @param name - the name of the test
    */
-  public MNodeQueryTest(String name) {
+  public MNodeQueryIT(String name) {
     super(name);
     try {
         collectionQueryPortal110 = FileUtils.readFileToString(new File(portal110ResultFilePath), "UTF-8").trim();
@@ -345,11 +344,18 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
-        
-        query = "q=id:"+guid2.getValue();
+
+        query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("documents"))
+                                                                    && account <= tryAcccounts) {
+            Thread.sleep(500);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+        }
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
@@ -364,12 +370,18 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains(guid.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
-        
-        query = "q=id:"+resourceMapId.getValue();
+        // query the resource map object
+        query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
-        assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId.getValue()+"</str>"));
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(500);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8");
+        }
+        assertTrue(resultStr.contains("<str name=\"id\">" + resourceMapId.getValue() + "</str>"));
         //postquery
         params = new HashMap<String, String[]>();
         String[] qValue3 = {"id:"+resourceMapId.getValue()};
@@ -457,11 +469,12 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         }
         assertTrue(resultStr.contains("name=\"obsoletes\">" + resourceMapId.getValue()));
         //make sure the new metadata object was reindexed and have the new resource map
-        query = "q=id:"+guid4.getValue();
+        query = "q=id:" + guid4.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("obsoletes")) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("resourceMap"))
+                                                                && account <= tryAcccounts) {
             Thread.sleep(1000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -611,11 +624,11 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
         
-        query = "q=id:"+resourceMapId.getValue();
+        query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains(resourceMapId.getValue())) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
             Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -724,11 +737,13 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId2.getValue()));
         
-        query = "q=id:"+resourceMapId2.getValue();
+        query = "q=id:" + resourceMapId2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains(resourceMapId2.getValue())) && account <= tryAcccounts) {
+        while ( (resultStr == null ||
+                    !resultStr.contains("<str name=\"id\">"
+                    + resourceMapId2.getValue() + "</str>")) && account <= tryAcccounts) {
             Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);

@@ -105,6 +105,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     protected StringBuffer textBuffer = new StringBuffer();
 
     public static final int MAXDATACHARS = 4000;
+    protected static final String SCHEMALOCATIONKEYWORD = ":schemaLocation";
 
     // methods writeChildNodeToDB, setAttribute, setNamespace,
     // writeTextForDBSAXNode will increase endNodeId.
@@ -308,8 +309,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
             // is xsi:schemaLocation. If the name space is in not in catalog 
             // table it will be registered.
             if (attributeName != null
-                    && attributeName
-                            .indexOf(MetaCatServlet.SCHEMALOCATIONKEYWORD) != -1) {
+                    && attributeName.indexOf(SCHEMALOCATIONKEYWORD) != -1) {
                 // These schemas will be registered in the end endDocument() method
                 // assuming parsing is successful.
                 // each namespace could have several schema locations.  parsedUri will

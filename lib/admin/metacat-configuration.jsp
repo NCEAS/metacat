@@ -43,7 +43,7 @@
     String ezidConfigured = (String)request.getAttribute("ezidConfigured");
     String quotaConfigured = (String)request.getAttribute("quotaConfigured");
     Boolean metacatConfigured = (Boolean)request.getAttribute("metacatConfigured");
-    Boolean metacatServletInitialized = (Boolean)request.getAttribute("metcatServletInitialized");
+    Boolean metacatServletInitialized = (Boolean)request.getAttribute("metacatServletInitialized");
     String contextURL = (String)request.getAttribute("contextURL");
 %>
 
