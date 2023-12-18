@@ -1,5 +1,6 @@
 package edu.ucsb.nceas.metacat.dataone;
 
+import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -57,7 +58,6 @@ import org.dataone.service.util.TypeMarshaller;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
-
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -448,7 +448,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             Node localNode = MNodeService.getInstance(request).getCapabilities();
             ReplicationPolicy rePolicy = new ReplicationPolicy();
             rePolicy.setReplicationAllowed(true);
-            rePolicy.setNumberReplicas(new Integer(3));
+            rePolicy.setNumberReplicas(3);
             rePolicy.addPreferredMemberNode(localNode.getIdentifier());
             sysmeta.setReplicationPolicy(rePolicy);
             Checksum checksum = new Checksum();
@@ -500,7 +500,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             Node localNode = MNodeService.getInstance(request).getCapabilities();
             ReplicationPolicy rePolicy = new ReplicationPolicy();
             rePolicy.setReplicationAllowed(true);
-            rePolicy.setNumberReplicas(new Integer(3));
+            rePolicy.setNumberReplicas(3);
             rePolicy.addPreferredMemberNode(localNode.getIdentifier());
             sysmeta.setReplicationPolicy(rePolicy);
             Checksum checksum = new Checksum();
@@ -583,7 +583,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         MNodeService.getInstance(request).archive(session, guid);
         SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
         assertTrue(result.getArchived());
-        System.out.println("the identifier is ===================" + pid.getValue());
+        LeanTestUtils.debug("the identifier is ===================" + pid.getValue());
 
         //test to archive an obsoleted object
         Identifier guid1 = new Identifier();
@@ -600,7 +600,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         newSysMeta.setObsoletes(guid1);
         newSysMeta.setArchived(false);
         MNodeService.getInstance(request).update(session, guid1, object, guid2, newSysMeta);
-        System.out.println("The object " + guid1.getValue() + " has been updated by the object "
+        LeanTestUtils.debug("The object " + guid1.getValue() + " has been updated by the object "
             + guid2.getValue());
         MNodeService.getInstance(request).archive(session, guid1);
         SystemMetadata sys1 = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
@@ -626,7 +626,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         newSysMeta.setObsoletes(guid3);
         newSysMeta.setArchived(false);
         MNodeService.getInstance(request).update(session, guid3, object, guid4, newSysMeta);
-        System.out.println("The object " + guid3.getValue() + " has been updated by the object "
+        LeanTestUtils.debug("The object " + guid3.getValue() + " has been updated by the object "
             + guid4.getValue());
         SystemMetadata sysFromServer =
             MNodeService.getInstance(request).getSystemMetadata(session, guid3);
@@ -680,7 +680,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
             newSysMeta.setArchived(true);
-            System.out.println("the pid is =======!!!!!!!!!!!! " + pid.getValue());
+            LeanTestUtils.debug("the pid is =======!!!!!!!!!!!! " + pid.getValue());
             // do the update
             Identifier updatedPid =
                 MNodeService.getInstance(request).update(session, pid, object, newPid, newSysMeta);
@@ -922,7 +922,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             guid.setValue("testUpdate." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-            System.out.println("========= the old pid is " + guid.getValue());
+            LeanTestUtils.debug("========= the old pid is " + guid.getValue());
             Identifier newPid = new Identifier();
             newPid.setValue(
                 "testUpdate." + (System.currentTimeMillis() + 1)); // ensure it is different from
@@ -935,7 +935,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             Checksum checksum = newSysMeta.getChecksum();
             checksum.setValue("foo-checksum");
             newSysMeta.setChecksum(checksum);
-            System.out.println("========= the new pid is " + newPid.getValue());
+            LeanTestUtils.debug("========= the new pid is " + newPid.getValue());
             // do the update and it should fail
             try {
                 MNodeService.getInstance(request).update(session, pid, object, newPid, newSysMeta);
@@ -989,7 +989,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.1")
                     .getFormatId());
             MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-            System.out.println("=================the old pid is " + guid.getValue());
+            LeanTestUtils.debug("=================the old pid is " + guid.getValue());
 
             String st2 =
                 "<eml:eml xmlns:eml=\"eml://ecoinformatics.org/eml-2.1.1\" xmlns:xsi=\"http://www"
@@ -1007,7 +1007,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             newPid.setValue(
                 "testUpdate." + (System.currentTimeMillis() + 1)); // ensure it is different from
             // original
-            System.out.println("=================the new pid is " + newPid.getValue());
+            LeanTestUtils.debug("=================the new pid is " + newPid.getValue());
             object = new ByteArrayInputStream(st2.getBytes("UTF-8"));
             SystemMetadata sysmeta2 = createSystemMetadata(newPid, session.getSubject(), object);
             sysmeta2.setFormatId(
@@ -1089,7 +1089,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             newPid.setValue(
                 "testUpdate." + (System.currentTimeMillis() + 1)); // ensure it is different from
             // original
-            System.out.println("=================the pid is " + newPid.getValue());
+            LeanTestUtils.debug("=================the pid is " + newPid.getValue());
             object = new ByteArrayInputStream(st2.getBytes("UTF-8"));
             SystemMetadata sysmeta2 = createSystemMetadata(newPid, session.getSubject(), object);
             sysmeta2.setFormatId(
@@ -1097,12 +1097,12 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                     .getFormatId());
             sysmeta2.setObsoletes(guid);
             Checksum sum1 = sysmeta2.getChecksum();
-            System.out.println("the checksum before sending is " + sum1.getValue());
+            LeanTestUtils.debug("the checksum before sending is " + sum1.getValue());
             object = new ByteArrayInputStream(st2.getBytes("UTF-8"));
             MNodeService.getInstance(request).update(session, guid, object, newPid, sysmeta2);
             SystemMetadata meta =
                 MNodeService.getInstance(request).getSystemMetadata(session, newPid);
-            System.out.println(
+            LeanTestUtils.debug(
                 "the checksum getting from the server is " + meta.getChecksum().getValue());
             assertTrue(meta.getChecksum().getValue().equals(sum1.getValue()));
         } catch (UnsupportedEncodingException e) {
@@ -1161,7 +1161,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             Session session = getCNSession();
             Identifier guid = new Identifier();
             guid.setValue("testReplicate." + System.currentTimeMillis());
-            System.out.println(
+            LeanTestUtils.debug(
                 "======================the id need to be replicated is " + guid.getValue());
             InputStream object =
                 new FileInputStream(new File(MockReplicationMNode.replicationSourceFile));
@@ -2001,7 +2001,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
-                resultStr = IOUtils.toString(stream, "UTF-8"); 
+                resultStr = IOUtils.toString(stream, "UTF-8");
             }
             // second data file
             InputStream dataObject2 =
@@ -2017,7 +2017,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
-                resultStr = IOUtils.toString(stream, "UTF-8"); 
+                resultStr = IOUtils.toString(stream, "UTF-8");
             }
             
             // metadata file
@@ -2034,7 +2034,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
-                resultStr = IOUtils.toString(stream, "UTF-8"); 
+                resultStr = IOUtils.toString(stream, "UTF-8");
             }
             
             // save the ORE object
@@ -2054,7 +2054,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
-                resultStr = IOUtils.toString(stream, "UTF-8"); 
+                resultStr = IOUtils.toString(stream, "UTF-8");
             }
             // get the package we uploaded
             ObjectFormatIdentifier format = new ObjectFormatIdentifier();
@@ -2108,16 +2108,16 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 Thread.sleep(1000);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
-                resultStr = IOUtils.toString(stream, "UTF-8"); 
+                resultStr = IOUtils.toString(stream, "UTF-8");
             }
-            System.out.println("+++++++++++++++++++ the metadataId on the ore package is "
+            LeanTestUtils.debug("+++++++++++++++++++ the metadataId on the ore package is "
                 + metadataId.getValue());
             List<Identifier> oreIds =
                 MNodeService.getInstance(request).lookupOreFor(session, doi, true);
-            assertTrue(oreIds.size() == 1);
+            assertEquals(1, oreIds.size());
             List<Identifier> oreId2 =
                 MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
-            assertTrue(oreId2.size() == 2);
+            assertEquals(2, oreId2.size());
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
@@ -2182,22 +2182,18 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             Identifier pid =
                 MNodeService.getInstance(request).create(session, resourceMapId, object, sysmeta);
 
-            Thread.sleep(30000);
-            List<Identifier> oreId3 =
-                MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
-            assertTrue(oreId3.size() == 1);
+            List<Identifier> oreId3 = waitForIdentifiers(session, dataId);
+            assertEquals(1, oreId3.size());
             //publish the package
             Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
             // test the ORE lookup
-            Thread.sleep(30000);
-            System.out.println("+++++++++++++++++++ the metadataId on the ore package is "
+            LeanTestUtils.debug("+++++++++++++++++++ the metadataId on the ore package is "
                 + metadataId.getValue());
-            List<Identifier> oreIds =
-                MNodeService.getInstance(request).lookupOreFor(session, doi, true);
-            assertTrue(oreIds.size() == 1);
+            List<Identifier> oreIds = waitForIdentifiers(session, doi);
+            assertEquals(1, oreIds.size());
             List<Identifier> oreId2 =
                 MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
-            assertTrue(oreId2.size() == 2);
+            assertEquals(2, oreId2.size());
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
@@ -2289,19 +2285,17 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             } catch (NotAuthorized e) {
 
             }
-
-            Thread.sleep(30000);
-            List<Identifier> oreId3 =
-                MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
-            assertTrue(oreId3.size() == 1);
+            List<Identifier> oreId3 = waitForIdentifiers(session, dataId);
+            assertNotNull("ORE NOT FOUND FOR " + dataId
+                              + " -- could be an auth issue? Check indexer logs? Owner is: "
+                              + session.getSubject(), oreId3);
+            assertEquals(1, oreId3.size());
             //publish the package
             Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
             // test the ORE lookup
-            Thread.sleep(30000);
-            System.out.println("+++++++++++++++++++ the metadataId on the ore package is "
+            LeanTestUtils.debug("+++++++++++++++++++ the metadataId on the ore package is "
                 + metadataId.getValue());
-            List<Identifier> oreIds =
-                MNodeService.getInstance(request).lookupOreFor(session, doi, true);
+            List<Identifier> oreIds = waitForIdentifiers(session, doi);
             assertTrue(oreIds.size() == 1);
             List<Identifier> oreId2 =
                 MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
@@ -2333,55 +2327,55 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             // use MN admin to delete
             session = getMNSession();
             Identifier deletedPid = MNodeService.getInstance(request).delete(session, pid);
-            System.out.println("after deleting");
+            LeanTestUtils.debug("after deleting");
             assertEquals(pid.getValue(), deletedPid.getValue());
             // check that we cannot get the object
             session = getTestSession();
             InputStream deletedObject = null;
             try {
-                //System.out.println("before read ===============");
+                //LeanTestUtils.debug("before read ===============");
                 deletedObject = MNodeService.getInstance(request).get(session, deletedPid);
-                //System.out.println("after read ===============");
+                //LeanTestUtils.debug("after read ===============");
             } catch (NotFound nf) {
                 assertTrue(nf.getMessage().contains("deleted"));
             }
             try {
-                //System.out.println("before read ===============");
+                //LeanTestUtils.debug("before read ===============");
                 SystemMetadata sysmeta2 =
                     MNodeService.getInstance(request).getSystemMetadata(session, deletedPid);
-                //System.out.println("after read ===============");
+                //LeanTestUtils.debug("after read ===============");
             } catch (NotFound nf) {
-                //System.out.println("the exception is "+nf.getMessage());
+                //LeanTestUtils.debug("the exception is "+nf.getMessage());
                 assertTrue(nf.getMessage().contains("deleted"));
             }
 
             try {
-                //System.out.println("before read ===============");
+                //LeanTestUtils.debug("before read ===============");
                 DescribeResponse describeResponse =
                     MNodeService.getInstance(request).describe(session, pid);
-                //System.out.println("after read ===============");
+                //LeanTestUtils.debug("after read ===============");
             } catch (NotFound nf) {
-                //System.out.println("the exception is "+nf.getMessage());
+                //LeanTestUtils.debug("the exception is "+nf.getMessage());
                 assertTrue(nf.getMessage().contains("deleted"));
             }
 
             try {
-                //System.out.println("before read ===============");
+                //LeanTestUtils.debug("before read ===============");
                 Checksum checksum =
                     MNodeService.getInstance(request).getChecksum(session, pid, "MD5");
-                //System.out.println("after read ===============");
+                //LeanTestUtils.debug("after read ===============");
             } catch (NotFound nf) {
-                //System.out.println("the exception 3 is "+nf.getMessage());
+                //LeanTestUtils.debug("the exception 3 is "+nf.getMessage());
                 assertTrue(nf.getMessage().contains("deleted"));
             }
 
             try {
-                //System.out.println("before read ===============");
+                //LeanTestUtils.debug("before read ===============");
                 boolean isAuthorized =
                     MNodeService.getInstance(request).isAuthorized(session, pid, Permission.READ);
-                //System.out.println("after read ===============");
+                //LeanTestUtils.debug("after read ===============");
             } catch (NotFound nf) {
-                System.out.println("the exception 4 is " + nf.getMessage());
+                LeanTestUtils.debug("the exception 4 is " + nf.getMessage());
                 assertTrue(nf.getMessage().contains("deleted"));
             }
 
@@ -2409,13 +2403,13 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         InputStream object = new ByteArrayInputStream(
             FileUtils.readFileToByteArray(new File(unmatchingEncodingFilePath)));
         Checksum orgChecksum = ChecksumUtil.checksum(object, algorithm);
-        //System.out.println("the original checksum is "+orgChecksum.getValue());
+        //LeanTestUtils.debug("the original checksum is "+orgChecksum.getValue());
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         InputStream readResult = MNodeService.getInstance(request).get(session, pid);
         byte[] readBytes = IOUtils.toByteArray(readResult);
         Checksum checksum1 = ChecksumUtil.checksum(readBytes, algorithm);
-        //System.out.println("the read checksum1 is "+checksum1.getValue());
+        //LeanTestUtils.debug("the read checksum1 is "+checksum1.getValue());
         assertEquals(orgChecksum.getValue(), checksum1.getValue());
 
         Identifier newPid = new Identifier();
@@ -2433,7 +2427,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         byte[] readBytes2 = IOUtils.toByteArray(readResult2);
         Checksum checksum2 = ChecksumUtil.checksum(readBytes2, algorithm);
         assertEquals(orgChecksum.getValue(), checksum2.getValue());
-        //System.out.println("the read checksum2 is "+checksum2.getValue());
+        //LeanTestUtils.debug("the read checksum2 is "+checksum2.getValue());
 
 
     }
@@ -2460,10 +2454,10 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             String sid1 = "sid." + System.nanoTime();
             Identifier seriesId = new Identifier();
             seriesId.setValue(sid1);
-            System.out.println("the first sid is " + seriesId.getValue());
+            LeanTestUtils.debug("the first sid is " + seriesId.getValue());
             sysmeta.setSeriesId(seriesId);
             MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
-            System.out.println("the first pid is " + guid.getValue());
+            LeanTestUtils.debug("the first pid is " + guid.getValue());
             //test the get(pid) for v2
             InputStream result = MNodeService.getInstance(request).get(session, guid);
             // go back to beginning of original stream
@@ -2611,7 +2605,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             Thread.sleep(1000);
             Identifier newPid = new Identifier();
             newPid.setValue(generateDocumentId() + "1");
-            System.out.println("the second pid is " + newPid.getValue());
+            LeanTestUtils.debug("the second pid is " + newPid.getValue());
             InputStream object2 = new ByteArrayInputStream(str2.getBytes("UTF-8"));
             SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object2);
             newSysMeta.setObsoletes(guid);
@@ -2705,10 +2699,10 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             String sid2 = "sid." + System.nanoTime();
             Identifier seriesId2 = new Identifier();
             seriesId2.setValue(sid2);
-            System.out.println("the second sid is " + seriesId2.getValue());
+            LeanTestUtils.debug("the second sid is " + seriesId2.getValue());
             Identifier newPid2 = new Identifier();
             newPid2.setValue(generateDocumentId() + "2");
-            System.out.println("the third pid is " + newPid2.getValue());
+            LeanTestUtils.debug("the third pid is " + newPid2.getValue());
             InputStream object3 = new ByteArrayInputStream(str3.getBytes("UTF-8"));
             SystemMetadata sysmeta3 = createSystemMetadata(newPid2, session.getSubject(), object3);
             sysmeta3.setObsoletes(newPid);
@@ -2909,7 +2903,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             Thread.sleep(1000);
             Identifier newPid3 = new Identifier();
             newPid3.setValue(generateDocumentId() + "3");
-            System.out.println("the third pid is " + newPid3.getValue());
+            LeanTestUtils.debug("the third pid is " + newPid3.getValue());
             InputStream object4 = new ByteArrayInputStream(str3.getBytes("UTF-8"));
             SystemMetadata sysmeta4 = createSystemMetadata(newPid3, session.getSubject(), object4);
             sysmeta4.setObsoletes(newPid2);
@@ -2964,7 +2958,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 MNodeService.getInstance(request).get(session, seriesId2);
                 fail("we can't reach here since the series id was deleted ");
             } catch (NotFound nf3) {
-                System.out.println("the message is =============" + nf3.getMessage());
+                LeanTestUtils.debug("the message is =============" + nf3.getMessage());
                 //assertTrue(nf3.getMessage().indexOf("delete") >0);
             }
 
@@ -2972,7 +2966,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 MNodeService.getInstance(request).get(session, newPid2);
                 fail("we can't reach here since the series id was deleted ");
             } catch (NotFound nf3) {
-                //System.out.println("the message is ============="+nf3.getMessage());
+                //LeanTestUtils.debug("the message is ============="+nf3.getMessage());
                 assertTrue(nf3.getMessage().indexOf("delete") > 0);
             }
 
@@ -2981,7 +2975,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                     .get(session, newPid2);
                 fail("we can't reach here since the series id was deleted ");
             } catch (NotFound nf3) {
-                System.out.println("the message is =============" + nf3.getMessage());
+                LeanTestUtils.debug("the message is =============" + nf3.getMessage());
                 assertTrue(nf3.getMessage().indexOf("delete") > 0);
             }
 
@@ -2999,7 +2993,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 MNodeService.getInstance(request).get(session, newPid);
                 fail("we can't reach here since the series id was deleted ");
             } catch (NotFound nf3) {
-                //System.out.println("the message is ============="+nf3.getMessage());
+                //LeanTestUtils.debug("the message is ============="+nf3.getMessage());
                 assertTrue(nf3.getMessage().indexOf("delete") > 0);
             }
             SystemMetadata meta =
@@ -3025,7 +3019,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         assertTrue(list.sizeOptionList() > 0);
         List<String> names = list.getOptionList();
         for (String name : names) {
-            System.out.println("It has the view named " + name);
+            LeanTestUtils.debug("It has the view named " + name);
         }
     }
 
@@ -3045,7 +3039,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         String sid1 = "sid." + System.nanoTime();
         Identifier seriesId = new Identifier();
         seriesId.setValue(sid1);
-        System.out.println("the first sid is " + seriesId.getValue());
+        LeanTestUtils.debug("the first sid is " + seriesId.getValue());
         sysmeta.setSeriesId(seriesId);
         sysmeta.setArchived(false);
         MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
@@ -3054,9 +3048,9 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             MNodeService.getInstance(request).getSystemMetadata(session, guid);
         assertTrue(metadata.getIdentifier().equals(guid));
         assertTrue(metadata.getArchived().equals(false));
-        System.out.println("the checksum from request is " + metadata.getChecksum().getValue());
+        LeanTestUtils.debug("the checksum from request is " + metadata.getChecksum().getValue());
         assertTrue(metadata.getSize().equals(sysmeta.getSize()));
-        System.out.println("the identifier is " + guid.getValue());
+        LeanTestUtils.debug("the identifier is " + guid.getValue());
 
         Date current = sysmeta.getDateSysMetadataModified();
         //updating system metadata failed since the date doesn't match
@@ -3071,11 +3065,11 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         //update system metadata sucessfully
         sysmeta.setDateSysMetadataModified(current);
         BigInteger serialVersion = metadata.getSerialVersion();
-        //System.out.println("the current version is "+serialVersion.toString());
+        //LeanTestUtils.debug("the current version is "+serialVersion.toString());
         //serialVersion = serialVersion.add(BigInteger.ONE);
-        //System.out.println("the new version is "+serialVersion.toString());
+        //LeanTestUtils.debug("the new version is "+serialVersion.toString());
         //sysmeta.setSerialVersion(serialVersion);
-        System.out.println("the identifier is ----------------------- " + guid.getValue());
+        LeanTestUtils.debug("the identifier is ----------------------- " + guid.getValue());
         MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
         SystemMetadata metadata2 =
             MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
@@ -3650,7 +3644,6 @@ public class MNodeServiceIT extends D1NodeServiceTest {
     public void testUpdateSystemMetadataWithCircularObsoletedByChain() throws Exception {
 
         Date date = new Date();
-        Thread.sleep(1000);
         String str = "object1";
         //insert a test document
         Session session = getTestSession();
@@ -3735,7 +3728,6 @@ public class MNodeServiceIT extends D1NodeServiceTest {
 
     public void testUpdateSystemMetadataImmutableFields() throws Exception {
         Date date = new Date();
-        Thread.sleep(1000);
         String str = "object1";
         //insert a test document
         Session session = getTestSession();
@@ -3761,7 +3753,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
             fail("We can't update the system metadata which has new identifier");
         } catch (InvalidRequest e) {
-            //System.out.println("Error 1- "+e.getMessage());
+            //LeanTestUtils.debug("Error 1- "+e.getMessage());
             assertTrue(
                 "The update system metadata should fail since the identifier was changed on the "
                     + "system metadata.", e.getMessage().contains(newId.getValue()));
@@ -3973,32 +3965,11 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         metadata.setAccessPolicy(policy);
         //successfully update system metadata when the rights holder and access policy were changed
         MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
-       
-       /*metadata.setArchived(null);
-       try {
-           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
-           fail("We can't update the system metadata since we can't set archvied to be null when
-           original value is true");
-      } catch (InvalidRequest e)  {
-         assertTrue("The update system metadata should fail since the archived can't be set null
-         when original value is true", e.getMessage().contains("archvied field"));
-      }
-      
-       metadata.setArchived(false);
-       try {
-           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
-           fail("We can't update the system metadata since we can't set archvied to be false when
-            original value is true");
-      } catch (InvalidRequest e)  {
-         assertTrue("The update system metadata should fail since the archived can't be set false
-          when original value is true", e.getMessage().contains("archvied field"));
-      }*/
     }
 
     public void testUpdateAuthoritativeMN() throws Exception {
         String str1 = "object1";
         Date date = new Date();
-        Thread.sleep(2000);
         //insert test documents with a series id
         Session session = getTestSession();
         Identifier guid = new Identifier();
@@ -4008,7 +3979,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         String sid1 = "sid." + System.nanoTime();
         Identifier seriesId = new Identifier();
         seriesId.setValue(sid1);
-        System.out.println("the first sid is " + seriesId.getValue());
+        LeanTestUtils.debug("the first sid is " + seriesId.getValue());
         sysmeta.setSeriesId(seriesId);
         sysmeta.setArchived(false);
         MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
@@ -4017,11 +3988,11 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             MNodeService.getInstance(request).getSystemMetadata(session, guid);
         assertTrue(metadata.getIdentifier().equals(guid));
         assertTrue(metadata.getArchived().equals(false));
-        System.out.println("the checksum from request is " + metadata.getChecksum().getValue());
+        LeanTestUtils.debug("the checksum from request is " + metadata.getChecksum().getValue());
         assertTrue(metadata.getSize().equals(sysmeta.getSize()));
-        System.out.println("the identifier is " + guid.getValue());
+        LeanTestUtils.debug("the identifier is " + guid.getValue());
 
-        System.out.println("the identifier is ----------------------- " + guid.getValue());
+        LeanTestUtils.debug("the identifier is ----------------------- " + guid.getValue());
         MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
         SystemMetadata metadata2 =
             MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
@@ -4215,7 +4186,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             MNodeService.getInstance(request).update(session, pid, data, newPid, newMeta);
             fail("we shouldn't get here since the new object is an invalid json-ld file");
         } catch (Exception e) {
-            System.out.println("the message is +++++++++++ " + e.getMessage());
+            LeanTestUtils.debug("the message is +++++++++++ " + e.getMessage());
             assertTrue(e instanceof InvalidRequest);
         }
         data.close();
@@ -4401,7 +4372,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
     public void testCreateAndUpdateWithDoiDisabled() throws Exception {
         printTestHeader("testCreateAndUpdateWithDoiDisabled");
         String originDOIstatusStr = PropertyService.getInstance().getProperty("guid.doi.enabled");
-        System.out.println("the dois status is ++++++++++++++ " + originDOIstatusStr);
+        LeanTestUtils.debug("the dois status is ++++++++++++++ " + originDOIstatusStr);
         try {
             Session session = getTestSession();
             PropertyService.getInstance()
@@ -4595,4 +4566,18 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         }
         assertTrue(versionChanged);
     }
+
+    private List<Identifier> waitForIdentifiers(Session session, Identifier dataId)
+        throws InterruptedException {
+        int count = 0;
+        int maxTries = 60;
+        List<Identifier> identifiers;
+        MNodeService mNodeService = MNodeService.getInstance(request);
+        do {
+            Thread.sleep(500);
+            identifiers = mNodeService.lookupOreFor(session, dataId, true);
+        } while (identifiers == null && ++count <= maxTries);
+        return identifiers;
+    }
+
 }
