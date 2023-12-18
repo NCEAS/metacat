@@ -99,7 +99,7 @@
         <!-- Access log processes all and writes to stdout instead of a file.
              Documentation at: /docs/config/valve.html -->
         <Valve className="org.apache.catalina.valves.AccessLogValve"
-               pattern="%h %l %u %t &quot;%r&quot; %s %b"
+               pattern="%h %l %u %t &quot;%r&quot; %s %b" rotatable="false"
                directory="/dev/stdout" fileDateFormat="" prefix="" suffix="" />
       </Host>
     </Engine>
