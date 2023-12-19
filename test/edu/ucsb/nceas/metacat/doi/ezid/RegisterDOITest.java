@@ -1374,6 +1374,13 @@ public class RegisterDOITest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
+        assertNotNull("get data: resultStr was NULL for query: " + query
+                          + "; possible indexing problem?", resultStr);
+        assertTrue("get data: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse("get data: exceeded max number of tries to get query results for query: "
+                        + query + "; possible indexing problem?", account > MAX_TIMES);
+
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
@@ -1384,6 +1391,12 @@ public class RegisterDOITest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
+        assertNotNull("get metadata: resultStr was NULL for query: " + query
+                          + "; possible indexing problem?", resultStr);
+        assertTrue("get metadata: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse("get metadata: exceeded max number of tries to get query results for query: "
+                        + query + "; possible indexing problem?", account > MAX_TIMES);
 
         //insert resource map
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
@@ -1423,6 +1436,12 @@ public class RegisterDOITest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
+        assertNotNull("get resourcemap: resultStr was NULL for query: " + query
+                          + "; possible indexing problem?", resultStr);
+        assertTrue("get resourcemap: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse("get resourcemap: exceeded max number of tries to get query results for query: "
+                        + query + "; possible indexing problem?", account > MAX_TIMES);
 
         //publish the metadata id
         Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, guid2);
@@ -1448,7 +1467,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         SystemMetadata oldResourceMapSys =
             MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId);
         Identifier newResourceMapId = oldResourceMapSys.getObsoletedBy();
-        assertTrue(newResourceMapId != null);
+        assertNotNull(newResourceMapId);
         MNodeService.getInstance(request).getSystemMetadata(publicSession, newResourceMapId);
         //the data object is public readable
         MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
@@ -1532,6 +1551,13 @@ public class RegisterDOITest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
+        assertNotNull("get data: resultStr was NULL for query: " + query
+                          + "; possible indexing problem?", resultStr);
+        assertTrue("get data: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse("get data: exceeded max number of tries to get query results for query: "
+                        + query + "; possible indexing problem?", account > MAX_TIMES);
+
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
@@ -1542,6 +1568,12 @@ public class RegisterDOITest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
+        assertNotNull("get metadata: resultStr was NULL for query: " + query
+                          + "; possible indexing problem?", resultStr);
+        assertTrue("get metadata: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse("get metadata: exceeded max number of tries to get query results for query: "
+                        + query + "; possible indexing problem?", account > MAX_TIMES);
 
         //insert resource map
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
@@ -1581,6 +1613,12 @@ public class RegisterDOITest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
+        assertNotNull("get resourcemap: resultStr was NULL for query: " + query
+                          + "; possible indexing problem?", resultStr);
+        assertTrue("get resourcemap: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse("get resourcemap: exceeded max number of tries to get query results for query: "
+                        + query + "; possible indexing problem?", account > MAX_TIMES);
 
         //publish the metadata id
         Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, guid2);
@@ -1606,7 +1644,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         SystemMetadata oldResourceMapSys =
             MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId);
         Identifier newResourceMapId = oldResourceMapSys.getObsoletedBy();
-        assertTrue(newResourceMapId != null);
+        assertNotNull(newResourceMapId);
         MNodeService.getInstance(request).getSystemMetadata(publicSession, newResourceMapId);
         //the data object is not public readable
         try {
