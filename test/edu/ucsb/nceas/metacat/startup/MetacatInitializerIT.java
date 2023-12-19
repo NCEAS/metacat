@@ -45,19 +45,18 @@ public class MetacatInitializerIT {
     private ServletContextEvent event = null;
     private Properties withProperties;
 
-    private final boolean isContainerized;
+    private static final boolean isK8sForReal = Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
+    private final boolean testAsContainerized;
     private MockedStatic<K8sAdminInitializer> k8sAdminInitMock;
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-            { true },
-            { false }
-        });
+        return isK8sForReal ? Arrays.asList(new Object[][]{{true}})
+                            : Arrays.asList(new Object[][]{{true}, {false}});
     }
 
-    public MetacatInitializerIT(boolean isContainerized) {
-        this.isContainerized = isContainerized;
+    public MetacatInitializerIT(boolean testAsContainerized) {
+        this.testAsContainerized = testAsContainerized;
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
     }
 
@@ -65,16 +64,17 @@ public class MetacatInitializerIT {
     public void setUp() throws Exception {
         withProperties = new Properties();
         event = getMockServletContextEvent();
-        LeanTestUtils.debug("MetacatInitializerIT: isContainerized = " + isContainerized);
-        LeanTestUtils.setTestEnvironmentVariable("METACAT_IN_K8S", String.valueOf(isContainerized));
-        if (isContainerized) {
+        LeanTestUtils.debug("MetacatInitializerIT: isContainerized = " + testAsContainerized);
+        LeanTestUtils.setTestEnvironmentVariable("METACAT_IN_K8S", String.valueOf(
+            testAsContainerized));
+        if (testAsContainerized) {
             k8sAdminInitMock = Mockito.mockStatic(K8sAdminInitializer.class);
         }
     }
 
     @After
     public void tearDown() {
-        if (isContainerized) {
+        if (testAsContainerized) {
             k8sAdminInitMock.close();
         }
     }
