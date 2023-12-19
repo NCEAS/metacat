@@ -52,7 +52,7 @@ public class MetacatInitializerIT {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
             { true },
-            { true }
+            { false }
         });
     }
 
