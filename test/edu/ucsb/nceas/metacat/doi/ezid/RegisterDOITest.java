@@ -1467,7 +1467,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         SystemMetadata oldResourceMapSys =
             MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId);
         Identifier newResourceMapId = oldResourceMapSys.getObsoletedBy();
-        assertNotNull(newResourceMapId);
+        assertNotNull("newResourceMapId was NULL", newResourceMapId);
         MNodeService.getInstance(request).getSystemMetadata(publicSession, newResourceMapId);
         //the data object is public readable
         MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
@@ -1503,7 +1503,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
         //insert data
         Session session = getTestSession();
         Identifier guid = new Identifier();
-        HashMap<String, String[]> params = null;
         guid.setValue(
             "testPublishPrivatePackageToPartialPublic-data." + System.currentTimeMillis());
         System.out.println("the data file id is ==== " + guid.getValue());
@@ -1644,7 +1643,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         SystemMetadata oldResourceMapSys =
             MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId);
         Identifier newResourceMapId = oldResourceMapSys.getObsoletedBy();
-        assertNotNull(newResourceMapId);
+        assertNotNull("newResourceMapId was NULL", newResourceMapId);
         MNodeService.getInstance(request).getSystemMetadata(publicSession, newResourceMapId);
         //the data object is not public readable
         try {
