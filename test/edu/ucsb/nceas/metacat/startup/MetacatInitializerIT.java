@@ -64,9 +64,11 @@ public class MetacatInitializerIT {
     public void setUp() throws Exception {
         withProperties = new Properties();
         event = getMockServletContextEvent();
-        LeanTestUtils.debug("MetacatInitializerIT: isContainerized = " + testAsContainerized);
-        LeanTestUtils.setTestEnvironmentVariable("METACAT_IN_K8S", String.valueOf(
-            testAsContainerized));
+        LeanTestUtils.debug("MetacatInitializerIT: testAsContainerized = " + testAsContainerized);
+        if (!isK8sForReal) {
+            LeanTestUtils.setTestEnvironmentVariable(
+                "METACAT_IN_K8S", String.valueOf(testAsContainerized));
+        }
         if (testAsContainerized) {
             k8sAdminInitMock = Mockito.mockStatic(K8sAdminInitializer.class);
         }
