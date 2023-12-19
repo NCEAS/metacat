@@ -1,17 +1,29 @@
 package edu.ucsb.nceas.metacat.startup;
 
-import java.io.IOException;
-import java.util.Properties;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-
+import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.dataone.configuration.Settings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Properties;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -23,46 +35,59 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-
-import edu.ucsb.nceas.LeanTestUtils;
-import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.util.SystemUtil;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
-
 /**
  * The IT test class for the MetacatInitializer class
  * @author tao
  *
  */
+@RunWith(Parameterized.class)
 public class MetacatInitializerIT {
     private ServletContextEvent event = null;
     private Properties withProperties;
 
+    private final boolean isContainerized;
+    private MockedStatic<K8sAdminInitializer> k8sAdminInitMock;
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][] {
+            { true },
+            { true }
+        });
+    }
+
+    public MetacatInitializerIT(boolean isContainerized) {
+        this.isContainerized = isContainerized;
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
+    }
+
     @Before
     public void setUp() throws Exception {
-        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
-
         withProperties = new Properties();
         event = getMockServletContextEvent();
+        LeanTestUtils.debug("MetacatInitializerIT: isContainerized = " + isContainerized);
+        LeanTestUtils.setTestEnvironmentVariable("METACAT_IN_K8S", String.valueOf(isContainerized));
+        if (isContainerized) {
+            k8sAdminInitMock = Mockito.mockStatic(K8sAdminInitializer.class);
+        }
     }
 
     @After
     public void tearDown() {
+        if (isContainerized) {
+            k8sAdminInitMock.close();
+        }
     }
 
     /**
      * Test the contextInitialized method
-     * @throws IOException
      */
     @Test
-    public void testContextInitialized() throws Exception {
+    public void testContextInitialized() {
         //This should be a full-configured Metacat
         MetacatInitializer metacatInitializer = new MetacatInitializer();
         metacatInitializer.contextInitialized(event);
-        assertTrue(metacatInitializer.isFullyInitialized());
+        assertTrue(MetacatInitializer.isFullyInitialized());
 
         withProperties.setProperty("configutil.authConfigured", PropertyService.UNCONFIGURED);
         try (MockedStatic<PropertyService> ignored
@@ -71,44 +96,41 @@ public class MetacatInitializerIT {
             //reset the fully-initialized flag to be false by creating a new instance
             metacatInitializer = new MetacatInitializer();
             metacatInitializer.contextInitialized(event);
-            assertFalse(metacatInitializer.isFullyInitialized());
+            assertFalse(MetacatInitializer.isFullyInitialized());
         }
     }
 
     /**
      * Test the contextInitialized method when Postgres is down.
-     * We use a wrong connection uri to simulate that Postgres is down.
-     * @throws IOException
+     * We mock DBConnectionPool throwing an exception to simulate that Postgres is down.
      */
     @Test
-    public void testPostgresInContextInitialized() throws Exception {
-        String originUri = PropertyService.getProperty("database.connectionURI");
-        long time = System.currentTimeMillis();
-        String newUri = originUri + time;
+    public void testPostgresInContextInitialized() {
+       long time = System.currentTimeMillis();
+        MetacatInitializer metacatInitializer;
 
-        MetacatInitializer metacatInitializer = new MetacatInitializer();
+        withProperties.setProperty("configutil.databaseConfigured", PropertyService.CONFIGURED);
+        try (MockedStatic<ConfigurationUtil> mockCfg = Mockito.mockStatic(ConfigurationUtil.class);
+             MockedStatic<DBConnectionPool> staticMockDBConnPool =
+                 Mockito.mockStatic(DBConnectionPool.class)) {
 
-        withProperties.setProperty("database.connectionURI", newUri);
+            mockCfg.when(ConfigurationUtil::isMetacatConfigured).thenReturn(true);
+            staticMockDBConnPool.when(DBConnectionPool::getInstance).thenThrow(
+                new SQLException("org.postgresql.util.PSQLException: FATAL: database \"metacat"
+                        + time + "\" does not exist"));
 
-        try (MockedStatic<ConfigurationUtil> mockCfg = Mockito.mockStatic(ConfigurationUtil.class)) {
-            mockCfg.when(() -> ConfigurationUtil.isMetacatConfigured()).thenReturn(true);
-            try (MockedStatic<PropertyService> mock = LeanTestUtils.initializeMockPropertyService(
-                withProperties)) {
-                mock.when(() -> PropertyService.getInstance((ServletContext) any()))
-                    .thenReturn(Mockito.mock(PropertyService.class));
-
-                try {
-                    metacatInitializer.contextInitialized(event);
-                    fail("The initialization should fail and the test cannot get here");
-                } catch (RuntimeException e) {
-                    assertNotNull(
-                        "e.getMessage() returned unexpected type of RuntimeException: " + e,
-                        e.getMessage());
-                    assertTrue(
-                        "Exception message DID NOT contain expected string: " + time
-                            + ". Entire message was:\n\n" + e.getMessage() + "\n\n<EOM>",
-                        e.getMessage().contains(Long.toString(time)));
-                }
+            try {
+                metacatInitializer = new MetacatInitializer();
+                metacatInitializer.contextInitialized(event);
+                fail("The initialization should fail and the test cannot get here");
+            } catch (RuntimeException e) {
+                assertNotNull(
+                    "e.getMessage() returned unexpected type of RuntimeException: " + e,
+                    e.getMessage());
+                assertTrue("Exception message DID NOT contain expected string: " + time
+                               + ". Entire message was:\n\n" + e.getMessage()
+                               + "\n\nfrom exception: " + e,
+                           e.getMessage().contains(Long.toString(time)));
             }
         }
 
@@ -121,7 +143,7 @@ public class MetacatInitializerIT {
                 .thenReturn(Mockito.mock(PropertyService.class));
             metacatInitializer = new MetacatInitializer();
             metacatInitializer.contextInitialized(event);
-            assertFalse(metacatInitializer.isFullyInitialized());
+            assertFalse(MetacatInitializer.isFullyInitialized());
         }
     }
 
@@ -149,7 +171,8 @@ public class MetacatInitializerIT {
                 fail("The initialization should fail and the test cannot get here");
             } catch (RuntimeException e) {
                 assertTrue("Exception message DID NOT contain expected string: " + time
-                               + ". Entire message was:\n\n" + e.getMessage() + "\n\n<EOM>",
+                               + ". Entire message was:\n\n" + e.getMessage()
+                               + "\n\nfrom exception: " + e,
                            e.getMessage().contains(Long.toString(time)));
             }
 
@@ -162,9 +185,10 @@ public class MetacatInitializerIT {
                     .thenReturn(Mockito.mock(PropertyService.class));
                 metacatInitializer = new MetacatInitializer();
                 metacatInitializer.contextInitialized(event);
-                assertFalse(metacatInitializer.isFullyInitialized());
+                assertFalse(MetacatInitializer.isFullyInitialized());
             }
         }
+        IndexGenerator.refreshInstance();
     }
 
     private static Configuration createMockConfig(String newHost) {
@@ -176,17 +200,29 @@ public class MetacatInitializerIT {
             newHost);
 
         // ...but for remaining values, retrieve those that are already in Settings
-        int port = Settings.getConfiguration().getInt("index.rabbitmq.hostport", 5672);
-        String username = Settings.getConfiguration().getString("index.rabbitmq.username", "guest");
-        String password = Settings.getConfiguration().getString("index.rabbitmq.password", "guest");
-        int priority = Settings.getConfiguration().getInt("index.rabbitmq.max.priority");
+        Configuration config = Settings.getConfiguration();
+        when(mockD1Config.getInt(eq("index.rabbitmq.hostport"), anyInt()))
+            .thenReturn(config.getInt("index.rabbitmq.hostport", 5672));
+        when(mockD1Config.getString(eq("index.rabbitmq.username"), anyString()))
+            .thenReturn(config.getString("index.rabbitmq.username", "guest"));
+        when(mockD1Config.getString(eq("index.rabbitmq.password"), anyString()))
+            .thenReturn(config.getString("index.rabbitmq.password", "guest"));
+        when(mockD1Config.getInt(eq("index.rabbitmq.max.priority")))
+            .thenReturn(config.getInt("index.rabbitmq.max.priority"));
 
-        when(mockD1Config.getInt(eq("index.rabbitmq.hostport"), anyInt())).thenReturn(port);
-        when(mockD1Config.getString(eq("index.rabbitmq.username"), anyString())).thenReturn(
-            username);
-        when(mockD1Config.getString(eq("index.rabbitmq.password"), anyString())).thenReturn(
-            password);
-        when(mockD1Config.getInt(eq("index.rabbitmq.max.priority"))).thenReturn(priority);
+        // node properties
+        when(mockD1Config.getString(eq("dataone.nodeName")))
+            .thenReturn(config.getString("dataone.nodeName"));
+        when(mockD1Config.getString(eq("dataone.nodeId")))
+            .thenReturn(config.getString("dataone.nodeId"));
+        when(mockD1Config.getString(eq("dataone.subject")))
+            .thenReturn(config.getString("dataone.subject"));
+        when(mockD1Config.getString(eq("dataone.contactSubject")))
+            .thenReturn(config.getString("dataone.contactSubject"));
+        when(mockD1Config.getString(eq("dataone.nodeDescription")))
+            .thenReturn(config.getString("dataone.nodeDescription"));
+        when(mockD1Config.getString(eq("dataone.nodeType")))
+            .thenReturn(config.getString("dataone.nodeType"));
 
         return mockD1Config;
     }
