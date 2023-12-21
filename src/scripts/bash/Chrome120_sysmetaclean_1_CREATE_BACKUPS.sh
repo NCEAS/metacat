@@ -14,8 +14,8 @@ if [ -z "$TOKEN" ]; then
     exit 1
 fi
 if [ -z "$PGPASSWORD" ]; then
-    echo "Requires 'PGPASSWORD' env variable containing password for metacat db user"
-    exit 2
+    echo "WARNING: Optional 'PGPASSWORD' env variable containing database user password not set"
+    echo "You may get prompted to enter the password"
 fi
 if [ -z "$METACAT_BASE_URL" ]; then
     echo "Requires 'METACAT_BASE_URL' env variable containing the protocol, host, optional"
@@ -24,6 +24,10 @@ if [ -z "$METACAT_BASE_URL" ]; then
     echo "        export METACAT_BASE_URL=\"https://arcticdata.io/metacat\""
     exit 3
 fi
+
+echo "Please ensure that the following values are correct:"
+echo "DATABASE_NAME: $DATABASE_NAME (if not, edit this file)"
+echo "DATABASE_USER: $DATABASE_USER (if not, edit this file)"
 
 
 #1) Run a query against the local PostgreSQL database to get the list of guid, docid, rev,
@@ -35,8 +39,9 @@ echo "Step 1: Get the list of affected systemmetadata entries from postgres..."
 # date (2023-10-26 00:00:00) as a Unix timestamp. Can get via:
 # GNU/UNIX:     CUTOFF_DATE=$(date -d "2023-10-26 00:00:00" +%s)
 # MacOs:        CUTOFF_DATE=$(date -j -f "%Y-%m-%d %H:%M:%S" "2023-10-26 00:00:00" "+%s")
-#CUTOFF_DATE="1698303600"
-CUTOFF_DATE=$(date -j -f "%Y-%m-%d %H:%M:%S" "2023-10-26 00:00:00" "+%s")
+# but "1698303600" is the final unix timestamp value for 2023-10-26 00:00:00
+#
+CUTOFF_DATE="1698303600"
 
 QUERY_START="SELECT sm.guid, i.docid, i.rev, sm.date_uploaded, sm.date_modified \
 FROM systemmetadata sm LEFT JOIN identifier i ON (sm.guid = i.guid) WHERE i.guid IS NULL AND ("
@@ -67,6 +72,13 @@ echo "${RESULT_AC}"
 # "sysmeta" subdirectory of the current working directory:
 #
 echo; echo; echo "Making localhost backups of systemmetadata docs"
+
+if [[ $( curl --silent $METACAT_BASE_URL | grep -c "HTTP Status 404" ) -ne "0" ]]; then
+  echo "ERROR: no metacat found at: $METACAT_BASE_URL"
+  echo "Did you set the METACAT_BASE_URL env variable correctly?"
+  exit 4
+fi
+
 mkdir -p sysmeta
 IFS=$'\n'
 COUNT=0
