@@ -18,10 +18,10 @@ if [ -z "$PGPASSWORD" ]; then
     exit 2
 fi
 if [ -z "$METACAT_BASE_URL" ]; then
-    echo "Requires 'METACAT_BASE_URL' env variable containing the protocol, host and optional"
-    echo "port number. Examples:"
-    echo "        export METACAT_BASE_URL=\"http://localhost:8080\""
-    echo "        export METACAT_BASE_URL=\"https://arcticdata.io\""
+    echo "Requires 'METACAT_BASE_URL' env variable containing the protocol, host, optional"
+    echo "port number, and context name. Examples:"
+    echo "        export METACAT_BASE_URL=\"http://localhost:8080/knb\""
+    echo "        export METACAT_BASE_URL=\"https://arcticdata.io/metacat\""
     exit 3
 fi
 
@@ -72,7 +72,7 @@ IFS=$'\n'
 COUNT=0
 for row in $RESULT_AC; do
     guid=$(echo $row | cut -d '|' -f 1)
-    url="$METACAT_BASE_URL/metacat/d1/mn/v2/meta/${guid}"
+    url="$METACAT_BASE_URL/d1/mn/v2/meta/${guid}"
     echo "Retrieving from: $url"
     curl --silent -H "Authorization: Bearer $TOKEN" -o sysmeta/${guid}.xml $url && COUNT=$(($COUNT+1))
 done
