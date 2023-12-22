@@ -45,7 +45,8 @@ CUTOFF_DATE="1698303600"
 
 SELECT_QUERY=\
 "SELECT sm.guid                                                                                \
-FROM systemmetadata sm LEFT JOIN identifier i ON (sm.guid = i.guid) WHERE i.guid IS NULL AND ( \
+FROM systemmetadata sm LEFT JOIN identifier i ON (sm.guid = i.guid) WHERE i.guid IS NULL \
+AND sm.obsoleted_by IS NULL AND sm.obsoletes IS NULL AND ( \
 sm.date_uploaded > to_timestamp($CUTOFF_DATE) OR sm.date_modified > to_timestamp($CUTOFF_DATE) \
 ) ORDER BY date_modified DESC"
 SELECT_RESULTS=$(psql -h localhost -U $DATABASE_USER -d $DATABASE_NAME -tAX -c "$SELECT_QUERY")
