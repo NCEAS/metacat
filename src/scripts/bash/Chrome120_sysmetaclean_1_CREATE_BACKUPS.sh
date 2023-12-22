@@ -87,6 +87,10 @@ for row in $RESULT_AC; do
     url="$METACAT_BASE_URL/d1/mn/v2/meta/${guid}"
     echo "Retrieving from: $url"
     curl --silent -H "Authorization: Bearer $TOKEN" -o sysmeta/${guid}.xml $url && COUNT=$(($COUNT+1))
+    if [[ $( cat sysmeta/${guid}.xml | grep -c "checksum" ) == "0" ]]; then
+      echo "ERROR: file sysmeta/${guid}.xml is NOT VALID SYSMETA. Check that your TOKEN is valid!"
+      exit 3
+    fi
 done
 unset IFS
 
