@@ -118,6 +118,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
    */
   @After
   public void tearDown() {
+      super.tearDown();
   }
   
   /**
