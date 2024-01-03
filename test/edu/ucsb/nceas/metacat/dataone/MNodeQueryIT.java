@@ -79,7 +79,7 @@ import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 
 /**
- * A JUnit test to exercise the Metacat Member Node  query service implementation.
+ * A JUnit test to exercise the Metacat Member Node query service implementation.
  * @author cjones
  *
  */
@@ -109,6 +109,8 @@ public class MNodeQueryIT extends D1NodeServiceTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
+    Settings.getConfiguration().clearProperty("D1Client.CN_URL");
+    Settings.getConfiguration().addProperty("D1Client.CN_URL", "https://cn.dataone.org/cn");
     // set up the configuration for d1client
     Settings.getConfiguration().setProperty("D1Client.cnClassName", MockCNode.class.getName());
   }
