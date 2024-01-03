@@ -168,68 +168,68 @@ public class D1NodeServiceTest extends MCTestCase {
 
     public void testExpandRighsHolder() throws Exception {
         printTestHeader("testExpandRighsHolder");
-            // set back to force it to use defaults
-            NodeLocator nodeLocator1 = new NodeLocator() {
-               @Override
-               public D1Node getCNode() throws ClientSideException {
-                   D1Node node = null;
-                   try {
-                       node = D1Client.getCN("https://cn.dataone.org/cn");
-                   } catch (Exception e) {
-                       throw new ClientSideException(e.getMessage());
-                   }
-                   return node;
-               }
-           };
-           D1Client.setNodeLocator(nodeLocator1);
-           D1Node node = D1Client.getCN();//call this method can clear the mock cn
+        // set back to force it to use defaults
+        NodeLocator nodeLocator1 = new NodeLocator() {
+            @Override
+            public D1Node getCNode() throws ClientSideException {
+                D1Node node = null;
+                try {
+                    node = D1Client.getCN("https://cn.dataone.org/cn");
+                } catch (Exception e) {
+                    throw new ClientSideException(e.getMessage());
+                }
+                return node;
+            }
+        };
+        D1Client.setNodeLocator(nodeLocator1);
+        D1Node node = D1Client.getCN();//call this method can clear the mock cn
            System.out.println("in the testExpandRighsHolder, ---the base url is for cn is " + node.getNodeBaseServiceUrl());
-           Subject rightsHolder = new Subject();
-           rightsHolder.setValue("CN=arctic-data-admins,DC=dataone,DC=org");
-           Subject user = new Subject();
+        Subject rightsHolder = new Subject();
+        rightsHolder.setValue("CN=arctic-data-admins,DC=dataone,DC=org");
+        Subject user = new Subject();
 
-           user.setValue("http://orcid.org/0000-0002-1209-5268");
-           assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
+        user.setValue("http://orcid.org/0000-0002-1209-5268");
+        assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
-           user.setValue("uid=foo");
+        user.setValue("uid=foo");
            assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
-           user.setValue("http://orcid.org/0000-0003-0077-4738");
-           assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
+        user.setValue("http://orcid.org/0000-0003-0077-4738");
+        assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
-           rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
+        rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
            assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
-           user.setValue("uid=foo");
+        user.setValue("uid=foo");
            assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
-           rightsHolder.setValue(null);
+        rightsHolder.setValue(null);
            assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
-           rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
-           user.setValue(null);
+        rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
+        user.setValue(null);
            assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
-           rightsHolder.setValue(null);
+        rightsHolder.setValue(null);
            assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
-           rightsHolder.setValue("");
-           user.setValue("");
+        rightsHolder.setValue("");
+        user.setValue("");
            assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
-           NodeLocator nodeLocator = new NodeLocator() {
-               @Override
-               public D1Node getCNode() throws ClientSideException {
-                   D1Node node = null;
-                   try {
-                       node = new MockCNode();
-                   } catch (IOException e) {
-                       throw new ClientSideException(e.getMessage());
-                   }
-                   return node;
-               }
-           };
-           D1Client.setNodeLocator(nodeLocator );
-       }
+        NodeLocator nodeLocator = new NodeLocator() {
+            @Override
+            public D1Node getCNode() throws ClientSideException {
+                D1Node node = null;
+                try {
+                    node = new MockCNode();
+                } catch (IOException e) {
+                    throw new ClientSideException(e.getMessage());
+                }
+                return node;
+            }
+        };
+        D1Client.setNodeLocator(nodeLocator);
+    }
 
     /**
      * Test the isValidIdentifier method
@@ -978,7 +978,7 @@ public class D1NodeServiceTest extends MCTestCase {
             Thread.sleep(1000);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, "UTF-8");
         }
         assertTrue(resultStr.contains(guid));
     }
