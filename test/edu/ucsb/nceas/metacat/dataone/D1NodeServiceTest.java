@@ -25,29 +25,22 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Vector;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-
+import edu.ucsb.nceas.MCTestCase;
+import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
+import edu.ucsb.nceas.metacat.service.ServiceService;
+import edu.ucsb.nceas.metacat.util.SkinUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
-
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.D1Node;
 import org.dataone.client.NodeLocator;
 import org.dataone.client.exception.ClientSideException;
 import org.dataone.client.v2.CNode;
-import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -63,7 +56,6 @@ import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -71,17 +63,28 @@ import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
-import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.AccessUtil;
 import org.dataone.service.types.v1.util.ChecksumUtil;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v2.util.ObjectFormatServiceImpl;
 import org.dataone.service.util.Constants;
+import org.junit.After;
+import org.junit.Before;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
-import edu.ucsb.nceas.metacat.service.ServiceService;
-import edu.ucsb.nceas.metacat.util.SkinUtil;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Vector;
 
 /**
  * A JUnit superclass for testing the dataone Node implementations
@@ -93,6 +96,8 @@ public class D1NodeServiceTest extends MCTestCase {
     protected static ObjectFormatIdentifier eml_2_0_1_format = new ObjectFormatIdentifier();
     protected static ObjectFormatIdentifier eml_2_1_0_format = new ObjectFormatIdentifier();
     protected static ObjectFormatIdentifier eml_dataset_beta_6_format = new ObjectFormatIdentifier();
+    private MockedStatic<Settings> mockStaticSettings;
+
     static {
         eml_2_1_1_format.setValue("eml://ecoinformatics.org/eml-2.1.1");
         eml_2_1_0_format.setValue("eml://ecoinformatics.org/eml-2.1.0");
@@ -125,8 +130,12 @@ public class D1NodeServiceTest extends MCTestCase {
     /**
      * Establish a testing framework by initializing appropriate objects
      */
+    @Before
     public void setUp() throws Exception {
+
         super.setUp();
+        mockConfig();
+
         NodeLocator nodeLocator = new NodeLocator() {
             @Override
             public D1Node getCNode() throws ClientSideException {
@@ -139,6 +148,7 @@ public class D1NodeServiceTest extends MCTestCase {
                 return node;
             }
         };
+
         //add the replicate node into the locator
         NodeReference nodeRef = new NodeReference();
         nodeRef.setValue(MockReplicationMNode.NODE_ID);
@@ -153,9 +163,11 @@ public class D1NodeServiceTest extends MCTestCase {
     /**
      * Release any objects after tests are complete
      */
+    @After
     public void tearDown() {
         // set back to force it to use defaults
         D1Client.setNodeLocator(null);
+        mockStaticSettings.close();
     }
     
     /**
@@ -183,7 +195,8 @@ public class D1NodeServiceTest extends MCTestCase {
         };
         D1Client.setNodeLocator(nodeLocator1);
         D1Node node = D1Client.getCN();//call this method can clear the mock cn
-           System.out.println("in the testExpandRighsHolder, ---the base url is for cn is " + node.getNodeBaseServiceUrl());
+        System.out.println("in the testExpandRighsHolder, ---the base url is for cn is "
+                               + node.getNodeBaseServiceUrl());
         Subject rightsHolder = new Subject();
         rightsHolder.setValue("CN=arctic-data-admins,DC=dataone,DC=org");
         Subject user = new Subject();
@@ -192,30 +205,30 @@ public class D1NodeServiceTest extends MCTestCase {
         assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
         user.setValue("uid=foo");
-           assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
+        assertFalse(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
         user.setValue("http://orcid.org/0000-0003-0077-4738");
         assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
         rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
-           assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
+        assertFalse(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
         user.setValue("uid=foo");
-           assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
+        assertFalse(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
         rightsHolder.setValue(null);
-           assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
+        assertFalse(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
         rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
         user.setValue(null);
-           assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
+        assertFalse(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
         rightsHolder.setValue(null);
-           assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
+        assertFalse(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 
         rightsHolder.setValue("");
         user.setValue("");
-           assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
+        assertFalse(D1AuthHelper.expandRightsHolder(rightsHolder, user));
         NodeLocator nodeLocator = new NodeLocator() {
             @Override
             public D1Node getCNode() throws ClientSideException {
@@ -233,41 +246,40 @@ public class D1NodeServiceTest extends MCTestCase {
 
     /**
      * Test the isValidIdentifier method
-     * @throws Exception
      */
-    public void testIsValidIdentifier() throws Exception {
+    public void testIsValidIdentifier() {
         Identifier pid = null;
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid = new Identifier();
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue(" ");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("\nasfd");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("as\tfd");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("as fd");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("asfd ");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("  asfd");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("asfd\r");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("\fasfd\r");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("as\u000Bfd");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("as\u001Cfd");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("as\u001Dfd");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("as\u001Efd");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("as\u001Ffd");
-        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        assertFalse(D1NodeService.isValidIdentifier(pid));
         pid.setValue("`1234567890-=~!@#$%^&*()_+[]{}|\\:;,./<>?\"'");
         assertTrue(D1NodeService.isValidIdentifier(pid));
         pid.setValue("ess-dive-aa6e33480c133b0-20181019T234605514");
@@ -294,7 +306,7 @@ public class D1NodeServiceTest extends MCTestCase {
         String SKIN_NAME = "test-theme";
         //settings for testing
         Vector<String> originalSkinNames = SkinUtil.getSkinNames();
-        Vector<String> newNames = new Vector<String>();
+        Vector<String> newNames = new Vector<>();
         newNames.add(SKIN_NAME);
         SkinUtil.setSkinName(newNames);
         ServletContext servletContext = Mockito.mock(ServletContext.class);
@@ -304,16 +316,16 @@ public class D1NodeServiceTest extends MCTestCase {
         ServiceService.getInstance(servletContext);
         SkinPropertyService service = SkinPropertyService.getInstance();
 
-        Hashtable<String, String[]> params = new Hashtable<String, String[]>();
+        Hashtable<String, String[]> params = new Hashtable<>();
         D1NodeService.addParamsFromSkinProperties(params, SKIN_NAME);
         String[] value = params.get("serverName");
-        assertTrue(value[0].equals("https://foo.com"));//real value
+        assertEquals("https://foo.com", value[0]);//real value
         value = params.get("testUser");
-        assertTrue(value[0].equals("uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org")); //value of "test.mcUser" from the metacat.properties file
+        assertEquals("uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org", value[0]); //value of "test.mcUser" from the metacat.properties file
         value = params.get("testThirdUser");
-        assertTrue(value[0].equals("http://orcid.org/0023-0001-7868-2567")); //value of "test.mcThirdUser" from the metacat.properties file
+        assertEquals("http://orcid.org/0023-0001-7868-2567", value[0]); //value of "test.mcThirdUser" from the metacat.properties file
         value = params.get("organization");
-        assertTrue(value[0].equals("ESS-DIVE")); //real value
+        assertEquals("ESS-DIVE", value[0]); //real value
         SkinUtil.setSkinName(originalSkinNames);
 
     }
@@ -537,19 +549,9 @@ public class D1NodeServiceTest extends MCTestCase {
     }
 
     /**
-     * print a header to start each test
-     */
-    protected void printTestHeader(String testName)
-    {
-        System.out.println();
-        System.out.println("*************** " + testName + " ***************");
-    }
-
-    /**
      * Test the method if two AccessPolicy objects equal
-     * @throws Exception
      */
-    public void testAccessPolicyEqual() throws Exception {
+    public void testAccessPolicyEqual() {
         printTestHeader("testAccessPolicyEqual");
         String[] subjectsPublic = {"public"};
         String[] subjectsOrcid = {"http://orcid.org/0000-0002-8121-2341"};
@@ -576,14 +578,14 @@ public class D1NodeServiceTest extends MCTestCase {
         //same subject, but different permission
         ap1 = AccessUtil.createSingleRuleAccessPolicy(subjectsTest, permissionsREAD);
         ap2 = AccessUtil.createSingleRuleAccessPolicy(subjectsTest, permissionsCHANGE);
-        assertTrue(!D1NodeService.equals(ap1, ap2));
-        assertTrue(!D1NodeService.equals(ap2, ap1));
-        assertTrue(ap1.getAllowList().size() == 1);
-        assertTrue(ap1.getAllow(0).getSubject(0).getValue().equals("test"));
-        assertTrue(ap1.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllowList().size() == 1);
-        assertTrue(ap2.getAllow(0).getSubject(0).getValue().equals("test"));
-        assertTrue(ap2.getAllow(0).getPermission(0).equals(Permission.CHANGE_PERMISSION));
+        assertFalse(D1NodeService.equals(ap1, ap2));
+        assertFalse(D1NodeService.equals(ap2, ap1));
+        assertEquals(1, ap1.getAllowList().size());
+        assertEquals("test", ap1.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals(1, ap2.getAllowList().size());
+        assertEquals("test", ap2.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(0).getPermission(0), Permission.CHANGE_PERMISSION);
 
         //add a new permission for an existed user
         ap1 = new AccessPolicy();
@@ -592,19 +594,21 @@ public class D1NodeServiceTest extends MCTestCase {
         ap2 = new AccessPolicy();
         ap2.addAllow(AccessUtil.createAccessRule(subjectsPublic, permissionsREAD));
         ap2.addAllow(AccessUtil.createAccessRule(subjectsOrcid, AccessUtil.createReadWritePermissions()));
-        assertTrue(!D1NodeService.equals(ap1, ap2));
-        assertTrue(!D1NodeService.equals(ap2, ap1));
-        assertTrue(ap1.getAllowList().size() == 2);
-        assertTrue(ap1.getAllow(0).getSubject(0).getValue().equals("public"));
-        assertTrue(ap1.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap1.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap1.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllowList().size() == 2);
-        assertTrue(ap2.getAllow(0).getSubject(0).getValue().equals("public"));
-        assertTrue(ap2.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap2.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(1).getPermission(1).equals(Permission.WRITE));
+        assertFalse(D1NodeService.equals(ap1, ap2));
+        assertFalse(D1NodeService.equals(ap2, ap1));
+        assertEquals(2, ap1.getAllowList().size());
+        assertEquals("public", ap1.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap1.getAllow(1).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals(2, ap2.getAllowList().size());
+        assertEquals("public", ap2.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap2.getAllow(1).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals(ap2.getAllow(1).getPermission(1), Permission.WRITE);
 
         //add a new permission for an new user
         ap1 = new AccessPolicy();
@@ -614,20 +618,24 @@ public class D1NodeServiceTest extends MCTestCase {
         ap2.addAllow(AccessUtil.createAccessRule(subjectsPublic, permissionsREAD));
         ap2.addAllow(AccessUtil.createAccessRule(subjectsOrcid, permissionsREAD));
         ap2.addAllow(AccessUtil.createAccessRule(subjectsLDAP, permissionsWRITE));
-        assertTrue(!D1NodeService.equals(ap1, ap2));
-        assertTrue(!D1NodeService.equals(ap2, ap1));
-        assertTrue(ap1.getAllowList().size() == 2);
-        assertTrue(ap1.getAllow(0).getSubject(0).getValue().equals("public"));
-        assertTrue(ap1.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap1.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap1.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllowList().size() == 3);
-        assertTrue(ap2.getAllow(0).getSubject(0).getValue().equals("public"));
-        assertTrue(ap2.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap2.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(2).getSubject(0).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap2.getAllow(2).getPermission(0).equals(Permission.WRITE));
+        assertFalse(D1NodeService.equals(ap1, ap2));
+        assertFalse(D1NodeService.equals(ap2, ap1));
+        assertEquals(2, ap1.getAllowList().size());
+        assertEquals("public", ap1.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap1.getAllow(1).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals(3, ap2.getAllowList().size());
+        assertEquals("public", ap2.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap2.getAllow(1).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap2.getAllow(2).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(2).getPermission(0), Permission.WRITE);
 
         //nothing change
         ap1 = new AccessPolicy();
@@ -638,20 +646,26 @@ public class D1NodeServiceTest extends MCTestCase {
         ap2.addAllow(AccessUtil.createAccessRule(subjectsMix, AccessUtil.createReadWritePermissions()));
         assertTrue(D1NodeService.equals(ap1, ap2));
         assertTrue(D1NodeService.equals(ap2, ap1));
-        assertTrue(ap1.getAllowList().size() == 2);
-        assertTrue(ap1.getAllow(0).getSubject(0).getValue().equals("public"));
-        assertTrue(ap1.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap1.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap1.getAllow(1).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap1.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap1.getAllow(1).getPermission(1).equals(Permission.WRITE));
-        assertTrue(ap2.getAllowList().size() == 2);
-        assertTrue(ap2.getAllow(0).getSubject(0).getValue().equals("public"));
-        assertTrue(ap2.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap2.getAllow(1).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap2.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(1).getPermission(1).equals(Permission.WRITE));
+        assertEquals(2, ap1.getAllowList().size());
+        assertEquals("public", ap1.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap1.getAllow(1).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap1.getAllow(1).getSubject(1).getValue());
+        assertEquals(ap1.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals(ap1.getAllow(1).getPermission(1), Permission.WRITE);
+        assertEquals(2, ap2.getAllowList().size());
+        assertEquals("public", ap2.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap2.getAllow(1).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap2.getAllow(1).getSubject(1).getValue());
+        assertEquals(ap2.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals(ap2.getAllow(1).getPermission(1), Permission.WRITE);
 
         //different order, but same access rules
         ap1 = new AccessPolicy();
@@ -662,20 +676,26 @@ public class D1NodeServiceTest extends MCTestCase {
         ap2.addAllow(AccessUtil.createAccessRule(subjectsMix, permissionsWRITEREAD));
         assertTrue(D1NodeService.equals(ap1, ap2));
         assertTrue(D1NodeService.equals(ap2, ap1));
-        assertTrue(ap1.getAllowList().size() == 2);
-        assertTrue(ap1.getAllow(0).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap1.getAllow(0).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap1.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap1.getAllow(0).getPermission(1).equals(Permission.WRITE));
-        assertTrue(ap1.getAllow(1).getSubject(0).getValue().equals("public"));
-        assertTrue(ap1.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllowList().size() == 2);
-        assertTrue(ap2.getAllow(0).getSubject(0).getValue().equals("public"));
-        assertTrue(ap2.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap2.getAllow(1).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap2.getAllow(1).getPermission(0).equals(Permission.WRITE));
-        assertTrue(ap2.getAllow(1).getPermission(1).equals(Permission.READ));
+        assertEquals(2, ap1.getAllowList().size());
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap1.getAllow(0).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap1.getAllow(0).getSubject(1).getValue());
+        assertEquals(ap1.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals(ap1.getAllow(0).getPermission(1), Permission.WRITE);
+        assertEquals("public", ap1.getAllow(1).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals(2, ap2.getAllowList().size());
+        assertEquals("public", ap2.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap2.getAllow(1).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap2.getAllow(1).getSubject(1).getValue());
+        assertEquals(ap2.getAllow(1).getPermission(0), Permission.WRITE);
+        assertEquals(ap2.getAllow(1).getPermission(1), Permission.READ);
 
         //test duplicate rules
         ap1 = new AccessPolicy();
@@ -688,26 +708,35 @@ public class D1NodeServiceTest extends MCTestCase {
         ap2.addAllow(AccessUtil.createAccessRule(subjectsPublic, permissionsREAD));
         assertTrue(D1NodeService.equals(ap1, ap2));
         assertTrue(D1NodeService.equals(ap2, ap1));
-        assertTrue(ap1.getAllowList().size() == 2);
-        assertTrue(ap1.getAllow(0).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap1.getAllow(0).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap1.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap1.getAllow(0).getPermission(1).equals(Permission.WRITE));
-        assertTrue(ap1.getAllow(1).getSubject(0).getValue().equals("public"));
-        assertTrue(ap1.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllowList().size() == 4);
-        assertTrue(ap2.getAllow(0).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap2.getAllow(0).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap2.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(0).getPermission(1).equals(Permission.WRITE));
-        assertTrue(ap2.getAllow(1).getSubject(0).getValue().equals("public"));
-        assertTrue(ap2.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(2).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap2.getAllow(2).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap2.getAllow(2).getPermission(0).equals(Permission.WRITE));
-        assertTrue(ap2.getAllow(2).getPermission(1).equals(Permission.READ));
-        assertTrue(ap2.getAllow(3).getSubject(0).getValue().equals("public"));
-        assertTrue(ap2.getAllow(3).getPermission(0).equals(Permission.READ));
+        assertEquals(2, ap1.getAllowList().size());
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap1.getAllow(0).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap1.getAllow(0).getSubject(1).getValue());
+        assertEquals(ap1.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals(ap1.getAllow(0).getPermission(1), Permission.WRITE);
+        assertEquals("public", ap1.getAllow(1).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals(4, ap2.getAllowList().size());
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap2.getAllow(0).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap2.getAllow(0).getSubject(1).getValue());
+        assertEquals(ap2.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals(ap2.getAllow(0).getPermission(1), Permission.WRITE);
+        assertEquals("public", ap2.getAllow(1).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap2.getAllow(2).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap2.getAllow(2).getSubject(1).getValue());
+        assertEquals(ap2.getAllow(2).getPermission(0), Permission.WRITE);
+        assertEquals(ap2.getAllow(2).getPermission(1), Permission.READ);
+        assertEquals("public", ap2.getAllow(3).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(3).getPermission(0), Permission.READ);
 
         //test expanded access rule. One has read and write; another has write
         ap1 = new AccessPolicy();
@@ -718,19 +747,25 @@ public class D1NodeServiceTest extends MCTestCase {
         ap2.addAllow(AccessUtil.createAccessRule(subjectsMix, permissionsWRITE));
         assertTrue(D1NodeService.equals(ap1, ap2));
         assertTrue(D1NodeService.equals(ap2, ap1));
-        assertTrue(ap1.getAllowList().size() == 2);
-        assertTrue(ap1.getAllow(0).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap1.getAllow(0).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap1.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap1.getAllow(0).getPermission(1).equals(Permission.WRITE));
-        assertTrue(ap1.getAllow(1).getSubject(0).getValue().equals("public"));
-        assertTrue(ap1.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllowList().size() == 2);
-        assertTrue(ap2.getAllow(0).getSubject(0).getValue().equals("public"));
-        assertTrue(ap2.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap2.getAllow(1).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap2.getAllow(1).getPermission(0).equals(Permission.WRITE));
+        assertEquals(2, ap1.getAllowList().size());
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap1.getAllow(0).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap1.getAllow(0).getSubject(1).getValue());
+        assertEquals(ap1.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals(ap1.getAllow(0).getPermission(1), Permission.WRITE);
+        assertEquals("public", ap1.getAllow(1).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals(2, ap2.getAllowList().size());
+        assertEquals("public", ap2.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap2.getAllow(1).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap2.getAllow(1).getSubject(1).getValue());
+        assertEquals(ap2.getAllow(1).getPermission(0), Permission.WRITE);
 
         //test expanded access rule. One has read, write and change_permission, another has change_permission.
         ap1 = new AccessPolicy();
@@ -742,22 +777,31 @@ public class D1NodeServiceTest extends MCTestCase {
         ap2.addAllow(AccessUtil.createAccessRule(subjectsMix, permissionsCHANGE));
         assertTrue(D1NodeService.equals(ap1, ap2));
         assertTrue(D1NodeService.equals(ap2, ap1));
-        assertTrue(ap1.getAllowList().size() == 3);
-        assertTrue(ap1.getAllow(0).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap1.getAllow(0).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap1.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap1.getAllow(0).getPermission(1).equals(Permission.WRITE));
-        assertTrue(ap1.getAllow(1).getSubject(0).getValue().equals("public"));
-        assertTrue(ap1.getAllow(1).getPermission(0).equals(Permission.READ));
-        assertTrue(ap1.getAllow(2).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap1.getAllow(2).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap1.getAllow(2).getPermission(0).equals(Permission.CHANGE_PERMISSION));
-        assertTrue(ap2.getAllowList().size() == 2);
-        assertTrue(ap2.getAllow(0).getSubject(0).getValue().equals("public"));
-        assertTrue(ap2.getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(ap2.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
-        assertTrue(ap2.getAllow(1).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
-        assertTrue(ap2.getAllow(1).getPermission(0).equals(Permission.CHANGE_PERMISSION));
+        assertEquals(3, ap1.getAllowList().size());
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap1.getAllow(0).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap1.getAllow(0).getSubject(1).getValue());
+        assertEquals(ap1.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals(ap1.getAllow(0).getPermission(1), Permission.WRITE);
+        assertEquals("public", ap1.getAllow(1).getSubject(0).getValue());
+        assertEquals(ap1.getAllow(1).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap1.getAllow(2).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap1.getAllow(2).getSubject(1).getValue());
+        assertEquals(ap1.getAllow(2).getPermission(0), Permission.CHANGE_PERMISSION);
+        assertEquals(2, ap2.getAllowList().size());
+        assertEquals("public", ap2.getAllow(0).getSubject(0).getValue());
+        assertEquals(ap2.getAllow(0).getPermission(0), Permission.READ);
+        assertEquals("http://orcid.org/0000-0002-8121-2341",
+                     ap2.getAllow(1).getSubject(0).getValue());
+        assertEquals(
+            "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org",
+            ap2.getAllow(1).getSubject(1).getValue());
+        assertEquals(ap2.getAllow(1).getPermission(0), Permission.CHANGE_PERMISSION);
     }
 
     /**
@@ -810,7 +854,7 @@ public class D1NodeServiceTest extends MCTestCase {
         sysmeta2 = new SystemMetadata();
         sysmeta2.setRightsHolder(sbjRightsHolder1);
         sysmeta2.setAccessPolicy(ap1);
-        assertTrue(!D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        assertFalse(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
 
         sysmeta1 = new SystemMetadata();
         sysmeta1.setRightsHolder(sbjRightsHolder2);
@@ -818,7 +862,7 @@ public class D1NodeServiceTest extends MCTestCase {
         sysmeta2 = new SystemMetadata();
         sysmeta2.setRightsHolder(sbjRightsHolder3); //just change the letter case
         sysmeta2.setAccessPolicy(ap1);
-        assertTrue(!D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        assertFalse(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
 
         //the rights holder doesn't change but the access policy changes
         sysmeta1 = new SystemMetadata();
@@ -832,7 +876,7 @@ public class D1NodeServiceTest extends MCTestCase {
         //some scenario with null values
         sysmeta1 = null;
         sysmeta2 = null;
-        assertTrue(!D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        assertFalse(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
 
         sysmeta1 = null;
         sysmeta2 = new SystemMetadata();
@@ -845,7 +889,7 @@ public class D1NodeServiceTest extends MCTestCase {
         sysmeta1.setAccessPolicy(ap1);
         sysmeta2 = new SystemMetadata();
         sysmeta2.setAccessPolicy(ap1);
-        assertTrue(!D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        assertFalse(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
 
         sysmeta1 = new SystemMetadata();
         sysmeta1.setAccessPolicy(ap1);
@@ -958,7 +1002,7 @@ public class D1NodeServiceTest extends MCTestCase {
                     debug("doc    :" + doc);
                     debug("testDoc:" + testDoc);
             }
-            assertTrue(testDoc.equals(doc));
+            assertEquals(testDoc, doc);
         } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
@@ -981,5 +1025,24 @@ public class D1NodeServiceTest extends MCTestCase {
             resultStr = IOUtils.toString(stream, "UTF-8");
         }
         assertTrue(resultStr.contains(guid));
+    }
+
+    private void mockConfig() {
+
+        Configuration origConfig = Settings.getConfiguration();
+        Configuration testConfig = new PropertiesConfiguration();
+        for (Iterator<String> it = origConfig.getKeys(); it.hasNext(); ) {
+            String key = String.valueOf(it.next());
+            testConfig.addProperty(key, origConfig.getProperty(key));
+        }
+        testConfig.clearProperty("tls.protocol.preferences");
+        testConfig.addProperty("tls.protocol.preferences", "TLSv1.3, TLSv1.2, TLS");
+        testConfig.clearProperty("D1Client.CN_URL");
+        testConfig.addProperty("D1Client.CN_URL", MockCNode.MOCK_CN_BASE_SERVICE_URL);
+        testConfig.clearProperty("dataone.subject");
+        testConfig.addProperty("dataone.subject", "CN=urn:node:METACAT1,DC=dataone,DC=org");
+
+        mockStaticSettings = Mockito.mockStatic(Settings.class);
+        Mockito.when(Settings.getConfiguration()).thenReturn(testConfig);
     }
 }
