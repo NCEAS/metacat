@@ -615,7 +615,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         assertFalse((boolean) sys2.getArchived());
 
 
-        //test to archive an obsoleted object again (by use the updateSystemMetadata methdo)
+        //test to archive an obsoleted object again (by use the updateSystemMetadata method)
         Identifier guid3 = new Identifier();
         guid3.setValue("testArchive3." + System.currentTimeMillis());
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
@@ -730,7 +730,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             try {
                 updatedPid = MNodeService.getInstance(request)
                     .update(session, newPid, object, newPid2, newSysMeta2);
-                fail("update an object on non-authoritatvie node should get anexception");
+                fail("update an object on non-authoritative node should get an exception");
             } catch (Exception ee) {
                 assertTrue(ee instanceof InvalidRequest);
             }
@@ -739,7 +739,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             try {
                 updatedPid = MNodeService.getInstance(request)
                     .update(cnSession, newPid, object, newPid2, newSysMeta2);
-                fail("updating an object's authoritatvie node should get anexception");
+                fail("updating an object's authoritative node should get an exception");
                 //assertEquals(updatedPid.getValue(), newPid2.getValue());
             } catch (InvalidRequest ee) {
                 //assertTrue(ee.getMessage().contains(newPid.getValue()));
@@ -1384,7 +1384,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             }
             assertTrue(hasV1MNStorage);
             assertTrue(hasV2MNStorage);
-            // check the service restriction. Second, there are some service restrctions
+            // check the service restriction. Second, there are some service restrictions
             PropertyService.setPropertyNoPersist(
                 "auth.allowedSubmitters",
                 "http\\://orcid.org/0000-0002-1209-5268:cn=parc,o=PARC,dc=ecoinformatics,dc=org");
@@ -2405,7 +2405,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 InputStream result3 =
                     edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request)
                         .get(session, seriesId);
-                fail("the get(sid) methoud should throw a not found exception for the sid "
+                fail("the get(sid) method should throw a not found exception for the sid "
                          + seriesId.getValue());
             } catch (NotFound ee) {
 
@@ -2439,7 +2439,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 org.dataone.service.types.v1.SystemMetadata sys2 =
                     edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request)
                         .getSystemMetadata(session, seriesId);
-                fail("the getSystemMetadata(sid) methoud should throw a not found exception for "
+                fail("the getSystemMetadata(sid) method should throw a not found exception for "
                          + "the sid " + seriesId.getValue());
             } catch (NotFound nf2) {
 
@@ -2455,7 +2455,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 describeResponse =
                     edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request)
                         .describe(session, seriesId);
-                fail("the describe(sid) methoud should throw a not found exception for the sid "
+                fail("the describe(sid) method should throw a not found exception for the sid "
                          + seriesId.getValue());
             } catch (NotFound nf2) {
 
@@ -2576,7 +2576,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 InputStream result3 =
                     edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request)
                         .get(session, seriesId);
-                fail("the get(sid) methoud should throw a not found exception for the sid "
+                fail("the get(sid) method should throw a not found exception for the sid "
                          + seriesId.getValue());
             } catch (NotFound ee) {
 
@@ -2750,7 +2750,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 InputStream result3 =
                     edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request)
                         .get(session, seriesId);
-                fail("the get(sid) methoud should throw a not found exception for the sid "
+                fail("the get(sid) method should throw a not found exception for the sid "
                          + seriesId.getValue());
             } catch (NotFound ee) {
 
@@ -2761,7 +2761,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 InputStream result3 =
                     edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request)
                         .get(session, seriesId2);
-                fail("the get(sid) methoud should throw a not found exception for the sid "
+                fail("the get(sid) method should throw a not found exception for the sid "
                          + seriesId.getValue());
             } catch (NotFound ee) {
 
@@ -2773,7 +2773,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 Identifier non_exist_sid = new Identifier();
                 non_exist_sid.setValue("no-sid-exist-123qwe");
                 InputStream result3 = MNodeService.getInstance(request).get(session, non_exist_sid);
-                fail("the get(sid) methoud should throw a not found exception for the sid "
+                fail("the get(sid) method should throw a not found exception for the sid "
                          + seriesId.getValue());
             } catch (NotFound ee) {
 
@@ -2785,7 +2785,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 non_exist_sid.setValue("no-sid-exist-123qwe");
                 SystemMetadata result3 =
                     MNodeService.getInstance(request).getSystemMetadata(session, non_exist_sid);
-                fail("the getSystemMetadata(sid) methoud should throw a not found exception for "
+                fail("the getSystemMetadata(sid) method should throw a not found exception for "
                          + "the sid " + seriesId.getValue());
             } catch (NotFound ee) {
 
@@ -2796,7 +2796,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
                 Identifier non_exist_sid = new Identifier();
                 non_exist_sid.setValue("no-sid-exist-123qwe");
                 MNodeService.getInstance(request).describe(session, non_exist_sid);
-                fail("the describe(sid) methoud should throw a not found exception for the sid "
+                fail("the describe(sid) method should throw a not found exception for the sid "
                          + seriesId.getValue());
             } catch (NotFound ee) {
 
@@ -2980,10 +2980,6 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         //update system metadata sucessfully
         sysmeta.setDateSysMetadataModified(current);
         BigInteger serialVersion = metadata.getSerialVersion();
-        //System.out.println("the current version is "+serialVersion.toString());
-        //serialVersion = serialVersion.add(BigInteger.ONE);
-        //System.out.println("the new version is "+serialVersion.toString());
-        //sysmeta.setSerialVersion(serialVersion);
         System.out.println("the identifier is ----------------------- " + guid.getValue());
         MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
         SystemMetadata metadata2 =
@@ -3341,7 +3337,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         assertEquals(metadata.getSize(), sysmeta5.getSize());
 
 
-        //Setting p5 obosletes p1 fails since p2 already obsoletes p1
+        //Setting p5 obsoletes p1 fails since p2 already obsoletes p1
         sysmeta5.setObsoletes(guid1);
         serialVersion = metadata.getSerialVersion();
         serialVersion = serialVersion.add(BigInteger.ONE);
@@ -3355,7 +3351,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         }
 
 
-        //Setting p5 obosletedBy p2 fails since p1 already is obsoletedBy p2
+        //Setting p5 obsoletedBy p2 fails since p1 already is obsoletedBy p2
         sysmeta5.setObsoletes(null);
         sysmeta5.setObsoletedBy(guid2);
         try {
@@ -3367,7 +3363,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         }
 
 
-        //Setting p5 obsoletes p2 succeeds since the obosoletes of p5 is null and noone obsoletes
+        //Setting p5 obsoletes p2 succeeds since the obsoletes of p5 is null and noone obsoletes
         // p2.
         sysmeta5.setObsoletedBy(null);
         sysmeta5.setObsoletes(guid2);
@@ -3379,7 +3375,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         assertEquals(metadata.getChecksum().getValue(), sysmeta5.getChecksum().getValue());
 
 
-        //Setting p2 obsoletedBy p5 succeeds since the obosoletedBy of p2 is null and p5 doesn't
+        //Setting p2 obsoletedBy p5 succeeds since the obsoletedBy of p2 is null and p5 doesn't
         // obsolete anything
         sysmeta2.setObsoletes(guid1);
         sysmeta2.setObsoletedBy(guid5);
@@ -3711,8 +3707,6 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
             fail("We can't update the system metadata since its size was changed");
         } catch (InvalidRequest e) {
-            //assertTrue("The update system metadata should fail since the size was changed", e
-            // .getMessage().contains("The rightsHolder field "));
         }
 
         metadata.setSize(null);
@@ -3720,8 +3714,6 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
             fail("We can't update the system metadata since its size null");
         } catch (InvalidRequest e) {
-            //assertTrue("The update system metadata should fail since the size was changed", e
-            // .getMessage().contains("The rightsHolder field "));
         }
 
         metadata.setSize(size); //reset it back
@@ -4049,8 +4041,9 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         DetailedFileInputStream data = new DetailedFileInputStream(temp1, checksum);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, data, sysmeta);
         SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, pid);
-        assertTrue(result.getIdentifier().equals(guid));
+        assertEquals(result.getIdentifier(), guid);
         data.close();
+        temp1.delete();
 
         //fail to update the object since the new object is an invalid json-ld object
         File temp2 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
@@ -4095,7 +4088,8 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         MNodeService.getInstance(request).update(session, pid, data, newPid, newMeta);
         data.close();
         result = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
-        assertTrue(result.getIdentifier().equals(newPid));
+        assertEquals(result.getIdentifier(), newPid);
+        temp3.delete();
 
         //failed to create an object since it is an invalid json-ld object
         File temp4 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
