@@ -1,28 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2010 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *  Purpose: To test the Access Controls in metacat by JUnit
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.dataone;
 
 import edu.ucsb.nceas.MCTestCase;
@@ -80,6 +55,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -118,7 +94,7 @@ public class D1NodeServiceTest extends MCTestCase {
     {
         TestSuite suite = new TestSuite();
         suite.addTest(new D1NodeServiceTest("initialize"));
-        suite.addTest(new D1NodeServiceTest("testExpandRighsHolder"));
+        suite.addTest(new D1NodeServiceTest("testExpandRightsHolder"));
         suite.addTest(new D1NodeServiceTest("testIsValidIdentifier"));
         suite.addTest(new D1NodeServiceTest("testAddParamsFromSkinProperties"));
         suite.addTest(new D1NodeServiceTest("testAccessPolicyEqual"));
@@ -178,8 +154,8 @@ public class D1NodeServiceTest extends MCTestCase {
         return request;
     }
 
-    public void testExpandRighsHolder() throws Exception {
-        printTestHeader("testExpandRighsHolder");
+    public void testExpandRightsHolder() throws Exception {
+        printTestHeader("testExpandRightsHolder");
         // set back to force it to use defaults
         NodeLocator nodeLocator1 = new NodeLocator() {
             @Override
@@ -195,7 +171,7 @@ public class D1NodeServiceTest extends MCTestCase {
         };
         D1Client.setNodeLocator(nodeLocator1);
         D1Node node = D1Client.getCN();//call this method can clear the mock cn
-        System.out.println("in the testExpandRighsHolder, ---the base url is for cn is "
+        System.out.println("in the testExpandRightsHolder, ---the base url is for cn is "
                                + node.getNodeBaseServiceUrl());
         Subject rightsHolder = new Subject();
         rightsHolder.setValue("CN=arctic-data-admins,DC=dataone,DC=org");
@@ -610,7 +586,7 @@ public class D1NodeServiceTest extends MCTestCase {
         assertEquals(ap2.getAllow(1).getPermission(0), Permission.READ);
         assertEquals(ap2.getAllow(1).getPermission(1), Permission.WRITE);
 
-        //add a new permission for an new user
+        //add a new permission for a new user
         ap1 = new AccessPolicy();
         ap1.addAllow(AccessUtil.createAccessRule(subjectsPublic, permissionsREAD));
         ap1.addAllow(AccessUtil.createAccessRule(subjectsOrcid, permissionsREAD));
@@ -997,7 +973,7 @@ public class D1NodeServiceTest extends MCTestCase {
             Identifier guid = new Identifier();
             guid.setValue(docid);
             InputStream object = MNodeService.getInstance(request).get(session, guid);
-            String doc = IOUtils.toString(object, "UTF-8");
+            String doc = IOUtils.toString(object, StandardCharsets.UTF_8);
             if (!testDoc.equals(doc)) {
                     debug("doc    :" + doc);
                     debug("testDoc:" + testDoc);
@@ -1009,20 +985,20 @@ public class D1NodeServiceTest extends MCTestCase {
     }
     
     /**
-     * Use the solr query to query a title. If the result doesn't contains the given
+     * Use the solr query to query a title. If the result doesn't contain the given
      * guid, test will fail.
      */
     protected void queryTile(String title, String guid, Session session) throws Exception {
         String query = "q=title:" +"\"" + title +"\"";
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int count = 0;
         while ( (resultStr == null || !resultStr.contains(guid)) 
                                     && count <= D1NodeServiceTest.tryAcccounts) {
             Thread.sleep(1000);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         assertTrue(resultStr.contains(guid));
     }
