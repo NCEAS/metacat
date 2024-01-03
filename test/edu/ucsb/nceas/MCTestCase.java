@@ -634,7 +634,7 @@ public class MCTestCase
      *
      * @return a String docid based on the current date and time
      */
-    protected String generateDocumentId() {
+    public String generateDocumentId() {
         try {
             Thread.sleep(5);
         } catch (InterruptedException ie) {
@@ -824,4 +824,12 @@ public class MCTestCase
 
     }
 
+    /**
+     * print a header to start each test
+     */
+    public static void printTestHeader(String testName)
+    {
+        System.out.println();
+        System.out.println("*************** " + testName + " ***************");
+    }
 }
