@@ -1,22 +1,3 @@
-/**
- * '$RCSfile$' Copyright: 2010 Regents of the University of California and the National Center for
- * Ecological Analysis and Synthesis Purpose: To test the Access Controls in metacat by JUnit
- *
- * '$Author$' '$Date$' '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program; if
- * not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.doi.ezid;
 
 
@@ -37,6 +18,7 @@ import junit.framework.TestSuite;
 
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotAuthorized;
@@ -67,6 +49,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -106,7 +89,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
      */
     public RegisterDOITest(String name) {
         super(name);
-
     }
 
     /**
@@ -144,13 +126,17 @@ public class RegisterDOITest extends D1NodeServiceTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+
+        Settings.getConfiguration().clearProperty("D1Client.CN_URL");
+        Settings.getConfiguration().addProperty("D1Client.CN_URL", "https://cn.dataone.org/cn");
+
         // get ezid config properties
         ezidUsername = PropertyService.getProperty("guid.doi.username");
         ezidPassword = PropertyService.getProperty("guid.doi.password");
         String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
-        assertFalse("ezidUsername is empty!", ezidUsername.trim().equals(""));
-        assertFalse("ezidPassword is empty!", ezidPassword.trim().equals(""));
-        assertFalse("ezidServiceBaseUrl is empty!", ezidServiceBaseUrl.trim().equals(""));
+        assertNotEquals("ezidUsername is empty!", "", ezidUsername.trim());
+        assertNotEquals("ezidPassword is empty!", "", ezidPassword.trim());
+        assertNotEquals("ezidServiceBaseUrl is empty!", "", ezidServiceBaseUrl.trim());
 
         ezid = new EZIDService(ezidServiceBaseUrl);
         doiService = DOIServiceFactory.getDOIService();
@@ -1322,7 +1308,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
         PropertyService.setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "true");
         boolean enforcePublicEntirePackageInPublish =
-            new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+            Boolean.parseBoolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
 
         //insert data
@@ -1497,7 +1483,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         PropertyService.setPropertyNoPersist(
             "guid.doi.enforcePublicReadableEntirePackage", "false");
         boolean enforcePublicEntirePackageInPublish =
-            new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+            Boolean.parseBoolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
 
         //insert data
