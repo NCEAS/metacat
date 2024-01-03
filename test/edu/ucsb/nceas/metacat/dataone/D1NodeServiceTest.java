@@ -66,7 +66,7 @@ import java.util.Vector;
  * A JUnit superclass for testing the dataone Node implementations
  */
 public class D1NodeServiceTest extends MCTestCase {
-    public static final int tryAcccounts = 100;
+    public static final int MAX_TRIES = 100;
     protected MockHttpServletRequest request;
     protected static ObjectFormatIdentifier eml_2_1_1_format = new ObjectFormatIdentifier();
     protected static ObjectFormatIdentifier eml_2_0_1_format = new ObjectFormatIdentifier();
@@ -994,7 +994,7 @@ public class D1NodeServiceTest extends MCTestCase {
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int count = 0;
         while ( (resultStr == null || !resultStr.contains(guid)) 
-                                    && count <= D1NodeServiceTest.tryAcccounts) {
+                                    && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(1000);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);

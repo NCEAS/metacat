@@ -91,6 +91,7 @@ import java.util.zip.ZipFile;
 public class MNodeServiceIT extends D1NodeServiceTest {
 
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
+    private static final String CN_BASE_URL = "https://cn.dataone.org/cn";
 
     /**
      * Set up the test fixtures
@@ -100,6 +101,8 @@ public class MNodeServiceIT extends D1NodeServiceTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        Settings.getConfiguration().clearProperty("D1Client.CN_URL");
+        Settings.getConfiguration().addProperty("D1Client.CN_URL", CN_BASE_URL);
         // set up the configuration for d1client
         Settings.getConfiguration().setProperty("D1Client.cnClassName", MockCNode.class.getName());
     }
@@ -1998,7 +2001,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             String resultStr = IOUtils.toString(stream, "UTF-8");
             int account = 0;
             while ( (resultStr == null || !resultStr.contains("checksum")) 
-                    && account <= MNodeQueryIT.tryAcccounts) {
+                    && account <= MNodeQueryIT.MAX_TRIES) {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2014,7 +2017,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8");
             account = 0;
             while ( (resultStr == null || !resultStr.contains("checksum")) 
-                    && account <= MNodeQueryIT.tryAcccounts) {
+                    && account <= MNodeQueryIT.MAX_TRIES) {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2031,7 +2034,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8");
             account = 0;
             while ( (resultStr == null || !resultStr.contains("checksum")) 
-                    && account <= MNodeQueryIT.tryAcccounts) {
+                    && account <= MNodeQueryIT.MAX_TRIES) {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2051,7 +2054,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8");
             account = 0;
             while ( (resultStr == null || !resultStr.contains("checksum")) 
-                    && account <= MNodeQueryIT.tryAcccounts) {
+                    && account <= MNodeQueryIT.MAX_TRIES) {
                 Thread.sleep(500);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2105,7 +2108,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8");
             account = 0;
             while ( (resultStr == null || !resultStr.contains("resourceMap")) 
-                    && account <= MNodeQueryIT.tryAcccounts) {
+                    && account <= MNodeQueryIT.MAX_TRIES) {
                 Thread.sleep(1000);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2119,7 +2122,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             List<Identifier> oreId2 =
                 MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
             account = 0;
-            while (oreId2.size() != 2 && account <= MNodeQueryIT.tryAcccounts) {
+            while (oreId2.size() != 2 && account <= MNodeQueryIT.MAX_TRIES) {
                 Thread.sleep(500);
                 account++;
                 oreId2 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
@@ -4523,7 +4526,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         String resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-                                                && count <= MNodeQueryIT.tryAcccounts) {
+                                                && count <= MNodeQueryIT.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -4545,7 +4548,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-                                                && count <= MNodeQueryIT.tryAcccounts) {
+                                                && count <= MNodeQueryIT.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query1);
@@ -4581,7 +4584,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         count = 0;
         String newVersion = null;
-        while (!versionChanged && count <= MNodeQueryIT.tryAcccounts) {
+        while (!versionChanged && count <= MNodeQueryIT.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -4596,7 +4599,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         count = 0;
         String newVersion1 = null;
-        while (!versionChanged && count <= MNodeQueryIT.tryAcccounts) {
+        while (!versionChanged && count <= MNodeQueryIT.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query1);
