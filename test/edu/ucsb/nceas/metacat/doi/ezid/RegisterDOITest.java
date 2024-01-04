@@ -12,8 +12,6 @@ import edu.ucsb.nceas.metacat.doi.DOIService;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryTest;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
@@ -32,9 +30,11 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -47,17 +47,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.ucsb.nceas.MCTestCase.printTestHeader;
+import static edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest.createSystemMetadata;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import org.junit.FixMethodOrder;
+import org.junit.runners.MethodSorters;
 
 /**
  * A JUnit test to exercise the DOI registration for content added via the DataONE MN API
  *
  * @author leinfelder
  */
-public class RegisterDOITest extends D1NodeServiceTest {
+
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+public class RegisterDOITest {
     public static final int MAX_TIMES = 20;
     public static final int SLEEP_TIME = 1000;
     public static final String EMLFILEPATH = "test/tao.14563.1.xml";
@@ -76,41 +88,15 @@ public class RegisterDOITest extends D1NodeServiceTest {
     private EZIDService ezid = null;
     private DOIService doiService = null;
     private MockedStatic<PropertyService> mockProperties;
+    private final D1NodeServiceTest d1NodeServiceTest;
+    private final HttpServletRequest request;
 
     /**
      * Constructor for the tests
-     *
-     * @param name - the name of the test
      */
-    public RegisterDOITest(String name) {
-        super(name);
-    }
-
-    /**
-     * Build the test suite
-     *
-     * @return
-     */
-    public static Test suite() {
-
-        TestSuite suite = new TestSuite();
-        // DOI registration test
-        suite.addTest(new RegisterDOITest("testCreateDOI"));
-        suite.addTest(new RegisterDOITest("testMintAndCreateDOI"));
-        suite.addTest(new RegisterDOITest("testMintAndCreateForEML"));
-        // publish
-        suite.addTest(new RegisterDOITest("testPublishDOI"));
-        // test DOIs in the create method
-        suite.addTest(new RegisterDOITest("tesCreateDOIinSid"));
-        suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnDOIObject"));
-        suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnPrivateDOIObject"));
-        suite.addTest(new RegisterDOITest("testPublishEML220"));
-        suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOn"));
-        suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOff"));
-        suite.addTest(new RegisterDOITest("testPublishPrivatePackageToPublic"));
-        suite.addTest(new RegisterDOITest("testPublishPrivatePackageToPartialPublic"));
-        return suite;
-
+    public RegisterDOITest() {
+        d1NodeServiceTest = new D1NodeServiceTest("RegisterDOITest");
+        request = d1NodeServiceTest.getServletRequest();
     }
 
     /**
@@ -120,7 +106,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
      */
     @Before
     public void setUp() throws Exception {
-        super.setUp();
+        d1NodeServiceTest.setUp();
 
         Settings.getConfiguration().clearProperty("D1Client.CN_URL");
         Settings.getConfiguration().addProperty("D1Client.CN_URL", "https://cn.dataone.org/cn");
@@ -152,15 +138,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
     @After
     public void tearDown() {
         mockProperties.close();
-        super.tearDown();
-    }
-
-    /**
-     * Initial blank test
-     */
-    public void initialize() {
-        assertTrue(1 == 1);
-
+        d1NodeServiceTest.tearDown();
     }
 
     /**
@@ -168,8 +146,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
      *
      * @return
      */
-    @Override
-    public Session getTestSession() throws Exception {
+    private Session getTestSession() throws Exception {
         Session session = new Session();
         Subject subject = new Subject();
         subject.setValue(
@@ -178,11 +155,13 @@ public class RegisterDOITest extends D1NodeServiceTest {
         return session;
     }
 
+    @Test
     public void testMintAndCreateDOI() {
         printTestHeader("testMintAndCreateDOI");
         testMintAndCreateDOI(null);
     }
 
+    @Test
     public void testMintAndCreateForEML() {
         printTestHeader("testMintAndCreateForEML");
         String emlFile = EMLFILEPATH;
@@ -290,6 +269,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
     /**
      * Test object creation
      */
+    @Test
     public void testCreateDOI() {
         printTestHeader("testCreateDOI");
 
@@ -323,7 +303,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             assertNotNull(metadata);
             assertTrue(metadata.containsKey(EzidDOIService.DATACITE));
             String datacite = metadata.get(EzidDOIService.DATACITE);
-            System.out.println("" + datacite);
+            System.out.println(datacite);
             assertTrue(datacite.contains(
                 "CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org"));
         } catch (Exception e) {
@@ -335,6 +315,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
     /**
      * Test object publishing
      */
+    @Test
     public void testPublishDOI() {
         printTestHeader("testPublishDOI");
 
@@ -424,8 +405,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
     /**
      * Test the cases that an DOI is in the SID field.
      */
-    public void tesCreateDOIinSid() {
-        printTestHeader("tesCreateDOIinSid");
+    @Test
+    public void testCreateDOIinSid() {
+        printTestHeader("testCreateDOIinSid");
         String scheme = "DOI";
         try {
             Session session = getTestSession();
@@ -703,6 +685,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
      *
      * @throws Exception
      */
+    @Test
     public void testUpdateAccessPolicyOnDOIObject() throws Exception {
         printTestHeader("testUpdateAccessPolicyOnDOIObject");
         String user = "uid=test,o=nceas";
@@ -841,6 +824,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
      *
      * @throws Exception
      */
+    @Test
     public void testUpdateAccessPolicyOnPrivateDOIObject() throws Exception {
         printTestHeader("testUpdateAccessPolicyOnPrivateDOIObject");
         String user = "uid=test,o=nceas";
@@ -967,6 +951,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
      *
      * @throws Exception
      */
+    @Test
     public void testPublishEML220() throws Exception {
         Session session = getTestSession();
         Identifier guid = new Identifier();
@@ -1058,6 +1043,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
      *
      * @throws Exception
      */
+    @Test
     public void testPublishIdentifierProcessWithAutoPublishOn() throws Exception {
         printTestHeader("testPublishIdentifierProcessWithAutoPublishOn");
         try {
@@ -1170,6 +1156,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
      * When the autoPublish is false, to test the whole process: Reserve a doi, create an object use
      * the doi and publishIdentifier this doi.
      */
+    @Test
     public void testPublishIdentifierProcessWithAutoPublishOff() {
         printTestHeader("testPublishIdentifierProcessWithAutoPublishOff");
         try {
@@ -1280,6 +1267,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
      * Test to publish a private package to make all of them public
      * @throws Exception
      */
+    @Test
     public void testPublishPrivatePackageToPublic() throws Exception {
         printTestHeader("testPublishPrivatePackageToPublic");
         String user = "uid=test,o=nceas";
@@ -1426,7 +1414,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
         //publish the metadata id
         Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, guid2);
-        Thread.sleep(1000);
+        Thread.sleep(SLEEP_TIME);
 
         //the new identifier is public readable
         MNodeService.getInstance(request).getSystemMetadata(publicSession, publishedIdentifier);
@@ -1459,6 +1447,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
      * The data objects are still private
      * @throws Exception
      */
+    @Test
     public void testPublishPrivatePackageToPartialPublic() throws Exception {
         printTestHeader("testPublishPrivatePackageToPartialPublic");
         String user = "uid=test,o=nceas";
@@ -1607,7 +1596,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
         //publish the metadata id
         Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, guid2);
-        Thread.sleep(1000);
+        Thread.sleep(SLEEP_TIME);
 
         //the new identifier is public readable
         MNodeService.getInstance(request).getSystemMetadata(publicSession, publishedIdentifier);
