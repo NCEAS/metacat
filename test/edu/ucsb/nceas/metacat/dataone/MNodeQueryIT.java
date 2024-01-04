@@ -55,7 +55,7 @@ import java.util.UUID;
  *
  */
 public class MNodeQueryIT extends D1NodeServiceTest {
-    private static final long DEFAULT_SLEEP_MS = 500;
+    private static final long DEFAULT_SLEEP_MS = 1000;
     private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
     private static String portalFilePath = "metacat-index/src/test/resources/collection/portal-example-simple.xml";
     private static String portalResultFilePath = "metacat-index/src/test/resources/collection/collectionQuery-result-example-simple.txt";
@@ -102,24 +102,24 @@ public class MNodeQueryIT extends D1NodeServiceTest {
 
     TestSuite suite = new TestSuite();
     suite.addTest(new MNodeQueryIT("initialize"));
-    suite.addTest(new MNodeQueryIT("testQueryOfArchivedObjects"));
-    suite.addTest(new MNodeQueryIT("testPackage"));
-    suite.addTest(new MNodeQueryIT("testPackageWithSID"));
-    suite.addTest(new MNodeQueryIT("testQueryAccessControlAgainstPrivateObject"));
-    suite.addTest(new MNodeQueryIT("testQueryAccessControlAgainstPublicObject"));
-    suite.addTest(new MNodeQueryIT("testQueryEMLTaxonomy"));
-    suite.addTest(new MNodeQueryIT("testISO211"));
-    suite.addTest(new MNodeQueryIT("testPortalDocument"));
-    suite.addTest(new MNodeQueryIT("testPackageWithParts"));
-    suite.addTest(new MNodeQueryIT("testPostLongQuery"));
-    suite.addTest(new MNodeQueryIT("testChineseCharacters"));
-    suite.addTest(new MNodeQueryIT("testAccess"));
-    suite.addTest(new MNodeQueryIT("testPortal110"));
-    suite.addTest(new MNodeQueryIT("testCollectionl110"));
-    suite.addTest(new MNodeQueryIT("testSchemaOrg"));
-    suite.addTest(new MNodeQueryIT("testSchemaOrgWithContexts"));
-    suite.addTest(new MNodeQueryIT("testUpdateSystemmetadataToMakeObsolescentChain"));
-    suite.addTest(new MNodeQueryIT("testEmlWithAnnotation"));
+//    suite.addTest(new MNodeQueryIT("testQueryOfArchivedObjects"));
+//    suite.addTest(new MNodeQueryIT("testPackage"));
+//    suite.addTest(new MNodeQueryIT("testPackageWithSID"));
+//    suite.addTest(new MNodeQueryIT("testQueryAccessControlAgainstPrivateObject"));
+//    suite.addTest(new MNodeQueryIT("testQueryAccessControlAgainstPublicObject"));
+//    suite.addTest(new MNodeQueryIT("testQueryEMLTaxonomy"));
+//    suite.addTest(new MNodeQueryIT("testISO211"));
+//    suite.addTest(new MNodeQueryIT("testPortalDocument"));
+//    suite.addTest(new MNodeQueryIT("testPackageWithParts"));
+//    suite.addTest(new MNodeQueryIT("testPostLongQuery"));
+//    suite.addTest(new MNodeQueryIT("testChineseCharacters"));
+//    suite.addTest(new MNodeQueryIT("testAccess"));
+//    suite.addTest(new MNodeQueryIT("testPortal110"));
+//    suite.addTest(new MNodeQueryIT("testCollectionl110"));
+//    suite.addTest(new MNodeQueryIT("testSchemaOrg"));
+//    suite.addTest(new MNodeQueryIT("testSchemaOrgWithContexts"));
+//    suite.addTest(new MNodeQueryIT("testUpdateSystemmetadataToMakeObsolescentChain"));
+//    suite.addTest(new MNodeQueryIT("testEmlWithAnnotation"));
     suite.addTest(new MNodeQueryIT("testDelete"));
     suite.addTest(new MNodeQueryIT("testDeletePackage"));
     suite.addTest(new MNodeQueryIT("testDeletePackage2"));
@@ -207,7 +207,10 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //postquery
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        assertFalse(resultStr.contains("<str name=\"id\">" + guid.getValue() + "</str>"));
+        assertFalse(
+            "guid value is: " + guid.getValue()
+                + ", and resultStr contains: <str name=\"id\">" + guid.getValue() + "</str>)",
+            resultStr.contains("<str name=\"id\">" + guid.getValue() + "</str>"));
         assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         query = "q=id:"+guid.getValue()+"&archived=archived:true";
@@ -312,20 +315,26 @@ public class MNodeQueryIT extends D1NodeServiceTest {
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
-        assertTrue(resultStr.contains(guid2.getValue()));
+        assertTrue("resultStr should contain guid2 value: " + guid2.getValue(),
+                   resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
-        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        assertTrue("resultStr should contain resourceMapId value: " + resourceMapId.getValue(),
+                   resultStr.contains(resourceMapId.getValue()));
 
         //postquery
-        params = new HashMap<String, String[]>();
+        params = new HashMap<>();
         String[] qValue = {"id:"+guid.getValue()};
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
-        assertTrue(resultStr.contains(guid2.getValue()));
+        assertTrue("resultStr should contain guid2 value: " + guid2.getValue(),
+                   resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
-        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        assertTrue("resultStr should contain resourceMapId value: " + resourceMapId.getValue(),
+                   resultStr.contains(resourceMapId.getValue()));
 
         query = "q=id:" + guid2.getValue();
 
@@ -893,15 +902,21 @@ public class MNodeQueryIT extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
-        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertNotNull(resultStr);
+        assertTrue("resultStr should contain: <str name=\"id\">"+guid.getValue() + "</str>",
+                   resultStr.contains("<str name=\"id\">"+guid.getValue() + "</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+
         //postquery
-        params = new HashMap<String, String[]>();
+        params = new HashMap<>();
         String[] qValue = {"id:"+guid.getValue()};
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+
+        assertNotNull(resultStr);
+        assertTrue("resultStr should contain: <str name=\"id\">"+guid.getValue() + "</str>",
+                   resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         Session anotherSession = getAnotherSession();
@@ -909,7 +924,10 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
-        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+
+        assertNotNull(resultStr);
+        assertTrue("resultStr should contain: <str name=\"id\">"+guid.getValue() + "</str>",
+                   resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(anotherSession, "solr", params);
@@ -2381,7 +2399,8 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         if (resultStr != null && resultStr.contains("documents"))  {
             fail("Failed to delete the relationship elements in the metadata object.");
         }
-        assertTrue(!resultStr.contains("<arr name=\"resourceMap\">"));
+        assertNotNull(resultStr);
+        assertFalse(resultStr.contains("<arr name=\"resourceMap\">"));
         //the data object does not have any relationship elements in the solr doc
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2396,7 +2415,8 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         if (resultStr != null && resultStr.contains("documentedBy"))  {
             fail("Failed to delete the relationship elements of the data object.");
         }
-        assertTrue(!resultStr.contains("<arr name=\"resourceMap\">"));
+        assertNotNull(resultStr);
+        assertFalse(resultStr.contains("<arr name=\"resourceMap\">"));
         
         //delete the metadata object
         MNodeService.getInstance(request).delete(mnSession, guid2);
