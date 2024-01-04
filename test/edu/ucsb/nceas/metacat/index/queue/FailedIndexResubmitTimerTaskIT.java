@@ -18,7 +18,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import edu.ucsb.nceas.LeanTestUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -85,7 +84,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-                                                && count <= MNodeQueryIT.tryAcccounts) {
+                                                && count <= MNodeQueryIT.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -133,7 +132,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         String newVersion = null;
-        while (!versionChanged && count <= MNodeQueryIT.tryAcccounts) {
+        while (!versionChanged && count <= MNodeQueryIT.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -186,7 +185,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         String newVersion = null;
-        while (!versionChanged && count <= MNodeQueryIT.tryAcccounts) {
+        while (!versionChanged && count <= MNodeQueryIT.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -237,7 +236,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         while ((resultStr != null && resultStr.contains("checksum"))
-                                                && count <= MNodeQueryIT.tryAcccounts) {
+                                                && count <= MNodeQueryIT.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);

@@ -1,47 +1,18 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2010 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *  Purpose: To test the Access Controls in metacat by JUnit
- *
- *   '$Author:$'
- *     '$Date:$'
- * '$Revision:$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.dataone;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import junit.framework.Test;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManagerTest;
+import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import junit.framework.TestSuite;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.rest.DefaultHttpMultipartRestClient;
@@ -51,10 +22,9 @@ import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
+import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
-import org.dataone.service.types.v1.Identifier;
-
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -64,27 +34,28 @@ import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-
-import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
-import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManagerTest;
-import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
-import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
-import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
-import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
-import edu.ucsb.nceas.metacat.util.SystemUtil;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
- * A JUnit test to exercise the Metacat Member Node  query service implementation.
+ * A JUnit test to exercise the Metacat Member Node query service implementation.
  * @author cjones
  *
  */
 public class MNodeQueryIT extends D1NodeServiceTest {
-    private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
+    private static final long DEFAULT_SLEEP_MS = 500;
     private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
     private static String portalFilePath = "metacat-index/src/test/resources/collection/portal-example-simple.xml";
     private static String portalResultFilePath = "metacat-index/src/test/resources/collection/collectionQuery-result-example-simple.txt";
@@ -97,7 +68,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
     private static String collectionResult = null;
     private static String collectionQueryPortal110 = null;
     private static String collectionQueryCollection110 = null;
-    private static final String baseURI = "https://cn.dataone.org/cn/v2/resolve";
+    private static final String CN_BASE_URL = "https://cn.dataone.org/cn";
     private static final String longQueryFile = "test/test-queries/long-solr-query-partial.txt";
     
     
@@ -109,6 +80,8 @@ public class MNodeQueryIT extends D1NodeServiceTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
+    Settings.getConfiguration().clearProperty("D1Client.CN_URL");
+    Settings.getConfiguration().addProperty("D1Client.CN_URL", CN_BASE_URL);
     // set up the configuration for d1client
     Settings.getConfiguration().setProperty("D1Client.cnClassName", MockCNode.class.getName());
   }
@@ -118,14 +91,15 @@ public class MNodeQueryIT extends D1NodeServiceTest {
    */
   @After
   public void tearDown() {
+      super.tearDown();
   }
-  
+
   /**
    * Build the test suite
    * @return
    */
-  public static Test suite() {
-    
+  public static TestSuite suite() {
+
     TestSuite suite = new TestSuite();
     suite.addTest(new MNodeQueryIT("initialize"));
     suite.addTest(new MNodeQueryIT("testQueryOfArchivedObjects"));
@@ -150,9 +124,9 @@ public class MNodeQueryIT extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryIT("testDeletePackage"));
     suite.addTest(new MNodeQueryIT("testDeletePackage2"));
     return suite;
-    
+
   }
-  
+
   /**
    * Constructor for the tests
    * 
@@ -161,9 +135,9 @@ public class MNodeQueryIT extends D1NodeServiceTest {
   public MNodeQueryIT(String name) {
     super(name);
     try {
-        collectionQueryPortal110 = FileUtils.readFileToString(new File(portal110ResultFilePath), "UTF-8").trim();
-        collectionQueryCollection110 = FileUtils.readFileToString(new File(collection110ResultFilePath), "UTF-8").trim();
-        collectionResult = FileUtils.readFileToString(new File(portalResultFilePath), "UTF-8").trim();
+        collectionQueryPortal110 = FileUtils.readFileToString(new File(portal110ResultFilePath), StandardCharsets.UTF_8).trim();
+        collectionQueryCollection110 = FileUtils.readFileToString(new File(collection110ResultFilePath), StandardCharsets.UTF_8).trim();
+        collectionResult = FileUtils.readFileToString(new File(portalResultFilePath), StandardCharsets.UTF_8).trim();
     } catch (IOException e) {
         e.printStackTrace();
     }
@@ -183,19 +157,21 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         Identifier guid = new Identifier();
         HashMap<String, String[]> params = null;
         guid.setValue("testUpdate." + System.currentTimeMillis());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         String query = "q=id:"+guid.getValue();
-        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        InputStream stream;
+        String resultStr;
+
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ( (resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //post query
@@ -203,40 +179,40 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue = {"id:"+guid.getValue()};
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //only return id
         String[] flValue = {"id"};
         params.put("fl", flValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
-        assertTrue(!resultStr.contains("<bool name=\"archived\">false</bool>"));
-        
-        
+        assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
+
         MNodeService.getInstance(request).archive(session, guid);
         SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || resultStr.contains("<bool name=\"archived\">")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
-        assertTrue(!resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
-        assertTrue(!resultStr.contains("<bool name=\"archived\">false</bool>"));
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ( (resultStr == null || resultStr.contains("<bool name=\"archived\">"))
+            && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
+        assertFalse(resultStr.contains("<str name=\"id\">" + guid.getValue() + "</str>"));
+        assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
-        assertTrue(!resultStr.contains("<bool name=\"archived\">false</bool>"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("<str name=\"id\">" + guid.getValue() + "</str>"));
+        assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         query = "q=id:"+guid.getValue()+"&archived=archived:true";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
@@ -248,7 +224,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] archivedValue = {"archived:true"};
         params.put("archived", archivedValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">true</bool>"));
         
@@ -265,7 +241,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         HashMap<String, String[]> params = null;
         guid.setValue("testPackage-data." + System.currentTimeMillis());
         System.out.println("the data file id is ==== "+guid.getValue());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         
@@ -284,25 +260,29 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         //Make sure both data and metadata objects have been indexed
         String query = "q=id:"+guid.getValue();
-        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        InputStream stream;
+        String resultStr;
+
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ( (resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
+
         query = "q=id:"+guid2.getValue();
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ( (resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
+
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
         List<Identifier> dataIds = new ArrayList<Identifier>();
         dataIds.add(guid);
@@ -313,7 +293,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         System.out.println("the resource file id is ==== "+resourceMapId.getValue());
         ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
         String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
-        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
@@ -321,73 +301,78 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
         
         query = "q=id:"+guid.getValue();
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("isDocumentedBy")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        } while ((resultStr == null || !resultStr.contains("isDocumentedBy"))
+            && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
+
         //postquery
         params = new HashMap<String, String[]>();
         String[] qValue = {"id:"+guid.getValue()};
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
 
         query = "q=id:" + guid2.getValue();
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("documents"))
-                                                                    && account <= tryAcccounts) {
+        do {
             Thread.sleep(500);
-            account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        } while ((resultStr == null || !resultStr.contains("documents"))
+            && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
+
         //postquery
         params = new HashMap<String, String[]>();
         String[] qValue2 = {"id:"+guid2.getValue()};
         params.put("q", qValue2);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
+
         // query the resource map object
         query = "q=id:" + resourceMapId.getValue();
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+        do {
             Thread.sleep(500);
-            account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        } while ((resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">" + resourceMapId.getValue() + "</str>"));
+
         //postquery
-        params = new HashMap<String, String[]>();
+        params = new HashMap<>();
         String[] qValue3 = {"id:"+resourceMapId.getValue()};
         params.put("q", qValue3);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId.getValue()+"</str>"));
         
         
@@ -404,29 +389,31 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         MNodeService.getInstance(request).update(session, guid2, object4, guid4, sysmeta4);
         //make sure the new metadata object was indexed
         query = "q=id:"+guid4.getValue();
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ((resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         System.out.println("the result str is " + resultStr);
         assertTrue(resultStr.contains("name=\"obsoletes\">" + guid2.getValue()));
         
         //make sure guid2 was obsoleted
         query = "q=id:"+guid2.getValue();
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid4.getValue())) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        } while (
+            (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid4.getValue()))
+                && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("name=\"obsoletedBy\">" + guid4.getValue()));
         
         //create a new resourcemap with the new metadata object and old data object
@@ -440,46 +427,47 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         System.out.println("the resource file id is ==== "+newResourceMapId.getValue());
         rm = ResourceMapFactory.getInstance().createResourceMap(newResourceMapId, idMap);
         resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
-        InputStream object5 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        InputStream object5 = new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta5 = createSystemMetadata(newResourceMapId, session.getSubject(), object5);
         sysmeta5.setFormatId(formatId3);
         MNodeService.getInstance(request).update(session, resourceMapId, object5, newResourceMapId, sysmeta5);
         //make sure the old resource map has the obsoletedBy field.
         query = "q=id:"+resourceMapId.getValue();
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + newResourceMapId.getValue())) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        } while ((resultStr == null || !resultStr.contains(
+            "name=\"obsoletedBy\">" + newResourceMapId.getValue())) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("name=\"obsoletedBy\">" + newResourceMapId.getValue()));
         //make sure the new resource map was indexed
         query = "q=id:"+newResourceMapId.getValue();
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ( (resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("name=\"obsoletes\">" + resourceMapId.getValue()));
         //make sure the new metadata object was reindexed and have the new resource map
         query = "q=id:" + guid4.getValue();
-        stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("resourceMap"))
-                                                                && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ((resultStr == null || !resultStr.contains("resourceMap"))
+            && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("name=\"obsoletes\">" + guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));// the data object id
@@ -488,14 +476,15 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         // make sure the data object has been reindexed with the new information
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains(guid4.getValue())) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ((resultStr == null || !resultStr.contains(guid4.getValue())) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains(guid4.getValue()));
@@ -515,7 +504,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         HashMap<String, String[]> params = null;
         guid.setValue("testPackage-data." + System.currentTimeMillis());
         System.out.println("the data file id is ==== "+guid.getValue());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         
@@ -538,23 +527,23 @@ public class MNodeQueryIT extends D1NodeServiceTest {
       //Make sure both data and metadata objects have been indexed
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
         List<Identifier> dataIds = new ArrayList<Identifier>();
@@ -566,7 +555,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         System.out.println("the resource file id is ==== "+resourceMapId.getValue());
         ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
         String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
-        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
@@ -575,13 +564,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("isDocumentedBy")) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("isDocumentedBy")) && account <= MAX_TRIES) {
             Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
@@ -592,7 +581,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue = {"id:"+guid.getValue()};
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
@@ -600,13 +589,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= MAX_TRIES) {
             Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
@@ -618,7 +607,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue2 = {"id:"+guid2.getValue()};
         params.put("q", qValue2);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
@@ -626,13 +615,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
             Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId.getValue()+"</str>"));
@@ -641,7 +630,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue3 = {"id:"+resourceMapId.getValue()};
         params.put("q", qValue3);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId.getValue()+"</str>"));
         
         //update the metadata object
@@ -660,13 +649,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //update the resourceMap
         query = "q=id:"+guid4.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
             Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         Map<Identifier, List<Identifier>> idMap5 = new HashMap<Identifier, List<Identifier>>();
         idMap5.put(guid4, dataIds);
@@ -676,7 +665,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         System.out.println("the new resource file id is ==== "+resourceMapId2.getValue());
         ResourceMap rm2 = ResourceMapFactory.getInstance().createResourceMap(resourceMapId2, idMap5);
         String resourceMapXML2 = ResourceMapFactory.getInstance().serializeResourceMap(rm2);
-        InputStream object5 = new ByteArrayInputStream(resourceMapXML2.getBytes("UTF-8"));
+        InputStream object5 = new ByteArrayInputStream(resourceMapXML2.getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta5 = createSystemMetadata(resourceMapId2, session.getSubject(), object5);
         sysmeta5.setFormatId(formatId3);
         MNodeService.getInstance(request).update(session, resourceMapId, object5, resourceMapId2, sysmeta5);
@@ -684,13 +673,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
 
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains(resourceMapId2.getValue())) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains(resourceMapId2.getValue())) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
@@ -703,7 +692,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue4 = {"id:"+guid.getValue()};
         params.put("q", qValue4);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains(guid4.getValue()));
@@ -713,13 +702,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         query = "q=id:"+guid4.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains(resourceMapId2.getValue())) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains(resourceMapId2.getValue())) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
@@ -731,7 +720,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue5 = {"id:"+guid4.getValue()};
         params.put("q", qValue5);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
@@ -739,15 +728,15 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         query = "q=id:" + resourceMapId2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
         while ( (resultStr == null ||
                     !resultStr.contains("<str name=\"id\">"
-                    + resourceMapId2.getValue() + "</str>")) && account <= tryAcccounts) {
+                    + resourceMapId2.getValue() + "</str>")) && account <= MAX_TRIES) {
             Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId2.getValue()+"</str>"));
@@ -756,7 +745,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue6 = {"id:"+resourceMapId2.getValue()};
         params.put("q", qValue6);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId2.getValue()+"</str>"));
     }
     
@@ -770,19 +759,19 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         Identifier guid = new Identifier();
         HashMap<String, String[]> params = null;
         guid.setValue("testUpdate." + System.currentTimeMillis());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setAccessPolicy(new AccessPolicy());
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
@@ -791,20 +780,20 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue = {"id:"+guid.getValue()};
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         Session anotherSession = getAnotherSession();
         stream = MNodeService.getInstance(request).query(anotherSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(anotherSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
@@ -814,70 +803,70 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         subject.setValue("public");
         publicSession.setSubject(subject);
         stream = MNodeService.getInstance(request).query(publicSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(publicSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         //null session
         Session nullSession = null;
         stream = MNodeService.getInstance(request).query(nullSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(nullSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         //empty session
         Session emptySession = new Session();
         stream = MNodeService.getInstance(request).query(emptySession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(emptySession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         //MN session
         Session mnSession = getMNSession();
         stream = MNodeService.getInstance(request).query(mnSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(mnSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         //CN session
         Session cnSession = getCNSession();
         stream = MNodeService.getInstance(request).query(cnSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(cnSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
     }
@@ -891,18 +880,18 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         Identifier guid = new Identifier();
         HashMap<String, String[]> params = null;
         guid.setValue("testUpdate." + System.currentTimeMillis());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
@@ -911,20 +900,20 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue = {"id:"+guid.getValue()};
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         Session anotherSession = getAnotherSession();
         stream = MNodeService.getInstance(request).query(anotherSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(anotherSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
@@ -934,70 +923,70 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         subject.setValue("public");
         publicSession.setSubject(subject);
         stream = MNodeService.getInstance(request).query(publicSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(publicSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         //null session
         Session nullSession = null;
         stream = MNodeService.getInstance(request).query(nullSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(nullSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         //empty session
         Session emptySession = new Session();
         stream = MNodeService.getInstance(request).query(emptySession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(emptySession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         //MN session
         Session mnSession = getMNSession();
         stream = MNodeService.getInstance(request).query(mnSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(mnSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         
         //CN session
         Session cnSession = getCNSession();
         stream = MNodeService.getInstance(request).query(cnSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         System.out.println("the guid is "+guid.getValue());
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(cnSession, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
     }
@@ -1018,13 +1007,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         resultStr = resultStr.replaceAll("\\s","");
         //System.out.println("the guid is "+guid.getValue());
@@ -1043,7 +1032,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         String[] qValue = {"id:"+guid.getValue()};
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         resultStr = resultStr.replaceAll("\\s","");
         //System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<strname=\"id\">"+guid.getValue()+"</str>"));
@@ -1071,13 +1060,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         assertTrue(pid.getValue().equals(guid.getValue()));
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<date name=\"pubDate\">2017-07-26T10:15:22Z</date>"));
         assertTrue(resultStr.contains("<str name=\"formatId\">http://www.isotc211.org/2005/gmd-pangaea</str>"));
@@ -1138,13 +1127,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         System.out.println("After insert the object =========================");
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<str name=\"label\">my-portal</str>"));
@@ -1214,33 +1203,33 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //Make sure both portal and metadata objects have been indexed
         String query = "q=id:" +  "\"" + guid.getValue()  + "\"";
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         query = "q=id:" + "\""+ guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         query = "q=id:" +  "\"" + guid3.getValue()  + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         
         //generate the resource map with the documents/documentedBy and isPartOf/hasPart relationships.
@@ -1291,13 +1280,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         query = "q=id:" + "\"" + guid.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("hasPart")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("hasPart")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         //System.out.println(resultStr);
         assertTrue(resultStr.contains("<str name=\"label\">my-portal</str>"));
@@ -1309,13 +1298,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         query = "q=id:" + "\"" + guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
@@ -1327,13 +1316,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         query = "q=id:" + "\"" + guid3.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
@@ -1378,13 +1367,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         SimpleMultipartEntity params = new SimpleMultipartEntity();
         params.addParamPart("q", queryWithExtralSlash);
         InputStream stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params, 30000);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params, 30000);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         //System.out.println("the result is \n" + resultStr);
         assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
@@ -1393,7 +1382,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         SimpleMultipartEntity params2 = new SimpleMultipartEntity();
         params2.addParamPart("q", query2);
         stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params2, 30000);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         //System.out.println("the result is \n" + resultStr);
         assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
         
@@ -1405,7 +1394,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         SimpleMultipartEntity params3 = new SimpleMultipartEntity();
         params3.addParamPart("q", longQuery);
         stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params3, 30000);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         //System.out.println("the result is \n" + resultStr);
         assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
     }
@@ -1455,75 +1444,88 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         Session session = getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("testAccess." + System.currentTimeMillis());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+
         String query = "q=id:"+guid.getValue();
-        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+
+        InputStream stream;
+        String resultStr;
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+
+        } while ((resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("checksum"));
         
         // a document without access rules
         guid = new Identifier();
         guid.setValue("testAccess0." + System.currentTimeMillis());
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         sysmeta = createSystemMetadata(guid, rightsHolderSubject, object);
         sysmeta.setAccessPolicy(null);
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+
         query = "q=id:"+guid.getValue();
-        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        } while ((resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
         stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8"); 
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
-        assertTrue(!resultStr.contains("checksum"));
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        } while ((resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
+        assertFalse(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
-        
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
         
         // a document with the access rules that hasPermission can write it
         guid = new Identifier();
         guid.setValue("testAccess2." + System.currentTimeMillis());
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         sysmeta = createSystemMetadata(guid, rightsHolderSubject, object);
         AccessPolicy accessPolicy = new AccessPolicy();
         AccessRule allow = new AccessRule();
@@ -1531,37 +1533,41 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         allow.addSubject(hasPermissionSubject);
         accessPolicy.addAllow(allow);
         sysmeta.setAccessPolicy(accessPolicy);
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         query = "q=id:"+guid.getValue();
-        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ( (resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
         
         
          // a document with the access rules that hasPermission can read it
         guid = new Identifier();
         guid.setValue("testAccess1." + System.currentTimeMillis());
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         sysmeta = createSystemMetadata(guid, rightsHolderSubject, object);
         accessPolicy = new AccessPolicy();
         allow = new AccessRule();
@@ -1569,38 +1575,42 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         allow.addSubject(hasPermissionSubject);
         accessPolicy.addAllow(allow);
         sysmeta.setAccessPolicy(accessPolicy);
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         query = "q=id:"+guid.getValue();
-        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ( (resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
         
        
         
         // a document with the access rules that hasPermission can change it
         guid = new Identifier();
         guid.setValue("testAccess3." + System.currentTimeMillis());
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         sysmeta = createSystemMetadata(guid, rightsHolderSubject, object);
         accessPolicy = new AccessPolicy();
         allow = new AccessRule();
@@ -1608,31 +1618,37 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         allow.addSubject(hasPermissionSubject);
         accessPolicy.addAllow(allow);
         sysmeta.setAccessPolicy(accessPolicy);
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
-            account++;
+        do {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
+        } while ( (resultStr == null || !resultStr.contains("checksum")) && account++ < MAX_TRIES);
+
+        assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         assertTrue(resultStr.contains("checksum"));
+
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
-        assertTrue(!resultStr.contains("checksum"));
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        assertFalse(resultStr.contains("checksum"));
         
     }
     
@@ -1669,13 +1685,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         System.out.println("After insert the object =========================");
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<str name=\"label\">portal-1.1.0-example</str>"));
@@ -1716,13 +1732,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         System.out.println("After insert the object =========================");
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<str name=\"label\">filterGroup-operator-example</str>"));
@@ -1769,13 +1785,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<str name=\"title\">Removal of organic carbon by natural bacterioplankton"));
         assertTrue(resultStr.contains("<str name=\"abstract\">This dataset includes results of laboratory"));
@@ -1803,13 +1819,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         object.close();
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains("<str name=\"abstract\">No remote context, vocab http://schema.org/, creator 03, 02, 01"));
@@ -1825,13 +1841,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         object.close();
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains("<str name=\"abstract\">No remote context, vocab https://schema.org/, creator 03, 02, 01, using @list"));
@@ -1847,13 +1863,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         object.close();
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains("<str name=\"abstract\">No remote context, vocab https://schema.org/, creator 03, 02, 01"));
@@ -1869,13 +1885,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         object.close();
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains("<str name=\"abstract\">Remote context, creator 03, 02, 01"));
@@ -1891,13 +1907,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         object.close();
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains("<str name=\"abstract\">No remote context, vocab https://schema.org/, creator 03, 02, 01, using @list"));
@@ -1913,13 +1929,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         object.close();
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.print(resultStr);
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
@@ -1936,21 +1952,21 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         Session session = getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("testUpdateSystemmetadataToMakeObsolescentChain." + System.currentTimeMillis());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         
         //insert data
         Identifier guid1 = new Identifier();
         guid1.setValue("testUpdateSystemmetadataToMakeObsolescentChain-1." + System.currentTimeMillis());
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta1 = createSystemMetadata(guid1, session.getSubject(), object);
         MNodeService.getInstance(request).create(session, guid1, object, sysmeta1);
 
         //insert data
         Identifier guid2 = new Identifier();
         guid2.setValue("testUpdateSystemmetadataToMakeObsolescentChain-2." + System.currentTimeMillis());
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object);
         MNodeService.getInstance(request).create(session, guid2, object, sysmeta2);
         
@@ -1969,25 +1985,25 @@ public class MNodeQueryIT extends D1NodeServiceTest {
        
        String query = "q=id:"+guid.getValue();
        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-       String resultStr = IOUtils.toString(stream, "UTF-8");
+       String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
        int account = 0;
-       while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid1.getValue())) && account <= tryAcccounts) {
-           Thread.sleep(1000);
+       while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid1.getValue())) && account <= MAX_TRIES) {
+           Thread.sleep(DEFAULT_SLEEP_MS);
            account++;
            stream = MNodeService.getInstance(request).query(session, "solr", query);
-           resultStr = IOUtils.toString(stream, "UTF-8"); 
+           resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
        }
        assertTrue(resultStr.contains("name=\"obsoletedBy\">" + guid1.getValue()));
        
        query = "q=id:"+guid1.getValue();
        stream = MNodeService.getInstance(request).query(session, "solr", query);
-       resultStr = IOUtils.toString(stream, "UTF-8");
+       resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
        account = 0;
-       while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid2.getValue())) && account <= tryAcccounts) {
-           Thread.sleep(1000);
+       while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid2.getValue())) && account <= MAX_TRIES) {
+           Thread.sleep(DEFAULT_SLEEP_MS);
            account++;
            stream = MNodeService.getInstance(request).query(session, "solr", query);
-           resultStr = IOUtils.toString(stream, "UTF-8"); 
+           resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
        }
        assertTrue(resultStr.contains("name=\"obsoletedBy\">" + guid2.getValue()));
        assertTrue(resultStr.contains("name=\"obsoletes\">" + guid.getValue()));
@@ -1995,13 +2011,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
        
        query = "q=id:"+guid2.getValue();
        stream = MNodeService.getInstance(request).query(session, "solr", query);
-       resultStr = IOUtils.toString(stream, "UTF-8");
+       resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
        account = 0;
-       while ( (resultStr == null || !resultStr.contains("name=\"obsoletes\">" + guid1.getValue())) && account <= tryAcccounts) {
-           Thread.sleep(1000);
+       while ( (resultStr == null || !resultStr.contains("name=\"obsoletes\">" + guid1.getValue())) && account <= MAX_TRIES) {
+           Thread.sleep(DEFAULT_SLEEP_MS);
            account++;
            stream = MNodeService.getInstance(request).query(session, "solr", query);
-           resultStr = IOUtils.toString(stream, "UTF-8"); 
+           resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
        }
        assertTrue(resultStr.contains("name=\"obsoletes\">" + guid1.getValue()));
        
@@ -2026,13 +2042,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         resultStr = resultStr.replaceAll("\\s","");
         System.out.println("the guid is "+guid.getValue());
@@ -2074,18 +2090,18 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         HashMap<String, String[]> params = null;
         guid0.setValue("testDelete-data." + System.currentTimeMillis());
         System.out.println("the data file id is ==== "+guid0.getValue());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid0, session.getSubject(), object);
         MNodeService.getInstance(request).create(session, guid0, object, sysmeta);
         String query = "q=id:"+guid0.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr == null || !resultStr.contains("checksum"))  {
             fail("The index of data object failed");
@@ -2093,13 +2109,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         MNodeService.getInstance(request).delete(mnSession, guid0);
         //make sure the solr doc is gone
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println("the query result is:\n" + resultStr);
         if (resultStr != null && resultStr.contains("checksum"))  {
@@ -2117,7 +2133,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         Identifier guid = new Identifier();
         guid.setValue("deletePackage-data." + System.currentTimeMillis());
         System.out.println("the data file id is ==== "+guid.getValue());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         
@@ -2137,23 +2153,23 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //Make sure both data and metadata objects have been indexed
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         //create the resourcemap
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
@@ -2165,7 +2181,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         System.out.println("the resource file id is ==== "+resourceMapId.getValue());
         ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
         String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
-        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
@@ -2174,13 +2190,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //make sure the metadata and data has the relationship
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
@@ -2193,13 +2209,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //the metadata object should be gone.
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr != null && resultStr.contains("checksum"))  {
             fail("Failed to delete the index of the metadata object.");
@@ -2207,13 +2223,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //the data object exists but the documentedBy should be gone.
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("documentedBy")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("documentedBy")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr != null && resultStr.contains("documentedBy"))  {
             fail("Failed to delete the index of the metadata object.");
@@ -2226,13 +2242,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         MNodeService.getInstance(request).delete(mnSession, resourceMapId);
         query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr != null && resultStr.contains("checksum"))  {
             fail("Failed to delete the index of the resource map.");
@@ -2242,13 +2258,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         MNodeService.getInstance(request).delete(mnSession, guid);
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr != null && resultStr.contains("checksum"))  {
             fail("Failed to delete the index of the data object.");
@@ -2265,7 +2281,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         Identifier guid = new Identifier();
         guid.setValue("deletePackage-data." + System.currentTimeMillis());
         System.out.println("the data file id is ==== "+guid.getValue());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         
@@ -2285,23 +2301,23 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //Make sure both data and metadata objects have been indexed
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         //create the resourcemap
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
@@ -2313,7 +2329,7 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         System.out.println("the resource file id is ==== "+resourceMapId.getValue());
         ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
         String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
-        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
@@ -2322,13 +2338,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //make sure the metadata and data has the relationship
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
@@ -2340,13 +2356,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         MNodeService.getInstance(request).delete(mnSession, resourceMapId);
         query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr != null && resultStr.contains("checksum"))  {
             fail("Failed to delete the index of the resource map.");
@@ -2354,13 +2370,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //the metadata object does not have any relationship elements in the solr doc
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("documents")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("documents")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr != null && resultStr.contains("documents"))  {
             fail("Failed to delete the relationship elements in the metadata object.");
@@ -2369,13 +2385,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //the data object does not have any relationship elements in the solr doc
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("documentedBy")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("documentedBy")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr != null && resultStr.contains("documentedBy"))  {
             fail("Failed to delete the relationship elements of the data object.");
@@ -2387,13 +2403,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         //the metadata object should be gone.
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr != null && resultStr.contains("checksum"))  {
             fail("Failed to delete the index of the metadata object.");
@@ -2403,13 +2419,13 @@ public class MNodeQueryIT extends D1NodeServiceTest {
         MNodeService.getInstance(request).delete(mnSession, guid);
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
-        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= MAX_TRIES) {
+            Thread.sleep(DEFAULT_SLEEP_MS);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8); 
         }
         if (resultStr != null && resultStr.contains("checksum"))  {
             fail("Failed to delete the index of the data object.");

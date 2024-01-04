@@ -31,7 +31,7 @@ enableRemoteDebugging() {
     {
         echo "# Allow remote debugging connections to the port listed as \"address=\" below:"
         echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} \
-                            -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005\""
+            -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005\""
     } >> "${TC_SETENV}"
     echo
     echo "* * * * * * Remote debugging connections enabled on port 5005 * * * * * *"

@@ -132,7 +132,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         format.setValue(NonXMLMetadataHandlers.JSON_LD);
         SystemMetadata sysmeta = new SystemMetadata();
         
-        //save the DetaiedFileInputStream from the valid json-ld object without a checksum
+        //save the DetailedFileInputStream from the valid json-ld object without a checksum
         File temp1 = generateTmpFile("temp-json-ld-valid");
         InputStream input = new FileInputStream(new File(JSON_LD_FILE_PATH));
         OutputStream out = new FileOutputStream(temp1);
@@ -149,14 +149,14 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
         String localId = handler.save(data, sysmeta, session, event);
-        assertTrue(!temp1.exists());
+        assertFalse(temp1.exists());
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
         File savedFile = new File(metadataStoragePath, localId);
         assertTrue(savedFile.exists());
         DocumentImpl.deleteFromFileSystem(localId, true);
-        assertTrue(!savedFile.exists());
+        assertFalse(savedFile.exists());
         
         //save the DetaiedFileInputStream from the valid json-ld object with the expected checksum
         File temp2 = generateTmpFile("temp2-json-ld-valid");

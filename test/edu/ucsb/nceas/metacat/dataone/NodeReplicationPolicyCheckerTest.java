@@ -53,7 +53,7 @@ public class NodeReplicationPolicyCheckerTest {
     public NodeReplicationPolicyCheckerTest () {
         // D1NodeServiceTest extends MCTestCase, so it automatically calls
         // LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
-        d1NSTest = new D1NodeServiceTest("OrcidServiceTest");
+        d1NSTest = new D1NodeServiceTest("NodeReplicationPolicyCheckerTest");
     }
 
     @Before

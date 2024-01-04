@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -120,26 +121,25 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         String resultId = extractElementValue(doc, IDXPATH);
         assertEquals("testPublicReadable: query result ID is incorrect", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
-        assertTrue(title.equals(TITLE));
+        assertEquals(TITLE, title);
         Session querySession2 = getSession(QUERYUSER, null);
         input = query(querySession2, id);
         doc = generateDoc(input);
         String resultId2 = extractElementValue(doc, IDXPATH);
-        assertTrue(
+        assertEquals(
             "In the testPublicReadable method, the query result should have the id " + id.getValue()
-                + " rather than " + resultId2, resultId2.equals(id.getValue()));
+                + " rather than " + resultId2, resultId2, id.getValue());
         title = extractElementValue(doc, TITLEPATH);
-        assertTrue(title.equals(TITLE));
+        assertEquals(TITLE, title);
 
         archive(session, id);
         Thread.sleep(3000);
         input = query(querySession2, id);
         doc = generateDoc(input);
         String resultId3 = extractElementValue(doc, IDXPATH);
-        assertTrue(
+        assertNull(
             "In the testPublicReadable method, the query result should be null since the document"
-                + " was archived. ",
-            resultId3 == null);
+                + " was archived. ", resultId3);
     }
 
 
@@ -161,10 +161,8 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
         String resultId = extractElementValue(doc, IDXPATH);
-        assertTrue(
-            "In the testOnlyUserReadable method, the query result id should be null for the "
-                + "public rather than "
-                + resultId, resultId == null);
+        assertNull("In the testOnlyUserReadable method, the query result id should be null for the "
+                       + "public rather than " + resultId, resultId);
         Session querySession2 = getSession(QUERYUSER, null);
         input = query(querySession2, id);
         doc = generateDoc(input);
@@ -172,7 +170,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         assertEquals("testOnlyUserReadable: query result for the user " + QUERYUSER + " has the "
                          + "wrong ID", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
-        assertTrue(title.equals(TITLE));
+        assertEquals(TITLE, title);
         archive(session, id);
     }
 
@@ -193,15 +191,15 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
         String resultId = extractElementValue(doc, IDXPATH);
-        assertTrue(
+        assertNull(
             "In the testGroupReadable method, the query result id should be null for the public ",
-            resultId == null);
+            resultId);
         Session querySession2 = getSession(QUERYUSER, null);
         input = query(querySession2, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testGroupReadable method, the query result for the user " + QUERYUSER
-                       + " which doesn't belong to the group should be null ", resultId == null);
+        assertNull("In the testGroupReadable method, the query result for the user " + QUERYUSER
+                       + " which doesn't belong to the group should be null ", resultId);
         String[] groups = {GROUP1};
         Session querySession3 = getSession(QUERYUSER, groups);
         input = query(querySession3, id);
@@ -211,7 +209,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         assertEquals("testGroupReadable: query result for the user " + QUERYUSER
                          + " which belong to the group has the wrong ID ", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
-        assertTrue(title.equals(TITLE));
+        assertEquals(TITLE, title);
         archive(session, id);
     }
 
@@ -233,25 +231,24 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         InputStream input = query(querySession, id);
         Document doc = generateDoc(input);
         String resultId = extractElementValue(doc, IDXPATH);
-        assertTrue(
+        assertNull(
             "In the testOnlyRightHolderReadable method, the query result id should be null for "
-                + "the public ",
-            resultId == null);
+                + "the public ", resultId);
         Session querySession2 = getSession(QUERYUSER, null);
         input = query(querySession2, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertTrue(
+        assertNull(
             "In the testOnlyRightHolderReadable method, the query result for the user " + QUERYUSER
-                + " which doesn't belong to the group should be null.", resultId == null);
+                + " which doesn't belong to the group should be null.", resultId);
         String[] groups = {GROUP1};
         Session querySession3 = getSession(QUERYUSER, groups);
         input = query(querySession3, id);
         doc = generateDoc(input);
         resultId = extractElementValue(doc, IDXPATH);
-        assertTrue(
+        assertNull(
             "In the testOnlyRightHolderReadable method, the query result for the user " + QUERYUSER
-                + " which belong to the group should be null.", resultId == null);
+                + " which belong to the group should be null.", resultId);
         Session querySession4 = getSession(CREATEUSER, groups);
         input = query(querySession4, id);
         doc = generateDoc(input);
@@ -259,7 +256,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         assertEquals("testOnlyRightHolderReadable: query result for the creator " + CREATEUSER
                          + " is incorrect ", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
-        assertTrue(title.equals(TITLE));
+        assertEquals(TITLE, title);
         archive(session, id);
     }
 
@@ -288,7 +285,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         assertEquals("testDistrustCertificate: query result for the creator " + CREATEUSER
                          + " is incorrect ", id.getValue(), resultId);
         String title = extractElementValue(doc, TITLEPATH);
-        assertTrue(title.equals(TITLE));
+        assertEquals(TITLE, title);
 
         // Use the libclient without the session: the user shouldn't query the document since its
         // certificate is distrusted, and it will be considered public.
@@ -313,13 +310,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
             System.out.println("the exception class is " + e.getClass().getCanonicalName());
             assertTrue(e instanceof ServiceFailure);
         }
-
-        //doc = generateDoc(input);
-        //String resultId2 = extractElementValue(doc, IDXPATH);
-        //assertTrue("In the testDistrustCertificate method, the query result id should be null",
-        // resultId2==null);
         archive(session, id);
-
     }
 
     /*
@@ -328,7 +319,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
      * the subject and is the member of the groups.
      * @return
      */
-    private Session getSession(String subjectValue, String[] groups) throws Exception {
+    private Session getSession(String subjectValue, String[] groups) {
         Session session = new Session();
         Subject subject = new Subject();
         subject.setValue(subjectValue);
@@ -336,8 +327,8 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         if (groups != null) {
             Person person = new Person();
             person.setSubject(subject);
-            person.setVerified(new Boolean(true));
-            List<Subject> groupSubjects = new ArrayList<Subject>();
+            person.setVerified(Boolean.TRUE);
+            List<Subject> groupSubjects = new ArrayList<>();
             for (String group : groups) {
                 Subject groupSub = new Subject();
                 groupSub.setValue(group);
@@ -364,7 +355,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
     private Identifier generateIdentifier() {
         Identifier guid = new Identifier();
         long random = Math.round(Math.random() * 10000);
-        guid.setValue("test." + System.currentTimeMillis() + (new Long(random)).toString());
+        guid.setValue("test." + System.currentTimeMillis() + random);
         return guid;
     }
 

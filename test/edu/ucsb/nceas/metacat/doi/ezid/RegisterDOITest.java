@@ -1,42 +1,22 @@
-/**
- * '$RCSfile$' Copyright: 2010 Regents of the University of California and the National Center for
- * Ecological Analysis and Synthesis Purpose: To test the Access Controls in metacat by JUnit
- *
- * '$Author$' '$Date$' '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program; if
- * not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.doi.ezid;
 
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import edu.ucsb.nceas.ezid.EZIDService;
+import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
+import edu.ucsb.nceas.ezid.profile.InternalProfile;
+import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.doi.DOIService;
+import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
+import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryTest;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
-
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotAuthorized;
@@ -52,31 +32,30 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
-
-import edu.ucsb.nceas.ezid.EZIDService;
-import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
-import edu.ucsb.nceas.ezid.profile.InternalProfile;
-import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
-import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
-import edu.ucsb.nceas.metacat.doi.DOIService;
-import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
-import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryTest;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 
 /**
- * A JUnit test to exercise the DOI registration for content added
- * via the DataONE MN API
+ * A JUnit test to exercise the DOI registration for content added via the DataONE MN API
  *
  * @author leinfelder
- *
  */
 public class RegisterDOITest extends D1NodeServiceTest {
     public static final int MAX_TIMES = 20;
@@ -101,12 +80,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
     /**
      * Constructor for the tests
      *
-     * @param name
-     *            - the name of the test
+     * @param name - the name of the test
      */
     public RegisterDOITest(String name) {
         super(name);
-
     }
 
     /**
@@ -144,13 +121,17 @@ public class RegisterDOITest extends D1NodeServiceTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+
+        Settings.getConfiguration().clearProperty("D1Client.CN_URL");
+        Settings.getConfiguration().addProperty("D1Client.CN_URL", "https://cn.dataone.org/cn");
+
         // get ezid config properties
         ezidUsername = PropertyService.getProperty("guid.doi.username");
         ezidPassword = PropertyService.getProperty("guid.doi.password");
         String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
-        assertFalse("ezidUsername is empty!", ezidUsername.trim().equals(""));
-        assertFalse("ezidPassword is empty!", ezidPassword.trim().equals(""));
-        assertFalse("ezidServiceBaseUrl is empty!", ezidServiceBaseUrl.trim().equals(""));
+        assertNotEquals("ezidUsername is empty!", "", ezidUsername.trim());
+        assertNotEquals("ezidPassword is empty!", "", ezidPassword.trim());
+        assertNotEquals("ezidServiceBaseUrl is empty!", "", ezidServiceBaseUrl.trim());
 
         ezid = new EZIDService(ezidServiceBaseUrl);
         doiService = DOIServiceFactory.getDOIService();
@@ -184,6 +165,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
     /**
      * constructs a "fake" session with a test subject
+     *
      * @return
      */
     @Override
@@ -204,19 +186,14 @@ public class RegisterDOITest extends D1NodeServiceTest {
     public void testMintAndCreateForEML() {
         printTestHeader("testMintAndCreateForEML");
         String emlFile = EMLFILEPATH;
-        InputStream content = null;
-        try {
-            content = new FileInputStream(emlFile);
+        try (InputStream content = new FileInputStream(emlFile)) {
             testMintAndCreateDOI(content);
-            content.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             fail(e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
             fail(e.getMessage());
-        } finally {
-            IOUtils.closeQuietly(content);
         }
     }
 
@@ -260,9 +237,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
                         .getFormatId());
                 isMetadata = true;
             } else {
-                object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+                object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
                 sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-                object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+                object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             }
 
             Identifier pid =
@@ -299,7 +276,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             }
             if (isMetadata) {
                 String creator = metadata.get(DataCiteProfile.CREATOR.toString());
-                //assertTrue(creator.equals("John Doe;NCEAS"));                
+                //assertTrue(creator.equals("John Doe;NCEAS"));
             }
 
             System.out.println("tested with DOI: " + pid.getValue());
@@ -323,7 +300,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             Session session = getTestSession();
             Identifier guid = new Identifier();
             guid.setValue(shoulder + "/testCreateDOI." + System.currentTimeMillis());
-            InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             Identifier pid =
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
@@ -393,7 +370,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 //check if the package id was updated
                 InputStream emlObj =
                     MNodeService.getInstance(request).get(session, publishedIdentifier);
-                String emlStr = IOUtils.toString(emlObj, "UTF-8");
+                String emlStr = IOUtils.toString(emlObj, StandardCharsets.UTF_8);
                 assertTrue(emlStr.contains("packageId=\"" + publishedIdentifier.getValue() + "\""));
 
                 // check for the metadata explicitly, using ezid service
@@ -417,7 +394,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 result = metadata.get(EzidDOIService.DATACITE);
                 System.out.println("result is\n" + result);
                 Node node = MNodeService.getInstance(null).getCapabilities();
-                String nodeName = node.getName();
                 String id = publishedIdentifier.getValue();
                 id = id.replaceFirst("doi:", "");
                 //assertTrue(result.contains(EML2DataCiteFactoryTest.section));
@@ -552,7 +528,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 } while (result == null && count < MAX_TIMES);
 
                 assertNotNull(metadata);
-                System.out.println("the metadata is " + metadata.toString());
+                System.out.println("the metadata is " + metadata);
                 result = metadata.get(EzidDOIService.DATACITE);
                 System.out.println("the result is \n" + result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
@@ -572,7 +548,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 IOUtils.closeQuietly(content);
             }
 
-            //Test the case that both identifier and sid are dois 
+            //Test the case that both identifier and sid are dois
             try {
                 Identifier publishedIdentifier =
                     MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
@@ -697,6 +673,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 } while (metadata == null && count < MAX_TIMES);
                 System.out.println("the metadata is " + metadata);
                 assertNull(metadata);
+                count = 0;
                 do {
                     try {
                         Thread.sleep(SLEEP_TIME);
@@ -723,6 +700,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
     /**
      * Test change the access policy on an DOI object
+     *
      * @throws Exception
      */
     public void testUpdateAccessPolicyOnDOIObject() throws Exception {
@@ -788,9 +766,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
         try {
             MNodeService.getInstance(request)
                 .updateSystemMetadata(session, publishedIdentifier, meta);
-            fail(
-                "We shouldn't get here since removing public-read access rules for a DOI object "
-                    + "should fail.");
+            fail("We shouldn't get here since removing public-read access rules for a DOI object "
+                     + "should fail.");
         } catch (InvalidRequest e) {
             assertTrue(e.getMessage().contains(publishedIdentifier.getValue()));
         }
@@ -850,9 +827,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
         meta.setAccessPolicy(newAccess);
         try {
             MNodeService.getInstance(request).updateSystemMetadata(session, guid, meta);
-            fail(
-                "We shouldn't get here since removing public-read access rules for a DOI object "
-                    + "should fail.");
+            fail("We shouldn't get here since removing public-read access rules for a DOI object "
+                     + "should fail.");
         } catch (InvalidRequest e) {
             assertTrue(e.getMessage().contains(guid.getValue()));
             assertTrue(e.getMessage().contains(sid.getValue()));
@@ -862,6 +838,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
     /**
      * Test change the access policy on an DOI object which is not public readable
+     *
      * @throws Exception
      */
     public void testUpdateAccessPolicyOnPrivateDOIObject() throws Exception {
@@ -903,8 +880,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             .updateSystemMetadata(session, publishedIdentifier, meta);
         assertTrue(
             "The update should be successful even though there is no public readable rule on the "
-                + "new access policy since the old access policy is private.",
-            success);
+                + "new access policy since the old access policy is private.", success);
         meta = MNodeService.getInstance(request).getSystemMetadata(session, publishedIdentifier);
         access = meta.getAccessPolicy();
         boolean find = false;
@@ -960,8 +936,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         success = MNodeService.getInstance(request).updateSystemMetadata(session, guid, meta);
         assertTrue(
             "he update should be successful even though there is no public readable rule on the "
-                + "new access policy since the old access policy is private.",
-            success);
+                + "new access policy since the old access policy is private.", success);
         meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
         access = meta.getAccessPolicy();
         boolean found = false;
@@ -989,13 +964,14 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
     /**
      * Test to publish an eml 2.2.0 document
+     *
      * @throws Exception
      */
     public void testPublishEML220() throws Exception {
         Session session = getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("testPublishDOI." + System.currentTimeMillis());
-        // use EML to test 
+        // use EML to test
         String emlFile = "test/eml-2.2.0.xml";
         InputStream content = null;
         content = new FileInputStream(emlFile);
@@ -1038,13 +1014,13 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
         //check if the package id was updated
         InputStream emlObj = MNodeService.getInstance(request).get(session, publishedIdentifier);
-        String emlStr = IOUtils.toString(emlObj, "UTF-8");
+        String emlStr = IOUtils.toString(emlObj, StandardCharsets.UTF_8);
         assertTrue(emlStr.contains("packageId=\"" + publishedIdentifier.getValue() + "\""));
 
         //check the query
         String query = "q=id:" + "\"" + publishedIdentifier.getValue() + "\"";
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         do {
             try {
                 Thread.sleep(SLEEP_TIME * 3);
@@ -1052,7 +1028,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     break;
                 }
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
-                resultStr = IOUtils.toString(stream, "UTF-8");
+                resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
             } catch (Exception e) {
 
             }
@@ -1077,8 +1053,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
     }
 
     /**
-     * When the autoPublish is true, to test the whole process:
-     * Reserve a doi, create an object use the doi and publishIdentifier this doi.
+     * When the autoPublish is true, to test the whole process: Reserve a doi, create an object use
+     * the doi and publishIdentifier this doi.
+     *
      * @throws Exception
      */
     public void testPublishIdentifierProcessWithAutoPublishOn() throws Exception {
@@ -1091,7 +1068,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             Session session = getTestSession();
             Identifier guid =
                 MNodeService.getInstance(request).generateIdentifier(session, "DOI", null);
-            // check that EZID knows about it and its status is reserved 
+            // check that EZID knows about it and its status is reserved
             HashMap<String, String> metadata = null;
             int count = 0;
             do {
@@ -1105,8 +1082,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
             } while (metadata == null && count < MAX_TIMES);
             System.out.println("after reserve (auto on)\n" + metadata.toString());
             assertNotNull(metadata);
-            assertTrue(metadata.get(InternalProfile.STATUS.toString())
-                           .equals(InternalProfileValues.RESERVED.toString()));
+            assertEquals(metadata.get(InternalProfile.STATUS.toString()),
+                         InternalProfileValues.RESERVED.toString());
 
             // add the actual object for the newly-minted DOI
             SystemMetadata sysmeta = null;
@@ -1141,14 +1118,14 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 count++;
             } while (metadata == null && count < MAX_TIMES);
             assertNotNull(metadata);
-            System.out.println("after crate object (auto on)\n" + metadata.toString());
+            System.out.println("after crate object (auto on)\n" + metadata);
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
             // check that the target URI was updated
             String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
             assertTrue(registeredTarget.contains(serverName));
             String creator = metadata.get(DataCiteProfile.CREATOR.toString());
-            assertTrue(metadata.get(InternalProfile.STATUS.toString())
-                           .equals(InternalProfileValues.PUBLIC.toString()));
+            assertEquals(metadata.get(InternalProfile.STATUS.toString()),
+                         InternalProfileValues.PUBLIC.toString());
 
             //publishIdentifier
             MNodeService.getInstance(request).publishIdentifier(session, guid);
@@ -1172,16 +1149,16 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 count = count + 4;
             } while (metadata == null && count < MAX_TIMES);
             assertNotNull(metadata);
-            System.out.println("after publishIdentifier (auto on)\n" + metadata.toString());
+            System.out.println("after publishIdentifier (auto on)\n" + metadata);
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
             // check that the target URI was updated
             registeredTarget = metadata.get(InternalProfile.TARGET.toString());
             assertTrue(registeredTarget.contains(serverName));
             creator = metadata.get(DataCiteProfile.CREATOR.toString());
-            assertTrue(metadata.get(InternalProfile.STATUS.toString())
-                           .equals(InternalProfileValues.PUBLIC.toString()));
-            assertTrue(metadata.get(InternalProfile.EXPORT.toString())
-                           .equals(InternalProfileValues.YES.toString()));
+            assertEquals(metadata.get(InternalProfile.STATUS.toString()),
+                         InternalProfileValues.PUBLIC.toString());
+            assertEquals(metadata.get(InternalProfile.EXPORT.toString()),
+                         InternalProfileValues.YES.toString());
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
@@ -1190,11 +1167,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
 
     /**
-     * When the autoPublish is false, to test the whole process:
-     * Reserve a doi, create an object use the doi and publishIdentifier this doi.
-     * @throws Exception
+     * When the autoPublish is false, to test the whole process: Reserve a doi, create an object use
+     * the doi and publishIdentifier this doi.
      */
-    public void testPublishIdentifierProcessWithAutoPublishOff() throws Exception {
+    public void testPublishIdentifierProcessWithAutoPublishOff() {
         printTestHeader("testPublishIdentifierProcessWithAutoPublishOff");
         try {
             PropertyService.setPropertyNoPersist("guid.doi.autoPublish", "false");
@@ -1204,7 +1180,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             Session session = getTestSession();
             Identifier guid =
                 MNodeService.getInstance(request).generateIdentifier(session, "DOI", null);
-            // check that EZID knows about it and its status is reserved 
+            // check that EZID knows about it and its status is reserved
             HashMap<String, String> metadata = null;
             int count = 0;
             do {
@@ -1217,9 +1193,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 count++;
             } while (metadata == null && count < MAX_TIMES);
             assertNotNull(metadata);
-            assertTrue(metadata.get(InternalProfile.STATUS.toString())
-                           .equals(InternalProfileValues.RESERVED.toString()));
-            System.out.println("after reserve (auto off)\n" + metadata.toString());
+            assertEquals(metadata.get(InternalProfile.STATUS.toString()),
+                         InternalProfileValues.RESERVED.toString());
+            System.out.println("after reserve (auto off)\n" + metadata);
             // add the actual object for the newly-minted DOI
             SystemMetadata sysmeta = null;
             InputStream object = new FileInputStream(EMLFILEPATH);
@@ -1259,8 +1235,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
             String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
             assertTrue(registeredTarget.contains(serverName));
             String creator = metadata.get(DataCiteProfile.CREATOR.toString());
-            assertTrue(metadata.get(InternalProfile.STATUS.toString())
-                           .equals(InternalProfileValues.RESERVED.toString()));
+            assertEquals(metadata.get(InternalProfile.STATUS.toString()),
+                         InternalProfileValues.RESERVED.toString());
 
             //publishIdentifier
             MNodeService.getInstance(request).publishIdentifier(session, guid);
@@ -1283,17 +1259,17 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 }
                 count++;
             } while (metadata == null && count < MAX_TIMES);
-            System.out.println("after publishIdentifier (auto off)\n" + metadata.toString());
             assertNotNull(metadata);
+            System.out.println("after publishIdentifier (auto off)\n" + metadata);
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
             // check that the target URI was updated
             registeredTarget = metadata.get(InternalProfile.TARGET.toString());
             assertTrue(registeredTarget.contains(serverName));
             creator = metadata.get(DataCiteProfile.CREATOR.toString());
-            assertTrue(metadata.get(InternalProfile.STATUS.toString())
-                           .equals(InternalProfileValues.PUBLIC.toString()));
-            assertTrue(metadata.get(InternalProfile.EXPORT.toString())
-                           .equals(InternalProfileValues.YES.toString()));
+            assertEquals(metadata.get(InternalProfile.STATUS.toString()),
+                         InternalProfileValues.PUBLIC.toString());
+            assertEquals(metadata.get(InternalProfile.EXPORT.toString()),
+                         InternalProfileValues.YES.toString());
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
@@ -1321,8 +1297,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
         publicSession.setSubject(publicSub);
 
         PropertyService.setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "true");
-        boolean enforcePublicEntirePackageInPublish =
-            new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+        boolean enforcePublicEntirePackageInPublish = Boolean.parseBoolean(
+            PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
 
         //insert data
@@ -1331,7 +1307,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         HashMap<String, String[]> params = null;
         guid.setValue("testPublishPrivatePackageToPublic-data." + System.currentTimeMillis());
         System.out.println("the data file id is ==== " + guid.getValue());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setAccessPolicy(access);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
@@ -1346,15 +1322,14 @@ public class RegisterDOITest extends D1NodeServiceTest {
         Identifier guid2 = new Identifier();
         guid2.setValue("testPublishPrivatePackageToPublic-metadata." + System.currentTimeMillis());
         System.out.println("the metadata  file id is ==== " + guid2.getValue());
-        InputStream object2 =
-            new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        InputStream object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
         object2.close();
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta2.setFormatId(formatId);
         sysmeta2.setAccessPolicy(access);
-        object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
@@ -1366,28 +1341,45 @@ public class RegisterDOITest extends D1NodeServiceTest {
         //Make sure both data and metadata objects have been indexed
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
         while ((resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
-            Thread.sleep(2000);
+            Thread.sleep(SLEEP_TIME);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
+        assertNotNull(
+            "get data: resultStr was NULL for query: " + query + "; possible indexing problem?",
+            resultStr);
+        assertTrue("get data: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse(
+            "get data: exceeded max number of tries to get query results for query: " + query
+                + "; possible indexing problem?", account > MAX_TIMES);
+
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
         while ((resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
-            Thread.sleep(2000);
+            Thread.sleep(SLEEP_TIME);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
+        assertNotNull(
+            "get metadata: resultStr was NULL for query: " + query + "; possible indexing problem?",
+            resultStr);
+        assertTrue("get metadata: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse(
+            "get metadata: exceeded max number of tries to get query results for query: " + query
+                + "; possible indexing problem?", account > MAX_TIMES);
 
         //insert resource map
-        Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
-        List<Identifier> dataIds = new ArrayList<Identifier>();
+        Map<Identifier, List<Identifier>> idMap = new HashMap<>();
+        List<Identifier> dataIds = new ArrayList<>();
         dataIds.add(guid);
         idMap.put(guid2, dataIds);
         Identifier resourceMapId = new Identifier();
@@ -1397,7 +1389,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
         System.out.println("the resource file id is ==== " + resourceMapId.getValue());
         ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
         String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
-        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        InputStream object3 =
+            new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta3 =
             createSystemMetadata(resourceMapId, session.getSubject(), object3);
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
@@ -1415,14 +1408,21 @@ public class RegisterDOITest extends D1NodeServiceTest {
         //make sure the result map was indexed
         query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
         while ((resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
-            Thread.sleep(2000);
+            Thread.sleep(SLEEP_TIME);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
+        assertNotNull("get resourcemap: resultStr was NULL for query: " + query
+                          + "; possible indexing problem?", resultStr);
+        assertTrue("get resourcemap: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse(
+            "get resourcemap: exceeded max number of tries to get query results for query: " + query
+                + "; possible indexing problem?", account > MAX_TIMES);
 
         //publish the metadata id
         Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, guid2);
@@ -1448,7 +1448,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         SystemMetadata oldResourceMapSys =
             MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId);
         Identifier newResourceMapId = oldResourceMapSys.getObsoletedBy();
-        assertTrue(newResourceMapId != null);
+        assertNotNull("newResourceMapId was NULL", newResourceMapId);
         MNodeService.getInstance(request).getSystemMetadata(publicSession, newResourceMapId);
         //the data object is public readable
         MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
@@ -1477,18 +1477,17 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
         PropertyService.setPropertyNoPersist(
             "guid.doi.enforcePublicReadableEntirePackage", "false");
-        boolean enforcePublicEntirePackageInPublish =
-            new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+        boolean enforcePublicEntirePackageInPublish = Boolean.parseBoolean(
+            PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
 
         //insert data
         Session session = getTestSession();
         Identifier guid = new Identifier();
-        HashMap<String, String[]> params = null;
         guid.setValue(
             "testPublishPrivatePackageToPartialPublic-data." + System.currentTimeMillis());
         System.out.println("the data file id is ==== " + guid.getValue());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setAccessPolicy(access);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
@@ -1504,15 +1503,14 @@ public class RegisterDOITest extends D1NodeServiceTest {
         guid2.setValue(
             "testPublishPrivatePackageToPartialPublic-metadata." + System.currentTimeMillis());
         System.out.println("the metadata  file id is ==== " + guid2.getValue());
-        InputStream object2 =
-            new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        InputStream object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
         object2.close();
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta2.setFormatId(formatId);
         sysmeta2.setAccessPolicy(access);
-        object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
@@ -1524,24 +1522,41 @@ public class RegisterDOITest extends D1NodeServiceTest {
         //Make sure both data and metadata objects have been indexed
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int account = 0;
         while ((resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
-            Thread.sleep(2000);
+            Thread.sleep(SLEEP_TIME);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
+        assertNotNull(
+            "get data: resultStr was NULL for query: " + query + "; possible indexing problem?",
+            resultStr);
+        assertTrue("get data: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse(
+            "get data: exceeded max number of tries to get query results for query: " + query
+                + "; possible indexing problem?", account > MAX_TIMES);
+
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
         while ((resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
-            Thread.sleep(2000);
+            Thread.sleep(SLEEP_TIME);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
+        assertNotNull(
+            "get metadata: resultStr was NULL for query: " + query + "; possible indexing problem?",
+            resultStr);
+        assertTrue("get metadata: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse(
+            "get metadata: exceeded max number of tries to get query results for query: " + query
+                + "; possible indexing problem?", account > MAX_TIMES);
 
         //insert resource map
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
@@ -1555,7 +1570,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
         System.out.println("the resource file id is ==== " + resourceMapId.getValue());
         ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
         String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
-        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        InputStream object3 =
+            new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta3 =
             createSystemMetadata(resourceMapId, session.getSubject(), object3);
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
@@ -1573,14 +1589,21 @@ public class RegisterDOITest extends D1NodeServiceTest {
         //make sure the result map was indexed
         query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         account = 0;
         while ((resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
-            Thread.sleep(2000);
+            Thread.sleep(SLEEP_TIME);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
+        assertNotNull("get resourcemap: resultStr was NULL for query: " + query
+                          + "; possible indexing problem?", resultStr);
+        assertTrue("get resourcemap: result did not contain \"checksum\" for query: " + query
+                       + "; possible indexing problem?", resultStr.contains("checksum"));
+        assertFalse(
+            "get resourcemap: exceeded max number of tries to get query results for query: " + query
+                + "; possible indexing problem?", account > MAX_TIMES);
 
         //publish the metadata id
         Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, guid2);
@@ -1606,7 +1629,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         SystemMetadata oldResourceMapSys =
             MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId);
         Identifier newResourceMapId = oldResourceMapSys.getObsoletedBy();
-        assertTrue(newResourceMapId != null);
+        assertNotNull("newResourceMapId was NULL", newResourceMapId);
         MNodeService.getInstance(request).getSystemMetadata(publicSession, newResourceMapId);
         //the data object is not public readable
         try {

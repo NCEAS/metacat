@@ -132,6 +132,7 @@ public class AuthUtilIT extends MNodeServiceIT {
      */
     public void tearDown() {
         tmpPasswordFile.delete();
+        super.tearDown();
     }
     
     /**

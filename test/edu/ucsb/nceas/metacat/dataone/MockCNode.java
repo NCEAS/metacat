@@ -20,13 +20,10 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.dataone.client.exception.ClientSideException;
-import org.dataone.client.utils.ExceptionUtils;
 import org.dataone.client.v2.impl.MultipartCNode;
 import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
@@ -46,8 +43,6 @@ import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.SystemMetadata;
-import org.dataone.service.util.Constants;
-import org.dataone.service.util.D1Url;
 import org.dataone.service.util.TypeMarshaller;
 
 /**
@@ -66,6 +61,7 @@ public class MockCNode extends MultipartCNode {
     private final static String MEMBEROFCNODESUBJECTOFPATH = "test/subject-info/member-of-CNode.xml";
     public final static String MNODEMEMBERADMINSUBJECT = "http://orcid.org/0000-0001-5041-1111";
     public final static String CNODEMEMBERADMINSUBJECT = "http://orcid.org/0000-0003-5234-1234";
+    protected static final String MOCK_CN_BASE_SERVICE_URL = "https//:foo.dataone.org";
 
     /**
      * See superclass for documentation
@@ -111,7 +107,7 @@ public class MockCNode extends MultipartCNode {
     
     @Override
 	public String getNodeBaseServiceUrl() {
-		return "https//:foo.dataone.org";
+		return MOCK_CN_BASE_SERVICE_URL;
 	}
     
     /**

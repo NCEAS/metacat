@@ -90,19 +90,19 @@ public class MetacatInitializer implements ServletContextListener{
             initAfterMetacatConfig();
             fullInit = true;
         } catch (SQLException e) {
-            String errorMessage = "SQL problem while initializing MetaCat Servlet: "
+            String errorMessage = "SQL problem while initializing MetaCat: "
                     + e.getMessage();
             checker.abort(errorMessage, e);
         } catch (GeneralPropertyException gpe) {
-            String errorMessage = "Could not retrieve property while initializing MetaCat Servlet: "
+            String errorMessage = "Could not retrieve property while initializing MetaCat: "
                     + gpe.getMessage();
             checker.abort(errorMessage, gpe);
         } catch (ServiceException se) {
-            String errorMessage = "Service problem while initializing MetaCat Servlet: "
+            String errorMessage = "Service problem while initializing MetaCat: "
                 + se.getMessage();
             checker.abort(errorMessage, se);
         } catch (UtilException ue) {
-            String errorMessage = "Utility problem while initializing MetaCat Servlet: "
+            String errorMessage = "Utility problem while initializing MetaCat: "
                 + ue.getMessage();
             checker.abort(errorMessage, ue);
         } catch (ServletException e) {
