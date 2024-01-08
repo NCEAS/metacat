@@ -88,7 +88,6 @@ import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
-import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -1406,9 +1405,6 @@ public abstract class D1NodeService {
             if (docType != null && docType.equals(DocumentImpl.BIN)) {
                 isMeta = false;
             }
-            String replicationNotificationServer = "localhost";
-            ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", isMeta,
-                                                                      replicationNotificationServer);
         } catch (ServiceFailure sfe) {
             removeIdFromIdentifierTable(pid);
             throw sfe;

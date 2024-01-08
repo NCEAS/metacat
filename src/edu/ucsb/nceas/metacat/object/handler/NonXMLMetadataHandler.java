@@ -49,8 +49,6 @@ import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
-import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -124,90 +122,7 @@ public abstract class NonXMLMetadataHandler {
         }
         return localId;
     }
-    
-    
-    /**
-     * Save the bytes to the disk from a replication process
-     * @param source  the input stream contains the content of the meta data object
-     * @param sysmeta  the system meta data associated with the source
-     * @param replicationNtofication server  the server name notifying the replication (only for the replication process)
-     * @param event  the event log information associated with this action
-     * @return  the local document id. It can be null.
-     * @throws UnsupportedType
-     * @throws ServiceFailure
-     * @throws InvalidRequest
-     * @throws InvalidSystemMetadata
-     * @throws NotAuthorized 
-     */
-    public void saveReplication(InputStream source, String localId, SystemMetadata sysmeta, String owner, int serverCode, 
-                                 String replicationNotificationServer, EventLogData event) 
-                        throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
-        if (sysmeta == null) {
-            throw new InvalidRequest("1102", "NonXMLMetadataHandler.saveReplication - the system metadata parameter should not be null.");
-        }
-        Identifier pid = sysmeta.getIdentifier();
-        Checksum expectedChecksum = sysmeta.getChecksum();
-        String docType = sysmeta.getFormatId().getValue();
-        if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
-            throw new InvalidRequest("1102", "NonXMLMetadataHandler.saveReplication - the pid parameter should not be blank.");
-        }
-        logMetacat.debug("NonXMLMetadataHandler.saveReplication - save the object " + pid.getValue() + " with doctype " + docType);
-        InputStream data = checkValidation(source, pid);
-        try {
-            if (metadataStoragePath == null) {
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.saveReplication - cannot save the metadata object " + pid.getValue() + 
-                        " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
-            }
-            //Save the meta data object to disk using "localId" as the name
-            D1NodeService.writeStreamToFile(new File(metadataStoragePath), localId, source, expectedChecksum, pid);
-            
-            //register the local id into the xml_table
-            try {
-                DocumentImpl.registerDocument(localId, docType, localId, owner, null, serverCode);
-            } catch (Exception e) {
-                boolean isMetadata = true;
-                try {
-                    DocumentImpl.deleteFromFileSystem(localId, isMetadata);
-                } catch (Exception ee) {
-                    logMetacat.error("NonXMLMetadataHandler.saveReplication - In the exception route, Metacat cannot delete " 
-                                      + localId + " in order to undo the transaction since " + ee.getMessage());
-                }
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.saveReplication - cannot register the local id " 
-                                         + localId + " for the pid "+ pid.getValue() + 
-                                         " into the xml_table since " + e.getMessage());
-            }
-            
-            //register the mapping of localId and pid in the identifier table
-            IdentifierManager.getInstance().createMapping(pid.getValue(), localId);
 
-            //log the event
-            try {
-                logMetacat.debug("Logging the creation event.");
-                EventLog.getInstance().log(event.getIpAddress(), event.getUserAgent(), ReplicationService.REPLICATIONUSER, localId, "create");
-            } catch (Exception e) {
-                logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
-            }
-
-            // Schedule replication for this file
-            boolean isMeta = true;
-            ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", isMeta, replicationNotificationServer);
-        } finally {
-            if (tmpFile != null) {
-                tmpFile.delete();
-            }
-            try {
-                source.close();
-            } catch (IOException ee) {
-                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since " + ee.getMessage());
-            }
-            try {
-                data.close();
-            } catch (IOException ee) {
-                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since " + ee.getMessage());
-            }
-        }
-    }
-    
     /**
      * This method consumes the source input to do the check of validation. 
      * It will return an input stream for the next step - saving the bytes

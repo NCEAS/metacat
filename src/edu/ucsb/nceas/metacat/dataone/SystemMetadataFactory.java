@@ -1,8 +1,10 @@
 package edu.ucsb.nceas.metacat.dataone;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
@@ -54,8 +56,15 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.util.DateTimeMarshaller;
+import org.dataone.service.util.TypeMarshaller;
 import org.dspace.foresite.ResourceMap;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 import java.util.Calendar;
 
@@ -69,16 +78,17 @@ import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
+import edu.ucsb.nceas.metacat.accesscontrol.AccessControlForSingleFile;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import edu.ucsb.nceas.utilities.access.DocInfoHandler;
 
 public class SystemMetadataFactory {
 
@@ -199,7 +209,7 @@ public class SystemMetadataFactory {
         }
 
         // get additional docinfo
-        Hashtable<String, String> docInfo = ReplicationService.getDocumentInfoMap(localId);
+        Hashtable<String, String> docInfo = getDocumentInfoMap(localId);
         // set the default object format
         String doctype = docInfo.get("doctype");
         ObjectFormatIdentifier fmtid = null;
@@ -940,5 +950,133 @@ public class SystemMetadataFactory {
             }
         }
         return nodeList;
+    }
+
+    /**
+     * Get the document information in the format of a map.
+     * @param docid  the id of the document
+     * @return a map containing the document information
+     * @throws HandlerException
+     * @throws AccessControlException
+     * @throws MarshallingException
+     * @throws IOException
+     * @throws McdbException
+     * @throws SAXException
+     */
+    public static Hashtable<String, String> getDocumentInfoMap(String docid)
+            throws HandlerException, AccessControlException, MarshallingException,
+            IOException, McdbException, SAXException {
+
+        // Try get docid info from remote server
+        DocInfoHandler dih = new DocInfoHandler();
+        XMLReader docinfoParser = initParser(dih);
+
+        String docInfoStr = getDocumentInfo(docid);
+
+        // strip out the system metadata portion
+        String systemMetadataXML = DocumentUtil.getSystemMetadataContent(docInfoStr);
+        docInfoStr = DocumentUtil.getContentWithoutSystemMetadata(docInfoStr);
+
+        docinfoParser.parse(new InputSource(new StringReader(docInfoStr)));
+        Hashtable<String, String> docinfoHash = dih.getDocInfo();
+
+        return docinfoHash;
+    }
+
+    /**
+     * Gets a docInfo XML snippet for the replication API
+     * @param docid
+     * @return the doc information
+     * @throws AccessControlException
+     * @throws JiBXException
+     * @throws IOException
+     * @throws McdbException
+     */
+    private static String getDocumentInfo(String docid) throws AccessControlException,
+                                                MarshallingException, IOException, McdbException {
+        StringBuffer sb = new StringBuffer();
+
+        DocumentImpl doc = new DocumentImpl(docid);
+        sb.append("<documentinfo><docid>").append(docid);
+        sb.append("</docid>");
+
+        try {
+            // serialize the System Metadata as XML for docinfo
+            String guid = IdentifierManager.getInstance().getGUID(doc.getDocID(), doc.getRev());
+            SystemMetadata systemMetadata = IdentifierManager.getInstance().getSystemMetadata(guid);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            TypeMarshaller.marshalTypeToOutputStream(systemMetadata, baos);
+            String systemMetadataXML = baos.toString("UTF-8");
+            sb.append("<systemMetadata>");
+            sb.append(systemMetadataXML);
+            sb.append("</systemMetadata>");
+        } catch(McdbDocNotFoundException e) {
+          logMetacat.warn("No SystemMetadata found for: " + docid);
+        }
+
+        Calendar created = Calendar.getInstance();
+        created.setTime(doc.getCreateDate());
+        Calendar updated = Calendar.getInstance();
+        updated.setTime(doc.getUpdateDate());
+
+        sb.append("<docname><![CDATA[").append(doc.getDocname());
+        sb.append("]]></docname><doctype>").append(doc.getDoctype());
+        sb.append("</doctype>");
+        sb.append("<user_owner>").append(doc.getUserowner());
+        sb.append("</user_owner><user_updated>").append(doc.getUserupdated());
+        sb.append("</user_updated>");
+        sb.append("<date_created>");
+        sb.append(DateTimeMarshaller.serializeDateToUTC(doc.getCreateDate()));
+        sb.append("</date_created>");
+        sb.append("<date_updated>");
+        sb.append(DateTimeMarshaller.serializeDateToUTC(doc.getUpdateDate()));
+        sb.append("</date_updated>");
+        sb.append("<home_server>");
+        sb.append(doc.getDocHomeServer());
+        sb.append("</home_server>");
+        sb.append("<public_access>").append(doc.getPublicaccess());
+        sb.append("</public_access><rev>").append(doc.getRev());
+        sb.append("</rev>");
+
+        sb.append("<accessControl>");
+
+        AccessControlForSingleFile acfsf = new AccessControlForSingleFile(docid);
+        sb.append(acfsf.getAccessString());
+
+        sb.append("</accessControl>");
+
+        sb.append("</documentinfo>");
+
+        return sb.toString();
+    }
+
+    /**
+     * Method to initialize the message parser
+     * @param dh
+     * @return a sax parser
+     * @throws HandlerException
+     */
+    private static XMLReader initParser(DefaultHandler dh) throws HandlerException {
+        XMLReader parser = null;
+        try {
+            ContentHandler chandler = dh;
+            // Get an instance of the parser
+            String parserName = PropertyService.getProperty("xml.saxparser");
+            parser = XMLReaderFactory.createXMLReader(parserName);
+            // Turn off validation
+            parser.setFeature("http://xml.org/sax/features/validation", false);
+            parser.setContentHandler((ContentHandler) chandler);
+            parser.setErrorHandler((ErrorHandler) chandler);
+        } catch (SAXException se) {
+            throw new HandlerException(
+                "ReplicationHandler.initParser - Sax error when " + " initializing parser: "
+                    + se.getMessage());
+        } catch (PropertyNotFoundException pnfe) {
+            throw new HandlerException(
+                "ReplicationHandler.initParser - Property error when " + " getting parser name: "
+                    + pnfe.getMessage());
+        }
+
+        return parser;
     }
 }

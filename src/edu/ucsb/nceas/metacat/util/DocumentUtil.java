@@ -49,17 +49,18 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 /**
  * A suite of utility classes for the metadata catalog server
  */
-public class DocumentUtil
-{
-    
+public class DocumentUtil {
+
     private static int documentIdCounter = 0;
 
     public static AbstractDatabase dbAdapter;
-    
+    public static String startTag = "<systemMetadata>";
+    public static String endTag = "</systemMetadata>";
+
     private static Log logMetacat = LogFactory.getLog(DocumentUtil.class);
     private static char separator = '.';
     private static String prefix = "autogen";
-    
+
     static {
         try {
             separator = PropertyService.getProperty("document.accNumSeparator").charAt(0);
@@ -521,5 +522,30 @@ public class DocumentUtil
             docid.append(".").append(revision);
         }
         return docid.toString();
+    }
+
+    /**
+     * Get the content between the system metadata start and end tag
+     */
+    public static String getSystemMetadataContent(String docInfoStr) {
+        // get the system metadata portion
+        String systemMetadataXML = null;
+        if (docInfoStr.indexOf(startTag) > -1) {
+          systemMetadataXML = docInfoStr.substring(docInfoStr.indexOf(startTag)
+                  + startTag.length(), docInfoStr.lastIndexOf(endTag));
+        }
+        return systemMetadataXML;
+    }
+
+    /**
+     * Get the string WITHOUT the content between the system metadata start and end tag
+     */
+    public static String getContentWithoutSystemMetadata(String docInfoStr) {
+        // strip out the system metadata portion
+        if (docInfoStr.indexOf(startTag) > -1) {
+          docInfoStr = docInfoStr.substring(0, docInfoStr.indexOf(startTag))
+                  + docInfoStr.substring(docInfoStr.indexOf(endTag) + endTag.length());
+        }
+        return docInfoStr;
     }
 }

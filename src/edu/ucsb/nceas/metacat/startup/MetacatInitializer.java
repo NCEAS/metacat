@@ -31,7 +31,6 @@ import edu.ucsb.nceas.metacat.index.queue.IndexGeneratorTimerTask;
 import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPluginManager;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
-import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
@@ -147,22 +146,6 @@ public class MetacatInitializer implements ServletContextListener{
 
             // register the XML schema service
             ServiceService.registerService("XMLSchemaService", XMLSchemaService.getInstance());
-
-            // Set up the replication log file by setting the "replication.logfile.name"
-            // system property and reconfiguring the log4j property configurator.
-            String replicationLogPath = PropertyService.getProperty("replication.logdir")
-                + FileUtil.getFS() + ReplicationService.REPLICATION_LOG_FILE_NAME;
-            
-            if (FileUtil.getFileStatus(replicationLogPath) == FileUtil.DOES_NOT_EXIST) {
-                FileUtil.createFile(replicationLogPath);
-            }
-
-            if (FileUtil.getFileStatus(replicationLogPath) < FileUtil.EXISTS_READ_WRITABLE) {
-                logMetacat.warn("MetacatInitializer.initAfterMetacatConfig- Replication log file: "
-                                    + replicationLogPath + " does not exist read/writable.");
-            }
-
-            System.setProperty("replication.logfile.name", replicationLogPath);
 
             SessionService.getInstance().unRegisterAllSessions();
 
