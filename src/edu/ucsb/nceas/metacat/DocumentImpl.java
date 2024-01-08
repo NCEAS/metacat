@@ -38,8 +38,6 @@ import edu.ucsb.nceas.metacat.database.DatabaseService;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
-import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
@@ -476,85 +474,6 @@ public class DocumentImpl {
         }
     }
 
-    /**
-     * This method will register a data file entry in xml_documents and save a data file input
-     * Stream into file system.. It is only used in replication
-     *
-     * @param input,              the input stream which contain the file content.
-     * @param ,                   the input stream which contain the file content
-     * @param docname             - the name of DTD, for data file, it is a docid number.
-     * @param doctype             - "BIN" for data file
-     * @param accnum              the accession number to use for the INSERT OR UPDATE, which
-     *                            includes a revision number for this revision of the document
-     *                            (e.g., knb.1.1)
-     * @param user                the user that owns the document
-     * @param docHomeServer,      the home server of the docid
-     * @param notificationServer, the server to notify force replication info to local metacat
-     */
-    public static void writeDataFileInReplication(
-        InputStream input, String filePath, String docname, String doctype, String accnum,
-        String user, String docHomeServer, String notificationServer, String tableName,
-        boolean timedReplication, Date createDate, Date updateDate)
-        throws SQLException, AccessionNumberException, Exception {
-        int serverCode = -2;
-
-        if (filePath == null || filePath.equals("")) {
-            throw new Exception("Please specify the directory where file will be store");
-        }
-        if (accnum == null || accnum.equals("")) {
-            throw new Exception("Please specify the stored file name");
-        }
-
-        // If server is not int the xml replication talbe, insert it into
-        // xml_replication table
-        //serverList.addToServerListIfItIsNot(docHomeServer);
-        insertServerIntoReplicationTable(docHomeServer);
-
-        // Get server code again
-        serverCode = getServerCode(docHomeServer);
-
-
-        //write inputstream into file system.
-        File dataDirectory = new File(filePath);
-        File newFile = null;
-        try {
-            newFile = new File(dataDirectory, accnum);
-
-            // create a buffered byte output stream
-            // that uses a default-sized output buffer
-            FileOutputStream fos = new FileOutputStream(newFile);
-            BufferedOutputStream outPut = new BufferedOutputStream(fos);
-
-            BufferedInputStream bis = null;
-            bis = new BufferedInputStream(input);
-            byte[] buf = new byte[4 * 1024]; // 4K buffer
-            int b = bis.read(buf);
-
-            while (b != -1) {
-                outPut.write(buf, 0, b);
-                b = bis.read(buf);
-            }
-            bis.close();
-            outPut.close();
-            fos.close();
-
-            //register data file into xml_documents table
-            registerDocumentInReplication(docname, doctype, accnum, user, serverCode, tableName,
-                                          createDate, updateDate);
-        } catch (Exception ee) {
-            newFile.delete();
-            throw ee;
-        }
-
-        // Force replicate data file
-        if (!timedReplication) {
-            ForceReplicationHandler forceReplication =
-                new ForceReplicationHandler(accnum, false, notificationServer);
-            logMetacat.info("ForceReplicationHandler created: " + forceReplication.toString());
-        }
-    }
-
-
     /*
      * This method will determine if we need to insert or update xml_document base
      * on given docid, rev and rev in xml_documents table
@@ -631,90 +550,6 @@ public class DocumentImpl {
         return action;
     }
 
-    /*
-     *
-     */
-
-    /**
-     * Get a lock for a given document.
-     */
-    public static boolean getDataFileLockGrant(String accnum) throws Exception {
-        try {
-            int serverLocation = getServerLocationNumber(accnum);
-            return getDataFileLockGrant(accnum, serverLocation);
-        } catch (Exception e) {
-            throw e;
-        }
-    }
-
-    /**
-     * The method will check if metacat can get data file lock grant If server code is 1, it get. If
-     * server code is not 1 but call replication getlock successfully, it get else, it didn't get
-     *
-     * @param accnum,     the ID of the document
-     * @param action,     the action to the document
-     * @param serverCode, the server location code
-     */
-    public static boolean getDataFileLockGrant(String accnum, int serverCode) throws Exception {
-        boolean flag = true;
-        String docid = DocumentUtil.getDocIdFromString(accnum);
-        int rev = DocumentUtil.getVersionFromString(accnum);
-
-        if (serverCode == 1) {
-            flag = true;
-            return flag;
-        }
-
-        //if((serverCode != 1 && action.equals("UPDATE")) )
-        if (serverCode != 1) { //if this document being written is not a
-            // resident of this server then
-            //we need to try to get a lock from it's resident server. If the
-            //resident server will not give a lock then we send the user a
-            // message
-            //saying that he/she needs to download a new copy of the file and
-            //merge the differences manually.
-
-            String server = ReplicationService.getServerNameForServerCode(serverCode);
-            logReplication.info("attempting to lock " + accnum);
-            URL u = new URL(
-                "https://" + server + "?server=" + MetacatUtil.getLocalReplicationServerName()
-                    + "&action=getlock&updaterev=" + rev + "&docid=" + docid);
-            //System.out.println("sending message: " + u.toString());
-            String serverResStr = ReplicationService.getURLContent(u);
-            String openingtag = serverResStr.substring(0, serverResStr.indexOf(">") + 1);
-            if (openingtag.equals("<lockgranted>")) {
-                //the lock was granted go ahead with the insert
-                //System.out.println("In lockgranted");
-                logReplication.info("lock granted for " + accnum + " from " + server);
-                flag = true;
-                return flag;
-            }//if
-
-            else if (openingtag.equals("<filelocked>")) {//the file is
-                // currently locked by
-                // another user
-                //notify our user to wait a few minutes, check out a new copy and try again.
-                logReplication.error(
-                    "lock denied for " + accnum + " on " + server + " reason: file already locked");
-                throw new Exception("The file specified is already locked by another "
-                                        + "user.  Please wait 30 seconds, checkout the "
-                                        + "newer document, merge your changes and try " + "again.");
-            } else if (openingtag.equals("<outdatedfile>")) {//our file is
-                // outdated. notify
-                // our user to
-                // check out a new
-                // copy of the
-                //file and merge his version with the new version.
-                //System.out.println("outdated file");
-                logReplication.error(
-                    "lock denied for " + accnum + " on " + server + " reason: local file outdated");
-                throw new Exception("The file you are trying to update is an outdated"
-                                        + " version.  Please checkout the newest document, "
-                                        + "merge your changes and try again.");
-            }
-        }
-        return flag;
-    }
 
     /**
      * get the document name
@@ -1726,109 +1561,57 @@ public class DocumentImpl {
             }
             int revision = DocumentUtil.getRevisionFromAccessionNumber(accnum);
             String updaterev = Integer.toString(revision);
-            String server = ReplicationService.getServerNameForServerCode(serverCode);
-            logReplication.info("attempting to lock " + accnum);
-            URL u = new URL(
-                "https://" + server + "?server=" + MetacatUtil.getLocalReplicationServerName()
-                    + "&action=getlock&updaterev=" + updaterev + "&docid=" + docid);
-            String openingtag = null;
+
+            XMLReader parser = null;
             try {
-                String serverResStr = ReplicationService.getURLContent(u);
-                openingtag = serverResStr.substring(0, serverResStr.indexOf(">") + 1);
-            } catch (IOException e) {
-                // give a more meaningful error if replication check fails
-                // see http://bugzilla.ecoinformatics.org/show_bug.cgi?id=4907
-                String msg = "Error during replication lock request on server=" + server;
-                logReplication.error(msg);
-                throw new Exception(msg, e);
-            }
+                Vector<String> guidsToSync = new Vector<String>();
+                logMetacat.debug("DocumentImpl.write - initializing parser");
+                parser =
+                    initializeParser(conn, action, docid, xmlReader, updaterev, user, groups,
+                                     pub, serverCode, dtd, ruleBase, needValidation, false,
+                                     null, null, encoding, writeAccessRules, guidsToSync,
+                                     schemaLocation);
+                // false means it is not a revision doc
+                //null, null are createdate and updatedate
+                //null will use current time as create date time
+                conn.setAutoCommit(false);
+                logMetacat.debug("DocumentImpl.write - parsing xml");
+                parser.parse(new InputSource(xmlReader));
 
-            if (openingtag.equals("<lockgranted>")) {//the lock was granted go
-                // ahead with the insert
-                XMLReader parser = null;
-                try {
-                    //System.out.println("In lockgranted");
-                    logReplication.info("lock granted for " + accnum + " from " + server);
+                //write the file to disk
+                logMetacat.debug("DocumentImpl.write - Writing xml to file system");
+                writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
 
+                conn.commit();
+                conn.setAutoCommit(true);
 
-                    Vector<String> guidsToSync = new Vector<String>();
-
-                    /*
-                     * XMLReader parser = initializeParser(conn, action, docid,
-                     * updaterev, validate, user, groups, pub, serverCode, dtd);
-                     */
-                    logMetacat.debug("DocumentImpl.write - initializing parser");
-                    parser =
-                        initializeParser(conn, action, docid, xmlReader, updaterev, user, groups,
-                                         pub, serverCode, dtd, ruleBase, needValidation, false,
-                                         null, null, encoding, writeAccessRules, guidsToSync,
-                                         schemaLocation);
-                    // false means it is not a revision doc
-                    //null, null are createdate and updatedate
-                    //null will use current time as create date time
-                    conn.setAutoCommit(false);
-                    logMetacat.debug("DocumentImpl.write - parsing xml");
-                    parser.parse(new InputSource(xmlReader));
-
-                    //write the file to disk
-                    logMetacat.debug("DocumentImpl.write - Writing xml to file system");
-                    writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
-
-                    conn.commit();
-                    conn.setAutoCommit(true);
-
-                    // The EML parser has already written to systemmetadata and then writes to
-                    // xml_access when the db transaction
-                    // is committed. If the pids that have been updated are for data objects with
-                    // their own access rules, we
-                    // must inform the CN to sync it's access rules with the MN, so the EML 2.1
-                    // parser collected such pids from the parse
-                    // operation.
-                    if (guidsToSync.size() > 0) {
-                        try {
-                            SyncAccessPolicy syncAP = new SyncAccessPolicy();
-                            syncAP.sync(guidsToSync);
-                        } catch (Exception e) {
-                            logMetacat.error(
-                                "Error syncing pids with CN: " + " Exception " + e.getMessage());
-                            e.printStackTrace(System.out);
-                        }
+                // The EML parser has already written to systemmetadata and then writes to
+                // xml_access when the db transaction
+                // is committed. If the pids that have been updated are for data objects with
+                // their own access rules, we
+                // must inform the CN to sync it's access rules with the MN, so the EML 2.1
+                // parser collected such pids from the parse
+                // operation.
+                if (guidsToSync.size() > 0) {
+                    try {
+                        SyncAccessPolicy syncAP = new SyncAccessPolicy();
+                        syncAP.sync(guidsToSync);
+                    } catch (Exception e) {
+                        logMetacat.error(
+                            "Error syncing pids with CN: " + " Exception " + e.getMessage());
+                        e.printStackTrace(System.out);
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    logMetacat.error(
-                        "DocumentImpl.write - Problem with parsing: " + e.getMessage());
-                    conn.rollback();
-                    conn.setAutoCommit(true);
-                    throw e;
                 }
-                // Force replication the docid
-                ForceReplicationHandler frh = new ForceReplicationHandler(accnum, true, null);
-                logMetacat.debug(
-                    "DocumentImpl.write - ForceReplicationHandler created: " + frh.toString());
-                return (accnum);
-
-            } else if (openingtag.equals("<filelocked>")) {
-                // the file is currently locked by another user notify our
-                // user to wait a few minutes, check out a new copy and try
-                // again.
-                logReplication.error(
-                    "DocumentImpl.write - lock denied for " + accnum + " on " + server
-                        + " reason: file already locked");
-                throw new Exception("The file specified is already locked by another "
-                                        + "user.  Please wait 30 seconds, checkout the "
-                                        + "newer document, merge your changes and try " + "again.");
-            } else if (openingtag.equals("<outdatedfile>")) {
-                // our file is outdated. notify our user to check out a new
-                // copy of the file and merge his version with the new version.
-                //System.out.println("outdated file");
-                logReplication.info(
-                    "DocumentImpl.write - lock denied for " + accnum + " on " + server
-                        + " reason: local file outdated");
-                throw new Exception("The file you are trying to update is an outdated"
-                                        + " version.  Please checkout the newest document, "
-                                        + "merge your changes and try again.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                logMetacat.error(
+                    "DocumentImpl.write - Problem with parsing: " + e.getMessage());
+                conn.rollback();
+                conn.setAutoCommit(true);
+                throw e;
             }
+            return (accnum);
+
         }
 
         if (action.equals("UPDATE")) {
@@ -1887,163 +1670,9 @@ public class DocumentImpl {
             conn.setAutoCommit(true);
             throw e;
         }
-
-
-        // Force replicate out the new document to each server in our server
-        // list. Start the thread to replicate this new document out to the
-        // other servers true mean it is xml document null is because no
-        // metacat notify the force replication.
-        ForceReplicationHandler frh = new ForceReplicationHandler(accnum, action, true, null);
-        logMetacat.debug("DocumentImpl.write - ForceReplicationHandler created: " + frh.toString());
-        logMetacat.info(
-            "DocumentImpl.write - Conn Usage count after writing: " + conn.getUsageCount());
         return (accnum);
     }
 
-
-    /**
-     * Write an XML file to the database during replication
-     *
-     * @param conn          the JDBC connection to the database
-     * @param xml           the xml stream to be loaded into the database
-     * @param pub           flag for public "read" access on xml document
-     * @param dtd           the dtd to be uploaded on server's file system
-     * @param action        the action to be performed (INSERT or UPDATE)
-     * @param accnum        the docid + rev# to use on INSERT or UPDATE
-     * @param user          the user that owns the document
-     * @param groups        the groups to which user belongs
-     * @param homeServer    the name of server which the document origanlly create
-     * @param validate,     if the xml document is valid or not
-     * @param notifyServer, the server which notify local server the force replication command
-     */
-    public static String writeReplication(
-        DBConnection conn, String xmlString, byte[] xmlBytes, String pub, Reader dtd, String action,
-        String accnum, String user, String[] groups, String homeServer, String notifyServer,
-        String ruleBase, boolean needValidation, String tableName, boolean timedReplication,
-        Date createDate, Date updateDate, String schemaLocation) throws Exception {
-        // Get the xml as a string so we can write to file later
-        StringReader xmlReader = new StringReader(xmlString);
-
-        long rootId;
-        String docType = null;
-        String docName = null;
-        String catalogId = null;
-        logMetacat.debug("DocumentImpl.writeReplication - user in replication" + user);
-        // Docid without revision
-        String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
-        logMetacat.debug("DocumentImpl.writeReplication - The docid without rev is " + docid);
-        // Revision specified by user (int)
-        int userSpecifyRev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
-        logMetacat.debug("DocumentImpl.writeReplication - The user specifyRev: " + userSpecifyRev);
-        // Revision for this docid in current database
-        int revInDataBase = DBUtil.getLatestRevisionInDocumentTable(docid);
-        logMetacat.debug("DocumentImpl.writeReplication - The rev in data base: " + revInDataBase);
-        // String to store the revision
-        String rev = Integer.toString(userSpecifyRev);
-
-        if (tableName.equals(DOCUMENTTABLE)) {
-            action = checkRevInXMLDocuments(docid, userSpecifyRev);
-        } else if (tableName.equals(REVISIONTABLE)) {
-            action = checkXMLRevisionTable(docid, userSpecifyRev);
-        } else {
-            throw new Exception("The table name is not support " + tableName);
-        }
-        // Variable to store homeserver code
-        int serverCode = -2;
-
-        // If server is not int the xml replication talbe, insert it into
-        // xml_replication table
-        //serverList.addToServerListIfItIsNot(homeServer);
-        insertServerIntoReplicationTable(homeServer);
-        // Get server code again
-        serverCode = getServerCode(homeServer);
-
-        logMetacat.info(
-            "DocumentImpl.writeReplication - Document " + docid + "." + rev + " " + action
-                + " into local" + " metacat with servercode: " + serverCode);
-
-        XMLReader parser = null;
-        boolean isRevision = false;
-        try {
-
-            if (tableName.equals(REVISIONTABLE)) {
-                isRevision = true;
-            }
-            // detect encoding
-            //XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString
-            // .getBytes()));
-            XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlBytes));
-            String encoding = xsr.getEncoding();
-
-            // no need to write the EML-contained access rules for replication
-            boolean writeAccessRules = false;
-            Vector<String> guidsToSync = new Vector<String>();
-
-            parser =
-                initializeParser(conn, action, docid, xmlReader, rev, user, groups, pub, serverCode,
-                                 dtd, ruleBase, needValidation, isRevision, createDate, updateDate,
-                                 encoding, writeAccessRules, guidsToSync, schemaLocation);
-
-            conn.setAutoCommit(false);
-            parser.parse(new InputSource(xmlReader));
-            conn.commit();
-            conn.setAutoCommit(true);
-
-            // Write the file to disk
-            //byte[] bytes = xmlString.getBytes(encoding);
-            Checksum checksum = null;
-            File objectFile = null;
-            writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
-
-            DBSAXHandler dbx = (DBSAXHandler) parser.getContentHandler();
-            rootId = dbx.getRootNodeId();
-            docType = dbx.getDocumentType();
-            docName = dbx.getDocumentName();
-            catalogId = dbx.getCatalogId();
-
-        } catch (Exception e) {
-            logMetacat.error(
-                "DocumentImpl.writeReplication - Problem with parsing: " + e.getMessage());
-            conn.rollback();
-            conn.setAutoCommit(true);
-            throw e;
-        }
-
-        // run write into access db base on relation table and access rule
-        try {
-            conn.setAutoCommit(false);
-            if (!isRevision) {
-                //runRelationAndAccessHandler(accnum, user, groups, serverCode);
-            } else {
-                // in replicate revision documents,
-                // we need to register the record
-                // into xml_revision table
-                writeDocumentToRevisionTable(conn, docid, rev, docType, docName, user, catalogId,
-                                             serverCode, rootId, createDate, updateDate);
-
-            }
-            conn.commit();
-            conn.setAutoCommit(true);
-
-        } catch (Exception ee) {
-            conn.rollback();
-            conn.setAutoCommit(true);
-            logReplication.error("DocumentImpl.writeReplication - Failed to " + "create access "
-                                     + "rule for package: " + accnum + " because "
-                                     + ee.getMessage());
-            logMetacat.error("DocumentImpl.writeReplication - Failed to  " + "create access "
-                                 + "rule for package: " + accnum + " because " + ee.getMessage());
-        }
-
-        //Force replication to other server
-        if (!timedReplication) {
-            ForceReplicationHandler forceReplication =
-                new ForceReplicationHandler(accnum, action, true, notifyServer);
-            logMetacat.debug("DocumentImpl.writeReplication - ForceReplicationHandler created: "
-                                 + forceReplication.toString());
-        }
-        return (accnum);
-    }
 
 
     /**
@@ -2283,16 +1912,6 @@ public class DocumentImpl {
             if (removeAll) {
                 deleteFromFileSystem(accnum, isXML);
             }
-
-            // add force delete replication document here.
-            String deleteAction = ReplicationService.FORCEREPLICATEDELETE;
-            if (removeAll) {
-                deleteAction = ReplicationService.FORCEREPLICATEDELETEALL;
-            }
-            ForceReplicationHandler frh =
-                new ForceReplicationHandler(accnum, deleteAction, isXML, notifyServer);
-            logMetacat.debug(
-                "DocumentImpl.delete - ForceReplicationHandler created: " + frh.toString());
 
             double end = System.currentTimeMillis() / 1000;
             logMetacat.info("DocumentImpl.delete - total delete time is:  " + (end - start));
