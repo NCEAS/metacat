@@ -84,7 +84,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-                                                && count <= MNodeQueryIT.MAX_TRIES) {
+                                                && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -132,7 +132,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         String newVersion = null;
-        while (!versionChanged && count <= MNodeQueryIT.MAX_TRIES) {
+        while (!versionChanged && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -185,7 +185,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         String newVersion = null;
-        while (!versionChanged && count <= MNodeQueryIT.MAX_TRIES) {
+        while (!versionChanged && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -236,7 +236,7 @@ public class FailedIndexResubmitTimerTaskIT {
         resultStr = IOUtils.toString(stream, "UTF-8");
         int count = 0;
         while ((resultStr != null && resultStr.contains("checksum"))
-                                                && count <= MNodeQueryIT.MAX_TRIES) {
+                                                && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
