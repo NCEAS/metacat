@@ -1,23 +1,10 @@
 package edu.ucsb.nceas.metacat.index.queue;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Timer;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
+import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.index.IndexEventDAO;
 import org.apache.commons.io.IOUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -31,12 +18,22 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
-import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import edu.ucsb.nceas.metacat.dataone.MNodeQueryIT;
-import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
-import edu.ucsb.nceas.metacat.index.IndexEventDAO;
+import javax.servlet.http.HttpServletRequest;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Timer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,7 +50,6 @@ public class FailedIndexResubmitTimerTaskIT {
     private Identifier guid = null;
     private String query = null;
     private String resultStr = null;
-    private D1NodeServiceTest d1NodeTest = null;
     HttpServletRequest request = null;
     
     /**
@@ -61,7 +57,7 @@ public class FailedIndexResubmitTimerTaskIT {
      */
     @Before
     public void setUp() throws Exception {
-        d1NodeTest = new D1NodeServiceTest("initialize");
+        D1NodeServiceTest d1NodeTest = new D1NodeServiceTest("initialize");
         request = d1NodeTest.getServletRequest();
         //insert metadata
         session = d1NodeTest.getTestSession();
@@ -69,26 +65,26 @@ public class FailedIndexResubmitTimerTaskIT {
         //guid.setValue("testCreateFailure.1698383743829");
         guid.setValue("testCreateFailure." + System.currentTimeMillis());
         InputStream object = 
-                        new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
-        SystemMetadata sysmeta = d1NodeTest
+                        new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+        SystemMetadata sysmeta = D1NodeServiceTest
                                         .createSystemMetadata(guid, session.getSubject(), object);
         object.close();
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta.setFormatId(formatId);
-        object = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         //Make sure the metadata objects have been indexed
         query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
                                                 && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         assertNotNull("Couldn't initialize resultStr from solr query (" + query + ") - still null",
                       resultStr);
@@ -129,14 +125,14 @@ public class FailedIndexResubmitTimerTaskIT {
         // check if a reindex happened (the solr doc version changed)
         boolean versionChanged = false;
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int count = 0;
         String newVersion = null;
         while (!versionChanged && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
             newVersion = getSolrDocVersion(resultStr);
             versionChanged = !newVersion.equals(originVersion);
         }
@@ -157,7 +153,6 @@ public class FailedIndexResubmitTimerTaskIT {
         //add the identifier to the index event as a create_failure index task
         IndexEvent event = new IndexEvent();
         event.setAction(IndexEvent.CREATE_FAILURE_TO_QUEUE);
-        Date now = new Date();
         long age = Calendar.getInstance().getTime().getTime()
                                     - 3 * FailedIndexResubmitTimerTask.maxAgeOfFailedIndexTask;
         Date eventDate = new Date(age);
@@ -182,14 +177,14 @@ public class FailedIndexResubmitTimerTaskIT {
         // Since it is too old, it should not happen.
         boolean versionChanged = false;
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int count = 0;
         String newVersion = null;
         while (!versionChanged && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8");
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
             newVersion = getSolrDocVersion(resultStr);
             versionChanged = !newVersion.equals(originVersion);
         }
@@ -231,20 +226,22 @@ public class FailedIndexResubmitTimerTaskIT {
         long delay = 0;
         indexTimer.schedule(new FailedIndexResubmitTimerTask(), delay);
         
-        // wait until the the solr doc is deleted
+        // wait until the solr doc is deleted
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         int count = 0;
         while ((resultStr != null && resultStr.contains("checksum"))
                                                 && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
             count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
-        assertTrue(!resultStr.contains("checksum"));
+        assertNotNull(resultStr);
+        assertFalse(resultStr.contains("checksum"));
         
         // the saved event should be deleted
+        Thread.sleep(500);
         savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
         assertNull(savedEvent);
     }
