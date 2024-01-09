@@ -81,7 +81,7 @@ public class MNodeQueryIT {
             + ".0-example-filterGroup-operator.xml";
     private static String collection110ResultFilePath =
         "metacat-index/src/test/resources/collection/collectionQuery-result-example-filterGroup"
-        + "-operator.txt";
+            + "-operator.txt";
     private static String emlWithAnnotation = "test/eml220withAnnotation.xml";
 
     private static String collectionResult = null;
@@ -133,9 +133,10 @@ public class MNodeQueryIT {
             e.printStackTrace();
         }
         boolean containerized = Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
-        DEFAULT_SLEEP_MS = containerized? DEFAULT_SLEEP_K8S_MS : DEFAULT_SLEEP_NON_K8S_MS;
-        LeanTestUtils.debug("Running in a container?: " + containerized
-                                + "; setting DEFAULT_SLEEP_MS to: " + DEFAULT_SLEEP_MS);
+        DEFAULT_SLEEP_MS = containerized ? DEFAULT_SLEEP_K8S_MS : DEFAULT_SLEEP_NON_K8S_MS;
+        LeanTestUtils.debug(
+            "Running in a container?: " + containerized + "; setting DEFAULT_SLEEP_MS to: "
+                + DEFAULT_SLEEP_MS);
     }
 
     @Test
@@ -151,17 +152,16 @@ public class MNodeQueryIT {
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         String query = "q=id:" + guid.getValue();
-        InputStream stream;
-        String resultStr;
-
-        int account = 0;
-        do {
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        int count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
-
+        }
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">" + guid.getValue() + "</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
@@ -183,14 +183,16 @@ public class MNodeQueryIT {
 
         MNodeService.getInstance(request).archive(session, guid);
         SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || resultStr.contains("<bool name=\"archived\">"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || resultStr.contains("<bool name=\"archived\">"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertFalse(resultStr.contains("<str name=\"id\">" + guid.getValue() + "</str>"));
@@ -246,8 +248,7 @@ public class MNodeQueryIT {
         Identifier guid2 = new Identifier();
         guid2.setValue("testPackage-metadata." + System.currentTimeMillis());
         LeanTestUtils.debug("the metadata  file id is ==== " + guid2.getValue());
-        InputStream object2 =
-            new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+        InputStream object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         SystemMetadata sysmeta2 =
             D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object2);
         object2.close();
@@ -259,28 +260,30 @@ public class MNodeQueryIT {
 
         // Make sure both data and metadata objects have been indexed
         String query = "q=id:" + guid.getValue();
-        InputStream stream;
-        String resultStr;
-
-        int account = 0;
-        do {
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        int count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
 
         query = "q=id:" + guid2.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
 
@@ -304,14 +307,16 @@ public class MNodeQueryIT {
         MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
 
         query = "q=id:" + guid.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("isDocumentedBy"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("isDocumentedBy"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
@@ -337,15 +342,16 @@ public class MNodeQueryIT {
                    resultStr.contains(resourceMapId.getValue()));
 
         query = "q=id:" + guid2.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("documents"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("documents"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
-
+        }
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));
@@ -366,13 +372,16 @@ public class MNodeQueryIT {
 
         // query the resource map object
         query = "q=id:" + resourceMapId.getValue();
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(500);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">" + resourceMapId.getValue() + "</str>"));
@@ -390,9 +399,9 @@ public class MNodeQueryIT {
         // update the metadata object
         Identifier guid4 = new Identifier();
         guid4.setValue("testPackage-metadata-new-version." + System.currentTimeMillis());
-        LeanTestUtils.debug("the new version of the metadata object id is ==== " + guid4.getValue());
-        InputStream object4 =
-            new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+        LeanTestUtils.debug(
+            "the new version of the metadata object id is ==== " + guid4.getValue());
+        InputStream object4 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         SystemMetadata sysmeta4 =
             D1NodeServiceTest.createSystemMetadata(guid4, session.getSubject(), object4);
         object4.close();
@@ -401,14 +410,16 @@ public class MNodeQueryIT {
         MNodeService.getInstance(request).update(session, guid2, object4, guid4, sysmeta4);
         // make sure the new metadata object was indexed
         query = "q=id:" + guid4.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         LeanTestUtils.debug("the result str is " + resultStr);
@@ -416,15 +427,17 @@ public class MNodeQueryIT {
 
         // make sure guid2 was obsoleted
         query = "q=id:" + guid2.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while (
+            (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid4.getValue()))
+                && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while (
-            (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid4.getValue()))
-                && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("name=\"obsoletedBy\">" + guid4.getValue()));
@@ -449,41 +462,46 @@ public class MNodeQueryIT {
             .update(session, resourceMapId, object5, newResourceMapId, sysmeta5);
         // make sure the old resource map has the obsoletedBy field.
         query = "q=id:" + resourceMapId.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains(
+            "name=\"obsoletedBy\">" + newResourceMapId.getValue()))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains(
-            "name=\"obsoletedBy\">" + newResourceMapId.getValue()))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("name=\"obsoletedBy\">" + newResourceMapId.getValue()));
         // make sure the new resource map was indexed
         query = "q=id:" + newResourceMapId.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
-
+        }
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("name=\"obsoletes\">" + resourceMapId.getValue()));
         // make sure the new metadata object was reindexed and have the new resource map
         query = "q=id:" + guid4.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("resourceMap"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("resourceMap"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("name=\"obsoletes\">" + guid2.getValue()));
@@ -494,14 +512,15 @@ public class MNodeQueryIT {
         // make sure the data object has been reindexed with the new information
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
-        account = 0;
-        do {
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains(guid4.getValue()))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains(guid4.getValue()))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
-
+        }
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
@@ -536,8 +555,7 @@ public class MNodeQueryIT {
         Identifier guid2 = new Identifier();
         guid2.setValue("testPackage-metadata." + System.currentTimeMillis());
         LeanTestUtils.debug("the metadata  file id is ==== " + guid2.getValue());
-        InputStream object2 =
-            new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+        InputStream object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         SystemMetadata sysmeta2 =
             D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object2);
         object2.close();
@@ -552,22 +570,22 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -593,11 +611,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("isDocumentedBy"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(2000);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -620,11 +638,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("documents"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(2000);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -648,11 +666,11 @@ public class MNodeQueryIT {
         query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(2000);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -671,8 +689,7 @@ public class MNodeQueryIT {
         Identifier guid4 = new Identifier();
         guid4.setValue("testPackage-metadata." + System.currentTimeMillis());
         LeanTestUtils.debug("the new metadata  file id is ==== " + guid4.getValue());
-        InputStream object4 =
-            new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+        InputStream object4 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         SystemMetadata sysmeta4 =
             D1NodeServiceTest.createSystemMetadata(guid4, session.getSubject(), object4);
         object4.close();
@@ -686,11 +703,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid4.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(2000);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -715,11 +732,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains(resourceMapId2.getValue()))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -746,11 +763,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid4.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains(resourceMapId2.getValue()))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -774,12 +791,12 @@ public class MNodeQueryIT {
         query = "q=id:" + resourceMapId2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains(
             "<str name=\"id\">" + resourceMapId2.getValue() + "</str>"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(2000);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -816,11 +833,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -942,11 +959,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1077,11 +1094,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1143,11 +1160,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1221,11 +1238,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1276,8 +1293,7 @@ public class MNodeQueryIT {
         uuid = UUID.randomUUID();
         guid2.setValue(uuid_prefix + uuid);
         LeanTestUtils.debug("the metadata  file id is ==== " + guid2.getValue());
-        InputStream object2 =
-            new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+        InputStream object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         SystemMetadata sysmeta2 =
             D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object2);
         object2.close();
@@ -1307,33 +1323,33 @@ public class MNodeQueryIT {
         String query = "q=id:" + "\"" + guid.getValue() + "\"";
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         query = "q=id:" + "\"" + guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         query = "q=id:" + "\"" + guid3.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1353,8 +1369,10 @@ public class MNodeQueryIT {
         Resource aggregation =
             ResourceFactory.createResource(resourceMap.getURI() + "#aggregation");
         // create a collection object resource
-        Resource collection = ResourceMapModifier.generateNewComponent(
-            model, seriesId.getValue());// it only works with a series id
+        Resource collection = ResourceMapModifier.generateNewComponent(model,
+                                                                       seriesId.getValue());// it
+        // only works with a
+        // series id
         // create a metadata object resource
         Resource metadata = ResourceMapModifier.generateNewComponent(model, guid2.getValue());
         // create the second metadata object resource
@@ -1395,11 +1413,11 @@ public class MNodeQueryIT {
         query = "q=id:" + "\"" + guid.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("hasPart"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1418,11 +1436,11 @@ public class MNodeQueryIT {
         query = "q=id:" + "\"" + guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("documents"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1439,11 +1457,11 @@ public class MNodeQueryIT {
         query = "q=id:" + "\"" + guid3.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("documents"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1506,11 +1524,11 @@ public class MNodeQueryIT {
         InputStream stream =
             multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params, 30000);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream =
                 multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params, 30000);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -1546,10 +1564,9 @@ public class MNodeQueryIT {
     @Test
     public void testChineseCharacters() throws Exception {
         D1NodeServiceTest.printTestHeader("testChineseCharacters");
-        
+
         String server = SystemUtil.getContextURL();
-        String query =
-            "q=%20-obsoletedBy:*%20AND%20%20-formatId:*dataone"
+        String query = "q=%20-obsoletedBy:*%20AND%20%20-formatId:*dataone"
             + ".org%2Fcollections*%20AND%20%20-formatId:*dataone"
             + ".org%2Fportals*%20AND%20%E4%B8%AD%E6%96%87%20AND%20formatType:METADATA%20AND"
             + "%20endDate:[1800-01-01T00:00:00Z%20TO%202020-01-24T21:56:15"
@@ -1606,17 +1623,17 @@ public class MNodeQueryIT {
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
 
         String query = "q=id:" + guid.getValue();
-
-        InputStream stream;
-        String resultStr;
-        int account = 0;
-        do {
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        int count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
 
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
@@ -1648,26 +1665,30 @@ public class MNodeQueryIT {
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
 
         query = "q=id:" + guid.getValue();
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
         stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
 
-        account = 0;
-        do {
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertFalse(resultStr.contains("checksum"));
@@ -1694,14 +1715,16 @@ public class MNodeQueryIT {
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         query = "q=id:" + guid.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
@@ -1737,14 +1760,16 @@ public class MNodeQueryIT {
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         query = "q=id:" + guid.getValue();
-
-        account = 0;
-        do {
+        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+        resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
@@ -1783,13 +1808,14 @@ public class MNodeQueryIT {
         stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
 
-        account = 0;
-        do {
+        count = 0;
+        while ((resultStr == null || !resultStr.contains("checksum"))
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
+            count++;
             stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        } while ((resultStr == null || !resultStr.contains("checksum"))
-            && account++ < D1NodeServiceTest.MAX_TRIES);
+        }
 
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
@@ -1851,11 +1877,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1906,11 +1932,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -1964,11 +1990,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2005,11 +2031,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2017,7 +2043,7 @@ public class MNodeQueryIT {
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains(
             "<str name=\"abstract\">No remote context, vocab http://schema.org/, creator 03, 02, "
-            + "01"));
+                + "01"));
 
         guid = new Identifier();
         guid.setValue("testSchemaOrgWithContexts2." + System.currentTimeMillis());
@@ -2031,11 +2057,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2043,7 +2069,7 @@ public class MNodeQueryIT {
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains(
             "<str name=\"abstract\">No remote context, vocab https://schema.org/, creator 03, 02,"
-            + " 01, using @list"));
+                + " 01, using @list"));
 
         guid = new Identifier();
         guid.setValue("testSchemaOrgWithContexts3." + System.currentTimeMillis());
@@ -2057,11 +2083,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2069,7 +2095,7 @@ public class MNodeQueryIT {
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains(
             "<str name=\"abstract\">No remote context, vocab https://schema.org/, creator 03, 02,"
-            + " 01"));
+                + " 01"));
 
         guid = new Identifier();
         guid.setValue("testSchemaOrgWithContexts4." + System.currentTimeMillis());
@@ -2083,11 +2109,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2107,11 +2133,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2119,7 +2145,7 @@ public class MNodeQueryIT {
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains(
             "<str name=\"abstract\">No remote context, vocab https://schema.org/, creator 03, 02,"
-            + " 01, using @list"));
+                + " 01, using @list"));
 
         guid = new Identifier();
         guid.setValue("testSchemaOrgWithContexts6." + System.currentTimeMillis());
@@ -2133,11 +2159,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2203,12 +2229,12 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while (
             (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid1.getValue()))
-                && account <= D1NodeServiceTest.MAX_TRIES) {
+                && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2218,12 +2244,12 @@ public class MNodeQueryIT {
         query = "q=id:" + guid1.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while (
             (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid2.getValue()))
-                && account <= D1NodeServiceTest.MAX_TRIES) {
+                && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2235,11 +2261,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("name=\"obsoletes\">" + guid1.getValue()))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2272,11 +2298,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2325,11 +2351,11 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid0.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2340,11 +2366,11 @@ public class MNodeQueryIT {
         // make sure the solr doc is gone
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr != null && resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2377,8 +2403,7 @@ public class MNodeQueryIT {
         Identifier guid2 = new Identifier();
         guid2.setValue("deletePackage-metadata." + System.currentTimeMillis());
         LeanTestUtils.debug("the metadata  file id is ==== " + guid2.getValue());
-        InputStream object2 =
-            new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+        InputStream object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
         SystemMetadata sysmeta2 =
             D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object2);
         object2.close();
@@ -2392,22 +2417,22 @@ public class MNodeQueryIT {
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        int account = 0;
+        int count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2433,11 +2458,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr == null || !resultStr.contains("documents"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2454,11 +2479,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr != null && resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2470,11 +2495,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr != null && resultStr.contains("documentedBy"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2492,11 +2517,11 @@ public class MNodeQueryIT {
         query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr != null && resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2510,11 +2535,11 @@ public class MNodeQueryIT {
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
-        account = 0;
+        count = 0;
         while ((resultStr != null && resultStr.contains("checksum"))
-            && account <= D1NodeServiceTest.MAX_TRIES) {
+            && count <= D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            account++;
+            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2667,10 +2692,10 @@ public class MNodeQueryIT {
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         count = 0;
-        while (count++ <= D1NodeServiceTest.MAX_TRIES && resultStr != null
-                && (resultStr.contains("documents")
-                || resultStr.contains("<arr name=\"resourceMap\">"))) {
-            Thread.sleep(3000);
+        final long sleepTime = (long) (1.5 * DEFAULT_SLEEP_MS);
+        while (count++ <= D1NodeServiceTest.MAX_TRIES && resultStr != null && (
+            resultStr.contains("documents") || resultStr.contains("<arr name=\"resourceMap\">"))) {
+            Thread.sleep(sleepTime);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2690,9 +2715,8 @@ public class MNodeQueryIT {
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         count = 0;
-        while (count++ <= D1NodeServiceTest.MAX_TRIES && resultStr != null
-                && (resultStr.contains("documents")
-                || resultStr.contains("<arr name=\"resourceMap\">"))) {
+        while (count++ <= D1NodeServiceTest.MAX_TRIES && resultStr != null && (
+            resultStr.contains("documents") || resultStr.contains("<arr name=\"resourceMap\">"))) {
             Thread.sleep(DEFAULT_SLEEP_MS);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
