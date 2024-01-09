@@ -2665,10 +2665,10 @@ public class MNodeQueryIT {
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         count = 0;
-        while ((resultStr != null && resultStr.contains("documents"))
-            && count <= D1NodeServiceTest.MAX_TRIES) {
+        while (count++ <= D1NodeServiceTest.MAX_TRIES && resultStr != null
+                && (resultStr.contains("documents")
+                || resultStr.contains("<arr name=\"resourceMap\">"))) {
             Thread.sleep(2000);
-            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
@@ -2676,10 +2676,10 @@ public class MNodeQueryIT {
             LeanTestUtils.debug("WARNING: reached D1NodeServiceTest.MAX_TRIES!");
         }
         assertNotNull(resultStr);
-        if (resultStr.contains("documents")) {
-            fail("Failed to delete the relationship elements in the metadata object.");
-        }
-        assertFalse("testDeletePackage2: metadata resultStr contains 'resourceMap'\n" + resultStr,
+        assertFalse(
+            "Failed to delete the relationship (documents) elements in the metadata object",
+            resultStr.contains("documents"));
+        assertFalse("Failed to delete the <arr name=\"resourceMap\"> elements in the data object",
                     resultStr.contains("<arr name=\"resourceMap\">"));
 
         // Ensure the data object does not have any relationship elements in the solr doc
@@ -2687,18 +2687,15 @@ public class MNodeQueryIT {
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         count = 0;
-        while ((resultStr != null && resultStr.contains("documentedBy"))
-            && count <= D1NodeServiceTest.MAX_TRIES) {
+        while (count++ <= D1NodeServiceTest.MAX_TRIES && resultStr != null
+                && (resultStr.contains("documents")
+                || resultStr.contains("<arr name=\"resourceMap\">"))) {
             Thread.sleep(DEFAULT_SLEEP_MS);
-            count++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         assertNotNull(resultStr);
-        if (resultStr.contains("documentedBy")) {
-            fail("Failed to delete the relationship elements of the data object.");
-        }
-        assertFalse("testDeletePackage2: metadata resultStr contains 'resourceMap'\n" + resultStr,
+        assertFalse("Failed to delete the <arr name=\"resourceMap\"> elements in the data object",
                     resultStr.contains("<arr name=\"resourceMap\">"));
 
         // delete the metadata object
