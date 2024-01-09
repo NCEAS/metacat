@@ -461,6 +461,7 @@
         <property name="dist.dir" value="dist"/>
         <property name="ver.dir" value="${dist.dir}/${name}-${release}"/>
         <property name="ver.src" value="${ver.dir}/src"/>
+        <property name="ver.test" value="${ver.dir}/test"/>
         <property name="test.dir" value="${dist.dir}/test"/>
         <!-- directories for creating a Harvest List Editor distribution -->
         <property name="dist.dir.hle" value="disthle"/>
@@ -1442,7 +1443,7 @@
         <mkdir dir="${ver.dir}"/>
         <copy todir="${ver.dir}">
             <fileset dir="."
-                     excludes="**/CVS* **/.#* src/** test/** build/** docs/** ${dist.dir}/** ${dist.dir.hle}/** metacat*.tar.gz metacat*.tar metacat*.zip"/>
+                     excludes="**/CVS* **/.#* src/** test/** build*/** docs/** ${dist.dir}/** ${dist.dir.hle}/** metacat*.tar.gz metacat*.tar metacat*.zip"/>
         </copy>
         <copy todir="${ver.dir}" file="build.xml"/>
         <copy todir="${ver.dir}" file="build.properties"/>
@@ -1460,7 +1461,7 @@
             <fileset dir="${build.dir}/src"/>
         </copy>
 
-        <mkdir dir="${ver.dir}/tests/servertestfiles"/>
+        <mkdir dir="${ver.dir}/test/servertestfiles"/>
         <copy todir="${ver.dir}/test/servertestfiles">
             <fileset dir="./test/servertestfiles"/>
         </copy>
@@ -1490,6 +1491,9 @@
         <mkdir dir="${ver.src}"/>
         <copy todir="${ver.src}">
             <fileset dir="./src"/>
+        </copy>
+        <copy todir="${ver.test}">
+            <fileset dir="${testdir}"/>
         </copy>
         <delete file="./${name}-src-${release}.zip"/>
         <zip zipfile="./${name}-src-${release}.zip"
