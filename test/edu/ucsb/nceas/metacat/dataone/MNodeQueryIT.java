@@ -64,9 +64,7 @@ import static org.junit.Assert.fail;
  * @author cjones
  */
 public class MNodeQueryIT {
-    private final long DEFAULT_SLEEP_MS;
-    private static final long DEFAULT_SLEEP_NON_K8S_MS = 1000;
-    private static final long DEFAULT_SLEEP_K8S_MS = 2000;
+    private final long DEFAULT_SLEEP_MS= 1000;
     private static String taxonomyFilePath = "test/eml-with-taxonomy.xml";
     private static String portalFilePath =
         "metacat-index/src/test/resources/collection/portal-example-simple.xml";
@@ -132,11 +130,6 @@ public class MNodeQueryIT {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        boolean containerized = Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"));
-        DEFAULT_SLEEP_MS = containerized ? DEFAULT_SLEEP_K8S_MS : DEFAULT_SLEEP_NON_K8S_MS;
-        LeanTestUtils.debug(
-            "Running in a container?: " + containerized + "; setting DEFAULT_SLEEP_MS to: "
-                + DEFAULT_SLEEP_MS);
     }
 
     @Test
