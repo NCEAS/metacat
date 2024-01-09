@@ -2670,7 +2670,7 @@ public class MNodeQueryIT {
         while (count++ <= D1NodeServiceTest.MAX_TRIES && resultStr != null
                 && (resultStr.contains("documents")
                 || resultStr.contains("<arr name=\"resourceMap\">"))) {
-            Thread.sleep(2000);
+            Thread.sleep(3000);
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
