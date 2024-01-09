@@ -2574,7 +2574,8 @@ public class MNodeQueryIT {
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         if (count >= D1NodeServiceTest.MAX_TRIES) {
-            LeanTestUtils.debug("WARNING: reached D1NodeServiceTest.MAX_TRIES!");
+            LeanTestUtils.debug(
+                "WARNING: reached D1NodeServiceTest.MAX_TRIES looking for data object index!");
         }
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
@@ -2592,7 +2593,8 @@ public class MNodeQueryIT {
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         if (count >= D1NodeServiceTest.MAX_TRIES) {
-            LeanTestUtils.debug("WARNING: reached D1NodeServiceTest.MAX_TRIES!");
+            LeanTestUtils.debug(
+                "WARNING: reached D1NodeServiceTest.MAX_TRIES looking for metadata object index¡");
         }
         assertNotNull(resultStr);
         assertTrue(resultStr.contains("checksum"));
@@ -2653,12 +2655,12 @@ public class MNodeQueryIT {
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         if (count >= D1NodeServiceTest.MAX_TRIES) {
-            LeanTestUtils.debug("WARNING: reached D1NodeServiceTest.MAX_TRIES!");
+            LeanTestUtils.debug(
+                "WARNING: reached D1NodeServiceTest.MAX_TRIES deleting resourcemap index!");
         }
         assertNotNull(resultStr);
-        if (resultStr.contains("checksum")) {
-            fail("Failed to delete the index of the resource map.");
-        }
+        assertFalse("Failed to delete the index of the resource map.",
+                    resultStr.contains("checksum"));
 
         // Ensure the metadata object does not have any relationship elements in the solr doc
         query = "q=id:" + metadataGuid.getValue();
@@ -2673,7 +2675,8 @@ public class MNodeQueryIT {
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         if (count >= D1NodeServiceTest.MAX_TRIES) {
-            LeanTestUtils.debug("WARNING: reached D1NodeServiceTest.MAX_TRIES!");
+            LeanTestUtils.debug(
+                "WARNING: reached D1NodeServiceTest.MAX_TRIES deleting relationship elements!");
         }
         assertNotNull(resultStr);
         assertFalse(
