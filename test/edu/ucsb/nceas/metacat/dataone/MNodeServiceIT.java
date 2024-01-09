@@ -2007,7 +2007,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             account = 0;
             while ((resultStr == null || !resultStr.contains("resourceMap"))
                 && account <= D1NodeServiceTest.MAX_TRIES) {
-                Thread.sleep(500);
+                Thread.sleep(1000);
                 account++;
                 stream = MNodeService.getInstance(request).query(session, "solr", query);
                 resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
