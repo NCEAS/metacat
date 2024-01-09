@@ -34,7 +34,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -133,10 +132,16 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         assertEquals(TITLE, title);
 
         archive(session, id);
-        Thread.sleep(3000);
         input = query(querySession2, id);
         doc = generateDoc(input);
         String resultId3 = extractElementValue(doc, IDXPATH);
+        int count = 0;
+        while (resultId3 != null && count++ < MAX_TRIES) {
+            Thread.sleep(1000);
+            input = query(querySession2, id);
+            doc = generateDoc(input);
+            resultId3 = extractElementValue(doc, IDXPATH);
+        }
         assertNull(
             "In the testPublicReadable method, the query result should be null since the document"
                 + " was archived. ", resultId3);
