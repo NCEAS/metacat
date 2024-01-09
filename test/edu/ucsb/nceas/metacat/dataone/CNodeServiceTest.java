@@ -90,7 +90,7 @@ import static org.junit.Assert.fail;
 /**
  * A JUnit test for testing the dataone CNCore implementation
  */
-public class CNodeServiceTest {  // extends D1NodeServiceTest {
+public class CNodeServiceTest {
 
     private final D1NodeServiceTest d1NodeServiceTest;
     /**
