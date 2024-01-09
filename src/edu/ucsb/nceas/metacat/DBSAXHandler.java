@@ -244,7 +244,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
                 DBConnection dbConn = null;
                 int serialNumber = -1;
                
-                if (systemid != null) {
+                if (doctype != null) {
                     try {
                         // Get dbconnection
                         dbConn = DBConnectionPool
@@ -252,9 +252,8 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
                         serialNumber = dbConn.getCheckOutSerialNumber();
 
                         String sql = "SELECT catalog_id FROM xml_catalog "
-                            + "WHERE entry_type = 'DTD' "
-                            + "AND public_id = ?";
-                            
+                            + "WHERE public_id = ?";
+
                         PreparedStatement pstmt = dbConn.prepareStatement(sql);
                         pstmt.setString(1, doctype);
                         ResultSet rs = pstmt.executeQuery();
