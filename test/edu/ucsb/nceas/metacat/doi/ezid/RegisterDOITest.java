@@ -1618,7 +1618,16 @@ public class RegisterDOITest {
         SystemMetadata oldResourceMapSys =
             MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId);
         Identifier newResourceMapId = oldResourceMapSys.getObsoletedBy();
+        int count = 0;
+        while (newResourceMapId == null && count++ < MAX_TIMES) {
+            Thread.sleep(SLEEP_TIME);
+            newResourceMapId =
+                MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId)
+                    .getObsoletedBy();
+        }
         assertNotNull("newResourceMapId was NULL", newResourceMapId);
+
+
         MNodeService.getInstance(request).getSystemMetadata(publicSession, newResourceMapId);
         //the data object is not public readable
         try {
