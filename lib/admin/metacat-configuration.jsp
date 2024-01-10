@@ -35,7 +35,6 @@
     Boolean propsConfigured = (Boolean)request.getAttribute("propsConfigured");	
     Boolean orgsConfigured = (Boolean)request.getAttribute("orgsConfigured");	
     Boolean authConfigured = (Boolean)request.getAttribute("authConfigured");	
-    Boolean skinsConfigured = (Boolean)request.getAttribute("skinsConfigured");	
     Boolean dbConfigured = (Boolean)request.getAttribute("dbConfigured");
     Boolean replicationConfigured = (Boolean)request.getAttribute("replicationConfigured");
     String dataoneConfigured = (String)request.getAttribute("dataoneConfigured");
@@ -102,24 +101,9 @@
 	<%
 		}
 		
-	    if (skinsConfigured != null && skinsConfigured) {
+
 	%>
-	        <tr>
-	        <td class="configured-tag"><i class="icon-ok"></i>configured</td>
-			<td class="property-title"> Skins Specific Properties </td> 
-			<td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=skins"><i class="icon-cogs"></i>Reconfigure Now</a> </td>
-	        </tr>
 	<%
-		} else {
-	%>    		
-	        <tr>
-	 		<td class="unconfigured-tag">unconfigured </td>  
-	 		<td class="property-title"> Skins Specific Properties </td>
-			<td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=skins"><i class="icon-cogs"></i>Configure Now</a> </td>			
-	    	</tr>
-	<%
-		}  
-	    
 	    if ((dbConfigured != null && dbConfigured) ||
 	    		(metacatVersion != null && databaseVersion != null && 
 	    				metacatVersion.compareTo(databaseVersion) == 0)) {
