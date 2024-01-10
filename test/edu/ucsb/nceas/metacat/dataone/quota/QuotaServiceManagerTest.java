@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.sql.ResultSet;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -93,6 +94,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                     + "enabled "
                     + e.getMessage());
         }
+        suite.addTest(new QuotaServiceManagerTest("testCombinateCurrentDateAndGivenTime"));
         return suite;
     }
 
@@ -1696,6 +1698,20 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         } catch (Exception e) {
 
         }
+    }
+
+    /**
+     * Test the combinateCurrentDateAndGivenTime method
+     * @throws Exception
+     */
+    public void testCombinateCurrentDateAndGivenTime() throws Exception {
+        String givenTime = "11:59 PM";
+        Date date = QuotaServiceManager.combinateCurrentDateAndGivenTime(givenTime);
+        DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT);
+        String s = df.format(date);
+        assertTrue("The final time string (after transformed by the method "
+                     + " combinateCurrentDateAndGivenTime) " + s
+                     + " doesn't have the given time " + givenTime, s.contains(givenTime));
     }
 
     /**

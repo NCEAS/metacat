@@ -275,7 +275,7 @@ public class QuotaServiceManager {
      * @return the Date object
      * @throws HandlerException
      */
-    public static Date combinateCurrentDateAndGivenTime(String givenTime) throws HandlerException {
+    protected static Date combinateCurrentDateAndGivenTime(String givenTime) throws HandlerException {
         try {
             Date givenDate = parseTime(givenTime);
             Date newDate = null;
@@ -286,7 +286,7 @@ public class QuotaServiceManager {
                 logMetacat.info(
                     "QuotaServiceManager.combinateCurrentDateAndGivenTime - Today already pass the"
                         + " given time, we should set it as tomorrow");
-                String dateAndTime = getDateString(now) + " " + givenTime;
+                String dateAndTime = getDateString(now) + ", " + givenTime;
                 Date combinationDate = parseDateTime(dateAndTime);
                 // new date should plus 24 hours to make is the second day
                 newDate = new Date(combinationDate.getTime() + 24 * 3600 * 1000);
@@ -294,7 +294,7 @@ public class QuotaServiceManager {
                 logMetacat.info(
                     "QuotaServiceManager.combinateCurrentDateAndGivenTime - Today haven't pass the"
                         + " given time, we should it as today");
-                String dateAndTime = getDateString(now) + " " + givenTime;
+                String dateAndTime = getDateString(now) + ", " + givenTime;
                 newDate = parseDateTime(dateAndTime);
             }
             logMetacat.info(
