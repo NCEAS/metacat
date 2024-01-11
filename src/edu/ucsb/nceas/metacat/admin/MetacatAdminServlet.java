@@ -49,7 +49,6 @@ import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
-import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 
@@ -148,10 +147,6 @@ public class MetacatAdminServlet extends HttpServlet {
                 // process properties
                 PropertiesAdmin.getInstance().configureProperties(request,
                         response);
-                return;
-            } else if (action.equals("skins")) {
-                // process skins
-                SkinsAdmin.getInstance().configureSkins(request, response);
                 return;
             } else if (action.equals("database")) {
                 // process database
@@ -263,7 +258,6 @@ public class MetacatAdminServlet extends HttpServlet {
             request.setAttribute("propsConfigured",
                                     Boolean.valueOf(PropertyService.arePropertiesConfigured()));
             request.setAttribute("authConfigured", Boolean.valueOf(AuthUtil.isAuthConfigured()));
-            request.setAttribute("skinsConfigured", Boolean.valueOf(SkinUtil.areSkinsConfigured()));
             request.setAttribute("metacatConfigured",
                                         Boolean.valueOf(ConfigurationUtil.isMetacatConfigured()));
             request.setAttribute("dataoneConfigured",

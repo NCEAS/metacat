@@ -1,9 +1,0 @@
-<table class="group group_border width100percent">
- <c:forEach items="${dp_group}" var="current_dp">
-  <tr>
-   <td>
-		<a href="<%= SERVLET_URL %>?action=read&qformat=sbclter&docid=${current_dp.docid}">${current_dp.name}</a> (${current_dp.docid})
-		</td>
-  </tr>
- </c:forEach>
-</table>
