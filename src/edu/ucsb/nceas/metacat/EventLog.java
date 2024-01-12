@@ -70,11 +70,19 @@ public class EventLog {
      */
     private EventLog() {
         filter = new EventLogFilter();
+        refreshLogProperties();
+    }
+
+    /**
+     * Refresh the class fields controlled by properties
+     */
+    public void refreshLogProperties() {
         try {
             enableEventLogIndex = Boolean.parseBoolean(
                                     PropertyService.getProperty("index.accessLog.count.enabled"));
         } catch (PropertyNotFoundException e) {
-            logMetacat.info("EVentLog.constructor - the property 'index.accessLog.count.enabled'"
+            logMetacat.info("EVentLog.refreshLogProperties - the property "
+                          + "'index.accessLog.count.enabled'"
                           + " is not found in the property files and we will use the default value "
                           + enableEventLogIndex);
         }
@@ -82,7 +90,7 @@ public class EventLog {
             disableEventLog = Boolean.parseBoolean(
                                             PropertyService.getProperty("event.log.disabled"));
         } catch (PropertyNotFoundException e) {
-            logMetacat.info("EVentLog.constructor - the property 'event.log.disabled'"
+            logMetacat.info("EVentLog.refreshLogProperties - the property 'event.log.disabled'"
                     + " is not found in the property files and we will use the default value "
                     + disableEventLog);
         }

@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.EventLog;
 
 /**
@@ -52,7 +53,7 @@ public class EventLogTest extends MCTestCase {
         String[] ipList = {"192.168.1.103", "192.168.1.104"};
         String[] docList = {id};
         String[] eventList = {"read", "insert", "update"};
-        String report = EventLog.getInstance().getReport(ipList, principals, docList, 
+        String report = EventLog.getInstance().getReport(ipList, principals, docList,
                 eventList, startDate, endDate, anonymous);
         assertTrue(report.contains("<event>read</event>"));
         assertTrue(report.contains("<ipAddress>192.168.1.103</ipAddress>"));
@@ -116,5 +117,35 @@ public class EventLogTest extends MCTestCase {
         EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, EventLog.DELETE);
         deleted = EventLog.getInstance().isDeleted(id);
         assertTrue(deleted == true);
+    }
+
+    /**
+     * Test logging when the feature is disabled
+     * @throws Exception
+     */
+    public void testDisableEventLog() throws Exception {
+        PropertyService.setPropertyNoPersist("event.log.disabled", "true");
+        EventLog.getInstance().refreshLogProperties();
+        long time = System.nanoTime();
+        String id = "test-1934-wemewen-3-2"+time+".1";
+        EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, "read");
+        Thread.sleep(2000);
+        Timestamp startDate = null;
+        Timestamp endDate = null;
+        boolean anonymous = false;
+        String[] principals = {"public", "someone"};
+        String[] ipList = {"192.168.1.103", "192.168.1.104"};
+        String[] docList = {id};
+        String[] eventList = {"read", "insert", "update"};
+        String report = EventLog.getInstance().getReport(ipList, principals, docList,
+                eventList, startDate, endDate, anonymous);
+        assertTrue(report.contains("<log>"));
+        assertFalse(report.contains("<event>read</event>"));
+        assertFalse(report.contains("<ipAddress>192.168.1.103</ipAddress>"));
+        assertFalse(report.contains("<userAgent>Mozilla</userAgent>"));
+        assertFalse(report.contains("<principal>public</principal>"));
+        assertFalse(report.contains("<docid>" + id + "</docid>"));
+        PropertyService.setPropertyNoPersist("event.log.disabled", "false");
+        EventLog.getInstance().refreshLogProperties();
     }
 }
