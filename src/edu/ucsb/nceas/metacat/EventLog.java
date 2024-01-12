@@ -15,7 +15,6 @@ import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.LogEntry;
-import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.Subject;
@@ -61,7 +60,8 @@ public class EventLog {
     private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(EventLog.class);
     private static final int USERAGENTLENGTH = 512;
     private EventLogFilter filter = null;
-    private boolean enableEvenLogIndex= false;
+    private boolean enableEventLogIndex = false;
+    private boolean disableEventLog = false;
 
 
     /**
@@ -70,7 +70,22 @@ public class EventLog {
      */
     private EventLog() {
         filter = new EventLogFilter();
-        enableEvenLogIndex = Settings.getConfiguration().getBoolean("index.accessLog.count.enabled", false);
+        try {
+            enableEventLogIndex = Boolean.parseBoolean(
+                                    PropertyService.getProperty("index.accessLog.count.enabled"));
+        } catch (PropertyNotFoundException e) {
+            logMetacat.info("EVentLog.constructor - the property 'index.accessLog.count.enabled'"
+                          + " is not found in the property files and we will use the default value "
+                          + enableEventLogIndex);
+        }
+        try {
+            disableEventLog = Boolean.parseBoolean(
+                                            PropertyService.getProperty("event.log.disabled"));
+        } catch (PropertyNotFoundException e) {
+            logMetacat.info("EVentLog.constructor - the property 'event.log.disabled'"
+                    + " is not found in the property files and we will use the default value "
+                    + disableEventLog);
+        }
     }
 
     /**
@@ -98,6 +113,11 @@ public class EventLog {
      * @param event the string code for the event
      */
     public void log(String ipAddress, String userAgent, String principal, String docid, String event) {
+        if (disableEventLog) {
+            logMetacat.debug("EventLog.log - the feature of logging events is disabled,"
+                                + " so Metacat will not log any events.");
+            return;
+        }
         EventLogData logData = new EventLogData(ipAddress, userAgent, principal, docid, event);
         boolean filterOut = false;
         if(filter != null) {
@@ -116,7 +136,7 @@ public class EventLog {
                 pid.setValue(guid);
 
                 // submit for indexing
-                if(enableEvenLogIndex) {
+                if(enableEventLogIndex) {
                     MetacatSolrIndex.getInstance().submit(pid, null, false);
                 }
 
