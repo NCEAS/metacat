@@ -9,7 +9,7 @@ TEST_TAG="TEST"
 MC_VERSION=""
 DEFAULT_MC_VERSION="3.0.0"
 DEVTOOLS=false
-INCLUDE_TESTS='false'
+ENVIRONMENT='prod'
 DEV_BUILD_OPTS=""
 DISTBIN=""
 DISTSRC="./README.md"
@@ -43,10 +43,11 @@ devtools-info() {
 
 testmode-info() {
     echo "                  TEST MODE (-t TEST) is FOR DEV/DEBUGGING ONLY - NOT FOR PRODUCTION USE!"
-    echo "                  It installs additional command-line build tools in the container (see "
-    echo "                  Dockerfile for complete list), thus REDUCING CONTAINER SECURITY!"
+    echo "                  It installs the FULL JDK and additional command-line build tools in the"
+    echo "                  container (see Dockerfile for complete list), thus REDUCING CONTAINER"
+    echo "                  SECURITY!"
     echo "                  The metacat source files will be installed in the 'metacat' user's home"
-    echo "                  directory (/home/metacat/)"
+    echo "                  directory (is.e. under /home/metacat/)"
 }
 
 # Parse command-line arguments
@@ -83,7 +84,7 @@ if [[ -n $TAG ]]; then
         echo
         testmode-info
         echo
-        INCLUDE_TESTS='true'
+        ENVIRONMENT='test'
 
         DISTSRC="metacat-src-${MC_VERSION}.tar.gz"
 
@@ -126,8 +127,8 @@ echo "* * *  Starting docker image build: $(date), using:"
 echo "  TAG:                  $TAG"
 echo "  VERSION:              $MC_VERSION"
 echo "  BINARY DISTRIBUTION:  $DISTBIN"
-echo "  INCLUDE_TESTS?        $INCLUDE_TESTS"
-if [[ $INCLUDE_TESTS == "true" ]]; then
+echo "  ENVIRONMENT?          $ENVIRONMENT"
+if [[ $ENVIRONMENT == "test" ]]; then
     echo "  SOURCE DISTRIBUTION:  $DISTSRC"
 fi
 echo "  DEVTOOLS:             $DEVTOOLS"
@@ -138,7 +139,7 @@ fi
 docker image build $DEV_BUILD_OPTS       \
     --tag ghcr.io/nceas/metacat:"$TAG"   \
     --build-arg MC_VERSION="$MC_VERSION" \
-    --build-arg INCLUDE_TESTS="$INCLUDE_TESTS" \
+    --build-arg ENVIRONMENT="$ENVIRONMENT" \
     --build-arg DISTBIN="$DISTBIN"       \
     --build-arg DISTSRC="$DISTSRC"       \
     --build-arg DEVTOOLS="$DEVTOOLS"  .

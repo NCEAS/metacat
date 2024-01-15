@@ -1,11 +1,33 @@
-FROM tomcat:9.0.82-jre17-temurin-jammy
+# Define a build argument to determine which base image to use
+ARG ENVIRONMENT="prod"
+
+# The first stage is used to select the base image for production, based on the JRE
+FROM tomcat:9.0.82-jre17-temurin-jammy as prod-base
+
+# The second stage is used for testing, if needed, based on the JDK
+FROM tomcat:9.0.82-jdk17-temurin-jammy as test-base
+
+RUN    printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
+    && printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
+    && printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *\n\n'  \
+    && apt-get update && apt-get install -y --no-install-recommends   \
+        ant          \
+        ant-optional \
+        git          \
+        maven        \
+    && mkdir -p /opt/local/share/java  && ln -s  /usr/local/tomcat  /opt/local/share/java/tomcat
+
+
+# The final stage copies from the production or test stage, based on the build argument
+FROM ${ENVIRONMENT}-base
+
+COPY / /
 
 # ARG default values that can be overridden at build-time
 ARG DISTBIN=''
 ARG DISTSRC=''
 ARG DEVTOOLS=''
 ARG MC_VERSION=''
-ARG INCLUDE_TESTS='false'
 
 # ENV default key=value env vars shared with container at runtime
 ENV TC_HOME=/usr/local/tomcat
@@ -27,54 +49,41 @@ RUN useradd -u 1000 -g 1000 metacat
 
 ## ADD auto-inflates the .tar.gz
 ADD "$DISTBIN" /tmp/
-ADD --chown=metacat "$DISTSRC" /home/metacat/metacat-source/
+ADD "$DISTSRC" /home/metacat/metacat-source/
 
-RUN \
-    bash -c \
-      "if [[ \"$INCLUDE_TESTS\" == \"true\" ]]; then                  \
-                                                                      \
-        apt-get update && apt-get install -y --no-install-recommends  \
-            ant          \
-            ant-optional \
-            git          \
-            maven;       \
-        mkdir -p /home/metacat && chown metacat /home/metacat;        \
-        mkdir -p /opt/local/share/java;                               \
-        ln -s  /usr/local/tomcat  /opt/local/share/java/tomcat;       \
-        echo '* * * TEST BUILD * * *';                                \
-      fi" \
-    && apt-get update && apt-get install -y --no-install-recommends \
-        python3-bcrypt \
-        figlet         \
-        unzip          \
-        netcat         \
-        # non-critical tools
-        iputils-ping   \
-        lsof           \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3-bcrypt    \
+        figlet            \
+        unzip             \
+        netcat            \
+        # non-critical tools:
+        iputils-ping      \
+        lsof              \
         postgresql-client \
-        procps         \
-        telnet         \
-        vim            \
-    &&  rm -rf /var/lib/apt/lists/  /tmp/metacat-index.war         && \
-        mv /tmp/metacat.war  /tmp/metacatui.war ${TC_HOME}/webapps && \
-        chown -R metacat ${TC_HOME}                                && \
-        mkdir -p /var/metacat && chown metacat:metacat /var/metacat   \
+        procps            \
+        telnet            \
+        vim               \
+    &&  rm -rf /var/lib/apt/lists/  /tmp/metacat-index.war                \
+    &&  mv /tmp/metacat.war  /tmp/metacatui.war ${TC_HOME}/webapps        \
+    &&  chown -R metacat ${TC_HOME}                                       \
+    &&  mkdir -p /var/metacat  && chown metacat:metacat /var/metacat      \
+    &&  mkdir -p /home/metacat && chown -R metacat:metacat /home/metacat  \
     ## Tomcat Mods to Extend Allowed Character Set
         ## - Encoded forward slashes (%2f):
-    &&  echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true" \
-                                               >> ${TC_HOME}/conf/catalina.properties && \
+    &&  echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true"     \
+                                      >> ${TC_HOME}/conf/catalina.properties    \
         ## - Backslashes:
-        echo "org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true" \
-                                               >> ${TC_HOME}/conf/catalina.properties
+    &&  echo "org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true" \
+                                      >> ${TC_HOME}/conf/catalina.properties
 
 ## Redirect file-based logging to stdout for access logs
-COPY --chown=metacat tomcat.k8s.server.xml ${TC_HOME}/conf/server.xml
+COPY --chown=metacat:metacat tomcat.k8s.server.xml ${TC_HOME}/conf/server.xml
 
 ## Redirect file-based logging for all other logs
-COPY --chown=metacat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging.properties
+COPY --chown=metacat:metacat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging.properties
 
-COPY --chown=metacat apply_context.py     ${USRBINDIR}/
-COPY --chown=metacat docker-entrypoint.sh ${USRBINDIR}/
+COPY --chown=metacat:metacat apply_context.py     ${USRBINDIR}/
+COPY --chown=metacat:metacat docker-entrypoint.sh ${USRBINDIR}/
 
 #Run Container as 'metacat'
 USER 1000
