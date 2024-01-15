@@ -115,6 +115,18 @@ configMetacatUi() {
     } > "${UI_HOME}"/WEB-INF/web.xml
 }
 
+make-var-metacat-dirs() {
+    mkdir -p \
+        /var/metacat/.metacat    \
+        /var/metacat/certs       \
+        /var/metacat/config      \
+        /var/metacat/data        \
+        /var/metacat/documents   \
+        /var/metacat/inline-data \
+        /var/metacat/logs        \
+        /var/metacat/temporary
+}
+
 ####################################################################################################
 ####   MAIN SCRIPT
 ####################################################################################################
@@ -122,6 +134,9 @@ configMetacatUi() {
 figlet -ck Metacat
 
 if [[ $DEVTOOLS == "true" ]]; then
+
+    make-var-metacat-dirs
+
     echo '* * * Container "-devtools" mode'
     echo '* * * NOTE Tomcat does NOT get started in devtools mode!'
     echo '* * * See commands in /usr/local/bin/docker-entrypoint.sh to start manually'
@@ -138,6 +153,13 @@ elif [[ $1 = "catalina.sh" ]]; then
     fi
 
     configMetacatUi
+
+    if [ -z "$METACAT_APP_CONTEXT" ]; then
+        METACAT_APP_CONTEXT="metacat"
+        echo "METACAT_APP_CONTEXT wasn't set; defaulting to $METACAT_APP_CONTEXT..."
+    else
+        echo "METACAT_APP_CONTEXT is $METACAT_APP_CONTEXT"
+    fi
 
     # set the env vars for metacat location. Note that TC_HOME is set in the Dockerfile
     METACAT_DEFAULT_WAR=${TC_HOME}/webapps/metacat.war
@@ -162,15 +184,7 @@ elif [[ $1 = "catalina.sh" ]]; then
     apply_context.py "$METACAT_DIR"/WEB-INF/web.xml metacat "${METACAT_APP_CONTEXT}"
 
     # Make sure all default directories are available
-    mkdir -p \
-        /var/metacat/.metacat    \
-        /var/metacat/certs       \
-        /var/metacat/config      \
-        /var/metacat/data        \
-        /var/metacat/documents   \
-        /var/metacat/inline-data \
-        /var/metacat/logs        \
-        /var/metacat/temporary
+    make-var-metacat-dirs
 
     # Metacat Site Properties
     SITEPROPS_TARGET=/var/metacat/config/metacat-site.properties
