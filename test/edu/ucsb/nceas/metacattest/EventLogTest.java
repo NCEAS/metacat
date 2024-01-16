@@ -124,7 +124,7 @@ public class EventLogTest extends MCTestCase {
      * @throws Exception
      */
     public void testDisableEventLog() throws Exception {
-        PropertyService.setPropertyNoPersist("event.log.disabled", "true");
+        PropertyService.setPropertyNoPersist("event.log.enabled", "false");
         EventLog.getInstance().refreshLogProperties();
         long time = System.nanoTime();
         String id = "test-1934-wemewen-3-2"+time+".1";
@@ -145,7 +145,7 @@ public class EventLogTest extends MCTestCase {
         assertFalse(report.contains("<userAgent>Mozilla</userAgent>"));
         assertFalse(report.contains("<principal>public</principal>"));
         assertFalse(report.contains("<docid>" + id + "</docid>"));
-        PropertyService.setPropertyNoPersist("event.log.disabled", "false");
+        PropertyService.setPropertyNoPersist("event.log.enabled", "true");
         EventLog.getInstance().refreshLogProperties();
     }
 }
