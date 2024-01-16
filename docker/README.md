@@ -22,15 +22,50 @@ If you wish to build your own version locally, this can be accomplished by first
 metacat distribution associated with a given version, and then building the docker image based on
 that. Starting in the root directory of the "metacat" repo:
 
-    $ ant distbin
-    ... a very long build process ensues, resulting in a tar.gz file
+```console
+$ ant distbin
 
-    $ cd docker
-    $ ./build 3.0.0
-    ...image is built
+# ... a very long build process ensues, resulting in a tar.gz file
+#     e.g. metacat-bin-3.0.0.tar.gz
 
-    $ docker image ls
-    REPOSITORY    TAG      IMAGE ID        CREATED           SIZE
-    metacat       3.0.0    8da92210dfc4     1 minute ago     1.27GB
+$ cd docker
+$ ./build.sh  -t 3.0.0  -v 3.0.0
+
+# ...image is built
+
+$ docker image ls
+
+REPOSITORY               TAG      IMAGE ID        CREATED           SIZE
+ghcr.io/nceas/metacat    3.0.0    8da92210dfc4    1 minute ago      1.27GB
+```
 
 The image can then be deployed in a Kubernetes environment - [see the helm chart](../helm/README.md)
+
+# How to build the Metacat TEST image
+
+A TEST image may also be built, which includes the metacat application and test source files, along
+with the JDK and the necessary command line tools, that enable the metacat test suite to be run 
+inside the container.
+
+To build the image, starting in the root directory of the "metacat" repo: 
+
+```console
+$ ant fulldist
+
+# ... a very long build process ensues, resulting in two tar.gz files
+#     e.g. metacat-bin-3.0.0.tar.gz and metacat-src-3.0.0.tar.gz
+
+$ cd docker
+$ ./build.sh  -t TEST -v 3.0.0
+
+# ...image is built
+
+$ docker image ls
+
+REPOSITORY               TAG       IMAGE ID       CREATED         SIZE
+ghcr.io/nceas/metacat    TEST      dd1435cf946f   1 minute ago    1.81GB
+```
+
+When the container is running, you can connect using a `bash` shell, and the source code can 
+then be found in `/home/metacat/metacat-source`. From there, you can run `ant test`
+as you would locally.

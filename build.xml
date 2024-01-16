@@ -461,6 +461,7 @@
         <property name="dist.dir" value="dist"/>
         <property name="ver.dir" value="${dist.dir}/${name}-${release}"/>
         <property name="ver.src" value="${ver.dir}/src"/>
+        <property name="ver.test" value="${ver.dir}/test"/>
         <property name="test.dir" value="${dist.dir}/test"/>
         <!-- directories for creating a Harvest List Editor distribution -->
         <property name="dist.dir.hle" value="disthle"/>
@@ -1442,7 +1443,7 @@
         <mkdir dir="${ver.dir}"/>
         <copy todir="${ver.dir}">
             <fileset dir="."
-                     excludes="**/CVS* **/.#* src/** test/** build/** docs/** ${dist.dir}/** ${dist.dir.hle}/** metacat*.tar.gz metacat*.tar metacat*.zip"/>
+                     excludes="**/.* **/.*/** src/** test/** build*/** target/** helm/** docker/** docs/** ${dist.dir}/** ${dist.dir.hle}/** metacat*.tar.gz metacat*.tar metacat*.zip"/>
         </copy>
         <copy todir="${ver.dir}" file="build.xml"/>
         <copy todir="${ver.dir}" file="build.properties"/>
@@ -1460,7 +1461,7 @@
             <fileset dir="${build.dir}/src"/>
         </copy>
 
-        <mkdir dir="${ver.dir}/tests/servertestfiles"/>
+        <mkdir dir="${ver.dir}/test/servertestfiles"/>
         <copy todir="${ver.dir}/test/servertestfiles">
             <fileset dir="./test/servertestfiles"/>
         </copy>
@@ -1491,12 +1492,34 @@
         <copy todir="${ver.src}">
             <fileset dir="./src"/>
         </copy>
+        <copy todir="${ver.test}">
+            <fileset dir="${testdir}"/>
+        </copy>
+        <mkdir dir="${ver.dir}/docker"/>
+        <copy todir="${ver.dir}/docker">
+            <fileset dir="./docker">
+                <exclude name="**/.*/**"/>
+                <exclude name="**/.*"/>
+                <exclude name="*/*gz"/>
+            </fileset>
+        </copy>
+        <mkdir dir="${ver.dir}/helm"/>
+        <copy todir="${ver.dir}/helm">
+            <fileset dir="./helm">
+                <exclude name="**/.*/**"/>
+                <exclude name="**/.*"/>
+                <exclude name="charts/**"/>
+                <exclude name="admin/**"/>
+            </fileset>
+        </copy>
         <delete file="./${name}-src-${release}.zip"/>
         <zip zipfile="./${name}-src-${release}.zip"
-             basedir="${dist.dir}" excludes="metacat*.tar.gz,metacat*.zip"/>
+             basedir="${ver.dir}"
+             excludes="**/.*,**/.*/**,**/metacat*.tar.gz,metacat*.zip,metacat*.tar,docs/**,**/target/**"/>
         <delete file="./${name}-src-${release}.tar.gz"/>
         <tar tarfile="./${name}-src-${release}.tar"
-             basedir="${dist.dir}" excludes="metacat*.tar.gz,metacat*.zip"/>
+             basedir="${ver.dir}"
+             excludes="**/.*,**/.*/**,**/metacat*.tar.gz,metacat*.zip,metacat*.tar,docs/**,**/target/**"/>
         <gzip zipfile="./${name}-src-${release}.tar.gz"
               src="./${name}-src-${release}.tar"/>
         <delete file="./${name}-src-${release}.tar"/>
