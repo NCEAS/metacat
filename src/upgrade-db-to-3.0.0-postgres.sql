@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS node_id_revisions (
  * Drop some unneeded constraint in the xml_revisions table
  */
 ALTER TABLE xml_revisions DROP CONSTRAINT IF EXISTS xml_revisions_root_fk;
+ALTER TABLE xml_revisions DROP CONSTRAINT IF EXISTS xml_revisions_rep_fk;
+ALTER TABLE xml_revisions DROP COLUMN IF EXISTS server_location;
 
 /*
  * Drop some unneeded constraint and index in the xml_documents table
@@ -23,6 +25,8 @@ ALTER TABLE xml_documents DROP CONSTRAINT IF EXISTS xml_documents_root_fk;
 DROP INDEX IF EXISTS xml_documents_idx3;
 DROP INDEX IF EXISTS xml_documents_idx4;
 CREATE INDEX IF NOT EXISTS xml_documents_idx6 ON xml_documents (docid);
+ALTER TABLE xml_documents DROP CONSTRAINT IF EXISTS xml_documents_rep_fk;
+ALTER TABLE xml_documents DROP COLUMN IF EXISTS server_location;
 
 /*
  * Drop the xml_path_index table
@@ -62,6 +66,12 @@ DROP TABLE IF EXISTS xml_nodes_revisions;
  */
 DROP TABLE IF EXISTS xml_nodes;
 DROP SEQUENCE IF EXISTS xml_nodes_id_seq;
+
+/*
+ * Drop the xml_replication table
+ */
+DROP TABLE IF EXISTS xml_replication;
+DROP SEQUENCE IF EXISTS xml_replication_id_seq;
  
 /*
  * update the database version

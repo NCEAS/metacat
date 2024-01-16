@@ -29,22 +29,6 @@
  * than an Oracle Backend
  */
 
-/*
- * Replication -- table to store servers that metacat is replicated to
- */
-CREATE SEQUENCE xml_replication_id_seq;
-CREATE TABLE xml_replication (
-  serverid INT8 default nextval('xml_replication_id_seq'),
-  server VARCHAR(512),
-  last_checked DATE,
-  replicate INT8,
-  datareplicate INT8,
-  hub INT8,
-  CONSTRAINT xml_replication_pk PRIMARY KEY (serverid)
-);
-
-INSERT INTO xml_replication (server, replicate, datareplicate, hub) VALUES ('localhost', '0', '0', '0');
-
 
 /*
  * XML Catalog -- table to store all external sources for XML documents
@@ -80,15 +64,12 @@ CREATE TABLE xml_documents (
 	doctype VARCHAR(100),	-- public id indicating document type
 	user_owner VARCHAR(100),	-- the user owned the document
 	user_updated VARCHAR(100),	-- the user updated the document
-	server_location INT8,	-- the server on which this document resides
 	rev INT8 default 1,   -- the revision number of the document
 	date_created DATE,
 	date_updated DATE,
 	public_access INT8,	-- flag for public access
         catalog_id INT8,	-- reference to xml_catalog
      CONSTRAINT xml_documents_pk PRIMARY KEY (docid),
-     CONSTRAINT xml_documents_rep_fk
-     		FOREIGN KEY (server_location) REFERENCES xml_replication,
    CONSTRAINT xml_documents_catalog_fk
 		FOREIGN KEY (catalog_id) REFERENCES xml_catalog
 );
@@ -115,15 +96,12 @@ CREATE TABLE xml_revisions (
 	doctype VARCHAR(100),	-- public id indicating document type
 	user_owner VARCHAR(100),
 	user_updated VARCHAR(100),
-	server_location INT8,
 	rev INT8,
 	date_created DATE,
 	date_updated DATE,
 	public_access INT8,	-- flag for public access
         catalog_id INT8,	-- reference to xml_catalog
    CONSTRAINT xml_revisions_pk PRIMARY KEY (revisionid),
-   CONSTRAINT xml_revisions_rep_fk
-		FOREIGN KEY (server_location) REFERENCES xml_replication,
    CONSTRAINT xml_revisions_catalog_fk
 		FOREIGN KEY (catalog_id) REFERENCES xml_catalog
 );
