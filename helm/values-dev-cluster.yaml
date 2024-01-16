@@ -28,9 +28,9 @@ metacat:
   #  dataone.autoRegisterMemberNode: 2023-02-28
 
   ## @param metacat.D1Client.CN_URL the url of the CN
-  ## (Default value shown - no need to uncomment unless changing from this)
+  ## (Default value https://cn.dataone.org/cn - no need to uncomment unless changing from this)
   ##
-  #  D1Client.CN_URL: https://cn.dataone.org/cn
+  D1Client.CN_URL: https://cn-sandbox.test.dataone.org/cn
 
   ## @param metacat.dataone.nodeId The unique ID of your DataONE MN - must match client cert subject
   ## The Node Identifier field is a unique identifier assigned by DataONE to identify this node even
@@ -59,12 +59,12 @@ metacat:
   ##       removed, and wrapped in double quotes, so it becomes:
   ##           dataone.subject: "CN=urn:node:YOUR_VALUE,DC=dataone,DC=org"
   ##
-  #  dataone.subject: "CN=urn:node:CHANGE_ME_TO_YOUR_VALUE!,DC=dataone,DC=org"
+  dataone.subject: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org"
 
   ## @param metacat.dataone.nodeName short name for the node that can be used in user interfaces
   ## @param metacat.dataone.nodeDescription What is the node's intended scope and purpose?
-  #  dataone.nodeName: My Metacat Node
-  #  dataone.nodeDescription: Describe your Member Node briefly.
+  dataone.nodeName: Test BROOKE LT Metacat Node
+  dataone.nodeDescription: Dev cluster Test BROOKE LT Metacat Node
 
   ## @param metacat.dataone.contactSubject registered contact for this MN
   ## IMPORTANT NOTE: Before registering you MN, you will need to first register your contact subject
@@ -74,7 +74,7 @@ metacat:
   ## an x509 client certificate, and use it as the value of dataone.contactSubject
   ## NOTE: you must use 'http://...' and NOT 'https://...' for this ORCID value:
   ##
-  #  dataone.contactSubject: http://orcid.org/0000-0002-8888-999X
+  dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
 
   ## @param metacat.dataone.nodeSynchronize Enable Synchronization of Metadata to DataONE
   ## Allows the administrator to decide whether to turn on synchronization with the DataONE
