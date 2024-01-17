@@ -254,7 +254,7 @@
     <target name="init" depends="config, build-metacat-common" unless="init.called">
 
         <property name="libdir.mvn" value="lib/maven"/>
-        <delete dir="${libdir.mvn}"></delete>
+        <delete dir="${libdir.mvn}"/>
         <mkdir dir="${libdir.mvn}"/>
 
         <path id="base.classpath">
@@ -529,7 +529,7 @@
     <target name="resolveDependencies" depends="init" description="retrieve dependencies with maven">
         <echo>Moving Maven dependencies (${dependency.fileset}) to ${libdir.mvn}</echo>
         <!-- Clear out mvn dir -->
-        <delete dir="${libdir.mvn}"></delete>
+        <delete dir="${libdir.mvn}"/>
         <!-- Copy all dependencies to the correct location. -->
         <copy todir="${libdir.mvn}">
             <fileset refid="dependency.fileset"/>
@@ -1112,6 +1112,24 @@
         </java>
     </target>
 
+    <!-- Common list of tests included/excluded by default from test runs -->
+    <patternset id="test.common.includes.excludes">
+        <include name="**/*.class"/>
+
+        <!-- valid test cases excluded for various reasons (e.g. credentials needed) -->
+        <exclude name="**/ClientViewHelperTest.class"/>
+        <exclude name="**/MultiThreadClientIT.class"/>
+
+        <!-- these are not test cases -->
+        <exclude name="**/*$*.class"/>
+        <exclude name="**/MCTestCase.class"/>
+        <exclude name="**/MockCNode.class"/>
+        <exclude name="**/MockObjectPathMap.class"/>
+        <exclude name="**/MockReplicationMNode.class"/>
+        <exclude name="**/QueryRunner.class"/>
+        <exclude name="**/WrappingServletInputStream.class"/>
+    </patternset>
+
     <target name="test" depends="testprep"
             description="Uses the ant junit task to run all JUnit tests">
 
@@ -1137,24 +1155,7 @@
 
             <batchtest fork="yes" todir="${build.dir}">
                 <fileset dir="${build.tests}">
-                    <include name="**/*.class"/>
-                    <exclude name="**/MockReplicationMNode.class"/>
-                    <exclude name="**/MCTestCase.class"/>
-                    <exclude name="**/ClientViewHelperTest.class"/>
-                    <!-- these are not test cases -->
-                    <exclude name="**/MockCNode.class"/>
-                    <!--<exclude name="**/D1NodeServiceTest.class" />-->
-                    <exclude name="**/D1NodeServiceTest$*.class"/>
-                    <exclude name="**/LeanTestUtils$*.class"/>
-                    <exclude name="**/D1AdminCNUpdaterTest$*.class"/>
-                    <exclude name="**/QueryRunner.class"/>
-                    <exclude name="**/MockObjectPathMap.class"/>
-                    <exclude name="**/HzObjectPathMapTest$1.class"/>
-                    <exclude name="**/HzObjectPathMapTest$2.class"/>
-                    <exclude name="**/MultiThreadClientIT.class"/>
-                    <exclude name="**/MultiThreadClientIT$1.class"/>
-                    <exclude name="**/AuthUtilIT.class"/>
-                    <exclude name="**/WrappingServletInputStream.class"/>
+                    <patternset refid="test.common.includes.excludes"/>
                 </fileset>
             </batchtest>
         </junit>
@@ -1165,7 +1166,7 @@
     </target>
 
     <target name="test-fast" depends="testprep"
-            description="Runs only the fast tests. WARNING: Omits MNode*Test, AccessControlTest, IdentifierManagerTest, and 4 known to fail without replication setup">
+            description="Runs only the fast tests. * * * WARNING * * * - Omits all named Integration Tests (*IT.class), all tests with runtime > 60 sec, and the 4 tests known to fail without replication setup">
 
         <!-- use the ant "junit" task to run JUnit tests. -->
         <junit printsummary="yes" haltonfailure="no" fork="yes"
@@ -1189,40 +1190,25 @@
 
             <batchtest fork="yes" todir="${build.dir}">
                 <fileset dir="${build.tests}">
-                    <include name="**/*.class"/>
-                    <!-- * * * WARNING * * * - excluding these valid but slow/failing tests!! -->
-                    <exclude name="**/MNodeReplicationTest.class" /> <!-- known to fail without replication setup -->
-                    <exclude name="**/MultipleDOIShouldersTest.class" /> <!-- known to fail without replication setup -->
-                    <exclude name="**/OstiDOIServiceTest.class" /> <!-- known to fail without replication setup -->
-                    <exclude name="**/ReplicationTest.class" /> <!-- known to fail without replication setup -->
-                    <exclude name="**/MNodeQueryTest.class" /> <!-- 121 sec -->
-                    <exclude name="**/MNodeServiceTest.class" /> <!-- 327 sec -->
-                    <exclude name="**/AccessControlTest.class" /> <!-- 405 sec -->
-                    <exclude name="**/IdentifierManagerTest.class" /> <!-- 154 sec -->
-                    <exclude name="**/InlineDataAccessTest.class" /> <!-- 212 sec -->
-                    <exclude name="**/MetacatClientTest.class" /> <!-- 326 sec -->
-                    <exclude name="**/OnlineDataAccessTest.class" /> <!-- 68 sec -->
-                    <exclude name="**/RegisterDOITest.class" /><!-- Hazelcast -->
-                    <exclude name="**/SolrQueryAccessFilterTest.class" /><!-- Hazelcast -->
-                    <!-- END of excluded valid but slow/failing tests -->
+                    <patternset refid="test.common.includes.excludes"/>
 
-                    <!-- these are not test cases -->
-                    <exclude name="**/MockReplicationMNode.class"/>
-                    <exclude name="**/LeanTestUtils$*.class"/>
-                    <exclude name="**/D1AdminCNUpdaterTest$*.class"/>
-                    <exclude name="**/MCTestCase.class"/>
-                    <exclude name="**/LeanTestUtils.class"/>
-                    <exclude name="**/ClientViewHelperTest.class"/>
-                    <exclude name="**/MockCNode.class"/>
-                    <exclude name="**/D1NodeServiceTest$*.class"/>
-                    <exclude name="**/QueryRunner.class"/>
-                    <exclude name="**/MockObjectPathMap.class"/>
-                    <exclude name="**/HzObjectPathMapTest$1.class"/>
-                    <exclude name="**/HzObjectPathMapTest$2.class"/>
-                    <exclude name="**/MultiThreadClientIT.class"/>
-                    <exclude name="**/MultiThreadClientIT$1.class"/>
-                    <exclude name="**/AuthUtilIT.class"/>
-                    <exclude name="**/WrappingServletInputStream.class"/>
+                    <!-- * * * exclude tests known to fail without replication setup -->
+                    <exclude name="**/MNodeReplicationTest.class" />
+                    <exclude name="**/MultipleDOIShouldersTest.class" />
+                    <exclude name="**/OstiDOIServiceTest.class" />
+                    <exclude name="**/ReplicationTest.class" />
+
+                    <!-- * * * exclude all named Integration Tests (*IT.class) -->
+                    <!--       All integration tests that are named *Test.class will still run -->
+                    <exclude name="**/*IT.class" />
+
+                    <!-- * * * exclude valid but slow tests (> 60 seconds run time) -->
+                    <exclude name="**/IdentifierManagerTest.class" />
+                    <exclude name="**/InlineDataAccessTest.class" />
+                    <exclude name="**/MetacatClientTest.class" />
+                    <exclude name="**/OnlineDataAccessTest.class" />
+                    <exclude name="**/RegisterDOITest.class" />
+                    <exclude name="**/SolrQueryAccessFilterTest.class" />
                 </fileset>
             </batchtest>
         </junit>
@@ -1638,7 +1624,7 @@
     <target name="dist-metacat-index" depends="init, build-metacat-index"
             description="Copy metacat-index.war to dist folder">
         <copy tofile="${dist.dir}/metacat-index.war">
-            <fileset dir="metacat-index/target" includes="metacat-index*.war"></fileset>
+            <fileset dir="metacat-index/target" includes="metacat-index*.war"/>
         </copy>
     </target>
 
