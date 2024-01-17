@@ -6,9 +6,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.logging.LogFactory;
@@ -61,7 +59,7 @@ public class EventLog {
     private static final int USERAGENTLENGTH = 512;
     private EventLogFilter filter = null;
     private boolean enableEventLogIndex = false;
-    private boolean enableEventLog = true;
+    private boolean isEventLogEnabled = true;
 
 
     /**
@@ -87,12 +85,12 @@ public class EventLog {
                           + enableEventLogIndex);
         }
         try {
-            enableEventLog = Boolean.parseBoolean(
+            isEventLogEnabled = Boolean.parseBoolean(
                                             PropertyService.getProperty("event.log.enabled"));
         } catch (PropertyNotFoundException e) {
             logMetacat.info("EVentLog.refreshLogProperties - the property 'event.log.enabled'"
                     + " is not found in the property files and we will use the default value "
-                    + enableEventLog);
+                    + isEventLogEnabled);
         }
     }
 
@@ -121,7 +119,7 @@ public class EventLog {
      * @param event the string code for the event
      */
     public void log(String ipAddress, String userAgent, String principal, String docid, String event) {
-        if (!enableEventLog) {
+        if (!isEventLogEnabled) {
             logMetacat.debug("EventLog.log - the feature of logging events is disabled,"
                                 + " so Metacat will not log any events.");
             return;
