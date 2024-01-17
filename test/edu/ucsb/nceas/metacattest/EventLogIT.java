@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author jones
  */
-public class EventLogTest {
+public class EventLogIT {
     private static final String USERAGENT="useragent-useragent-useragent-useragent-"
                     + "useragent-useragent-useragent-useragent-useragent-useragent-"
                     + "useragent-useragent-useragent-useragent-useragent-useragent-"
