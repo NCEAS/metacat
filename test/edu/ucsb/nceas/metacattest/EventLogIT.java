@@ -2,10 +2,12 @@ package edu.ucsb.nceas.metacattest;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Properties;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -36,7 +38,7 @@ public class EventLogIT {
      */
     @Before
     public void setUp() throws Exception {
-        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
     }
 
     /**
@@ -139,28 +141,30 @@ public class EventLogIT {
      */
     @Test
     public void testDisableEventLog() throws Exception {
-        PropertyService.setPropertyNoPersist("event.log.enabled", "false");
-        EventLog.getInstance().refreshLogProperties();
-        long time = System.nanoTime();
-        String id = "test-1934-wemewen-3-2"+time+".1";
-        EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, "read");
-        Thread.sleep(2000);
-        Timestamp startDate = null;
-        Timestamp endDate = null;
-        boolean anonymous = false;
-        String[] principals = {"public", "someone"};
-        String[] ipList = {"192.168.1.103", "192.168.1.104"};
-        String[] docList = {id};
-        String[] eventList = {"read", "insert", "update"};
-        String report = EventLog.getInstance().getReport(ipList, principals, docList,
-                eventList, startDate, endDate, anonymous);
-        assertTrue(report.contains("<log>"));
-        assertFalse(report.contains("<event>read</event>"));
-        assertFalse(report.contains("<ipAddress>192.168.1.103</ipAddress>"));
-        assertFalse(report.contains("<userAgent>Mozilla</userAgent>"));
-        assertFalse(report.contains("<principal>public</principal>"));
-        assertFalse(report.contains("<docid>" + id + "</docid>"));
-        PropertyService.setPropertyNoPersist("event.log.enabled", "true");
-        EventLog.getInstance().refreshLogProperties();
+        Properties withProperties = new Properties();
+        withProperties.setProperty("event.log.enabled", "false");
+        try (MockedStatic<PropertyService> ignored =
+                LeanTestUtils.initializeMockPropertyService(withProperties)) {
+            EventLog.getInstance().refreshLogProperties();
+            long time = System.nanoTime();
+            String id = "test-1934-wemewen-3-2"+time+".1";
+            EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, "read");
+            Thread.sleep(2000);
+            Timestamp startDate = null;
+            Timestamp endDate = null;
+            boolean anonymous = false;
+            String[] principals = {"public", "someone"};
+            String[] ipList = {"192.168.1.103", "192.168.1.104"};
+            String[] docList = {id};
+            String[] eventList = {"read", "insert", "update"};
+            String report = EventLog.getInstance().getReport(ipList, principals, docList,
+                    eventList, startDate, endDate, anonymous);
+            assertTrue(report.contains("<log>"));
+            assertFalse(report.contains("<event>read</event>"));
+            assertFalse(report.contains("<ipAddress>192.168.1.103</ipAddress>"));
+            assertFalse(report.contains("<userAgent>Mozilla</userAgent>"));
+            assertFalse(report.contains("<principal>public</principal>"));
+            assertFalse(report.contains("<docid>" + id + "</docid>"));
+        }
     }
 }
