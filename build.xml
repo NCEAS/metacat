@@ -1138,9 +1138,11 @@
             <batchtest fork="yes" todir="${build.dir}">
                 <fileset dir="${build.tests}">
                     <include name="**/*.class"/>
+
                     <!-- valid test cases excluded for various reasons (e.g. credentials needed) -->
                     <exclude name="**/ClientViewHelperTest.class"/>
                     <exclude name="**/MultiThreadClientIT.class"/>
+
                     <!-- these are not test cases -->
                     <exclude name="**/*$*.class"/>
                     <exclude name="**/MCTestCase.class"/>
@@ -1189,21 +1191,24 @@
                     <exclude name="**/ClientViewHelperTest.class"/>
                     <exclude name="**/MultiThreadClientIT.class"/>
 
-                    <!-- * * * WARNING * * * - excluding these valid but slow/failing tests!! -->
-                    <exclude name="**/MNodeReplicationTest.class" /> <!-- known to fail without replication setup -->
-                    <exclude name="**/MultipleDOIShouldersTest.class" /> <!-- known to fail without replication setup -->
-                    <exclude name="**/OstiDOIServiceTest.class" /> <!-- known to fail without replication setup -->
-                    <exclude name="**/ReplicationTest.class" /> <!-- known to fail without replication setup -->
-                    <exclude name="**/MNodeQueryTest.class" /> <!-- 121 sec -->
-                    <exclude name="**/MNodeServiceTest.class" /> <!-- 327 sec -->
-                    <exclude name="**/AccessControlTest.class" /> <!-- 405 sec -->
-                    <exclude name="**/IdentifierManagerTest.class" /> <!-- 154 sec -->
-                    <exclude name="**/InlineDataAccessTest.class" /> <!-- 212 sec -->
-                    <exclude name="**/MetacatClientTest.class" /> <!-- 326 sec -->
-                    <exclude name="**/OnlineDataAccessTest.class" /> <!-- 68 sec -->
-                    <exclude name="**/RegisterDOITest.class" /><!-- Hazelcast -->
-                    <exclude name="**/SolrQueryAccessFilterTest.class" /><!-- Hazelcast -->
-                    <!-- END of excluded valid but slow/failing tests -->
+                    <!-- * * * exclude tests known to fail without replication setup -->
+                    <exclude name="**/MNodeReplicationTest.class" />
+                    <exclude name="**/MultipleDOIShouldersTest.class" />
+                    <exclude name="**/OstiDOIServiceTest.class" />
+                    <exclude name="**/ReplicationTest.class" />
+
+                    <!-- * * * exclude all named Integration Tests (*IT.class) -->
+                    <!--       All integration tests that are named *Test.class will still run -->
+                    <exclude name="**/*IT.class" />
+
+                    <!-- * * * exclude valid but slow tests (> 60 seconds run time) -->
+                    <exclude name="**/AccessControlTest.class" />
+                    <exclude name="**/IdentifierManagerTest.class" />
+                    <exclude name="**/InlineDataAccessTest.class" />
+                    <exclude name="**/MetacatClientTest.class" />
+                    <exclude name="**/OnlineDataAccessTest.class" />
+                    <exclude name="**/RegisterDOITest.class" />
+                    <exclude name="**/SolrQueryAccessFilterTest.class" />
 
                     <!-- these are not test cases -->
                     <exclude name="**/*$*.class"/>
