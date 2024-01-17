@@ -58,7 +58,7 @@ public class EventLog {
     private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(EventLog.class);
     private static final int USERAGENTLENGTH = 512;
     private EventLogFilter filter = null;
-    private boolean enableEventLogIndex = false;
+    private boolean isEventLogIndexEnabled = false;
     private boolean isEventLogEnabled = true;
 
 
@@ -76,13 +76,13 @@ public class EventLog {
      */
     public void refreshLogProperties() {
         try {
-            enableEventLogIndex = Boolean.parseBoolean(
+            isEventLogIndexEnabled = Boolean.parseBoolean(
                                     PropertyService.getProperty("index.accessLog.count.enabled"));
         } catch (PropertyNotFoundException e) {
             logMetacat.info("EVentLog.refreshLogProperties - the property "
                           + "'index.accessLog.count.enabled'"
                           + " is not found in the property files and we will use the default value "
-                          + enableEventLogIndex);
+                          + isEventLogIndexEnabled);
         }
         try {
             isEventLogEnabled = Boolean.parseBoolean(
@@ -142,7 +142,7 @@ public class EventLog {
                 pid.setValue(guid);
 
                 // submit for indexing
-                if(enableEventLogIndex) {
+                if(isEventLogIndexEnabled) {
                     MetacatSolrIndex.getInstance().submit(pid, null, false);
                 }
 
