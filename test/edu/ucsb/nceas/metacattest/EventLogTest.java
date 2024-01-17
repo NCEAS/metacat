@@ -1,20 +1,26 @@
 package edu.ucsb.nceas.metacattest;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.EventLog;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test the logging facility against the database connection.
  *
  * @author jones
  */
-public class EventLogTest extends MCTestCase {
+public class EventLogTest {
     private static final String USERAGENT="useragent-useragent-useragent-useragent-"
                     + "useragent-useragent-useragent-useragent-useragent-useragent-"
                     + "useragent-useragent-useragent-useragent-useragent-useragent-"
@@ -24,23 +30,29 @@ public class EventLogTest extends MCTestCase {
                     + "useragent-useragent-useragent-useragent-useragent-useragent-useragent-"
                     + "useragent-useragent-useragent-useragent-useragent-useragent-useragent-"
                     + "useragent-useragent-useragent-useragent-useragent-useragent-useragent-12";
-    protected void setUp() throws Exception {
-        super.setUp();
-        DBConnectionPool pool = DBConnectionPool.getInstance();
+
+    /**
+     * Establish the property service
+     */
+    @Before
+    public void setUp() throws Exception {
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
     }
 
     /**
      * Test whether a valid instance of the EventLog can be retrieved.
      *
      */
+    @Test
     public void testGetInstance() {
         EventLog logger = EventLog.getInstance();
-        assertTrue(logger != null);
+        assertNotNull(logger);
     }
 
     /**
      * Test whether the log method can properly insert a log record.
      */
+    @Test
     public void testLog() throws Exception {
         long time = System.nanoTime();
         String id = "test-1934-wemewen-3-2"+time+".1";
@@ -81,6 +93,7 @@ public class EventLogTest extends MCTestCase {
     /**
      * Test whether getReport returns correct reports.
      */
+    @Test
     public void testGetReport() {
         String[] principals = {"jones", "public", "someone"};
         String[] ipList = {"192.168.1.103", "192.168.1.104"};
@@ -106,13 +119,14 @@ public class EventLogTest extends MCTestCase {
     /**
      * Test if the isDeleted method
      */
+    @Test
     public void testIsDeleted() throws Exception{
         long time = System.nanoTime();
         String id = "test-1934-weme123-3-1"+time+".1";
         EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, "read");
         Thread.sleep(2000);
         boolean deleted = EventLog.getInstance().isDeleted(id);
-        assertTrue(deleted == false);
+        assertFalse(deleted);
         Thread.sleep(2000);
         EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, EventLog.DELETE);
         deleted = EventLog.getInstance().isDeleted(id);
@@ -123,6 +137,7 @@ public class EventLogTest extends MCTestCase {
      * Test logging when the feature is disabled
      * @throws Exception
      */
+    @Test
     public void testDisableEventLog() throws Exception {
         PropertyService.setPropertyNoPersist("event.log.enabled", "false");
         EventLog.getInstance().refreshLogProperties();

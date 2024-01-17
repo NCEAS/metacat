@@ -158,37 +158,6 @@ public class EventLog {
         }
     }
 
-    public Map<String, List<Object>> getIndexFields(Identifier pid, String event) {
-        // update the search index for the event
-        try {
-
-            if (event != null) {
-
-                String fieldName = event + "_count_i";
-                int eventCount = 0;
-
-                String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
-                Log eventLog = this.getD1Report(null, null, new String[] {docid},
-                                    event, null, null, false, 0, 0);
-                eventCount = eventLog.getTotal();
-
-                List<Object> values = new ArrayList<Object>();
-                values.add(eventCount);
-                Map<String, List<Object>> fields = new HashMap<String, List<Object>>();
-                fields.put(fieldName, values);
-
-                return fields;
-            }
-
-        } catch (Exception e) {
-            logMetacat.error("Could not update event index information on pid: "
-                                                + pid.getValue() + " for event: " + event, e);
-        }
-        // default if we can't find the event information
-        return null;
-
-    }
-
     /**
      * Insert a single log event record to the database.
      * 
@@ -395,7 +364,7 @@ public class EventLog {
      */
     public boolean isDeleted(String docid) {
         boolean deleted =false;
-        if(docid != null || !docid.trim().equals("")) {
+        if(docid != null && !docid.trim().equals("")) {
             String[] docids = new String[1];
             docids[0] = docid;
             String[] events = new String[1];
@@ -723,7 +692,7 @@ public class EventLog {
      * 
      * @param entryId the identifier of the log entry
      * @param ipAddress the internet protocol address for the event
-     * @param the agent making the request
+     * @param userAgent the agent making the request
      * @param principal the principal for the event (a username, etc)
      * @param docid the identifier of the document to which the event applies
      * @param event the string code for the event
