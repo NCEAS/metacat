@@ -774,61 +774,6 @@ public class SystemMetadataFactory {
         return (ids != null && ids.size() > 0);
     }
 
-    /**
-     * Generate SystemMetadata for any object in the object store that does
-     * not already have it.  SystemMetadata documents themselves, are, of course,
-     * exempt.  This is a utility method for migration of existing object
-     * stores to DataONE where SystemMetadata is required for all objects.
-     * @param idList
-     * @param includeOre
-     * @param downloadData
-     * @throws PropertyNotFoundException
-     * @throws NoSuchAlgorithmException
-     * @throws AccessionNumberException
-     * @throws SQLException
-     * @throws SAXException
-     * @throws HandlerException
-     * @throws MarshallingException
-     * @throws BaseException
-     * @throws ParseLSIDException
-     * @throws InsufficientKarmaException
-     * @throws ClassNotFoundException
-     * @throws IOException
-     * @throws McdbException
-     * @throws AccessException
-     * @throws AccessControlException
-     */
-    public static void generateSystemMetadata(
-        List<String> idList, boolean includeOre, boolean downloadData)
-        throws PropertyNotFoundException, NoSuchAlgorithmException, AccessionNumberException,
-        SQLException, AccessControlException, AccessException, McdbException, IOException,
-        ClassNotFoundException, InsufficientKarmaException, ParseLSIDException, BaseException,
-        MarshallingException, HandlerException, SAXException {
-
-        for (String localId : idList) {
-            logMetacat.debug("Creating SystemMetadata for localId " + localId);
-            logMetacat.trace("METRICS:\tGENERATE_SYSTEM_METADATA:\tBEGIN:\tLOCALID:\t" + localId);
-
-            SystemMetadata sm = null;
-
-            //generate required system metadata fields from the document
-            try {
-                sm = SystemMetadataFactory.createSystemMetadata(localId, includeOre, downloadData);
-            } catch (Exception e) {
-                logMetacat.error(
-                    "Could not create/process system metadata for docid: " + localId, e);
-                continue;
-            }
-
-            //insert the systemmetadata object or just update it as needed
-            SystemMetadataManager.getInstance().store(sm);
-            logMetacat.info("Generated or Updated SystemMetadata for " + localId);
-
-            logMetacat.trace("METRICS:\tGENERATE_SYSTEM_METADATA:\tEND:\tLOCALID:\t" + localId);
-
-        }
-        logMetacat.info("done generating system metadata for given list");
-    }
 
     /**
      * Find the size (in bytes) of a stream. Note: This needs to refactored out
@@ -1031,9 +976,6 @@ public class SystemMetadataFactory {
         sb.append("<date_updated>");
         sb.append(DateTimeMarshaller.serializeDateToUTC(doc.getUpdateDate()));
         sb.append("</date_updated>");
-        sb.append("<home_server>");
-        sb.append(doc.getDocHomeServer());
-        sb.append("</home_server>");
         sb.append("<public_access>").append(doc.getPublicaccess());
         sb.append("</public_access><rev>").append(doc.getRev());
         sb.append("</rev>");

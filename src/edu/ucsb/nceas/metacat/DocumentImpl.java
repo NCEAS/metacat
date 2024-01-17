@@ -1,7 +1,5 @@
 package edu.ucsb.nceas.metacat;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -12,7 +10,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.net.URL;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -43,7 +40,6 @@ import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -160,8 +156,6 @@ public class DocumentImpl {
     private String userupdated = null;
     protected String docid = null; // without revision
     private int rev;
-    private int serverlocation;
-    private String docHomeServer;
     private String publicaccess;
     protected long rootnodeid;
 
@@ -606,14 +600,6 @@ public class DocumentImpl {
 
     public String getUserupdated() {
         return userupdated;
-    }
-
-    public int getServerlocation() {
-        return serverlocation;
-    }
-
-    public String getDocHomeServer() {
-        return docHomeServer;
     }
 
     public String getPublicaccess() {
@@ -1214,7 +1200,7 @@ public class DocumentImpl {
             StringBuffer sql = new StringBuffer();
             sql.append("SELECT docname, doctype, rootnodeid, ");
             sql.append("date_created, date_updated, user_owner, user_updated,");
-            sql.append(" server_location, public_access, rev");
+            sql.append(" public_access, rev");
             sql.append(" FROM ").append(table);
             sql.append(" WHERE docid LIKE ? ");
             sql.append(" and rev = ? ");
@@ -1235,35 +1221,11 @@ public class DocumentImpl {
                 this.updatedate = rs.getTimestamp(5);
                 this.userowner = rs.getString(6);
                 this.userupdated = rs.getString(7);
-                this.serverlocation = rs.getInt(8);
-                this.publicaccess = rs.getString(9);
-                this.rev = rs.getInt(10);
+                this.publicaccess = rs.getString(8);
+                this.rev = rs.getInt(9);
             }
             pstmt.close();
 
-            //get doc home server name
-            pstmt = dbconn.prepareStatement(
-                "select server " + "from xml_replication where serverid = ?");
-            //because connection use twice here, so we need to increase one
-            dbconn.increaseUsageCount(1);
-            pstmt.setInt(1, serverlocation);
-            logMetacat.debug("DocumentImpl.getDocumentInfo - executing SQL: " + pstmt.toString());
-            pstmt.execute();
-            rs = pstmt.getResultSet();
-            tableHasRows = rs.next();
-            if (tableHasRows) {
-
-                String server = rs.getString(1);
-                //get homeserver name
-                if (!server.equals("localhost")) {
-                    this.docHomeServer = server;
-                } else {
-                    this.docHomeServer = MetacatUtil.getLocalReplicationServerName();
-                }
-                logMetacat.debug("DocumentImpl.getDocumentInfo - server: " + docHomeServer);
-
-            }
-            pstmt.close();
             if (this.doctype != null && !XMLSchemaService.getInstance()
                 .getNonXMLMetadataFormatList().contains(doctype)) {
                 pstmt = dbconn.prepareStatement(
@@ -2268,153 +2230,6 @@ public class DocumentImpl {
         }//finally
 
         return serverLocation;
-    }
-
-    /**
-     * Given a server name, return its servercode in xml_replication table. If no server is found,
-     * -1 will return
-     *
-     * @param serverName,
-     */
-    public static int getServerCode(String serverName) {
-        PreparedStatement pStmt = null;
-        int serverLocation = -2;
-        DBConnection dbConn = null;
-        int serialNumber = -1;
-
-        //we should consider about local host too
-        if (serverName.equals(MetacatUtil.getLocalReplicationServerName())) {
-            serverLocation = 1;
-            return serverLocation;
-        }
-
-        try {
-            //check xml_replication table
-            //dbConn=util.openDBConnection();
-            //check out DBConnection
-            dbConn = DBConnectionPool.getDBConnection("DocumentImpl.getServerCode");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-            pStmt =
-                dbConn.prepareStatement("SELECT serverid FROM xml_replication WHERE server = ?");
-            pStmt.setString(1, serverName);
-            pStmt.execute();
-
-            ResultSet rs = pStmt.getResultSet();
-            boolean hasRow = rs.next();
-            //if there is entry in xml_replication, get the serverid
-            if (hasRow) {
-                serverLocation = rs.getInt(1);
-                pStmt.close();
-            } else {
-                // if htere is no entry in xml_replication, -1 will return
-                serverLocation = -1;
-                pStmt.close();
-            }
-        } catch (Exception e) {
-            logMetacat.error("DocumentImpl.getServerCode - General Error: " + e.getMessage());
-        } finally {
-            try {
-                pStmt.close();
-            } catch (Exception ee) {
-                logMetacat.error("DocumentImpl.getServerCode - General error: " + ee.getMessage());
-            } finally {
-                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-            }
-        }
-
-        return serverLocation;
-    }
-
-    /**
-     * Insert a server into xml_replcation table
-     *
-     * @param server, the name of server
-     */
-    private static synchronized void insertServerIntoReplicationTable(
-        String server) {
-        PreparedStatement pStmt = null;
-        DBConnection dbConn = null;
-        int serialNumber = -1;
-
-        // Initial value for the server
-        int replicate = 0;
-        int dataReplicate = 0;
-        int hub = 0;
-
-        try {
-            // Get DBConnection
-            dbConn =
-                DBConnectionPool.getDBConnection("DocumentImpl.insertServIntoReplicationTable");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-
-            // Compare the server to dabase
-            pStmt =
-                dbConn.prepareStatement("SELECT serverid FROM xml_replication WHERE server = ?");
-            pStmt.setString(1, server);
-            pStmt.execute();
-            ResultSet rs = pStmt.getResultSet();
-            boolean hasRow = rs.next();
-            // Close preparedstatement and result set
-            pStmt.close();
-            rs.close();
-
-            // If the server is not in the table, and server is not local host,
-            // insert it
-            if (!hasRow && !server.equals(MetacatUtil.getLocalReplicationServerName())) {
-                // Set auto commit false
-                dbConn.setAutoCommit(false);
-                /*
-                 * pStmt = dbConn.prepareStatement("INSERT INTO xml_replication " +
-                 * "(server, last_checked, replicate, datareplicate, hub) " +
-                 * "VALUES ('" + server + "', to_date(" + "'01/01/00',
-                 * 'MM/DD/YY'), '" + replicate +"', '"+dataReplicate+"','"+ hub +
-                 * "')");
-                 */
-
-                Calendar cal = Calendar.getInstance();
-                cal.set(1980, 1, 1);
-                pStmt = dbConn.prepareStatement("INSERT INTO xml_replication "
-                                                    + "(server, last_checked, replicate, "
-                                                    + "datareplicate, hub) "
-                                                    + "VALUES (?, ?, ?, ?, ?)");
-                pStmt.setString(1, server);
-                pStmt.setTimestamp(2, new Timestamp(cal.getTimeInMillis()));
-                pStmt.setInt(3, replicate);
-                pStmt.setInt(4, dataReplicate);
-                pStmt.setInt(5, hub);
-
-                logMetacat.debug("DocumentImpl.insertServerIntoReplicationTable - executing SQL: "
-                                     + pStmt.toString());
-                pStmt.execute();
-                dbConn.commit();
-                // Increase usage number
-                dbConn.increaseUsageCount(1);
-                pStmt.close();
-
-            }
-        }//try
-        catch (Exception e) {
-            logMetacat.error(
-                "DocumentImpl.insertServerIntoReplicationTable - General error: " + e.getMessage());
-        }//catch
-        finally {
-
-            try {
-                // Set auto commit true
-                dbConn.setAutoCommit(true);
-                pStmt.close();
-
-            }//try
-            catch (Exception ee) {
-                logMetacat.error("DocumentImpl.insertServerIntoReplicationTable - General error: "
-                                     + ee.getMessage());
-            }//catch
-            finally {
-                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-            }
-
-        }//finally
-
     }
 
 
