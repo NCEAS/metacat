@@ -94,7 +94,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     
     protected String encoding = null;
 
-    protected int serverCode = 1;
 
     protected Hashtable<String,String> namespaces = new Hashtable<String,String>();
 
@@ -134,11 +133,11 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     /**
      * Construct an instance of the handler class
-     *
-     * @param conn the JDBC connection to which information is written
+     * @param conn  the JDBC connection to which information is written
+     * @param createDate  the created date of this document
+     * @param updateDate  the updated date of this document
      */
-    private DBSAXHandler(DBConnection conn, Date createDate, Date updateDate)
-    {
+    private DBSAXHandler(DBConnection conn, Date createDate, Date updateDate) {
         this.connection = conn;
         this.atFirstElement = true;
         this.processingDTD = false;
@@ -148,23 +147,21 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     /**
      * Construct an instance of the handler class In this constructor, user can
-     * specify the version need to upadate
-     *
-     * @param conn the JDBC connection to which information is written
-     * @param action - "INSERT" or "UPDATE"
-     * @param docid to be inserted or updated into JDBC connection
-     * @param revision, the user specified the revision need to be update
-     * @param user the user connected to MetaCat servlet and owns the document
-     * @param groups the groups to which user belongs
-     * @param pub flag for public "read" access on document
-     * @param serverCode the serverid from xml_replication on which this
-     *            document resides.
-     *
+     * specify the version need to update
+     * @param conn  the JDBC connection to which information is written
+     * @param action  - "INSERT" or "UPDATE"
+     * @param docid  the id to be inserted or updated into JDBC connection
+     * @param revision  the user specified the revision need to be update
+     * @param user  the user owns the document
+     * @param groups  the groups to which user belongs
+     * @param pub  flag for public "read" access on document
+     * @param createDate  the created date of this document
+     * @param updateDate  the updated date of this document
+     * @param writeAccessRules
      */
     public DBSAXHandler(DBConnection conn, String action, String docid,
             String revision, String user, String[] groups, String pub,
-            int serverCode, Date createDate, Date updateDate, boolean writeAccessRules)
-    {
+            Date createDate, Date updateDate, boolean writeAccessRules) {
         this(conn, createDate, updateDate);
         this.action = action;
         this.docid = docid;
@@ -172,13 +169,11 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         this.user = user;
         this.groups = groups;
         this.pub = pub;
-        this.serverCode = serverCode;
         this.writeAccessRules = writeAccessRules;
     }
 
     /** SAX Handler that receives notification of beginning of the document */
-    public void startDocument() throws SAXException
-    {
+    public void startDocument() throws SAXException {
         logMetacat.trace("DBSaxHandler.startDocument - starting document");
     }
 
@@ -273,13 +268,12 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
                 // specify
                 //the revision
               
-                if (!isRevisionDoc)
-                {
+                if (!isRevisionDoc) {
                   currentDocument = new DocumentImpl(connection, NODE_ID,
                          docname, doctype, docid, revision,
-                        action, user, this.pub, catalogid, this.serverCode,
+                        action, user, this.pub, catalogid,
                         createDate, updateDate);
-                }               
+                }
             } catch (Exception ane) {
                 ane.printStackTrace(System.out);
                 ane.printStackTrace(System.err);

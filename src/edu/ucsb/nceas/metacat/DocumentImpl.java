@@ -81,14 +81,6 @@ public class DocumentImpl {
     public static final String REVISIONTABLE = "xml_revisions";
     public static final String DOCUMENTTABLE = "xml_documents";
     public static final String BIN = "BIN";
-
-    /*
-     * public static final String EXTERNALSCHEMALOCATION =
-     * "eml://ecoinformatics.org/eml-2.0.0
-     * http://dev.nceas.ucsb.edu/tao/schema/eml.xsd"+ "
-     * http://www.xml-cml.org/schema/stmml
-     * http://dev.nceas.ucsb.edu/tao/schema/stmml.xsd";
-     */
     public static final String DECLARATIONHANDLERPROPERTY =
         "http://xml.org/sax/properties/declaration-handler";
     public static final String LEXICALPROPERTY = "http://xml.org/sax/properties/lexical-handler";
@@ -145,7 +137,6 @@ public class DocumentImpl {
     static final int WRITE = 2;
     static final int READ = 4;
     protected DBConnection connection = null;
-    //protected String updatedVersion = null;
     protected String docname = null;
     protected String doctype = null;
     private String validateType = null; //base on dtd or schema
@@ -160,7 +151,6 @@ public class DocumentImpl {
     protected long rootnodeid;
 
     private static Log logMetacat = LogFactory.getLog(DocumentImpl.class);
-    private static Log logReplication = LogFactory.getLog("ReplicationLogging");
 
     /**
      * Default constructor
@@ -175,7 +165,6 @@ public class DocumentImpl {
      * needed (such as when a call to toXml() is made).
      *
      * @param conn      the database connection from which to read the document
-     * @param docid     the identifier of the document to be created, it should be with revision
      * @param readNodes flag indicating whether the xmlnodes should be read
      */
     public DocumentImpl(String accNum, boolean readNodes) throws McdbException {
@@ -222,38 +211,25 @@ public class DocumentImpl {
      *                   keyword in DOCTYPE declaration or the docname if no Public ID provided or
      *                   null if no DOCTYPE declaration provided
      * @param docid      the docid to use for the UPDATE, no version number
-     * @param version,   need to be update
+     * @param newVersion,   need to be update
      * @param action     the action to be performed (INSERT OR UPDATE)
      * @param user       the user that owns the document
      * @param pub        flag for public "read" access on document
-     * @param serverCode the serverid from xml_replication on which this document resides.
+     * @param catalogId  the identifier of catalog which this document belongs to
+     * @param createDate  the created date of this document
+     * @param updateDate  the updated date of this document
      */
     public DocumentImpl(
         DBConnection conn, long rootNodeId, String docName, String docType, String docId,
         String newRevision, String action, String user, String pub, String catalogId,
-        int serverCode, Date createDate, Date updateDate) throws SQLException, Exception {
+        Date createDate, Date updateDate) throws SQLException, Exception {
         this.connection = conn;
         this.rootnodeid = rootNodeId;
         this.docname = docName;
         this.doctype = docType;
         this.docid = docId;
         this.rev = Integer.parseInt(newRevision);
-        writeDocumentToDB(action, user, pub, catalogId, serverCode, createDate, updateDate);
-    }
-
-    /**
-     * This method will be call in handleUploadRequest in MetacatServlet class
-     */
-    public static void registerDocument(
-        String docname, String doctype, String accnum, String user, String[] groupnames)
-        throws SQLException, AccessionNumberException, Exception {
-        try {
-            // get server location for this doc
-            int serverLocation = getServerLocationNumber(accnum);
-            registerDocument(docname, doctype, accnum, user, groupnames, serverLocation);
-        } catch (Exception e) {
-            throw e;
-        }
+        writeDocumentToDB(action, user, pub, catalogId, createDate, updateDate);
     }
 
     /**
@@ -261,7 +237,6 @@ public class DocumentImpl {
      * xml_documents). Creates a reference to a filesystem document (used for non-xml data files).
      * This class only be called in MetaCatServerlet.
      *
-     * @param conn       the JDBC Connection to which all information is written
      * @param docname    - the name of DTD, i.e. the name immediately following the DOCTYPE keyword
      *                   ( should be the root element name ) or the root element name if no DOCTYPE
      *                   declaration provided (Oracle's and IBM parsers are not aware if it is not
@@ -273,10 +248,9 @@ public class DocumentImpl {
      *                   revision number for this revision of the document (e.g., knb.1.1)
      * @param user       the user that owns the document
      * @param groupnames the groups that owns the document
-     * @param serverCode the serverid from xml_replication on which this document resides.
      */
     public static void registerDocument(
-        String docname, String doctype, String accnum, String user, String[] groups, int serverCode)
+        String docname, String doctype, String accnum, String user, String[] groups)
         throws SQLException, AccessionNumberException, Exception {
         DBConnection conn = null;
         int serialNumber = -1;
@@ -306,7 +280,7 @@ public class DocumentImpl {
 
             String rev = Integer.toString(userSpecifyRev);
             modifyRecordsInGivenTable(DOCUMENTTABLE, action, docIdWithoutRev, doctype, docname,
-                                      user, rev, serverCode, null, null, conn);
+                                      user, rev, null, null, conn);
             // null and null is createdate and updatedate
             // null will create current time
             conn.commit();
@@ -323,72 +297,22 @@ public class DocumentImpl {
     }
 
     /**
-     * Register a document that resides on the filesystem with the database. (ie, just an entry in
-     * xml_documents). Creates a reference to a filesystem document (used for non-xml data files)
-     * This method will be called for register data file in xml_documents in Replication. This
-     * method is revised from registerDocument.
-     *
-     * @param conn       the JDBC Connection to which all information is written
-     * @param docname    - the name of DTD, i.e. the name immediately following the DOCTYPE keyword
-     *                   ( should be the root element name ) or the root element name if no DOCTYPE
-     *                   declaration provided (Oracle's and IBM parsers are not aware if it is not
-     *                   the root element name)
-     * @param doctype    - Public ID of the DTD, i.e. the name immediately following the PUBLIC
-     *                   keyword in DOCTYPE declaration or the docname if no Public ID provided or
-     *                   null if no DOCTYPE declaration provided
-     * @param accnum     the accession number to use for the INSERT OR UPDATE, which includes a
-     *                   revision number for this revision of the document (e.g., knb.1.1)
-     * @param user       the user that owns the document
-     * @param serverCode the serverid from xml_replication on which this document resides.
-     */
-    public static void registerDocumentInReplication(
-        String docname, String doctype, String accnum, String user, int serverCode,
-        String tableName, Date createDate, Date updateDate)
-        throws SQLException, AccessionNumberException, Exception {
-        DBConnection conn = null;
-        int serialNumber = -1;
-        try {
-            //check out DBConnection
-            conn = DBConnectionPool.getDBConnection("DocumentImpl.registerDocumentInreplication");
-            serialNumber = conn.getCheckOutSerialNumber();
-            conn.setAutoCommit(false);
-            String action = null;
-            String docIdWithoutRev = DocumentUtil.getDocIdFromAccessionNumber(accnum);
-            int userSpecifyRev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
-            if (tableName.equals(DOCUMENTTABLE)) {
-                action = checkRevInXMLDocuments(docIdWithoutRev, userSpecifyRev);
-                if (action.equals("UPDATE")) {
-                    //archive the old entry
-                    archiveDocRevision(docIdWithoutRev, user, conn);
-                }
-            } else if (tableName.equals(REVISIONTABLE)) {
-                action = checkXMLRevisionTable(docIdWithoutRev, userSpecifyRev);
-            } else {
-                throw new Exception("Couldn't handle this table name " + tableName);
-            }
-
-            String rev = Integer.toString(userSpecifyRev);
-            modifyRecordsInGivenTable(tableName, action, docIdWithoutRev, doctype, docname, user,
-                                      rev, serverCode, createDate, updateDate, conn);
-            conn.commit();
-            conn.setAutoCommit(true);
-        } catch (Exception e) {
-            conn.rollback();
-            conn.setAutoCommit(true);
-            throw e;
-        } finally {
-            //check in DBConnection
-            DBConnectionPool.returnDBConnection(conn, serialNumber);
-        }
-
-    }
-
-    /*
      * This method will insert or update xml-documents or xml_revision table
+     * @param tableName  the name of the table to which will be insert
+     * @param action  the action to be performed (INSERT OR UPDATE)
+     * @param docid  the docid of the document
+     * @param doctype  the type of the document
+     * @param docname  the name of the document
+     * @param user  the owner of the document
+     * @param rev  the revision of the document
+     * @param createDate  the created date of the document
+     * @param updateDate  the updated date of the document
+     * @param dbconn  the JDBC Connection to which all information is written
+     * @throws Exception
      */
     private static void modifyRecordsInGivenTable(
         String tableName, String action, String docid, String doctype, String docname, String user,
-        String rev, int serverCode, Date createDate, Date updateDate, DBConnection dbconn)
+        String rev, Date createDate, Date updateDate, DBConnection dbconn)
         throws Exception {
 
         PreparedStatement pstmt = null;
@@ -412,9 +336,8 @@ public class DocumentImpl {
                 sql.append("insert into ");
                 sql.append(tableName);
                 sql.append(" (docid, docname, doctype, ");
-                sql.append("user_owner, user_updated, server_location, rev, date_created, ");
+                sql.append("user_owner, user_updated, rev, date_created, ");
                 sql.append("date_updated, public_access) values (");
-                sql.append("?, ");
                 sql.append("?, ");
                 sql.append("?, ");
                 sql.append("?, ");
@@ -431,16 +354,14 @@ public class DocumentImpl {
                 pstmt.setString(3, doctype);
                 pstmt.setString(4, user);
                 pstmt.setString(5, user);
-                pstmt.setInt(6, serverCode);
-                pstmt.setInt(7, revision);
-                pstmt.setTimestamp(8, new Timestamp(createDate.getTime()));
-                pstmt.setTimestamp(9, new Timestamp(updateDate.getTime()));
+                pstmt.setInt(6, revision);
+                pstmt.setTimestamp(7, new Timestamp(createDate.getTime()));
+                pstmt.setTimestamp(8, new Timestamp(updateDate.getTime()));
 
             } else if (action != null && action.equals("UPDATE")) {
 
                 sql.append("update xml_documents set docname = ?,");
                 sql.append("user_updated = ?, ");
-                sql.append("server_location= ?, ");
                 sql.append("rev = ?, ");
                 sql.append("date_updated = ?");
                 sql.append(" where docid = ? ");
@@ -448,10 +369,9 @@ public class DocumentImpl {
                 pstmt = dbconn.prepareStatement(sql.toString());
                 pstmt.setString(1, docname);
                 pstmt.setString(2, user);
-                pstmt.setInt(3, serverCode);
-                pstmt.setInt(4, revision);
-                pstmt.setTimestamp(5, new Timestamp(updateDate.getTime()));
-                pstmt.setString(6, docid);
+                pstmt.setInt(3, revision);
+                pstmt.setTimestamp(4, new Timestamp(updateDate.getTime()));
+                pstmt.setString(5, docid);
             }
             logMetacat.debug(
                 "DocumentImpl.modifyRecordsInGivenTable - executing SQL: " + pstmt.toString());
@@ -513,34 +433,6 @@ public class DocumentImpl {
             throw new Exception(
                 "The docid" + docid + "'s revision number couldn't be " + userSpecifyRev);
         }
-        return action;
-    }
-
-    /*
-     * This method will check if the xml_revision table already has the
-     * document or not
-     */
-    private static String checkXMLRevisionTable(String docid, int rev) throws Exception {
-        String action = "INSERT";
-        Vector<Integer> localrev = null;
-
-        try {
-            localrev = DBUtil.getRevListFromRevisionTable(docid);
-        } catch (SQLException e) {
-            logMetacat.error("Local rev for docid " + docid + " could not " + " be found because "
-                                 + e.getMessage());
-            logReplication.error("Docid " + docid + " could not be "
-                                     + "written because error happend to find it's local revision");
-            throw new Exception(e.getMessage());
-        }
-        logMetacat.debug(
-            "rev list in xml_revision table for docid " + docid + " is " + localrev.toString());
-
-        // if the rev is in the xml_revision, it throws a exception
-        if (localrev.contains(Integer.valueOf(rev))) {
-            throw new Exception("The docid and rev is already in xml_revision table");
-        }
-
         return action;
     }
 
@@ -1171,7 +1063,8 @@ public class DocumentImpl {
     /**
      * Look up the document type information from the database
      *
-     * @param docid the id of the document to look up
+     * @param docid  the id of the document to look up
+     * @param revsion  the revision of the document
      */
     private void getDocumentInfo(String docid, int revision) throws McdbException, Exception {
         DBConnection dbconn = null;
@@ -1275,12 +1168,19 @@ public class DocumentImpl {
     }
 
     /**
-     * creates SQL code and inserts new document into DB connection
+     * Creates the SQL code and inserts new document into DB connection
+     * @param action  it can be insert or update
+     * @param user  the owner of the document
+     * @param pub  the flag if the document is public readable
+     * @param catalogid  the catalog identifier to which the document belongs
+     * @param createDate  the created date of the document
+     * @param updateDate  the updated date of the document
+     * @throws SQLException
+     * @throws Exception
      */
     private void writeDocumentToDB(
-        String action, String user, String pub, String catalogid, int serverCode, Date createDate,
+        String action, String user, String pub, String catalogid, Date createDate,
         Date updateDate) throws SQLException, Exception {
-        //System.out.println("!!!!!!!!1write document to db  " +docid +"."+rev);
         String sysdate = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
         Date today = Calendar.getInstance().getTime();
         if (createDate == null) {
@@ -1300,13 +1200,13 @@ public class DocumentImpl {
                     sql = "INSERT INTO xml_documents "
                         + "(docid, rootnodeid, docname, doctype, user_owner, "
                         + "user_updated, date_created, date_updated, "
-                        + "public_access, server_location, rev, catalog_id) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, " + "?, ?, ?, ?, ?)";
+                        + "public_access, rev, catalog_id) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, " + "?, ?, ?, ?)";
                 } else {
                     sql = "INSERT INTO xml_documents "
                         + "(docid, rootnodeid, docname, doctype, user_owner, "
                         + "user_updated, date_created, date_updated, "
-                        + "public_access, server_location, rev) " + "VALUES (?, ?, ?, ?, ?, ?, ?, "
+                        + "public_access, rev) " + "VALUES (?, ?, ?, ?, ?, ?, "
                         + "?, ?, ?, ?)";
                 }
                 pstmt = connection.prepareStatement(sql);
@@ -1329,11 +1229,10 @@ public class DocumentImpl {
                 pstmt.setTimestamp(8, new Timestamp(updateDate.getTime()));
                 //public access is usefulless, so set it to null
                 pstmt.setInt(9, 0);
-                pstmt.setInt(10, serverCode);
-                pstmt.setInt(11, rev);
+                pstmt.setInt(10, rev);
 
                 if (catalogid != null) {
-                    pstmt.setInt(12, Integer.parseInt(catalogid));
+                    pstmt.setInt(11, Integer.parseInt(catalogid));
                 }
 
             } else if (action.equals("UPDATE")) {
@@ -1361,13 +1260,13 @@ public class DocumentImpl {
                     updateSql =
                         "UPDATE xml_documents " + "SET rootnodeid = ?, docname = ?, doctype = ?, "
                             + "user_updated = ?, date_updated = ?, "
-                            + "server_location = ?, rev = ?, public_access = ?, "
+                            + "rev = ?, public_access = ?, "
                             + "catalog_id = ? " + "WHERE docid = ?";
                 } else {
                     updateSql =
                         "UPDATE xml_documents " + "SET rootnodeid = ?, docname = ?, doctype = ?, "
                             + "user_updated = ?, date_updated = ?, "
-                            + "server_location = ?, rev = ?, public_access = ? "
+                            + "rev = ?, public_access = ? "
                             + "WHERE docid = ?";
                 }
                 // Increase dbconnection usage count
@@ -1379,20 +1278,14 @@ public class DocumentImpl {
                 pstmt.setString(3, doctype);
                 pstmt.setString(4, user);
                 pstmt.setTimestamp(5, new Timestamp(updateDate.getTime()));
-                pstmt.setInt(6, serverCode);
-                pstmt.setInt(7, thisrev);
-                pstmt.setInt(8, 0);
-                /*
-                 * if ( pub == null ) { pstmt.setString(7, null); } else if (
-                 * pub.toUpperCase().equals("YES") || pub.equals("1") ) { pstmt
-                 * .setInt(7, 1); } else if ( pub.toUpperCase().equals("NO") ||
-                 * pub.equals("0") ) { pstmt.setInt(7, 0); }
-                 */
+                pstmt.setInt(6, thisrev);
+                pstmt.setInt(7, 0);
+
                 if (catalogid != null) {
-                    pstmt.setInt(9, Integer.parseInt(catalogid));
-                    pstmt.setString(10, this.docid);
-                } else {
+                    pstmt.setInt(8, Integer.parseInt(catalogid));
                     pstmt.setString(9, this.docid);
+                } else {
+                    pstmt.setString(8, this.docid);
                 }
 
             } else {
@@ -1416,42 +1309,6 @@ public class DocumentImpl {
         }
     }
 
-    /**
-     * Write an XML file to the database, given a filename
-     *
-     * @param conn             the JDBC connection to the database
-     * @param filename         the filename to be loaded into the database
-     * @param pub              flag for public "read" access on document
-     * @param dtdfilename      the dtd to be uploaded on server's file system
-     * @param action           the action to be performed (INSERT OR UPDATE)
-     * @param docid            the docid to use for the INSERT OR UPDATE
-     * @param user             the user that owns the document
-     * @param groups           the groups to which user belongs
-     * @param writeAccessRules
-     */
-    /*
-     * public static String write(DBConnection conn,String filename, String pub,
-     * String dtdfilename, String action, String docid, String user, String[]
-     * groups ) throws Exception {
-     *
-     * Reader dtd = null; if ( dtdfilename != null ) { dtd = new FileReader(new
-     * File(dtdfilename).toString()); } return write ( conn, new FileReader(new
-     * File(filename).toString()), pub, dtd, action, docid, user, groups,
-     * false); }
-     */
-    public static String write(
-        DBConnection conn, String xmlString, String pub, Reader dtd, String action, String docid,
-        String user, String[] groups, String ruleBase, boolean needValidation,
-        boolean writeAccessRules, byte[] xmlBytes, String schemaLocation, Checksum checksum,
-        File objectFile) throws Exception {
-        //this method will be called in handleUpdateOrInsert method
-        //in MetacatServlet class and now is wrapper into documentImple
-        // get server location for this doc
-        int serverLocation = getServerLocationNumber(docid);
-        return write(conn, xmlString, pub, dtd, action, docid, user, groups, serverLocation, false,
-                     ruleBase, needValidation, writeAccessRules, xmlBytes, schemaLocation, checksum,
-                     objectFile);
-    }
 
     /**
      * Write an XML file to the database, given a Reader
@@ -1474,7 +1331,7 @@ public class DocumentImpl {
 
     public static String write(
         DBConnection conn, String xmlString, String pub, Reader dtd, String action, String accnum,
-        String user, String[] groups, int serverCode, boolean override, String ruleBase,
+        String user, String[] groups, String ruleBase,
         boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String schemaLocation,
         Checksum checksum, File objectFile) throws Exception {
         // NEW - WHEN CLIENT ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV IN IT
@@ -1499,82 +1356,6 @@ public class DocumentImpl {
         AccessionNumber ac = new AccessionNumber(accnum, action);
         String docid = ac.getDocid();
         String rev = ac.getRev();
-        logMetacat.debug(
-            "DocumentImpl.write - action: " + action + " servercode: " + serverCode + " override: "
-                + override);
-
-        if ((serverCode != 1 && action.equals("UPDATE")) && !override) {
-            // if this document being written is not a resident of this server
-            // then we need to try to get a lock from it's resident server. If
-            // the resident server will not give a lock then we send the user
-            // a  message saying that he/she needs to download a new copy of
-            // the file and merge the differences manually.
-
-            // check for 'write' permission for 'user' to update this document
-            // use the previous revision to check the permissions
-            String docIdWithoutRev = DocumentUtil.getSmartDocId(accnum);
-            int latestRev = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
-            String latestDocId =
-                docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator")
-                    + latestRev;
-            if (!hasWritePermission(user, groups, latestDocId)) {
-                throw new Exception(
-                    "User " + user + " does not have permission to update XML Document #" + accnum);
-            }
-            int revision = DocumentUtil.getRevisionFromAccessionNumber(accnum);
-            String updaterev = Integer.toString(revision);
-
-            XMLReader parser = null;
-            try {
-                Vector<String> guidsToSync = new Vector<String>();
-                logMetacat.debug("DocumentImpl.write - initializing parser");
-                parser =
-                    initializeParser(conn, action, docid, xmlReader, updaterev, user, groups,
-                                     pub, serverCode, dtd, ruleBase, needValidation, false,
-                                     null, null, encoding, writeAccessRules, guidsToSync,
-                                     schemaLocation);
-                // false means it is not a revision doc
-                //null, null are createdate and updatedate
-                //null will use current time as create date time
-                conn.setAutoCommit(false);
-                logMetacat.debug("DocumentImpl.write - parsing xml");
-                parser.parse(new InputSource(xmlReader));
-
-                //write the file to disk
-                logMetacat.debug("DocumentImpl.write - Writing xml to file system");
-                writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
-
-                conn.commit();
-                conn.setAutoCommit(true);
-
-                // The EML parser has already written to systemmetadata and then writes to
-                // xml_access when the db transaction
-                // is committed. If the pids that have been updated are for data objects with
-                // their own access rules, we
-                // must inform the CN to sync it's access rules with the MN, so the EML 2.1
-                // parser collected such pids from the parse
-                // operation.
-                if (guidsToSync.size() > 0) {
-                    try {
-                        SyncAccessPolicy syncAP = new SyncAccessPolicy();
-                        syncAP.sync(guidsToSync);
-                    } catch (Exception e) {
-                        logMetacat.error(
-                            "Error syncing pids with CN: " + " Exception " + e.getMessage());
-                        e.printStackTrace(System.out);
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                logMetacat.error(
-                    "DocumentImpl.write - Problem with parsing: " + e.getMessage());
-                conn.rollback();
-                conn.setAutoCommit(true);
-                throw e;
-            }
-            return (accnum);
-
-        }
 
         if (action.equals("UPDATE")) {
             // check for 'write' permission for 'user' to update this document
@@ -1598,9 +1379,9 @@ public class DocumentImpl {
             Vector<String> guidsToSync = new Vector<String>();
 
             parser =
-                initializeParser(conn, action, docid, xmlReader, rev, user, groups, pub, serverCode,
+                initializeParser(conn, action, docid, xmlReader, rev, user, groups, pub,
                                  dtd, ruleBase, needValidation, false, null, null, encoding,
-                                 writeAccessRules, guidsToSync, schemaLocation);
+                                 writeAccessRules, schemaLocation);
             // null and null are createtime and updatetime
             // null will create current time
             //false means it is not a revision doc
@@ -1953,15 +1734,31 @@ public class DocumentImpl {
 
     /**
      * Set up the parser handlers for writing the document to the database
-     *
+     * @param dbconn  the connection connected to db
+     * @param action  it can be insert or update
+     * @param docid  the id of the document
+     * @param xml  the source of the xml document
+     * @param rev  the revision of the document
+     * @param user  the owner of the document
+     * @param groups  the groups in which the owner is
+     * @param pub  the flag indicates if the doucment is public readable
+     * @param dtd  the dtd content
+     * @param ruleBase  the validation base - schema or dtd
+     * @param needValidation  if the document needs to be validated
+     * @param isRevision  if this document is in the xml_revsion table
+     * @param createDate  the created date of the document
+     * @param updateDate  the updated date of the document
+     * @param encoding  the encoding code of the document
      * @param writeAccessRules
+     * @param schemaLocation  the string contains the schema location
+     * @return the XMLReader object
+     * @throws Exception
      */
     private static XMLReader initializeParser(
         DBConnection dbconn, String action, String docid, Reader xml, String rev, String user,
-        String[] groups, String pub, int serverCode, Reader dtd, String ruleBase,
+        String[] groups, String pub, Reader dtd, String ruleBase,
         boolean needValidation, boolean isRevision, Date createDate, Date updateDate,
-        String encoding, boolean writeAccessRules, Vector<String> guidsToSync,
-        String schemaLocation) throws Exception {
+        String encoding, boolean writeAccessRules, String schemaLocation) throws Exception {
         XMLReader parser = null;
         try {
             // handler
@@ -1974,7 +1771,7 @@ public class DocumentImpl {
             //XMLSchemaService.getInstance().populateRegisteredSchemaList();
             //create a DBSAXHandler object which has the revision
             // specification
-            chandler = new DBSAXHandler(dbconn, action, docid, rev, user, groups, pub, serverCode,
+            chandler = new DBSAXHandler(dbconn, action, docid, rev, user, groups, pub,
                                         createDate, updateDate, writeAccessRules);
             chandler.setIsRevisionDoc(isRevision);
             chandler.setEncoding(encoding);
@@ -2176,192 +1973,6 @@ public class DocumentImpl {
                 logMetacat.error("DocumentImpl.archiveDocRevision - SQL Error: " + ee.getMessage());
                 throw ee;
             }
-        }
-    }
-
-    /**
-     * Get server location form database for a accNum
-     *
-     * @param accum <sitecode>. <uniqueid>. <rev>
-     */
-    private static int getServerLocationNumber(String accNum) throws SQLException {
-        //get rid of revNum part
-        String docId = DocumentUtil.getDocIdFromString(accNum);
-        PreparedStatement pStmt = null;
-        int serverLocation = 1;
-        DBConnection conn = null;
-        int serialNumber = -1;
-
-        try {
-            //check out DBConnection
-            conn = DBConnectionPool.getDBConnection("DocumentImpl.getServerLocationNumber");
-            serialNumber = conn.getCheckOutSerialNumber();
-
-            pStmt =
-                conn.prepareStatement("SELECT server_location FROM xml_documents WHERE docid = ?");
-            pStmt.setString(1, docId);
-            pStmt.execute();
-
-            ResultSet rs = pStmt.getResultSet();
-            boolean hasRow = rs.next();
-            //if there is entry in xml_documents, get the serverlocation
-            if (hasRow) {
-                serverLocation = rs.getInt(1);
-                pStmt.close();
-            } else {
-                //if htere is no entry in xml_documents, we consider it is new
-                // document
-                //the server location is local host and value is 1
-                serverLocation = 1;
-                pStmt.close();
-            }
-        }//try
-        finally {
-            try {
-                pStmt.close();
-            }//try
-            catch (Exception ee) {
-                logMetacat.error(
-                    "DocumentImpl.getServerLocationNumber - General error: " + ee.getMessage());
-            }//catch
-            finally {
-                DBConnectionPool.returnDBConnection(conn, serialNumber);
-            }//finally
-        }//finally
-
-        return serverLocation;
-    }
-
-
-    /*
-     * This method will write a record to revision table base on given
-     * info. The create date and update will be current time.
-     * If rootNodeId < 0, this means it has not rootid
-     */
-    private static void writeDocumentToRevisionTable(
-        DBConnection con, String docId, String rev, String docType, String docName, String user,
-        String catalogid, int serverCode, long rootNodeId, Date createDate, Date updateDate)
-        throws SQLException, Exception {
-
-        try {
-            Date today = Calendar.getInstance().getTime();
-            if (createDate == null) {
-                createDate = today;
-            }
-
-            logMetacat.debug(
-                "DocumentImpl.writeDocumentToRevisionTable - the create date is " + createDate);
-            if (updateDate == null) {
-                updateDate = today;
-            }
-            logMetacat.debug(
-                "DocumentImpl.writeDocumentToRevisionTable - the update date is " + updateDate);
-            PreparedStatement pstmt = null;
-            String sql = null;
-            logMetacat.debug(
-                "DocumentImpl.writeDocumentToRevisionTable - the root node id is " + rootNodeId);
-            if (rootNodeId <= 0) {
-                // this is for data file, not rootnodeid need
-                sql = "INSERT INTO xml_revisions " + "(docid, docname, doctype, user_owner, "
-                    + "user_updated, date_created, date_updated, "
-                    + "public_access, server_location, rev) " + "VALUES (?, ?, ?, ?, ?, ?,"
-                    + " ?, ?, ?, ?)";
-            } else {
-                if (catalogid != null) {
-                    sql = "INSERT INTO xml_revisions " + "(docid, docname, doctype, user_owner, "
-                        + "user_updated, date_created, date_updated, "
-                        + "public_access, server_location, rev, catalog_id, rootnodeid ) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, " + "?, ?, ?, ?, ?, ?)";
-                } else {
-                    sql = "INSERT INTO xml_revisions " + "(docid, docname, doctype, user_owner, "
-                        + "user_updated, date_created, date_updated, "
-                        + "public_access, server_location, rev, rootnodeid ) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, " + "?, ?, ?, ?, ?)";
-                }
-            }
-            pstmt = con.prepareStatement(sql);
-            // Increase dbconnection usage count
-            con.increaseUsageCount(1);
-
-            // Bind the values to the query
-            pstmt.setString(1, docId);
-            logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - docid is " + docId);
-            pstmt.setString(2, docName);
-            logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - docname is " + docName);
-            pstmt.setString(3, docType);
-            logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - docType is " + docType);
-            pstmt.setString(4, user);
-            logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - onwer is " + user);
-            pstmt.setString(5, user);
-            logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - update user is " + user);
-            pstmt.setTimestamp(6, new Timestamp(createDate.getTime()));
-            pstmt.setTimestamp(7, new Timestamp(updateDate.getTime()));
-
-            pstmt.setInt(8, 0);
-
-            pstmt.setInt(9, serverCode);
-            logMetacat.debug(
-                "DocumentImpl.writeDocumentToRevisionTable - server code is " + serverCode);
-            pstmt.setInt(10, Integer.parseInt(rev));
-            logMetacat.debug("DocumentImpl.writeDocumentToRevisionTable - rev is " + rev);
-
-            if (rootNodeId > 0) {
-                if (catalogid != null) {
-                    pstmt.setInt(11, Integer.parseInt(catalogid));
-                    logMetacat.debug(
-                        "DocumentImpl.writeDocumentToRevisionTable - catalog id is " + catalogid);
-                    pstmt.setLong(12, rootNodeId);
-                    logMetacat.debug(
-                        "DocumentImpl.writeDocumentToRevisionTable - root id is " + rootNodeId);
-                } else {
-                    pstmt.setLong(11, rootNodeId);
-                    logMetacat.debug(
-                        "DocumentImpl.writeDocumentToRevisionTable - root id is " + rootNodeId);
-                }
-            }
-            // Do the insertion
-            logMetacat.debug(
-                "DocumentImpl.writeDocumentToRevisionTable - executing SQL: " + pstmt.toString());
-            pstmt.execute();
-            pstmt.close();
-            logMetacat.debug(
-                "DocumentImpl.writeDocumentToRevisionTable - end of write into revisons");
-
-        } catch (SQLException sqle) {
-            logMetacat.error(
-                "DocumentImpl.writeDocumentToRevisionTable - SQL error: " + sqle.getMessage());
-            sqle.printStackTrace();
-            throw sqle;
-        } catch (Exception e) {
-            logMetacat.error(
-                "DocumentImpl.writeDocumentToRevisionTable - General error: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    /**
-     * This method will generate record in xml_revision table for a data file The reason why we need
-     * this method is because data file would be parsed by xml parser. So the constructor would be
-     * called for data file and this method will replace the function
-     */
-    static private void registerDeletedDataFile(
-        String docname, String doctype, String accnum, String user, int serverCode, Date createDate,
-        Date updateDate) throws Exception {
-        DBConnection dbconn = null;
-        int serialNumber = -1;
-        try {
-            //dbconn = util.openDBConnection();
-            dbconn =
-                DBConnectionPool.getDBConnection("DeletedDocumentImpl.registerDeletedDataFile");
-            serialNumber = dbconn.getCheckOutSerialNumber();
-            String docIdWithoutRev = DocumentUtil.getDocIdFromAccessionNumber(accnum);
-            String rev = DocumentUtil.getRevisionStringFromString(accnum);
-            writeDocumentToRevisionTable(dbconn, docIdWithoutRev, rev, doctype, docname, user, null,
-                                         serverCode, -1, createDate, updateDate);
-            dbconn.close();
-        } finally {
-            DBConnectionPool.returnDBConnection(dbconn, serialNumber);
         }
     }
 }
