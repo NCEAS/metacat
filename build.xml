@@ -1138,16 +1138,17 @@
             <batchtest fork="yes" todir="${build.dir}">
                 <fileset dir="${build.tests}">
                     <include name="**/*.class"/>
-                    <exclude name="**/MultiThreadClientIT.class"/>
+                    <!-- valid test cases excluded for various reasons (e.g. credentials needed) -->
                     <exclude name="**/ClientViewHelperTest.class"/>
+                    <exclude name="**/MultiThreadClientIT.class"/>
                     <!-- these are not test cases -->
-                    <exclude name="**/MockCNode.class"/>
                     <exclude name="**/*$*.class"/>
-                    <exclude name="**/QueryRunner.class"/>
-                    <exclude name="**/MockObjectPathMap.class"/>
-                    <exclude name="**/WrappingServletInputStream.class"/>
                     <exclude name="**/MCTestCase.class"/>
+                    <exclude name="**/MockCNode.class"/>
+                    <exclude name="**/MockObjectPathMap.class"/>
                     <exclude name="**/MockReplicationMNode.class"/>
+                    <exclude name="**/QueryRunner.class"/>
+                    <exclude name="**/WrappingServletInputStream.class"/>
                 </fileset>
             </batchtest>
         </junit>
@@ -1183,6 +1184,8 @@
             <batchtest fork="yes" todir="${build.dir}">
                 <fileset dir="${build.tests}">
                     <include name="**/*.class"/>
+
+                    <!-- valid test cases excluded for various reasons (e.g. credentials needed) -->
                     <exclude name="**/ClientViewHelperTest.class"/>
                     <exclude name="**/MultiThreadClientIT.class"/>
 
@@ -1206,7 +1209,6 @@
                     <exclude name="**/*$*.class"/>
                     <exclude name="**/MockReplicationMNode.class"/>
                     <exclude name="**/MCTestCase.class"/>
-                    <exclude name="**/LeanTestUtils.class"/>
                     <exclude name="**/MockCNode.class"/>
                     <exclude name="**/QueryRunner.class"/>
                     <exclude name="**/MockObjectPathMap.class"/>
