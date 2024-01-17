@@ -1138,17 +1138,16 @@
             <batchtest fork="yes" todir="${build.dir}">
                 <fileset dir="${build.tests}">
                     <include name="**/*.class"/>
-                    <exclude name="**/MockReplicationMNode.class"/>
-                    <exclude name="**/MCTestCase.class"/>
+                    <exclude name="**/MultiThreadClientIT.class"/>
                     <exclude name="**/ClientViewHelperTest.class"/>
                     <!-- these are not test cases -->
                     <exclude name="**/MockCNode.class"/>
-                    <!--<exclude name="**/D1NodeServiceTest.class" />-->
                     <exclude name="**/*$*.class"/>
                     <exclude name="**/QueryRunner.class"/>
                     <exclude name="**/MockObjectPathMap.class"/>
-                    <exclude name="**/MultiThreadClientIT.class"/>
                     <exclude name="**/WrappingServletInputStream.class"/>
+                    <exclude name="**/MCTestCase.class"/>
+                    <exclude name="**/MockReplicationMNode.class"/>
                 </fileset>
             </batchtest>
         </junit>
@@ -1184,6 +1183,9 @@
             <batchtest fork="yes" todir="${build.dir}">
                 <fileset dir="${build.tests}">
                     <include name="**/*.class"/>
+                    <exclude name="**/ClientViewHelperTest.class"/>
+                    <exclude name="**/MultiThreadClientIT.class"/>
+
                     <!-- * * * WARNING * * * - excluding these valid but slow/failing tests!! -->
                     <exclude name="**/MNodeReplicationTest.class" /> <!-- known to fail without replication setup -->
                     <exclude name="**/MultipleDOIShouldersTest.class" /> <!-- known to fail without replication setup -->
@@ -1205,11 +1207,9 @@
                     <exclude name="**/MockReplicationMNode.class"/>
                     <exclude name="**/MCTestCase.class"/>
                     <exclude name="**/LeanTestUtils.class"/>
-                    <exclude name="**/ClientViewHelperTest.class"/>
                     <exclude name="**/MockCNode.class"/>
                     <exclude name="**/QueryRunner.class"/>
                     <exclude name="**/MockObjectPathMap.class"/>
-                    <exclude name="**/MultiThreadClientIT.class"/>
                     <exclude name="**/WrappingServletInputStream.class"/>
                 </fileset>
             </batchtest>
