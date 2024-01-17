@@ -1144,16 +1144,10 @@
                     <!-- these are not test cases -->
                     <exclude name="**/MockCNode.class"/>
                     <!--<exclude name="**/D1NodeServiceTest.class" />-->
-                    <exclude name="**/D1NodeServiceTest$*.class"/>
-                    <exclude name="**/LeanTestUtils$*.class"/>
-                    <exclude name="**/D1AdminCNUpdaterTest$*.class"/>
+                    <exclude name="**/*$*.class"/>
                     <exclude name="**/QueryRunner.class"/>
                     <exclude name="**/MockObjectPathMap.class"/>
-                    <exclude name="**/HzObjectPathMapTest$1.class"/>
-                    <exclude name="**/HzObjectPathMapTest$2.class"/>
                     <exclude name="**/MultiThreadClientIT.class"/>
-                    <exclude name="**/MultiThreadClientIT$1.class"/>
-                    <exclude name="**/AuthUtilIT.class"/>
                     <exclude name="**/WrappingServletInputStream.class"/>
                 </fileset>
             </batchtest>
@@ -1207,21 +1201,15 @@
                     <!-- END of excluded valid but slow/failing tests -->
 
                     <!-- these are not test cases -->
+                    <exclude name="**/*$*.class"/>
                     <exclude name="**/MockReplicationMNode.class"/>
-                    <exclude name="**/LeanTestUtils$*.class"/>
-                    <exclude name="**/D1AdminCNUpdaterTest$*.class"/>
                     <exclude name="**/MCTestCase.class"/>
                     <exclude name="**/LeanTestUtils.class"/>
                     <exclude name="**/ClientViewHelperTest.class"/>
                     <exclude name="**/MockCNode.class"/>
-                    <exclude name="**/D1NodeServiceTest$*.class"/>
                     <exclude name="**/QueryRunner.class"/>
                     <exclude name="**/MockObjectPathMap.class"/>
-                    <exclude name="**/HzObjectPathMapTest$1.class"/>
-                    <exclude name="**/HzObjectPathMapTest$2.class"/>
                     <exclude name="**/MultiThreadClientIT.class"/>
-                    <exclude name="**/MultiThreadClientIT$1.class"/>
-                    <exclude name="**/AuthUtilIT.class"/>
                     <exclude name="**/WrappingServletInputStream.class"/>
                 </fileset>
             </batchtest>
