@@ -1345,7 +1345,7 @@ public class DocumentImpl {
      * @return accnum
      * @throws Exception
      */
-    public static String write( DBConnection conn, String pub, Reader dtd, String action,
+    public static String write(DBConnection conn, String pub, Reader dtd, String action,
             String accnum, String user, String[] groups, String ruleBase,
         boolean needValidation, String encoding, byte[] xmlBytes, String schemaLocation,
         Checksum checksum, File objectFile) throws Exception {
