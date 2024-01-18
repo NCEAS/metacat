@@ -666,7 +666,7 @@ public class XMLSchemaService extends BaseService {
      * @return a vector of XMLSchema objects, or an empty vector if none are
      *         found
      */
-    public static Vector<XMLSchema> findSchemasInXML(StringReader xml) throws IOException {
+    public static Vector<XMLSchema> findSchemasInXML(Reader xml) throws IOException {
         Vector<XMLSchema> schemaList = new Vector<XMLSchema>();
 
         // no xml. return empty vector
@@ -771,7 +771,7 @@ public class XMLSchemaService extends BaseService {
      *            the document to parse
      * @return the "second" line of the document
      */
-    private static String getSchemaLine(StringReader xml) throws IOException {
+    private static String getSchemaLine(Reader xml) throws IOException {
         // find the line
         String secondLine = null;
         int count = 0;
@@ -829,8 +829,6 @@ public class XMLSchemaService extends BaseService {
         }
         secondLine = buffer.toString();
         logMetacat.debug("XMLSchemaService.getSchemaLine - the second line string is: " + secondLine);
-        
-        xml.reset();
         return secondLine;
     }
 

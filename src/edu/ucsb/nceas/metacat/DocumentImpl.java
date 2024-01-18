@@ -7,9 +7,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.io.StringReader;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -1326,30 +1326,33 @@ public class DocumentImpl {
      * @param writeAccessRules
      */
 
-    public static String write(
-        DBConnection conn, String xmlString, String pub, Reader dtd, String action, String accnum,
-        String user, String[] groups, String ruleBase,
-        boolean needValidation, byte[] xmlBytes, String schemaLocation,
+    /**
+     * Parse and write an XML file to the database
+     * @param conn  the JDBC connection to the database
+     * @param pub  flag for public "read" access on xml document
+     * @param dtd  the dtd to be uploaded on server's file system
+     * @param action  the action to be performed (INSERT or UPDATE)
+     * @param accnum  the docid + rev# to use on INSERT or UPDATE
+     * @param user  the user that owns the document
+     * @param groups  the groups to which user belongs
+     * @param ruleBase  the type (dtd, schema or et al) of validation
+     * @param needValidation  flag indicating if it needs a validate
+     * @param encoding  the encoding of the xml document
+     * @param xmlBytes  the content of the xml document
+     * @param schemaLocation  the schema location string
+     * @param checksum  the checksum of the xml document
+     * @param objectFile  the temporary file of the object 
+     * @return accnum
+     * @throws Exception
+     */
+    public static String write( DBConnection conn, String pub, Reader dtd, String action,
+            String accnum, String user, String[] groups, String ruleBase,
+        boolean needValidation, String encoding, byte[] xmlBytes, String schemaLocation,
         Checksum checksum, File objectFile) throws Exception {
         // NEW - WHEN CLIENT ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV IN IT
 
         // Get the xml as a string so we can write to file later
-        StringReader xmlReader = new StringReader(xmlString);
-        // detect encoding
-        XmlStreamReader xsr = null;
-        if (xmlBytes == null || xmlBytes.length == 0) {
-            xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
-        } else {
-            xsr = new XmlStreamReader(new ByteArrayInputStream(xmlBytes));
-        }
-        String encoding = xsr.getEncoding();
-        //get the byte array from xmlString if the xmlbyte is null (this comes from metacat api)
-        if (xmlBytes == null || xmlBytes.length == 0) {
-            xmlBytes = xmlString.getBytes(encoding);
-        }
-
-        logMetacat.debug(
-            "DocumentImpl.write - conn usage count before writing: " + conn.getUsageCount());
+        InputStreamReader xmlReader = new InputStreamReader(new ByteArrayInputStream(xmlBytes));
         AccessionNumber ac = new AccessionNumber(accnum, action);
         String docid = ac.getDocid();
         String rev = ac.getRev();
@@ -1371,22 +1374,19 @@ public class DocumentImpl {
         }
         XMLReader parser = null;
         try {
-
-
             Vector<String> guidsToSync = new Vector<String>();
-
-            parser =
-                initializeParser(conn, action, docid, xmlReader, rev, user, groups, pub,
-                                 dtd, ruleBase, needValidation, false, null, null, encoding,
-                                 schemaLocation);
+            Vector<XMLSchema> schemaList = XMLSchemaService.getInstance().
+                                                            findSchemasInXML(xmlReader);
             // null and null are createtime and updatetime
             // null will create current time
             //false means it is not a revision doc
-
+            parser =
+                initializeParser(conn, action, docid, schemaList, rev, user, groups, pub,
+                                 dtd, ruleBase, needValidation, false, null, null, encoding,
+                                 schemaLocation);
+            xmlReader = new InputStreamReader(new ByteArrayInputStream(xmlBytes));
             conn.setAutoCommit(false);
-            //logMetacat.debug("DocumentImpl.write - XML to be parsed: " + xmlString);
             parser.parse(new InputSource(xmlReader));
-
             //write the file to disk
             writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
 
@@ -1752,7 +1752,7 @@ public class DocumentImpl {
      * @throws Exception
      */
     private static XMLReader initializeParser(
-        DBConnection dbconn, String action, String docid, Reader xml, String rev, String user,
+        DBConnection dbconn, String action, String docid, Vector<XMLSchema> schemaList, String rev, String user,
         String[] groups, String pub, Reader dtd, String ruleBase,
         boolean needValidation, boolean isRevision, Date createDate, Date updateDate,
         String encoding, String schemaLocation) throws Exception {
@@ -1787,7 +1787,6 @@ public class DocumentImpl {
                 //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
                 parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
 
-                Vector<XMLSchema> schemaList = xmlss.findSchemasInXML((StringReader) xml);
                 boolean allSchemasRegistered = xmlss.areAllSchemasRegistered(schemaList);
                 if (xmlss.useFullSchemaValidation() && !allSchemasRegistered && !ruleBase.equals(
                     EML210) && !ruleBase.equals(EML200)) {

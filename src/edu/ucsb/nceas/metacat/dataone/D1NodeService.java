@@ -1163,17 +1163,6 @@ public abstract class D1NodeService {
 
         }
 
-        Hashtable<String, String[]> params = new Hashtable<String, String[]>();
-        String[] action = new String[1];
-        action[0] = insertOrUpdate;
-        params.put("action", action);
-        String[] docid = new String[1];
-        docid[0] = localId;
-        params.put("docid", docid);
-        String[] doctext = new String[1];
-        doctext[0] = xmlStr;
-        params.put("doctext", doctext);
-
         String username = Constants.SUBJECT_PUBLIC;
         String[] groupnames = null;
         if (session != null) {
@@ -1199,9 +1188,9 @@ public abstract class D1NodeService {
         }
         long start = System.currentTimeMillis();
         String result =
-            handler.handleInsertOrUpdateAction(ipAddress, userAgent, params, username,
-                                               groupnames, xmlBytes, formatId,
-                                               checksum, tempFile);
+            handler.handleInsertOrUpdateAction(ipAddress, userAgent, username,
+                                               groupnames, encoding, xmlBytes, formatId,
+                                               checksum, tempFile, localId, insertOrUpdate);
         long end = System.currentTimeMillis();
         logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue()
                             + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
