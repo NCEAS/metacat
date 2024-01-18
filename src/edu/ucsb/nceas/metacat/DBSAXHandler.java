@@ -123,8 +123,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     boolean hasTriple = false;
     
-    protected boolean writeAccessRules = true;
-    
     protected boolean ignoreDenyFirst = true;
 
     public static final String ECOGRID = "ecogrid://";
@@ -157,11 +155,10 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
      * @param pub  flag for public "read" access on document
      * @param createDate  the created date of this document
      * @param updateDate  the updated date of this document
-     * @param writeAccessRules
      */
     public DBSAXHandler(DBConnection conn, String action, String docid,
             String revision, String user, String[] groups, String pub,
-            Date createDate, Date updateDate, boolean writeAccessRules) {
+            Date createDate, Date updateDate) {
         this(conn, createDate, updateDate);
         this.action = action;
         this.docid = docid;
@@ -169,7 +166,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         this.user = user;
         this.groups = groups;
         this.pub = pub;
-        this.writeAccessRules = writeAccessRules;
     }
 
     /** SAX Handler that receives notification of beginning of the document */

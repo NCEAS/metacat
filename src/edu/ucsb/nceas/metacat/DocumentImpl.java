@@ -1329,7 +1329,7 @@ public class DocumentImpl {
     public static String write(
         DBConnection conn, String xmlString, String pub, Reader dtd, String action, String accnum,
         String user, String[] groups, String ruleBase,
-        boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String schemaLocation,
+        boolean needValidation, byte[] xmlBytes, String schemaLocation,
         Checksum checksum, File objectFile) throws Exception {
         // NEW - WHEN CLIENT ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV IN IT
 
@@ -1378,7 +1378,7 @@ public class DocumentImpl {
             parser =
                 initializeParser(conn, action, docid, xmlReader, rev, user, groups, pub,
                                  dtd, ruleBase, needValidation, false, null, null, encoding,
-                                 writeAccessRules, schemaLocation);
+                                 schemaLocation);
             // null and null are createtime and updatetime
             // null will create current time
             //false means it is not a revision doc
@@ -1755,7 +1755,7 @@ public class DocumentImpl {
         DBConnection dbconn, String action, String docid, Reader xml, String rev, String user,
         String[] groups, String pub, Reader dtd, String ruleBase,
         boolean needValidation, boolean isRevision, Date createDate, Date updateDate,
-        String encoding, boolean writeAccessRules, String schemaLocation) throws Exception {
+        String encoding, String schemaLocation) throws Exception {
         XMLReader parser = null;
         try {
             // handler
@@ -1769,7 +1769,7 @@ public class DocumentImpl {
             //create a DBSAXHandler object which has the revision
             // specification
             chandler = new DBSAXHandler(dbconn, action, docid, rev, user, groups, pub,
-                                        createDate, updateDate, writeAccessRules);
+                                        createDate, updateDate);
             chandler.setIsRevisionDoc(isRevision);
             chandler.setEncoding(encoding);
             parser.setContentHandler((ContentHandler) chandler);

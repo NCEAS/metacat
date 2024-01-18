@@ -221,16 +221,11 @@ public class MetacatHandler {
      */
     public String handleInsertOrUpdateAction( String ipAddress, String userAgent,
         Hashtable<String, String[]> params, String user, String[] groups,
-        boolean writeAccessRules, byte[] xmlBytes, String formatId,
+        byte[] xmlBytes, String formatId,
         Checksum checksum, File objectFile) {
         DBConnection dbConn = null;
         int serialNumber = -1;
         String output = "";
-        String qformat = null;
-        if (params.containsKey("qformat")) {
-            qformat = params.get("qformat")[0];
-        }
-
         if (params.get("docid") == null) {
             String msg = this.PROLOG + this.ERROR + "Docid not specified" + this.ERRORCLOSE;
             return msg;
@@ -289,22 +284,21 @@ public class MetacatHandler {
                                  + "the xml document in metacat servlet (before parsing):\n"
                                  + doctext[0]);
             StringReader xmlReader = new StringReader(doctext[0]);
-            boolean validate = false;
-            DocumentImplWrapper documentWrapper = null;
+            boolean needValidation = false;
+            String rule = null;
             String namespace = null;
             String schemaLocation = null;
             try {
                 // look inside XML Document for <!DOCTYPE ... PUBLIC/SYSTEM ...
                 // >
                 // in order to decide whether to use validation parser
-                validate = needDTDValidation(xmlReader);
-                if (validate) {
+                needValidation = needDTDValidation(xmlReader);
+                if (needValidation) {
                     // set a dtd base validation parser
                     logMetacat.debug(
                         "MetacatHandler.handleInsertOrUpdateAction - the xml object will be "
                             + "validate by a dtd");
-                    String rule = DocumentImpl.DTD;
-                    documentWrapper = new DocumentImplWrapper(rule, validate, writeAccessRules);
+                    rule = DocumentImpl.DTD;
                 } else {
                     XMLSchemaService.getInstance().doRefresh();
                     namespace = XMLSchemaService.findDocumentNamespace(xmlReader);
@@ -318,20 +312,20 @@ public class MetacatHandler {
                         if (namespace.compareTo(DocumentImpl.EML2_0_0NAMESPACE) == 0
                             || namespace.compareTo(DocumentImpl.EML2_0_1NAMESPACE) == 0) {
                             // set eml2 base     validation parser
-                            String rule = DocumentImpl.EML200;
+                            rule = DocumentImpl.EML200;
+                            needValidation = true;
                             // using emlparser to check id validation
                             @SuppressWarnings("unused") EMLParser parser =
                                 new EMLParser(doctext[0]);
-                            documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
                         } else if (namespace.compareTo(DocumentImpl.EML2_1_0NAMESPACE) == 0
                             || namespace.compareTo(DocumentImpl.EML2_1_1NAMESPACE) == 0
                             || namespace.compareTo(DocumentImpl.EML2_2_0NAMESPACE) == 0) {
                             // set eml2 base validation parser
-                            String rule = DocumentImpl.EML210;
+                            rule = DocumentImpl.EML210;
+                            needValidation = true;
                             // using emlparser to check id validation
                             @SuppressWarnings("unused") EMLParser parser =
                                 new EMLParser(doctext[0]);
-                            documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
                         } else {
                             if (!XMLSchemaService.isNamespaceRegistered(namespace)) {
                                 throw new Exception("The namespace " + namespace
@@ -343,8 +337,8 @@ public class MetacatHandler {
                                                         + "namespace.");
                             }
                             // set schema base validation parser
-                            String rule = DocumentImpl.SCHEMA;
-                            documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
+                            rule = DocumentImpl.SCHEMA;
+                            needValidation = true;
                         }
                     } else {
                         xmlReader = new StringReader(doctext[0]);
@@ -358,13 +352,14 @@ public class MetacatHandler {
                             schemaLocation = XMLSchemaService.getInstance()
                                 .findNoNamespaceSchemaLocalLocation(formatId,
                                                                     noNamespaceSchemaLocationAttr);
-                            String rule = DocumentImpl.NONAMESPACESCHEMA;
-                            documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
+                            rule = DocumentImpl.NONAMESPACESCHEMA;
+                            needValidation = true;
                         } else {
                             logMetacat.debug(
                                 "MetacatHandler.handleInsertOrUpdateAction - the xml object will "
                                     + "NOT be validated.");
-                            documentWrapper = new DocumentImplWrapper("", false, writeAccessRules);
+                            rule = "";
+                            needValidation = false;
                         }
 
                     }
@@ -391,9 +386,9 @@ public class MetacatHandler {
 
                     // write the document to the database and disk
                     String accNumber = docid[0];
-                    logMetacat.debug(
-                        "MetacatHandler.handleInsertOrUpdateAction - " + doAction + " " + accNumber
-                            + "...");
+                    logMetacat.info( "MetacatHandler.handleInsertOrUpdateAction - "
+                               + doAction + " " + accNumber + " with needValidation "
+                               + needValidation + " and validation type " + rule);
                     Identifier identifier = new Identifier();
                     identifier.setValue(accNumber);
                     if (!D1NodeService.isValidIdentifier(identifier)) {
@@ -403,10 +398,9 @@ public class MetacatHandler {
                         throw new Exception(error);
                     }
 
-                    newdocid =
-                        documentWrapper.write(dbConn, doctext[0], pub, dtd, doAction, accNumber,
-                                              user, groups, xmlBytes, schemaLocation, checksum,
-                                              objectFile);
+                    newdocid = DocumentImpl.write(dbConn, doctext[0], pub, dtd, doAction, accNumber,
+                                                  user,groups, rule, needValidation, xmlBytes,
+                                                  schemaLocation,checksum, objectFile);
 
                     EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action[0]);
 
