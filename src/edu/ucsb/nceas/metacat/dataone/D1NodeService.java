@@ -1199,8 +1199,8 @@ public abstract class D1NodeService {
         }
         long start = System.currentTimeMillis();
         String result =
-            handler.handleInsertOrUpdateAction(ipAddress, userAgent, null, null, params, username,
-                                               groupnames, false, false, xmlBytes, formatId,
+            handler.handleInsertOrUpdateAction(ipAddress, userAgent, params, username,
+                                               groupnames, false, xmlBytes, formatId,
                                                checksum, tempFile);
         long end = System.currentTimeMillis();
         logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue()

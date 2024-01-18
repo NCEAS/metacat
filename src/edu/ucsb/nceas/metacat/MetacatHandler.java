@@ -219,10 +219,9 @@ public class MetacatHandler {
      * @param userAgent
      * @param generateSystemMetadata
      */
-    public String handleInsertOrUpdateAction(
-        String ipAddress, String userAgent, HttpServletResponse response, PrintWriter out,
+    public String handleInsertOrUpdateAction( String ipAddress, String userAgent,
         Hashtable<String, String[]> params, String user, String[] groups,
-        boolean generateSystemMetadata, boolean writeAccessRules, byte[] xmlBytes, String formatId,
+        boolean writeAccessRules, byte[] xmlBytes, String formatId,
         Checksum checksum, File objectFile) {
         DBConnection dbConn = null;
         int serialNumber = -1;
@@ -234,10 +233,6 @@ public class MetacatHandler {
 
         if (params.get("docid") == null) {
             String msg = this.PROLOG + this.ERROR + "Docid not specified" + this.ERRORCLOSE;
-            if (out != null) {
-                out.println(msg);
-                logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - Docid not specified");
-            }
             return msg;
         }
 
@@ -247,10 +242,6 @@ public class MetacatHandler {
                     + "' is not allowed to insert or update. Check the Allowed and Denied "
                     + "Submitters lists"
                     + this.ERRORCLOSE;
-                if (out != null) {
-                    out.println(msg);
-                }
-
                 logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " + "User '" + user
                                      + "' not allowed to insert and update");
                 return msg;
@@ -262,9 +253,6 @@ public class MetacatHandler {
             String msg = this.PROLOG + this.ERROR + "MetacatHandler.handleInsertOrUpdateAction - "
                 + "Could not determine if user could insert or update: " + ue.getMessage()
                 + this.ERRORCLOSE;
-            if (out != null) {
-                out.println(msg);
-            }
             return msg;
         }
 
@@ -293,10 +281,6 @@ public class MetacatHandler {
             if (doctext == null) {
                 String msg =
                     this.PROLOG + this.ERROR + "Document text not submitted." + this.ERRORCLOSE;
-                if (out != null) {
-                    out.println(msg);
-                }
-
                 // TODO: this should really throw an exception
                 return msg;
             }
@@ -467,26 +451,6 @@ public class MetacatHandler {
             logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - "
                                  + "General error when writing the xml object "
                                  + "document to the database: " + e.getMessage(), e);
-            e.printStackTrace();
-        }
-
-        if (qformat == null || qformat.equals("xml")) {
-            if (response != null && out != null) {
-                response.setContentType("text/xml");
-                out.println(output);
-            }
-            return output;
-        } else {
-            try {
-                DBTransform trans = new DBTransform();
-                response.setContentType("text/html");
-                trans.transformXMLDocument(output, "message", "-//W3C//HTML//EN", qformat, out,
-                                           null, null);
-                return output;
-            } catch (Exception e) {
-                logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " + "General error: "
-                                     + e.getMessage(), e);
-            }
         }
         return output;
     }
