@@ -275,7 +275,7 @@ public class DocumentImpl {
                         "User " + user + " does not have permission to update the document"
                             + accnum);
                 }
-                archiveDocRevision(docIdWithoutRev, user, conn);
+                archiveDocToRevision(conn, docIdWithoutRev, user);
             }
 
             String rev = Integer.toString(userSpecifyRev);
@@ -1239,10 +1239,7 @@ public class DocumentImpl {
                 int thisrev = DBUtil.getLatestRevisionInDocumentTable(docid);
                 logMetacat.debug("DocumentImpl.writeDocumentToDB - this revision is: " + thisrev);
                 // Save the old document publicaccessentry in a backup table
-                String accNumber =
-                    docid + PropertyService.getProperty("document.accNumSeparator") + thisrev;
-                thisdoc = new DocumentImpl(accNumber, false);
-                DocumentImpl.moveDocToRevision(connection, docid, user, thisdoc);
+                archiveDocToRevision(connection, docid, user);
                 //if the updated vesion is not greater than current one,
                 //throw it into a exception
                 if (rev <= thisrev) {
@@ -1589,7 +1586,7 @@ public class DocumentImpl {
             if (!inRevisionTable) {
                 // Copy the record to the xml_revisions table if not a full delete
                 if (!removeAll) {
-                    DocumentImpl.moveDocToRevision(conn, docid, user, null);
+                    archiveDocToRevision(conn, docid, user);
                     logMetacat.info("DocumentImpl.delete - calling archiveDocAndNodesRevision");
                 }
                 double afterArchiveDocAndNode = System.currentTimeMillis() / 1000;
@@ -1849,38 +1846,15 @@ public class DocumentImpl {
     }
 
     /**
-     * Save a document entry in the xml_revisions table Connection use as a paramter is in order to
-     * rollback feature
-     */
-    private static void moveDocToRevision(
-        DBConnection dbconn, String docid, String user, DocumentImpl doc) {
-        try {
-            if (doc == null) {
-                String accNumber = docid + PropertyService.getProperty("document.accNumSeparator")
-                    + DBUtil.getLatestRevisionInDocumentTable(docid);
-                doc = new DocumentImpl(accNumber);
-            }
-            long rootNodeId = doc.getRootNodeID();
-            archiveDocToRevision(dbconn, docid, user, rootNodeId);
-        } catch (Exception e) {
-            logMetacat.error(
-                "DocumentImpl.archiveDocAndNodesRevision - Error in DocumentImpl"
-                + ".archiveDocRevision : "
-                    + e.getMessage());
-        }
-    }
-
-    /**
-     * This method will archive both xml_revision.
-     *
-     * @param dbconn
-     * @param docid
-     * @param user
-     * @param rootNodeId
+     * This method will move a document record from the xml_documents table
+     * to the xml_revisions table
+     * @param dbconn  the jdbc connection will be used to execute query
+     * @param docid  the docid of the document
+     * @param user  the user who request the action
      * @throws Exception
      */
     private static void archiveDocToRevision(
-        DBConnection dbconn, String docid, String user, long rootNodeId) throws Exception {
+        DBConnection dbconn, String docid, String user) throws Exception {
         String sysdate = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
         PreparedStatement pstmt = null;
         try {
@@ -1889,10 +1863,10 @@ public class DocumentImpl {
             pstmt = dbconn.prepareStatement(
                 "INSERT INTO xml_revisions " + "(docid, rootnodeid, docname, doctype, "
                     + "user_owner, user_updated, date_created, date_updated, "
-                    + "server_location, rev, public_access, catalog_id) "
+                    + "rev, public_access, catalog_id) "
                     + "SELECT ?, rootnodeid, docname, doctype, "
                     + "user_owner, ?, date_created, date_updated, "
-                    + "server_location, rev, public_access, catalog_id " + "FROM xml_documents "
+                    + "rev, public_access, catalog_id " + "FROM xml_documents "
                     + "WHERE docid = ?");
 
             // Increase dbconnection usage count
@@ -1902,76 +1876,31 @@ public class DocumentImpl {
             pstmt.setString(2, user);
             pstmt.setString(3, docid);
             logMetacat.debug(
-                "DocumentImpl.archiveDocAndNodesRevison - executing SQL: " + pstmt.toString());
+                "DocumentImpl.archiveDocToRevision - executing SQL: " + pstmt.toString());
             pstmt.execute();
             pstmt.close();
             double end = System.currentTimeMillis() / 1000;
             logMetacat.debug(
-                "DocumentImpl.archiveDocAndNodesRevision - moving docs from xml_documents to "
+                "DocumentImpl.archiveDocToRevision - moving docs from xml_documents to "
                 + "xml_revision takes "
                     + (end - start));
 
         } catch (SQLException e) {
             logMetacat.error(
-                "DocumentImpl.archiveDocAndNodesRevision - SQL error: " + e.getMessage());
+                "DocumentImpl.archiveDocToRevision - SQL error: " + e.getMessage());
             throw e;
         } catch (Exception e) {
             logMetacat.error(
-                "DocumentImpl.archiveDocAndNodesRevision - General error: " + e.getMessage());
+                "DocumentImpl.archiveDocToRevision - General error: " + e.getMessage());
             throw e;
         } finally {
             try {
                 pstmt.close();
             } catch (SQLException ee) {
                 logMetacat.error(
-                    "DocumentImpl.archiveDocAndNodesRevision - SQL error when closing prepared "
+                    "DocumentImpl.archiveDocToRevision - SQL error when closing prepared "
                     + "statement: "
                         + ee.getMessage());
-            }
-        }
-
-    }
-
-    /**
-     * Save a document entry in the xml_revisions table
-     */
-    private static void archiveDocRevision(String docid, String user, DBConnection conn)
-        throws Exception {
-        String sysdate = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
-        PreparedStatement pstmt = null;
-
-        // create a record in xml_revisions table
-        // for that document as selected from xml_documents
-
-        try {
-            //check out DBConnection
-            pstmt = conn.prepareStatement(
-                "INSERT INTO xml_revisions " + "(docid, rootnodeid, docname, doctype, "
-                    + "user_owner, user_updated, date_created, date_updated, "
-                    + "server_location, rev, public_access, catalog_id) "
-                    + "SELECT ?, rootnodeid, docname, doctype, "
-                    + "user_owner, ?, date_created, date_updated, "
-                    + "server_location, rev, public_access, catalog_id " + "FROM xml_documents "
-                    + "WHERE docid = ?");
-
-            // Bind the values to the query and execute it
-            conn.increaseUsageCount(1);
-            pstmt.setString(1, docid);
-            pstmt.setString(2, user);
-            pstmt.setString(3, docid);
-            logMetacat.debug(
-                "DocumentImpl.archiveDocRevision - executing SQL: " + pstmt.toString());
-            pstmt.execute();
-            pstmt.close();
-        } catch (SQLException e) {
-            logMetacat.error("DocumentImpl.archiveDocRevision - SQL error: " + e.getMessage());
-            throw e;
-        } finally {
-            try {
-                pstmt.close();
-            } catch (SQLException ee) {
-                logMetacat.error("DocumentImpl.archiveDocRevision - SQL Error: " + ee.getMessage());
-                throw ee;
             }
         }
     }
