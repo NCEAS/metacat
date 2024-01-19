@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS node_id_revisions (
 ALTER TABLE xml_revisions DROP CONSTRAINT IF EXISTS xml_revisions_root_fk;
 ALTER TABLE xml_revisions DROP CONSTRAINT IF EXISTS xml_revisions_rep_fk;
 ALTER TABLE xml_revisions DROP COLUMN IF EXISTS server_location;
+ALTER TABLE xml_revisions DROP COLUMN IF EXISTS public_access;
 
 /*
  * Drop some unneeded constraint and index in the xml_documents table
@@ -27,6 +28,7 @@ DROP INDEX IF EXISTS xml_documents_idx4;
 CREATE INDEX IF NOT EXISTS xml_documents_idx6 ON xml_documents (docid);
 ALTER TABLE xml_documents DROP CONSTRAINT IF EXISTS xml_documents_rep_fk;
 ALTER TABLE xml_documents DROP COLUMN IF EXISTS server_location;
+ALTER TABLE xml_documents DROP COLUMN IF EXISTS public_access;
 
 /*
  * Drop the xml_path_index table

@@ -35,14 +35,14 @@
  */
 CREATE SEQUENCE xml_catalog_id_seq;
 CREATE TABLE xml_catalog (
-	catalog_id INT8 default nextval('xml_catalog_id_seq'),
+  catalog_id INT8 default nextval('xml_catalog_id_seq'),
                                         -- the id for this catalog entry
-	entry_type VARCHAR(500),	-- the type of this catalog entry
-					-- (e.g., DTD, XSD, XSL)
-	source_doctype VARCHAR(500),	-- the source public_id for transforms
-	target_doctype VARCHAR(500),	-- the target public_id for transforms
-	public_id VARCHAR(500),	-- the unique id for this type
-	system_id VARCHAR(1000),	-- the local location of the object
+  entry_type VARCHAR(500),  -- the type of this catalog entry
+          -- (e.g., DTD, XSD, XSL)
+  source_doctype VARCHAR(500),  -- the source public_id for transforms
+  target_doctype VARCHAR(500),  -- the target public_id for transforms
+  public_id VARCHAR(500),  -- the unique id for this type
+  system_id VARCHAR(1000),  -- the local location of the object
   format_id VARCHAR(1000),  -- the format id from dataone 
   no_namespace_schema_location VARCHAR(2000), -- the identifier for a no-namespace schema
    CONSTRAINT xml_catalog_pk PRIMARY KEY (catalog_id),
@@ -58,20 +58,19 @@ CREATE SEQUENCE xml_documents_id_seq;
  * Documents -- table to store XML documents
  */
 CREATE TABLE xml_documents (
-	docid VARCHAR(250),	-- the document id #
-	rootnodeid INT8,		-- reference to root node of the DOM
-	docname VARCHAR(100),	-- usually the root element name
-	doctype VARCHAR(100),	-- public id indicating document type
-	user_owner VARCHAR(100),	-- the user owned the document
-	user_updated VARCHAR(100),	-- the user updated the document
-	rev INT8 default 1,   -- the revision number of the document
-	date_created DATE,
-	date_updated DATE,
-	public_access INT8,	-- flag for public access
-        catalog_id INT8,	-- reference to xml_catalog
-     CONSTRAINT xml_documents_pk PRIMARY KEY (docid),
+  docid VARCHAR(250),  -- the document id #
+  rootnodeid INT8,    -- reference to root node of the DOM
+  docname VARCHAR(100),  -- usually the root element name
+  doctype VARCHAR(100),  -- public id indicating document type
+  user_owner VARCHAR(100),  -- the user owned the document
+  user_updated VARCHAR(100),  -- the user updated the document
+  rev INT8 default 1,   -- the revision number of the document
+  date_created DATE,
+  date_updated DATE,
+  catalog_id INT8,  -- reference to xml_catalog
+   CONSTRAINT xml_documents_pk PRIMARY KEY (docid),
    CONSTRAINT xml_documents_catalog_fk
-		FOREIGN KEY (catalog_id) REFERENCES xml_catalog
+    FOREIGN KEY (catalog_id) REFERENCES xml_catalog
 );
 
 /*
@@ -88,22 +87,21 @@ CREATE INDEX xml_documents_idx6 ON xml_documents (docid);
  */
 CREATE SEQUENCE xml_revisions_id_seq;
 CREATE TABLE xml_revisions (
-	revisionid INT8  default nextval('xml_revisions_id_seq'),
+  revisionid INT8  default nextval('xml_revisions_id_seq'),
                                         -- the revision number we are saving
-	docid VARCHAR(250),	-- the document id #
-	rootnodeid INT8,		-- reference to root node of the DOM
-	docname VARCHAR(100),	-- usually the root element name
-	doctype VARCHAR(100),	-- public id indicating document type
-	user_owner VARCHAR(100),
-	user_updated VARCHAR(100),
-	rev INT8,
-	date_created DATE,
-	date_updated DATE,
-	public_access INT8,	-- flag for public access
-        catalog_id INT8,	-- reference to xml_catalog
+  docid VARCHAR(250),  -- the document id #
+  rootnodeid INT8,    -- reference to root node of the DOM
+  docname VARCHAR(100),  -- usually the root element name
+  doctype VARCHAR(100),  -- public id indicating document type
+  user_owner VARCHAR(100),
+  user_updated VARCHAR(100),
+  rev INT8,
+  date_created DATE,
+  date_updated DATE,
+  catalog_id INT8,  -- reference to xml_catalog
    CONSTRAINT xml_revisions_pk PRIMARY KEY (revisionid),
    CONSTRAINT xml_revisions_catalog_fk
-		FOREIGN KEY (catalog_id) REFERENCES xml_catalog
+    FOREIGN KEY (catalog_id) REFERENCES xml_catalog
 );
 
 CREATE INDEX xml_revisions_idx1 ON xml_revisions (docid);
@@ -112,15 +110,15 @@ CREATE INDEX xml_revisions_idx1 ON xml_revisions (docid);
  * ACL -- table to store ACL for XML documents by principals
  */
 CREATE TABLE xml_access (
-	guid text,	-- foreign key to system metadata
-	accessfileid text,	-- the id for the access file
-	principal_name VARCHAR(100),	-- name of user, group, etc.
-	permission INT8,		-- "read", "write", "all"
-	perm_type VARCHAR(32),	-- "allowed" or "denied"
-	perm_order VARCHAR(32),	-- "allow first" or "deny first"
-	begin_time DATE,		-- the time that permission begins
-	end_time DATE,		-- the time that permission ends
-	ticket_count INT8,		-- ticket counter for that permission
+  guid text,  -- foreign key to system metadata
+  accessfileid text,  -- the id for the access file
+  principal_name VARCHAR(100),  -- name of user, group, etc.
+  permission INT8,    -- "read", "write", "all"
+  perm_type VARCHAR(32),  -- "allowed" or "denied"
+  perm_order VARCHAR(32),  -- "allow first" or "deny first"
+  begin_time DATE,    -- the time that permission begins
+  end_time DATE,    -- the time that permission ends
+  ticket_count INT8,    -- ticket counter for that permission
   subtreeid VARCHAR(32),
   startnodeid INT8,
   endnodeid INT8,
@@ -139,19 +137,19 @@ CREATE INDEX xml_access_idx6 on xml_access(guid);
 
 CREATE SEQUENCE xml_relation_id_seq;
 CREATE TABLE xml_relation (
-	relationid INT8 default nextval('xml_relation_id_seq') PRIMARY KEY,
-					     -- unique id
-	docid VARCHAR(250) ,         -- the docid of the package file
-	                                     -- that this relation came from
+  relationid INT8 default nextval('xml_relation_id_seq') PRIMARY KEY,
+               -- unique id
+  docid VARCHAR(250) ,         -- the docid of the package file
+                                       -- that this relation came from
         packagetype VARCHAR(250),          -- the type of the package
-	subject VARCHAR(512) NOT NULL, -- the subject of the relation
-	subdoctype VARCHAR(128),         	-- the doctype of the subject
-	relationship VARCHAR(128)  NOT NULL,-- the relationship type
-	object VARCHAR(512) NOT NULL, -- the object of the relation
-	objdoctype VARCHAR(128),          -- the doctype of the object
-	CONSTRAINT xml_relation_uk UNIQUE (docid, subject, relationship, object),
-	CONSTRAINT xml_relation_docid_fk
-		FOREIGN KEY (docid) REFERENCES xml_documents
+  subject VARCHAR(512) NOT NULL, -- the subject of the relation
+  subdoctype VARCHAR(128),           -- the doctype of the subject
+  relationship VARCHAR(128)  NOT NULL,-- the relationship type
+  object VARCHAR(512) NOT NULL, -- the object of the relation
+  objdoctype VARCHAR(128),          -- the doctype of the object
+  CONSTRAINT xml_relation_uk UNIQUE (docid, subject, relationship, object),
+  CONSTRAINT xml_relation_docid_fk
+    FOREIGN KEY (docid) REFERENCES xml_documents
 );
 
 /*
@@ -163,7 +161,7 @@ CREATE TABLE xml_relation (
  */
 CREATE TABLE identifier (
    guid   text,          -- the globally unique string identifier
-   docid  VARCHAR(250),	 -- the local document id #
+   docid  VARCHAR(250),   -- the local document id #
    rev    INT8,          -- the revision part of the local identifier
    CONSTRAINT identifier_pk PRIMARY KEY (guid)
 );
@@ -180,27 +178,27 @@ CREATE INDEX identifier_docid_rev_log ON identifier((docid||'.'||rev));
  * data first or the systemMetadata first.
  */
 CREATE TABLE systemMetadata (
-	guid   text,          -- the globally unique string identifier of the object that the system metadata describes
-	series_id text, -- the series identifier
-	serial_version VARCHAR(256), --the serial version of the object
-	date_uploaded TIMESTAMP, -- the date/time the document was first submitted
-	rights_holder VARCHAR(250), --the user who has rights to the document, usually the first persons to upload it
-	checksum VARCHAR(512), --the checksum of the doc using the given algorithm (see below)
-	checksum_algorithm VARCHAR(250), --the algorithm used to calculate the checksum
-	origin_member_node VARCHAR(250), --the member node where the document was first uploaded
-	authoritive_member_node VARCHAR(250), --the member node that currently controls the document
-	date_modified TIMESTAMP, -- the last date/time that the file was changed
-	submitter VARCHAR(256), -- the user who originally submitted the doc
-	object_format VARCHAR(256), --the format of the object
-	size VARCHAR(256), --the size of the object
-	archived boolean,	 -- specifies whether this an archived object
-	replication_allowed boolean,	 -- replication allowed
-	number_replicas INT8, 	-- the number of replicas allowed
-	obsoletes   text,       -- the identifier that this record obsoletes
-	obsoleted_by   text,     -- the identifier of the record that replaces this record
+  guid   text,          -- the globally unique string identifier of the object that the system metadata describes
+  series_id text, -- the series identifier
+  serial_version VARCHAR(256), --the serial version of the object
+  date_uploaded TIMESTAMP, -- the date/time the document was first submitted
+  rights_holder VARCHAR(250), --the user who has rights to the document, usually the first persons to upload it
+  checksum VARCHAR(512), --the checksum of the doc using the given algorithm (see below)
+  checksum_algorithm VARCHAR(250), --the algorithm used to calculate the checksum
+  origin_member_node VARCHAR(250), --the member node where the document was first uploaded
+  authoritive_member_node VARCHAR(250), --the member node that currently controls the document
+  date_modified TIMESTAMP, -- the last date/time that the file was changed
+  submitter VARCHAR(256), -- the user who originally submitted the doc
+  object_format VARCHAR(256), --the format of the object
+  size VARCHAR(256), --the size of the object
+  archived boolean,   -- specifies whether this an archived object
+  replication_allowed boolean,   -- replication allowed
+  number_replicas INT8,   -- the number of replicas allowed
+  obsoletes   text,       -- the identifier that this record obsoletes
+  obsoleted_by   text,     -- the identifier of the record that replaces this record
   media_type   text,      -- the media type of this object
   file_name    text,      -- the suggested file name for this object
-	CONSTRAINT systemMetadata_pk PRIMARY KEY (guid)
+  CONSTRAINT systemMetadata_pk PRIMARY KEY (guid)
 );
 CREATE INDEX systemMetadata_series_id on systemMetadata(series_id);
 CREATE INDEX systemMetadata_date_uploaded on systemMetadata(date_uploaded);
@@ -214,7 +212,7 @@ CREATE INDEX systemMetadata_archived on systemMetadata(archived);
  * the guids in the systemMetadata.
  */
 CREATE TABLE smMediaTypeProperties (
-	guid    text,  -- id refer to guid in the system metadata table
+  guid    text,  -- id refer to guid in the system metadata table
   name    text, -- name of the property
   value    text, -- value of the property
   CONSTRAINT smMediaTypeProperties_fk 
@@ -231,20 +229,20 @@ CREATE TABLE smMediaTypeProperties (
 CREATE SEQUENCE policy_id_seq;
 CREATE TABLE smReplicationPolicy (
   policy_id INT8 default nextval('policy_id_seq'), 
-	guid text,	-- the globally unique string identifier of the object that the system metadata describes
-	member_node VARCHAR(250),	 -- replication member node
-	policy text,	 -- the policy (preferred, blocked, etc...TBD)
-	CONSTRAINT smReplicationPolicy_fk 
-		FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
+  guid text,  -- the globally unique string identifier of the object that the system metadata describes
+  member_node VARCHAR(250),   -- replication member node
+  policy text,   -- the policy (preferred, blocked, etc...TBD)
+  CONSTRAINT smReplicationPolicy_fk
+    FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
 );
 
 CREATE TABLE smReplicationStatus (
-	guid text,	-- the globally unique string identifier of the object that the system metadata describes
-	member_node VARCHAR(250),	 -- replication member node
-	status VARCHAR(250),	 -- replication status
-	date_verified TIMESTAMP, 	-- the date replication was verified   
-	CONSTRAINT smReplicationStatus_fk 
-		FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
+  guid text,  -- the globally unique string identifier of the object that the system metadata describes
+  member_node VARCHAR(250),   -- replication member node
+  status VARCHAR(250),   -- replication status
+  date_verified TIMESTAMP,   -- the date replication was verified
+  CONSTRAINT smReplicationStatus_fk
+    FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
 );
 
 /*
@@ -256,7 +254,7 @@ CREATE TABLE access_log (
   ip_address    VARCHAR(512),   -- the ip address inititiating the event
   user_agent    VARCHAR(512),   -- the user agent for the request
   principal     VARCHAR(512),   -- the user initiating the event
-  docid         VARCHAR(250),	-- the document id #
+  docid         VARCHAR(250),  -- the document id #
   event         VARCHAR(512),   -- the code symbolizing the event type
   date_logged   TIMESTAMP,      -- the datetime on which the event occurred
   CONSTRAINT access_log_pk PRIMARY KEY (entryid)
@@ -268,10 +266,10 @@ CREATE INDEX access_log_docid ON access_log(docid);
  * the index_event table for solr-based indexing
  */
 CREATE TABLE index_event (
-	guid text,
-	event_action VARCHAR(250),
-	description text, 
-	event_date TIMESTAMP
+  guid text,
+  event_action VARCHAR(250),
+  description text,
+  event_date TIMESTAMP
 );
 
 
@@ -377,7 +375,7 @@ CREATE TABLE scheduled_job_params (
  */
 CREATE SEQUENCE quota_usage_events_usage_local_id_seq;
 CREATE TABLE quota_usage_events (
-	usage_local_id INT8 default nextval('quota_usage_events_usage_local_id_seq'),  -- the unique usage local id (pk)
+  usage_local_id INT8 default nextval('quota_usage_events_usage_local_id_seq'),  -- the unique usage local id (pk)
   object text NOT NULL,  -- it should always be usage
   quota_id INT,  -- the identifier of the quota
   instance_id TEXT NOT NULL,  -- storage - pid of object; portal - sid of portal document
