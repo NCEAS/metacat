@@ -261,7 +261,6 @@ public class MetacatHandler {
         }
 
         try {
-            String pub = null;
             StringReader dtd = null;
             String doctext = new String(xmlBytes, encoding);
             StringReader xmlReader = new StringReader(doctext);
@@ -381,7 +380,7 @@ public class MetacatHandler {
                         throw new Exception(error);
                     }
 
-                    newdocid = DocumentImpl.write(dbConn, pub, dtd, doAction, accNumber,
+                    newdocid = DocumentImpl.write(dbConn, dtd, doAction, accNumber,
                                               user,groups, rule, needValidation, encoding, xmlBytes,
                                               schemaLocation,checksum, objectFile);
 

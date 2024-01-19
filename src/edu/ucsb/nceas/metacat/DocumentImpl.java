@@ -147,7 +147,6 @@ public class DocumentImpl {
     private String userupdated = null;
     protected String docid = null; // without revision
     private int rev;
-    private String publicaccess;
     protected long rootnodeid;
 
     private static Log logMetacat = LogFactory.getLog(DocumentImpl.class);
@@ -214,14 +213,13 @@ public class DocumentImpl {
      * @param newVersion,   need to be update
      * @param action     the action to be performed (INSERT OR UPDATE)
      * @param user       the user that owns the document
-     * @param pub        flag for public "read" access on document
      * @param catalogId  the identifier of catalog which this document belongs to
      * @param createDate  the created date of this document
      * @param updateDate  the updated date of this document
      */
     public DocumentImpl(
         DBConnection conn, long rootNodeId, String docName, String docType, String docId,
-        String newRevision, String action, String user, String pub, String catalogId,
+        String newRevision, String action, String user, String catalogId,
         Date createDate, Date updateDate) throws SQLException, Exception {
         this.connection = conn;
         this.rootnodeid = rootNodeId;
@@ -229,7 +227,7 @@ public class DocumentImpl {
         this.doctype = docType;
         this.docid = docId;
         this.rev = Integer.parseInt(newRevision);
-        writeDocumentToDB(action, user, pub, catalogId, createDate, updateDate);
+        writeDocumentToDB(action, user, catalogId, createDate, updateDate);
     }
 
     /**
@@ -337,7 +335,7 @@ public class DocumentImpl {
                 sql.append(tableName);
                 sql.append(" (docid, docname, doctype, ");
                 sql.append("user_owner, user_updated, rev, date_created, ");
-                sql.append("date_updated, public_access) values (");
+                sql.append("date_updated) values (");
                 sql.append("?, ");
                 sql.append("?, ");
                 sql.append("?, ");
@@ -345,8 +343,7 @@ public class DocumentImpl {
                 sql.append("?, ");
                 sql.append("?, ");
                 sql.append("?, ");
-                sql.append("?, ");
-                sql.append("'0')");
+                sql.append("? )");
                 // set the values
                 pstmt = dbconn.prepareStatement(sql.toString());
                 pstmt.setString(1, docid);
@@ -492,10 +489,6 @@ public class DocumentImpl {
 
     public String getUserupdated() {
         return userupdated;
-    }
-
-    public String getPublicaccess() {
-        return publicaccess;
     }
 
     public int getRev() {
@@ -1093,7 +1086,7 @@ public class DocumentImpl {
             StringBuffer sql = new StringBuffer();
             sql.append("SELECT docname, doctype, rootnodeid, ");
             sql.append("date_created, date_updated, user_owner, user_updated,");
-            sql.append(" public_access, rev");
+            sql.append(" rev");
             sql.append(" FROM ").append(table);
             sql.append(" WHERE docid LIKE ? ");
             sql.append(" and rev = ? ");
@@ -1114,8 +1107,7 @@ public class DocumentImpl {
                 this.updatedate = rs.getTimestamp(5);
                 this.userowner = rs.getString(6);
                 this.userupdated = rs.getString(7);
-                this.publicaccess = rs.getString(8);
-                this.rev = rs.getInt(9);
+                this.rev = rs.getInt(8);
             }
             pstmt.close();
 
@@ -1179,7 +1171,7 @@ public class DocumentImpl {
      * @throws Exception
      */
     private void writeDocumentToDB(
-        String action, String user, String pub, String catalogid, Date createDate,
+        String action, String user, String catalogid, Date createDate,
         Date updateDate) throws SQLException, Exception {
         String sysdate = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
         Date today = Calendar.getInstance().getTime();
@@ -1200,14 +1192,14 @@ public class DocumentImpl {
                     sql = "INSERT INTO xml_documents "
                         + "(docid, rootnodeid, docname, doctype, user_owner, "
                         + "user_updated, date_created, date_updated, "
-                        + "public_access, rev, catalog_id) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, " + "?, ?, ?, ?)";
+                        + "rev, catalog_id) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, " + "?, ?, ?)";
                 } else {
                     sql = "INSERT INTO xml_documents "
                         + "(docid, rootnodeid, docname, doctype, user_owner, "
                         + "user_updated, date_created, date_updated, "
-                        + "public_access, rev) " + "VALUES (?, ?, ?, ?, ?, ?, "
-                        + "?, ?, ?, ?)";
+                        + "rev) " + "VALUES (?, ?, ?, ?, ?, ?, "
+                        + "?, ?, ?)";
                 }
                 pstmt = connection.prepareStatement(sql);
                 // Increase dbconnection usage count
@@ -1227,12 +1219,10 @@ public class DocumentImpl {
                 // dates
                 pstmt.setTimestamp(7, new Timestamp(createDate.getTime()));
                 pstmt.setTimestamp(8, new Timestamp(updateDate.getTime()));
-                //public access is usefulless, so set it to null
-                pstmt.setInt(9, 0);
-                pstmt.setInt(10, rev);
+                pstmt.setInt(9, rev);
 
                 if (catalogid != null) {
-                    pstmt.setInt(11, Integer.parseInt(catalogid));
+                    pstmt.setInt(10, Integer.parseInt(catalogid));
                 }
 
             } else if (action.equals("UPDATE")) {
@@ -1257,13 +1247,13 @@ public class DocumentImpl {
                     updateSql =
                         "UPDATE xml_documents " + "SET rootnodeid = ?, docname = ?, doctype = ?, "
                             + "user_updated = ?, date_updated = ?, "
-                            + "rev = ?, public_access = ?, "
+                            + "rev = ?, "
                             + "catalog_id = ? " + "WHERE docid = ?";
                 } else {
                     updateSql =
                         "UPDATE xml_documents " + "SET rootnodeid = ?, docname = ?, doctype = ?, "
                             + "user_updated = ?, date_updated = ?, "
-                            + "rev = ?, public_access = ? "
+                            + "rev = ? "
                             + "WHERE docid = ?";
                 }
                 // Increase dbconnection usage count
@@ -1276,13 +1266,12 @@ public class DocumentImpl {
                 pstmt.setString(4, user);
                 pstmt.setTimestamp(5, new Timestamp(updateDate.getTime()));
                 pstmt.setInt(6, thisrev);
-                pstmt.setInt(7, 0);
 
                 if (catalogid != null) {
-                    pstmt.setInt(8, Integer.parseInt(catalogid));
-                    pstmt.setString(9, this.docid);
-                } else {
+                    pstmt.setInt(7, Integer.parseInt(catalogid));
                     pstmt.setString(8, this.docid);
+                } else {
+                    pstmt.setString(7, this.docid);
                 }
 
             } else {
@@ -1329,7 +1318,6 @@ public class DocumentImpl {
     /**
      * Parse and write an XML file to the database
      * @param conn  the JDBC connection to the database
-     * @param pub  flag for public "read" access on xml document
      * @param dtd  the dtd to be uploaded on server's file system
      * @param action  the action to be performed (INSERT or UPDATE)
      * @param accnum  the docid + rev# to use on INSERT or UPDATE
@@ -1345,7 +1333,7 @@ public class DocumentImpl {
      * @return accnum
      * @throws Exception
      */
-    public static String write(DBConnection conn, String pub, Reader dtd, String action,
+    public static String write(DBConnection conn, Reader dtd, String action,
             String accnum, String user, String[] groups, String ruleBase,
         boolean needValidation, String encoding, byte[] xmlBytes, String schemaLocation,
         Checksum checksum, File objectFile) throws Exception {
@@ -1381,7 +1369,7 @@ public class DocumentImpl {
             // null will create current time
             //false means it is not a revision doc
             parser =
-                initializeParser(conn, action, docid, schemaList, rev, user, groups, pub,
+                initializeParser(conn, action, docid, schemaList, rev, user, groups,
                                  dtd, ruleBase, needValidation, false, null, null, encoding,
                                  schemaLocation);
             xmlReader = new InputStreamReader(new ByteArrayInputStream(xmlBytes));
@@ -1752,8 +1740,8 @@ public class DocumentImpl {
      * @throws Exception
      */
     private static XMLReader initializeParser(
-        DBConnection dbconn, String action, String docid, Vector<XMLSchema> schemaList, String rev, String user,
-        String[] groups, String pub, Reader dtd, String ruleBase,
+        DBConnection dbconn, String action, String docid, Vector<XMLSchema> schemaList, String rev,
+        String user, String[] groups, Reader dtd, String ruleBase,
         boolean needValidation, boolean isRevision, Date createDate, Date updateDate,
         String encoding, String schemaLocation) throws Exception {
         XMLReader parser = null;
@@ -1768,7 +1756,7 @@ public class DocumentImpl {
             //XMLSchemaService.getInstance().populateRegisteredSchemaList();
             //create a DBSAXHandler object which has the revision
             // specification
-            chandler = new DBSAXHandler(dbconn, action, docid, rev, user, groups, pub,
+            chandler = new DBSAXHandler(dbconn, action, docid, rev, user, groups,
                                         createDate, updateDate);
             chandler.setIsRevisionDoc(isRevision);
             chandler.setEncoding(encoding);
@@ -1862,10 +1850,10 @@ public class DocumentImpl {
             pstmt = dbconn.prepareStatement(
                 "INSERT INTO xml_revisions " + "(docid, rootnodeid, docname, doctype, "
                     + "user_owner, user_updated, date_created, date_updated, "
-                    + "rev, public_access, catalog_id) "
+                    + "rev, catalog_id) "
                     + "SELECT ?, rootnodeid, docname, doctype, "
                     + "user_owner, ?, date_created, date_updated, "
-                    + "rev, public_access, catalog_id " + "FROM xml_documents "
+                    + "rev, catalog_id " + "FROM xml_documents "
                     + "WHERE docid = ?");
 
             // Increase dbconnection usage count

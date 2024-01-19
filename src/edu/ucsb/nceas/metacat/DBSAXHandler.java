@@ -90,8 +90,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     protected String[] groups = null;
 
-    protected String pub = null;
-    
     protected String encoding = null;
 
 
@@ -152,12 +150,11 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
      * @param revision  the user specified the revision need to be update
      * @param user  the user owns the document
      * @param groups  the groups to which user belongs
-     * @param pub  flag for public "read" access on document
      * @param createDate  the created date of this document
      * @param updateDate  the updated date of this document
      */
     public DBSAXHandler(DBConnection conn, String action, String docid,
-            String revision, String user, String[] groups, String pub,
+            String revision, String user, String[] groups,
             Date createDate, Date updateDate) {
         this(conn, createDate, updateDate);
         this.action = action;
@@ -165,7 +162,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         this.revision = revision;
         this.user = user;
         this.groups = groups;
-        this.pub = pub;
     }
 
     /** SAX Handler that receives notification of beginning of the document */
@@ -267,7 +263,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
                 if (!isRevisionDoc) {
                   currentDocument = new DocumentImpl(connection, NODE_ID,
                          docname, doctype, docid, revision,
-                        action, user, this.pub, catalogid,
+                        action, user, catalogid,
                         createDate, updateDate);
                 }
             } catch (Exception ane) {

@@ -976,8 +976,7 @@ public class SystemMetadataFactory {
         sb.append("<date_updated>");
         sb.append(DateTimeMarshaller.serializeDateToUTC(doc.getUpdateDate()));
         sb.append("</date_updated>");
-        sb.append("<public_access>").append(doc.getPublicaccess());
-        sb.append("</public_access><rev>").append(doc.getRev());
+        sb.append("<rev>").append(doc.getRev());
         sb.append("</rev>");
 
         sb.append("<accessControl>");
