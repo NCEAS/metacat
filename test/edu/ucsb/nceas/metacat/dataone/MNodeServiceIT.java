@@ -93,6 +93,8 @@ public class MNodeServiceIT extends D1NodeServiceTest {
     private static final String TEST_MN_SUBJECT = "CN=urn:node:METACAT1,DC=dataone,DC=org";
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
     private static final String CN_BASE_URL = "https://cn.dataone.org/cn";
+    private static final String invalidEmlPath1 = "test/resources/eml-error-2.2.0.xml";
+    private static final String invalidEmlPath2 = "test/resources/eml-error.xml";
 
     /**
      * Set up the test fixtures
@@ -185,6 +187,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         suite.addTest(new MNodeServiceIT("testCreateAndUpdateWithDoiDisabled"));
         suite.addTest(new MNodeServiceIT("testCreateAndUpdateFGDC"));
         suite.addTest(new MNodeServiceIT("testReindex"));
+        suite.addTest(new MNodeServiceIT("testCreateWithInvalidEML"));
         return suite;
 
     }
@@ -4442,5 +4445,49 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             versionChanged = !newVersion1.equals(version1);
         }
         assertTrue(versionChanged);
+    }
+
+    /**
+     * Test the create method with the invalid eml objects
+     * @throws Exception
+     */
+    public void testCreateWithInvalidEML() throws Exception {
+        printTestHeader("testCreateWithInvalidEML");
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testCreateWithInvalidEML1." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(new File(invalidEmlPath1));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object.close();
+        sysmeta.setFormatId(formatId);
+        object = new FileInputStream(new File(invalidEmlPath1));
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("The test cannot get here since it inserted an invalid eml object.");
+        } catch(Exception e) {
+            object.close();
+            assertTrue("The error message must say the eml id should be unique",
+                                    e.getMessage().contains("ID attributes must be unique"));
+        }
+
+        guid = new Identifier();
+        guid.setValue("testCreateWithInvalidEML2." + System.currentTimeMillis());
+        ObjectFormatIdentifier formatId2 = new ObjectFormatIdentifier();
+        formatId2.setValue("eml://ecoinformatics.org/eml-2.1.1");
+        object = new FileInputStream(new File(invalidEmlPath2));
+        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatId2);
+        object.close();
+        object = new FileInputStream(new File(invalidEmlPath2));
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("The test cannot get here since it inserted an invalid eml object.");
+        } catch(Exception e) {
+            object.close();
+            assertTrue("The error message must say the elemement principal1 is invalid.",
+                        e.getMessage().contains("principal1"));
+        }
     }
 }
