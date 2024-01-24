@@ -90,7 +90,7 @@ configMetacatUi() {
           S="s"
         fi
         echo "  baseUrl: \"http${S}://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\","
-        echo "  d1CNBaseUrl: \"$METACAT_DATAONE_CN_URL\""
+        echo "  d1CNBaseUrl: \"${METACAT_DATAONE_CN_URL%"cn"}\""
         echo '}'
     } > "${UI_HOME}"/config/config.js
 
