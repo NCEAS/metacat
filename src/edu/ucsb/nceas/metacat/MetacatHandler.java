@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.sql.SQLException;
-import java.util.Hashtable;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -17,7 +16,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
 
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
@@ -25,14 +23,11 @@ import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
-import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
 import edu.ucsb.nceas.metacat.event.MetacatEventService;
-import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.LSIDUtil;
