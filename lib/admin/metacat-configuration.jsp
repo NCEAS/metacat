@@ -412,7 +412,7 @@
                 <i class="icon-thumbs-up"></i>Configuration of Metacat is complete.
                  Please restart Tomcat so that the webapps are initialized with these settings.
                  Note that this may take some time while the system initializes with the
-                 new configuration values. If this is the first time of the installation of the Solr
+                 new configuration values. If this is the first time installing the Solr
                  server, please reindex all objects.</div>
     <%
             }
