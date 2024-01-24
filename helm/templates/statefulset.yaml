@@ -94,6 +94,8 @@ spec:
               value: {{ include "metacat.serverPort" . | quote }}
             - name: METACAT_APP_CONTEXT
               value: {{ index .Values.metacat "application.context" }}
+            - name: METACAT_DATAONE_CN_URL
+              value: {{ index .Values.metacat "D1Client.CN_URL" }}
             - name: TOMCAT_MEM_MIN
               value: {{ .Values.tomcat.heapMemory.min }}
             - name: TOMCAT_MEM_MAX
