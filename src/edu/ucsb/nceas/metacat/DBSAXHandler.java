@@ -267,8 +267,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
                         createDate, updateDate);
                 }
             } catch (Exception ane) {
-                ane.printStackTrace(System.out);
-                ane.printStackTrace(System.err);
                 throw (new SAXException("Error in DBSaxHandler.startElement for action "
                         + action + " : " + ane.getMessage(), ane));
             }
