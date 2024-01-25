@@ -1,29 +1,3 @@
-/**
- *  '$RCSfile$'
- *    Purpose: A Class that implements utility methods for a metadata catalog
- *  Copyright: 2009 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Michael Daigle
- *
- *   '$Author: daigle $'
- *     '$Date: 2009-08-04 14:32:58 -0700 (Tue, 04 Aug 2009) $'
- * '$Revision: 5015 $'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.util;
 
 import java.sql.SQLException;
@@ -31,9 +5,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.SimpleTimeZone;
-import java.util.Stack;
 import java.util.TimeZone;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,7 +14,6 @@ import edu.ucsb.nceas.dbadapter.AbstractDatabase;
 import edu.ucsb.nceas.metacat.DBSAXHandler;
 import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
-import edu.ucsb.nceas.metacat.NodeRecord;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -100,27 +71,6 @@ public class DocumentUtil {
       return accessionNumber;
     }
 
-    private static int getIndexForGivenChar(String str, char character)
-    {
-        int index = -1;
-        // make sure str is not null
-        if (str == null) {
-            logMetacat.debug("DocumentUtil.getIndexForGivenChar - " +
-                    "The given str is null and -1 will be returned");
-            return index;
-        }
-        // got though the string
-        for (int i = 0; i < str.length(); i++) {
-            // find the first one then break the loop
-            if (str.charAt(i) == character) {
-                index = i;
-                break;
-            }//if
-        }//for
-        logMetacat.info("DocumentUtil.getIndexForGivenChar - the index for char " + 
-                character + " is: " + index);
-        return index;
-    }
 
     /**
      * Utility method to get docid from a given string
