@@ -93,12 +93,12 @@ public class DocumentUtil {
             return docid;
         }
         // the first element in list is 0
-        list.add(new Integer(0));
+        list.add(Integer.valueOf(0));
         for (int i = 0; i < url.length(); i++) {
             if (url.charAt(i) == limited) {
                 // count plus 1
                 count++;
-                list.add(new Integer(i));
+                list.add(Integer.valueOf(i));
                 // get substring beween two &
                 String str = url.substring(
                         ((Integer) list.elementAt(count - 1)).intValue(), i);
@@ -542,7 +542,7 @@ public class DocumentUtil {
      */
     public static String getContentWithoutSystemMetadata(String docInfoStr) {
         // strip out the system metadata portion
-        if (docInfoStr.indexOf(startTag) > -1) {
+        if (docInfoStr.contains(startTag)) {
           docInfoStr = docInfoStr.substring(0, docInfoStr.indexOf(startTag))
                   + docInfoStr.substring(docInfoStr.indexOf(endTag) + endTag.length());
         }
