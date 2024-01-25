@@ -41,7 +41,7 @@ import static org.junit.Assert.fail;
  * @author tao
  *
  */
-public class QuotaServiceManagerTest {
+public class QuotaServiceManagerIT {
     private final static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
     private final static String SUBSCRIBERWITHOUTENOUGHQUOTA =
         "CN=membership-EF2C028D-2168-495A-8B15-2177D0F18DB4,DC=dataone,DC=org";
