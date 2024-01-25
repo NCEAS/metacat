@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.sql.ResultSet;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -1735,6 +1736,33 @@ public class QuotaServiceManagerTest {
         assertTrue("The final time string (after transformed by the method "
                      + " combinateCurrentDateAndGivenTime) " + s
                      + " doesn't have the given time " + givenTime, s.contains(givenTime));
+
+        //when you run the test just a couple minutes around 12:00 AM, it may fail.
+        //before current time and should set the date tomorrow
+        String note = ". Note: if you run the test just a couple minutes around 12:00 AM, it may "
+                        + "fail. Please wait a couple minutes to try again.";
+        Date current = new Date();
+        Date before = new Date(current.getTime() - 65000);
+        SimpleDateFormat showDate = new SimpleDateFormat("MMMMM dd, yyyy,");
+        String tomorrow = showDate.format(new Date(current.getTime() + 24*60*60*1000));
+        SimpleDateFormat shortTime = new SimpleDateFormat("h:mm a");
+        String beforeShortTime = shortTime.format(before);
+        String combineStr = tomorrow + " " + beforeShortTime;
+        Date date1 = QuotaServiceManager.combineCurrentDateAndGivenTime(beforeShortTime);
+        s = df.format(date1);
+        assertTrue("The time parsed string " + s + " should be " + combineStr + note,
+                    s.equals(combineStr));
+
+        //after current time and should set the date today
+        current = new Date();
+        String today = showDate.format(current);
+        Date after = new Date(current.getTime() + 150000);
+        String afterShortTime = shortTime.format(after);
+        combineStr = today + " " + afterShortTime;
+        date1 = QuotaServiceManager.combineCurrentDateAndGivenTime(afterShortTime);
+        s = df.format(date1);
+        assertTrue("The parsed time string " + s + " should be " + combineStr + note,
+                s.equals(combineStr));
     }
 
     /**
