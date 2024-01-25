@@ -1706,7 +1706,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      */
     public void testCombinateCurrentDateAndGivenTime() throws Exception {
         String givenTime = "11:59 PM";
-        Date date = QuotaServiceManager.combinateCurrentDateAndGivenTime(givenTime);
+        Date date = QuotaServiceManager.combineCurrentDateAndGivenTime(givenTime);
         DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT);
         String s = df.format(date);
         assertTrue("The final time string (after transformed by the method "

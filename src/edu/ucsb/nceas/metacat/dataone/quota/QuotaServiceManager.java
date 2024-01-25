@@ -139,7 +139,7 @@ public class QuotaServiceManager {
                                         + startTimeStr);
             Date startTime = null;
             try {
-                startTime = combinateCurrentDateAndGivenTime(startTimeStr);
+                startTime = combineCurrentDateAndGivenTime(startTimeStr);
             } catch (Exception e) {
                 logMetacat.error("QuotaServiceManager.startDailyCheck - Metacat can't figure out "
                          + " the time setting as the value of the property "
@@ -264,10 +264,10 @@ public class QuotaServiceManager {
     }
 
     /**
-     * This method will combine given time string(in short format) to current
-     * date. If the given time (e.g 10:00 AM) passed the current time (e.g 2:00
-     * PM Aug 21, 2005), then the time will set to second day, 10:00 AM Aug 22,
-     * 2005. If the given time (e.g 10:00 AM) haven't passed the current time
+     * This method will combine given time string (in short format) to current
+     * date. If the given time (e.g 10:00 AM) is after the current time (e.g 2:00
+     * PM Aug 21, 2005), then the time will set to the following day, 10:00 AM Aug 22,
+     * 2005. If the given time (e.g 10:00 AM) is before the current time
      * (e.g 8:00 AM Aug 21, 2005) The time will set to be 10:00 AM Aug 21, 2005.
      *
      * @param givenTime
@@ -275,7 +275,7 @@ public class QuotaServiceManager {
      * @return the Date object
      * @throws HandlerException
      */
-    protected static Date combinateCurrentDateAndGivenTime(String givenTime) throws HandlerException {
+    protected static Date combineCurrentDateAndGivenTime(String givenTime) throws HandlerException {
         try {
             Date givenDate = parseTime(givenTime);
             Date newDate = null;
