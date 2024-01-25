@@ -30,19 +30,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
-import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.junit.Before;
+import org.junit.Test;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLogData;
@@ -53,56 +53,46 @@ import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 
 /**
  * JUnit test class for the JsonLDHandler class
  * @author tao
  *
  */
-public class JsonLDHandlerTest extends D1NodeServiceTest {
+public class JsonLDHandlerTest {
     private static String metadataStoragePath = null;
     private static String ip = "196.168.0.10";
     private static String agent = "java/junit_test";
     private static EventLogData event =  new EventLogData(ip, agent, null, null, "create");
-    
+
     public static final String JSON_LD_FILE_PATH = "test/json-ld.json";
     private static final String CHECKSUM_JSON_FILE = "847e1655bdc98082804698dbbaf85c35";
     public static final String INVALID_JSON_LD_FILE_PATH = "test/invalid-json-ld.json";
     private static final String CHECKSUM_INVALID_JSON_FILE = "ede435691fa0c68e9a3c23697ffc92d4";
-    
+
+    private D1NodeServiceTest d1NodeTest = null;
     /**
-     * Constructor
-     * @param name of the test method
+     * Set up the test fixtures
+     * @throws PropertyNotFoundException
      */
-    public JsonLDHandlerTest(String name) {
-        super(name);
-        try {
-            metadataStoragePath = PropertyService.getProperty("application.documentfilepath");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
+    @Before
+    public void setUp() throws PropertyNotFoundException {
+        d1NodeTest = new D1NodeServiceTest("initialize");
+        metadataStoragePath = PropertyService.getProperty("application.documentfilepath");
     }
 
-    /**
-     * Create a test suite
-     * @return the generated test suite
-     */
-    public static Test suite() {
-        TestSuite suite = new TestSuite();
-        suite.addTest(new JsonLDHandlerTest("testInvalid"));
-        suite.addTest(new JsonLDHandlerTest("testSave"));
-        suite.addTest(new JsonLDHandlerTest("testSaveByteArray"));
-        suite.addTest(new JsonLDHandlerTest("testSaveFile"));
-        return suite;
-    }
 
     /**
      * Test the valid method
      * @throws Exception
      */
+    @Test
     public void testInvalid() throws Exception {
         JsonLDHandler handler = new JsonLDHandler();
         InputStream input = new FileInputStream(new File(JSON_LD_FILE_PATH));
@@ -116,21 +106,22 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         }
         
     }
-    
+
     /**
      * Test the save method
      * @throws Exception
      */
+    @Test
     public void testSave() throws Exception {
-       
-        Session session = getTestSession();
+
+        Session session = d1NodeTest.getTestSession();
         Checksum expectedChecksum = new Checksum();
         expectedChecksum.setAlgorithm("MD5");
         expectedChecksum.setValue(CHECKSUM_JSON_FILE);
         ObjectFormatIdentifier format = new ObjectFormatIdentifier();
         format.setValue(NonXMLMetadataHandlers.JSON_LD);
         SystemMetadata sysmeta = new SystemMetadata();
-        
+
         //save the DetailedFileInputStream from the valid json-ld object without a checksum
         File temp1 = generateTmpFile("temp-json-ld-valid");
         InputStream input = new FileInputStream(new File(JSON_LD_FILE_PATH));
@@ -156,7 +147,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         assertTrue(savedFile.exists());
         DocumentImpl.deleteFromFileSystem(localId, true);
         assertFalse(savedFile.exists());
-        
+
         //save the DetaiedFileInputStream from the valid json-ld object with the expected checksum
         File temp2 = generateTmpFile("temp2-json-ld-valid");
         input = new FileInputStream(new File(JSON_LD_FILE_PATH));
@@ -181,11 +172,11 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         assertTrue(savedFile2.exists());
         DocumentImpl.deleteFromFileSystem(localId, true);
         assertTrue(!savedFile2.exists());
-        
+
         Checksum expectedChecksumForInvalidJson = new Checksum();
         expectedChecksumForInvalidJson.setAlgorithm("MD5");
         expectedChecksumForInvalidJson.setValue(CHECKSUM_INVALID_JSON_FILE);
-        
+
         //save the DetaiedFileInputStream from the invalid json-ld object without a checksum
         File temp3 = generateTmpFile("temp3-json-ld-valid");
         input = new FileInputStream(new File(INVALID_JSON_LD_FILE_PATH));
@@ -210,7 +201,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
         temp3.delete();
-       
+
         //save the DetaiedFileInputStream from the invalid json-ld object with the expected checksum
         File temp4 = generateTmpFile("temp4-json-ld-valid");
         input = new FileInputStream(new File(INVALID_JSON_LD_FILE_PATH));
@@ -234,7 +225,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
         temp4.delete();
-        
+
         //save the DetaiedFileInputStream from the valid json-ld object with a wrong checksum
         File temp5 = generateTmpFile("temp5-json-ld-valid");
         input = new FileInputStream(new File(JSON_LD_FILE_PATH));
@@ -262,23 +253,24 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
         temp5.delete();
     }
-    
+
     /**
      * Save the jsonLD object coming from a byte array input stream
      * @throws Exception
      */
+    @Test
     public void testSaveByteArray() throws Exception {
         ObjectFormatIdentifier format = new ObjectFormatIdentifier();
         format.setValue(NonXMLMetadataHandlers.JSON_LD);
-        Session session = getTestSession();
+        Session session = d1NodeTest.getTestSession();
         Checksum expectedChecksum = new Checksum();
         expectedChecksum.setAlgorithm("MD5");
         expectedChecksum.setValue(CHECKSUM_JSON_FILE);
-        
+
         Checksum expectedChecksumForInvalidJson = new Checksum();
         expectedChecksumForInvalidJson.setAlgorithm("MD5");
         expectedChecksumForInvalidJson.setValue(CHECKSUM_INVALID_JSON_FILE);
-        
+
         //save a valid json file with correct expected checksum
         String content = FileUtils.readFileToString(new File(JSON_LD_FILE_PATH), "UTF-8");
         InputStream data = new ByteArrayInputStream(content.getBytes());
@@ -297,7 +289,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         assertTrue(savedFile.exists());
         DocumentImpl.deleteFromFileSystem(localId, true);
         assertTrue(!savedFile.exists());
-        
+
         //save the valid json-ld object with the wrong checksum
         data = new ByteArrayInputStream(content.getBytes());
         pid = new Identifier();
@@ -313,7 +305,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             assertTrue(e instanceof InvalidSystemMetadata);
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        
+
         //save an invalid jsonld file
         content = FileUtils.readFileToString(new File(INVALID_JSON_LD_FILE_PATH), "UTF-8");
         data = new ByteArrayInputStream(content.getBytes());
@@ -331,23 +323,24 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
     }
-    
+
     /**
      * Save the jsonLD object coming from a regular file
      * @throws Exception
      */
+    @Test
     public void testSaveFile() throws Exception {
         ObjectFormatIdentifier format = new ObjectFormatIdentifier();
         format.setValue(NonXMLMetadataHandlers.JSON_LD);
-        Session session = getTestSession();
+        Session session = d1NodeTest.getTestSession();
         Checksum expectedChecksum = new Checksum();
         expectedChecksum.setAlgorithm("MD5");
         expectedChecksum.setValue(CHECKSUM_JSON_FILE);
-        
+
         Checksum expectedChecksumForInvalidJson = new Checksum();
         expectedChecksumForInvalidJson.setAlgorithm("MD5");
         expectedChecksumForInvalidJson.setValue(CHECKSUM_INVALID_JSON_FILE);
-        
+
         //save a valid json file with correct expected checksum
         InputStream data = new FileInputStream(new File(JSON_LD_FILE_PATH));
         JsonLDHandler handler = new JsonLDHandler();
@@ -366,7 +359,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         data.close();
         DocumentImpl.deleteFromFileSystem(localId, true);
         assertTrue(!savedFile.exists());
-        
+
         //save the  valid json-ld object with the wrong checksum
         data = new FileInputStream(new File(JSON_LD_FILE_PATH));
         pid = new Identifier();
@@ -383,7 +376,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             assertTrue(e instanceof InvalidSystemMetadata);
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        
+
         //save an invalid jsonld file
         pid = new Identifier();
         pid.setValue("test-saveFile-id3-" + System.currentTimeMillis());
@@ -400,7 +393,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             assertTrue(e instanceof InvalidRequest);
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        
+
     }
 
     /*
@@ -418,7 +411,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         }
         return newFile;
     }
-    
+
     /**
      * Delete the record from the xml_documents table
      * @param localId
