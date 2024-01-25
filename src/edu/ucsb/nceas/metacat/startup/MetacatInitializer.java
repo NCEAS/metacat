@@ -201,7 +201,7 @@ public class MetacatInitializer implements ServletContextListener{
 
         try {
             directoryName = SystemUtil.getContextDir() + FileUtil.getFS() + "sitemaps";
-            sitemapInterval = Integer.parseInt(PropertyService.getProperty("sitemap.interval"));
+            sitemapInterval = Long.parseLong(PropertyService.getProperty("sitemap.interval"));
         } catch (PropertyNotFoundException pnfe) {
             logMetacat.error("MetacatHandler.scheduleSitemapGeneration - "
                                  + "Could not run site map generation because property "
@@ -270,9 +270,8 @@ public class MetacatInitializer implements ServletContextListener{
     protected static void startIndexReGenerator() {
         boolean regenerateIndex = false;
         try {
-            regenerateIndex = (new Boolean(PropertyService
-                                         .getProperty("index.regenerate.sincelastProcessDate")))
-                                            .booleanValue();
+            regenerateIndex = Boolean.parseBoolean(PropertyService
+                                         .getProperty("index.regenerate.sincelastProcessDate"));
         } catch (PropertyNotFoundException e) {
             logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
                               + "index.regenerate.sincelastProcessDate"
@@ -281,9 +280,8 @@ public class MetacatInitializer implements ServletContextListener{
         }
         long period = 86400000;//milliseconds
         try {
-            period = (new Long(PropertyService
-                                          .getProperty("index.regenerate.interval")))
-                                            .longValue();
+            period = Long.parseLong(PropertyService
+                                          .getProperty("index.regenerate.interval"));
         } catch (PropertyNotFoundException | NumberFormatException e) {
             logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
                           + "index.regenerate.interval"
@@ -311,9 +309,8 @@ public class MetacatInitializer implements ServletContextListener{
         }
         boolean regneratedFailedIndex = true;
         try {
-            regneratedFailedIndex = (new Boolean(PropertyService
-                                           .getProperty("index.regenerate.failedObject")))
-                                             .booleanValue();
+            regneratedFailedIndex = Boolean.parseBoolean(PropertyService
+                                           .getProperty("index.regenerate.failedObject"));
         } catch (PropertyNotFoundException e) {
             logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
                     + "index.regenerate.failedObject"
@@ -322,8 +319,8 @@ public class MetacatInitializer implements ServletContextListener{
         }
         long delay = 1200000;
         try {
-            delay = (new Long(PropertyService
-                                .getProperty("index.regenerate.failedTask.delay"))).longValue();
+            delay = Long.parseLong(PropertyService
+                                .getProperty("index.regenerate.failedTask.delay"));
         } catch (PropertyNotFoundException | NumberFormatException e) {
             logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
                     + "index.regenerate.failedTask.delay"
@@ -331,9 +328,8 @@ public class MetacatInitializer implements ServletContextListener{
         }
         long failedInterval = 3600000;
         try {
-            failedInterval = (new Long(PropertyService
-                                    .getProperty("index.regenerate.failedTask.interval")))
-                                    .longValue();
+            failedInterval = Long.parseLong(PropertyService
+                                    .getProperty("index.regenerate.failedTask.interval"));
         } catch (PropertyNotFoundException | NumberFormatException e) {
             logMetacat.debug("MetacatServlet.startIndexGenerate - the property "
                     + "index.regenerate.failedTask.interval"

@@ -1140,7 +1140,6 @@ public class DocumentImpl {
             logMetacat.error(
                 "DocumentImpl.getDocumentInfo - Error in DocumentImpl.getDocumentInfo: "
                     + e.getMessage());
-            e.printStackTrace(System.out);
             throw new McdbException(
                 "DocumentImpl.getDocumentInfo - Error accessing database connection: ", e);
         } finally {
@@ -1163,7 +1162,6 @@ public class DocumentImpl {
      * Creates the SQL code and inserts new document into DB connection
      * @param action  it can be insert or update
      * @param user  the owner of the document
-     * @param pub  the flag if the document is public readable
      * @param catalogid  the catalog identifier to which the document belongs
      * @param createDate  the created date of the document
      * @param updateDate  the updated date of the document
@@ -1173,7 +1171,6 @@ public class DocumentImpl {
     private void writeDocumentToDB(
         String action, String user, String catalogid, Date createDate,
         Date updateDate) throws SQLException, Exception {
-        String sysdate = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
         Date today = Calendar.getInstance().getTime();
         if (createDate == null) {
             createDate = today;
@@ -1181,7 +1178,6 @@ public class DocumentImpl {
         if (updateDate == null) {
             updateDate = today;
         }
-        DocumentImpl thisdoc = null;
 
         try {
             PreparedStatement pstmt = null;
@@ -1193,12 +1189,12 @@ public class DocumentImpl {
                         + "(docid, rootnodeid, docname, doctype, user_owner, "
                         + "user_updated, date_created, date_updated, "
                         + "rev, catalog_id) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, " + "?, ?, ?)";
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 } else {
                     sql = "INSERT INTO xml_documents "
                         + "(docid, rootnodeid, docname, doctype, user_owner, "
                         + "user_updated, date_created, date_updated, "
-                        + "rev) " + "VALUES (?, ?, ?, ?, ?, ?, "
+                        + "rev) VALUES (?, ?, ?, ?, ?, ?, "
                         + "?, ?, ?)";
                 }
                 pstmt = connection.prepareStatement(sql);
@@ -1286,34 +1282,12 @@ public class DocumentImpl {
             pstmt.close();
         } catch (SQLException sqle) {
             logMetacat.error("DocumentImpl.writeDocumentToDB - SQL error: " + sqle.getMessage());
-            sqle.printStackTrace();
             throw sqle;
         } catch (Exception e) {
             logMetacat.error("DocumentImpl.writeDocumentToDB - General error: " + e.getMessage());
-            e.printStackTrace();
             throw e;
         }
     }
-
-
-    /**
-     * Write an XML file to the database, given a Reader
-     *
-     * @param conn             the JDBC connection to the database
-     * @param xml              the xml stream to be loaded into the database
-     * @param pub              flag for public "read" access on xml document
-     * @param dtd              the dtd to be uploaded on server's file system
-     * @param action           the action to be performed (INSERT or UPDATE)
-     * @param accnum           the docid + rev# to use on INSERT or UPDATE
-     * @param user             the user that owns the document
-     * @param groups           the groups to which user belongs
-     * @param serverCode       the serverid from xml_replication on which this document resides.
-     * @param override         flag to stop insert replication checking. if override = true then a
-     *                         document not belonging to the local server will not be checked upon
-     *                         update for a file lock. if override = false then a document not from
-     *                         this server, upon update will be locked and version checked.
-     * @param writeAccessRules
-     */
 
     /**
      * Parse and write an XML file to the database
@@ -1388,12 +1362,10 @@ public class DocumentImpl {
                 } catch (Exception e) {
                     logMetacat.error(
                         "Error syncing pids with CN: " + " Exception " + e.getMessage());
-                    e.printStackTrace(System.out);
                 }
             }
         } catch (Exception e) {
             logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
-            e.printStackTrace();
             conn.rollback();
             conn.setAutoCommit(true);
             throw e;
@@ -1663,20 +1635,29 @@ public class DocumentImpl {
 
     }
 
+    /**
+     * Get the doc type for a given docid. If we don't find, null will be returned
+     * @param conn  the db connection which will be used to connect to database
+     * @param tableName  the table name which will be looked up
+     * @param docidWithoutRev  the given docid
+     * @return the doc type
+     * @throws SQLException
+     */
     private static String getDocTypeFromDB(
         DBConnection conn, String tableName, String docidWithoutRev) throws SQLException {
         String type = null;
         String sql = "SELECT DOCTYPE FROM " + tableName + " WHERE docid LIKE ?";
-        PreparedStatement stmt = null;
-        stmt = conn.prepareStatement(sql);
-        stmt.setString(1, docidWithoutRev);
-        ResultSet result = stmt.executeQuery();
-        boolean hasResult = result.next();
-        if (hasResult) {
-            type = result.getString(1);
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, docidWithoutRev);
+            try (ResultSet result = stmt.executeQuery()) {
+                boolean hasResult = result.next();
+                if (hasResult) {
+                    type = result.getString(1);
+                }
+            }
         }
         logMetacat.debug(
-            "DocumentImpl.delete - The type of deleting docid " + docidWithoutRev + " is " + type);
+            "DocumentImpl.getDocTypeFromDB - The type of docid " + docidWithoutRev + " is " + type);
         return type;
     }
 
@@ -1690,19 +1671,6 @@ public class DocumentImpl {
         return controller.hasPermission(user, groups, AccessControlInterface.WRITESTRING);
     }
 
-    /**
-     * Check for "READ" permission base on docid, user and group
-     *
-     * @param docid,  the document
-     * @param user,   user name
-     * @param groups, user's group
-     */
-    public static boolean hasReadPermission(String user, String[] groups, String docId)
-        throws SQLException, McdbException {
-        // Check for READ permission on @docid for @user and/or @groups
-        PermissionController controller = new PermissionController(docId);
-        return controller.hasPermission(user, groups, AccessControlInterface.READSTRING);
-    }
 
     /**
      * Check for "ALL" or "CHMOD" permission on @docid for @user and/or @groups from DB connection
@@ -1722,11 +1690,10 @@ public class DocumentImpl {
      * @param dbconn  the connection connected to db
      * @param action  it can be insert or update
      * @param docid  the id of the document
-     * @param xml  the source of the xml document
+     * @param schemaList  the list of schema will be used
      * @param rev  the revision of the document
      * @param user  the owner of the document
      * @param groups  the groups in which the owner is
-     * @param pub  the flag indicates if the doucment is public readable
      * @param dtd  the dtd content
      * @param ruleBase  the validation base - schema or dtd
      * @param needValidation  if the document needs to be validated
@@ -1734,7 +1701,6 @@ public class DocumentImpl {
      * @param createDate  the created date of the document
      * @param updateDate  the updated date of the document
      * @param encoding  the encoding code of the document
-     * @param writeAccessRules
      * @param schemaLocation  the string contains the schema location
      * @return the XMLReader object
      * @throws Exception

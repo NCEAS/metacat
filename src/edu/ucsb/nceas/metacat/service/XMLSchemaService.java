@@ -104,7 +104,7 @@ public class XMLSchemaService extends BaseService {
             createRegisteredNameSpaceAndLocationString();
             populateNonXMLMetadataFormatList();
         } catch (PropertyNotFoundException pnfe) {
-            logMetacat.error("XMLService.doRefresh - Could not find property: xml.useFullSchemaValidation."
+            logMetacat.warn("XMLService.doRefresh - Could not find property: xml.useFullSchemaValidation."
                     + " Setting to false.");
         }
     }
