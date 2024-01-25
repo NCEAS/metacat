@@ -1,7 +1,5 @@
 package edu.ucsb.nceas.metacat.dataone;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -14,57 +12,24 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.junit.Test;
 
-import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.IdentifierManager;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * A class for testing the generation of SystemMetadata from defaults
  */
-public class SystemMetadataFactoryTest extends MCTestCase {
-
-    /**
-     * constructor for the test
-     */
-    public SystemMetadataFactoryTest(String name) {
-        super(name);
-    }
-
-    /**
-     * Establish a testing framework by initializing appropriate objects
-     */
-    public void setUp() throws Exception {
-    }
-
-    /**
-     * Release any objects after tests are complete
-     */
-    public void tearDown() {
-    }
-
-    /**
-     * Create a suite of tests to be run together
-     */
-    public static Test suite() {
-        TestSuite suite = new TestSuite();
-        suite.addTest(new SystemMetadataFactoryTest("initialize"));
-        suite.addTest(new SystemMetadataFactoryTest("getDefaultReplicationPolicy"));
-        suite.addTest(new SystemMetadataFactoryTest("testGetDocumentInfoMap"));
-        return suite;
-    }
-
-    /**
-     * Run an initial test that always passes to check that the test harness is
-     * working.
-     */
-    public void initialize() {
-        assertTrue(1 == 1);
-    }
+public class SystemMetadataFactoryTest {
 
     /**
      * Test the getDefaultRepicationPolicy method
      * @throws Exception
      */
+    @Test
     public void getDefaultReplicationPolicy() throws Exception {
         ReplicationPolicy rp = SystemMetadataFactory.getDefaultReplicationPolicy();
         assertNotNull(rp);
@@ -75,6 +40,7 @@ public class SystemMetadataFactoryTest extends MCTestCase {
     /**
      * Tests the getDocumentInfoMap method
      */
+    @Test
     public void testGetDocumentInfoMap() throws Exception {
         D1NodeServiceTest d1NodeTest = new D1NodeServiceTest("initialize");
         HttpServletRequest request = d1NodeTest.getServletRequest();
