@@ -376,32 +376,6 @@ public class AccessControlList extends DefaultHandler
         return thisPermission;
     }
 
-    /* Get the text value of READ, WRITE, CHMOD or ALL. */
-    public static String txtValue(int permission) {
-        StringBuffer txtPerm = new StringBuffer();
-
-        if ((permission & ALL) == ALL) {
-            return ALLSTRING;
-        }
-        if ((permission & CHMOD) == CHMOD) {
-            txtPerm.append(CHMODSTRING);
-        }
-        if ((permission & READ) == READ) {
-          if (txtPerm.length() > 0) {
-            txtPerm.append(",");
-          }
-            txtPerm.append(READSTRING);
-        }
-        if ((permission & WRITE) == WRITE) {
-          if (txtPerm.length() > 0) {
-            txtPerm.append(",");
-          }
-            txtPerm.append(WRITESTRING);
-        }
-
-        return txtPerm.toString();
-    }
-
 
   /**
      * SAX Handler that receives notification of comments in the DTD
@@ -414,14 +388,14 @@ public class AccessControlList extends DefaultHandler
     /**
      * SAX Handler that receives notification of the start of CDATA sections
      */
-    public void startCDATA() throws SAXException {
+    public void startCDATA() {
         logMetacat.trace("AccessControlList.startCDATA - starting CDATA");
     }
 
     /**
      * SAX Handler that receives notification of the end of CDATA sections
      */
-    public void endCDATA() throws SAXException {
+    public void endCDATA() {
         logMetacat.trace("AccessControlList.endCDATA - end CDATA");
     }
 
