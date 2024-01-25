@@ -10,6 +10,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.bookkeeper.api.Quota;
 import org.dataone.bookkeeper.api.Usage;
 import org.dataone.configuration.Settings;
@@ -20,19 +23,24 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.junit.Before;
+import org.junit.Test;
 
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * A IT test class to test all quota services
  * @author tao
  *
  */
-public class QuotaServiceManagerTest extends D1NodeServiceTest {
+public class QuotaServiceManagerTest {
     private final static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
     private final static String SUBSCRIBERWITHOUTENOUGHQUOTA =
         "CN=membership-EF2C028D-2168-495A-8B15-2177D0F18DB4,DC=dataone,DC=org";
@@ -50,12 +58,17 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
     private static int maxAttempt = 50;
     private static String portalFilePath = "test/example-portal.xml";
 
+    private D1NodeServiceTest d1NodeTest = null;
+    private MockHttpServletRequest request = null;
+
     /**
-     * Constructor
-     * @param name  name of method will be tested
+     * Set up the test fixtures
+     * @throws Exception
      */
-    public QuotaServiceManagerTest(String name) {
-        super(name);
+    @Before
+    public void setUp() throws Exception {
+        d1NodeTest = new D1NodeServiceTest("initialize");
+        request = (MockHttpServletRequest)d1NodeTest.getServletRequest();
         java.util.logging.Logger.getLogger("org.apache.http.wire")
             .setLevel(java.util.logging.Level.FINEST);
         java.util.logging.Logger.getLogger("org.apache.http.headers")
@@ -70,33 +83,6 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             "org.apache.commons.logging.simplelog.log.org.apache.http.headers", "debug");
     }
 
-    /**
-     * Create a suite of tests to be run together
-     */
-    public static Test suite() {
-        TestSuite suite = new TestSuite();
-        try {
-            if (QuotaServiceManager.getInstance().isEnabled()) {
-                suite.addTest(new QuotaServiceManagerTest("testBookKeeperClientMethods"));
-                suite.addTest(new QuotaServiceManagerTest("testFailedReportingAttemptChecker_Run"));
-                suite.addTest(
-                    new QuotaServiceManagerTest("testFailedReportingAttemptChecker_Run2"));
-                suite.addTest(new QuotaServiceManagerTest("testQuotaServiceManagerQuotaEnforce"));
-                suite.addTest(new QuotaServiceManagerTest("testQuotaServiceManagerQuotaEnforce2"));
-                suite.addTest(new QuotaServiceManagerTest("testMNodeMethodWithPortalQuota"));
-                suite.addTest(new QuotaServiceManagerTest("testNoEnoughQuota"));
-                suite.addTest(new QuotaServiceManagerTest("testNoSubscriberHeader"));
-                suite.addTest(new QuotaServiceManagerTest("testDelinquentUser"));
-            }
-        } catch (Exception e) {
-            fail(
-                "Can't run the junit test since Metacat can't check if the quota service is "
-                    + "enabled "
-                    + e.getMessage());
-        }
-        suite.addTest(new QuotaServiceManagerTest("testCombinateCurrentDateAndGivenTime"));
-        return suite;
-    }
 
     /*************************************************************
      * Test the BookKeeperClient class
@@ -106,7 +92,11 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      * Test the BookKeeperClient.createUsageMethod
      * @throws Exception
      */
+    @Test
     public void testBookKeeperClientMethods() throws Exception {
+        if (!QuotaServiceManager.getInstance().isEnabled()) {
+            return;
+        }
         //test to list quotas
         List<Quota> quotas = null;
         try {
@@ -242,7 +232,11 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      * archived and deleted.
      * @throws Exception
      */
+    @Test
     public void testFailedReportingAttemptChecker_Run() throws Exception {
+        if (!QuotaServiceManager.getInstance().isEnabled()) {
+            return;
+        }
         List<Quota> quotas = BookKeeperClient.getInstance()
             .listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
         assertTrue(quotas.size() >= 1);
@@ -391,7 +385,11 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      * archived.
      * @throws Exception
      */
+    @Test
     public void testFailedReportingAttemptChecker_Run2() throws Exception {
+        if (!QuotaServiceManager.getInstance().isEnabled()) {
+            return;
+        }
         List<Quota> quotas = BookKeeperClient.getInstance()
             .listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
         assertTrue(quotas.size() >= 1);
@@ -513,14 +511,18 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      * archive and delete
      * @throws Exception
      */
+    @Test
     public void testQuotaServiceManagerQuotaEnforce() throws Exception {
+        if (!QuotaServiceManager.getInstance().isEnabled()) {
+            return;
+        }
         //Test to enforce the portal quota service
         Identifier guid = new Identifier();
         guid.setValue("testPortal." + System.currentTimeMillis());
         InputStream object = new FileInputStream(portalFilePath);
         Subject submitter = new Subject();
         submitter.setValue(REQUESTOR);
-        SystemMetadata sysmeta = createSystemMetadata(guid, submitter, object);
+        SystemMetadata sysmeta = d1NodeTest.createSystemMetadata(guid, submitter, object);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("https://purl.dataone.org/portals-1.0.0");
         sysmeta.setFormatId(formatId);
@@ -774,14 +776,18 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      * Test the enforce method in the QuotaServiceManager class with two actions - create and delete
      * @throws Exception
      */
+    @Test
     public void testQuotaServiceManagerQuotaEnforce2() throws Exception {
+        if (!QuotaServiceManager.getInstance().isEnabled()) {
+            return;
+        }
         //Test to enforce the portal quota service
         Identifier guid = new Identifier();
         guid.setValue("testPortal." + System.currentTimeMillis());
         InputStream object = new FileInputStream(portalFilePath);
         Subject submitter = new Subject();
         submitter.setValue(REQUESTOR);
-        SystemMetadata sysmeta = createSystemMetadata(guid, submitter, object);
+        SystemMetadata sysmeta = d1NodeTest.createSystemMetadata(guid, submitter, object);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("https://purl.dataone.org/portals-1.0.0");
         sysmeta.setFormatId(formatId);
@@ -965,7 +971,11 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      * Test the create, update and archive methods in MNService when portal quota is enabled.
      * @throws Exception
      */
+    @Test
     public void testMNodeMethodWithPortalQuota() throws Exception {
+        if (!QuotaServiceManager.getInstance().isEnabled()) {
+            return;
+        }
         //Check if we have enough portal quota space in the remote server
         List<Quota> quotas = BookKeeperClient.getInstance()
             .listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
@@ -995,7 +1005,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             submitter.setValue(REQUESTOR);
             Session session = new Session();
             session.setSubject(submitter);
-            SystemMetadata sysmeta = createSystemMetadata(guid, submitter, object);
+            SystemMetadata sysmeta = d1NodeTest.createSystemMetadata(guid, submitter, object);
             ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
             formatId.setValue("https://purl.dataone.org/portals-1.0.0");
             sysmeta.setFormatId(formatId);
@@ -1072,7 +1082,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             Identifier guid2 = new Identifier();
             guid2.setValue("testMNodeMethodWithPortalQuota2." + System.currentTimeMillis());
             object = new FileInputStream(portalFilePath);
-            sysmeta = createSystemMetadata(guid2, submitter, object);
+            sysmeta = d1NodeTest.createSystemMetadata(guid2, submitter, object);
             sysmeta.setFormatId(formatId);
             sysmeta.setSeriesId(sid);
             object.close();
@@ -1274,7 +1284,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             Identifier guid3 = new Identifier();
             guid3.setValue("testMNodeMethodWithPortalQuota3." + System.currentTimeMillis());
             object = new FileInputStream(portalFilePath);
-            sysmeta = createSystemMetadata(guid3, submitter, object);
+            sysmeta = d1NodeTest.createSystemMetadata(guid3, submitter, object);
             sysmeta.setFormatId(formatId);
             String sidStr2 = generateUUID();
             sid.setValue(sidStr2);
@@ -1288,7 +1298,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             Identifier guid4 = new Identifier();
             guid4.setValue("testMNodeMethodWithPortalQuota4." + System.currentTimeMillis());
             object = new FileInputStream(portalFilePath);
-            sysmeta = createSystemMetadata(guid4, submitter, object);
+            sysmeta = d1NodeTest.createSystemMetadata(guid4, submitter, object);
             sysmeta.setFormatId(formatId);
             sid.setValue(sidStr2);
             sysmeta.setSeriesId(sid);
@@ -1439,7 +1449,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             Identifier guid5 = new Identifier();
             guid5.setValue("testMNodeMethodWithPortalQuota5." + System.currentTimeMillis());
             object = new FileInputStream(portalFilePath);
-            sysmeta = createSystemMetadata(guid5, submitter, object);
+            sysmeta = d1NodeTest.createSystemMetadata(guid5, submitter, object);
             sysmeta.setFormatId(formatId);
             String sidStr3 = generateUUID();
             sid.setValue(sidStr3);
@@ -1453,7 +1463,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             Identifier guid6 = new Identifier();
             guid6.setValue("testMNodeMethodWithPortalQuota6." + System.currentTimeMillis());
             object = new FileInputStream(portalFilePath);
-            sysmeta = createSystemMetadata(guid6, submitter, object);
+            sysmeta = d1NodeTest.createSystemMetadata(guid6, submitter, object);
             sysmeta.setFormatId(formatId);
             sysmeta.setSeriesId(sid);
             object.close();
@@ -1462,7 +1472,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
 
             //Delete the first object. The quota and usages would not change
             Thread.sleep(2000);
-            Session adminsession = getCNSession();
+            Session adminsession = d1NodeTest.getCNSession();
             MNodeService.getInstance(request).delete(adminsession, guid5);
             //local and remote server still has a record for the usage
             index = 0;
@@ -1609,7 +1619,11 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      * Test a subscriber without enough quota
      * @throws Exception
      */
+    @Test
     public void testNoEnoughQuota() throws Exception {
+        if (!QuotaServiceManager.getInstance().isEnabled()) {
+            return;
+        }
         try {
             request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, DEFICIT_SUBSCRIBER);
             Identifier guid = new Identifier();
@@ -1617,7 +1631,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             InputStream object = new FileInputStream(portalFilePath);
             Subject submitter = new Subject();
             submitter.setValue(DEFICIT_REQUESTOR);
-            SystemMetadata sysmeta = createSystemMetadata(guid, submitter, object);
+            SystemMetadata sysmeta = d1NodeTest.createSystemMetadata(guid, submitter, object);
             ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
             formatId.setValue("https://purl.dataone.org/portals-1.0.0");
             sysmeta.setFormatId(formatId);
@@ -1640,7 +1654,11 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
     /**
      * Test the case there is not subscriber header in the request
      */
+    @Test
     public void testNoSubscriberHeader() throws Exception {
+        if (!QuotaServiceManager.getInstance().isEnabled()) {
+            return;
+        }
         try {
             String header = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
             assertTrue(header == null);
@@ -1649,7 +1667,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             InputStream object = new FileInputStream(portalFilePath);
             Subject submitter = new Subject();
             submitter.setValue(DEFICIT_REQUESTOR);
-            SystemMetadata sysmeta = createSystemMetadata(guid, submitter, object);
+            SystemMetadata sysmeta = d1NodeTest.createSystemMetadata(guid, submitter, object);
             ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
             formatId.setValue("https://purl.dataone.org/portals-1.0.0");
             sysmeta.setFormatId(formatId);
@@ -1673,7 +1691,11 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      * Test the delinquent user
      * @throws Exception
      */
+    @Test
     public void testDelinquentUser() throws Exception {
+        if (!QuotaServiceManager.getInstance().isEnabled()) {
+            return;
+        }
         try {
             request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, DELINGUENT_SUBSCRIBER);
             Identifier guid = new Identifier();
@@ -1681,7 +1703,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             InputStream object = new FileInputStream(portalFilePath);
             Subject submitter = new Subject();
             submitter.setValue(DELINGUENT_REQUESTOR);
-            SystemMetadata sysmeta = createSystemMetadata(guid, submitter, object);
+            SystemMetadata sysmeta = d1NodeTest.createSystemMetadata(guid, submitter, object);
             ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
             formatId.setValue("https://purl.dataone.org/portals-1.0.0");
             sysmeta.setFormatId(formatId);
@@ -1704,6 +1726,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      * Test the combinateCurrentDateAndGivenTime method
      * @throws Exception
      */
+    @Test
     public void testCombinateCurrentDateAndGivenTime() throws Exception {
         String givenTime = "11:59 PM";
         Date date = QuotaServiceManager.combineCurrentDateAndGivenTime(givenTime);
