@@ -76,67 +76,6 @@ public class DocumentUtil {
         }
     }
 
-    /**
-     * Get docid from online/url string
-     */
-    public static String getDocIdWithRevFromOnlineURL(String url)
-    {
-        String docid = null;
-        String DOCID = "docid";
-        boolean find = false;
-        char limited = '&';
-        int count = 0; //keep track how many & was found
-        Vector list = new Vector();// keep index number for &
-        if (url == null) {
-            logMetacat.debug("DocumentUtil.getDocIdWithRevFromOnlineURL - url is null and null "
-                                +  "will be returned");
-            return docid;
-        }
-        // the first element in list is 0
-        list.add(Integer.valueOf(0));
-        for (int i = 0; i < url.length(); i++) {
-            if (url.charAt(i) == limited) {
-                // count plus 1
-                count++;
-                list.add(Integer.valueOf(i));
-                // get substring beween two &
-                String str = url.substring(
-                        ((Integer) list.elementAt(count - 1)).intValue(), i);
-                logMetacat.debug("DocumentUtil.getDocIdWithRevFromOnlineURL - substring between "
-                                    + "two & is: " + str);
-                //if the subString contains docid, we got it
-                if (str.indexOf(DOCID) != -1) {
-                    //get index of '="
-                    int start = getIndexForGivenChar(str, '=') + 1;
-                    int end = str.length();
-                    docid = str.substring(start, end);
-                    find = true;
-                }//if
-            }//if
-        }//for
-        //if not find, we need check the subtring between the index of last &
-        // and
-        // the end of string
-        if (!find) {
-            logMetacat.debug("DocumentUtil.getDocIdWithRevFromOnlineURL - Checking the "
-                                + "last substring");
-            String str = url.substring(((Integer) list.elementAt(count))
-                    .intValue() + 1, url.length());
-            logMetacat.debug("DocumentUtil.getDocIdWithRevFromOnlineURL - Last substring is: "
-                              + str);
-            if (str.indexOf(DOCID) != -1) {
-                //get index of '="
-                int start = getIndexForGivenChar(str, '=') + 1;
-                int end = str.length();
-                docid = str.substring(start, end);
-                find = true;
-            }//if
-        }//if
-        logMetacat.debug("DocumentUtil.getDocIdWithRevFromOnlineURL - The docid from online url is:"
-                            + docid);
-        return docid.trim();
-    }
-
 
     /**
      * Eocgorid identifier will look like: ecogrid://knb/tao.1.1
@@ -351,25 +290,6 @@ public class DocumentUtil {
         return docid;
     }
 
-    /**
-     * This method will get inline data id without the revision number.
-     * So if inlineData.1.2 is passed as input, inlineData.2 is returned.
-     */
-    public static String getInlineDataIdWithoutRev(String accessionNumber)
-    {
-        String docid = null;
-        if (accessionNumber == null) { return docid; }
-        int indexOfLastSeperator = accessionNumber.lastIndexOf(separator);
-        String version = accessionNumber.substring(indexOfLastSeperator,
-                                                   accessionNumber.length());
-        accessionNumber = accessionNumber.substring(0, indexOfLastSeperator);
-        indexOfLastSeperator = accessionNumber.lastIndexOf(separator);
-        docid = accessionNumber.substring(0, indexOfLastSeperator) + version;
-        logMetacat.debug("DocumentUtil.getInlineDataIdWithoutRev - after parsing accessionnumber, "
-                            + "docid is " + docid);
-
-        return docid;
-    }
 
     /**
      * This method will call both getDocIdFromString and
@@ -415,56 +335,6 @@ public class DocumentUtil {
         return revNumber;
     }
 
-    /**
-     * Method to get docidwithrev from eml2 inline data id The eml inline data
-     * id would look like eml.200.2.3
-     */
-    public static String getDocIdFromInlineDataID(String inlineDataID)
-    {
-        String docidWithoutRev = null;
-        if (inlineDataID == null) { return docidWithoutRev; }
-        char charSeperator = separator;
-        int targetNumberOfSeperator = 3;// we want to know his index
-        int numberOfSeperator = 0;
-        for (int i = 0; i < inlineDataID.length(); i++) {
-            // meet seperator, increase number of seperator
-            if (inlineDataID.charAt(i) == charSeperator) {
-                numberOfSeperator++;
-            }
-            // if number of seperator reach the target one, record the index(i)
-            // and get substring and terminate the loop
-            if (numberOfSeperator == targetNumberOfSeperator) {
-                docidWithoutRev = inlineDataID.substring(0, i);
-                break;
-            }
-        }
-
-        logMetacat.debug("DocumentUtil.getDocIdWithoutRevFromInlineDataID - Docid without rev "
-                            + "from inlinedata id: " + docidWithoutRev);
-        return docidWithoutRev;
-
-    }
-    
-    /**
-     * Revise stack change a stack to opposite order
-     */
-    public static Stack<NodeRecord> reviseStack(Stack<NodeRecord> stack)
-    {
-        Stack result = new Stack();
-        // make sure the parameter is correct
-        if (stack == null || stack.isEmpty()) {
-            result = stack;
-            return result;
-        }
-
-        while (!stack.isEmpty()) {
-            Object obj = stack.pop();
-            result.push(obj);
-        }
-        return result;
-    }
-    
-    
     /**
      * Create a unique docid for use in inserts and updates using the default
      * prefix from the document.accNumPrefix property. Does not include the 
