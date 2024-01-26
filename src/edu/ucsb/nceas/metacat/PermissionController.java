@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,8 +33,6 @@ public class PermissionController {
     private String guid = null;
 
     private boolean hasSubTreeAccessControl = false; // flag if has a subtree
-    // access for this docid
-    private Vector subTreeList = new Vector();
 
     private static final long TOPLEVELSTARTNODEID = 0; //if start node is 0, means it is top
     //level document
@@ -246,166 +243,6 @@ public class PermissionController {
         }
     }
 
-    /**
-     * The method to determine of a node can be access by a user just by subtree
-     * access control
-     */
-    public boolean hasPermissionForSubTreeNode(
-        String user, String[] groups, String myPermission, long nodeId) throws McdbException {
-        boolean flag = true;
-        // Get unaccessble subtree for this user
-        Hashtable unaccessableSubTree = hasUnaccessableSubTree(user, groups, myPermission);
-        Enumeration en = unaccessableSubTree.elements();
-        while (en.hasMoreElements()) {
-            SubTree tree = (SubTree) en.nextElement();
-            long start = tree.getStartNodeId();
-            long stop = tree.getEndNodeId();
-            // nodeid in unaccessablesubtree, return false
-            if (nodeId >= start && nodeId <= stop) {
-                flag = false;
-                break;
-            }
-        }
-        return flag;
-    }
-
-    /**
-     * This method will return a hasTable of subtree which user doesn't has the
-     * permssion to access
-     * @param user  the user name
-     * @param groups  the groups which the use is in
-     * @param myPermission  permission type to check for
-     */
-    public Hashtable hasUnaccessableSubTree(String user, String[] groups, String myPermission)
-        throws McdbException {
-        Hashtable resultUnaccessableSubTree = new Hashtable();
-        String[] principals = null;
-        int permission = AccessControlList.intValue(myPermission);
-
-        //for the commnad line invocation return null(no unaccessable subtree)
-        if ((user == null) && (groups == null || groups.length == 0)) {
-            return resultUnaccessableSubTree;
-        }
-
-        //create a userpackage including user, public and group member
-        principals = createUsersPackage(user, groups);
-        //for the document owner return null(no unaccessable subtree)
-        try {
-            if (containDocumentOwner(principals)) {
-                return resultUnaccessableSubTree;
-            }
-        } catch (SQLException ee) {
-            throw new McdbException(ee);
-        }
-
-        // go through every subtree which has access control
-        for (int i = 0; i < subTreeList.size(); i++) {
-            SubTree tree = (SubTree) subTreeList.elementAt(i);
-            long startId = tree.getStartNodeId();
-
-
-            try {
-                if (isAllowFirst(principals, startId)) {
-
-                    if (hasExplicitDenyRule(principals, permission, startId)) {
-
-                        //if it is allowfirst and has deny rule
-                        // put the subtree into unaccessable vector
-                        if (!resultUnaccessableSubTree.containsKey(new Long(startId))) {
-                            resultUnaccessableSubTree.put(new Long(startId), tree);
-                        }
-                    }//if
-                    else if (hasAllowRule(principals, permission, startId)) {
-                        //if it is allowfirst and hasn't deny rule and has allow rule
-                        //allow access do nothing
-
-                    }//else if
-                    else {
-                        //other situation deny access
-                        if (!resultUnaccessableSubTree.containsKey(new Long(startId))) {
-                            resultUnaccessableSubTree.put(new Long(startId), tree);
-                        }
-
-                    }//else
-                }//if isAllowFirst
-                else //denyFirst
-                {
-                    if (hasAllowRule(principals, permission, startId)) {
-                        //if it is denyFirst and has allow rule, allow access, do nothing
-
-                    } else {
-                        //if it is denyfirst but no allow rule, deny access
-                        // add into vector
-                        if (!resultUnaccessableSubTree.containsKey(new Long(startId))) {
-                            resultUnaccessableSubTree.put(new Long(startId), tree);
-                        }
-                    }
-                }//else denyfirst
-            }//try
-            catch (Exception e) {
-                logMetacat.error(
-                    "PermissionController.hasUnaccessableSubTree - error in PermissionControl.has"
-                        + "UnaccessableSubTree " + e.getMessage());
-                throw new McdbException(e);
-            }
-
-        }//for
-        // merge the subtree if a subtree is another subtree'subtree
-        resultUnaccessableSubTree = mergeEquivalentSubtree(resultUnaccessableSubTree);
-        return resultUnaccessableSubTree;
-    }//hasUnaccessableSubtree
-
-
-    /*
-     * A method to merge nested subtree into bigger one. For example subtree b
-     * is a subtree of subtree a. And user doesn't have read permission for both
-     * so we only use subtree a is enough.
-     */
-    private Hashtable mergeEquivalentSubtree(Hashtable unAccessSubTree) {
-        Hashtable newSubTreeHash = new Hashtable();
-        boolean needDelete = false;
-        // check the parameters
-        if (unAccessSubTree == null || unAccessSubTree.isEmpty()) {
-            return newSubTreeHash;
-        } else {
-            // look every subtree start point and stop point, to see if it is embedded
-            // in another one. If embedded, they are equavelent and we can use bigger
-            // one to replace smaller one
-            Enumeration en = unAccessSubTree.elements();
-            while (en.hasMoreElements()) {
-                SubTree tree = (SubTree) en.nextElement();
-                String treeId = tree.getSubTreeId();
-                long startId = tree.getStartNodeId();
-                long endId = tree.getEndNodeId();
-
-                Enumeration enu = unAccessSubTree.elements();
-                while (enu.hasMoreElements()) {
-                    SubTree subTree = (SubTree) enu.nextElement();
-                    String subTreeId = subTree.getSubTreeId();
-                    long subTreeStartId = subTree.getStartNodeId();
-                    long subTreeEndId = subTree.getEndNodeId();
-                    //compare and if the first subtree is a subtree of the second
-                    // one, set neeDelete true
-                    if (startId > subTreeStartId && endId < subTreeEndId) {
-                        needDelete = true;
-                        logMetacat.info(
-                            "PermissionController.mergeEquivalentSubtree - the subtree: " + treeId
-                                + " need to be get rid of from unaccessable"
-                                + " subtree list becuase it is a subtree of"
-                                + " another subtree in the list");
-                        break;
-                    }//if
-                }//while
-                // if not need to delete, put the subtree into hash
-                if (!needDelete) {
-                    newSubTreeHash.put(new Long(startId), tree);
-                }
-                //reset needDelete
-                needDelete = false;
-            }//while
-            return newSubTreeHash;
-        }//else
-    }
 
     /**
      * Check if a document id is a access document. Access document need user
