@@ -1,5 +1,6 @@
 package edu.ucsb.nceas.metacat.dataone;
 
+import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -57,6 +58,7 @@ import org.dataone.service.util.TypeMarshaller;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
+import org.mockito.MockedStatic;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -79,6 +81,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -185,6 +188,7 @@ public class MNodeServiceIT extends D1NodeServiceTest {
         suite.addTest(new MNodeServiceIT("testCreateAndUpdateWithDoiDisabled"));
         suite.addTest(new MNodeServiceIT("testCreateAndUpdateFGDC"));
         suite.addTest(new MNodeServiceIT("testReindex"));
+        suite.addTest(new MNodeServiceIT("testFailedDoiUpdateInCreate"));
         return suite;
 
     }
@@ -4442,5 +4446,34 @@ public class MNodeServiceIT extends D1NodeServiceTest {
             versionChanged = !newVersion1.equals(version1);
         }
         assertTrue(versionChanged);
+    }
+
+    /**
+     * Test the failure of updating doi during the create method
+     * @throws Exception
+     */
+    public void testFailedDoiUpdateInCreate() throws Exception {
+        Session session = getTestSession();
+        Properties withProperties = new Properties();
+        withProperties.setProperty("guid.doi.password", "foo");
+        try (MockedStatic<PropertyService> ignored =
+                LeanTestUtils.initializeMockPropertyService(withProperties)) {
+            Identifier guid = new Identifier();
+            guid.setValue("doi:10.5072/FK2meta.1." + System.currentTimeMillis());
+            InputStream object =
+                    new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+                SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+                object.close();
+                ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+                formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+                sysmeta.setFormatId(formatId);
+                object = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+                try {
+                    mnCreate(session, guid, object, sysmeta);
+                } catch (Exception e) {
+                    fail("The failure of updating doi shouldn't discrupt the create method");
+                }
+                object.close();
+        }
     }
 }
