@@ -1724,17 +1724,17 @@ public class QuotaServiceManagerIT {
     }
 
     /**
-     * Test the combinateCurrentDateAndGivenTime method
+     * Test the combineCurrentDateAndGivenTime method
      * @throws Exception
      */
     @Test
-    public void testCombinateCurrentDateAndGivenTime() throws Exception {
+    public void testCombineCurrentDateAndGivenTime() throws Exception {
         String givenTime = "11:59 PM";
         Date date = QuotaServiceManager.combineCurrentDateAndGivenTime(givenTime);
         DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT);
         String s = df.format(date);
         assertTrue("The final time string (after transformed by the method "
-                     + " combinateCurrentDateAndGivenTime) " + s
+                     + " combineCurrentDateAndGivenTime) " + s
                      + " doesn't have the given time " + givenTime, s.contains(givenTime));
 
         //when you run the test just a couple minutes around 12:00 AM, it may fail.
