@@ -284,7 +284,7 @@ public class QuotaServiceManager {
             Date currentTime = parseTime(currentTimeString);
             if (currentTime.getTime() >= givenDate.getTime()) {
                 logMetacat.info(
-                    "QuotaServiceManager.combinateCurrentDateAndGivenTime - Today already pass the"
+                    "QuotaServiceManager.combineCurrentDateAndGivenTime - Today already pass the"
                         + " given time, we should set it as tomorrow");
                 String dateAndTime = getDateString(now) + ", " + givenTime;
                 Date combinationDate = parseDateTime(dateAndTime);
@@ -292,18 +292,18 @@ public class QuotaServiceManager {
                 newDate = new Date(combinationDate.getTime() + 24 * 3600 * 1000);
             } else {
                 logMetacat.info(
-                    "QuotaServiceManager.combinateCurrentDateAndGivenTime - Today haven't pass the"
+                    "QuotaServiceManager.combineCurrentDateAndGivenTime - Today haven't pass the"
                         + " given time, we should it as today");
                 String dateAndTime = getDateString(now) + ", " + givenTime;
                 newDate = parseDateTime(dateAndTime);
             }
             logMetacat.info(
-                "QuotaServiceManager.combinateCurrentDateAndGivenTime - final setting time is "
+                "QuotaServiceManager.combineCurrentDateAndGivenTime - final setting time is "
                     + newDate.toString());
             return newDate;
         } catch (ParseException pe) {
             throw new HandlerException(
-                "QuotaServiceManager.combinateCurrentDateAndGivenTime - " + "parsing error: "
+                "QuotaServiceManager.combineCurrentDateAndGivenTime - " + "parsing error: "
                     + pe.getMessage());
         }
     }
