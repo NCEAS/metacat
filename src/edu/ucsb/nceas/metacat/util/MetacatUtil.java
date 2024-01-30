@@ -258,24 +258,6 @@ public class MetacatUtil {
              return str.toString();
     }
 
-    /**
-     * Method to get the name of local replication server
-     */
-    public static String getLocalReplicationServerName() {
-        String replicationServerName = null;
-        // append "context/servlet/replication" to the host name
-        try {
-        replicationServerName = 
-           SystemUtil.getServer() + "/" + PropertyService.getProperty("application.context")
-               + "/servlet/replication";
-        } catch (PropertyNotFoundException pnfe) {
-           logMetacat.error("Could not get local replication server name "
-                 + "because property could not be found: " + pnfe.getMessage());
-        }
-        return replicationServerName;
-
-    }
-
     /** A method to replace whitespace in url */
     public static String replaceWhiteSpaceForURL(String urlHasWhiteSpace) {
         StringBuffer newUrl = new StringBuffer();

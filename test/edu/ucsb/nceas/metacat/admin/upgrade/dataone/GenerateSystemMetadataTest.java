@@ -33,114 +33,67 @@ import java.util.Map;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.types.v1.Identifier;
 import org.dspace.foresite.ResourceMap;
+import org.junit.Test;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.admin.upgrade.dataone.GenerateSystemMetadata;
-import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+
 
 /**
  * A JUnit test for testing system metadata generation
  */
-public class GenerateSystemMetadataTest
-    extends MCTestCase {
-    
-	/**
-     * Constructor to build the test
-     *
-     * @param name the name of the test method
-     */
-    public GenerateSystemMetadataTest(String name) {
-        super(name);
-    }
+public class GenerateSystemMetadataTest {
+
 
     /**
-     * Establish a testing framework by initializing appropriate objects
+     * Test to create resource map
      */
-    public void setUp() {
-        
-    }
+    @Test
+    public void testCreateResourceMap() {
+        try {
+            Identifier resourceMapId = new Identifier();
+            resourceMapId.setValue("doi://1234/AA/map.1.1");
+            Identifier metadataId = new Identifier();
+            metadataId.setValue("doi://1234/AA/meta.1.1");
+            List<Identifier> dataIds = new ArrayList<Identifier>();
+            Identifier dataId = new Identifier();
+            dataId.setValue("doi://1234/AA/data.1.1");
+            Identifier dataId2 = new Identifier();
+            dataId2.setValue("doi://1234/AA/data.2.1");
+            dataIds.add(dataId);
+            dataIds.add(dataId2);
+            Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
+            idMap.put(metadataId, dataIds);
+            ResourceMapFactory rmf = ResourceMapFactory.getInstance();
+            ResourceMap resourceMap = rmf.createResourceMap(resourceMapId, idMap);
+            assertNotNull(resourceMap);
+            String rdfXml = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
+            assertNotNull(rdfXml);
+            System.out.println(rdfXml);
 
-    /**
-     * Release any objects after tests are complete
-     */
-    public void tearDown() {
-    }
+            // now put it back in an object
+            Map<Identifier, Map<Identifier, List<Identifier>>> retPackageMap =
+                                         ResourceMapFactory.getInstance().parseResourceMap(rdfXml);
+            Identifier retPackageId = retPackageMap.keySet().iterator().next();
 
-    /**
-     * Create a suite of tests to be run together
-     */
-    public static Test suite() {
-        TestSuite suite = new TestSuite();
-        suite.addTest(new GenerateSystemMetadataTest("initialize"));
-        // Test basic functions
-        //suite.addTest(new GenerateSystemMetadataTest("upgrade"));
-        // test ORE generation
-        suite.addTest(new GenerateSystemMetadataTest("testCreateResourceMap"));
-
-        // requires manual configuration to actually pass
-        //suite.addTest(new GenerateSystemMetadataTest("testOreExistsFor"));
-
-        return suite;
-    }
-
-    /**
-     * Run an initial test that always passes to check that the test
-     * harness is working.
-     */
-    public void initialize() {
-        assertTrue(1 == 1);
-    }
-    
-    public void upgrade() throws Exception {
-    	GenerateSystemMetadata upgrader = new GenerateSystemMetadata();
-        upgrader.upgrade();
-    }
-    
-	public void testCreateResourceMap() {
-		
-		try {
-			Identifier resourceMapId = new Identifier();
-			resourceMapId.setValue("doi://1234/AA/map.1.1");
-			Identifier metadataId = new Identifier();
-			metadataId.setValue("doi://1234/AA/meta.1.1");
-			List<Identifier> dataIds = new ArrayList<Identifier>();
-			Identifier dataId = new Identifier();
-			dataId.setValue("doi://1234/AA/data.1.1");
-			Identifier dataId2 = new Identifier();
-			dataId2.setValue("doi://1234/AA/data.2.1");
-			dataIds.add(dataId);
-			dataIds.add(dataId2);
-			Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
-			idMap.put(metadataId, dataIds);
-			ResourceMapFactory rmf = ResourceMapFactory.getInstance();
-			ResourceMap resourceMap = rmf.createResourceMap(resourceMapId, idMap);
-			assertNotNull(resourceMap);
-			String rdfXml = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
-			assertNotNull(rdfXml);
-			System.out.println(rdfXml);
-			
-			// now put it back in an object
-			Map<Identifier, Map<Identifier, List<Identifier>>> retPackageMap = ResourceMapFactory.getInstance().parseResourceMap(rdfXml);
-            Identifier retPackageId = retPackageMap.keySet().iterator().next();   
-            
             // Package Identifiers should match
             assertEquals(resourceMapId.getValue(), retPackageId.getValue());
             System.out.println("PACKAGEID IS: " + retPackageId.getValue());
 
             // Get the Map of metadata/data identifiers
             Map<Identifier, List<Identifier>> retIdMap = retPackageMap.get(retPackageId);
-            			
-			// same size
-			assertEquals(idMap.keySet().size(), retIdMap.keySet().size());
-			for (Identifier key : idMap.keySet()) {
-			    System.out.println("  ORIGINAL: " + key.getValue());
-			    List<Identifier> contained = idMap.get(key);
-			    for (Identifier cKey : contained) {
-		             System.out.println("    CONTAINS: " + cKey.getValue());
-			    }
-			}
+
+            // same size
+            assertEquals(idMap.keySet().size(), retIdMap.keySet().size());
+            for (Identifier key : idMap.keySet()) {
+                System.out.println("  ORIGINAL: " + key.getValue());
+                List<Identifier> contained = idMap.get(key);
+                for (Identifier cKey : contained) {
+                     System.out.println("    CONTAINS: " + cKey.getValue());
+                }
+            }
             for (Identifier key : retIdMap.keySet()) {
                 System.out.println("  RETURNED: " + key.getValue());
                 List<Identifier> contained = idMap.get(key);
@@ -149,28 +102,15 @@ public class GenerateSystemMetadataTest
                 }
             }
 
-			// same value
-			assertEquals(idMap.keySet().iterator().next().getValue(), retIdMap.keySet().iterator().next().getValue());
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail();
-		}
-	}
-	
-	/**
-	 * Requires ORE to be present and parsed in the solr index to pass
-	 */
-	public void testOreExistsFor() {
-		String pid = "tao.1.1";
-		Identifier guid = new Identifier();
-		guid.setValue(pid);
-		boolean exists = SystemMetadataFactory.oreExistsFor(guid);
-		assertTrue(exists);
-		guid.setValue("BAD");
-		exists = SystemMetadataFactory.oreExistsFor(guid);
-		assertFalse(exists);
-	}
-    
+            // same value
+            assertEquals(idMap.keySet().iterator().next().getValue(),
+                                                retIdMap.keySet().iterator().next().getValue());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
 }
 
