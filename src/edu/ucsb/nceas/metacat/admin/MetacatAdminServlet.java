@@ -168,10 +168,6 @@ public class MetacatAdminServlet extends HttpServlet {
                 // process dataone config
                 D1Admin.getInstance().configureDataONE(request, response);
                 return;
-            } else if (action.equals("replication")) {
-                // process replication config
-                ReplicationAdmin.getInstance().handleRequest(request, response);
-                return;
             } else if (action.equals("ezid")) {
                 // process replication config
                 EZIDAdmin.getInstance().configureEZID(request, response);
@@ -210,12 +206,6 @@ public class MetacatAdminServlet extends HttpServlet {
             String errorMessage =
                 "MetacatAdminServlet.handleGetOrPost - Utility problem while handling request: "
                                                                                + ue.getMessage();
-            logMetacat.error(errorMessage);
-            processingErrors.add(errorMessage);
-        } catch (ServiceException e) {
-            String errorMessage =
-                "MetacatAdminServlet.handleGetOrPost - Service problem while handling request: "
-                                                                                + e.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
         }

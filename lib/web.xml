@@ -58,20 +58,6 @@
       <load-on-startup>3</load-on-startup>
     </servlet>
 
-     <servlet>
-      <servlet-name>replication</servlet-name>
-      <servlet-class>edu.ucsb.nceas.metacat.replication.ReplicationServlet</servlet-class>
-      <init-param>
-        <param-name>debug</param-name>
-        <param-value>1</param-value>
-      </init-param>
-      <init-param>
-        <param-name>listings</param-name>
-        <param-value>true</param-value>
-      </init-param>
-      <load-on-startup>3</load-on-startup>
-    </servlet>
-
     <!-- This is an example for users who want to enable the OAI-PMH service - 
          see: https://knb.ecoinformatics.org/knb/docs/oaipmh.html-->
     <!--
@@ -168,16 +154,6 @@
     <servlet-mapping>
         <servlet-name>MetacatAdmin</servlet-name>
         <url-pattern>/admin/</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>replication</servlet-name>
-        <url-pattern>/replication</url-pattern>
-    </servlet-mapping> 
-
-    <servlet-mapping>
-        <servlet-name>replication</servlet-name>
-        <url-pattern>/servlet/replication</url-pattern>
     </servlet-mapping>
 
     <!-- CN REST services v1-->

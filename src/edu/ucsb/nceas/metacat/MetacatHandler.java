@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.sql.SQLException;
-import java.util.Hashtable;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -17,7 +16,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
 
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
@@ -25,14 +23,11 @@ import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
-import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
 import edu.ucsb.nceas.metacat.event.MetacatEventService;
-import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.LSIDUtil;
@@ -215,29 +210,28 @@ public class MetacatHandler {
 
     /**
      * Handle the database putdocument request and write an XML document to the database connection
-     *
-     * @param userAgent
-     * @param generateSystemMetadata
+     * @param ipAddress  the ip address of the request
+     * @param userAgent  the user agent of the request
+     * @param user  the user who sent the request
+     * @param groups  the groups to which the user belongs
+     * @param encoding  the encoding of the xml document
+     * @param xmlBytes  the content of the xml document
+     * @param formatId  the format id of the xml document
+     * @param checksum  the checksum of the xml document
+     * @param objectFile  the temporary file which the xml document is stored
+     * @param docid  the docid of the document
+     * @param action  the action to be performed (INSERT or UPDATE)
+     * @return docid
      */
-    public String handleInsertOrUpdateAction(
-        String ipAddress, String userAgent, HttpServletResponse response, PrintWriter out,
-        Hashtable<String, String[]> params, String user, String[] groups,
-        boolean generateSystemMetadata, boolean writeAccessRules, byte[] xmlBytes, String formatId,
-        Checksum checksum, File objectFile) {
+    public String handleInsertOrUpdateAction(String ipAddress, String userAgent,
+                                    String user, String[] groups, String encoding, byte[] xmlBytes,
+                                    String formatId,Checksum checksum, File objectFile,
+                                    String docid, String action) {
         DBConnection dbConn = null;
         int serialNumber = -1;
         String output = "";
-        String qformat = null;
-        if (params.containsKey("qformat")) {
-            qformat = params.get("qformat")[0];
-        }
-
-        if (params.get("docid") == null) {
+        if (docid == null || docid.trim().equals("")) {
             String msg = this.PROLOG + this.ERROR + "Docid not specified" + this.ERRORCLOSE;
-            if (out != null) {
-                out.println(msg);
-                logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - Docid not specified");
-            }
             return msg;
         }
 
@@ -247,10 +241,6 @@ public class MetacatHandler {
                     + "' is not allowed to insert or update. Check the Allowed and Denied "
                     + "Submitters lists"
                     + this.ERRORCLOSE;
-                if (out != null) {
-                    out.println(msg);
-                }
-
                 logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " + "User '" + user
                                      + "' not allowed to insert and update");
                 return msg;
@@ -262,65 +252,28 @@ public class MetacatHandler {
             String msg = this.PROLOG + this.ERROR + "MetacatHandler.handleInsertOrUpdateAction - "
                 + "Could not determine if user could insert or update: " + ue.getMessage()
                 + this.ERRORCLOSE;
-            if (out != null) {
-                out.println(msg);
-            }
             return msg;
         }
 
         try {
-            // Get the document indicated
-            logMetacat.debug(
-                "MetacatHandler.handleInsertOrUpdateAction - params: " + params.toString());
-
-            String[] doctext = params.get("doctext");
-            String pub = null;
-            if (params.containsKey("public")) {
-                pub = params.get("public")[0];
-            }
-
             StringReader dtd = null;
-            if (params.containsKey("dtdtext")) {
-                String[] dtdtext = params.get("dtdtext");
-                try {
-                    if (!dtdtext[0].equals("")) {
-                        dtd = new StringReader(dtdtext[0]);
-                    }
-                } catch (NullPointerException npe) {
-                }
-            }
-
-            if (doctext == null) {
-                String msg =
-                    this.PROLOG + this.ERROR + "Document text not submitted." + this.ERRORCLOSE;
-                if (out != null) {
-                    out.println(msg);
-                }
-
-                // TODO: this should really throw an exception
-                return msg;
-            }
-
-            logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - "
-                                 + "the xml document in metacat servlet (before parsing):\n"
-                                 + doctext[0]);
-            StringReader xmlReader = new StringReader(doctext[0]);
-            boolean validate = false;
-            DocumentImplWrapper documentWrapper = null;
+            String doctext = new String(xmlBytes, encoding);
+            StringReader xmlReader = new StringReader(doctext);
+            boolean needValidation = false;
+            String rule = null;
             String namespace = null;
             String schemaLocation = null;
             try {
                 // look inside XML Document for <!DOCTYPE ... PUBLIC/SYSTEM ...
                 // >
                 // in order to decide whether to use validation parser
-                validate = needDTDValidation(xmlReader);
-                if (validate) {
+                needValidation = needDTDValidation(xmlReader);
+                if (needValidation) {
                     // set a dtd base validation parser
                     logMetacat.debug(
                         "MetacatHandler.handleInsertOrUpdateAction - the xml object will be "
                             + "validate by a dtd");
-                    String rule = DocumentImpl.DTD;
-                    documentWrapper = new DocumentImplWrapper(rule, validate, writeAccessRules);
+                    rule = DocumentImpl.DTD;
                 } else {
                     XMLSchemaService.getInstance().doRefresh();
                     namespace = XMLSchemaService.findDocumentNamespace(xmlReader);
@@ -334,20 +287,20 @@ public class MetacatHandler {
                         if (namespace.compareTo(DocumentImpl.EML2_0_0NAMESPACE) == 0
                             || namespace.compareTo(DocumentImpl.EML2_0_1NAMESPACE) == 0) {
                             // set eml2 base     validation parser
-                            String rule = DocumentImpl.EML200;
+                            rule = DocumentImpl.EML200;
+                            needValidation = true;
                             // using emlparser to check id validation
                             @SuppressWarnings("unused") EMLParser parser =
-                                new EMLParser(doctext[0]);
-                            documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
+                                new EMLParser(doctext);
                         } else if (namespace.compareTo(DocumentImpl.EML2_1_0NAMESPACE) == 0
                             || namespace.compareTo(DocumentImpl.EML2_1_1NAMESPACE) == 0
                             || namespace.compareTo(DocumentImpl.EML2_2_0NAMESPACE) == 0) {
                             // set eml2 base validation parser
-                            String rule = DocumentImpl.EML210;
+                            rule = DocumentImpl.EML210;
+                            needValidation = true;
                             // using emlparser to check id validation
                             @SuppressWarnings("unused") EMLParser parser =
-                                new EMLParser(doctext[0]);
-                            documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
+                                new EMLParser(doctext);
                         } else {
                             if (!XMLSchemaService.isNamespaceRegistered(namespace)) {
                                 throw new Exception("The namespace " + namespace
@@ -359,11 +312,11 @@ public class MetacatHandler {
                                                         + "namespace.");
                             }
                             // set schema base validation parser
-                            String rule = DocumentImpl.SCHEMA;
-                            documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
+                            rule = DocumentImpl.SCHEMA;
+                            needValidation = true;
                         }
                     } else {
-                        xmlReader = new StringReader(doctext[0]);
+                        xmlReader = new StringReader(doctext);
                         String noNamespaceSchemaLocationAttr =
                             XMLSchemaService.findNoNamespaceSchemaLocationAttr(xmlReader);
                         if (noNamespaceSchemaLocationAttr != null) {
@@ -374,29 +327,32 @@ public class MetacatHandler {
                             schemaLocation = XMLSchemaService.getInstance()
                                 .findNoNamespaceSchemaLocalLocation(formatId,
                                                                     noNamespaceSchemaLocationAttr);
-                            String rule = DocumentImpl.NONAMESPACESCHEMA;
-                            documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
+                            rule = DocumentImpl.NONAMESPACESCHEMA;
+                            needValidation = true;
                         } else {
                             logMetacat.debug(
                                 "MetacatHandler.handleInsertOrUpdateAction - the xml object will "
                                     + "NOT be validated.");
-                            documentWrapper = new DocumentImplWrapper("", false, writeAccessRules);
+                            rule = "";
+                            needValidation = false;
                         }
 
                     }
                 }
 
-                String[] action = params.get("action");
-                String[] docid = params.get("docid");
                 String newdocid = null;
 
                 String doAction = null;
-                if (action[0].equals("insert") || action[0].equals("insertmultipart")) {
+                if (action.equals("insert") || action.equals("insertmultipart")) {
                     doAction = "INSERT";
-
-                } else if (action[0].equals("update")) {
+                } else if (action.equals("update")) {
                     doAction = "UPDATE";
-
+                } else {
+                    String msg = this.PROLOG + this.ERROR
+                                   + "MetacatHandler.handleInsertOrUpdateAction - "
+                                   + "Could not handle this action: " + action
+                                   + this.ERRORCLOSE;
+                        return msg;
                 }
 
                 try {
@@ -406,10 +362,10 @@ public class MetacatHandler {
                     serialNumber = dbConn.getCheckOutSerialNumber();
 
                     // write the document to the database and disk
-                    String accNumber = docid[0];
-                    logMetacat.debug(
-                        "MetacatHandler.handleInsertOrUpdateAction - " + doAction + " " + accNumber
-                            + "...");
+                    String accNumber = docid;
+                    logMetacat.info( "MetacatHandler.handleInsertOrUpdateAction - "
+                               + doAction + " " + accNumber + " with needValidation "
+                               + needValidation + " and validation type " + rule);
                     Identifier identifier = new Identifier();
                     identifier.setValue(accNumber);
                     if (!D1NodeService.isValidIdentifier(identifier)) {
@@ -419,12 +375,11 @@ public class MetacatHandler {
                         throw new Exception(error);
                     }
 
-                    newdocid =
-                        documentWrapper.write(dbConn, doctext[0], pub, dtd, doAction, accNumber,
-                                              user, groups, xmlBytes, schemaLocation, checksum,
-                                              objectFile);
+                    newdocid = DocumentImpl.write(dbConn, dtd, doAction, accNumber,
+                                              user,groups, rule, needValidation, encoding, xmlBytes,
+                                              schemaLocation,checksum, objectFile);
 
-                    EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action[0]);
+                    EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action);
 
 
                     // alert listeners of this event
@@ -435,89 +390,6 @@ public class MetacatHandler {
                     mde.setUser(user);
                     mde.setGroups(groups);
                     MetacatEventService.getInstance().notifyMetacatEventObservers(mde);
-
-                    // if it was called from Metacat API, we want to generate system metadata for it
-                    if (generateSystemMetadata) {
-
-                        SystemMetadata sysMeta = null;
-                        // it's possible that system metadata exists although
-                        // older clients don't support it. Try updates first.
-                        try {
-                            // get the docid parts
-                            String docidWithoutRev = DocumentUtil.getSmartDocId(newdocid);
-                            int rev =
-                                IdentifierManager.getInstance().getLatestRevForLocalId(newdocid);
-                            String guid =
-                                IdentifierManager.getInstance().getGUID(docidWithoutRev, rev);
-                            sysMeta = IdentifierManager.getInstance().getSystemMetadata(guid);
-                            // TODO: need to update? we just looked it up
-                            //IdentifierManager.getInstance().updateSystemMetadata(sysMeta);
-
-                        } catch (McdbDocNotFoundException mnfe) {
-                            // handle inserts
-                            try {
-                                // create the system metadata. During the creation, the data
-                                // file in the eml may need to be reindexed.
-                                boolean reindexDataObject = true;
-                                sysMeta =
-                                    SystemMetadataFactory.createSystemMetadata(reindexDataObject,
-                                                                               newdocid, true,
-                                                                               false);
-
-                                // save it to the map
-                                SystemMetadataManager.getInstance().store(sysMeta);
-
-                                // submit for indexing
-                                MetacatSolrIndex.getInstance()
-                                    .submit(sysMeta.getIdentifier(), sysMeta, true);
-
-                                // [re]index the resource map now that everything is saved
-                                // see: https://projects.ecoinformatics.org/ecoinfo/issues/6520
-                                Identifier potentialOreIdentifier = new Identifier();
-                                potentialOreIdentifier.setValue(
-                                    SystemMetadataFactory.RESOURCE_MAP_PREFIX + sysMeta
-                                        .getIdentifier().getValue());
-                                SystemMetadata oreSystemMetadata =
-                                    SystemMetadataManager.getInstance().get(potentialOreIdentifier);
-                                if (oreSystemMetadata != null) {
-                                    MetacatSolrIndex.getInstance()
-                                        .submit(oreSystemMetadata.getIdentifier(),
-                                                oreSystemMetadata, false);
-                                    if (oreSystemMetadata.getObsoletes() != null) {
-                                        logMetacat.debug(
-                                            "MetacatHandler.handleInsertOrUpdateAction - submit "
-                                                + "the index task to reindex the obsoleted "
-                                                + "resource map "
-                                                + oreSystemMetadata.getObsoletes().getValue());
-                                        boolean isSysmetaChangeOnly = true;
-                                        SystemMetadata obsoletedOresysmeta =
-                                            SystemMetadataManager.getInstance()
-                                                .get(oreSystemMetadata.getObsoletes());
-                                        MetacatSolrIndex.getInstance()
-                                            .submit(oreSystemMetadata.getObsoletes(),
-                                                    obsoletedOresysmeta, isSysmetaChangeOnly, true);
-                                    }
-                                }
-
-                            } catch (McdbDocNotFoundException dnfe) {
-                                logMetacat.warn(
-                                    "There was a problem finding the localId " + newdocid
-                                        + "The error was: " + dnfe.getMessage());
-                                throw dnfe;
-
-                            } catch (AccessionNumberException ane) {
-
-                                logMetacat.error(
-                                    "There was a problem creating the accession number " + "for "
-                                        + newdocid + ". The error was: " + ane.getMessage());
-                                throw ane;
-
-                            } // end try()
-
-                        }
-
-                    } // end if()
-
                 } finally {
                     // Return db connection
                     DBConnectionPool.returnDBConnection(dbConn, serialNumber);
@@ -550,26 +422,6 @@ public class MetacatHandler {
             logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - "
                                  + "General error when writing the xml object "
                                  + "document to the database: " + e.getMessage(), e);
-            e.printStackTrace();
-        }
-
-        if (qformat == null || qformat.equals("xml")) {
-            if (response != null && out != null) {
-                response.setContentType("text/xml");
-                out.println(output);
-            }
-            return output;
-        } else {
-            try {
-                DBTransform trans = new DBTransform();
-                response.setContentType("text/html");
-                trans.transformXMLDocument(output, "message", "-//W3C//HTML//EN", qformat, out,
-                                           null, null);
-                return output;
-            } catch (Exception e) {
-                logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " + "General error: "
-                                     + e.getMessage(), e);
-            }
         }
         return output;
     }

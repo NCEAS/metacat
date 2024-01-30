@@ -7,7 +7,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
-import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManagerTest;
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManagerIT;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
@@ -1204,7 +1204,7 @@ public class MNodeQueryIT {
 
         session = new Session();
         Subject subject = new Subject();
-        subject.setValue(QuotaServiceManagerTest.REQUESTOR);
+        subject.setValue(QuotaServiceManagerIT.REQUESTOR);
         session.setSubject(subject);
         if (QuotaServiceManager.getInstance().isEnabled()) {
             try {
@@ -1219,7 +1219,7 @@ public class MNodeQueryIT {
 
         try {
             request.setHeader(
-                QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
+                QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
             Identifier pid =
                 MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
         } catch (Exception e) {
@@ -1259,7 +1259,7 @@ public class MNodeQueryIT {
         // insert a portal object with series id
         Session session = new Session();
         Subject subject1 = new Subject();
-        subject1.setValue(QuotaServiceManagerTest.REQUESTOR);
+        subject1.setValue(QuotaServiceManagerIT.REQUESTOR);
         session.setSubject(subject1);
         Identifier guid = new Identifier();
         guid.setValue(uuid_prefix + uuid);
@@ -1277,7 +1277,7 @@ public class MNodeQueryIT {
         formatId4.setValue("https://purl.dataone.org/portals-1.0.0");
         sysmeta.setFormatId(formatId4);
         request.setHeader(
-            QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
+            QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
         MNodeService.getInstance(request).create(session, guid, object8, sysmeta);
         object8.close();
 
@@ -1858,7 +1858,7 @@ public class MNodeQueryIT {
         LeanTestUtils.debug("before insert the object +++++++++++++++++++++ " + guid.getValue());
         try {
             request.setHeader(
-                QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
+                QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
             Identifier pid =
                 MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
         } catch (Exception e) {
@@ -1913,7 +1913,7 @@ public class MNodeQueryIT {
         LeanTestUtils.debug("before insert the object +++++++++++++++++++++ " + guid.getValue());
         try {
             request.setHeader(
-                QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
+                QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
             Identifier pid =
                 MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
         } catch (Exception e) {
@@ -1970,7 +1970,7 @@ public class MNodeQueryIT {
         object.close();
         try {
             request.setHeader(
-                QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
+                QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
             Identifier pid = MNodeService.getInstance(request).create(session, guid, data, sysmeta);
         } catch (Exception e) {
             LeanTestUtils.debug("the error is " + e.getMessage());
