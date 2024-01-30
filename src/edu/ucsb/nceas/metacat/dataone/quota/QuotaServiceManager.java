@@ -139,7 +139,7 @@ public class QuotaServiceManager {
                                         + startTimeStr);
             Date startTime = null;
             try {
-                startTime = combineCurrentDateAndGivenTime(startTimeStr);
+                startTime = combineDateAndGivenTime(new Date(), startTimeStr);
             } catch (Exception e) {
                 logMetacat.error("QuotaServiceManager.startDailyCheck - Metacat can't figure out "
                          + " the time setting as the value of the property "
@@ -264,27 +264,28 @@ public class QuotaServiceManager {
     }
 
     /**
-     * This method will combine given time string (in short format) to current
-     * date. If the given time (e.g 10:00 AM) is after the current time (e.g 2:00
+     * This method will combine a given date and given time string (in short format) to
+     * a new date. If the given time (e.g 10:00 AM) is before the given date (e.g 2:00
      * PM Aug 21, 2005), then the time will set to the following day, 10:00 AM Aug 22,
-     * 2005. If the given time (e.g 10:00 AM) is before the current time
-     * (e.g 8:00 AM Aug 21, 2005) The time will set to be 10:00 AM Aug 21, 2005.
+     * 2005. If the given time (e.g 10:00 AM) is after the given date
+     * (e.g 8:00 AM Aug 21, 2005), the time will set to be 10:00 AM Aug 21, 2005.
      *
+     * @param now  the date will be combine
      * @param givenTime
      *            the format should be "10:00 AM " or "2:00 PM"
      * @return the Date object
      * @throws HandlerException
      */
-    protected static Date combineCurrentDateAndGivenTime(String givenTime) throws HandlerException {
+    protected static Date combineDateAndGivenTime(Date now, String givenTime)
+                                                                        throws HandlerException {
         try {
             Date givenDate = parseTime(givenTime);
             Date newDate = null;
-            Date now = new Date();
             String currentTimeString = getTimeString(now);
             Date currentTime = parseTime(currentTimeString);
             if (currentTime.getTime() >= givenDate.getTime()) {
                 logMetacat.info(
-                    "QuotaServiceManager.combineCurrentDateAndGivenTime - Today already pass the"
+                    "QuotaServiceManager.combineDateAndGivenTime - Today already pass the"
                         + " given time, we should set it as tomorrow");
                 String dateAndTime = getDateString(now) + ", " + givenTime;
                 Date combinationDate = parseDateTime(dateAndTime);
@@ -292,18 +293,18 @@ public class QuotaServiceManager {
                 newDate = new Date(combinationDate.getTime() + 24 * 3600 * 1000);
             } else {
                 logMetacat.info(
-                    "QuotaServiceManager.combineCurrentDateAndGivenTime - Today haven't pass the"
+                    "QuotaServiceManager.combineDateAndGivenTime - Today haven't pass the"
                         + " given time, we should it as today");
                 String dateAndTime = getDateString(now) + ", " + givenTime;
                 newDate = parseDateTime(dateAndTime);
             }
             logMetacat.info(
-                "QuotaServiceManager.combineCurrentDateAndGivenTime - final setting time is "
+                "QuotaServiceManager.combineDateAndGivenTime - final setting time is "
                     + newDate.toString());
             return newDate;
         } catch (ParseException pe) {
             throw new HandlerException(
-                "QuotaServiceManager.combineCurrentDateAndGivenTime - " + "parsing error: "
+                "QuotaServiceManager.combineDateAndGivenTime - " + "parsing error: "
                     + pe.getMessage());
         }
     }
