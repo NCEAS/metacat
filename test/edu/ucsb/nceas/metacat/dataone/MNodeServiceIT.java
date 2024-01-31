@@ -168,53 +168,9 @@ public class MNodeServiceIT {
             assertTrue(result.available() > 0);
             assertTrue(IOUtils.contentEquals(result, object));
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidToken e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (ServiceFailure e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotAuthorized e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (IdentifierNotUnique e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (UnsupportedType e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InsufficientResources e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidSystemMetadata e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotImplemented e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidRequest e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotFound e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
+
         }
     }
 
@@ -238,54 +194,8 @@ public class MNodeServiceIT {
             assertEquals(newsysmeta.getIdentifier().getValue(), sysmeta.getIdentifier().getValue());
             assertEquals(newsysmeta.getSeriesId(), null);
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidToken e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (ServiceFailure e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotAuthorized e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (IdentifierNotUnique e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (UnsupportedType e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InsufficientResources e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidSystemMetadata e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotImplemented e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidRequest e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotFound e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
-
         }
 
     }
@@ -330,52 +240,9 @@ public class MNodeServiceIT {
             } catch (InvalidSystemMetadata ee) {
 
             }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidToken e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (ServiceFailure e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotAuthorized e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (IdentifierNotUnique e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (UnsupportedType e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InsufficientResources e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidSystemMetadata e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotImplemented e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidRequest e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
-
         }
-
     }
 
     /**
@@ -813,50 +680,8 @@ public class MNodeServiceIT {
             assertEquals(retrive1.getAuthoritativeMemberNode().getValue(),
                          originMemberNode.getValue());
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidToken e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (ServiceFailure e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotAuthorized e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (IdentifierNotUnique e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (UnsupportedType e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InsufficientResources e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidSystemMetadata e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotImplemented e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidRequest e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
-
         }
     }
 
@@ -1054,50 +879,8 @@ public class MNodeServiceIT {
             System.out.println(
                 "the checksum getting from the server is " + meta.getChecksum().getValue());
             assertEquals(meta.getChecksum().getValue(), sum1.getValue());
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidToken e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (ServiceFailure e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotAuthorized e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (IdentifierNotUnique e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (UnsupportedType e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InsufficientResources e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidSystemMetadata e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotImplemented e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidRequest e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
-
         }
     }
 
@@ -1156,54 +939,8 @@ public class MNodeServiceIT {
             assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(),
                          sysmeta.getFormatId().getValue());
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidToken e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (ServiceFailure e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotAuthorized e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (IdentifierNotUnique e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (UnsupportedType e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InsufficientResources e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidSystemMetadata e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotImplemented e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidRequest e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotFound e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
-
         }
     }
 
@@ -1225,56 +962,9 @@ public class MNodeServiceIT {
             Checksum checksum = MNodeService.getInstance(request).getChecksum(session, pid, "MD5");
             assertEquals(checksum.getValue(), sysmeta.getChecksum().getValue());
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidToken e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (ServiceFailure e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotAuthorized e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (IdentifierNotUnique e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (UnsupportedType e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InsufficientResources e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidSystemMetadata e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotImplemented e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidRequest e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotFound e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
-
         }
-
     }
 
     /**
@@ -1405,18 +1095,8 @@ public class MNodeServiceIT {
                     assertEquals("false", property.getValue());
                 }
             }
-        } catch (MarshallingException e) {
-            e.printStackTrace();
-            fail("The node instance couldn't be parsed correctly:" + e.getMessage());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("The node instance couldn't be read correctly:" + e.getMessage());
-
         } catch (Exception e) {
-            e.printStackTrace();
-            fail("Probably not yet implemented: " + e.getMessage());
-
+            fail("The node instance couldn't be parsed correctly:" + e.getMessage());
         } finally {
             PropertyService.setPropertyNoPersist("auth.allowedSubmitters", originAllowedSubmitters);
             AuthUtil.populateAllowedSubmitters();//make the allowedSubimtters effective
@@ -1434,18 +1114,8 @@ public class MNodeServiceIT {
             Date mnDate = MNodeService.getInstance(request).ping();
             assertNotNull(mnDate);
 
-        } catch (NotImplemented e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             fail("Unexpected error: " + e.getMessage());
-
-        } catch (ServiceFailure e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InsufficientResources e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
         }
 
     }
@@ -1620,50 +1290,8 @@ public class MNodeServiceIT {
 
             }
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidToken e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (ServiceFailure e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotAuthorized e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (IdentifierNotUnique e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (UnsupportedType e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InsufficientResources e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidSystemMetadata e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (NotImplemented e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
-        } catch (InvalidRequest e) {
-            e.printStackTrace();
-            fail("Unexpected error: " + e.getMessage());
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
-
         }
     }
 
