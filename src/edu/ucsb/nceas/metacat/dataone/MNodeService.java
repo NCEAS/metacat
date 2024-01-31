@@ -749,7 +749,6 @@ public class MNodeService extends D1NodeService
                     + " However, the new metadata can't be registered on the DOI service: "
                     + e.getMessage();
                 logMetacat.error(message);
-                throw new ServiceFailure("1310", message);
             }
             long end5 = System.currentTimeMillis();
             logMetacat.debug(
@@ -890,7 +889,6 @@ public class MNodeService extends D1NodeService
                 + " However, the metadata can't be registered on the DOI service: "
                 + e.getMessage();
             logMetacat.error(message);
-            throw new ServiceFailure("1190", message);
         }
 
         // return 
