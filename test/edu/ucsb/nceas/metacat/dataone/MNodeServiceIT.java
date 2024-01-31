@@ -4043,25 +4043,22 @@ public class MNodeServiceIT {
         List<Identifier> identifiers = new ArrayList<Identifier>();
         identifiers.add(guid);
         identifiers.add(guid1);
-        boolean all = true;
         try {
-            MNodeService.getInstance(request).reindex(session, null, all);
+            MNodeService.getInstance(request).reindex(session, identifiers);
             fail("We shouldn't get here since the session doesn't have permission to reindex.");
         } catch (NotAuthorized e) {
             assertTrue(e.getMessage().contains(session.getSubject().getValue()));
         }
 
-        all = false;
         try {
-            MNodeService.getInstance(request).reindex(session, identifiers, all);
+            MNodeService.getInstance(request).reindex(session, identifiers);
             fail("We shouldn't get here since the session doesn't have permission to reindex.");
         } catch (NotAuthorized e) {
             assertTrue(e.getMessage().contains(session.getSubject().getValue()));
         }
 
-        all = false;
         Session adminSession = d1NodeTest.getMNSession();
-        MNodeService.getInstance(request).reindex(adminSession, identifiers, all);
+        MNodeService.getInstance(request).reindex(adminSession, identifiers);
 
         boolean versionChanged = false;
         stream = MNodeService.getInstance(request).query(session, "solr", query);
