@@ -197,7 +197,7 @@ public class MNodeService extends D1NodeService
         nThreads = Math.max(1, nThreads);
         executor = Executors.newFixedThreadPool(nThreads);
         try {
-            enforcePublicEntirePackageInPublish = new Boolean(
+            enforcePublicEntirePackageInPublish = Boolean.parseBoolean(
                 PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         } catch (Exception e) {
             logMetacat.warn("MNodeService.static - couldn't get the value since " + e.getMessage());
@@ -240,8 +240,8 @@ public class MNodeService extends D1NodeService
             Settings.getConfiguration().getString("D1Client.certificate.file"));
 
         try {
-            needSync = (new Boolean(
-                PropertyService.getProperty("dataone.nodeSynchronize"))).booleanValue();
+            needSync = Boolean.parseBoolean(
+                PropertyService.getProperty("dataone.nodeSynchronize"));
         } catch (PropertyNotFoundException e) {
             // TODO Auto-generated catch block
             logMetacat.warn(
@@ -1396,10 +1396,10 @@ public class MNodeService extends D1NodeService
             nodeDesc = Settings.getConfiguration().getString("dataone.nodeDescription");
             nodeTypeString = Settings.getConfiguration().getString("dataone.nodeType");
             nodeType = NodeType.convert(nodeTypeString);
-            nodeSynchronize = new Boolean(
-                Settings.getConfiguration().getString("dataone.nodeSynchronize")).booleanValue();
-            nodeReplicate = new Boolean(
-                Settings.getConfiguration().getString("dataone.nodeReplicate")).booleanValue();
+            nodeSynchronize = Boolean.parseBoolean(
+                                Settings.getConfiguration().getString("dataone.nodeSynchronize"));
+            nodeReplicate = Boolean.parseBoolean(
+                                Settings.getConfiguration().getString("dataone.nodeReplicate"));
             allowedSubmitters = AuthUtil.getAllowedSubmitters();
 
             // Set the properties of the node based on configuration information and
@@ -1450,7 +1450,7 @@ public class MNodeService extends D1NodeService
                 && mnCoreServiceVersions.size() == mnCoreServiceAvailables.size()) {
                 for (int i = 0; i < mnCoreServiceVersions.size(); i++) {
                     String version = mnCoreServiceVersions.get(i);
-                    boolean available = new Boolean(mnCoreServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnCoreServiceAvailables.get(i));
                     Service sMNCore = new Service();
                     sMNCore.setName("MNCore");
                     sMNCore.setVersion(version);
@@ -1467,7 +1467,7 @@ public class MNodeService extends D1NodeService
                 && mnReadServiceVersions.size() == mnReadServiceAvailables.size()) {
                 for (int i = 0; i < mnReadServiceVersions.size(); i++) {
                     String version = mnReadServiceVersions.get(i);
-                    boolean available = new Boolean(mnReadServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnReadServiceAvailables.get(i));
                     Service sMNRead = new Service();
                     sMNRead.setName("MNRead");
                     sMNRead.setVersion(version);
@@ -1486,7 +1486,7 @@ public class MNodeService extends D1NodeService
                 for (int i = 0; i < mnAuthorizationServiceVersions.size(); i++) {
                     String version = mnAuthorizationServiceVersions.get(i);
                     boolean available =
-                        new Boolean(mnAuthorizationServiceAvailables.get(i)).booleanValue();
+                                    Boolean.parseBoolean(mnAuthorizationServiceAvailables.get(i));
                     Service sMNAuthorization = new Service();
                     sMNAuthorization.setName("MNAuthorization");
                     sMNAuthorization.setVersion(version);
@@ -1503,8 +1503,7 @@ public class MNodeService extends D1NodeService
                 && mnStorageServiceVersions.size() == mnStorageServiceAvailables.size()) {
                 for (int i = 0; i < mnStorageServiceVersions.size(); i++) {
                     String version = mnStorageServiceVersions.get(i);
-                    boolean available =
-                        new Boolean(mnStorageServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnStorageServiceAvailables.get(i));
                     Service sMNStorage = new Service();
                     sMNStorage.setName("MNStorage");
                     sMNStorage.setVersion(version);
@@ -1535,8 +1534,7 @@ public class MNodeService extends D1NodeService
                 && mnReplicationServiceVersions.size() == mnReplicationServiceAvailables.size()) {
                 for (int i = 0; i < mnReplicationServiceVersions.size(); i++) {
                     String version = mnReplicationServiceVersions.get(i);
-                    boolean available =
-                        new Boolean(mnReplicationServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnReplicationServiceAvailables.get(i));
                     Service sMNReplication = new Service();
                     sMNReplication.setName("MNReplication");
                     sMNReplication.setVersion(version);
@@ -1553,8 +1551,7 @@ public class MNodeService extends D1NodeService
                 && mnPackageServiceVersions.size() == mnPackageServiceAvailables.size()) {
                 for (int i = 0; i < mnPackageServiceVersions.size(); i++) {
                     String version = mnPackageServiceVersions.get(i);
-                    boolean available =
-                        new Boolean(mnPackageServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnPackageServiceAvailables.get(i));
                     Service sMNPakcage = new Service();
                     sMNPakcage.setName("MNPackage");
                     sMNPakcage.setVersion(version);
@@ -1571,7 +1568,7 @@ public class MNodeService extends D1NodeService
                 && mnQueryServiceVersions.size() == mnQueryServiceAvailables.size()) {
                 for (int i = 0; i < mnQueryServiceVersions.size(); i++) {
                     String version = mnQueryServiceVersions.get(i);
-                    boolean available = new Boolean(mnQueryServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnQueryServiceAvailables.get(i));
                     Service sMNQuery = new Service();
                     sMNQuery.setName("MNQuery");
                     sMNQuery.setVersion(version);
@@ -1588,7 +1585,7 @@ public class MNodeService extends D1NodeService
                 && mnViewServiceVersions.size() == mnViewServiceAvailables.size()) {
                 for (int i = 0; i < mnViewServiceVersions.size(); i++) {
                     String version = mnViewServiceVersions.get(i);
-                    boolean available = new Boolean(mnViewServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnViewServiceAvailables.get(i));
                     Service sMNView = new Service();
                     sMNView.setName("MNView");
                     sMNView.setVersion(version);
@@ -1999,8 +1996,7 @@ public class MNodeService extends D1NodeService
                                 + "node for the pid " + pid.getValue());
                         List<Replica> replicas = newSysMeta.getReplicaList();
                         newSysMeta = currentLocalSysMeta;
-                        newSysMeta.setSerialVersion(
-                            new BigInteger((new Long(serialVersion)).toString()));
+                        newSysMeta.setSerialVersion(BigInteger.valueOf(serialVersion));
                         newSysMeta.setReplicaList(replicas);
                     } else {
                         //we need to archive the object in the replica node
