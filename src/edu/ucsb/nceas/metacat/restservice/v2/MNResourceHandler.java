@@ -163,7 +163,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_WHOAMI = "whoami";
     //make the status of identifier (e.g. DOI) public
     protected static final String RESOURCE_PUBLISH_IDENTIFIER = "publishIdentifier";
-    protected static final String RESOURCE_REINDEX = "reindex";
+    protected static final String RESOURCE_INDEX = "index";
 
 
 
@@ -532,10 +532,10 @@ public class MNResourceHandler extends D1ResourceHandler {
                         publishIdentifier(extra);
                         status = true;
                     }
-                } else if (resource.startsWith(RESOURCE_REINDEX)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_REINDEX);
+                } else if (resource.startsWith(RESOURCE_INDEX)) {
+                    logMetacat.debug("Using resource: " + RESOURCE_INDEX);
                     // GET
-                    if (httpVerb == GET) {
+                    if (httpVerb == PUT) {
                         // after the command
                         reindex();
                         status = true;
@@ -1869,6 +1869,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected void reindex() throws InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented,
                                                                                     IOException {
         boolean all = false;
+        Boolean success = Boolean.TRUE;
         List<Identifier> identifiers = new ArrayList<Identifier>();
         String[] allValueArray = params.get("all");
         if (allValueArray != null) {
@@ -1891,25 +1892,24 @@ public class MNResourceHandler extends D1ResourceHandler {
                         identifier.setValue(id);
                         identifiers.add(identifier);
                     }
+                    success = MNodeService.getInstance(request).reindex(session, identifiers);
                 }
             } else {
                 throw new InvalidRequest("5903", "Users should specify the \"pid\" value "
                                                                             + "for reindexing");
             }
+        } else {
+            success = MNodeService.getInstance(request).reindexAll(session);
         }
-        boolean success = MNodeService.getInstance(request).reindex(session, identifiers, all);
+
         response.setStatus(200);
         response.setContentType("text/xml");
-        OutputStream out = response.getOutputStream();
-        out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes());
-        out.write("<scheduled>".getBytes());
-        if (success) {
-            out.write("true".getBytes());
-        } else {
-            out.write("false".getBytes());
+        try (OutputStream out = response.getOutputStream()) {
+            out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes());
+            out.write("<scheduled>".getBytes());
+            out.write(success.toString().getBytes());
+            out.write("</scheduled>".getBytes());
         }
-        out.write("</scheduled>".getBytes());
-        IOUtils.closeQuietly(out);
     }
 
 }

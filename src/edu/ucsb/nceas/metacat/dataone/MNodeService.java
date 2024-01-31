@@ -3495,26 +3495,64 @@ public class MNodeService extends D1NodeService
     }
 
     /**
-     * The admin API call to reindex partial or all documents in the instance
+     * The admin API call to reindex a list of documents in the instance.
      * @param session  the identity of requester. It must have administrative permissions
-     * @param identifiers  the list of objects' identifier which will be reindexed. If the parameter
-     *                     all is true, this parameter will be ignored.
-     * @param all  indicator if we need to reindex all objects in this instance
-     * @return true if the reindex request is scheduled; otherwise false
+     * @param identifiers  the list of objects' identifier which will be reindexed.
+     * @return true if the reindex request is scheduled. If something went wrong, an exception will
+     * thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws NotImplemented
      * @throws InvalidRequest
      */
-    public boolean reindex(Session session, List<Identifier> identifiers, boolean all)
+    public Boolean reindex(Session session, List<Identifier> identifiers)
                              throws ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest {
-        boolean scheduled = true;
+        Boolean scheduled = Boolean.valueOf(true);
         String serviceFailureCode = "5901";
         String notAuthorizedCode = "5902";
         String notAuthorizedError ="The provided identity does not have permission to reindex "
                                     + "objects on the Node: ";
+        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+        handleReindexAction(identifiers);
+        return scheduled;
+    }
+
+    /**
+     * The admin API call to reindex all documents in the instance.
+     * @param session  the identity of requester. It must have administrative permissions
+     * @return true if the reindex request is scheduled. If something went wrong, an exception will
+     * thrown.
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     */
+    public Boolean reindexAll(Session session) throws ServiceFailure, NotAuthorized,
+                                                                NotImplemented, InvalidRequest {
+        Boolean scheduled = Boolean.TRUE;
+        String serviceFailureCode = "5901";
+        String notAuthorizedCode = "5902";
+        String notAuthorizedError ="The provided identity does not have permission to reindex "
+                                    + "objects on the Node: ";
+        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+        handleReindexAllAction();
+        return scheduled;
+    }
+
+    /**
+     * Check if the given session has the admin privilege. If it does not have, a NotAuthorized
+     * exception will be thrown.
+     * @param session  the session will be checked.
+     * @param serviceFailureCode  the detail code for the ServiceFailure exception
+     * @param notAuthorizedCode  the detail code for the NotAuthorized exception
+     * @param error  the error message will be in the exception
+     * @throws NotAuthorized
+     * @throws ServiceFailure
+     */
+    protected void checkAdminPrivilege(Session session, String serviceFailureCode,
+                     String notAuthorizedCode, String error) throws NotAuthorized, ServiceFailure {
         if (session == null) {
-            throw new NotAuthorized(notAuthorizedCode, notAuthorizedError + "public");
+            throw new NotAuthorized(notAuthorizedCode, error + "public");
         }
         try {
             Identifier identifier = null;
@@ -3523,19 +3561,12 @@ public class MNodeService extends D1NodeService
             authDel.doAdminAuthorization(session);
         } catch (NotAuthorized na) {
             if (session.getSubject() != null) {
-                throw new NotAuthorized(notAuthorizedCode, notAuthorizedError
+                throw new NotAuthorized(notAuthorizedCode, error
                         + session.getSubject().getValue());
             } else {
-                throw new NotAuthorized(notAuthorizedCode, notAuthorizedError + "public");
+                throw new NotAuthorized(notAuthorizedCode, error + "public");
             }
         }
-
-        if (all) {
-            handleReindexAllAction();
-        } else {
-            handleReindexAction(identifiers);
-        }
-        return scheduled;
     }
 
     /**
