@@ -141,7 +141,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *         getReplica() - GET /d1/mn/replica
  *
  *     MNAdmin
- *         reindex() - GET /d1/mn/reindex
+ *         reindex() - GET /d1/mn/index
  *
  * ******************
  * @author leinfelder
@@ -536,10 +536,12 @@ public class MNResourceHandler extends D1ResourceHandler {
                     }
                 } else if (resource.startsWith(RESOURCE_INDEX)) {
                     logMetacat.debug("Using resource: " + RESOURCE_INDEX);
-                    // GET
+                    // PUT
                     if (httpVerb == PUT) {
-                        // after the command
-                        reindex();
+                        extra = parseTrailing(resource, RESOURCE_INDEX);
+                        extra = decode(extra);
+                        logMetacat.debug("The objectId(extra) in index is: " + extra);
+                        reindex(extra);
                         status = true;
                     }
                 } else {
@@ -1889,48 +1891,60 @@ public class MNResourceHandler extends D1ResourceHandler {
 
     /**
      * Handle the reindex request
+     * @param pid  the pid which will be indexed. It can be null, which means we will do a batch
+     *             reindex based on the query part
      * @throws InvalidRequest
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws NotImplemented
      * @throws IOException
      */
-    protected void reindex() throws InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented,
-                                                                                    IOException {
+    protected void reindex(String pid) throws InvalidRequest, ServiceFailure,
+                                                     NotAuthorized, NotImplemented, IOException {
         boolean all = false;
         Boolean success = Boolean.TRUE;
         List<Identifier> identifiers = new ArrayList<Identifier>();
-        String[] allValueArray = params.get("all");
-        if (allValueArray != null) {
-            if (allValueArray.length != 1) {
-                throw new InvalidRequest("5903", "The \"all\" should only have one value");
-            } else {
-                String allValue = allValueArray[0];
-                if (allValue != null && allValue.equalsIgnoreCase("true")) {
-                    all = true;
-                }
-            }
-        }
-        logMetacat.debug("MNResourceHandler.reindex - the \"all\" value is " + all);
-        if (!all) {
-            String[] ids = params.get("pid");
-            if (ids != null) {
-                for (String id : ids) {
-                    if (id != null && !id.trim().equals("")) {
-                        Identifier identifier = new Identifier();
-                        identifier.setValue(id);
-                        identifiers.add(identifier);
-                    }
-                    success = MNodeService.getInstance(request).reindex(session, identifiers);
-                }
-            } else {
-                throw new InvalidRequest("5903", "Users should specify the \"pid\" value "
-                                                                            + "for reindexing");
-            }
+        if (pid != null) {
+            //handle to reindex a single pid
+            logMetacat.debug("MNResourceHandler.reindex - reindex one pid (part of url) " + pid);
+            Identifier id = new Identifier();
+            id.setValue(pid);
+            identifiers.add(id);
+            success = MNodeService.getInstance(request).reindex(session, identifiers);
         } else {
-            success = MNodeService.getInstance(request).reindexAll(session);
+            //handle the batch of reindex tasks based on query
+            logMetacat.debug("MNResourceHandler.reindex - reindex objects based on the query part");
+            String[] allValueArray = params.get("all");
+            if (allValueArray != null) {
+                if (allValueArray.length != 1) {
+                    throw new InvalidRequest("5903", "The \"all\" should only have one value");
+                } else {
+                    String allValue = allValueArray[0];
+                    if (allValue != null && allValue.equalsIgnoreCase("true")) {
+                        all = true;
+                    }
+                }
+            }
+            logMetacat.debug("MNResourceHandler.reindex - the \"all\" value is " + all);
+            if (!all) {
+                String[] ids = params.get("pid");
+                if (ids != null) {
+                    for (String id : ids) {
+                        if (id != null && !id.trim().equals("")) {
+                            Identifier identifier = new Identifier();
+                            identifier.setValue(id);
+                            identifiers.add(identifier);
+                        }
+                        success = MNodeService.getInstance(request).reindex(session, identifiers);
+                    }
+                } else {
+                    throw new InvalidRequest("5903", "Users should specify the \"pid\" value "
+                                                                                + "for reindexing");
+                }
+            } else {
+                success = MNodeService.getInstance(request).reindexAll(session);
+            }
         }
-
         response.setStatus(200);
         response.setContentType("text/xml");
         try (OutputStream out = response.getOutputStream()) {
