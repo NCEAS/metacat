@@ -33,6 +33,7 @@ import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.XMLUtilities;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrRequest;
@@ -119,6 +120,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
@@ -197,7 +199,7 @@ public class MNodeService extends D1NodeService
         nThreads = Math.max(1, nThreads);
         executor = Executors.newFixedThreadPool(nThreads);
         try {
-            enforcePublicEntirePackageInPublish = new Boolean(
+            enforcePublicEntirePackageInPublish = Boolean.parseBoolean(
                 PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         } catch (Exception e) {
             logMetacat.warn("MNodeService.static - couldn't get the value since " + e.getMessage());
@@ -240,8 +242,8 @@ public class MNodeService extends D1NodeService
             Settings.getConfiguration().getString("D1Client.certificate.file"));
 
         try {
-            needSync = (new Boolean(
-                PropertyService.getProperty("dataone.nodeSynchronize"))).booleanValue();
+            needSync = Boolean.parseBoolean(
+                PropertyService.getProperty("dataone.nodeSynchronize"));
         } catch (PropertyNotFoundException e) {
             // TODO Auto-generated catch block
             logMetacat.warn(
@@ -1160,46 +1162,6 @@ public class MNodeService extends D1NodeService
 
     }
 
-    /*
-     * If the given node supports v2 replication.
-     */
-    private boolean supportV2Replication(Node node) throws InvalidRequest {
-        return supportVersionReplication(node, "v2");
-    }
-
-    /*
-     * If the given node support the the given version replication. Return true if it does.
-     */
-    private boolean supportVersionReplication(Node node, String version) throws InvalidRequest {
-        boolean support = false;
-        if (node == null) {
-            throw new InvalidRequest("2153",
-                "There is no capacity information about the node in the replicate.");
-        } else {
-            Services services = node.getServices();
-            if (services == null) {
-                throw new InvalidRequest("2153",
-                    "Can't get replica from a node which doesn't have the replicate service.");
-            } else {
-                List<Service> list = services.getServiceList();
-                if (list == null) {
-                    throw new InvalidRequest("2153",
-                        "Can't get replica from a node which doesn't have the replicate service.");
-                } else {
-                    for (Service service : list) {
-                        if (service != null && service.getName() != null && service.getName()
-                            .equals("MNReplication") && service.getVersion() != null
-                            && service.getVersion().equalsIgnoreCase(version)
-                            && service.getAvailable() == true) {
-                            support = true;
-
-                        }
-                    }
-                }
-            }
-        }
-        return support;
-    }
 
     /**
      * Return the object identified by the given object identifier
@@ -1394,10 +1356,10 @@ public class MNodeService extends D1NodeService
             nodeDesc = Settings.getConfiguration().getString("dataone.nodeDescription");
             nodeTypeString = Settings.getConfiguration().getString("dataone.nodeType");
             nodeType = NodeType.convert(nodeTypeString);
-            nodeSynchronize = new Boolean(
-                Settings.getConfiguration().getString("dataone.nodeSynchronize")).booleanValue();
-            nodeReplicate = new Boolean(
-                Settings.getConfiguration().getString("dataone.nodeReplicate")).booleanValue();
+            nodeSynchronize = Boolean.parseBoolean(
+                                Settings.getConfiguration().getString("dataone.nodeSynchronize"));
+            nodeReplicate = Boolean.parseBoolean(
+                                Settings.getConfiguration().getString("dataone.nodeReplicate"));
             allowedSubmitters = AuthUtil.getAllowedSubmitters();
 
             // Set the properties of the node based on configuration information and
@@ -1418,7 +1380,8 @@ public class MNodeService extends D1NodeService
                 Date pingDate = ping();
                 canPing.setSuccess(pingDate != null);
             } catch (BaseException e) {
-                e.printStackTrace();
+                logMetacat.warn("MNodeService.getCapabilities - can't set the ping date since "
+                                        + e.getMessage());
                 // guess it can't be pinged
             }
 
@@ -1448,7 +1411,7 @@ public class MNodeService extends D1NodeService
                 && mnCoreServiceVersions.size() == mnCoreServiceAvailables.size()) {
                 for (int i = 0; i < mnCoreServiceVersions.size(); i++) {
                     String version = mnCoreServiceVersions.get(i);
-                    boolean available = new Boolean(mnCoreServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnCoreServiceAvailables.get(i));
                     Service sMNCore = new Service();
                     sMNCore.setName("MNCore");
                     sMNCore.setVersion(version);
@@ -1465,7 +1428,7 @@ public class MNodeService extends D1NodeService
                 && mnReadServiceVersions.size() == mnReadServiceAvailables.size()) {
                 for (int i = 0; i < mnReadServiceVersions.size(); i++) {
                     String version = mnReadServiceVersions.get(i);
-                    boolean available = new Boolean(mnReadServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnReadServiceAvailables.get(i));
                     Service sMNRead = new Service();
                     sMNRead.setName("MNRead");
                     sMNRead.setVersion(version);
@@ -1484,7 +1447,7 @@ public class MNodeService extends D1NodeService
                 for (int i = 0; i < mnAuthorizationServiceVersions.size(); i++) {
                     String version = mnAuthorizationServiceVersions.get(i);
                     boolean available =
-                        new Boolean(mnAuthorizationServiceAvailables.get(i)).booleanValue();
+                                    Boolean.parseBoolean(mnAuthorizationServiceAvailables.get(i));
                     Service sMNAuthorization = new Service();
                     sMNAuthorization.setName("MNAuthorization");
                     sMNAuthorization.setVersion(version);
@@ -1501,8 +1464,7 @@ public class MNodeService extends D1NodeService
                 && mnStorageServiceVersions.size() == mnStorageServiceAvailables.size()) {
                 for (int i = 0; i < mnStorageServiceVersions.size(); i++) {
                     String version = mnStorageServiceVersions.get(i);
-                    boolean available =
-                        new Boolean(mnStorageServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnStorageServiceAvailables.get(i));
                     Service sMNStorage = new Service();
                     sMNStorage.setName("MNStorage");
                     sMNStorage.setVersion(version);
@@ -1533,8 +1495,7 @@ public class MNodeService extends D1NodeService
                 && mnReplicationServiceVersions.size() == mnReplicationServiceAvailables.size()) {
                 for (int i = 0; i < mnReplicationServiceVersions.size(); i++) {
                     String version = mnReplicationServiceVersions.get(i);
-                    boolean available =
-                        new Boolean(mnReplicationServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnReplicationServiceAvailables.get(i));
                     Service sMNReplication = new Service();
                     sMNReplication.setName("MNReplication");
                     sMNReplication.setVersion(version);
@@ -1551,8 +1512,7 @@ public class MNodeService extends D1NodeService
                 && mnPackageServiceVersions.size() == mnPackageServiceAvailables.size()) {
                 for (int i = 0; i < mnPackageServiceVersions.size(); i++) {
                     String version = mnPackageServiceVersions.get(i);
-                    boolean available =
-                        new Boolean(mnPackageServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnPackageServiceAvailables.get(i));
                     Service sMNPakcage = new Service();
                     sMNPakcage.setName("MNPackage");
                     sMNPakcage.setVersion(version);
@@ -1569,7 +1529,7 @@ public class MNodeService extends D1NodeService
                 && mnQueryServiceVersions.size() == mnQueryServiceAvailables.size()) {
                 for (int i = 0; i < mnQueryServiceVersions.size(); i++) {
                     String version = mnQueryServiceVersions.get(i);
-                    boolean available = new Boolean(mnQueryServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnQueryServiceAvailables.get(i));
                     Service sMNQuery = new Service();
                     sMNQuery.setName("MNQuery");
                     sMNQuery.setVersion(version);
@@ -1586,7 +1546,7 @@ public class MNodeService extends D1NodeService
                 && mnViewServiceVersions.size() == mnViewServiceAvailables.size()) {
                 for (int i = 0; i < mnViewServiceVersions.size(); i++) {
                     String version = mnViewServiceVersions.get(i);
-                    boolean available = new Boolean(mnViewServiceAvailables.get(i)).booleanValue();
+                    boolean available = Boolean.parseBoolean(mnViewServiceAvailables.get(i));
                     Service sMNView = new Service();
                     sMNView.setName("MNView");
                     sMNView.setVersion(version);
@@ -1997,8 +1957,7 @@ public class MNodeService extends D1NodeService
                                 + "node for the pid " + pid.getValue());
                         List<Replica> replicas = newSysMeta.getReplicaList();
                         newSysMeta = currentLocalSysMeta;
-                        newSysMeta.setSerialVersion(
-                            new BigInteger((new Long(serialVersion)).toString()));
+                        newSysMeta.setSerialVersion(BigInteger.valueOf(serialVersion));
                         newSysMeta.setReplicaList(replicas);
                     } else {
                         //we need to archive the object in the replica node
@@ -2220,7 +2179,6 @@ public class MNodeService extends D1NodeService
                     MetacatSolrEngineDescriptionHandler.getInstance().getQueryEngineDescritpion();
                 return qed;
             } catch (Exception e) {
-                e.printStackTrace();
                 throw new ServiceFailure("Solr server error", e.getMessage());
             }
         } else {
@@ -2257,8 +2215,6 @@ public class MNodeService extends D1NodeService
 
                 return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);
             } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
                 throw new ServiceFailure("Solr server error", e.getMessage());
             }
         } else {
@@ -2983,39 +2939,33 @@ public class MNodeService extends D1NodeService
                 downloader.speedBag.addFile(pidFile, "pid-mapping.txt", true);
             } catch (SpeedBagException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf =
                     new ServiceFailure("1030", "Error creating the bag: " + e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (IOException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (OREException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (URISyntaxException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (OREParserException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", "There was an "
                     + "error while processing the resource map. Ensure that the resource map "
                     + "for the package is valid. " + e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", "There was an "
                     + "error while adding a file to the archive. Please ensure that the "
                     + "checksumming algorithm is supported." + e.getMessage());
@@ -3027,14 +2977,12 @@ public class MNodeService extends D1NodeService
             try {
                 return downloader.speedBag.stream();
             } catch (NullPointerException | IOException e) {
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030",
                     "There was an " + "error while streaming the downloaded data package. "
                         + e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", "While creating the package "
                     + "download, an unsupported checksumming algorithm was encountered. "
                     + e.getMessage());
@@ -3111,7 +3059,6 @@ public class MNodeService extends D1NodeService
 
                 return downloader.download();
             } catch (NullPointerException e) {
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030",
                     "There was an " + "error while streaming the downloaded data package. "
                         + e.getMessage());
@@ -3348,13 +3295,11 @@ public class MNodeService extends D1NodeService
                                     + "call cn.synchronize to update the system metadata in CN.");
                         }
                     } catch (BaseException e) {
-                        e.printStackTrace();
                         logMetacat.error("It is a DataONEBaseException and its detail code is "
                             + e.getDetail_code() + " and its code is " + e.getCode());
                         logMetacat.error("Can't update the systemmetadata of pid " + id.getValue()
                             + " in CNs through cn.synchronize method since " + e.getMessage(), e);
                     } catch (Exception e) {
-                        e.printStackTrace();
                         logMetacat.error("Can't update the systemmetadata of pid " + id.getValue()
                             + " in CNs through cn.synchronize method since " + e.getMessage(), e);
                     }
@@ -3389,19 +3334,13 @@ public class MNodeService extends D1NodeService
      *
      * @param session
      * @return the input stream which is the xml presentation of the status report
+     * @throws NotAuthorized
+     * @throws ServiceFailure
+     * @throws NotImplemented
      */
-    public InputStream getStatus(Session session) throws NotAuthorized, ServiceFailure {
-        String size = "We don't support this feature.";
-        StringBuffer result = new StringBuffer();
-        result.append("<?xml version=\"1.0\"?>");
-        result.append("<status>");
-        result.append("<index>");
-        result.append("<sizeOfQueue>");
-        result.append(size);
-        result.append("</sizeOfQueue>");
-        result.append("</index>");
-        result.append("</status>");
-        return IOUtils.toInputStream(result.toString());
+    public InputStream getStatus(Session session)
+                                        throws NotAuthorized, ServiceFailure, NotImplemented{
+        throw new NotImplemented("1253", "We don't support this feature anymore.");
     }
 
     /**
@@ -3493,26 +3432,62 @@ public class MNodeService extends D1NodeService
     }
 
     /**
-     * The admin API call to reindex partial or all documents in the instance
+     * The admin API call to reindex a list of documents in the instance.
      * @param session  the identity of requester. It must have administrative permissions
-     * @param identifiers  the list of objects' identifier which will be reindexed. If the parameter
-     *                     all is true, this parameter will be ignored.
-     * @param all  indicator if we need to reindex all objects in this instance
-     * @return true if the reindex request is scheduled; otherwise false
+     * @param identifiers  the list of objects' identifier which will be reindexed.
+     * @return true if the reindex request is scheduled. If something went wrong, an exception will
+     * thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
-     * @throws NotImplemented
      * @throws InvalidRequest
+     * @throws NotImplementedException
      */
-    public boolean reindex(Session session, List<Identifier> identifiers, boolean all)
-                             throws ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest {
-        boolean scheduled = true;
+    public Boolean reindex(Session session, List<Identifier> identifiers) throws ServiceFailure,
+                                            NotAuthorized, InvalidRequest, NotImplemented{
         String serviceFailureCode = "5901";
         String notAuthorizedCode = "5902";
-        String notAuthorizedError ="The provided identity does not have permission to reindex "
-                                    + "objects on the Node: ";
+        String notAuthorizedError =
+                "The provided identity does not have permission to reindex objects on the Node: ";
+        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+        handleReindexAction(identifiers);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * The admin API call to reindex all documents in the instance.
+     * @param session  the identity of requester. It must have administrative permissions
+     * @return true if the reindex request is scheduled. If something went wrong, an exception will
+     * thrown.
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplementedException
+     */
+    public Boolean reindexAll(Session session) throws ServiceFailure, NotAuthorized,
+                                                          InvalidRequest, NotImplemented {
+        String serviceFailureCode = "5901";
+        String notAuthorizedCode = "5902";
+        String notAuthorizedError =
+                "The provided identity does not have permission to reindex objects on the Node: ";
+        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+        handleReindexAllAction();
+        return Boolean.TRUE;
+    }
+
+    /**
+     * Check if the given session has the admin privilege. If it does not have, a NotAuthorized
+     * exception will be thrown.
+     * @param session  the session will be checked.
+     * @param serviceFailureCode  the detail code for the ServiceFailure exception
+     * @param notAuthorizedCode  the detail code for the NotAuthorized exception
+     * @param error  the error message will be in the exception
+     * @throws NotAuthorized
+     * @throws ServiceFailure
+     */
+    protected void checkAdminPrivilege(Session session, String serviceFailureCode,
+                     String notAuthorizedCode, String error) throws NotAuthorized, ServiceFailure {
         if (session == null) {
-            throw new NotAuthorized(notAuthorizedCode, notAuthorizedError + "public");
+            throw new NotAuthorized(notAuthorizedCode, error + " public");
         }
         try {
             Identifier identifier = null;
@@ -3521,19 +3496,12 @@ public class MNodeService extends D1NodeService
             authDel.doAdminAuthorization(session);
         } catch (NotAuthorized na) {
             if (session.getSubject() != null) {
-                throw new NotAuthorized(notAuthorizedCode, notAuthorizedError
+                throw new NotAuthorized(notAuthorizedCode, error
                         + session.getSubject().getValue());
             } else {
-                throw new NotAuthorized(notAuthorizedCode, notAuthorizedError + "public");
+                throw new NotAuthorized(notAuthorizedCode, error + " public");
             }
         }
-
-        if (all) {
-            handleReindexAllAction();
-        } else {
-            handleReindexAction(identifiers);
-        }
-        return scheduled;
     }
 
     /**

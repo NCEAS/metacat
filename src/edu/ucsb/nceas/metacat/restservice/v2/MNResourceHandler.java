@@ -1,25 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2011 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.restservice.v2;
 
 import java.io.File;
@@ -108,7 +86,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * MN REST service implementation handler
  *
  * ******************
- * MNCore -- DONE
+ *    MNCore
  *         ping() - GET /d1/mn/monitor/ping
  *         log() - GET /d1/mn/log
  *         **getObjectStatistics() - GET /d1/mn/monitor/object
@@ -116,7 +94,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *         **getStatus - GET /d1/mn/monitor/status
  *         getCapabilities() - GET /d1/mn/ and /d1/mn/node
  *
- *     MNRead -- DONE
+ *    MNRead
  *         get() - GET /d1/mn/object/PID
  *         getSystemMetadata() - GET /d1/mn/meta/PID
  *         describe() - HEAD /d1/mn/object/PID
@@ -124,11 +102,11 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *         listObjects() - GET /d1/mn/object
  *         synchronizationFailed() - POST /d1/mn/error
  *
- *     MNAuthorization -- DONE
+ *    MNAuthorization
  *         isAuthorized() - GET /d1/mn/isAuthorized/PID
  *         setAccessPolicy() - PUT /d1/mn/accessRules/PID
  *
- *     MNStorage - DONE
+ *    MNStorage
  *         create() - POST /d1/mn/object/PID
  *         update() - PUT /d1/mn/object/PID
  *         delete() - DELETE /d1/mn/object/PID
@@ -136,12 +114,12 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *      updateSystemMetadata() - PUT /d1/mn/meta
  *    systemMetadataChanged() - POST /dirtySystemMetadata/PID
  *
- *     MNReplication
+ *    MNReplication
  *         replicate() - POST /d1/mn/replicate
  *         getReplica() - GET /d1/mn/replica
  *
- *     MNAdmin
- *         reindex() - GET /d1/mn/reindex
+ *    MNAdmin
+ *         reindex() - GET /d1/mn/index
  *
  * ******************
  * @author leinfelder
@@ -163,7 +141,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_WHOAMI = "whoami";
     //make the status of identifier (e.g. DOI) public
     protected static final String RESOURCE_PUBLISH_IDENTIFIER = "publishIdentifier";
-    protected static final String RESOURCE_REINDEX = "reindex";
+    protected static final String RESOURCE_INDEX = "index";
 
 
 
@@ -233,7 +211,8 @@ public class MNResourceHandler extends D1ResourceHandler {
             // get the rest of the path info
             String extra = null;
 
-            logMetacat.info("MNResourceHandler.handle - V2 handling verb " + httpVerb + " request with resource '" + resource + "'");
+            logMetacat.info("MNResourceHandler.handle - V2 handling verb " + httpVerb
+                                + " request with resource '" + resource + "'");
             logMetacat.debug("resource: '" + resource + "'");
             boolean status = false;
 
@@ -437,7 +416,8 @@ public class MNResourceHandler extends D1ResourceHandler {
                         generateIdentifier();
                         status = true;
                     }
-                } else if (resource.startsWith(RESOURCE_PUBLISH) && !resource.startsWith(RESOURCE_PUBLISH_IDENTIFIER)) {
+                } else if (resource.startsWith(RESOURCE_PUBLISH) &&
+                                            !resource.startsWith(RESOURCE_PUBLISH_IDENTIFIER)) {
                     logMetacat.debug("Using resource: " + RESOURCE_PUBLISH);
                     // PUT
                     if (httpVerb == PUT) {
@@ -532,12 +512,14 @@ public class MNResourceHandler extends D1ResourceHandler {
                         publishIdentifier(extra);
                         status = true;
                     }
-                } else if (resource.startsWith(RESOURCE_REINDEX)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_REINDEX);
-                    // GET
-                    if (httpVerb == GET) {
-                        // after the command
-                        reindex();
+                } else if (resource.startsWith(RESOURCE_INDEX)) {
+                    logMetacat.debug("Using resource: " + RESOURCE_INDEX);
+                    // PUT
+                    if (httpVerb == PUT) {
+                        extra = parseTrailing(resource, RESOURCE_INDEX);
+                        extra = decode(extra);
+                        logMetacat.debug("The objectId(extra) in index is: " + extra);
+                        reindex(extra);
                         status = true;
                     }
                 } else {
@@ -579,7 +561,8 @@ public class MNResourceHandler extends D1ResourceHandler {
         OutputStream out = null;
 
         try {
-            // NOTE: we set the session explicitly for the MNode instance since these methods do not provide a parameter
+            // NOTE: we set the session explicitly for the MNode instance since these methods
+            //do not provide a parameter
             if (engine == null) {
                 // just looking for list of engines
                 MNodeService mnode = MNodeService.getInstance(request);
@@ -607,7 +590,9 @@ public class MNResourceHandler extends D1ResourceHandler {
                     // write the results to the output stream
                     IOUtils.copyLarge(stream, out);
                     long end = System.currentTimeMillis();
-                    logMetacat.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_QUERY_METHOD + query + " Total query method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+                    logMetacat.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_QUERY_METHOD
+                                    + query + " Total query method"
+                                    + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
                     IOUtils.closeQuietly(out);
                     return;
                 } else {
@@ -651,11 +636,13 @@ public class MNResourceHandler extends D1ResourceHandler {
     private void doPostQuery(String engine) {
         OutputStream out = null;
         try {
-            // NOTE: we set the session explicitly for the MNode instance since these methods do not provide a parameter
+            // NOTE: we set the session explicitly for the MNode instance since these methods
+            //do not provide a parameter
             collectMultipartParams();
             MNodeService mnode = MNodeService.getInstance(request);
             if(multipartparams == null || multipartparams.isEmpty()) {
-                throw new InvalidRequest("2823", "The request doesn't have any query information by the HTTP POST method.");
+                throw new InvalidRequest("2823",
+                        "The request doesn't have any query information by the HTTP POST method.");
             }
             HashMap<String, String[]> params = new HashMap<String, String[]>();
             for(String key : multipartparams.keySet()) {
@@ -728,7 +715,9 @@ public class MNResourceHandler extends D1ResourceHandler {
                 }
             long end = System.currentTimeMillis();
             IOUtils.closeQuietly(out);
-            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_VIEW_METHOD + " Total view method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_VIEW_METHOD
+                              + " Total view method" + Settings.PERFORMANCELOG_DURATION
+                              + (end-start)/1000);
             return;
             } else {
                 // TODO: list the registered views
@@ -815,7 +804,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 
         }
 
-        final long serialVersion = (new Long(serialVersionStr)).longValue();
+        final long serialVersion = Long.parseLong(serialVersionStr);
 
         // get the dateSysMetaLastModified
         try {
@@ -830,7 +819,8 @@ public class MNResourceHandler extends D1ResourceHandler {
             throw new InvalidRequest("1334", msg);
 
         }
-        final Date dateSysMetaLastModified = DateTimeMarshaller.deserializeDateToUTC(dateSysMetaLastModifiedStr);
+        final Date dateSysMetaLastModified = DateTimeMarshaller
+                                        .deserializeDateToUTC(dateSysMetaLastModifiedStr);
 
         // check authorization before sending to implementation
         D1AuthHelper authDel = new D1AuthHelper(request, pid, "1331", "????");
@@ -844,7 +834,8 @@ public class MNResourceHandler extends D1ResourceHandler {
             public void run() {
                 try {
                    // call the service
-                    MNodeService.getInstance(request, ipAddress, userAgent).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+                    MNodeService.getInstance(request, ipAddress, userAgent)
+                       .systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
                 } catch (Exception e) {
                     logMetacat.error("Error running replication: " + e.getMessage(), e);
                     throw new RuntimeException(e.getMessage(), e);
@@ -869,7 +860,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    private void generateIdentifier() throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, IOException, MarshallingException {
+    private void generateIdentifier() throws InvalidToken, ServiceFailure, NotAuthorized,
+                                NotImplemented, InvalidRequest, IOException, MarshallingException {
 
         // make sure we have the multipart params
         try {
@@ -916,7 +908,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws NotImplemented
      * @throws InvalidRequest
      */
-    private boolean isAuthorized(String id) throws ServiceFailure, InvalidToken, NotFound, NotAuthorized, NotImplemented, InvalidRequest {
+    private boolean isAuthorized(String id) throws ServiceFailure, InvalidToken, NotFound,
+                                                    NotAuthorized, NotImplemented, InvalidRequest {
         Identifier pid = new Identifier();
         pid.setValue(id);
         Permission permission = null;
@@ -1013,7 +1006,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InstantiationException
      * @throws IOException
      */
-    private void syncError() throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, MarshallingException, IOException, InstantiationException, IllegalAccessException {
+    private void syncError() throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest,
+                MarshallingException, IOException, InstantiationException, IllegalAccessException {
         SynchronizationFailed syncFailed = null;
         try {
             syncFailed = collectSynchronizationFailed();
@@ -1037,12 +1031,14 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws NotFound
      * @throws InvalidRequest
      */
-    private void checksum(String pid) throws NotImplemented, MarshallingException, IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest {
+    private void checksum(String pid) throws NotImplemented, MarshallingException, IOException,
+                            InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest {
         String checksumAlgorithm = "MD5";
         try {
             checksumAlgorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
         } catch(Exception e) {
-            logMetacat.warn("Could not lookup configured default checksum algorithm, using: " + checksumAlgorithm);
+            logMetacat.warn("Could not lookup configured default checksum algorithm, using: "
+                                                + checksumAlgorithm);
         }
 
         Identifier pidid = new Identifier();
@@ -1099,14 +1095,16 @@ public class MNResourceHandler extends D1ResourceHandler {
             NotAuthorized failure = new NotAuthorized("2152", msg);
             throw failure;
         } else {
-            // TODO: should we refactore replicate() in MNodeservice to not replicate, it would avoid a possible second listNodes call...
+            // TODO: should we refactore replicate() in MNodeservice to not replicate, it would
+            //avoid a possible second listNodes call...
             D1AuthHelper authDel = new D1AuthHelper(request, null, "2152", "????");
             authDel.doAdminAuthorization(session);
         }
 
         // parse the systemMetadata
         Map<String, File> files = collectMultipartFiles();
-        final SystemMetadata sysmeta = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, files.get("sysmeta"));
+        final SystemMetadata sysmeta = TypeMarshaller
+                                .unmarshalTypeFromFile(SystemMetadata.class, files.get("sysmeta"));
 
         String sn = multipartparams.get("sourceNode").get(0);
         logMetacat.debug("sourceNode: " + sn);
@@ -1120,7 +1118,8 @@ public class MNResourceHandler extends D1ResourceHandler {
             @Override
             public void run() {
                 try {
-                    MNodeService.getInstance(request, ipAddress, userAgent).replicate(session, sysmeta, sourceNode);
+                    MNodeService.getInstance(request, ipAddress, userAgent)
+                                                        .replicate(session, sysmeta, sourceNode);
                 } catch (Exception e) {
                     logMetacat.error("Error running replication: " + e.getMessage(), e);
                     throw new RuntimeException(e.getMessage(), e);
@@ -1206,7 +1205,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure
      * @throws InvalidToken
      */
-    private void describeObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest
+    private void describeObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
+                                                          NotFound, NotImplemented, InvalidRequest
     {
 
         response.setContentType("text/xml");
@@ -1229,7 +1229,8 @@ public class MNResourceHandler extends D1ResourceHandler {
         response.setStatus(200);
 
         //response.addHeader("pid", pid);
-        response.addHeader("DataONE-Checksum", dr.getDataONE_Checksum().getAlgorithm() + "," + dr.getDataONE_Checksum().getValue());
+        response.addHeader("DataONE-Checksum", dr.getDataONE_Checksum().getAlgorithm() + ","
+                                                + dr.getDataONE_Checksum().getValue());
         response.addHeader("Content-Length", dr.getContent_Length() + "");
         response.addHeader("Last-Modified", DateTimeMarshaller.serializeDateToUTC(dr.getLast_Modified()));
         response.addHeader("DataONE-ObjectFormat", dr.getDataONE_ObjectFormatIdentifier().getValue());
@@ -1250,7 +1251,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    private void getLog() throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, IOException, MarshallingException
+    private void getLog() throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest,
+                                                NotImplemented, IOException, MarshallingException
     {
 
         Date fromDate = null;
@@ -1299,7 +1301,8 @@ public class MNResourceHandler extends D1ResourceHandler {
         }
 
         logMetacat.debug("calling getLogRecords");
-        Log log = MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
+        Log log = MNodeService.getInstance(request)
+                        .getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
 
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
@@ -1323,7 +1326,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException {
+    protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
+                    NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException {
         OutputStream out = null;
 
         if (pid != null) { //get a specific document
@@ -1409,10 +1413,10 @@ public class MNResourceHandler extends D1ResourceHandler {
                 }
             }
             long end = System.currentTimeMillis();
-            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_METHOD + " Total get method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
-        }
-        else
-        { //call listObjects with specified params
+            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_METHOD
+                    + " Total get method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+        } else {
+            //call listObjects with specified params
             Date startTime = null;
             Date endTime = null;
             ObjectFormatIdentifier formatId = null;
@@ -1422,65 +1426,45 @@ public class MNResourceHandler extends D1ResourceHandler {
             //TODO: make the max count into a const
             int count = 1000;
             Enumeration paramlist = request.getParameterNames();
-            while (paramlist.hasMoreElements())
-            { //parse the params and make the crud call
+            while (paramlist.hasMoreElements()) {
+                //parse the params and make the crud call
                 String name = (String) paramlist.nextElement();
                 String[] value = (String[])request.getParameterValues(name);
 
-                if (name.equals("fromDate") && value != null)
-                {
-                    try
-                    {
-                      //startTime = dateFormat.parse(value[0]);
+                if (name.equals("fromDate") && value != null) {
+                    try {
                         startTime = DateTimeMarshaller.deserializeDateToUTC(value[0]);
-                        //startTime = parseDateAndConvertToGMT(value[0]);
-                    }
-                    catch(Exception e)
-                    {  //if we can't parse it, just don't use the fromDate param
+                    } catch(Exception e) {
+                        //if we can't parse it, just don't use the fromDate param
                         logMetacat.warn("Could not parse fromDate: " + value[0], e);
-                        throw new InvalidRequest("1540", "Could not parse fromDate: " + value[0]+" since "+e.getMessage());
-                        //startTime = null;
+                        throw new InvalidRequest("1540", "Could not parse fromDate: "
+                                                + value[0] + " since " + e.getMessage());
                     }
-                }
-                else if(name.equals("toDate") && value != null)
-                {
-                    try
-                    {
+                } else if(name.equals("toDate") && value != null) {
+                    try {
                         endTime = DateTimeMarshaller.deserializeDateToUTC(value[0]);
-                    }
-                    catch(Exception e)
-                    {  //if we can't parse it, just don't use the toDate param
+                    } catch(Exception e) {
+                        //if we can't parse it, just don't use the toDate param
                         logMetacat.warn("Could not parse toDate: " + value[0], e);
-                        throw new InvalidRequest("1540", "Could not parse toDate: " + value[0]+" since "+e.getMessage());
-                        //endTime = null;
+                        throw new InvalidRequest("1540", "Could not parse toDate: "
+                                                + value[0] + " since " +e.getMessage());
                     }
-                }
-                else if(name.equals("formatId") && value != null)
-                {
+                } else if(name.equals("formatId") && value != null) {
                     formatId = new ObjectFormatIdentifier();
                     formatId.setValue(value[0]);
-                }
-                else if(name.equals("identifier") && value != null)
-                {
+                } else if(name.equals("identifier") && value != null) {
                     identifier = new Identifier();
                     identifier.setValue(value[0]);
-                }
-                else if(name.equals("replicaStatus") && value != null)
-                {
+                } else if(name.equals("replicaStatus") && value != null) {
                     if(value != null &&
                        value.length > 0 &&
-                       (value[0].equalsIgnoreCase("false") || value[0].equalsIgnoreCase("no")))
-                    {
+                       (value[0].equalsIgnoreCase("false") || value[0].equalsIgnoreCase("no"))) {
                         replicaStatus = false;
                     }
-                }
-                else if(name.equals("start") && value != null)
-                {
-                    start = new Integer(value[0]).intValue();
-                }
-                else if(name.equals("count") && value != null)
-                {
-                    count = new Integer(value[0]).intValue();
+                } else if(name.equals("start") && value != null) {
+                    start = Integer.parseInt(value[0]);
+                } else if(name.equals("count") && value != null) {
+                    count = Integer.parseInt(value[0]);
                 }
             }
             //make the crud call
@@ -1515,7 +1499,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws InvalidRequest
      */
-    protected void getPackage(String format, String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, InvalidRequest {
+    protected void getPackage(String format, String pid) throws InvalidToken, ServiceFailure,
+                            NotAuthorized, NotFound, NotImplemented, IOException, InvalidRequest {
         long start = System.currentTimeMillis();
         Identifier id = new Identifier();
         id.setValue(pid);
@@ -1540,7 +1525,10 @@ public class MNResourceHandler extends D1ResourceHandler {
             IOUtils.copyLarge(is, out);
             IOUtils.closeQuietly(out);
             long end = System.currentTimeMillis();
-            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD + " Total getPackage method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+            logMetacat.info(Settings.PERFORMANCELOG + pid
+                                    + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD
+                                    + " Total getPackage method"
+                                    + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
 
         } finally {
             IOUtils.closeQuietly(is);
@@ -1583,9 +1571,10 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    protected void publishIdentifier(String identifier) throws InvalidToken, ServiceFailure, NotAuthorized,
-                             NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, UnsupportedType,
-                             InsufficientResources, InvalidSystemMetadata, DOIException, IOException, MarshallingException {
+    protected void publishIdentifier(String identifier) throws InvalidToken, ServiceFailure,
+                             NotAuthorized, NotImplemented, InvalidRequest, NotFound,
+                             IdentifierNotUnique, UnsupportedType, InsufficientResources,
+                            InvalidSystemMetadata, DOIException, IOException, MarshallingException {
         Identifier id = new Identifier();
         id.setValue(identifier);
         MNodeService.getInstance(request).publishIdentifier(session, id);
@@ -1605,7 +1594,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    protected void getSystemMetadataObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException {
+    protected void getSystemMetadataObject(String pid) throws InvalidToken, ServiceFailure,
+                                        NotAuthorized, NotFound, InvalidRequest, NotImplemented,
+                                                             IOException, MarshallingException {
 
         Identifier id = new Identifier();
         id.setValue(pid);
@@ -1643,7 +1634,12 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws FileUploadException
      * @throws NoSuchAlgorithmException
      */
-    protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
+    protected void putObject(String trailingPid, String action) throws ServiceFailure,
+                            InvalidRequest, MarshallingException, InvalidToken, NotAuthorized,
+                            IdentifierNotUnique, UnsupportedType, InsufficientResources,
+                            InvalidSystemMetadata, NotImplemented, NotFound, IOException,
+                                            InstantiationException, IllegalAccessException,
+                                                NoSuchAlgorithmException, FileUploadException {
         CheckedFile objFile = null;
         try {
             long start = System.currentTimeMillis();
@@ -1665,7 +1661,8 @@ public class MNResourceHandler extends D1ResourceHandler {
                     pid.setValue(pidString);
 
                   } else {
-                      throw new InvalidRequest("1102", "The pid param must be included and contain the identifier.");
+                      throw new InvalidRequest("1102",
+                                      "The pid param must be included and contain the identifier.");
 
                   }
                 } else {
@@ -1706,14 +1703,18 @@ public class MNResourceHandler extends D1ResourceHandler {
                         logMetacat.error("Could not get newPid from request");
                     }
                     logMetacat.debug("Commence update...");
-                    Identifier rId = MNodeService.getInstance(request).update(session, pid, object, newPid, smd);
+                    Identifier rId = MNodeService.getInstance(request)
+                                                .update(session, pid, object, newPid, smd);
                     TypeMarshaller.marshalTypeToOutputStream(rId, out);
                 } else {
                     throw new InvalidRequest("1000", "Operation must be create or update.");
                 }
                 IOUtils.closeQuietly(out);
                 long end = System.currentTimeMillis();
-                logMetacat.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Total create/update method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+                logMetacat.info(Settings.PERFORMANCELOG + pid.getValue()
+                        + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
+                        + " Total create/update method" + Settings.PERFORMANCELOG_DURATION
+                            + (end-start)/1000);
         } catch (Exception e) {
             if(objFile != null) {
                 StreamingMultipartRequestResolver.deleteTempFile(objFile);
@@ -1734,8 +1735,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken
      * @throws MarshallingException
      */
-    private void deleteObject(String pid) throws IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest, MarshallingException
-    {
+    private void deleteObject(String pid) throws IOException, InvalidToken, ServiceFailure,
+                    NotAuthorized, NotFound, NotImplemented, InvalidRequest, MarshallingException {
         long start = System.currentTimeMillis();
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
@@ -1749,7 +1750,8 @@ public class MNResourceHandler extends D1ResourceHandler {
         TypeMarshaller.marshalTypeToOutputStream(id, out);
         long end = System.currentTimeMillis();
         IOUtils.closeQuietly(out);
-        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_DELETE_METHOD + " Total delete method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_DELETE_METHOD
+                + " Total delete method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
 
     }
 
@@ -1764,7 +1766,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    private void archive(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, MarshallingException {
+    private void archive(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
+                                    NotFound, NotImplemented, IOException, MarshallingException {
         long start = System.currentTimeMillis();
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
@@ -1779,10 +1782,14 @@ public class MNResourceHandler extends D1ResourceHandler {
         TypeMarshaller.marshalTypeToOutputStream(id, out);
         IOUtils.closeQuietly(out);
         long end = System.currentTimeMillis();
-        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_ARCHIVE_METHOD + " Total archive method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_ARCHIVE_METHOD
+                 + " Total archive method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
     }
 
-    protected SynchronizationFailed collectSynchronizationFailed() throws IOException, ServiceFailure, InvalidRequest, MarshallingException, InstantiationException, IllegalAccessException, ParserConfigurationException, SAXException  {
+    protected SynchronizationFailed collectSynchronizationFailed() throws IOException,
+                       ServiceFailure, InvalidRequest, MarshallingException,
+                       InstantiationException, IllegalAccessException,
+                       ParserConfigurationException, SAXException {
 
         // Read the incoming data from its Mime Multipart encoding
         logMetacat.debug("Disassembling MIME multipart form");
@@ -1818,7 +1825,8 @@ public class MNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("sfFile: " + sfFile.getAbsolutePath());
         sf = new FileInputStream(sfFile);
 
-        SynchronizationFailed syncFailed = (SynchronizationFailed) ExceptionHandler.deserializeXml(sf, "Error deserializing exception");
+        SynchronizationFailed syncFailed = (SynchronizationFailed) ExceptionHandler
+                                            .deserializeXml(sf, "Error deserializing exception");
         return syncFailed;
     }
 
@@ -1836,8 +1844,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken
      */
     protected void updateSystemMetadata() throws ServiceFailure, InvalidRequest,
-                            InstantiationException, IllegalAccessException, IOException, MarshallingException, NotImplemented,
-                            NotAuthorized, InvalidSystemMetadata, InvalidToken {
+                                    InstantiationException, IllegalAccessException,
+                                    IOException, MarshallingException, NotImplemented,
+                                        NotAuthorized, InvalidSystemMetadata, InvalidToken {
         // Read the incoming data from its Mime Multipart encoding
         Map<String, File> files = collectMultipartFiles();
 
@@ -1860,56 +1869,68 @@ public class MNResourceHandler extends D1ResourceHandler {
 
     /**
      * Handle the reindex request
+     * @param pid  the pid which will be indexed. It can be null, which means we will do a batch
+     *             reindex based on the query part
      * @throws InvalidRequest
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws NotImplemented
      * @throws IOException
      */
-    protected void reindex() throws InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented,
-                                                                                    IOException {
+    protected void reindex(String pid) throws InvalidRequest, ServiceFailure,
+                                                     NotAuthorized, NotImplemented, IOException {
         boolean all = false;
+        Boolean success = Boolean.TRUE;
         List<Identifier> identifiers = new ArrayList<Identifier>();
-        String[] allValueArray = params.get("all");
-        if (allValueArray != null) {
-            if (allValueArray.length != 1) {
-                throw new InvalidRequest("5903", "The \"all\" should only have one value");
-            } else {
-                String allValue = allValueArray[0];
-                if (allValue != null && allValue.equalsIgnoreCase("true")) {
-                    all = true;
-                }
-            }
-        }
-        logMetacat.debug("MNResourceHandler.reindex - the \"all\" value is " + all);
-        if (!all) {
-            String[] ids = params.get("pid");
-            if (ids != null) {
-                for (String id : ids) {
-                    if (id != null && !id.trim().equals("")) {
-                        Identifier identifier = new Identifier();
-                        identifier.setValue(id);
-                        identifiers.add(identifier);
+        if (pid != null) {
+            //handle to reindex a single pid
+            logMetacat.debug("MNResourceHandler.reindex - reindex one pid (part of url) " + pid);
+            Identifier id = new Identifier();
+            id.setValue(pid);
+            identifiers.add(id);
+            success = MNodeService.getInstance(request).reindex(session, identifiers);
+        } else {
+            //handle the batch of reindex tasks based on query
+            logMetacat.debug("MNResourceHandler.reindex - reindex objects based on the query part");
+            String[] allValueArray = params.get("all");
+            if (allValueArray != null) {
+                if (allValueArray.length != 1) {
+                    throw new InvalidRequest("5903", "The \"all\" should only have one value");
+                } else {
+                    String allValue = allValueArray[0];
+                    if (allValue != null && allValue.equalsIgnoreCase("true")) {
+                        all = true;
                     }
                 }
+            }
+            logMetacat.debug("MNResourceHandler.reindex - the \"all\" value is " + all);
+            if (!all) {
+                String[] ids = params.get("pid");
+                if (ids != null) {
+                    for (String id : ids) {
+                        if (id != null && !id.trim().equals("")) {
+                            Identifier identifier = new Identifier();
+                            identifier.setValue(id);
+                            identifiers.add(identifier);
+                        }
+                        success = MNodeService.getInstance(request).reindex(session, identifiers);
+                    }
+                } else {
+                    throw new InvalidRequest("5903", "Users should specify the \"pid\" value "
+                                                                                + "for reindexing");
+                }
             } else {
-                throw new InvalidRequest("5903", "Users should specify the \"pid\" value "
-                                                                            + "for reindexing");
+                success = MNodeService.getInstance(request).reindexAll(session);
             }
         }
-        boolean success = MNodeService.getInstance(request).reindex(session, identifiers, all);
         response.setStatus(200);
         response.setContentType("text/xml");
-        OutputStream out = response.getOutputStream();
-        out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes());
-        out.write("<scheduled>".getBytes());
-        if (success) {
-            out.write("true".getBytes());
-        } else {
-            out.write("false".getBytes());
+        try (OutputStream out = response.getOutputStream()) {
+            out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes());
+            out.write("<scheduled>".getBytes());
+            out.write(success.toString().getBytes());
+            out.write("</scheduled>".getBytes());
         }
-        out.write("</scheduled>".getBytes());
-        IOUtils.closeQuietly(out);
     }
 
 }
