@@ -119,6 +119,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
@@ -1160,46 +1161,6 @@ public class MNodeService extends D1NodeService
 
     }
 
-    /*
-     * If the given node supports v2 replication.
-     */
-    private boolean supportV2Replication(Node node) throws InvalidRequest {
-        return supportVersionReplication(node, "v2");
-    }
-
-    /*
-     * If the given node support the the given version replication. Return true if it does.
-     */
-    private boolean supportVersionReplication(Node node, String version) throws InvalidRequest {
-        boolean support = false;
-        if (node == null) {
-            throw new InvalidRequest("2153",
-                "There is no capacity information about the node in the replicate.");
-        } else {
-            Services services = node.getServices();
-            if (services == null) {
-                throw new InvalidRequest("2153",
-                    "Can't get replica from a node which doesn't have the replicate service.");
-            } else {
-                List<Service> list = services.getServiceList();
-                if (list == null) {
-                    throw new InvalidRequest("2153",
-                        "Can't get replica from a node which doesn't have the replicate service.");
-                } else {
-                    for (Service service : list) {
-                        if (service != null && service.getName() != null && service.getName()
-                            .equals("MNReplication") && service.getVersion() != null
-                            && service.getVersion().equalsIgnoreCase(version)
-                            && service.getAvailable() == true) {
-                            support = true;
-
-                        }
-                    }
-                }
-            }
-        }
-        return support;
-    }
 
     /**
      * Return the object identified by the given object identifier
@@ -3374,17 +3335,17 @@ public class MNodeService extends D1NodeService
      * @return the input stream which is the xml presentation of the status report
      */
     public InputStream getStatus(Session session) throws NotAuthorized, ServiceFailure {
-        String size = "We don't support this feature.";
-        StringBuffer result = new StringBuffer();
-        result.append("<?xml version=\"1.0\"?>");
-        result.append("<status>");
-        result.append("<index>");
-        result.append("<sizeOfQueue>");
-        result.append(size);
-        result.append("</sizeOfQueue>");
-        result.append("</index>");
-        result.append("</status>");
-        return IOUtils.toInputStream(result.toString());
+        String result = """
+                <?xml version="1.0"?>
+                <status>
+                  <index>
+                    <sizeOfQueue>
+                      We don't support this feature.
+                    </sizeOfQueue>
+                  </index>
+                </status>
+                """;
+        return IOUtils.toInputStream(result, Charset.defaultCharset());
     }
 
     /**
