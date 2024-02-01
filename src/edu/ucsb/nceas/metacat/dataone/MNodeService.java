@@ -33,6 +33,7 @@ import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.XMLUtilities;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrRequest;
@@ -3333,19 +3334,13 @@ public class MNodeService extends D1NodeService
      *
      * @param session
      * @return the input stream which is the xml presentation of the status report
+     * @throws NotAuthorized
+     * @throws ServiceFailure
+     * @throws NotImplemented
      */
-    public InputStream getStatus(Session session) throws NotAuthorized, ServiceFailure {
-        String result = """
-                <?xml version="1.0"?>
-                <status>
-                  <index>
-                    <sizeOfQueue>
-                      We don't support this feature.
-                    </sizeOfQueue>
-                  </index>
-                </status>
-                """;
-        return IOUtils.toInputStream(result, Charset.defaultCharset());
+    public InputStream getStatus(Session session)
+                                        throws NotAuthorized, ServiceFailure, NotImplemented{
+        throw new NotImplemented("1253", "We don't support this feature anymore.");
     }
 
     /**
@@ -3444,9 +3439,11 @@ public class MNodeService extends D1NodeService
      * thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplementedException
      */
     public Boolean reindex(Session session, List<Identifier> identifiers) throws ServiceFailure,
-                                                                                    NotAuthorized{
+                                            NotAuthorized, InvalidRequest, NotImplemented{
         String serviceFailureCode = "5901";
         String notAuthorizedCode = "5902";
         String notAuthorizedError =
@@ -3463,8 +3460,11 @@ public class MNodeService extends D1NodeService
      * thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplementedException
      */
-    public Boolean reindexAll(Session session) throws ServiceFailure, NotAuthorized {
+    public Boolean reindexAll(Session session) throws ServiceFailure, NotAuthorized,
+                                                          InvalidRequest, NotImplemented {
         String serviceFailureCode = "5901";
         String notAuthorizedCode = "5902";
         String notAuthorizedError =
