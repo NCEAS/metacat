@@ -3444,19 +3444,16 @@ public class MNodeService extends D1NodeService
      * thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
-     * @throws NotImplemented
-     * @throws InvalidRequest
      */
-    public Boolean reindex(Session session, List<Identifier> identifiers)
-                             throws ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest {
-        Boolean scheduled = Boolean.valueOf(true);
+    public Boolean reindex(Session session, List<Identifier> identifiers) throws ServiceFailure,
+                                                                                    NotAuthorized{
         String serviceFailureCode = "5901";
         String notAuthorizedCode = "5902";
-        String notAuthorizedError ="The provided identity does not have permission to reindex "
-                                    + "objects on the Node: ";
+        String notAuthorizedError =
+                "The provided identity does not have permission to reindex objects on the Node: ";
         checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
         handleReindexAction(identifiers);
-        return scheduled;
+        return Boolean.TRUE;
     }
 
     /**
@@ -3466,19 +3463,15 @@ public class MNodeService extends D1NodeService
      * thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
-     * @throws NotImplemented
-     * @throws InvalidRequest
      */
-    public Boolean reindexAll(Session session) throws ServiceFailure, NotAuthorized,
-                                                                NotImplemented, InvalidRequest {
-        Boolean scheduled = Boolean.TRUE;
+    public Boolean reindexAll(Session session) throws ServiceFailure, NotAuthorized {
         String serviceFailureCode = "5901";
         String notAuthorizedCode = "5902";
-        String notAuthorizedError ="The provided identity does not have permission to reindex "
-                                    + "objects on the Node: ";
+        String notAuthorizedError =
+                "The provided identity does not have permission to reindex objects on the Node: ";
         checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
         handleReindexAllAction();
-        return scheduled;
+        return Boolean.TRUE;
     }
 
     /**
