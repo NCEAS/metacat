@@ -1418,7 +1418,8 @@ public class MNodeService extends D1NodeService
                 Date pingDate = ping();
                 canPing.setSuccess(pingDate != null);
             } catch (BaseException e) {
-                e.printStackTrace();
+                logMetacat.warn("MNodeService.getCapabilities - can't set the ping date since "
+                                        + e.getMessage());
                 // guess it can't be pinged
             }
 
@@ -2216,7 +2217,6 @@ public class MNodeService extends D1NodeService
                     MetacatSolrEngineDescriptionHandler.getInstance().getQueryEngineDescritpion();
                 return qed;
             } catch (Exception e) {
-                e.printStackTrace();
                 throw new ServiceFailure("Solr server error", e.getMessage());
             }
         } else {
@@ -2253,8 +2253,6 @@ public class MNodeService extends D1NodeService
 
                 return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);
             } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
                 throw new ServiceFailure("Solr server error", e.getMessage());
             }
         } else {
@@ -2979,39 +2977,33 @@ public class MNodeService extends D1NodeService
                 downloader.speedBag.addFile(pidFile, "pid-mapping.txt", true);
             } catch (SpeedBagException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf =
                     new ServiceFailure("1030", "Error creating the bag: " + e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (IOException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (OREException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (URISyntaxException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (OREParserException e) {
                 // report as service failure
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", "There was an "
                     + "error while processing the resource map. Ensure that the resource map "
                     + "for the package is valid. " + e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", "There was an "
                     + "error while adding a file to the archive. Please ensure that the "
                     + "checksumming algorithm is supported." + e.getMessage());
@@ -3023,14 +3015,12 @@ public class MNodeService extends D1NodeService
             try {
                 return downloader.speedBag.stream();
             } catch (NullPointerException | IOException e) {
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030",
                     "There was an " + "error while streaming the downloaded data package. "
                         + e.getMessage());
                 sf.initCause(e);
                 throw sf;
             } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030", "While creating the package "
                     + "download, an unsupported checksumming algorithm was encountered. "
                     + e.getMessage());
@@ -3107,7 +3097,6 @@ public class MNodeService extends D1NodeService
 
                 return downloader.download();
             } catch (NullPointerException e) {
-                e.printStackTrace();
                 ServiceFailure sf = new ServiceFailure("1030",
                     "There was an " + "error while streaming the downloaded data package. "
                         + e.getMessage());
@@ -3344,13 +3333,11 @@ public class MNodeService extends D1NodeService
                                     + "call cn.synchronize to update the system metadata in CN.");
                         }
                     } catch (BaseException e) {
-                        e.printStackTrace();
                         logMetacat.error("It is a DataONEBaseException and its detail code is "
                             + e.getDetail_code() + " and its code is " + e.getCode());
                         logMetacat.error("Can't update the systemmetadata of pid " + id.getValue()
                             + " in CNs through cn.synchronize method since " + e.getMessage(), e);
                     } catch (Exception e) {
-                        e.printStackTrace();
                         logMetacat.error("Can't update the systemmetadata of pid " + id.getValue()
                             + " in CNs through cn.synchronize method since " + e.getMessage(), e);
                     }
