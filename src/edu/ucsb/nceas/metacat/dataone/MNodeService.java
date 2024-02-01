@@ -3487,7 +3487,7 @@ public class MNodeService extends D1NodeService
     protected void checkAdminPrivilege(Session session, String serviceFailureCode,
                      String notAuthorizedCode, String error) throws NotAuthorized, ServiceFailure {
         if (session == null) {
-            throw new NotAuthorized(notAuthorizedCode, error + "public");
+            throw new NotAuthorized(notAuthorizedCode, error + " public");
         }
         try {
             Identifier identifier = null;
@@ -3499,7 +3499,7 @@ public class MNodeService extends D1NodeService
                 throw new NotAuthorized(notAuthorizedCode, error
                         + session.getSubject().getValue());
             } else {
-                throw new NotAuthorized(notAuthorizedCode, error + "public");
+                throw new NotAuthorized(notAuthorizedCode, error + " public");
             }
         }
     }
