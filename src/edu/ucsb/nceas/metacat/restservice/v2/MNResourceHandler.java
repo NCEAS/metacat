@@ -86,7 +86,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * MN REST service implementation handler
  *
  * ******************
- * MNCore -- DONE
+ *    MNCore
  *         ping() - GET /d1/mn/monitor/ping
  *         log() - GET /d1/mn/log
  *         **getObjectStatistics() - GET /d1/mn/monitor/object
@@ -94,7 +94,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *         **getStatus - GET /d1/mn/monitor/status
  *         getCapabilities() - GET /d1/mn/ and /d1/mn/node
  *
- *     MNRead -- DONE
+ *    MNRead
  *         get() - GET /d1/mn/object/PID
  *         getSystemMetadata() - GET /d1/mn/meta/PID
  *         describe() - HEAD /d1/mn/object/PID
@@ -102,11 +102,11 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *         listObjects() - GET /d1/mn/object
  *         synchronizationFailed() - POST /d1/mn/error
  *
- *     MNAuthorization -- DONE
+ *    MNAuthorization
  *         isAuthorized() - GET /d1/mn/isAuthorized/PID
  *         setAccessPolicy() - PUT /d1/mn/accessRules/PID
  *
- *     MNStorage - DONE
+ *    MNStorage
  *         create() - POST /d1/mn/object/PID
  *         update() - PUT /d1/mn/object/PID
  *         delete() - DELETE /d1/mn/object/PID
@@ -114,11 +114,11 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *      updateSystemMetadata() - PUT /d1/mn/meta
  *    systemMetadataChanged() - POST /dirtySystemMetadata/PID
  *
- *     MNReplication
+ *    MNReplication
  *         replicate() - POST /d1/mn/replicate
  *         getReplica() - GET /d1/mn/replica
  *
- *     MNAdmin
+ *    MNAdmin
  *         reindex() - GET /d1/mn/index
  *
  * ******************
