@@ -3477,7 +3477,49 @@ public class MNodeService extends D1NodeService
     }
 
     /**
-     * Update the given identifiers' (such as DOI) metadata in the third party service.
+     * Update all controlled identifiers' (such as DOI) metadata on the third party service.
+     * @param session  the identity of requester. It must have administrative permissions
+     * @return true if the reindex request is scheduled. If something went wrong, an exception will
+     * thrown.
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplemented
+     */
+    public Boolean updateAllIdMetadata(Session session) throws ServiceFailure,
+                                                    NotAuthorized, InvalidRequest, NotImplemented {
+        String serviceFailureCode = "5906";
+        String notAuthorizedCode = "5907";
+        String notAuthorizedError = "The provided identity does not have permission to update "
+                                    + "identifiers' metadata on the Node: ";
+        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+            final UpdateDOI udoi = new UpdateDOI();
+            logMetacat.debug("MNodeService.updateAllIdMetadata");
+            Runnable runner = new Runnable() {
+                /**
+                 * Override
+                 */
+                public void run() {
+                    try {
+                        udoi.upgrade();
+                    } catch (AdminException e) {
+                         logMetacat.error("MNodeService.updateAllIdMetadata - "
+                               + "can not update all identifiers' metadata since " +e.getMessage());
+                    }
+                }
+            };
+            if (executor != null) {
+                executor.submit(runner);
+            } else {
+                throw new ServiceFailure(serviceFailureCode, "MNodeService.updateAllIdMetadata - "
+                        + "the ExecutorService object has not been initialized and is null. "
+                        + "So Metacat can not submit the updateAllIdMetadata task by it.");
+            }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * Update the given identifiers' (such as DOI) metadata on the third party service.
      * @param session  the identity of requester. It must have administrative permissions.
      * @param pids  the list of pids will be updated
      * @param formatIds  the list of format id to which the identifiers belong will be updated
@@ -3490,11 +3532,15 @@ public class MNodeService extends D1NodeService
      */
     public Boolean updateIdMetadata(Session session, String[] pids, String[] formatIds)
             throws ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
-        String serviceFailureCode = "5903";
-        String notAuthorizedCode = "5904";
+        String serviceFailureCode = "5906";
+        String notAuthorizedCode = "5907";
         String notAuthorizedError = "The provided identity does not have permission to update "
                                     + "identifiers' metadata on the Node: ";
         checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+        if (pids == null && formatIds == null) {
+            throw new InvalidRequest("5908", "Users should specify values of pid or formatId in "
+                                                  + "the update identifier metadata request.");
+        }
         try {
             UpdateDOI udoi = new UpdateDOI();
             if (pids != null && pids.length > 0) {
@@ -3505,33 +3551,6 @@ public class MNodeService extends D1NodeService
                 logMetacat.debug("MNodeService.updateIdMetadata - update a list of format ids.");
                 udoi.upgradeByFormatId(Arrays.asList(formatIds));
             }
-        } catch (AdminException e) {
-            throw new ServiceFailure(serviceFailureCode, e.getMessage());
-        }
-        return Boolean.TRUE;
-    }
-
-    /**
-     * Update all controlled identifiers' (such as DOI) metadata in the third party service.
-     * @param session  the identity of requester. It must have administrative permissions
-     * @return true if the reindex request is scheduled. If something went wrong, an exception will
-     * thrown.
-     * @throws ServiceFailure
-     * @throws NotAuthorized
-     * @throws InvalidRequest
-     * @throws NotImplemented
-     */
-    public Boolean updateAllIdMetadata(Session session) throws ServiceFailure,
-                                                    NotAuthorized, InvalidRequest, NotImplemented {
-        String serviceFailureCode = "5903";
-        String notAuthorizedCode = "5904";
-        String notAuthorizedError = "The provided identity does not have permission to update "
-                                    + "identifiers' metadata on the Node: ";
-        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
-        try {
-            UpdateDOI udoi = new UpdateDOI();
-            logMetacat.debug("MNodeService.updateAllIdMetadata");
-            udoi.upgrade();
         } catch (AdminException e) {
             throw new ServiceFailure(serviceFailureCode, e.getMessage());
         }
