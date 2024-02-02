@@ -1,10 +1,12 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
+import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
 import edu.ucsb.nceas.metacat.index.queue.FailedIndexResubmitTimerTaskIT;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
@@ -81,6 +83,7 @@ import java.util.zip.ZipFile;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -4164,5 +4167,158 @@ public class MNodeServiceIT {
             assertTrue("The error message must say the elemement principal1 is invalid.",
                         e.getMessage().contains("principal1"));
         }
+    }
+
+    /**
+     * Test the updateIdMetadata api
+     * @throws Exception
+     */
+    @Test
+    public void testUpdateIdMetadata() throws Exception {
+        //first doi object
+        Session session = d1NodeTest.getTestSession();
+        Session adminSession = d1NodeTest.getMNSession();
+        String emlFile = "test/eml-multiple-creators.xml";
+        InputStream content = null;
+        String scheme = "DOI";
+        Identifier publishedPID1 = MNodeService.getInstance(request)
+                                                    .generateIdentifier(session, scheme, null);
+        content = new FileInputStream(emlFile);
+        SystemMetadata sysmeta = D1NodeServiceTest
+                            .createSystemMetadata(publishedPID1, session.getSubject(), content);
+        content.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance()
+                                .getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+        content = new FileInputStream(emlFile);
+        MNodeService.getInstance(request).create(session, publishedPID1, content, sysmeta);
+        content.close();
+        long originalUpdateTimeOfPid1 = getIdentifierUpdateDate(publishedPID1.getValue());
+        //second doi object
+        emlFile = "test/eml-2.2.0.xml";
+        Identifier publishedPID2 = MNodeService.getInstance(request)
+                                                        .generateIdentifier(session, scheme, null);
+        content = new FileInputStream(emlFile);
+        SystemMetadata sysmeta2 = D1NodeServiceTest
+                .createSystemMetadata(publishedPID2, session.getSubject(), content);
+        content.close();
+        sysmeta2.setFormatId(ObjectFormatCache.getInstance()
+                                .getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        content = new FileInputStream(emlFile);
+        MNodeService.getInstance(request).create(session, publishedPID2, content, sysmeta2);
+        content.close();
+        long originalUpdateTimeOfPid2 = getIdentifierUpdateDate(publishedPID2.getValue());
+        String[] ids = null;
+        String[] formats = null;
+        try {
+            MNodeService.getInstance(request).updateIdMetadata(adminSession, ids, formats);
+            fail("Since ids and formats are null, test can't reach there.");
+        } catch (Exception e) {
+            assertTrue("The exception "+ e.getClass().getName() + " should be InvalidRequest",
+                                                                    e instanceof InvalidRequest);
+        }
+
+        ids = new String[1];
+        formats = null;
+        ids[0] = publishedPID1.getValue();
+        try {
+            MNodeService.getInstance(request).updateIdMetadata(session, ids, formats);
+            fail("Since the session is not an admin, test can't reach there.");
+        } catch (Exception e) {
+            assertTrue("The exception "+ e.getClass().getName() + " should be NotAuthorized",
+                                                                       e instanceof NotAuthorized);
+        }
+        MNodeService.getInstance(request).updateIdMetadata(adminSession, ids, formats);
+        long firstUpdateTimeOfPid1 = getNewDOIUpdateTime(ids[0], originalUpdateTimeOfPid1);
+        assertNotEquals("The update time for "+ ids[0] + " should change", firstUpdateTimeOfPid1,
+                                                                          originalUpdateTimeOfPid1);
+
+        ids = new String[2];
+        ids[0] = publishedPID1.getValue();
+        ids[1] = publishedPID2.getValue();
+        formats = null;
+        MNodeService.getInstance(request).updateIdMetadata(adminSession, ids, formats);
+        long secondUpdateTimeOfPid1 = getNewDOIUpdateTime(ids[0], firstUpdateTimeOfPid1);
+        assertNotEquals("The update time for "+ ids[0] + " should change", secondUpdateTimeOfPid1,
+                                                                    firstUpdateTimeOfPid1);
+        long firstUpdateTimeOfPid2 = getNewDOIUpdateTime(ids[1], originalUpdateTimeOfPid2);
+        assertNotEquals("The update time for "+ ids[1] + " should change", firstUpdateTimeOfPid2,
+                                                                 originalUpdateTimeOfPid2);
+
+        ids = null;
+        formats = new String[2];
+        formats[0] = "eml://ecoinformatics.org/eml-2.1.0";
+        formats[1] = "https://eml.ecoinformatics.org/eml-2.2.0";
+        MNodeService.getInstance(request).updateIdMetadata(adminSession, ids, formats);
+        long thirdUpdateTimeOfPid1 =
+                            getNewDOIUpdateTime(publishedPID1.getValue(), secondUpdateTimeOfPid1);
+        assertNotEquals("The update time for "+ publishedPID1.getValue() + " should change",
+                                                thirdUpdateTimeOfPid1, secondUpdateTimeOfPid1);
+        long secondUpdateTimeOfPid2 =
+                              getNewDOIUpdateTime(publishedPID2.getValue(), firstUpdateTimeOfPid2);
+        assertNotEquals("The update time for "+ publishedPID2.getValue() + " should change",
+                                                    secondUpdateTimeOfPid2, firstUpdateTimeOfPid2);
+
+        ids = new String[1];
+        ids[0] = publishedPID1.getValue();
+        formats = new String[1];
+        formats[0] = "https://eml.ecoinformatics.org/eml-2.2.0";
+        MNodeService.getInstance(request).updateIdMetadata(adminSession, ids, formats);
+        long fourthUpdateTimeOfPid1 =
+                            getNewDOIUpdateTime(publishedPID1.getValue(), thirdUpdateTimeOfPid1);
+        assertNotEquals("The update time for "+ publishedPID1.getValue() + " should change",
+                                                    fourthUpdateTimeOfPid1, thirdUpdateTimeOfPid1);
+        long thirdUpdateTimeOfPid2 =
+                              getNewDOIUpdateTime(publishedPID2.getValue(), secondUpdateTimeOfPid2);
+        assertNotEquals("The update time for "+ publishedPID2.getValue() + " should change",
+                                                    thirdUpdateTimeOfPid2, secondUpdateTimeOfPid2);
+    }
+
+    /**
+     * Get a new update time from the doi metadata, which should be different to the original one.
+     * If we can't get a different update time after multiple tries, it throws an exception.
+     * @param pid  the identifier of the object
+     * @param original  the original update time
+     * @return a new update time
+     * @throws Exception
+     */
+    private long getNewDOIUpdateTime(String pid, long original) throws Exception {
+        long newTime = getIdentifierUpdateDate(pid);
+        int count = 0;
+        while (newTime == original && count < D1NodeServiceTest.MAX_TRIES) {
+            Thread.sleep(600);
+            count++;
+            newTime = getIdentifierUpdateDate(pid);
+        }
+        if (newTime == original) {
+            throw new Exception("We can't get a different update time for pid " + pid);
+        }
+        return newTime;
+    }
+
+    /**
+     * Get the update time of the given pid on the doi metadata
+     * @param pid
+     * @return
+     * @throws Exception
+     */
+    private long getIdentifierUpdateDate(String pid) throws Exception {
+        String ezidUsername = PropertyService.getProperty("guid.doi.username");
+        String ezidPassword = PropertyService.getProperty("guid.doi.password");
+        String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
+        EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
+        ezid.login(ezidUsername, ezidPassword);
+        int count = 0;
+        HashMap<String, String> metadata = null;
+        do {
+            metadata = ezid.getMetadata(pid);
+            Thread.sleep(600);
+            count++;
+        } while ((metadata == null || metadata.get(EzidDOIService.DATACITE) == null) &&
+                                                               count < D1NodeServiceTest.MAX_TRIES);
+        assertNotNull(metadata);
+        String result = metadata.get(EzidDOIService.DATACITE);
+        assertTrue(result.contains("<creatorName>"));
+        String updateTime = metadata.get("_updated");
+        return Long.parseLong(updateTime);
     }
 }
