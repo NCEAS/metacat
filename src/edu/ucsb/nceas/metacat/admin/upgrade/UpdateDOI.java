@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -34,7 +35,7 @@ public class UpdateDOI implements UpgradeUtilityInterface {
      * Public constructor
      * @throws Exception
      */
-    public UpdateDOI() throws Exception {
+    public UpdateDOI() throws ServiceFailure {
         Node node = MNodeService.getInstance(null).getCapabilities();
         nodeId = node.getIdentifier().getValue();
     }

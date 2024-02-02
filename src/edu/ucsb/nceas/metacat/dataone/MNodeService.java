@@ -10,6 +10,8 @@ import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
+import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.upgrade.UpdateDOI;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -128,6 +130,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -3471,6 +3474,68 @@ public class MNodeService extends D1NodeService
                 "The provided identity does not have permission to reindex objects on the Node: ";
         checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
         handleReindexAllAction();
+        return Boolean.TRUE;
+    }
+
+    /**
+     * Update the given identifiers' (such as DOI) metadata in the third party service.
+     * @param session  the identity of requester. It must have administrative permissions.
+     * @param pids  the list of pids will be updated
+     * @param formatIds  the list of format id to which the identifiers belong will be updated
+     * @return true if the reindex request is scheduled. If something went wrong, an exception will
+     * thrown.
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplemented
+     */
+    public Boolean updateIdMetadata(Session session, String[] pids, String[] formatIds)
+            throws ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
+        String serviceFailureCode = "5903";
+        String notAuthorizedCode = "5904";
+        String notAuthorizedError = "The provided identity does not have permission to update "
+                                    + "identifiers' metadata on the Node: ";
+        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+        try {
+            UpdateDOI udoi = new UpdateDOI();
+            if (pids != null && pids.length > 0) {
+                logMetacat.debug("MNodeService.updateIdMetadata - update a list of pids.");
+                udoi.upgradeById(Arrays.asList(pids));
+            }
+            if (formatIds != null && formatIds.length > 0) {
+                logMetacat.debug("MNodeService.updateIdMetadata - update a list of format ids.");
+                udoi.upgradeByFormatId(Arrays.asList(formatIds));
+            }
+        } catch (AdminException e) {
+            throw new ServiceFailure(serviceFailureCode, e.getMessage());
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * Update all controlled identifiers' (such as DOI) metadata in the third party service.
+     * @param session  the identity of requester. It must have administrative permissions
+     * @return true if the reindex request is scheduled. If something went wrong, an exception will
+     * thrown.
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplemented
+     */
+    public Boolean updateAllIdMetadata(Session session) throws ServiceFailure,
+                                                    NotAuthorized, InvalidRequest, NotImplemented {
+        String serviceFailureCode = "5903";
+        String notAuthorizedCode = "5904";
+        String notAuthorizedError = "The provided identity does not have permission to update "
+                                    + "identifiers' metadata on the Node: ";
+        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+        try {
+            UpdateDOI udoi = new UpdateDOI();
+            logMetacat.debug("MNodeService.updateAllIdMetadata");
+            udoi.upgrade();
+        } catch (AdminException e) {
+            throw new ServiceFailure(serviceFailureCode, e.getMessage());
+        }
         return Boolean.TRUE;
     }
 
