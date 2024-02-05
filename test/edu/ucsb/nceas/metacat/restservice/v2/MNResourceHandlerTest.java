@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyListOf;
 
 import java.util.List;
 import java.util.Vector;
@@ -60,10 +59,9 @@ public class MNResourceHandlerTest {
         String index = "index";
         List<Identifier> ids;
         try (MockedStatic<MNodeService> ignored = Mockito.mockStatic(MNodeService.class)) {
-            //how does mockMNodeService link to resourceHandler
             MNodeService mockMNodeService = Mockito.mock(MNodeService.class);
             Mockito.when(MNodeService.getInstance(request)).thenReturn(mockMNodeService);
-            Mockito.when(mockMNodeService.reindex(any(Session.class), anyListOf(Identifier.class)))
+            Mockito.when(mockMNodeService.reindex(any(Session.class), any(List.class)))
                                                                         .thenReturn(Boolean.TRUE);
             Identifier id = new Identifier();
             id.setValue(DECODED_PID);
@@ -74,7 +72,6 @@ public class MNResourceHandlerTest {
             // Verify that reindex() was called
             Mockito.verify(mockMNodeService, Mockito.times(1)).reindex(null, ids);
         }
-
     }
 
     /**
