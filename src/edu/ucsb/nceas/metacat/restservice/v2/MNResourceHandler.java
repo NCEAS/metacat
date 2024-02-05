@@ -1925,8 +1925,8 @@ public class MNResourceHandler extends D1ResourceHandler {
                             identifier.setValue(id);
                             identifiers.add(identifier);
                         }
-                        success = MNodeService.getInstance(request).reindex(session, identifiers);
                     }
+                    success = MNodeService.getInstance(request).reindex(session, identifiers);
                 } else {
                     throw new InvalidRequest("5903", "Users should specify the \"pid\" value "
                                                                                 + "for reindexing");
