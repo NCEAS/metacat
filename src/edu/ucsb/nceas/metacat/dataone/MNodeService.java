@@ -3493,28 +3493,28 @@ public class MNodeService extends D1NodeService
         String notAuthorizedError = "The provided identity does not have permission to update "
                                     + "identifiers' metadata on the Node: ";
         checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
-            final UpdateDOI udoi = new UpdateDOI();
-            logMetacat.debug("MNodeService.updateAllIdMetadata");
-            Runnable runner = new Runnable() {
-                /**
-                 * Override
-                 */
-                public void run() {
-                    try {
-                        udoi.upgrade();
-                    } catch (AdminException e) {
-                         logMetacat.error("MNodeService.updateAllIdMetadata - "
-                               + "can not update all identifiers' metadata since " +e.getMessage());
-                    }
+        final UpdateDOI udoi = new UpdateDOI();
+        logMetacat.debug("MNodeService.updateAllIdMetadata");
+        Runnable runner = new Runnable() {
+            /**
+             * Override
+             */
+            public void run() {
+                try {
+                    udoi.upgrade();
+                } catch (AdminException e) {
+                     logMetacat.error("MNodeService.updateAllIdMetadata - "
+                           + "can not update all identifiers' metadata since " +e.getMessage());
                 }
-            };
-            if (executor != null) {
-                executor.submit(runner);
-            } else {
-                throw new ServiceFailure(serviceFailureCode, "MNodeService.updateAllIdMetadata - "
-                        + "the ExecutorService object has not been initialized and is null. "
-                        + "So Metacat can not submit the updateAllIdMetadata task by it.");
             }
+        };
+        if (executor != null) {
+            executor.submit(runner);
+        } else {
+            throw new ServiceFailure(serviceFailureCode, "MNodeService.updateAllIdMetadata - "
+                    + "the ExecutorService object has not been initialized and is null. "
+                    + "So Metacat can not submit the updateAllIdMetadata task by it.");
+        }
         return Boolean.TRUE;
     }
 
