@@ -192,6 +192,7 @@ public class MNodeService extends D1NodeService
     private static boolean enforcePublicEntirePackageInPublish = true;
     private boolean needSync = true;
     private static UpdateDOI DOIUpdator = null;
+    private static MetacatSolrIndex metacatSolrIndex = null;
 
     static {
         // use a shared executor service with nThreads == one less than available processors
@@ -210,6 +211,12 @@ public class MNodeService extends D1NodeService
             DOIUpdator = new UpdateDOI();
         } catch (ServiceFailure e) {
             logMetacat.error("MNodeService.static - can't get the DOI updator " + e.getMessage());
+        }
+        try {
+            metacatSolrIndex = MetacatSolrIndex.getInstance();
+        } catch (Exception e) {
+            logMetacat.error("MNodeService.static - can't get the MetacatSolrIndex object "
+                                                                                + e.getMessage());
         }
     }
 
@@ -3678,7 +3685,7 @@ public class MNodeService extends D1NodeService
                 "MNodeService.buildAllNonResourceMapIndex - the number of non-resource map "
                     + "objects is "
                     + size + " being submitted to the index queue.");
-        } catch (SQLException e) {
+        } catch (SQLException | ServiceFailure e) {
             logMetacat.error(
                 "MNodeService.buildAllNonResourceMapIndex - can't index the objects since: "
                     + e.getMessage());
@@ -3716,7 +3723,7 @@ public class MNodeService extends D1NodeService
             logMetacat.info(
                 "MNodeService.buildAllResourceMapIndex - the number of resource map objects is "
                     + size + " being submitted to the index queue.");
-        } catch (SQLException e) {
+        } catch (SQLException | ServiceFailure e) {
             logMetacat.error(
                 "MNodeService.buildAllResourceMapIndex - can't index the objects since: "
                     + e.getMessage());
@@ -3728,11 +3735,16 @@ public class MNodeService extends D1NodeService
      * @param sql  the query which will be used to executed to select identifiers for reindexing
      * @return the number of objects which were reindexed
      * @throws SQLException
+     * @throws SericeFailure
      */
-    private long buildIndexFromQuery(String sql) throws SQLException {
+    private long buildIndexFromQuery(String sql) throws SQLException, ServiceFailure {
         DBConnection dbConn = null;
         long i = 0;
         int serialNumber = -1;
+        if (metacatSolrIndex == null) {
+            throw new ServiceFailure("0000", "The MetacatSolrIndex can't be initialized so "
+                                        + "we can't regenerate all index for the Metacat instance");
+        }
         try {
             // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("MNodeService.buildIndexFromQuery");
@@ -3750,7 +3762,7 @@ public class MNodeService extends D1NodeService
                         // submit for indexing
                         boolean isSysmetaChangeOnly = false;
                         boolean followRevisions = false;
-                        MetacatSolrIndex.getInstance()
+                        metacatSolrIndex
                             .submit(identifier, sysMeta, isSysmetaChangeOnly, followRevisions,
                                     IndexGenerator.LOW_PRIORITY);
                         i++;
@@ -3928,6 +3940,16 @@ public class MNodeService extends D1NodeService
      */
     public static void setDOIUpdator(UpdateDOI doiUpdator) {
         DOIUpdator = doiUpdator;
+    }
+
+    /**
+     * This method is for testing only - replacing the real class by a stubbed
+     * Mockito MetacatSolrIndex class.
+     * @param solrIndex  the stubbed Mockito MetacatSolrIndex class which will be used to
+     *                      replace the real class
+     */
+    public static void setMetacatSolrIndex(MetacatSolrIndex solrIndex) {
+        metacatSolrIndex = solrIndex;
     }
 
 }

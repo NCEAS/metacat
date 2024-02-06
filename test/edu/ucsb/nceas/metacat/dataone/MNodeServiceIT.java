@@ -8,6 +8,7 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.index.queue.FailedIndexResubmitTimerTaskIT;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
@@ -90,6 +91,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 
 /**
@@ -4095,6 +4100,23 @@ public class MNodeServiceIT {
             versionChanged = !newVersion1.equals(version1);
         }
         assertTrue(versionChanged);
+
+        // Use Mockito to test the reindexAll method
+        MetacatSolrIndex solrIndex = Mockito.mock(MetacatSolrIndex.class);
+        Mockito.doNothing().when(solrIndex).submit(any(Identifier.class), any(SystemMetadata.class),
+                anyBoolean(), anyBoolean(),anyInt());
+        MNodeService.setMetacatSolrIndex(solrIndex);
+        try {
+            MNodeService.getInstance(request).reindexAll(session);
+            fail("The test shouldn't get there since the session doesn't have the privilege "
+                        + "to reindex all objects on this instance.");
+        } catch (Exception e) {
+            assertTrue( e instanceof NotAuthorized);
+        }
+        MNodeService.getInstance(request).reindexAll(adminSession);
+        Thread.sleep(1000); //reindexAll is called in another thread.
+        Mockito.verify(solrIndex, Mockito.atLeast(1)).submit(any(Identifier.class),
+                                    any(SystemMetadata.class), anyBoolean(), anyBoolean(),anyInt());
     }
 
     /**
@@ -4274,8 +4296,17 @@ public class MNodeServiceIT {
                               getNewDOIUpdateTime(publishedPID2.getValue(), secondUpdateTimeOfPid2);
         assertNotEquals("The update time for "+ publishedPID2.getValue() + " should change",
                                                     thirdUpdateTimeOfPid2, secondUpdateTimeOfPid2);
+    }
 
+    /**
+     * Test the updateAllIdMetadata method
+     * @throws Exception
+     */
+    @Test
+    public void testUpdateAllIdMetadata() throws Exception {
         //use mockito to test updateAllIdMetadata
+        Session session = d1NodeTest.getTestSession();
+        Session adminSession = d1NodeTest.getMNSession();
         UpdateDOI DOIUpdator = Mockito.mock(UpdateDOI.class);
         Mockito.when(DOIUpdator.upgrade()).thenReturn(true);
         MNodeService.setDOIUpdator(DOIUpdator);
