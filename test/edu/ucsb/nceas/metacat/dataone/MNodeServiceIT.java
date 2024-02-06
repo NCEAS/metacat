@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat.dataone;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.admin.upgrade.UpdateDOI;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
@@ -56,6 +57,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -88,6 +90,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 
 /**
  * A JUnit test to exercise the Metacat Member Node service implementation. This also tests a few of
@@ -4271,6 +4274,21 @@ public class MNodeServiceIT {
                               getNewDOIUpdateTime(publishedPID2.getValue(), secondUpdateTimeOfPid2);
         assertNotEquals("The update time for "+ publishedPID2.getValue() + " should change",
                                                     thirdUpdateTimeOfPid2, secondUpdateTimeOfPid2);
+
+        //use mockito to test updateAllIdMetadata
+        UpdateDOI DOIUpdator = Mockito.mock(UpdateDOI.class);
+        Mockito.when(DOIUpdator.upgrade()).thenReturn(true);
+        MNodeService.setDOIUpdator(DOIUpdator);
+        try {
+            MNodeService.getInstance(request).updateAllIdMetadata(session);
+            fail("The test shouldn't get there since the session doesn't have the privilege "
+                        + "to update the all doi's metadata");
+        } catch (Exception e) {
+            assertTrue( e instanceof NotAuthorized);
+        }
+        MNodeService.getInstance(request).updateAllIdMetadata(adminSession);
+        Thread.sleep(1000); //updateAllIdMetadata is called in another thread.
+        Mockito.verify(DOIUpdator, Mockito.times(1)).upgrade();
     }
 
     /**

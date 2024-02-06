@@ -191,7 +191,7 @@ public class MNodeService extends D1NodeService
     private static ExecutorService executor = null;
     private static boolean enforcePublicEntirePackageInPublish = true;
     private boolean needSync = true;
-
+    private static UpdateDOI DOIUpdator = null;
 
     static {
         // use a shared executor service with nThreads == one less than available processors
@@ -205,6 +205,11 @@ public class MNodeService extends D1NodeService
                 PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         } catch (Exception e) {
             logMetacat.warn("MNodeService.static - couldn't get the value since " + e.getMessage());
+        }
+        try {
+            DOIUpdator = new UpdateDOI();
+        } catch (ServiceFailure e) {
+            logMetacat.error("MNodeService.static - can't get the DOI updator " + e.getMessage());
         }
     }
 
@@ -3492,8 +3497,13 @@ public class MNodeService extends D1NodeService
         String notAuthorizedCode = "5907";
         String notAuthorizedError = "The provided identity does not have permission to update "
                                     + "identifiers' metadata on the Node: ";
+        if(DOIUpdator == null) {
+            throw new ServiceFailure(serviceFailureCode, "MNodeService.updateAllIdMetadata - "
+                    + "the UpdateDOI object has not been initialized and is null. "
+                    + "So Metacat can not submit the updateAllIdMetadata task by it.");
+        }
         checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
-        final UpdateDOI udoi = new UpdateDOI();
+        final UpdateDOI udoi = DOIUpdator;
         logMetacat.debug("MNodeService.updateAllIdMetadata");
         Runnable runner = new Runnable() {
             /**
@@ -3908,6 +3918,16 @@ public class MNodeService extends D1NodeService
      */
     public static void setEnforcePublisEntirePackage(boolean enforce) {
         enforcePublicEntirePackageInPublish = enforce;
+    }
+
+    /**
+     * This method is for testing only - replacing the real class by a stubbed
+     * Mockito UpdateDOI class.
+     * @param doiUpdator  the stubbed Mockito UpdateDOI class which will be used to
+     *                      replace the real class
+     */
+    public static void setDOIUpdator(UpdateDOI doiUpdator) {
+        DOIUpdator = doiUpdator;
     }
 
 }
