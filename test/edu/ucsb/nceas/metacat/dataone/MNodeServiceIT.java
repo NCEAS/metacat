@@ -4114,7 +4114,7 @@ public class MNodeServiceIT {
             assertTrue( e instanceof NotAuthorized);
         }
         MNodeService.getInstance(request).reindexAll(adminSession);
-        Thread.sleep(1000); //reindexAll is called in another thread.
+        Thread.sleep(100); //reindexAll is called in another thread.
         Mockito.verify(solrIndex, Mockito.atLeast(1)).submit(any(Identifier.class),
                                     any(SystemMetadata.class), anyBoolean(), anyBoolean(),anyInt());
     }
@@ -4204,7 +4204,7 @@ public class MNodeServiceIT {
         Session session = d1NodeTest.getTestSession();
         Session adminSession = d1NodeTest.getMNSession();
         String emlFile = "test/eml-multiple-creators.xml";
-        InputStream content = null;
+        InputStream content;
         String scheme = "DOI";
         Identifier publishedPID1 = MNodeService.getInstance(request)
                                                     .generateIdentifier(session, scheme, null);
@@ -4212,8 +4212,9 @@ public class MNodeServiceIT {
         SystemMetadata sysmeta = D1NodeServiceTest
                             .createSystemMetadata(publishedPID1, session.getSubject(), content);
         content.close();
-        sysmeta.setFormatId(ObjectFormatCache.getInstance()
-                                .getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.1.0");
+        sysmeta.setFormatId(formatId);
         content = new FileInputStream(emlFile);
         MNodeService.getInstance(request).create(session, publishedPID1, content, sysmeta);
         content.close();
@@ -4226,8 +4227,9 @@ public class MNodeServiceIT {
         SystemMetadata sysmeta2 = D1NodeServiceTest
                 .createSystemMetadata(publishedPID2, session.getSubject(), content);
         content.close();
-        sysmeta2.setFormatId(ObjectFormatCache.getInstance()
-                                .getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        ObjectFormatIdentifier formatId1 = new ObjectFormatIdentifier();
+        formatId1.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta2.setFormatId(formatId1);
         content = new FileInputStream(emlFile);
         MNodeService.getInstance(request).create(session, publishedPID2, content, sysmeta2);
         content.close();
@@ -4357,7 +4359,7 @@ public class MNodeServiceIT {
         EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
         ezid.login(ezidUsername, ezidPassword);
         int count = 0;
-        HashMap<String, String> metadata = null;
+        HashMap<String, String> metadata;
         do {
             metadata = ezid.getMetadata(pid);
             Thread.sleep(600);
