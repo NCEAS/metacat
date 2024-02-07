@@ -4307,9 +4307,9 @@ public class MNodeServiceIT {
         //use mockito to test updateAllIdMetadata
         Session session = d1NodeTest.getTestSession();
         Session adminSession = d1NodeTest.getMNSession();
-        UpdateDOI DOIUpdator = Mockito.mock(UpdateDOI.class);
-        Mockito.when(DOIUpdator.upgrade()).thenReturn(true);
-        MNodeService.setDOIUpdator(DOIUpdator);
+        UpdateDOI doiUpdater = Mockito.mock(UpdateDOI.class);
+        Mockito.when(doiUpdater.upgrade()).thenReturn(true);
+        MNodeService.setDOIUpdater(doiUpdater);
         try {
             MNodeService.getInstance(request).updateAllIdMetadata(session);
             fail("The test shouldn't get there since the session doesn't have the privilege "
@@ -4319,7 +4319,7 @@ public class MNodeServiceIT {
         }
         MNodeService.getInstance(request).updateAllIdMetadata(adminSession);
         Thread.sleep(1000); //updateAllIdMetadata is called in another thread.
-        Mockito.verify(DOIUpdator, Mockito.times(1)).upgrade();
+        Mockito.verify(doiUpdater, Mockito.times(1)).upgrade();
     }
 
     /**

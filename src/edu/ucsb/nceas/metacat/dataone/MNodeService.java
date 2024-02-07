@@ -191,13 +191,13 @@ public class MNodeService extends D1NodeService
     private static ExecutorService executor = null;
     private static boolean enforcePublicEntirePackageInPublish = true;
     private boolean needSync = true;
-    private static UpdateDOI DOIUpdator = null;
+    private static UpdateDOI doiUpdater = null;
     private static MetacatSolrIndex metacatSolrIndex = null;
 
     static {
         // use a shared executor service with nThreads == one less than available processors
         int availableProcessors = Runtime.getRuntime().availableProcessors();
-        int nThreads = availableProcessors * 1;
+        int nThreads = availableProcessors;
         nThreads--;
         nThreads = Math.max(1, nThreads);
         executor = Executors.newFixedThreadPool(nThreads);
@@ -208,9 +208,9 @@ public class MNodeService extends D1NodeService
             logMetacat.warn("MNodeService.static - couldn't get the value since " + e.getMessage());
         }
         try {
-            DOIUpdator = new UpdateDOI();
+            doiUpdater = new UpdateDOI();
         } catch (ServiceFailure e) {
-            logMetacat.error("MNodeService.static - can't get the DOI updator " + e.getMessage());
+            logMetacat.error("MNodeService.static - can't get the DOI updater " + e.getMessage());
         }
         try {
             metacatSolrIndex = MetacatSolrIndex.getInstance();
@@ -3450,7 +3450,7 @@ public class MNodeService extends D1NodeService
      * @param session  the identity of requester. It must have administrative permissions
      * @param identifiers  the list of objects' identifier which will be reindexed.
      * @return true if the reindex request is scheduled. If something went wrong, an exception will
-     * thrown.
+     * be thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws InvalidRequest
@@ -3471,7 +3471,7 @@ public class MNodeService extends D1NodeService
      * The admin API call to reindex all documents in the instance.
      * @param session  the identity of requester. It must have administrative permissions
      * @return true if the reindex request is scheduled. If something went wrong, an exception will
-     * thrown.
+     * be thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws InvalidRequest
@@ -3492,7 +3492,7 @@ public class MNodeService extends D1NodeService
      * Update all controlled identifiers' (such as DOI) metadata on the third party service.
      * @param session  the identity of requester. It must have administrative permissions
      * @return true if the reindex request is scheduled. If something went wrong, an exception will
-     * thrown.
+     * be thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws InvalidRequest
@@ -3504,13 +3504,13 @@ public class MNodeService extends D1NodeService
         String notAuthorizedCode = "5907";
         String notAuthorizedError = "The provided identity does not have permission to update "
                                     + "identifiers' metadata on the Node: ";
-        if(DOIUpdator == null) {
+        if(doiUpdater == null) {
             throw new ServiceFailure(serviceFailureCode, "MNodeService.updateAllIdMetadata - "
                     + "the UpdateDOI object has not been initialized and is null. "
                     + "So Metacat can not submit the updateAllIdMetadata task by it.");
         }
         checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
-        final UpdateDOI udoi = DOIUpdator;
+        final UpdateDOI udoi = doiUpdater;
         logMetacat.debug("MNodeService.updateAllIdMetadata");
         Runnable runner = new Runnable() {
             /**
@@ -3541,7 +3541,7 @@ public class MNodeService extends D1NodeService
      * @param pids  the list of pids will be updated
      * @param formatIds  the list of format id to which the identifiers belong will be updated
      * @return true if the reindex request is scheduled. If something went wrong, an exception will
-     * thrown.
+     * be thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws InvalidRequest
@@ -3935,11 +3935,11 @@ public class MNodeService extends D1NodeService
     /**
      * This method is for testing only - replacing the real class by a stubbed
      * Mockito UpdateDOI class.
-     * @param doiUpdator  the stubbed Mockito UpdateDOI class which will be used to
+     * @param anotherDoiUpdater  the stubbed Mockito UpdateDOI class which will be used to
      *                      replace the real class
      */
-    public static void setDOIUpdator(UpdateDOI doiUpdator) {
-        DOIUpdator = doiUpdator;
+    public static void setDOIUpdater(UpdateDOI anotherDoiUpdater) {
+        doiUpdater = anotherDoiUpdater;
     }
 
     /**
