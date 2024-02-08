@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -26,26 +27,18 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 
     private static Log log = LogFactory.getLog(UpdateDOI.class);
 
-    private int serverLocation = 1;
     private String nodeId = null;
     private String DOISCHEME = "doi:";
 
     /**
      * Public constructor
-     * @throws Exception
+     * @throws ServiceFailure
      */
-    public UpdateDOI() throws Exception {
+    public UpdateDOI() throws ServiceFailure {
         Node node = MNodeService.getInstance(null).getCapabilities();
         nodeId = node.getIdentifier().getValue();
     }
 
-    public int getServerLocation() {
-        return serverLocation;
-    }
-
-    public void setServerLocation(int serverLocation) {
-        this.serverLocation = serverLocation;
-    }
 
     /**
      * Update the registration of a list of DOIs
@@ -75,7 +68,8 @@ public class UpdateDOI implements UpgradeUtilityInterface {
                 }
             } catch (Exception e) {
                 // what to do? nothing
-                e.printStackTrace();
+                log.warn("UpdateDOI.updateDOIRegistration - failed to update "
+                                                    + pid + " since " + e.getMessage());
                 continue;
             }
 

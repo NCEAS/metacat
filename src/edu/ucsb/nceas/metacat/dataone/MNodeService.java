@@ -10,6 +10,8 @@ import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
+import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.upgrade.UpdateDOI;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -120,7 +122,6 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
@@ -128,6 +129,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -189,12 +191,13 @@ public class MNodeService extends D1NodeService
     private static ExecutorService executor = null;
     private static boolean enforcePublicEntirePackageInPublish = true;
     private boolean needSync = true;
-
+    private static UpdateDOI doiUpdater = null;
+    private static MetacatSolrIndex metacatSolrIndex = null;
 
     static {
         // use a shared executor service with nThreads == one less than available processors
         int availableProcessors = Runtime.getRuntime().availableProcessors();
-        int nThreads = availableProcessors * 1;
+        int nThreads = availableProcessors;
         nThreads--;
         nThreads = Math.max(1, nThreads);
         executor = Executors.newFixedThreadPool(nThreads);
@@ -203,6 +206,17 @@ public class MNodeService extends D1NodeService
                 PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         } catch (Exception e) {
             logMetacat.warn("MNodeService.static - couldn't get the value since " + e.getMessage());
+        }
+        try {
+            doiUpdater = new UpdateDOI();
+        } catch (ServiceFailure e) {
+            logMetacat.error("MNodeService.static - can't get the DOI updater " + e.getMessage());
+        }
+        try {
+            metacatSolrIndex = MetacatSolrIndex.getInstance();
+        } catch (Exception e) {
+            logMetacat.error("MNodeService.static - can't get the MetacatSolrIndex object "
+                                                                                + e.getMessage());
         }
     }
 
@@ -3436,7 +3450,7 @@ public class MNodeService extends D1NodeService
      * @param session  the identity of requester. It must have administrative permissions
      * @param identifiers  the list of objects' identifier which will be reindexed.
      * @return true if the reindex request is scheduled. If something went wrong, an exception will
-     * thrown.
+     * be thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws InvalidRequest
@@ -3457,7 +3471,7 @@ public class MNodeService extends D1NodeService
      * The admin API call to reindex all documents in the instance.
      * @param session  the identity of requester. It must have administrative permissions
      * @return true if the reindex request is scheduled. If something went wrong, an exception will
-     * thrown.
+     * be thrown.
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws InvalidRequest
@@ -3471,6 +3485,92 @@ public class MNodeService extends D1NodeService
                 "The provided identity does not have permission to reindex objects on the Node: ";
         checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
         handleReindexAllAction();
+        return Boolean.TRUE;
+    }
+
+    /**
+     * Update all controlled identifiers' (such as DOI) metadata on the third party service.
+     * @param session  the identity of requester. It must have administrative permissions
+     * @return true if the reindex request is scheduled. If something went wrong, an exception will
+     * be thrown.
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplemented
+     */
+    public Boolean updateAllIdMetadata(Session session) throws ServiceFailure,
+                                                    NotAuthorized, InvalidRequest, NotImplemented {
+        String serviceFailureCode = "5906";
+        String notAuthorizedCode = "5907";
+        String notAuthorizedError = "The provided identity does not have permission to update "
+                                    + "identifiers' metadata on the Node: ";
+        if(doiUpdater == null) {
+            throw new ServiceFailure(serviceFailureCode, "MNodeService.updateAllIdMetadata - "
+                    + "the UpdateDOI object has not been initialized and is null. "
+                    + "So Metacat can not submit the updateAllIdMetadata task by it.");
+        }
+        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+        final UpdateDOI udoi = doiUpdater;
+        logMetacat.debug("MNodeService.updateAllIdMetadata");
+        Runnable runner = new Runnable() {
+            /**
+             * Override
+             */
+            public void run() {
+                try {
+                    udoi.upgrade();
+                } catch (AdminException e) {
+                     logMetacat.error("MNodeService.updateAllIdMetadata - "
+                           + "can not update all identifiers' metadata since " +e.getMessage());
+                }
+            }
+        };
+        if (executor != null) {
+            executor.submit(runner);
+        } else {
+            throw new ServiceFailure(serviceFailureCode, "MNodeService.updateAllIdMetadata - "
+                    + "the ExecutorService object has not been initialized and is null. "
+                    + "So Metacat can not submit the updateAllIdMetadata task by it.");
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * Update the given identifiers' (such as DOI) metadata on the third party service.
+     * @param session  the identity of requester. It must have administrative permissions.
+     * @param pids  the list of pids will be updated
+     * @param formatIds  the list of format id to which the identifiers belong will be updated
+     * @return true if the reindex request is scheduled. If something went wrong, an exception will
+     * be thrown.
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplemented
+     */
+    public Boolean updateIdMetadata(Session session, String[] pids, String[] formatIds)
+            throws ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
+        String serviceFailureCode = "5906";
+        String notAuthorizedCode = "5907";
+        String notAuthorizedError = "The provided identity does not have permission to update "
+                                    + "identifiers' metadata on the Node: ";
+        checkAdminPrivilege(session, serviceFailureCode, notAuthorizedCode, notAuthorizedError);
+        if (pids == null && formatIds == null) {
+            throw new InvalidRequest("5908", "Users should specify values of pid or formatId in "
+                                                  + "the update identifier metadata request.");
+        }
+        try {
+            UpdateDOI udoi = new UpdateDOI();
+            if (pids != null && pids.length > 0) {
+                logMetacat.debug("MNodeService.updateIdMetadata - update a list of pids.");
+                udoi.upgradeById(Arrays.asList(pids));
+            }
+            if (formatIds != null && formatIds.length > 0) {
+                logMetacat.debug("MNodeService.updateIdMetadata - update a list of format ids.");
+                udoi.upgradeByFormatId(Arrays.asList(formatIds));
+            }
+        } catch (AdminException e) {
+            throw new ServiceFailure(serviceFailureCode, e.getMessage());
+        }
         return Boolean.TRUE;
     }
 
@@ -3585,7 +3685,7 @@ public class MNodeService extends D1NodeService
                 "MNodeService.buildAllNonResourceMapIndex - the number of non-resource map "
                     + "objects is "
                     + size + " being submitted to the index queue.");
-        } catch (SQLException e) {
+        } catch (SQLException | ServiceFailure e) {
             logMetacat.error(
                 "MNodeService.buildAllNonResourceMapIndex - can't index the objects since: "
                     + e.getMessage());
@@ -3623,7 +3723,7 @@ public class MNodeService extends D1NodeService
             logMetacat.info(
                 "MNodeService.buildAllResourceMapIndex - the number of resource map objects is "
                     + size + " being submitted to the index queue.");
-        } catch (SQLException e) {
+        } catch (SQLException | ServiceFailure e) {
             logMetacat.error(
                 "MNodeService.buildAllResourceMapIndex - can't index the objects since: "
                     + e.getMessage());
@@ -3635,11 +3735,16 @@ public class MNodeService extends D1NodeService
      * @param sql  the query which will be used to executed to select identifiers for reindexing
      * @return the number of objects which were reindexed
      * @throws SQLException
+     * @throws SericeFailure
      */
-    private long buildIndexFromQuery(String sql) throws SQLException {
+    private long buildIndexFromQuery(String sql) throws SQLException, ServiceFailure {
         DBConnection dbConn = null;
         long i = 0;
         int serialNumber = -1;
+        if (metacatSolrIndex == null) {
+            throw new ServiceFailure("0000", "The MetacatSolrIndex can't be initialized so "
+                                        + "we can't regenerate all index for the Metacat instance");
+        }
         try {
             // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("MNodeService.buildIndexFromQuery");
@@ -3657,7 +3762,7 @@ public class MNodeService extends D1NodeService
                         // submit for indexing
                         boolean isSysmetaChangeOnly = false;
                         boolean followRevisions = false;
-                        MetacatSolrIndex.getInstance()
+                        metacatSolrIndex
                             .submit(identifier, sysMeta, isSysmetaChangeOnly, followRevisions,
                                     IndexGenerator.LOW_PRIORITY);
                         i++;
@@ -3825,6 +3930,26 @@ public class MNodeService extends D1NodeService
      */
     public static void setEnforcePublisEntirePackage(boolean enforce) {
         enforcePublicEntirePackageInPublish = enforce;
+    }
+
+    /**
+     * This method is for testing only - replacing the real class by a stubbed
+     * Mockito UpdateDOI class.
+     * @param anotherDoiUpdater  the stubbed Mockito UpdateDOI class which will be used to
+     *                      replace the real class
+     */
+    public static void setDOIUpdater(UpdateDOI anotherDoiUpdater) {
+        doiUpdater = anotherDoiUpdater;
+    }
+
+    /**
+     * This method is for testing only - replacing the real class by a stubbed
+     * Mockito MetacatSolrIndex class.
+     * @param solrIndex  the stubbed Mockito MetacatSolrIndex class which will be used to
+     *                      replace the real class
+     */
+    public static void setMetacatSolrIndex(MetacatSolrIndex solrIndex) {
+        metacatSolrIndex = solrIndex;
     }
 
 }
