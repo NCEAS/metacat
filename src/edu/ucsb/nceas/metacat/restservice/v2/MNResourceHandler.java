@@ -119,7 +119,8 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *         getReplica() - GET /d1/mn/replica
  *
  *    MNAdmin
- *         reindex() - GET /d1/mn/index
+ *         reindex() - PUT /d1/mn/index
+ *         updateIdMetadata() - PUT /d1/mn/identifiers
  *
  * ******************
  * @author leinfelder
@@ -142,6 +143,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     //make the status of identifier (e.g. DOI) public
     protected static final String RESOURCE_PUBLISH_IDENTIFIER = "publishIdentifier";
     protected static final String RESOURCE_INDEX = "index";
+    protected static final String RESOURCE_IDENTIFIERS = "identifiers";
 
 
 
@@ -520,6 +522,16 @@ public class MNResourceHandler extends D1ResourceHandler {
                         extra = decode(extra);
                         logMetacat.debug("The objectId(extra) in index is: " + extra);
                         reindex(extra);
+                        status = true;
+                    }
+                } else if (resource.startsWith(RESOURCE_IDENTIFIERS)) {
+                    logMetacat.debug("Using resource: " + RESOURCE_IDENTIFIERS);
+                    // PUT
+                    if (httpVerb == PUT) {
+                        extra = parseTrailing(resource, RESOURCE_IDENTIFIERS);
+                        extra = decode(extra);
+                        logMetacat.debug("The objectId(extra) in updateIdMetadata is: " + extra);
+                        updateIdMetadata(extra);
                         status = true;
                     }
                 } else {
@@ -1880,7 +1892,6 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected void reindex(String pid) throws InvalidRequest, ServiceFailure,
                                                      NotAuthorized, NotImplemented, IOException {
         boolean all = false;
-        Boolean success = Boolean.TRUE;
         List<Identifier> identifiers = new ArrayList<Identifier>();
         if (pid != null) {
             //handle to reindex a single pid
@@ -1888,7 +1899,7 @@ public class MNResourceHandler extends D1ResourceHandler {
             Identifier id = new Identifier();
             id.setValue(pid);
             identifiers.add(id);
-            success = MNodeService.getInstance(request).reindex(session, identifiers);
+            MNodeService.getInstance(request).reindex(session, identifiers);
         } else {
             //handle the batch of reindex tasks based on query
             logMetacat.debug("MNResourceHandler.reindex - reindex objects based on the query part");
@@ -1913,25 +1924,87 @@ public class MNResourceHandler extends D1ResourceHandler {
                             identifier.setValue(id);
                             identifiers.add(identifier);
                         }
-                        success = MNodeService.getInstance(request).reindex(session, identifiers);
                     }
+                    MNodeService.getInstance(request).reindex(session, identifiers);
                 } else {
                     throw new InvalidRequest("5903", "Users should specify the \"pid\" value "
                                                                                 + "for reindexing");
                 }
             } else {
-                success = MNodeService.getInstance(request).reindexAll(session);
+                MNodeService.getInstance(request).reindexAll(session);
             }
         }
         response.setStatus(200);
         response.setContentType("text/xml");
         try (OutputStream out = response.getOutputStream()) {
-            out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes());
-            out.write("<scheduled>".getBytes());
-            out.write(success.toString().getBytes());
-            out.write("</scheduled>".getBytes());
+            out.write(getSuccessScheduleText().getBytes());
         }
     }
 
+    /**
+     * Handle the request to update identifiers' (such as DOI) metadata on the third party service
+     * @param pid  the pid which will be updated. It can be null, which means we will do a batch of
+     *             update based on the query part.
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplemented
+     * @throws IOException
+     */
+    protected void updateIdMetadata(String pid) throws ServiceFailure, NotAuthorized,
+                                                      InvalidRequest, NotImplemented, IOException {
+        boolean all = false;
+        String[] identifiers = null;
+        String[] formatIds = null;
+        if (pid != null) {
+            //handle to update a single pid's metadata
+            logMetacat.debug("MNResourceHandler.updateIdMetadata - update one "
+                                                             + "pid (part of url) " + pid);
+            identifiers = new String[1];
+            identifiers[0] = pid;
+            MNodeService.getInstance(request)
+                                                .updateIdMetadata(session, identifiers, formatIds);
+        } else {
+            //handle a batch of updating ids' metadata tasks based on query
+            logMetacat.debug("MNResourceHandler.updateIdMetadata - updateIdMetadata "
+                                                                    + "based on the query part");
+            String[] allValueArray = params.get("all");
+            if (allValueArray != null) {
+                if (allValueArray.length != 1) {
+                    throw new InvalidRequest("5908", "The \"all\" should only have one value");
+                } else {
+                    String allValue = allValueArray[0];
+                    if (allValue != null && allValue.equalsIgnoreCase("true")) {
+                        all = true;
+                    }
+                }
+            }
+            logMetacat.debug("MNResourceHandler.updateIdMetadata - the \"all\" value is " + all);
+            if (!all) {
+                identifiers = params.get("pid");
+                formatIds = params.get("formatId");
+                MNodeService.getInstance(request)
+                                                 .updateIdMetadata(session, identifiers, formatIds);
+            } else {
+                MNodeService.getInstance(request).updateAllIdMetadata(session);
+            }
+        }
+        response.setStatus(200);
+        response.setContentType("text/xml");
+        try (OutputStream out = response.getOutputStream()) {
+            out.write(getSuccessScheduleText().getBytes());
+        }
+    }
+
+    /**
+     * Get the text of a successful scheduling.
+     * @return the string of successful scheduling information
+     */
+    private String getSuccessScheduleText() {
+        return """
+                <?xml version="1.0" encoding="UTF-8"?>
+                    <scheduled>true</scheduled>
+               """;
+    }
 }
 
