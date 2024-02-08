@@ -16,7 +16,7 @@ DISTSRC="./README.md"
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [-t <TAG>] [-v <MC_VERSION>] [-devtools]"
+    echo "Usage: $0 [-t <TAG>] [-v <VERSION>] [--devtools]"
     echo
     echo "where:  -t <TAG>  is the image tag, which is typically the metacat version being released."
     echo "                  The image tag defaults to $TAG if the -t option is omitted"
@@ -28,7 +28,7 @@ usage() {
     echo "        -v <VERSION> is the metacat build version number; e.g. 2.19.1"
     echo "                  The version number defaults to $MC_VERSION if the -v option is omitted"
     echo
-    echo "       --devtools is FOR DEV/DEBUGGING ONLY - NOT FOR PRODUCTION USE!"
+    echo "        --devtools is FOR DEV/DEBUGGING ONLY - NOT FOR PRODUCTION USE!"
     devtools-info
     echo
     exit 1
