@@ -68,8 +68,10 @@ public class MNResourceHandlerTest {
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         context = new MockServletContext(null, PATH);
-        //@TODO The filter seems not working
-        context.addFilter("d1Filter", "edu.ucsb.nceas.metacat.restservice.D1URLFilter");
+        // The default filter works for our testing.
+        // Note, however, that the following filter does NOT seem to work:
+        //  context.addFilter("d1Filter", "edu.ucsb.nceas.metacat.restservice.D1URLFilter");
+        // This is OK for now, but may become a problem for the sql query test"
         request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
         resourceHandler =
                     new MNResourceHandler(context, request, new MockHttpServletResponse(request));
