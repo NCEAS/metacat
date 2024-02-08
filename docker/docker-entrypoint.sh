@@ -6,6 +6,7 @@
 # METACAT_EXTERNAL_PORT     (see .Values.metacat.server.httpPort)
 # TOMCAT_MEM_MIN            (see .Values.tomcat.heapMemory.min)
 # TOMCAT_MEM_MAX            (see .Values.tomcat.heapMemory.max)
+# INCLUDE_METACATUI         (see .Values.metacat.includeMetacatUi)
 #
 # Defined in Dockerfile:
 # TC_HOME       (tomcat home directory in container; typically /usr/local/tomcat)
@@ -78,18 +79,24 @@ setTomcatEnv() {
 configMetacatUi() {
     UI_HOME="${TC_HOME}"/webapps/metacatui
 
+    # Expand the metacatui.war
+    if [ ! -d "${UI_HOME}" ]; then
+        unzip -qq "${TC_HOME}"/webapps/metacatui.war -d "${UI_HOME}"
+    fi
+
     # show default skin if nothing else configured.
     # 1. Overwrite config.js
+    if [ "$METACAT_EXTERNAL_PORT" == "443" ] || [ "$METACAT_EXTERNAL_PORT" == "8443" ]; then
+      PROTOCOL="https"
+    else
+      PROTOCOL="http"
+    fi
     {
         echo "MetacatUI.AppConfig = {"
         echo "  theme: \"default\","
         echo "  root: \"/metacatui\","
         echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
-        S=""
-        if [ "$METACAT_EXTERNAL_PORT" == "443" ] || [ "$METACAT_EXTERNAL_PORT" == "8443" ]; then
-          S="s"
-        fi
-        echo "  baseUrl: \"http${S}://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\","
+        echo "  baseUrl: \"${PROTOCOL}://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\","
         echo "  d1CNBaseUrl: \"${METACAT_DATAONE_CN_URL%"cn"}\""
         echo '}'
     } > "${UI_HOME}"/config/config.js
@@ -114,6 +121,8 @@ configMetacatUi() {
         echo "    </error-page>"
         echo "</web-app>"
     } > "${UI_HOME}"/WEB-INF/web.xml
+
+    echo "MetacatUI installed and configured at: ${UI_HOME}"
 }
 
 make-var-metacat-dirs() {
@@ -148,12 +157,18 @@ if [[ $DEVTOOLS == "true" ]]; then
 
 elif [[ $1 = "catalina.sh" ]]; then
 
-    # Expand the metacatui.war
-    if [ ! -d "${TC_HOME}"/webapps/metacatui ]; then
-        unzip -qq "${TC_HOME}"/webapps/metacatui.war -d "${TC_HOME}"/webapps/metacatui
+    # If $INCLUDE_METACATUI is not set, default to installing
+    if [ -z "$INCLUDE_METACATUI" ]; then
+        echo "INCLUDE_METACATUI env var not found; defaulting to INCLUDE MetacatUI..."
+        INCLUDE_METACATUI="true"
     fi
 
-    configMetacatUi
+    if [ "$INCLUDE_METACATUI" == "true" ]; then
+        echo "Including MetacatUI, since INCLUDE_METACATUI=$INCLUDE_METACATUI"
+        configMetacatUi
+    else
+        echo "NOT including MetacatUI, since INCLUDE_METACATUI ($INCLUDE_METACATUI) != \"true\""
+    fi
 
     if [ -z "$METACAT_APP_CONTEXT" ]; then
         METACAT_APP_CONTEXT="metacat"

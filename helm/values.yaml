@@ -97,6 +97,12 @@ metacat:
   ##
   application.context: *metacatAppContext
 
+  ## @param metacat.includeMetacatUi Include MetacatUI in the same container as metacat
+  ## A default-skin deployment of MetacatUI will be included in the metacat pod, unless this value
+  ## is set to 'false'. If not including MetacatUI, don't forget to remove the path mapping from
+  ## ingress.hosts
+  includeMetacatUi: true
+
   ## @param metacat.administrator.username The admin username that will be used to authenticate
   ## with the new metacat instance and apply any necessary setup steps, database upgrades etc.
   ## upon first run.
@@ -559,8 +565,9 @@ ingress:
       paths:
         - path: "/metacat"
           pathType: Prefix
-        # remove the following if you do NOT want metacatui to be exposed & accessed via /metacatui
-        # (default knb skin)
+        # Remove the following if you do NOT want metacatui to be exposed & accessed via /metacatui
+        # (A default-skin deployment of MetacatUI will still be included in the metacat pod,
+        #  unless the value of 'metacat.includeMetacatUi' is set to 'false'.)
         - path: "/metacatui"
           pathType: Prefix
 
@@ -733,7 +740,8 @@ postgresql:
 ## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
 ## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
 ## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
-## setting memory limits using Kubernetes will have no effect on a Java application, unless you specifically set a maximimum heap size (using Java’s -Xmx setting).
+## setting memory limits using Kubernetes will have no effect on a Java application, unless you
+## specifically set a maximimum heap size (using Java’s -Xmx setting).
 ##
 ## IMPORTANT NOTE
 ## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
