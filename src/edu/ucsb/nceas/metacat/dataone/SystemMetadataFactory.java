@@ -6,44 +6,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.math.BigInteger;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
-
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.v2.formats.ObjectFormatCache;
-import org.dataone.configuration.Settings;
-import org.dataone.eml.DataoneEMLParser;
-import org.dataone.eml.EMLDocument;
-import org.dataone.eml.EMLDocument.DistributionMetadata;
 import org.dataone.exceptions.MarshallingException;
-import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.exceptions.InvalidRequest;
-import org.dataone.service.exceptions.InvalidToken;
-import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
-import org.dataone.service.exceptions.NotImplemented;
-import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
@@ -51,13 +28,11 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ReplicationPolicy;
-import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.TypeMarshaller;
-import org.dspace.foresite.ResourceMap;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -75,12 +50,10 @@ import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.McdbException;
-import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlForSingleFile;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
-import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
@@ -94,10 +67,6 @@ public class SystemMetadataFactory {
 
     public static final String RESOURCE_MAP_PREFIX = "resourceMap_";
     private static Log logMetacat = LogFactory.getLog(SystemMetadataFactory.class);
-    private static int waitingTime =
-        Settings.getConfiguration().getInt("index.resourcemap.waitingComponent.time", 100);
-    private static int maxAttempts =
-        Settings.getConfiguration().getInt("index.resourcemap.waitingComponent.max.attempts", 5);
     /**
      * use this flag if you want to update any existing system metadata values with generated
      * content
@@ -106,11 +75,13 @@ public class SystemMetadataFactory {
 
 
     /**
-     * Create a system metadata object for insertion into metacat
+     * Creates a system metadata object for insertion into metacat
+     * @param indexDataFile
+     *            Indicate if we need to index data file.
+     *
      * @param localId
-     * @param includeORE
-     * @param downloadData
-     * @return
+     *            The local document identifier
+     * @return sysMeta The system metadata object created
      * @throws McdbException
      * @throws McdbDocNotFoundException
      * @throws SQLException
@@ -128,43 +99,12 @@ public class SystemMetadataFactory {
      * @throws SAXException
      * @throws AccessException
      */
-    public static SystemMetadata createSystemMetadata(
-        String localId, boolean includeORE, boolean downloadData)
+    public static SystemMetadata createSystemMetadata(String localId)
         throws McdbException, McdbDocNotFoundException, SQLException, IOException,
         AccessionNumberException, ClassNotFoundException, InsufficientKarmaException,
         ParseLSIDException, PropertyNotFoundException, BaseException, NoSuchAlgorithmException,
         MarshallingException, AccessControlException, HandlerException, SAXException,
         AccessException {
-        boolean indexDataFile = false;
-        return createSystemMetadata(indexDataFile, localId, includeORE, downloadData);
-    }
-
-    /**
-     * Creates a system metadata object for insertion into metacat
-     * @param indexDataFile
-     *            Indicate if we need to index data file.
-     *
-     * @param localId
-     *            The local document identifier
-     * @param user
-     *            The user submitting the system metadata document
-     * @param groups
-     *            The groups the user belongs to
-     *
-     * @return sysMeta The system metadata object created
-     * @throws SAXException
-     * @throws HandlerException
-     * @throws AccessControlException
-     * @throws AccessException
-     */
-    public static SystemMetadata createSystemMetadata(
-        boolean indexDataFile, String localId, boolean includeORE, boolean downloadData)
-        throws McdbException, McdbDocNotFoundException, SQLException, IOException,
-        AccessionNumberException, ClassNotFoundException, InsufficientKarmaException,
-        ParseLSIDException, PropertyNotFoundException, BaseException, NoSuchAlgorithmException,
-        MarshallingException, AccessControlException, HandlerException, SAXException,
-        AccessException {
-
         logMetacat.debug("createSystemMetadata() called for localId " + localId);
 
         // check for system metadata
@@ -212,23 +152,22 @@ public class SystemMetadataFactory {
         Hashtable<String, String> docInfo = getDocumentInfoMap(localId);
         // set the default object format
         String doctype = docInfo.get("doctype");
-        ObjectFormatIdentifier fmtid = null;
+        ObjectFormatIdentifier fmtid = new ObjectFormatIdentifier();
 
         // set the object format, fall back to defaults
         if (doctype.trim().equals("BIN")) {
             // we don't know much about this file (yet)
-            fmtid =
-                ObjectFormatCache.getInstance().getFormat("application/octet-stream").getFormatId();
+            fmtid.setValue("application/octet-stream");
         } else if (doctype.trim().equals("metadata")) {
             // special ESRI FGDC format
-            fmtid = ObjectFormatCache.getInstance().getFormat("FGDC-STD-001-1998").getFormatId();
+            fmtid.setValue("FGDC-STD-001-1998");
         } else {
+            // do we know the given format?
+            fmtid.setValue(doctype);
             try {
-                // do we know the given format?
-                fmtid = ObjectFormatCache.getInstance().getFormat(doctype).getFormatId();
+                ObjectFormatCache.getInstance().getFormat(fmtid);
             } catch (NotFound nfe) {
-                // format is not registered, use default
-                fmtid = ObjectFormatCache.getInstance().getFormat("text/plain").getFormatId();
+                fmtid.setValue("text/plain");
             }
         }
 
@@ -237,7 +176,8 @@ public class SystemMetadataFactory {
 
         // for retrieving the actual object
         InputStream inputStream = null;
-        inputStream = MetacatHandler.read(localId);
+        inputStream = MetacatHandler.read(localId,
+                                ObjectFormatCache.getInstance().getFormat(fmtid).getFormatType());
 
         // create the checksum
         String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
@@ -363,417 +303,9 @@ public class SystemMetadataFactory {
             sysMeta.setReplicationPolicy(rp);
         }
 
-        // further parse EML documents to get data object format,
-        // describes and describedBy information
-        if (fmtid == ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.0.0")
-            .getFormatId() || fmtid == ObjectFormatCache.getInstance()
-            .getFormat("eml://ecoinformatics.org/eml-2.0.1").getFormatId()
-            || fmtid == ObjectFormatCache.getInstance()
-            .getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId()
-            || fmtid == ObjectFormatCache.getInstance()
-            .getFormat("eml://ecoinformatics.org/eml-2.1.1").getFormatId()
-            || fmtid == ObjectFormatCache.getInstance()
-            .getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId()) {
-
-            try {
-                Session session = new Session();
-                session.setSubject(submitter);
-                MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-                // get it again to parse the document
-                logMetacat.debug("Re-reading document inputStream");
-                inputStream = MetacatHandler.read(localId);
-
-                DataoneEMLParser emlParser = DataoneEMLParser.getInstance();
-                EMLDocument emlDocument = emlParser.parseDocument(inputStream);
-
-                // iterate through the data objects in the EML doc and add sysmeta
-                logMetacat.debug("In createSystemMetadata() the number of data " + "entities is: "
-                                     + emlDocument.distributionMetadata);
-
-                // for generating the ORE map
-                Map<Identifier, List<Identifier>> idMap =
-                    new HashMap<Identifier, List<Identifier>>();
-                List<Identifier> dataIds = new ArrayList<Identifier>();
-
-                // iterate through data objects described by the EML
-                if (emlDocument.distributionMetadata != null) {
-                    for (int j = 0; j < emlDocument.distributionMetadata.size(); j++) {
-
-                        DistributionMetadata distMetadata =
-                            emlDocument.distributionMetadata.elementAt(j);
-                        String dataDocUrl = distMetadata.url;
-                        String dataDocMimeType = distMetadata.mimeType;
-                        // default to binary
-                        if (dataDocMimeType == null) {
-                            dataDocMimeType = "application/octet-stream";
-                        }
-
-                        // process the data
-                        boolean remoteData = false;
-                        String dataDocLocalId = null;
-                        Identifier dataGuid = new Identifier();
-
-                        // handle ecogrid, or downloadable data
-                        String ecogridPrefix = "ecogrid://knb/";
-                        if (dataDocUrl.trim().startsWith(ecogridPrefix)) {
-                            dataDocLocalId = dataDocUrl.substring(
-                                dataDocUrl.indexOf(ecogridPrefix) + ecogridPrefix.length());
-                        } else {
-                            // should we try downloading the remote data?
-                            if (downloadData) {
-                                InputStream dataObject = null;
-                                try {
-                                    // download the data from the URL
-                                    URL dataURL = new URL(dataDocUrl);
-                                    URLConnection dataConnection = dataURL.openConnection();
-
-                                    // default is to download the data
-                                    dataObject = dataConnection.getInputStream();
-
-                                    String detectedContentType = dataConnection.getContentType();
-                                    logMetacat.info(
-                                        "Detected content type: " + detectedContentType);
-
-                                    if (detectedContentType != null) {
-                                        // seems to be HTML from the remote location
-                                        if (detectedContentType.contains("html")) {
-                                            // if we are not expecting it, we skip it
-                                            if (!dataDocMimeType.contains("html")) {
-                                                // set to null so we don't download it
-                                                dataObject = null;
-                                                logMetacat.warn(
-                                                    "Skipping remote resource, unexpected HTML "
-                                                        + "content type at: "
-                                                        + dataDocUrl);
-                                            }
-                                        }
-
-                                    } else {
-                                        // if we don't know what it is, should we skip it?
-                                        dataObject = null;
-                                        logMetacat.warn(
-                                            "Skipping remote resource, unknown content type at: "
-                                                + dataDocUrl);
-                                    }
-
-                                } catch (Exception e) {
-                                    // error with the download
-                                    logMetacat.warn(
-                                        "Error downloading remote data. " + e.getMessage());
-                                }
-
-                                if (dataObject != null) {
-                                    // create the local version of it
-                                    dataDocLocalId = DocumentUtil.generateDocumentId(1);
-                                    IdentifierManager.getInstance()
-                                        .createMapping(dataDocLocalId, dataDocLocalId);
-                                    dataGuid.setValue(dataDocLocalId);
-
-                                    // save it locally
-                                    Checksum sum = null;
-                                    MNodeService.getInstance(request)
-                                        .insertDataObject(dataObject, dataGuid, session, sum);
-
-                                    remoteData = true;
-                                }
-                            }
-
-                        }
-
-                        logMetacat.debug("Data local ID: " + dataDocLocalId);
-                        logMetacat.debug("Data URL     : " + dataDocUrl);
-                        logMetacat.debug("Data mime    : " + dataDocMimeType);
-
-                        // check for valid docid.rev
-                        String dataDocid = null;
-                        int dataRev = 0;
-                        if (dataDocLocalId != null) {
-                            // look up the guid for the data
-                            try {
-                                dataDocid = DocumentUtil.getSmartDocId(dataDocLocalId);
-                                dataRev =
-                                    DocumentUtil.getRevisionFromAccessionNumber(dataDocLocalId);
-                            } catch (Exception e) {
-                                logMetacat.warn(e.getClass().getName()
-                                                    + " - Problem parsing accession number for: "
-                                                    + dataDocLocalId + ". Message: "
-                                                    + e.getMessage());
-                                dataDocLocalId = null;
-                            }
-                        }
-
-                        // now we have a local id for the data
-                        if (dataDocLocalId != null) {
-
-                            // check if data system metadata exists already
-                            SystemMetadata dataSysMeta = null;
-                            String dataGuidString = null;
-                            try {
-                                // look for the identifier
-                                dataGuidString =
-                                    IdentifierManager.getInstance().getGUID(dataDocid, dataRev);
-                                // set it
-                                dataGuid.setValue(dataGuidString);
-                                // look up the system metadata
-                                try {
-                                    dataSysMeta = SystemMetadataManager.getInstance().get(dataGuid);
-                                } catch (Exception e) {
-                                    // probably not in the system
-                                    dataSysMeta = null;
-                                }
-                            } catch (McdbDocNotFoundException nf) {
-                                // we didn't find it
-                                dataSysMeta = null;
-                            }
-
-                            // we'll have to generate it
-                            if (dataSysMeta == null) {
-                                // System metadata for data doesn't exist yet, so create it
-                                logMetacat.debug("No exisiting SystemMetdata found, creating for: "
-                                                     + dataDocLocalId);
-                                dataSysMeta =
-                                    createSystemMetadata(dataDocLocalId, includeORE, false);
-
-                                // now look it up again
-                                dataGuidString =
-                                    IdentifierManager.getInstance().getGUID(dataDocid, dataRev);
-
-                                // set the guid
-                                dataGuid.setValue(dataGuidString);
-
-                                // inherit access rules from metadata, if we don't have our own
-                                if (remoteData) {
-                                    dataSysMeta.setAccessPolicy(sysMeta.getAccessPolicy());
-                                    // TODO: use access rules defined in EML, per data file
-                                }
-
-                            }
-
-                            // set object format for the data file
-                            logMetacat.debug(
-                                "Updating system metadata for " + dataGuid.getValue() + " to "
-                                    + dataDocMimeType);
-                            ObjectFormatIdentifier fmt = null;
-                            try {
-                                fmt = ObjectFormatCache.getInstance().getFormat(dataDocMimeType)
-                                    .getFormatId();
-                            } catch (NotFound nfe) {
-                                logMetacat.debug(
-                                    "Couldn't find format identifier for: " + dataDocMimeType
-                                        + ". Setting it to application/octet-stream.");
-                                fmt = new ObjectFormatIdentifier();
-                                fmt.setValue("application/octet-stream");
-                            }
-                            dataSysMeta.setFormatId(fmt);
-
-                            // update the values
-                            SystemMetadataManager.getInstance().store(dataSysMeta);
-                            // reindex data file if need it.
-                            logMetacat.debug("do we need to reindex guid " + dataGuid.getValue()
-                                                 + "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?"
-                                                 + indexDataFile);
-                            if (indexDataFile) {
-                                reindexDataFile(
-                                    dataSysMeta.getIdentifier(), dataSysMeta, session, request);
-                            }
-
-                            // include as part of the ORE package
-                            dataIds.add(dataGuid);
-
-                        } // end if (EML package)
-
-                    } // end for (data entities)
-
-                } // data entities not null
-
-                // ORE map
-                if (includeORE) {
-                    // can we generate them?
-                    if (!dataIds.isEmpty()) {
-                        // it doesn't exist in the system?
-                        if (!oreExistsFor(sysMeta.getIdentifier())) {
-
-                            // generate the ORE map for this datapackage
-                            Identifier resourceMapId = new Identifier();
-                            // use the local id, not the guid in case we have DOIs for them already
-                            resourceMapId.setValue(RESOURCE_MAP_PREFIX + localId);
-                            idMap.put(sysMeta.getIdentifier(), dataIds);
-                            ResourceMap rm = ResourceMapFactory.getInstance()
-                                .createResourceMap(resourceMapId, idMap);
-                            String resourceMapXML =
-                                ResourceMapFactory.getInstance().serializeResourceMap(rm);
-                            // copy most of the same system metadata as the packaging metadata
-                            SystemMetadata resourceMapSysMeta = new SystemMetadata();
-                            BeanUtils.copyProperties(resourceMapSysMeta, sysMeta);
-                            resourceMapSysMeta.setIdentifier(resourceMapId);
-                            Checksum oreChecksum = ChecksumUtil.checksum(
-                                IOUtils.toInputStream(resourceMapXML,
-                                                      MetaCatServlet.DEFAULT_ENCODING), algorithm);
-                            resourceMapSysMeta.setChecksum(oreChecksum);
-                            ObjectFormatIdentifier formatId = ObjectFormatCache.getInstance()
-                                .getFormat("http://www.openarchives.org/ore/terms").getFormatId();
-                            resourceMapSysMeta.setFormatId(formatId);
-                            resourceMapSysMeta.setSize(BigInteger.valueOf(sizeOfStream(
-                                IOUtils.toInputStream(resourceMapXML,
-                                                      MetaCatServlet.DEFAULT_ENCODING))));
-
-                            // set the revision graph
-                            resourceMapSysMeta.setObsoletes(null);
-                            resourceMapSysMeta.setObsoletedBy(null);
-                            // look up the resource map that this one obsoletes
-                            if (sysMeta.getObsoletes() != null) {
-                                // use the localId in case we have a DOI
-                                String obsoletesLocalId = IdentifierManager.getInstance()
-                                    .getLocalId(sysMeta.getObsoletes().getValue());
-                                Identifier resourceMapObsoletes = new Identifier();
-                                resourceMapObsoletes.setValue(
-                                    RESOURCE_MAP_PREFIX + obsoletesLocalId);
-                                resourceMapSysMeta.setObsoletes(resourceMapObsoletes);
-                                SystemMetadata resourceMapObsoletesSystemMetadata =
-                                    SystemMetadataManager.getInstance().get(resourceMapObsoletes);
-                                if (resourceMapObsoletesSystemMetadata != null) {
-                                    resourceMapObsoletesSystemMetadata.setObsoletedBy(
-                                        resourceMapId);
-                                    SystemMetadataManager.getInstance()
-                                        .store(resourceMapObsoletesSystemMetadata);
-                                }
-                            }
-                            // look up the resource map that this one is obsoletedBy
-                            if (sysMeta.getObsoletedBy() != null) {
-                                // use the localId in case we have a DOI
-                                String obsoletedByLocalId = IdentifierManager.getInstance()
-                                    .getLocalId(sysMeta.getObsoletedBy().getValue());
-                                Identifier resourceMapObsoletedBy = new Identifier();
-                                resourceMapObsoletedBy.setValue(
-                                    RESOURCE_MAP_PREFIX + obsoletedByLocalId);
-                                resourceMapSysMeta.setObsoletedBy(resourceMapObsoletedBy);
-                                SystemMetadata resourceMapObsoletedBySystemMetadata =
-                                    SystemMetadataManager.getInstance().get(resourceMapObsoletedBy);
-                                if (resourceMapObsoletedBySystemMetadata != null) {
-                                    resourceMapObsoletedBySystemMetadata.setObsoletes(
-                                        resourceMapId);
-                                    SystemMetadataManager.getInstance()
-                                        .store(resourceMapObsoletedBySystemMetadata);
-                                }
-                            }
-
-                            // save it locally, if it doesn't already exist
-                            if (!IdentifierManager.getInstance()
-                                .identifierExists(resourceMapId.getValue())) {
-                                MNodeService.getInstance(request).insertDataObject(
-                                    IOUtils.toInputStream(resourceMapXML,
-                                                          MetaCatServlet.DEFAULT_ENCODING),
-                                    resourceMapId, session, resourceMapSysMeta.getChecksum());
-                                SystemMetadataManager.getInstance().store(resourceMapSysMeta);
-                                logMetacat.info(
-                                    "Inserted ORE package: " + resourceMapId.getValue());
-                            }
-                        }
-                    }
-                }
-
-            } catch (ParserConfigurationException pce) {
-                logMetacat.debug(
-                    "There was a problem parsing the EML document. " + "The error message was: "
-                        + pce.getMessage());
-
-            } catch (SAXException saxe) {
-                logMetacat.debug(
-                    "There was a problem traversing the EML document. " + "The error message was: "
-                        + saxe.getMessage());
-
-            } catch (XPathExpressionException xpee) {
-                logMetacat.debug(
-                    "There was a problem searching the EML document. " + "The error message was: "
-                        + xpee.getMessage());
-            } catch (Exception e) {
-                logMetacat.debug(
-                    "There was a problem creating System Metadata. " + "The error message was: "
-                        + e.getMessage());
-                e.printStackTrace();
-            } // end try()
-
-        } // end if()
 
         return sysMeta;
     }
-
-    /*
-     * Re-index the data file since the access rule was changed during the inserting of the eml
-     * document.
-     * (During first time to index the data file in Metacat API, the eml hasn't been inserted)
-     */
-    private static void reindexDataFile(
-        Identifier id, SystemMetadata sysmeta, Session session, HttpServletRequest request) {
-        try {
-            logMetacat.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ reindex" + id.getValue());
-            if (sysmeta != null) {
-                for (int i = 0; i < maxAttempts; i++) {
-                    try {
-                        boolean exists = solrDocExists(id.getValue(), session, request);
-                        if (exists) {
-                            break;
-                        }
-                        Thread.sleep(waitingTime);
-                    } catch (Exception ee) {
-                        logMetacat.warn("Can't get the solr doc for  " + id.getValue() + " since "
-                                            + ee.getMessage());
-                        Thread.sleep(waitingTime);
-                    }
-                }
-                MetacatSolrIndex.getInstance().submit(id, sysmeta, false);
-            }
-
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            logMetacat.warn(
-                "Can't reindex the data object " + id.getValue() + " since " + e.getMessage());
-            //e.printStackTrace();
-        }
-    }
-
-    /**
-     * Check if the solr doc for the given id exists.
-     * @param id
-     * @param session
-     * @param request
-     * @return
-     * @throws InvalidToken
-     * @throws ServiceFailure
-     * @throws NotAuthorized
-     * @throws InvalidRequest
-     * @throws NotImplemented
-     * @throws NotFound
-     * @throws IOException
-     */
-    private static boolean solrDocExists(String id, Session session, HttpServletRequest request)
-        throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented,
-        NotFound, IOException {
-        boolean exists = false;
-        String query = "q=id:" + URLEncoder.encode(id, StandardCharsets.UTF_8.toString());
-        logMetacat.debug("SystemMetadataFactory.solrDocExist - the solr query is " + query);
-        InputStream response = MNodeService.getInstance(request).query(session, "solr", query);
-        String result = IOUtils.toString(response);
-        logMetacat.debug(
-            "SystemMetadataFactory.solrDocExist - the response from the solr query is " + result);
-        if (result != null && result.contains("checksumAlgorithm")) {
-            exists = true;
-        }
-        return exists;
-    }
-
-    /**
-     * Checks for potential ORE object existence
-     * @param identifier
-     * @return
-     */
-    public static boolean oreExistsFor(Identifier identifier) {
-        MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-        List<Identifier> ids =
-            MNodeService.getInstance(request).lookupOreFor(null, identifier, true);
-        return (ids != null && ids.size() > 0);
-    }
-
 
     /**
      * Find the size (in bytes) of a stream. Note: This needs to refactored out
@@ -833,8 +365,8 @@ public class SystemMetadataFactory {
         ReplicationPolicy rp = null;
         int numReplicas = -1;
         try {
-            numReplicas = new Integer(
-                PropertyService.getProperty("dataone.replicationpolicy.default.numreplicas"));
+            numReplicas = Integer.parseInt(PropertyService
+                                .getProperty("dataone.replicationpolicy.default.numreplicas"));
         } catch (NumberFormatException e) {
             // The property is not a valid integer, so set it to 0
             numReplicas = 0;
