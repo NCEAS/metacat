@@ -2499,7 +2499,7 @@ public class MNodeService extends D1NodeService
 
                     @SuppressWarnings("unused")
                     SystemMetadata extraSysMeta =
-                        SystemMetadataFactory.createSystemMetadata(newLocalId, true, false);
+                        SystemMetadataFactory.createSystemMetadata(newLocalId);
                     // should be done generating the ORE here, and the same permissions were used
                     // from the metadata object
 
