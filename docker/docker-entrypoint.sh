@@ -77,8 +77,6 @@ setTomcatEnv() {
 }
 
 configMetacatUi() {
-    UI_HOME="${TC_HOME}"/webapps/metacatui
-
     # Expand the metacatui.war
     if [ ! -d "${UI_HOME}" ]; then
         unzip -qq "${TC_HOME}"/webapps/metacatui.war -d "${UI_HOME}"
@@ -163,11 +161,17 @@ elif [[ $1 = "catalina.sh" ]]; then
         INCLUDE_METACATUI="true"
     fi
 
+    UI_HOME="${TC_HOME}"/webapps/metacatui
+
     if [ "$INCLUDE_METACATUI" == "true" ]; then
         echo "Including MetacatUI, since INCLUDE_METACATUI=$INCLUDE_METACATUI"
         configMetacatUi
     else
         echo "NOT including MetacatUI, since INCLUDE_METACATUI ($INCLUDE_METACATUI) != \"true\""
+        if [ -e "${UI_HOME}.war" ]; then
+            echo "deleting ${UI_HOME}.war"
+            rm -f "${UI_HOME}.war"
+        fi
     fi
 
     if [ -z "$METACAT_APP_CONTEXT" ]; then
