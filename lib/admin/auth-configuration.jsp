@@ -44,6 +44,8 @@
 	<div class="document">
 		<h2>Authentication Configuration</h2>
 		<p>LDAP & Password-based Authentication is no longer supported. Please use ORCID authentication.</p>
+		<p>If you do not have an ORCID account, please sign up at <a href="https://orcid.org/" target="_blank">https://orcid.org/</a>
+		</p>
 		
 		<br class="auth-header">
 		<%@ include file="./page-message-section.jsp"%>

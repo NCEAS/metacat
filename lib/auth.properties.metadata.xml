@@ -10,20 +10,18 @@
 		<description>Authentication Configuration Values.</description>
 	</group>
 	
-	<group>
+	<!-- <group>
         <index>2</index>
         <name>File-based Authentication Configuration</name>
         <description>Authentication class edu.ucsb.nceas.metacat.authentication.AuthFile uses the configuration.</description>
-    </group>
+    </group> -->
 	
-	<group>
+	<!-- <group>
         <index>3</index>
         <name>LDAP Authentication Configuration</name>
         <description>Authentication class edu.ucsb.nceas.metacat.AuthLdap uses the configurations of an external LDAP server.</description>
-    </group>
+    </group> -->
     
-    
-	
 	<!--<group>
 		<index>4</index>
 		<name>Authentication LDAP Client Configuration</name>
@@ -39,13 +37,17 @@
         <required>true</required>
         <fieldType>select</fieldType>
         <option>
+            <name>ORCID Authentication</name>
+            <value>ORCID Authentication</value>
+        </option>
+        <!-- <option>
               <name>edu.ucsb.nceas.metacat.authentication.AuthFile</name>
               <value>edu.ucsb.nceas.metacat.authentication.AuthFile</value>
-        </option>
-        <option>
+        </option> -->
+        <!-- <option>
            <name>edu.ucsb.nceas.metacat.AuthLdap</name>
            <value>edu.ucsb.nceas.metacat.AuthLdap</value>
-         </option>
+         </option> -->
         <description>Authentication Class.</description>
         <helpFile>docs/metacat-properties.html#auth-class</helpFile>
     </config>
@@ -57,15 +59,13 @@
         <index>2</index>
         <required>true</required>
         <description>Authentication users or groups for Metacat administration. 
-            Typically, this holds LDAP credentials.
-            &lt;font color="red"&gt; Note: this must be set to a username or
-            group that you belong to in order to continue with 
-            configuration&lt;/font&gt;.</description>
+            &lt;font color="red"&gt;&lt;br&gt;Note: If adding a user, a 16-digit ORCID ID
+             is expected&lt;/font&gt;.</description>
         <helpFile>docs/metacat-properties.html#auth-administrators</helpFile>
         <isRequired>true</isRequired>
     </config>
     
-    <config>
+    <!-- <config>
         <key>auth.userManagementUrl</key>
         <label>Users Management URL</label>
         <group>1</group>
@@ -73,11 +73,9 @@
         <required>true</required>
         <description>Web page provides the user management such as creating a new user and changing password.</description>
         <helpFile>docs/metacat-properties.html#auth-user-management-url</helpFile>
-    </config>
+    </config> -->
 
-	
-	
-	<config>
+	<!-- <config>
         <key>auth.file.path</key>
         <label>Password File Path</label>
         <group>2</group>
@@ -85,9 +83,9 @@
         <required>true</required>
         <description>Absolute path of the password file.</description>
         <helpFile>docs/metacat-properties.html#auth-file-path</helpFile>
-    </config>
+    </config> -->
 	
-	<config>
+	<!-- <config>
         <key>auth.url</key>
         <label>Authentication URL</label>
         <group>3</group>
@@ -95,9 +93,9 @@
         <required>true</required>
         <description>Authentication Server URL.</description>
         <helpFile>docs/metacat-properties.html#auth-url</helpFile>
-    </config>
+    </config> -->
 
-	<config>
+	<!-- <config>
 		<key>auth.surl</key>
 		<label>Authentication Secure URL</label>
 		<group>3</group>
@@ -105,9 +103,9 @@
 		<required>true</required>
 		<description>Authentication Secure Server URL.</description>
 		<helpFile>docs/metacat-properties.html#auth-surl</helpFile>
-	</config>
+	</config> -->
 	
-	<config>
+	<!-- <config>
 		<key>auth.base</key>
 		<label>Authentication Base</label>
 		<group>3</group>
@@ -115,9 +113,8 @@
 		<required>true</required>
 		<description>Base part of Distinguished Name that Metacat uses for authentication.</description>
 		<helpFile>docs/metacat-properties.html#auth-base</helpFile>
-	</config>
+	</config> -->
 
-	
 	<!--  
 	<config>
 		<key>organization.user.unaffiliated</key>
