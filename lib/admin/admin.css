@@ -110,6 +110,7 @@ input[type="radio"] {
 	height: 15px;
 	float: left;
 	-webkit-appearance: radio;
+	appearance: radio;
 }
 
 input[type="checkbox"] {
@@ -117,11 +118,12 @@ input[type="checkbox"] {
 	height: 15px;
 	float: left;
 	-webkit-appearance: checkbox;
+	appearance: checkbox;
 	margin-top: 1em;
 }
 
 label {
-	//font-size: 1.1em;
+	/* font-size: 1.1em; */
 	line-height: 1.1em;
 	display: block;
 	margin-top: 10px;
