@@ -263,7 +263,15 @@ public class AuthAdmin extends MetacatAdmin {
 		String adminUsers = request.getParameter("auth.administrators");
 		Vector<String> adminUserList = StringUtil.toVector(adminUsers, ':');
 
+
 		try {
+			// AuthSessions were previously created based on the authentication class.
+			// As LDAP and Password based authentication is being deprecated, we no
+			// longer have to check for a valid class.
+			// The user is expected to provide an ORCID ID, which must be a 16 digit string
+			// Ensure that the user submits a 16 digit string
+			// TODO: Check to see how user's get registered in the CN after registering for ORCID
+			// - They should be registered
 			AuthSession authSession = new AuthSession();
 			for (String adminUser : adminUserList) {
 				try {
