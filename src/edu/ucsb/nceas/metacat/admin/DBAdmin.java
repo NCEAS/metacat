@@ -125,10 +125,15 @@ public class DBAdmin extends MetacatAdmin {
     /**
      * Get the single instance of DBAdmin.
      * @return the single instance of DBAdmin
+     * @throws AdminException
      */
     public static DBAdmin getInstance() throws AdminException {
         if (dbAdmin == null) {
-            dbAdmin = new DBAdmin();
+            synchronized (DBAdmin.class) {
+                if (dbAdmin == null) {
+                    dbAdmin = new DBAdmin();
+                }
+            }
         }
         return dbAdmin;
     }
