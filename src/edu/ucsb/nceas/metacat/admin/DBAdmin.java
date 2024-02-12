@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import edu.ucsb.nceas.metacat.MetacatVersion;
+import edu.ucsb.nceas.metacat.admin.upgrade.PrerequisiteChecker300;
 import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
 import edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrSchemaModificationException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -761,6 +762,8 @@ public class DBAdmin extends MetacatAdmin {
      */
     public void upgradeDatabase() throws AdminException {
         boolean persist = true;
+        PrerequisiteChecker300 checker = new PrerequisiteChecker300();
+        checker.check();
         Vector<String> updateClassList = getUpdateClasses();
         // Update3_0_0 should run before the database update
         if(updateClassList.contains(UPDATE3_0_0_ClASS_NAME)) {
