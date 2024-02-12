@@ -99,7 +99,7 @@ public class MetacatAdminServlet extends HttpServlet {
         logMetacat.info("MetacatAdminServlet.handleGetOrPost - Processing admin action: " + action);
         Vector<String> processingMessage = new Vector<String>();
         Vector<String> processingErrors = new Vector<String>();
-
+        // TODO: Double-check to see how user's get registered in the CN after registering for ORCID
         try {
             // Update the last update time for this user if they are not new
             // TODO: Remove the code below, the session below will be redundant
