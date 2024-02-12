@@ -71,10 +71,9 @@
 					<td class="textinput-description">[Fully qualified administrator username]</td>
 				</tr>
 			</table>
-
 			<div class="orcid-btn-wrapper">
 				<div class="orcid-flex">
-					<a href="" class="signin orcid-btn update-orcid-sign-in-url orcid-flex">
+					<a href=<%= "https://cn.dataone.org/portal/oauth?action=start&amp;target=" + request.getRequestURL() %> class="signin orcid-btn update-orcid-sign-in-url orcid-flex">
 						<img src="admin/images/orcid_64x64.png">
 						<span>Sign in with ORCID</span>
 					</a>
