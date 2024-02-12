@@ -80,6 +80,7 @@ public class AuthAdmin extends MetacatAdmin {
 	}
 
 	// TODO: Update Authorization Documentation RE: ORCID Authentication
+	// TODO: Double check .jsp page's (i) displays the correct documentation
 
 	/**
 	 * Handle configuration of the Authentication properties
@@ -253,14 +254,19 @@ public class AuthAdmin extends MetacatAdmin {
 		String adminUsers = request.getParameter("auth.administrators");
 		Vector<String> adminUserList = StringUtil.toVector(adminUsers, ':');
 
-		// ORCID Format ID to follow
-		String regex = "\\d{4}-\\d{4}-\\d{4}-\\d{4}";
-		Pattern pattern = Pattern.compile(regex);
-		for (String adminUser : adminUserList) {
-			Matcher matcher = pattern.matcher(adminUser);
-			boolean matched = matcher.matches();
-			if (!matched) {
-				errorVector.add("AuthAdmin.validateOptions - Invalid ORCID: Please submit a 16-digit ORCID.");
+		// Ensure that user has supplied an ID
+		if (adminUserList.size() == 0) {
+			errorVector.add("AuthAdmin.validateOptions - Invalid ORCID: Cannot be empty.");
+		} else {
+			// ORCID Format ID to match
+			String regex = "\\d{4}-\\d{4}-\\d{4}-\\d{4}";
+			Pattern pattern = Pattern.compile(regex);
+			for (String adminUser : adminUserList) {
+				Matcher matcher = pattern.matcher(adminUser);
+				boolean matched = matcher.matches();
+				if (!matched) {
+					errorVector.add("AuthAdmin.validateOptions - Invalid ORCID: Please submit a 16-digit ORCID.");
+				}
 			}
 		}
 
