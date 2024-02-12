@@ -29,15 +29,15 @@ public class PrerequisiteChecker300 {
         try {
             DBVersion version200 = new DBVersion("2.0.0");
             DBVersion version219 = new DBVersion("2.19.0");
-            String versionStr = version.getVersionString();
+            DBVersion version000 = new DBVersion("0.0.0");
              //// 0.0.0 means a new fresh database (from scratch)
-            if (version.compareTo(version200) < 0 && !versionStr.equals("0.0.0")) {
+            if (version.compareTo(version200) < 0 && version.compareTo(version000) != 0) {
                 throw new AdminException(error + " Also make sure it is compliance with DataONE API"
                                     + ", which means you should generate system metadata for the"
                                     + " existing objects. Detalis please see"
                                     + " https://knb.ecoinformatics.org/knb/docs"
                                     + "/dataone.html#generating-dataone-system-metadata");
-            } else if (version.compareTo(version219) < 0 && !versionStr.equals("0.0.0")) {
+            } else if (version.compareTo(version219) < 0 && version.compareTo(version000) != 0) {
                 throw new AdminException(error);
             }
         } catch (PropertyNotFoundException e) {
