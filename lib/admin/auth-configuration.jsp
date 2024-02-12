@@ -33,9 +33,7 @@
 		<%@ include file="./head-section.jsp"%>
 		<script language="javascript" type="text/javascript" src="<%= request.getContextPath() %>/style/common/jquery/jquery.js"></script>
 		<script language="javascript" type="text/javascript">
-		<!--
 			createExclusionList();
-		//-->
 		</script>
 	</head>
 	<body>
@@ -77,25 +75,40 @@
 					// Iterate through each property and display appropriately
 					for (Integer propertyIndex : propertyIndexes) {
 						MetaDataProperty metaDataProperty = propertyMap.get(propertyIndex);
-						String fieldType = metaDataProperty.getFieldType(); 
+						String fieldType = metaDataProperty.getFieldType();
 		%>
-						<div class="form-row">
+					<div class="form-row">
+		<%
+						if (fieldType.equals("select")) {
+		%>
 							<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	
 								<input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 
 									value="<%= request.getAttribute(metaDataProperty.getKey()) %>"                                                                                      
-									type="<%= fieldType %>  "/> 				
+									type="text" readonly/> 				
 								<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
-							</div>    		    
+							</div>   
 		<%
-							if (metaDataProperty.getDescription() != null) {
+						} else {
 		%>
-								<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
+							<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	
+								<input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 
+									value="<%= request.getAttribute(metaDataProperty.getKey()) %>"                                                                                      
+									type="<%= fieldType %>"/> 				
+								<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
+							</div>   
+		<%
+						}
+		%> 		    
+		<%
+						if (metaDataProperty.getDescription() != null) {
+		%>
+							<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
 		<%		
-							}
+						}
 						
 					}
 		%>
-						</div>
+					</div>
 		<%
 				}
 			}
@@ -109,6 +122,16 @@
 		</div>
 		</form>
 	</div>
+	<script>
+		window.onload = function() {
+			var field = document.getElementById("auth.administrators");
+			field.addEventListener("input", function(event) {
+				var value = event.target.value.replace(/\D/g, "").slice(0, 16); // Remove non-digits and limit to 16 characters
+				var formattedValue = value.replace(/(\d{4})(?=\d)/g, "$1-"); // Add hyphens
+				event.target.value = formattedValue;
+			});
+		};
+	</script>
 	<%@ include file="./footer-section.jsp"%>
 	</body>
 </html>
