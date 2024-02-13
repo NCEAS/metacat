@@ -769,8 +769,8 @@ public class DBAdmin extends MetacatAdmin {
         if(updateClassList.contains(UPDATE3_0_0_ClASS_NAME)) {
             UpgradeUtilityInterface utility = null;
             try {
-                utility = (UpgradeUtilityInterface) Class
-                                                    .forName(UPDATE3_0_0_ClASS_NAME).newInstance();
+                utility = (UpgradeUtilityInterface) Class.forName(UPDATE3_0_0_ClASS_NAME)
+                                                    .getDeclaredConstructor().newInstance();
                 utility.upgrade();
             } catch (Exception e) {
                 try {
@@ -818,7 +818,8 @@ public class DBAdmin extends MetacatAdmin {
         for (String className : updateClassList) {
             UpgradeUtilityInterface utility = null;
             try {
-                utility = (UpgradeUtilityInterface) Class.forName(className).newInstance();
+                utility = (UpgradeUtilityInterface) Class.forName(className)
+                                                            .getDeclaredConstructor().newInstance();
                 utility.upgrade();
             } catch (SolrSchemaModificationException e) {
                 //don't throw the exception and continue
