@@ -32,62 +32,60 @@
 %>
 
 <html>
-<head>
+	<head>
 
-<title>Database Install/Upgrade Utility</title>
-<%@ include file="./head-section.jsp"%>
+	<title>Database Install/Upgrade Utility</title>
+	<%@ include file="./head-section.jsp"%>
 
-</head>
-<body>
-<%@ include file="./header-section.jsp"%>
-	
-<div class="document">
-	<h2>Administrator Login</h2>
-	
-	<p>Account login page.</p>
-	
-	<%@ include file="./page-message-section.jsp"%>
-	
-	<form name="loginform" method="post" action="<%= request.getContextPath() %>/admin"
-		target="_top" onsubmit="return validateAndSubmitForm(this);" id="loginform">
-	
-	<table class="admin-login">
-		<tr>
-			<td><h4>Username</h4></td>
-			<td>
-				<select class="username-input" name="username">
-	<%
-				for(String adminName : adminList) {
-	%>
-					<option><%= adminName %></option>
-	<%
-		}
-	%>
-			    
-			  </select>
-			</td>
-		</tr>
-		<tr>
-		    <td></td>
-		    <td class="textinput-description">[Fully qualified administrator username]</td>
-		</tr>
-		<tr>
-			<td><h4>Password</h4></td>
-			<td><input class="login-input" name="password" type="password" maxlength="50" value=""></td>
-		</tr>
-		<tr>
-		    <td></td>
-		    <td class="textinput-description">[Administrator password]</td>
-		</tr>
-	</table>
-	
-	<div class="buttons-wrapper">
-		<input class="button" input type="submit" name="loginAction" value="Login" class="button_login"></td>
-		<input class="button" type="button" value="Cancel" onClick="forward('<%= request.getContextPath() %>')"> 
-		<input type="hidden" name="configureType" value="login"/>
-		<input type="hidden" name="processForm" value="true"/>
-	</div>
-	</form>
-</div>
-</body>
+	</head>
+	<body>
+	<%@ include file="./header-section.jsp"%>
+		
+		<div class="document">
+			<h2>Administrator Login</h2>
+			
+			<p>Account login page.</p>
+			
+			<%@ include file="./page-message-section.jsp"%>
+			
+			<!-- <form name="loginform" method="post" action="<%= request.getContextPath() %>/admin"
+				target="_top" onsubmit="return validateAndSubmitForm(this);" id="loginform"> -->
+			
+			<table class="admin-login">
+				<tr>
+					<td><h4>Administrators</h4></td>
+					<td>
+						<select class="username-input" name="username">
+			<%
+						for(String adminName : adminList) {
+			%>
+							<option><%= adminName %></option>
+			<%
+				}
+			%>
+					</select>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td class="textinput-description">[Fully qualified administrator username]</td>
+				</tr>
+			</table>
+			<div class="orcid-btn-wrapper">
+				<div class="orcid-flex">
+					<a href=<%= "https://cn.dataone.org/portal/oauth?action=start&amp;target=" + request.getRequestURL() %> class="signin orcid-btn update-orcid-sign-in-url orcid-flex">
+						<img src="admin/images/orcid_64x64.png">
+						<span>Sign in with ORCID</span>
+					</a>
+				</div>
+			</div>
+			<!-- <div class="buttons-wrapper"> -->
+				<!-- <input class="button" input type="submit" name="loginAction" value="Login" class="button_login"></td>
+				<input class="button" type="button" value="Cancel" onClick="forward('<%= request.getContextPath() %>')"> 
+				<input type="hidden" name="configureType" value="login"/>
+				<input type="hidden" name="processForm" value="true"/> -->
+			<!-- </div> -->
+			<!-- </form> -->
+		</div>
+	</body>
 </html>

@@ -42,39 +42,37 @@ body{
 	 font-family: "Helvetica", "Source Sans Pro", sans-serif;
 }
 
+h3 {
+	font-size: 1.2em;
+	line-height: 2em;
+	display: block;
+	clear: both;
+	margin: 0px;
+}
 
+h2{
+	font-size: 2em;
+	line-height: 2.1em;
+	font-weight: 400;
+	display: block;
+	clear: both;
+	margin: 0px;
+}
 
-	h3 {
-		font-size: 1.2em;
-		line-height: 2em;
-		display: block;
-		clear: both;
-		margin: 0px;
-	}
-	
-	h2{
-		font-size: 2em;
-		line-height: 2.1em;
-		font-weight: 400;
-		display: block;
-		clear: both;
-		margin: 0px;
-	}
-	
-	h1{
-		font-size: 2.5em;
-		line-height: 2.8em;
-		display: inline-block;
-		clear: both;
-		margin: 0px;
-	}
-	
-	h1 > a, 
-	h2 > a,
-	h3 > a,
-	h4 > a{
-		color: #333333;
-	}
+h1{
+	font-size: 2.5em;
+	line-height: 2.8em;
+	display: inline-block;
+	clear: both;
+	margin: 0px;
+}
+
+h1 > a, 
+h2 > a,
+h3 > a,
+h4 > a{
+	color: #333333;
+}
 	
 input {
 	padding-left: 4px;
@@ -110,6 +108,7 @@ input[type="radio"] {
 	height: 15px;
 	float: left;
 	-webkit-appearance: radio;
+	appearance: radio;
 }
 
 input[type="checkbox"] {
@@ -117,11 +116,12 @@ input[type="checkbox"] {
 	height: 15px;
 	float: left;
 	-webkit-appearance: checkbox;
+	appearance: checkbox;
 	margin-top: 1em;
 }
 
 label {
-	//font-size: 1.1em;
+	/* font-size: 1.1em; */
 	line-height: 1.1em;
 	display: block;
 	margin-top: 10px;
@@ -414,4 +414,46 @@ i{
 	margin-right: 10px;
 }
 
+/* ORCID Authentication & Related CSS */
 
+
+
+/** The ORCID Sign In button **/
+.orcid-btn{
+	border: 1px solid #aacf14;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	background-color: #FFF;
+	padding: 15px 20px;
+	color: #aacf14;
+	text-decoration: none;
+	margin-bottom: 10px;
+	margin-top: 10px;
+	display: inline-block;
+	font-weight: bold;
+}
+.orcid-btn img {
+    height: 1.5em;
+    margin-right: 5px;
+}
+.orcid-btn:hover{
+	background-color: #aacf14;
+	transition: all 500ms;
+	text-decoration: none;
+}
+.orcid-btn:hover > span{
+	color: #FFF;
+	text-decoration: none;
+}
+
+.orcid-btn-wrapper {
+    margin: 0 auto;
+    float: none;
+	text-align: center;
+	display: block;
+}
+
+.orcid-flex {
+	display: flex;
+}
