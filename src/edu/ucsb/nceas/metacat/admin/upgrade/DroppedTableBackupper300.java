@@ -191,6 +191,11 @@ public class DroppedTableBackupper300 {
                 if (valueObject != null) {
                     valueString = valueObject.toString();
                 }
+
+                if (valueObject instanceof String) {
+                    valueString = "\"" + escapeDoubleQuotes(valueString) + "\"";
+                }
+
                 line.append(valueString);
                 if (i != columnCount) {
                     line.append(",");
@@ -241,5 +246,14 @@ public class DroppedTableBackupper300 {
      */
     public String getBackupPath() {
         return this.backupPath;
+    }
+
+    /**
+     * Escape the double quotes in the given string
+     * @param value  the string will be escaped
+     * @return the escaped string
+     */
+    private String escapeDoubleQuotes(String value) {
+        return value.replaceAll("\"", "\"\"");
     }
 }
