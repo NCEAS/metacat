@@ -32,9 +32,6 @@
 		<title>Authentication Configuration</title>
 		<%@ include file="./head-section.jsp"%>
 		<script language="javascript" type="text/javascript" src="<%= request.getContextPath() %>/style/common/jquery/jquery.js"></script>
-		<script language="javascript" type="text/javascript">
-			createExclusionList();
-		</script>
 	</head>
 	<body>
 	<%@ include file="./header-section.jsp"%>
