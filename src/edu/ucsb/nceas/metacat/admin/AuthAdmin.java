@@ -167,10 +167,6 @@ public class AuthAdmin extends MetacatAdmin {
 				SortedMap<Integer, MetaDataProperty> globalPropertyMap = authMetaData
 					.getPropertiesInGroup(1);
 				Set<Integer> globalPropertyIndexes = globalPropertyMap.keySet();
-				for (Integer globalPropertyIndex : globalPropertyIndexes) {
-					String globalPropertyKey = globalPropertyMap.get(globalPropertyIndex).getKey();
-					PropertyService.checkAndSetProperty(request, globalPropertyKey);
-				}
 
 				// Write the options from memory to the properties file
 				PropertyService.persistProperties();
@@ -196,7 +192,7 @@ public class AuthAdmin extends MetacatAdmin {
 			} catch (GeneralPropertyException gpe) {
 				String errorMessage =
 					"AuthAdmin.configureAuth - Problem getting or setting property while "
-						+ "processing LDAP properties page: " + gpe.getMessage();
+						+ "processing properties page: " + gpe.getMessage();
 				logMetacat.error(errorMessage);
 				processingErrors.add(errorMessage);
 			}
@@ -256,7 +252,7 @@ public class AuthAdmin extends MetacatAdmin {
 
 		// Ensure that user has supplied an ID
 		if (adminUserList.size() == 0) {
-			errorVector.add("AuthAdmin.validateOptions - Invalid ORCID: Cannot be empty.");
+			errorVector.add("Error: ORCID Cannot be empty.");
 		} else {
 			// ORCID Format ID to match
 			String regex = "\\d{4}-\\d{4}-\\d{4}-\\d{4}";
@@ -265,7 +261,7 @@ public class AuthAdmin extends MetacatAdmin {
 				Matcher matcher = pattern.matcher(adminUser);
 				boolean matched = matcher.matches();
 				if (!matched) {
-					errorVector.add("AuthAdmin.validateOptions - Invalid ORCID: Please submit a 16-digit ORCID.");
+					errorVector.add("Error: A 16-digit ORCID is required.");
 				}
 			}
 		}
