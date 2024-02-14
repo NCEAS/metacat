@@ -15,6 +15,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Stack;
 import java.util.TreeSet;
@@ -152,10 +155,10 @@ public class XMLNodesToFilesChecker {
         boolean append = true;
         ResultSet result = null;
         Vector<Long> failedRootNodeIds = new Vector<Long>();
-        try (BufferedWriter success_writer = new BufferedWriter(
-                          new FileWriter(log_dir + File.separator + SUCCESS_DOC_LOG_FILE, append));
-            BufferedWriter failure_writer = new BufferedWriter(new FileWriter(log_dir
-                                            + File.separator + FAILURE_DOC_LOG_FILE, append))) {
+        try (BufferedWriter success_writer = new BufferedWriter( new FileWriter(log_dir
+                                    + File.separator + getFileName(SUCCESS_DOC_LOG_FILE), append));
+             BufferedWriter failure_writer = new BufferedWriter(new FileWriter(log_dir
+                                  + File.separator + getFileName(FAILURE_DOC_LOG_FILE), append))) {
             if (pstmt != null) {
                 result = pstmt.getResultSet();
                 while (result != null && result.next()) {
@@ -713,5 +716,16 @@ public class XMLNodesToFilesChecker {
             DBConnectionPool.returnDBConnection(conn, serialNumber);
         }
         return pstmt;
+    }
+
+    /**
+     * Get a file name concatenating the base name and current time.
+     * @param baseName  the name will be appended by current time
+     * @return the file name concatenating the base name and current time.
+     */
+    private String getFileName(String baseName) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        String dateTimeInfo = dateFormat.format(new Date());
+        return baseName.concat(String.format("_%s.txt", dateTimeInfo));
     }
 }
