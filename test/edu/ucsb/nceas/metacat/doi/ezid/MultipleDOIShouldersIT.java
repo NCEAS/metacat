@@ -20,11 +20,9 @@
  */
 package edu.ucsb.nceas.metacat.doi.ezid;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Set;
 import java.util.UUID;
 
 import org.dataone.client.v2.formats.ObjectFormatCache;
@@ -53,7 +51,7 @@ import junit.framework.TestSuite;
  * @author tao
  *
  */
-public class MultipleDOIShouldersTest extends D1NodeServiceTest {
+public class MultipleDOIShouldersIT extends D1NodeServiceTest {
     private static final String PROPERTY_SHOULDER_1 = "guid.doi.doishoulder.1";
     private static final String PROPERTY_SHOULDER_2 = "guid.doi.doishoulder.2";
     private static final String SHOULDER_1 = "doi:10.18739/A2";
@@ -63,7 +61,7 @@ public class MultipleDOIShouldersTest extends D1NodeServiceTest {
      * Constructor
      * @param name
      */
-    public MultipleDOIShouldersTest(String name) {
+    public MultipleDOIShouldersIT(String name) {
         super(name);
     }
     
@@ -94,9 +92,9 @@ public class MultipleDOIShouldersTest extends D1NodeServiceTest {
      */
     public static Test suite() {
         TestSuite suite = new TestSuite();
-        suite.addTest(new MultipleDOIShouldersTest("testPrimaryShoulder"));
-        suite.addTest(new MultipleDOIShouldersTest("testSecondaryShoulder"));
-        suite.addTest(new MultipleDOIShouldersTest("testNonExistedShoulder"));
+        suite.addTest(new MultipleDOIShouldersIT("testPrimaryShoulder"));
+        suite.addTest(new MultipleDOIShouldersIT("testSecondaryShoulder"));
+        suite.addTest(new MultipleDOIShouldersIT("testNonExistedShoulder"));
         return suite;
     }
     

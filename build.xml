@@ -1116,7 +1116,12 @@
     <patternset id="test.common.includes.excludes">
         <include name="**/*.class"/>
 
-        <!-- valid test cases excluded for various reasons (e.g. credentials needed) -->
+        <!-- * * * exclude tests known to fail without replication/doi setup -->
+        <exclude name="**/MNodeReplicationTest.class" />
+        <exclude name="**/MultipleDOIShouldersIT.class" />
+        <exclude name="**/OstiDOIServiceIT.class" />
+
+        <!-- other valid test cases excluded for various reasons (e.g. credentials needed) -->
         <exclude name="**/ClientViewHelperTest.class"/>
         <exclude name="**/MultiThreadClientIT.class"/>
 
@@ -1131,9 +1136,8 @@
     </patternset>
 
     <target name="test" depends="testprep"
-            description="Uses the ant junit task to run all JUnit tests">
+            description="Runs all unit and integration tests, except those covered by the 'test-replicate-doi' target">
 
-        <!-- use the ant "junit" task to run JUnit tests. -->
         <junit printsummary="yes" haltonfailure="no" fork="yes"
                haltonerror="no">
             <jvmarg value="-Dfile.encoding=UTF-8"/>
@@ -1166,9 +1170,8 @@
     </target>
 
     <target name="test-fast" depends="testprep"
-            description="Runs only the fast tests. * * * WARNING * * * - Omits all named Integration Tests (*IT.class), all tests with runtime > 60 sec, and the 4 tests known to fail without replication setup">
+            description="Runs fast unit and integration tests (~60 sec max). WARNING: omits tests named (*IT.class), and those covered by 'test-replicate-doi' target">
 
-        <!-- use the ant "junit" task to run JUnit tests. -->
         <junit printsummary="yes" haltonfailure="no" fork="yes"
                haltonerror="no">
             <jvmarg value="-Dfile.encoding=UTF-8"/>
@@ -1192,12 +1195,6 @@
                 <fileset dir="${build.tests}">
                     <patternset refid="test.common.includes.excludes"/>
 
-                    <!-- * * * exclude tests known to fail without replication setup -->
-                    <exclude name="**/MNodeReplicationTest.class" />
-                    <exclude name="**/MultipleDOIShouldersTest.class" />
-                    <exclude name="**/OstiDOIServiceTest.class" />
-                    <exclude name="**/ReplicationTest.class" />
-
                     <!-- * * * exclude all named Integration Tests (*IT.class) -->
                     <!--       All integration tests that are named *Test.class will still run -->
                     <exclude name="**/*IT.class" />
@@ -1209,6 +1206,42 @@
                     <exclude name="**/OnlineDataAccessTest.class" />
                     <exclude name="**/RegisterDOITest.class" />
                     <exclude name="**/SolrQueryAccessFilterTest.class" />
+                </fileset>
+            </batchtest>
+        </junit>
+        <tstamp>
+            <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa"/>
+        </tstamp>
+        <echo>Tests completed at ${NOW}</echo>
+    </target>
+
+    <target name="test-replicate-doi" depends="testprep"
+        description="Runs ONLY the integration tests that fail without replication/DOI setup: MNodeReplicationTest; MultipleDOIShouldersIT; OstiDOIServiceIT">
+
+        <junit printsummary="yes" haltonfailure="no" fork="yes"
+               haltonerror="no">
+            <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <jvmarg value="-Xshare:off"/>
+            <jvmarg line="--add-opens java.base/java.util=ALL-UNNAMED"/>
+            <jvmarg line="--add-opens java.base/java.lang=ALL-UNNAMED"/>
+            <classpath>
+                <path refid="test.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-client.jar"/>
+                    <include name="harvester.jar"/>
+                    <include name="${name}-junittests.jar"/>
+                </fileset>
+                <pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
+            </classpath>
+
+            <formatter type="plain"/>
+
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${build.tests}">
+                    <include name="**/MNodeReplicationTest.class" />
+                    <include name="**/MultipleDOIShouldersIT.class" />
+                    <include name="**/OstiDOIServiceIT.class" />
                 </fileset>
             </batchtest>
         </junit>
