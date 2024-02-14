@@ -696,10 +696,15 @@ public class DBAdmin extends MetacatAdmin {
         return updateScriptList;
     }
 
+    /**
+     * Get the list of the Java and Solr update class files which will run in the upgrade process
+     * @return the list of Java class files
+     * @throws AdminException
+     */
     public Vector<String> getUpdateClasses() throws AdminException {
         Vector<String> updateClassList = new Vector<String>();
         MetacatVersion metaCatVersion = null;
-        
+
         // get the location of sql scripts
         try {
             metaCatVersion = SystemUtil.getMetacatVersion();
@@ -707,17 +712,25 @@ public class DBAdmin extends MetacatAdmin {
             throw new AdminException("DBAdmin.getUpdateScripts - Could not get property while trying " 
                     + "to retrieve update utilities: " + pnfe.getMessage());
         }
-        
-        // if either of these is null, we don't want to do anything.  Just
-        // return an empty list.
-        if (metaCatVersion == null || databaseVersion == null) {
+
+        if (metaCatVersion != null) {
+            logMetacat.debug("DBADmin.getUpdateClasses - the version from the propterty file is "
+                                                            + metaCatVersion.getVersionString());
+        }
+        if (databaseVersion != null) {
+            logMetacat.debug("DBADmin.getUpdateClasses - the databaseVersion is "
+                                                            + databaseVersion.getVersionString());
+        }
+        // if either of these is null, or the database version is 0.0.0 (a fresh installation),
+        // we don't want to do anything.  Just return an empty list.
+        if (metaCatVersion == null || databaseVersion == null ||
+                                             databaseVersion.getVersionString().equals("0.0.0")) {
             return updateClassList;
         }
 
         // go through all the versions that the the software went through and
         // figure out which ones need to be applied to the database
         for (DBVersion nextVersion : versionSet) {
-
             // add every update script that is > than the db version
             // but <= to the metacat version to the update list.
             if (nextVersion.compareTo(databaseVersion) > 0
@@ -747,6 +760,8 @@ public class DBAdmin extends MetacatAdmin {
                     logMetacat.warn("No utility defined for version: " + key);
                     continue;
                 }
+                logMetacat
+                        .debug("DBAdmin.getUpdateClasses - add the class to the list " + className);
                 updateClassList.add(className);
             }
         }
