@@ -2,6 +2,7 @@ package edu.ucsb.nceas.metacat.admin.upgrade;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.upgrade.DroppedTableBackupper300.NodeTableName;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.junit.Before;
@@ -12,7 +13,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.withSettings;
 
@@ -24,7 +24,8 @@ import java.io.IOException;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.Timestamp;
+import java.util.Vector;
+
 
 /**
  * A junit test for the DroppedTableBackupper300 class
@@ -54,10 +55,9 @@ public class DroppedTableBackupper300Test {
      */
     @Before
     public void setUp() throws Exception {
-        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
         mockBackupper = Mockito.mock(DroppedTableBackupper300.class,
                        withSettings().useConstructor(backupPath).defaultAnswer(CALLS_REAL_METHODS));
-        //spyBackupper = Mockito.spy(new DroppedTableBackupper300(backupPath));
     }
 
     /**
@@ -244,6 +244,116 @@ public class DroppedTableBackupper300Test {
                 line.equals(target));
         line = reader.readLine();
         assertEquals("The four line " + line + " doesn't match the target - null", line, null);
+    }
+
+    /**
+     * Test the backupNodesTable method
+     * @throws Exception
+     */
+    @Test
+    public void testBackupNodesTable() throws Exception {
+
+        deleteFiles("xml_nodes*.csv");
+
+        Vector<Long> rootNodeIds = new Vector<Long>();
+        rootNodeIds.add(Long.valueOf(34000000));
+        rootNodeIds.add(Long.valueOf(68000000));
+
+        ResultSet mockResultXMLNodes = Mockito.mock(ResultSet.class);
+        ResultSetMetaData mockResultXMLNodesMetadata = Mockito.mock(ResultSetMetaData.class);
+        Mockito.when(mockResultXMLNodesMetadata.getColumnCount()).thenReturn(13);
+        Mockito.when(mockResultXMLNodes.getMetaData()).thenReturn(mockResultXMLNodesMetadata);
+        Mockito.when(mockResultXMLNodes.next()).thenReturn(true, true, false);
+        //nodeid,nodeindex,nodetype,nodename,nodeprefix,
+        //nodedata,parentnodeid,rootnodeid,docid,date_created,date_updated,
+        //nodedatanumerical,nodedatadate
+        Mockito.when(mockResultXMLNodes.getObject(1)).thenReturn(34000002, 34000005);
+        Mockito.when(mockResultXMLNodes.getObject(2)).thenReturn(2, 3);
+        Mockito.when(mockResultXMLNodes.getObject(3)).thenReturn("ELEMENT", "TEXT");
+        Mockito.when(mockResultXMLNodes.getObject(4)).thenReturn("individualName", null);
+        Mockito.when(mockResultXMLNodes.getObject(5)).thenReturn(null, null);
+        Mockito.when(mockResultXMLNodes.getObject(6)).thenReturn(null, "some text");
+        Mockito.when(mockResultXMLNodes.getObject(7)).thenReturn(34000001, 34000004);
+        Mockito.when(mockResultXMLNodes.getObject(8)).thenReturn(34000000, 34000000);
+        Mockito.when(mockResultXMLNodes.getObject(9)).thenReturn("autogen.2015021909545383816",
+                                                                        "autogen.2015021909545383816");
+        Mockito.when(mockResultXMLNodes.getObject(10)).thenReturn(null, null);
+        Mockito.when(mockResultXMLNodes.getObject(11)).thenReturn(null, null);
+        Mockito.when(mockResultXMLNodes.getObject(12)).thenReturn(null, null);
+        Mockito.when(mockResultXMLNodes.getObject(13)).thenReturn(null, null);
+        String queryXMLNode1 = "SELECT " + XML_NODES_HEADER + " FROM "
+                            + NodeTableName.XML_NODES.getTableName() + " WHERE rootnodeid=34000000";
+        Mockito.doReturn(mockResultXMLNodes).when(mockBackupper).runQuery(queryXMLNode1);
+
+        ResultSet mockResultXMLNodes2 = Mockito.mock(ResultSet.class);
+        ResultSetMetaData mockResultXMLNodesMetadata2 = Mockito.mock(ResultSetMetaData.class);
+        Mockito.when(mockResultXMLNodesMetadata2.getColumnCount()).thenReturn(13);
+        Mockito.when(mockResultXMLNodes2.getMetaData()).thenReturn(mockResultXMLNodesMetadata2);
+        Mockito.when(mockResultXMLNodes2.next()).thenReturn(true, true, false);
+        //nodeid,nodeindex,nodetype,nodename,nodeprefix,
+        //nodedata,parentnodeid,rootnodeid,docid,date_created,date_updated,
+        //nodedatanumerical,nodedatadate
+        Mockito.when(mockResultXMLNodes2.getObject(1)).thenReturn(68000002, 68000005);
+        Mockito.when(mockResultXMLNodes2.getObject(2)).thenReturn(2, 3);
+        Mockito.when(mockResultXMLNodes2.getObject(3)).thenReturn("ATTRIBUTE", "TEXT");
+        Mockito.when(mockResultXMLNodes2.getObject(4)).thenReturn("scope", null);
+        Mockito.when(mockResultXMLNodes2.getObject(5)).thenReturn(null, null);
+        Mockito.when(mockResultXMLNodes2.getObject(6)).thenReturn("document",
+                                          "CC0, http://creativecommons.org/publicdomain/zero/1.0");
+        Mockito.when(mockResultXMLNodes2.getObject(7)).thenReturn(68000001, 68000004);
+        Mockito.when(mockResultXMLNodes2.getObject(8)).thenReturn(68000000, 68000000);
+        Mockito.when(mockResultXMLNodes2.getObject(9)).thenReturn("autogen.2015021909585190020",
+                                                                     "autogen.2015021909585190020");
+        Mockito.when(mockResultXMLNodes2.getObject(10)).thenReturn(null, null);
+        Mockito.when(mockResultXMLNodes2.getObject(11)).thenReturn(null, null);
+        Mockito.when(mockResultXMLNodes2.getObject(12)).thenReturn(null, null);
+        Mockito.when(mockResultXMLNodes2.getObject(13)).thenReturn(null, null);
+        String queryXMLNode2 = "SELECT " + XML_NODES_HEADER + " FROM "
+                            + NodeTableName.XML_NODES.getTableName() + " WHERE rootnodeid=68000000";
+        Mockito.doReturn(mockResultXMLNodes2).when(mockBackupper).runQuery(queryXMLNode2);
+        mockBackupper.backupNodesTable(NodeTableName.XML_NODES, rootNodeIds);
+
+        File[] files = findFiles("xml_nodes*.csv");
+        assertEquals("We should have only one backup file for the xml_nodes table",
+                                                                                  files.length, 1);
+        BufferedReader reader = new BufferedReader(new FileReader(files[0]));
+        String line = reader.readLine();
+        assertTrue("The first line " + line + " doesn't match the header " + XML_NODES_HEADER,
+                                                                   line.equals(XML_NODES_HEADER));
+        String target = "34000002,2,\"ELEMENT\",\"individualName\",,,"
+                                         + "34000001,34000000,\"autogen.2015021909545383816\",,,,";
+        line = reader.readLine();
+        assertTrue("The second line " + line + " doesn't match the target " + target,
+                line.equals(target));
+        line = reader.readLine();
+        target = "34000005,3,\"TEXT\",,,\"some text\",34000004,"
+                                                + "34000000,\"autogen.2015021909545383816\",,,,";
+        assertTrue("The third line " + line + " doesn't match the target " + target,
+                line.equals(target));
+        line = reader.readLine();
+        target = "68000002,2,\"ATTRIBUTE\",\"scope\",,\"document\",68000001,"
+                                                + "68000000,\"autogen.2015021909585190020\",,,,";
+        assertTrue("The fourth line " + line + " doesn't match the target " + target,
+                line.equals(target));
+        line = reader.readLine();
+        target = "68000005,3,\"TEXT\",,,\"CC0, http://creativecommons.org/publicdomain/zero/1.0\","
+                                        + "68000004,68000000,\"autogen.2015021909585190020\",,,,";
+        assertTrue("The fifth line " + line + " doesn't match the target " + target,
+                line.equals(target));
+        line = reader.readLine();
+        assertEquals("The sixth line " + line + " doesn't match the target - null", line, null);
+    }
+
+    /**
+     * Test the method of runQuery
+     * @throws Exception
+     */
+    @Test
+    public void testRunQuery() throws Exception {
+        DroppedTableBackupper300 backupper = new DroppedTableBackupper300(backupPath);
+        String query = "SELECT * FROM xml_catalog";
+        ResultSet result = backupper.runQuery(query);
+        assertTrue(result.next());
     }
 
     /**
