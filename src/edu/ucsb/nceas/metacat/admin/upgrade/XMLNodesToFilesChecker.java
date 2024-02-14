@@ -241,7 +241,7 @@ public class XMLNodesToFilesChecker {
                 if (!failedRootNodeIds.isEmpty()) {
                     if (tableName != null && tableName.equals(XML_DOCUMENTS)) {
                         tableBackupper.backupNodesTable(NodeTableName.XML_NODES, failedRootNodeIds);
-                    } else if (tableName != null && tableName.equals(XML_DOCUMENTS)) {
+                    } else if (tableName != null && tableName.equals(XML_REVISIONS)) {
                         tableBackupper
                             .backupNodesTable(NodeTableName.XML_NODES_REVISIONS, failedRootNodeIds);
                     } else {
