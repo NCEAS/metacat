@@ -28,7 +28,6 @@
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
     <property name="metacatui-tag" value="${metacatui.tag}"/>
-    <!-- the target version for java compilation-->
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2"/>
 
     <property environment="env"/>
