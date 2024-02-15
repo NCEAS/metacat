@@ -27,7 +27,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
-    <property name="metacatui-tag" value="2.25.0"/>
+    <property name="metacatui-tag" value="${metacatui.tag}"/>
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2"/>
 
     <property environment="env"/>
