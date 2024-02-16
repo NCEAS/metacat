@@ -20,9 +20,7 @@
  */
 package edu.ucsb.nceas.metacat.doi.osti;
 
-import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.osti_elink.OSTIElinkNotFoundException;
@@ -59,7 +57,7 @@ import junit.framework.TestSuite;
  * @author tao
  *
  */
-public class OstiDOIServiceTest extends D1NodeServiceTest {
+public class OstiDOIServiceIT extends D1NodeServiceTest {
     
     private OstiDOIService service = null;
     private final static int MAX_ATTEMPTS = 20;
@@ -68,7 +66,7 @@ public class OstiDOIServiceTest extends D1NodeServiceTest {
      * Constructor
      * @param name
      */
-    public OstiDOIServiceTest(String name) {
+    public OstiDOIServiceIT(String name) {
         super(name);
     }
     
@@ -79,13 +77,13 @@ public class OstiDOIServiceTest extends D1NodeServiceTest {
      */
     public static Test suite() {
         TestSuite suite = new TestSuite();
-        suite.addTest(new OstiDOIServiceTest("testPublishProcess"));
-        suite.addTest(new OstiDOIServiceTest("testPublishProcessForSID"));
-        suite.addTest(new OstiDOIServiceTest("testAutoPublishProcess"));
-        suite.addTest(new OstiDOIServiceTest("testAutoPublishProcessForSID"));
-        suite.addTest(new OstiDOIServiceTest("testUnregisteredShoulder"));
-        suite.addTest(new OstiDOIServiceTest("testPublishIdentifierPrivatePackageToPublic"));
-        suite.addTest(new OstiDOIServiceTest("testPublishIdentifierPrivatePackageToPartialPublic"));
+        suite.addTest(new OstiDOIServiceIT("testPublishProcess"));
+        suite.addTest(new OstiDOIServiceIT("testPublishProcessForSID"));
+        suite.addTest(new OstiDOIServiceIT("testAutoPublishProcess"));
+        suite.addTest(new OstiDOIServiceIT("testAutoPublishProcessForSID"));
+        suite.addTest(new OstiDOIServiceIT("testUnregisteredShoulder"));
+        suite.addTest(new OstiDOIServiceIT("testPublishIdentifierPrivatePackageToPublic"));
+        suite.addTest(new OstiDOIServiceIT("testPublishIdentifierPrivatePackageToPartialPublic"));
         return suite;
     }
     
@@ -474,8 +472,9 @@ public class OstiDOIServiceTest extends D1NodeServiceTest {
         Session publicSession = new Session();
         publicSession.setSubject(publicSub);
         
-        PropertyService.getInstance().setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "true");
-        boolean enforcePublicEntirePackageInPublish = new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+        PropertyService.setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "true");
+        boolean enforcePublicEntirePackageInPublish = Boolean.parseBoolean(PropertyService.getProperty(
+            "guid.doi.enforcePublicReadableEntirePackage"));
         MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
         
         //insert data
