@@ -157,8 +157,8 @@ public class SolrConfigUpgrader {
                                         FileUtils.copyFile(configFile, backupFile);
                                         //overwrite the solr.config file
                                         FileUtils.copyFile(metacatIndexConfigFile, configFile);
-                                        //throw an exception to give users a warning
-                                        throw new SolrSchemaModificationException(error3);
+                                        //Give the users a warning
+                                        logMetacat.warn("SolrConfigUpgrader.upgrade - " + error3);
                                     }
                                 }
                             } else {
@@ -167,7 +167,7 @@ public class SolrConfigUpgrader {
                                 FileUtils.copyFile(configFile, backupFile);
                                 //overwrite the solr.config file
                                 FileUtils.copyFile(metacatIndexConfigFile, configFile);
-                                throw new SolrSchemaModificationException(error1);
+                                logMetacat.warn("SolrConfigUpgrader.upgrade - " + error1);
                             }
                         } else {
                             File backupFile =
@@ -175,7 +175,7 @@ public class SolrConfigUpgrader {
                             FileUtils.copyFile(configFile, backupFile);
                             //overwrite the solr.config file
                             FileUtils.copyFile(metacatIndexConfigFile, configFile);
-                            throw new SolrSchemaModificationException(error1);
+                            logMetacat.warn("SolrConfigUpgrader.upgrade - " + error1);
                         }
                     }
                 }
