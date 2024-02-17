@@ -1,22 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2013 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.admin.upgrade.solr;
 
 import java.io.File;
@@ -36,7 +17,6 @@ import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 
 import edu.ucsb.nceas.metacat.admin.AdminException;
-import edu.ucsb.nceas.metacat.common.Settings;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -61,6 +41,7 @@ public class SolrConfigUpgrader {
     /**
      * Constructor
      * @throws PropertyNotFoundException
+     * @throws ServiceException
      */
     public SolrConfigUpgrader() throws PropertyNotFoundException, ServiceException {
         String hashString = null;
@@ -69,29 +50,31 @@ public class SolrConfigUpgrader {
             solrHomePath = PropertyService.getProperty("solr.homeDir");
             String indexContext = PropertyService.getProperty("index.context");
             currentHash = PropertyService.getProperty("index.configFile.current.hash");
-            logMetacat.info("the current hash is ================== "+currentHash);
+            logMetacat.info("SolrConfigUpgrader.constructor - the current hash is " + currentHash);
             String metacatWebInf = ServiceService.getRealConfigDir();
-            metacatIndexSolrHome = metacatWebInf + "/../../" + indexContext + "/WEB-INF/classes/solr-home";
+            metacatIndexSolrHome = metacatWebInf + "/../../" + indexContext
+                                                                    + "/WEB-INF/classes/solr-home";
         } catch (PropertyNotFoundException pnfe) {
-            throw new PropertyNotFoundException("SolrConfigUpdator.Constructor - could not get a metacat property in the metacat.properties file - "
+            throw new PropertyNotFoundException("SolrConfigUpdator.Constructor - "
+                            + "could not get a metacat property in the metacat.properties file - "
                             + pnfe.getMessage());
         }
         releasedConfigHashList = StringUtil.toVector(hashString, ';');
-        logMetacat.info("the released hash is ================== "+releasedConfigHashList);
+        logMetacat.info("the released hash is "+releasedConfigHashList);
     }
     
     /**
-     * Upgrade the solrconfig.xml on the solr home. If the existing solrconfigure.xml's hash codes doesn't match released ones, we
-     * will copy it as solrconfigure.xml and give user an warning.
+     * Upgrade the solrconfig.xml on the solr home. If the existing solrconfigure.xml's hash codes
+     * doesn't match released ones, we will copy it as solrconfigure.xml and give user an warning.
      * @throws AdminException
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws SolrSchemaModificationException
      */
-    public void upgrade() throws AdminException, IOException, NoSuchAlgorithmException, SolrSchemaModificationException {
+    public void upgrade() throws AdminException, IOException, NoSuchAlgorithmException,
+                                                                SolrSchemaModificationException {
         boolean solrHomeExists = new File(solrHomePath).exists();
         if (!solrHomeExists) {
-            //System.out.println("solr home doesn't exist ================== ");
             //create the solr home and copy the files to it if it didn't exist
             try {
                 // only attempt to copy if we have the source directory to copy from
@@ -101,19 +84,19 @@ public class SolrConfigUpgrader {
                     OrFileFilter fileFilter = new OrFileFilter();
                     fileFilter.addFileFilter(DirectoryFileFilter.DIRECTORY);
                     fileFilter.addFileFilter(new WildcardFileFilter("*"));
-                    FileUtils.copyDirectory(new File(metacatIndexSolrHome), new File(solrHomePath), fileFilter );
+                    FileUtils.copyDirectory(new File(metacatIndexSolrHome),
+                                                            new File(solrHomePath), fileFilter );
                 } 
             } catch (Exception ue) {    
-                String errorString = "SolrConfigUpdator.update - Could not initialize directory: " + solrHomePath +
-                        " : " + ue.getMessage();
+                String errorString = "SolrConfigUpdator.update - Could not initialize directory: "
+                                                          + solrHomePath + " : " + ue.getMessage();
                 throw new AdminException(errorString);
-                
             }
         } else {
-            //System.out.println("solr home does  exist ================== ");
             // check it
             if (!FileUtil.isDirectory(solrHomePath)) {
-                String errorString = "SolrConfigUpdator.update - SOLR home is not a directory: " + solrHomePath;
+                String errorString =
+                        "SolrConfigUpdator.update - SOLR home is not a directory: " + solrHomePath;
                 throw new AdminException(errorString);
             } else {
                 File metacatIndexConfigFile = new File(metacatIndexSolrHome+CONFIGFILERELATIVEPATH);
@@ -134,19 +117,26 @@ public class SolrConfigUpgrader {
                                 IOUtils.closeQuietly(configInputStream);
                             }
                         }
-                        String error1 = "Metacat couldn't determine if the solrconfig.xml in the "+solrHomePath+"/conf"+
-                                        " was modified or not. We backup the file to solrconfig.xml.org. If you did modify it, please manually merge the change back to the file solrconfig.xml"+" at "+solrHomePath+"/conf.";
-                        //String error2 ="After configuring Metacat and restarting Tomcat, you have to issue a 'reindexall' action as an administrator to rebuild the Solr index.";
-                        String error3 = "Metacat determined the solrconfig.xml in the "+solrHomePath+"/conf"+
-                                        " was customized. Metacat backuped the file to solrconfig.xml.org. You have to manually fix the issue - merge the change back to the solrconfig.xml in the "+
-                                        solrHomePath+"/conf. You may click the OK button when you finish the merging. ";
+                        String error1 = "Metacat couldn't determine if the solrconfig.xml in the "
+                                     + solrHomePath + "/conf" + " was modified or not. We backup "
+                                + "the file to solrconfig.xml.org. If you did modify it, please "
+                                + "manually merge the change back to the file solrconfig.xml"
+                                + " at " + solrHomePath + "/conf.";
+                        String error3 = "Metacat determined the solrconfig.xml in the "
+                                        + solrHomePath + "/conf was customized. Metacat backuped "
+                                        + "the file to solrconfig.xml.org. You have to manually fix"
+                               + " the issue - merge the change back to the solrconfig.xml in the "
+                                        + solrHomePath
+                               + "/conf. You may click the OK button when you finish the merging.";
                         if(checkSum != null) {
                             String checksumValue = checkSum.getValue();
-                            logMetacat.info("the existing schema.xml in the solr home has the checksum ================== "+checksumValue);
+                            logMetacat.info("the existing schema.xml in the solr home has the "
+                                                                + "checksum " + checksumValue);
                             if(checksumValue != null) {
                                 if(checksumValue.equals(currentHash)) {
                                     //it has the newest schema, do nothing
-                                    logMetacat.info("=====the existing config.xml in the solr home has the same checksum as our current release, do nothing") ;
+                                    logMetacat.info("the existing config.xml in the solr home has "
+                                    + "the same checksum as our current release, do nothing") ;
                                 } else {
                                     boolean found = false;
                                     for(String value : releasedConfigHashList) {
@@ -156,12 +146,14 @@ public class SolrConfigUpgrader {
                                         }
                                     }
                                     if(found) {
-                                        //there is  no change in the solrconfig. We can silently overwrite it.
+                                        //there is no change in the solrconfig.
+                                        //We can silently overwrite it.
                                         FileUtils.copyFile(metacatIndexConfigFile, configFile);
                                     } else {
                                         //users changed the solrconfig.xml file.
                                         //backup the original file:
-                                        File backupFile = new File(solrHomePath+CONFIGFILERELATIVEPATH+".org");
+                                        File backupFile =
+                                           new File(solrHomePath + CONFIGFILERELATIVEPATH + ".org");
                                         FileUtils.copyFile(configFile, backupFile);
                                         //overwrite the solr.config file
                                         FileUtils.copyFile(metacatIndexConfigFile, configFile);
@@ -170,14 +162,16 @@ public class SolrConfigUpgrader {
                                     }
                                 }
                             } else {
-                                File backupFile = new File(solrHomePath+CONFIGFILERELATIVEPATH+".org");
+                                File backupFile =
+                                        new File(solrHomePath + CONFIGFILERELATIVEPATH + ".org");
                                 FileUtils.copyFile(configFile, backupFile);
                                 //overwrite the solr.config file
                                 FileUtils.copyFile(metacatIndexConfigFile, configFile);
                                 throw new SolrSchemaModificationException(error1);
                             }
                         } else {
-                            File backupFile = new File(solrHomePath+CONFIGFILERELATIVEPATH+".org");
+                            File backupFile =
+                                    new File(solrHomePath + CONFIGFILERELATIVEPATH + ".org");
                             FileUtils.copyFile(configFile, backupFile);
                             //overwrite the solr.config file
                             FileUtils.copyFile(metacatIndexConfigFile, configFile);
