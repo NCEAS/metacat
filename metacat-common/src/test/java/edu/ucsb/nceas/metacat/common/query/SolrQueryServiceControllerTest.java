@@ -33,7 +33,7 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
                             ParserConfigurationException, IOException, SAXException {
         String version = SolrQueryServiceController.getInstance().getSolrSpecVersion();
         assertTrue(version != null);
-        assertTrue("The version should be 8.8.2 rather than " + version, version.equals("8.8.2"));
+        assertTrue("The version should be 8.11.3 rather than " + version, version.equals("8.11.3"));
     }
 
 
