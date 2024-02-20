@@ -38,4 +38,20 @@ public class SolrUpgrade3_0_0 implements UpgradeUtilityInterface {
         }
         return true;
     }
+
+    /**
+     * Set the SolrSchemaUpgrader instance. This method is for the test class only.
+     * @param schemaUpgrader  the SolrSchemaUpgrader instance will be set
+     */
+    public void setSolrSchemaUpgrader(SolrSchemaUpgrader schemaUpgrader) {
+        this.schemaUpgrader = schemaUpgrader;
+    }
+
+    /**
+     * Set the SolrConfigUpgrader instance. This method is for the test class only.
+     * @param configUpgrader  the SolrConfigUpgrader instance will be set.
+     */
+    public void setSolrConfigUpgrader(SolrConfigUpgrader configUpgrader) {
+        this.configUpgrader = configUpgrader;
+    }
 }
