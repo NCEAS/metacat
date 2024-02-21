@@ -57,11 +57,13 @@
 					<td>
 						<select class="username-input" name="username">
 			<%
-						for(String adminName : adminList) {
+						if (adminList != null) {
+							for(String adminName : adminList) {
 			%>
 							<option><%= adminName %></option>
 			<%
-				}
+							}
+						}
 			%>
 					</select>
 					</td>
@@ -88,4 +90,22 @@
 			<!-- </form> -->
 		</div>
 	</body>
+	<script>
+		window.onload = function() {
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function() {
+			if (xhr.readyState === XMLHttpRequest.DONE) {
+				if (xhr.status === 200) {
+						var token = xhr.responseText;
+						console.log(token)
+						return token;
+					}
+				}
+			};
+
+			xhr.open('GET', 'https://cn.dataone.org/portal/token', true);
+			xhr.withCredentials = true; // Include credentials (cookies) in the request
+			xhr.send();
+		};
+	</script>
 </html>
