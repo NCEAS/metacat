@@ -52,6 +52,10 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.SubjectInfo;
+import org.dataone.portal.TokenGenerator;
+import java.util.Enumeration;
 
 /**
  * Entry servlet for the metadata configuration utility
@@ -99,19 +103,32 @@ public class MetacatAdminServlet extends HttpServlet {
         logMetacat.info("MetacatAdminServlet.handleGetOrPost - Processing admin action: " + action);
         Vector<String> processingMessage = new Vector<String>();
         Vector<String> processingErrors = new Vector<String>();
-        // TODO: Double-check to see how user's get registered in the CN after registering for ORCID
+
         try {
-            // Update the last update time for this user if they are not new
-            // TODO: Remove the code below, the session below will be redundant
-            // Update the last update time for this user if they are not new
-            HttpSession httpSession = request.getSession(false);
-            if (httpSession != null) {
-                SessionService.getInstance().touchSession(httpSession.getId());
+            // TODO: Double-check to see how user's get registered in the CN after registering for ORCID
+            // Always check if user is an admin before redirecting user 
+            boolean isAdminSession = false;
+
+            // Get the enumeration of header names
+            Enumeration<String> headerNames = request.getHeaderNames();
+            
+            // Iterate over the enumeration and print each header name
+            while (headerNames.hasMoreElements()) {
+                String headerName = headerNames.nextElement();
+                System.out.println(headerName);
             }
-            // TODO: This is where we should check for the JWT
-            // Client apps are allowed to authorize without verifying the signature
-            // Any code downstream will be utilizing the info here.
-            // Ensure that client persists the token (maybe local storage?)
+
+            String authHeader = request.getHeader("Authorization");
+            // Check if the Authorization header is present and starts with "Bearer"
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                // Extract the token value after "Bearer "
+                String token = authHeader.substring(7); // "Bearer ".length() == 7
+                Session adminSession = TokenGenerator.getInstance().getSession(token);
+                System.out.println(adminSession);
+                // isAdminSession = true;
+            } else {
+                System.out.println("Authorization header not found");
+            }
 
             if (!ConfigurationUtil.isBackupDirConfigured()) {
                 // if the backup dir has not been configured, then show the
@@ -137,7 +154,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 logMetacat.debug(
                     "MetacatAdminServlet.handleGetOrPost - " + "Admin action changed to 'auth'"
                 );
-            } else if (!AuthUtil.isUserLoggedInAsAdmin(request)) {
+            } else if (!isAdminSession) {
                 // If auth is configured, see if the user is logged in
                 // as an administrator.  If not, they need to log in before
                 // they can continue with configuration.
