@@ -103,31 +103,25 @@ public class MetacatAdminServlet extends HttpServlet {
         logMetacat.info("MetacatAdminServlet.handleGetOrPost - Processing admin action: " + action);
         Vector<String> processingMessage = new Vector<String>();
         Vector<String> processingErrors = new Vector<String>();
-
+        // TODO: Double-check to see how user's get registered in the CN after registering for ORCID
         try {
-            // TODO: Double-check to see how user's get registered in the CN after registering for ORCID
-            // Always check if user is an admin before redirecting user 
+            // Verify client has the appropriate credentials before redirecting
             boolean isAdminSession = false;
-
-            // Get the enumeration of header names
-            Enumeration<String> headerNames = request.getHeaderNames();
-            
-            // Iterate over the enumeration and print each header name
-            while (headerNames.hasMoreElements()) {
-                String headerName = headerNames.nextElement();
-                System.out.println(headerName);
-            }
-
-            String authHeader = request.getHeader("Authorization");
+            String httpAuthHeader = request.getHeader("Authorization");
             // Check if the Authorization header is present and starts with "Bearer"
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            if (httpAuthHeader != null && httpAuthHeader.startsWith("Bearer ")) {
                 // Extract the token value after "Bearer "
-                String token = authHeader.substring(7); // "Bearer ".length() == 7
+                String token = httpAuthHeader.substring(7); // "Bearer ".length() == 7
+                // Parse and validate the token
                 Session adminSession = TokenGenerator.getInstance().getSession(token);
-                System.out.println(adminSession);
-                // isAdminSession = true;
-            } else {
-                System.out.println("Authorization header not found");
+                // Get the value and compare it with the saved admin user
+                String adminuser = adminSession.getSubject().getValue();
+                // System.out.println(adminuser);
+                if (true) {
+                    // User is an admin, redirect to configuration page
+                    isAdminSession = true;
+                    action = "configure";
+                }
             }
 
             if (!ConfigurationUtil.isBackupDirConfigured()) {

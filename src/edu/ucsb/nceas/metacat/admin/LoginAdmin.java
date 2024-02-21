@@ -79,13 +79,6 @@ public class LoginAdmin extends MetacatAdmin {
 		String formErrors = (String) request.getAttribute("formErrors");
 
 		if (processForm == null || !processForm.equals("true") || formErrors != null) {
-			// The servlet configuration parameters have not been set, or there
-			// were form errors on the last attempt to configure, so redirect to
-			// the web form for configuring metacat
-			// TODO: Note to self, this is where it first lands when MAS redirects with act 'login'
-			System.out.println("In statement:");
-			System.out.println("ProcessingForm:");
-			System.out.println(processForm);
 			try {
 				request.setAttribute("adminList", AuthUtil.getAdministrators());
 				// Forward the request to the JSP page
@@ -97,35 +90,13 @@ public class LoginAdmin extends MetacatAdmin {
 				);
 			}
 		} else {
-			System.out.println("Else Statement:");
-			System.out.println("ProcessingForm:");
-			System.out.println(processForm);
-			// The configuration form is being submitted and needs to be
-			// processed.
+			// The configuration form is being submitted and needs to be processed.
 			Vector<String> processingSuccess = new Vector<String>();
 			Vector<String> processingErrors = new Vector<String>();
 			Vector<String> validationErrors = new Vector<String>();
 
-			// String userName = "";
-			// userName = request.getParameter("username");
-			// String password = request.getParameter("password");
-
-			// Validate that the options provided are legitimate. Note that
-			// we've allowed them to persist their entries. As of this point
-			// there is no other easy way to go back to the configure form
-			// and preserve their entries.
-			validationErrors.addAll(validateOptions(request));
-
-			// if (validationErrors.size() == 0) {
-			// 	try {
-			// 		AuthUtil.logUserIn(request, userName, password);
-			// 	} catch (MetacatUtilException ue) {
-			// 		String errorMessage = "LoginAdmin.authenticateUser - Could not log in as: "
-			// 			+ userName + " : " + ue.getMessage() + ". Please try again";
-			// 		processingErrors.add(errorMessage);
-			// 		logMetacat.error(errorMessage);
-			// 	}
-			// }
+			// See 'validateOptions' javadoc for more information.
+			// validationErrors.addAll(validateOptions(request));
 
 			// TODO:
 			// - Extract user name and compare against administrator stored
@@ -137,17 +108,16 @@ public class LoginAdmin extends MetacatAdmin {
 					RequestUtil.setRequestFormErrors(request, validationErrors);
 					RequestUtil.setRequestErrors(request, processingErrors);
 					RequestUtil.forwardRequest(request, response, "/admin", null);
+				} else {
+					// Reload the main metacat configuration page
+					processingSuccess.add("User logged in as: " + "str_placeholder");
+					RequestUtil.clearRequestMessages(request);
+					RequestUtil.setUserId(request, "str_placeholder");
+					RequestUtil.setRequestSuccess(request, processingSuccess);
+					RequestUtil.forwardRequest(
+						request, response, "/admin?configureType=configure&processForm=false", null
+					);
 				}
-				// } else {
-				// 	// Reload the main metacat configuration page
-				// 	processingSuccess.add("User logged in as: " + userName);
-				// 	RequestUtil.clearRequestMessages(request);
-				// 	RequestUtil.setUserId(request, userName);
-				// 	RequestUtil.setRequestSuccess(request, processingSuccess);
-				// 	RequestUtil.forwardRequest(
-				// 		request, response, "/admin?configureType=configure&processForm=false", null
-				// 	);
-				// }
 			} catch (MetacatUtilException mue) {
 				throw new AdminException(
 					"LoginAdmin.authenticateUser - IO problem while processing login page: " + mue
@@ -158,16 +128,15 @@ public class LoginAdmin extends MetacatAdmin {
 	}
 
 	/**
-	 * Validate the most important configuration options submitted by the user.
+	 * Validate the relevant configuration options submitted by the user.
+	 * There are no options to validate at this time as the user is not submitting a form.
+	 * Only ORCID authentication is available.
 	 * 
-	 * @return a vector holding error message for any fields that fail
-	 *         validation.
+	 * @return A vector holding error messages for any fields that fail validation.
 	 */
 	protected Vector<String> validateOptions(HttpServletRequest request) {
 		Vector<String> errorVector = new Vector<String>();
-
-		//TODO MCD validate options.
-
+		// There is no configuration option to validate
 		return errorVector;
 	}
 }
