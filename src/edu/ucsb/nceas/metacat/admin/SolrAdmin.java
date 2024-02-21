@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat.admin;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -19,6 +20,7 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
@@ -36,6 +38,7 @@ import org.dataone.service.exceptions.UnsupportedType;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
+import edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrJvmVersionFinder;
 import edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrSchemaModificationException;
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -105,6 +108,8 @@ public class SolrAdmin extends MetacatAdmin {
     private static final String DATA = "data";
     private static final String CORE_PROPERTY = "core.properties";
     private static final String SOLR_HOME = "SOLR_HOME";
+    private static final String UPDATE_300_CLASS_NAME =
+                                      "edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrUpgrade3_0_0";
 
     private SolrSchemaModificationException solrSchemaException = null;
     private Vector<String> updateClassList = null;
@@ -187,6 +192,31 @@ public class SolrAdmin extends MetacatAdmin {
                 boolean solrHomeCoreExists = new File(solrHomePath + "/" + CORE_PROPERTY).exists();
                 request.setAttribute("solrHomeExist", (Boolean) solrHomeExists);
                 request.setAttribute("solrHomeValueInProp", solrHomePath);
+
+                boolean updateSchema = false;
+                if(updateClassList != null && updateClassList.size() > 0) {
+                    updateSchema = true;
+                    if (updateClassList.contains(UPDATE_300_CLASS_NAME)) {
+                        // We need to check the jvm version of solr.
+                        // The solrconfig.xml and schema.xml in the Metacat 2.* index don't
+                        // work well under java 17
+                        SolrJvmVersionFinder versionFinder = new SolrJvmVersionFinder(baseURL);
+                        try {
+                            String jvmVersion = versionFinder.find();
+                            if (jvmVersion == null || !jvmVersion.startsWith("1.8")) {
+                                throw new AdminException("SolrAdmin.configureSolr - The Solr "
+                                     + " instance is running against Java " + jvmVersion
+                                     + ". Please restart the Solr instance with Java 1.8 so "
+                                     + "Metacat can determine the Solr instance's status."
+                                     + " Then restart Tomcat and come back to the admin page.");
+                            }
+                        } catch (URISyntaxException | TransformerException e) {
+                            throw new AdminException("SolrAdmin.configureSolr - Metacat counldn't"
+                                    + " determine the jvm version of Solr since " + e.getMessage());
+                        }
+                    }
+                }
+
                 //check the solr-home for given core name
                 String solrHomeForGivenCore =getInstanceDir(coreName);
                 request.setAttribute("solrCore", coreName);
@@ -195,10 +225,6 @@ public class SolrAdmin extends MetacatAdmin {
                     request.setAttribute("solrHomeForGivenCore", solrHomeForGivenCore);
                 }
 
-                boolean updateSchema = false;
-                if(updateClassList != null && updateClassList.size() > 0) {
-                    updateSchema = true;
-                }
                 logMetacat.info("SolrAmdin.confgureSolr -the solr-home on the properties is "
                                 + solrHomePath + " and doe it exist? " + solrHomeExists);
                 logMetacat.info("SolrAmdin.confgureSolr - the instance directory for the core "
