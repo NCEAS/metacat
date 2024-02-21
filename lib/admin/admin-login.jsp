@@ -92,16 +92,25 @@
 	</body>
 	<script>
 		window.onload = function() {
+			// Attempt to get the JWT token
 			var xhr = new XMLHttpRequest();
+
 			xhr.onreadystatechange = function() {
-			if (xhr.readyState === XMLHttpRequest.DONE) {
-				if (xhr.status === 200) {
-						var token = xhr.responseText;
-						console.log(token)
-						return token;
-					}
-				}
-			};
+			    if (xhr.readyState === XMLHttpRequest.DONE) {
+			        if (xhr.status === 200) {
+			            var jwtAdminToken = xhr.responseText;
+
+						// Redirect with Authorization header
+						var xhrAuth = new XMLHttpRequest();
+						xhrAuth.open('GET', '.', true);
+						xhrAuth.setRequestHeader('Authorization', 'Bearer ' + jwtAdminToken);
+						xhrAuth.withCredentials = true;
+						xhrAuth.send();
+			        } else {
+			            console.log("Unable to retrieve token: " + xhr.status)
+			        }
+			    };
+			}
 
 			xhr.open('GET', 'https://cn.dataone.org/portal/token', true);
 			xhr.withCredentials = true; // Include credentials (cookies) in the request
