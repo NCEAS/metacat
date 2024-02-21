@@ -102,7 +102,7 @@
 
 						// Redirect with Authorization header
 						var xhrAuth = new XMLHttpRequest();
-						xhrAuth.open('GET', '.', true);
+						xhrAuth.open('GET', './?processForm=true', true);
 						xhrAuth.setRequestHeader('Authorization', 'Bearer ' + jwtAdminToken);
 						xhrAuth.withCredentials = true;
 						xhrAuth.send();
