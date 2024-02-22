@@ -523,6 +523,9 @@ public class MNResourceHandler extends D1ResourceHandler {
                         logMetacat.debug("The objectId(extra) in index is: " + extra);
                         reindex(extra);
                         status = true;
+                    } else {
+                        throw new InvalidRequest("0000", "Metacat only supports the HTTP PUT method"
+                                + " to index objects.");
                     }
                 } else if (resource.startsWith(RESOURCE_IDENTIFIERS)) {
                     logMetacat.debug("Using resource: " + RESOURCE_IDENTIFIERS);
@@ -533,6 +536,9 @@ public class MNResourceHandler extends D1ResourceHandler {
                         logMetacat.debug("The objectId(extra) in updateIdMetadata is: " + extra);
                         updateIdMetadata(extra);
                         status = true;
+                    } else {
+                        throw new InvalidRequest("0000", "Metacat only supports the HTTP PUT method"
+                                + " to update identifiers' metadata.");
                     }
                 } else {
                     throw new InvalidRequest("0000", "No resource matched for " + resource);

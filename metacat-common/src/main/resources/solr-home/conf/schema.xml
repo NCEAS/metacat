@@ -370,7 +370,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
 	<dynamicField name="*_bm" type="boolean" indexed="true" stored="true" multiValued="true"/>
 	<dynamicField name="*_fm" type="tfloat" indexed="true" stored="true" multiValued="true"/>
 	<dynamicField name="*_dm" type="tdouble" indexed="true" stored="true" multiValued="true"/>
-	<dynamicField name="*_dtm" type="tdate" indexed="true" stored="true" multiValued="true"/>
+	<dynamicField name="*_dtm" type="date" indexed="true" stored="true" multiValued="true"/>
 
    
    <dynamicField name="*_i"  type="int"    indexed="true"  stored="true"/>
@@ -401,7 +401,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
    <dynamicField name="*_tl" type="tlong"   indexed="true"  stored="true"/>
    <dynamicField name="*_tf" type="tfloat"  indexed="true"  stored="true"/>
    <dynamicField name="*_td" type="tdouble" indexed="true"  stored="true"/>
-   <dynamicField name="*_tdt" type="tdate"  indexed="true"  stored="true"/>
+   <dynamicField name="*_tdt" type="date"  indexed="true"  stored="true"/>
 
    <dynamicField name="*_c"   type="currency" indexed="true"  stored="true"/>
 
@@ -562,13 +562,8 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
                       the current day
                       
          Consult the DateField javadocs for more information.
-
-         Note: For faster range queries, consider the tdate type
       -->
     <fieldType name="date" class="solr.DatePointField" docValues="true"/>
-
-    <!-- A Trie based date field for faster date range queries and date faceting. -->
-    <fieldType name="tdate" class="solr.DatePointField" docValues="true"/>
 
     <!-- A Date Range Field for truncated date searches -->
     <fieldType name="date_range" class="solr.DateRangeField"/>
@@ -936,4 +931,3 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
    <fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
    <field name="language" type="string" indexed="true" stored="true"/>
 </schema>
-
