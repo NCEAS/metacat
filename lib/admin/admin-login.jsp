@@ -97,12 +97,13 @@
 
 			xhr.onreadystatechange = function() {
 			    if (xhr.readyState === XMLHttpRequest.DONE) {
-			        if (xhr.status === 200) {
+			        if (xhr.status === 200 && xhr.responseText.length !== 0) {
 			            var jwtAdminToken = xhr.responseText;
 
 						// Redirect with Authorization header
 						var xhrAuth = new XMLHttpRequest();
 						xhrAuth.open('GET', './?processForm=true', true);
+                        // xhrAuth.open('GET', '.', true);
 						xhrAuth.setRequestHeader('Authorization', 'Bearer ' + jwtAdminToken);
 						xhrAuth.withCredentials = true;
 						xhrAuth.send();

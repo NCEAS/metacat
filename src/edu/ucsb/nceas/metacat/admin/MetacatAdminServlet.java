@@ -115,12 +115,15 @@ public class MetacatAdminServlet extends HttpServlet {
                 // Parse and validate the token
                 Session adminSession = TokenGenerator.getInstance().getSession(token);
                 // Get the value and compare it with the saved admin user
-                String adminuser = adminSession.getSubject().getValue();
-                // System.out.println(adminuser);
-                if (true) {
-                    // User is an admin, redirect to configuration page
-                    isAdminSession = true;
-                    action = "configure";
+                String bearerUser = adminSession.getSubject().getValue();
+
+                Vector<String> adminList = AuthUtil.getAdministrators();
+                // Iterate over adminList to get ORCID
+                for (String admin : adminList) {
+                    String adminFormatted = "http://orcid.org/" + admin;
+                    if (adminFormatted.equals(bearerUser)) {
+                        isAdminSession = true;
+                    }
                 }
             }
 

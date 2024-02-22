@@ -26,6 +26,7 @@
 
 package edu.ucsb.nceas.metacat.admin;
 
+import java.io.IOException;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,6 +38,9 @@ import org.apache.commons.logging.LogFactory;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
+
+import org.dataone.portal.TokenGenerator;
+import org.dataone.service.types.v1.Session;
 
 /**
  * Control the display of the login page
@@ -67,10 +71,9 @@ public class LoginAdmin extends MetacatAdmin {
 	/**
 	 * Handle configuration of the Authentication properties
 	 * 
-	 * @param request
-	 *                 the http request information
-	 * @param response
-	 *                 the http response to be sent back to the client
+	 * @param request  The http request information
+	 * @param response The http response to be sent back to the client
+	 * @throws AdminException
 	 */
 	public void authenticateUser(HttpServletRequest request, HttpServletResponse response)
 		throws AdminException {
@@ -98,9 +101,38 @@ public class LoginAdmin extends MetacatAdmin {
 			// See 'validateOptions' javadoc for more information.
 			// validationErrors.addAll(validateOptions(request));
 
-			// TODO:
-			// - Extract user name and compare against administrator stored
-			// - If it's verified, valid token, all set, we can move forward
+			// Authenticate the user
+			String adminTokenUser = "";
+			String authHeader = request.getHeader("Authorization");
+			Boolean authenticatedAdmin = false;
+			// Check if the Authorization header is present and starts with "Bearer"
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+				// Extract the token value after "Bearer "
+				String token = authHeader.substring(7); // "Bearer ".length() == 7
+				// Parse and validate the token
+				try {
+					Session adminSession = TokenGenerator.getInstance().getSession(token);
+					// Get the value and compare it with the saved admin user
+					adminTokenUser = adminSession.getSubject().getValue();
+
+					Vector<String> adminList = AuthUtil.getAdministrators();
+					// Iterate over adminList to get ORCID
+					for (String admin : adminList) {
+						String adminFormatted = "http://orcid.org/" + admin;
+						if (adminFormatted.equals(adminTokenUser)) {
+							authenticatedAdmin = true;
+						}
+					}
+				} catch (IOException ioe) {
+					logMetacat.error("LoginAdmin - Unexpected Token Exception: " + ioe.getMessage());
+				} catch (MetacatUtilException mue) {
+					logMetacat.error("Unable to retrieve Metacat administrators list: " + mue.getMessage());
+				}
+			} else {
+				processingErrors.add(
+					"Unable to authenticate Metacat Admin user - missing authentication token."
+				);
+			}
 
 			try {
 				if (validationErrors.size() > 0 || processingErrors.size() > 0) {
@@ -110,9 +142,9 @@ public class LoginAdmin extends MetacatAdmin {
 					RequestUtil.forwardRequest(request, response, "/admin", null);
 				} else {
 					// Reload the main metacat configuration page
-					processingSuccess.add("User logged in as: " + "str_placeholder");
+					processingSuccess.add("User logged in as: " + adminTokenUser);
 					RequestUtil.clearRequestMessages(request);
-					RequestUtil.setUserId(request, "str_placeholder");
+					RequestUtil.setUserId(request, adminTokenUser);
 					RequestUtil.setRequestSuccess(request, processingSuccess);
 					RequestUtil.forwardRequest(
 						request, response, "/admin?configureType=configure&processForm=false", null
