@@ -83,6 +83,9 @@ public class MetacatInitializer implements ServletContextListener{
             // If both are false then stop the initialization
             if (!ConfigurationUtil.bypassConfiguration() &&
                                     !ConfigurationUtil.isMetacatConfigured()) {
+                if (PropertyService.arePropertiesConfigured()) {
+                    DBConnectionPool.getInstance();
+                }
                 fullInit = false;
                 return;
             }
