@@ -208,7 +208,8 @@ public class SolrAdmin extends MetacatAdmin {
                                      + " instance is running against Java " + jvmVersion
                                      + ". Please restart the Solr instance with Java 1.8 so "
                                      + "Metacat can determine the Solr instance's status."
-                                     + " Then restart Tomcat and come back to the admin page.");
+                                     + " Then restart Tomcat and come back to the admin page. "
+                                + "After configuration, you may switch JAVA back to " + jvmVersion);
                             }
                         } catch (URISyntaxException | TransformerException e) {
                             throw new AdminException("SolrAdmin.configureSolr - Metacat counldn't"
