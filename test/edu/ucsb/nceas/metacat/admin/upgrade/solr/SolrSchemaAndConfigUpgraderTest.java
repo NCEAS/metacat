@@ -19,7 +19,7 @@ import edu.ucsb.nceas.metacat.service.ServiceService;
  * @author tao
  *
  */
-public class SolrUpgrade3_0_0Test {
+public class SolrSchemaAndConfigUpgraderTest {
 
     /**
      * Setup
@@ -44,7 +44,7 @@ public class SolrUpgrade3_0_0Test {
             //success
             Mockito.doNothing().when(mockConfigUpgrader).upgrade();
             Mockito.doNothing().when(mockSchemaUpgrader).upgrade();
-            SolrUpgrade3_0_0 upgrader = new SolrUpgrade3_0_0();
+            SolrSchemaAndConfigUpgrader upgrader = SolrSchemaAndConfigUpgrader.getInstance();
             upgrader.setSolrConfigUpgrader(mockConfigUpgrader);
             upgrader.setSolrSchemaUpgrader(mockSchemaUpgrader);
             upgrader.upgrade();

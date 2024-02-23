@@ -13,19 +13,36 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * @author tao
  *
  */
-public class SolrUpgrade3_0_0 implements UpgradeUtilityInterface {
+public class SolrSchemaAndConfigUpgrader implements UpgradeUtilityInterface {
 
     private SolrSchemaUpgrader schemaUpgrader;
     private SolrConfigUpgrader configUpgrader;
+    private static SolrSchemaAndConfigUpgrader instance;
 
     /**
      * Default constructor
      * @throws PropertyNotFoundException
      * @throws ServiceException
      */
-    public SolrUpgrade3_0_0() throws PropertyNotFoundException, ServiceException {
+    private SolrSchemaAndConfigUpgrader() throws PropertyNotFoundException, ServiceException {
         schemaUpgrader = new SolrSchemaUpgrader();
         configUpgrader = new SolrConfigUpgrader();
+    }
+
+    /**
+     * Get the singleton instance
+     * @return the singleton instance of the SolrSchemaAndConfigUpgrader class
+     * @throws PropertyNotFoundException
+     * @throws ServiceException
+     */
+    public static SolrSchemaAndConfigUpgrader getInstance() throws PropertyNotFoundException,
+                                                                                ServiceException {
+        if (instance == null) {
+            synchronized (SolrSchemaAndConfigUpgrader.class) {
+                instance = new SolrSchemaAndConfigUpgrader();
+            }
+        }
+        return instance;
     }
 
     @Override
