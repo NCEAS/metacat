@@ -67,7 +67,7 @@ public class SolrAdmin extends MetacatAdmin {
 
     private Vector<String> solrUpdateClassesList = new Vector<String> ();
     private static SolrAdmin solrAdmin = null;
-    private Log logMetacat = LogFactory.getLog(SolrAdmin.class);
+    private static Log logMetacat = LogFactory.getLog(SolrAdmin.class);
     //possibilities:
     //1. Create - both core and solr-home doesn't exist. Create solr-home and register the core.
     public static final String CREATE = "create";
@@ -611,7 +611,7 @@ public class SolrAdmin extends MetacatAdmin {
                 //The getInstanceDirectory method doesn't handle the scenario that the core
                 //doesn't exist. It will give a null exception.
                 throw new SolrServerException("The core " + coreName + " was not found in the solr "
-                                   + "server. Please check if the solr service running correctly.");
+                                + "server. Please check if the solr service is running correctly.");
             }
         }
         return instanceDir;
@@ -868,7 +868,7 @@ public class SolrAdmin extends MetacatAdmin {
       * @throws SQLException
      * @throws PropertyNotFoundException
       */
-     protected Map<String, String> getSolrUpdateClasses() throws SQLException,
+     protected static Map<String, String> getSolrUpdateClasses() throws SQLException,
                                                                         PropertyNotFoundException {
          Map<String, String> classes = new HashMap<String, String>();
          if (isFreshInstall()) {
@@ -911,7 +911,7 @@ public class SolrAdmin extends MetacatAdmin {
       * @throws SQLException
      * @throws PropertyNotFoundException
       */
-     protected Vector<DBVersion> getUnupgradedSolrVersions() throws SQLException,
+     protected static Vector<DBVersion> getUnupgradedSolrVersions() throws SQLException,
                                                                         PropertyNotFoundException {
          Vector<DBVersion> versions = new Vector<DBVersion>();
          DBConnection dbConn = null;
@@ -944,7 +944,7 @@ public class SolrAdmin extends MetacatAdmin {
       * @return ture if it is; otherwise false.
       * @throws SQLException
       */
-     protected boolean isFreshInstall() throws SQLException {
+     protected static boolean isFreshInstall() throws SQLException {
          boolean isFreshInstall = false;
          DBConnection dbConn = null;
          int serialNumber = -1;
@@ -978,7 +978,7 @@ public class SolrAdmin extends MetacatAdmin {
       * @param status  the status will be applied.
      * @throws SQLException
       */
-     protected void updateSolrStatus(String version, boolean status) throws SQLException {
+     protected static void updateSolrStatus(String version, boolean status) throws SQLException {
          DBConnection dbConn = null;
          int serialNumber = -1;
          String sql = "UPDATE db_version SET solr_upgraded = ? WHERE version = ?";
