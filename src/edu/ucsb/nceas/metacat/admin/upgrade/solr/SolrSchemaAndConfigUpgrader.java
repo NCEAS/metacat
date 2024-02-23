@@ -3,6 +3,9 @@ package edu.ucsb.nceas.metacat.admin.upgrade.solr;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -18,6 +21,8 @@ public class SolrSchemaAndConfigUpgrader implements UpgradeUtilityInterface {
     private SolrSchemaUpgrader schemaUpgrader;
     private SolrConfigUpgrader configUpgrader;
     private static SolrSchemaAndConfigUpgrader instance;
+    private static boolean hasRun = false;
+    private static Log logMetacat = LogFactory.getLog(SolrSchemaAndConfigUpgrader.class);
 
     /**
      * Default constructor
@@ -47,11 +52,19 @@ public class SolrSchemaAndConfigUpgrader implements UpgradeUtilityInterface {
 
     @Override
     public boolean upgrade() throws AdminException {
-        try {
-            schemaUpgrader.upgrade();
-            configUpgrader.upgrade();
-        } catch (NoSuchAlgorithmException | IOException e) {
-            throw new AdminException(e.getMessage());
+        if (!hasRun) {
+            logMetacat.debug("SolrSchemaAndConfigUpgrader.upgrade - Metacat should run the upgrade"
+                                                + " classes since this is the first time to run.");
+            try {
+                configUpgrader.upgrade();
+                schemaUpgrader.upgrade();
+                hasRun = true;
+            } catch (NoSuchAlgorithmException | IOException e) {
+                throw new AdminException(e.getMessage());
+            }
+        } else {
+            logMetacat.info("SolrSchemaAndConfigUpgrader.upgrade - Metacat should skip to run the"
+                    + " upgrade classes since they already ran.");
         }
         return true;
     }

@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Vector;
 
 import org.apache.commons.io.FileUtils;
@@ -99,8 +102,8 @@ public class SolrConfigUpgrader {
                         "SolrConfigUpdator.update - SOLR home is not a directory: " + solrHomePath;
                 throw new AdminException(errorString);
             } else {
-                File metacatIndexConfigFile = new File(metacatIndexSolrHome+CONFIGFILERELATIVEPATH);
-                File configFile = new File(solrHomePath+CONFIGFILERELATIVEPATH);
+                File metacatIndexConfigFile = new File(metacatIndexSolrHome + CONFIGFILERELATIVEPATH);
+                File configFile = new File(solrHomePath + CONFIGFILERELATIVEPATH);
                 if(metacatIndexConfigFile.exists()) {
                     if(!configFile.exists()) {
                         FileUtils.copyFile(metacatIndexConfigFile, configFile);
@@ -153,7 +156,7 @@ public class SolrConfigUpgrader {
                                         //users changed the solrconfig.xml file.
                                         //backup the original file:
                                         File backupFile =
-                                           new File(solrHomePath + CONFIGFILERELATIVEPATH + ".org");
+                                           new File(getFileName(solrHomePath + CONFIGFILERELATIVEPATH));
                                         FileUtils.copyFile(configFile, backupFile);
                                         //overwrite the solr.config file
                                         FileUtils.copyFile(metacatIndexConfigFile, configFile);
@@ -163,7 +166,7 @@ public class SolrConfigUpgrader {
                                 }
                             } else {
                                 File backupFile =
-                                        new File(solrHomePath + CONFIGFILERELATIVEPATH + ".org");
+                                       new File(getFileName(solrHomePath + CONFIGFILERELATIVEPATH));
                                 FileUtils.copyFile(configFile, backupFile);
                                 //overwrite the solr.config file
                                 FileUtils.copyFile(metacatIndexConfigFile, configFile);
@@ -171,7 +174,7 @@ public class SolrConfigUpgrader {
                             }
                         } else {
                             File backupFile =
-                                    new File(solrHomePath + CONFIGFILERELATIVEPATH + ".org");
+                                    new File(getFileName(solrHomePath + CONFIGFILERELATIVEPATH));
                             FileUtils.copyFile(configFile, backupFile);
                             //overwrite the solr.config file
                             FileUtils.copyFile(metacatIndexConfigFile, configFile);
@@ -182,6 +185,17 @@ public class SolrConfigUpgrader {
 
             }
         }
+    }
+
+    /**
+     * Get a file name concatenating the base name and current time.
+     * @param baseName  the name will be appended by current time
+     * @return the file name concatenating the base name and current time.
+     */
+    private String getFileName(String baseName) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        String dateTimeInfo = dateFormat.format(new Date());
+        return baseName.concat(String.format("_%s.backup", dateTimeInfo));
     }
 
 }

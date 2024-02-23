@@ -48,6 +48,7 @@ import edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrSchemaModificationException
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.database.DBVersion;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -128,7 +129,7 @@ public class SolrAdmin extends MetacatAdmin {
     private SolrAdmin() throws AdminException {
         try {
             updateClassMap = getSolrUpdateClasses();
-        } catch (SQLException e) {
+        } catch (SQLException | PropertyNotFoundException e) {
             throw new AdminException(e.getMessage());
         }
 
@@ -767,7 +768,16 @@ public class SolrAdmin extends MetacatAdmin {
                                      + className + " for the db version " + version);
                  UpgradeUtilityInterface utility = null;
                  try {
-                     utility = (UpgradeUtilityInterface) Class.forName(className).newInstance();
+                     try {
+                         utility = (UpgradeUtilityInterface) Class.forName(className)
+                                                         .getDeclaredConstructor().newInstance();
+                     } catch (IllegalAccessException ee) {
+                         logMetacat.debug("SolrAdmin.updateSolrSchema - Metacat could not get a "
+                                               + "instance by the constructor. It will try to the "
+                                               + "method of getIntance.");
+                         utility = (UpgradeUtilityInterface) Class.forName(className)
+                                                     .getDeclaredMethod("getInstance").invoke(null);
+                     }
                      utility.upgrade();
                      try {
                          updateSolrStatus(version, true);
@@ -856,16 +866,18 @@ public class SolrAdmin extends MetacatAdmin {
       * is the update class.
       * @return the map of upgrade classes. An empty map will be return if nothing is found.
       * @throws SQLException
+     * @throws PropertyNotFoundException
       */
-     protected Map<String, String> getSolrUpdateClasses() throws SQLException {
+     protected Map<String, String> getSolrUpdateClasses() throws SQLException,
+                                                                        PropertyNotFoundException {
          Map<String, String> classes = new HashMap<String, String>();
          if (isFreshInstall()) {
              logMetacat.debug("SolrAdmin.getSolrUpdateClasses - this is a fresh installation "
                                  + "and no upgrade classes will be applied.");
              return classes;
          }
-         Vector<String> versions = getUnupgradedSolrVersions();
-         for (String version : versions) {
+         Vector<DBVersion> versions = getUnupgradedSolrVersions();
+         for (DBVersion version : versions) {
            //figured out the solr update class list which will be used by SolrAdmin
              String solrKey = "solr.upgradeUtility." + version;
              String solrClassName = null;
@@ -874,7 +886,7 @@ public class SolrAdmin extends MetacatAdmin {
                  if(solrClassName != null && !solrClassName.trim().equals("")) {
                      logMetacat.debug("SolrAdmin.getSolrUpdateClasses - the class " + solrClassName
                              + " was added into the upgrade class map for version " + version);
-                     classes.put(version, solrClassName);
+                     classes.put(version.getVersionString(), solrClassName);
                  }
              } catch (PropertyNotFoundException pnfe) {
                  // there probably isn't a utility needed for this version
@@ -892,9 +904,11 @@ public class SolrAdmin extends MetacatAdmin {
       * @return the list of db versions in which the solr db hasn't been upgraded. An empty vector
       *  will be returned if nothing was found.
       * @throws SQLException
+     * @throws PropertyNotFoundException
       */
-     protected Vector<String> getUnupgradedSolrVersions() throws SQLException {
-         Vector<String> versions = new Vector<String>();
+     protected Vector<DBVersion> getUnupgradedSolrVersions() throws SQLException,
+                                                                        PropertyNotFoundException {
+         Vector<DBVersion> versions = new Vector<DBVersion>();
          DBConnection dbConn = null;
          int serialNumber = -1;
          String query = "SELECT version FROM db_version WHERE solr_upgraded IS NOT true "
@@ -906,7 +920,7 @@ public class SolrAdmin extends MetacatAdmin {
                  pstmt.execute();
                  try (ResultSet rs = pstmt.getResultSet()) {
                      while (rs.next()) {
-                         String version = rs.getNString(1);
+                         DBVersion version = new DBVersion(rs.getString(1));
                          versions.add(version);
                      }
                  }
@@ -916,7 +930,7 @@ public class SolrAdmin extends MetacatAdmin {
                  DBConnectionPool.returnDBConnection(dbConn, serialNumber);
              }
          }
-         return null;
+         return versions;
      }
 
      /**
