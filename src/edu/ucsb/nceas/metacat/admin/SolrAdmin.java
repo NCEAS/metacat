@@ -234,7 +234,7 @@ public class SolrAdmin extends MetacatAdmin {
                 }
 
                 //check the solr-home for given core name
-                String solrHomeForGivenCore =getInstanceDir(coreName);
+                String solrHomeForGivenCore = getInstanceDir(coreName);
                 request.setAttribute("solrCore", coreName);
                 if(solrHomeForGivenCore != null) {
                    //the given core  exists
@@ -591,7 +591,7 @@ public class SolrAdmin extends MetacatAdmin {
     /**
      * Get the instance directory of a given core.
      * @param coreName  the core will be looked for
-     * @return the instance directory of the core. The null will be return if we can't find the core.
+     * @return the instance directory of the core.
      * @throws UnsupportedType
      * @throws ParserConfigurationException
      * @throws IOException
@@ -606,12 +606,12 @@ public class SolrAdmin extends MetacatAdmin {
         CoreStatus status = adminRequest.getCoreStatus(coreName, client);
         if(status != null) {
             try {
-                //The getInstanceDirectory method doesn't handle the scenario that the core
-                //doesn't exist. It will give a null exception.
-                //So it has to swallow the null pointer exception here.
                 instanceDir = status.getInstanceDirectory();
             } catch (NullPointerException e) {
-
+                //The getInstanceDirectory method doesn't handle the scenario that the core
+                //doesn't exist. It will give a null exception.
+                throw new SolrServerException("The core " + coreName + " was not found in the solr "
+                                   + "server. Please check if the solr service running correctly.");
             }
         }
         return instanceDir;
@@ -878,22 +878,27 @@ public class SolrAdmin extends MetacatAdmin {
          }
          Vector<DBVersion> versions = getUnupgradedSolrVersions();
          for (DBVersion version : versions) {
-           //figured out the solr update class list which will be used by SolrAdmin
-             String solrKey = "solr.upgradeUtility." + version;
-             String solrClassName = null;
-             try {
-                 solrClassName = PropertyService.getProperty(solrKey);
-                 if(solrClassName != null && !solrClassName.trim().equals("")) {
-                     logMetacat.debug("SolrAdmin.getSolrUpdateClasses - the class " + solrClassName
-                             + " was added into the upgrade class map for version " + version);
-                     classes.put(version.getVersionString(), solrClassName);
+             if (version != null && version.getVersionString() != null
+                                     && !version.getVersionString().trim().equals("")) {
+                 //figured out the solr update class list which will be used by SolrAdmin
+                 String solrKey = "solr.upgradeUtility." + version.getVersionString();
+                 String solrClassName = null;
+                 try {
+                     solrClassName = PropertyService.getProperty(solrKey);
+                     if(solrClassName != null && !solrClassName.trim().equals("")) {
+                         logMetacat.debug("SolrAdmin.getSolrUpdateClasses - the class "
+                             + solrClassName + " was added into the upgrade class map for version "
+                             + version.getVersionString());
+                         classes.put(version.getVersionString(), solrClassName);
+                     }
+                 } catch (PropertyNotFoundException pnfe) {
+                     // there probably isn't a utility needed for this version
+                     logMetacat.warn("No solr update utility defined for version: " + solrKey
+                                     + " since "+ pnfe.getMessage());
+                 } catch (Exception e) {
+                     logMetacat.warn("Can't put the solr update utility class into a vector : "
+                                         + e.getMessage());
                  }
-             } catch (PropertyNotFoundException pnfe) {
-                 // there probably isn't a utility needed for this version
-                 logMetacat.warn("No solr update utility defined for version: " + solrKey);
-             } catch (Exception e) {
-                 logMetacat.warn("Can't put the solr update utility class into a vector : "
-                                     + e.getMessage());
              }
          }
          return classes;
