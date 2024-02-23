@@ -12,7 +12,12 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.Vector;
@@ -41,6 +46,8 @@ import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
 import edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrJvmVersionFinder;
 import edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrSchemaModificationException;
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -57,6 +64,7 @@ import edu.ucsb.nceas.utilities.UtilException;
  */
 public class SolrAdmin extends MetacatAdmin {
 
+    private Vector<String> solrUpdateClassesList = new Vector<String> ();
     private static SolrAdmin solrAdmin = null;
     private Log logMetacat = LogFactory.getLog(SolrAdmin.class);
     //possibilities:
@@ -108,18 +116,22 @@ public class SolrAdmin extends MetacatAdmin {
     private static final String DATA = "data";
     private static final String CORE_PROPERTY = "core.properties";
     private static final String SOLR_HOME = "SOLR_HOME";
-    private static final String UPDATE_300_CLASS_NAME =
-                                      "edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrUpgrade3_0_0";
 
     private SolrSchemaModificationException solrSchemaException = null;
-    private Vector<String> updateClassList = null;
+    // This map maps the db version and relevant the upgrade class
+    private Map<String, String> updateClassMap;
 
     /**
-     * private constructor since this is a singleton
+     * Private constructor since this is a singleton
      * @throws AdminException
      */
     private SolrAdmin() throws AdminException {
-        updateClassList = DBAdmin.getInstance().getSolrUpdateClasses();
+        try {
+            updateClassMap = getSolrUpdateClasses();
+        } catch (SQLException e) {
+            throw new AdminException(e.getMessage());
+        }
+
     }
 
     /**
@@ -194,12 +206,14 @@ public class SolrAdmin extends MetacatAdmin {
                 request.setAttribute("solrHomeValueInProp", solrHomePath);
 
                 boolean updateSchema = false;
-                if(updateClassList != null && updateClassList.size() > 0) {
+                if(updateClassMap != null && updateClassMap.size() > 0) {
                     updateSchema = true;
-                    if (updateClassList.contains(UPDATE_300_CLASS_NAME)) {
-                        // We need to check the jvm version of solr.
-                        // The solrconfig.xml and schema.xml in the Metacat 2.* index don't
-                        // work well under java 17
+                    if (updateClassMap.keySet().contains("3.0.0")) {
+                        logMetacat.debug("SolrAdmin.configureSolr - We need to check jvm version "
+                                    + " when we upgrade Metacat from 2.19.0 to 3.*.");
+                        // We need to check the jvm version of solr when we upgrade solr for
+                        // Metacat 3.0.0. The solrconfig.xml and schema.xml in the Metacat 2.* index
+                        // don't work well under java 17.
                         SolrJvmVersionFinder versionFinder = new SolrJvmVersionFinder(baseURL);
                         try {
                             String jvmVersion = versionFinder.find();
@@ -376,6 +390,8 @@ public class SolrAdmin extends MetacatAdmin {
                     //action 1 - create (no core and no solr home)
                     try {
                         createSolrHome();
+                        //set the solr_upgraded status true for the current Metacat version
+                        updateSolrStatus(DBAdmin.getInstance().getDBVersion().getVersionString(), true);
                     }  catch (UnsupportedOperationException usoe) {
                         unspportedOperExcepiton = usoe;
                     }
@@ -744,15 +760,30 @@ public class SolrAdmin extends MetacatAdmin {
       * @throws AdminException
       */
      private void updateSolrSchema() throws AdminException {
-         if(updateClassList != null) {
-             for (String className : updateClassList) {
+         if(updateClassMap != null) {
+             for (String version : updateClassMap.keySet()) {
+                 String className = updateClassMap.get(version);
+                 logMetacat.debug("SolrAdmin.updateSolrSchema - will run the update class "
+                                     + className + " for the db version " + version);
                  UpgradeUtilityInterface utility = null;
                  try {
                      utility = (UpgradeUtilityInterface) Class.forName(className).newInstance();
                      utility.upgrade();
+                     try {
+                         updateSolrStatus(version, true);
+                     } catch (SQLException ee) {
+                         throw new AdminException("Metacat cannot update the solr_upgraded status "
+                                                 + ee.getMessage());
+                     }
                  } catch (SolrSchemaModificationException e) {
                      //don't throw the exception and continue
                      solrSchemaException = e;
+                     try {
+                         updateSolrStatus(version, true);
+                     } catch (SQLException ee) {
+                         throw new AdminException("Metacat cannot update the solr_upgraded status "
+                                                 + ee.getMessage());
+                     }
                      continue;
                  } catch (Exception e) {
                      throw new AdminException("Solr.upgradeSolrSchema - error getting utility class: "
@@ -816,6 +847,136 @@ public class SolrAdmin extends MetacatAdmin {
          } else {
              logMetacat.error("SolrAdmin.modifySolrHomeInSolrEnvScript - the solr home string "
                                          + "shouldn't be null or blank.");
+         }
+     }
+
+     /**
+      * Get the map of upgrade classes should be run in the upgrade. If this is a fresh
+      * installation, no classes will be added to it. The key of map is the db version and the value
+      * is the update class.
+      * @return the map of upgrade classes. An empty map will be return if nothing is found.
+      * @throws SQLException
+      */
+     protected Map<String, String> getSolrUpdateClasses() throws SQLException {
+         Map<String, String> classes = new HashMap<String, String>();
+         if (isFreshInstall()) {
+             logMetacat.debug("SolrAdmin.getSolrUpdateClasses - this is a fresh installation "
+                                 + "and no upgrade classes will be applied.");
+             return classes;
+         }
+         Vector<String> versions = getUnupgradedSolrVersions();
+         for (String version : versions) {
+           //figured out the solr update class list which will be used by SolrAdmin
+             String solrKey = "solr.upgradeUtility." + version;
+             String solrClassName = null;
+             try {
+                 solrClassName = PropertyService.getProperty(solrKey);
+                 if(solrClassName != null && !solrClassName.trim().equals("")) {
+                     logMetacat.debug("SolrAdmin.getSolrUpdateClasses - the class " + solrClassName
+                             + " was added into the upgrade class map for version " + version);
+                     classes.put(version, solrClassName);
+                 }
+             } catch (PropertyNotFoundException pnfe) {
+                 // there probably isn't a utility needed for this version
+                 logMetacat.warn("No solr update utility defined for version: " + solrKey);
+             } catch (Exception e) {
+                 logMetacat.warn("Can't put the solr update utility class into a vector : "
+                                     + e.getMessage());
+             }
+         }
+         return classes;
+     }
+
+     /**
+      * Get a list of db versions in which the solr db hasn't been upgraded
+      * @return the list of db versions in which the solr db hasn't been upgraded. An empty vector
+      *  will be returned if nothing was found.
+      * @throws SQLException
+      */
+     protected Vector<String> getUnupgradedSolrVersions() throws SQLException {
+         Vector<String> versions = new Vector<String>();
+         DBConnection dbConn = null;
+         int serialNumber = -1;
+         String query = "SELECT version FROM db_version WHERE solr_upgraded IS NOT true "
+                                                     + "ORDER BY db_version_id ASC";
+         try {
+             dbConn = DBConnectionPool.getDBConnection("SolrAdmin.getUnupgradedSolrVersions");
+             serialNumber = dbConn.getCheckOutSerialNumber();
+             try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
+                 pstmt.execute();
+                 try (ResultSet rs = pstmt.getResultSet()) {
+                     while (rs.next()) {
+                         String version = rs.getNString(1);
+                         versions.add(version);
+                     }
+                 }
+             }
+         } finally {
+             if (dbConn != null) {
+                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+             }
+         }
+         return null;
+     }
+
+     /**
+      * Check if the db is a fresh installation. If the db_version has only one row, we consider it
+      * a fresh installation.
+      * @return ture if it is; otherwise false.
+      * @throws SQLException
+      */
+     protected boolean isFreshInstall() throws SQLException {
+         boolean isFreshInstall = false;
+         DBConnection dbConn = null;
+         int serialNumber = -1;
+         int count = 0;
+         String sql = "SELECT version FROM db_version";
+         try {
+             dbConn = DBConnectionPool.getDBConnection("SolrAdmin.isFreshInstall");
+             serialNumber = dbConn.getCheckOutSerialNumber();
+             try (PreparedStatement pstmt = dbConn.prepareStatement(sql)) {
+                 pstmt.execute();
+                 try (ResultSet rs = pstmt.getResultSet()) {
+                     while (rs.next()) {
+                         count++;
+                     }
+                     if (count == 1) {
+                         isFreshInstall = true;
+                     }
+                 }
+             }
+         } finally {
+             if (dbConn != null) {
+                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+             }
+         }
+         return isFreshInstall;
+     }
+
+     /**
+      * Update the solr_upgraded status for the given metacat version
+      * @param version  the version of Metacat will be updated in the db_version table.
+      * @param status  the status will be applied.
+     * @throws SQLException
+      */
+     protected void updateSolrStatus(String version, boolean status) throws SQLException {
+         DBConnection dbConn = null;
+         int serialNumber = -1;
+         String sql = "UPDATE db_version SET solr_upgraded = ? WHERE version = ?";
+         try {
+             dbConn = DBConnectionPool.getDBConnection("SolrAdmin.isFreshInstall");
+             serialNumber = dbConn.getCheckOutSerialNumber();
+             try (PreparedStatement pstmt = dbConn.prepareStatement(sql)) {
+                 pstmt.setBoolean(1, status);
+                 pstmt.setString(2, version);
+                 pstmt.execute();
+                 logMetacat.debug("SolrAdmin.updateSolrStatus - update the solr_upgrade field to "
+                                 + status + " for version " + version );
+             }
+         } finally {
+             if (dbConn != null) {
+                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+             }
          }
      }
 }

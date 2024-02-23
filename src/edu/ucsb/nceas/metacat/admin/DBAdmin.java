@@ -92,8 +92,7 @@ public class DBAdmin extends MetacatAdmin {
     private HashSet<String> sqlCommandSet = new HashSet<String>();
     private Map<String, String> scriptSuffixMap = new HashMap<String, String>();
     private static DBVersion databaseVersion = null;
-    //private SolrSchemaModificationException solrSchemaException = null;
-    private Vector<String> solrUpdateClassesList = new Vector<String> ();
+
 
     /**
      * private constructor since this is a singleton
@@ -345,14 +344,7 @@ public class DBAdmin extends MetacatAdmin {
         }
         return databaseVersion;
     }
-    
-    /**
-     * Get the list of classes that should be run to update the solr server.
-     * @return the list of classes
-     */
-    public Vector<String> getSolrUpdateClasses() {
-        return solrUpdateClassesList;
-    }
+
 
     /**
      * Gets the version of the database from the db_version table. Usually this
@@ -735,22 +727,6 @@ public class DBAdmin extends MetacatAdmin {
             // but <= to the metacat version to the update list.
             if (nextVersion.compareTo(databaseVersion) > 0
                     && nextVersion.compareTo(metaCatVersion) <= 0) {
-                //figured out the solr update class list which will be used by SolrAdmin
-                String solrKey = "solr.upgradeUtility." + nextVersion.getVersionString();
-                String solrClassName = null;
-                try {
-                    solrClassName = PropertyService.getProperty(solrKey);
-                    if(solrClassName != null && !solrClassName.trim().equals("")) {
-                        solrUpdateClassesList.add(solrClassName);
-                    }
-                } catch (PropertyNotFoundException pnfe) {
-                    // there probably isn't a utility needed for this version
-                    logMetacat.warn("No solr update utility defined for version: " + solrKey);
-                } catch (Exception e) {
-                    logMetacat.warn("Can't put the solr update utility class into a vector : "
-                                        + e.getMessage());
-                }
-                
                 String key = "database.upgradeUtility." + nextVersion.getVersionString();
                 String className = null;
                 try {
