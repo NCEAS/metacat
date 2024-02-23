@@ -41,30 +41,30 @@ public class SolrSchemaAndConfigUpgraderTest {
             dummy.when(() -> ServiceService.getRealConfigDir()).thenReturn("dummy");
             SolrConfigUpgrader mockConfigUpgrader = Mockito.mock(SolrConfigUpgrader.class);
             SolrSchemaUpgrader mockSchemaUpgrader = Mockito.mock(SolrSchemaUpgrader.class);
-            //success
-            Mockito.doNothing().when(mockConfigUpgrader).upgrade();
-            Mockito.doNothing().when(mockSchemaUpgrader).upgrade();
             SolrSchemaAndConfigUpgrader upgrader = SolrSchemaAndConfigUpgrader.getInstance();
-            upgrader.setSolrConfigUpgrader(mockConfigUpgrader);
-            upgrader.setSolrSchemaUpgrader(mockSchemaUpgrader);
-            upgrader.upgrade();
             //failure
             Mockito.doThrow(new IOException("fail to copy the configuration files"))
                                                               .when(mockConfigUpgrader).upgrade();
+            upgrader.setSolrConfigUpgrader(mockConfigUpgrader);
+            upgrader.setSolrSchemaUpgrader(mockSchemaUpgrader);
             try {
                 upgrader.upgrade();
                 fail("The test can't reach there since it should throw an exception");
             } catch (Exception e) {
                 assertTrue(e instanceof AdminException);
             }
+
+            //success
+            Mockito.doNothing().when(mockConfigUpgrader).upgrade();
+            Mockito.doNothing().when(mockSchemaUpgrader).upgrade();
+            upgrader.upgrade();
+
+            // Even though this time the mockSchemaUpgrader will throw an exception,
+            // it wouldn't throw exception since the upgrader is singleton and only run one time.
             Mockito.doThrow(new IOException("fail to copy the schema files"))
-                                                               .when(mockSchemaUpgrader).upgrade();
-            try {
-                upgrader.upgrade();
-                fail("The test can't reach there since it should throw an exception");
-            } catch (Exception e) {
-                assertTrue(e instanceof AdminException);
-            }
+                                                            .when(mockSchemaUpgrader).upgrade();
+             upgrader.upgrade();
+
         }
     }
 }
