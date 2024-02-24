@@ -328,6 +328,9 @@ public class SolrAdmin extends MetacatAdmin {
             } catch (SolrServerException e) {
                 throw new AdminException("SolrAdmin.configureSolr- solr problem while initializing "
                         + "solr page:" + e.getMessage());
+            } catch (SQLException e) {
+                throw new AdminException("SolrAdmin.configureSolr- sql problem while initializing "
+                        + "solr page:" + e.getMessage());
             }
         } else if (bypass != null && bypass.equals("true")) {
             Vector<String> processingErrors = new Vector<String>();
@@ -597,8 +600,9 @@ public class SolrAdmin extends MetacatAdmin {
      * @throws IOException
      * @throws SAXException
      * @throws SolrServerException
+     * @throws SQLException
      */
-    private String getInstanceDir(String coreName) throws UnsupportedType,
+    private String getInstanceDir(String coreName) throws UnsupportedType, SQLException,
                       ParserConfigurationException, IOException, SAXException, SolrServerException {
         String instanceDir = null;
         SolrClient client = SolrServerFactory.createSolrAdminClient();
@@ -610,8 +614,10 @@ public class SolrAdmin extends MetacatAdmin {
             } catch (NullPointerException e) {
                 //The getInstanceDirectory method doesn't handle the scenario that the core
                 //doesn't exist. It will give a null exception.
-                throw new SolrServerException("The core " + coreName + " was not found in the solr "
-                                + "server. Please check if the solr service is running correctly.");
+                if (!isFreshInstall()) {
+                    throw new SolrServerException("The core " + coreName + " was not found in the "
+                           + "solr server. Please check if the solr service is running correctly.");
+                }
             }
         }
         return instanceDir;
