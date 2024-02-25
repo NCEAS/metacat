@@ -47,10 +47,6 @@
 			<p>Account login page.</p>
 			
 			<%@ include file="./page-message-section.jsp"%>
-			
-			<!-- <form name="loginform" method="post" action="<%= request.getContextPath() %>/admin"
-				target="_top" onsubmit="return validateAndSubmitForm(this);" id="loginform"> -->
-			
 			<table class="admin-login">
 				<tr>
 					<td><h4>Administrators</h4></td>
@@ -75,47 +71,42 @@
 			</table>
 			<div class="orcid-btn-wrapper">
 				<div class="orcid-flex">
-					<a href=<%= "https://cn.dataone.org/portal/oauth?action=start&amp;target=" + request.getRequestURL() %> class="signin orcid-btn update-orcid-sign-in-url orcid-flex">
-						<img src="admin/images/orcid_64x64.png">
+					<a href=<%= "https://cn.dataone.org/portal/oauth?action=start&amp;target=" + request.getRequestURL() %> class="signin orcid-btn update-orcid-sign-in-url
+					orcid-flex" id="orcidLogin">
+						<img src="<%= request.getContextPath() %>/admin/images/orcid_64x64.png">
 						<span>Sign in with ORCID</span>
 					</a>
 				</div>
 			</div>
-			<!-- <div class="buttons-wrapper"> -->
-				<!-- <input class="button" input type="submit" name="loginAction" value="Login" class="button_login"></td>
-				<input class="button" type="button" value="Cancel" onClick="forward('<%= request.getContextPath() %>')"> 
-				<input type="hidden" name="configureType" value="login"/>
-				<input type="hidden" name="processForm" value="true"/> -->
-			<!-- </div> -->
-			<!-- </form> -->
 		</div>
 	</body>
 	<script>
-		window.onload = function() {
-			// Attempt to get the JWT token
-			var xhr = new XMLHttpRequest();
+	    window.onload = function() {
+            // Attempt to get the JWT token
+            var xhr = new XMLHttpRequest();
 
-			xhr.onreadystatechange = function() {
-			    if (xhr.readyState === XMLHttpRequest.DONE) {
-			        if (xhr.status === 200 && xhr.responseText.length !== 0) {
-			            var jwtAdminToken = xhr.responseText;
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200 && xhr.responseText.length !== 0) {
+                        var jwtAdminToken = xhr.responseText;
+                        console.log(jwtAdminToken)
 
-						// Redirect with Authorization header
-						var xhrAuth = new XMLHttpRequest();
-						xhrAuth.open('GET', './?processForm=true', true);
-                        // xhrAuth.open('GET', '.', true);
-						xhrAuth.setRequestHeader('Authorization', 'Bearer ' + jwtAdminToken);
-						xhrAuth.withCredentials = true;
-						xhrAuth.send();
-			        } else {
-			            console.log("Unable to retrieve token: " + xhr.status)
-			        }
-			    };
-			}
+                        // Redirect with Authorization header
+                        var xhr2 = new XMLHttpRequest();
+                        xhr2.open('GET', '.', true);
+                        xhr2.setRequestHeader('Authorization', 'Bearer ' + jwtAdminToken);
+                        xhr2.withCredentials = true;
+                        xhr2.send();
+                        console.log(xhr2.responseURL)
+                    } else {
+                        console.log("Unable to retrieve token: " + xhr.status)
+                    }
+                };
+            }
 
-			xhr.open('GET', 'https://cn.dataone.org/portal/token', true);
-			xhr.withCredentials = true; // Include credentials (cookies) in the request
-			xhr.send();
-		};
+            xhr.open('GET', 'https://cn.dataone.org/portal/token', true);
+            xhr.withCredentials = true; // Include credentials (cookies) in the request
+            xhr.send();
+	    }
 	</script>
 </html>

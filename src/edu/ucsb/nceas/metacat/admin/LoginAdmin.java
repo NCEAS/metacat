@@ -82,6 +82,7 @@ public class LoginAdmin extends MetacatAdmin {
 		String formErrors = (String) request.getAttribute("formErrors");
 
 		if (processForm == null || !processForm.equals("true") || formErrors != null) {
+			logMetacat.debug("LoginAdmin - Not processing form");
 			try {
 				request.setAttribute("adminList", AuthUtil.getAdministrators());
 				// Forward the request to the JSP page
@@ -93,6 +94,7 @@ public class LoginAdmin extends MetacatAdmin {
 				);
 			}
 		} else {
+			logMetacat.debug("LoginAdmin - Processing form (true)");
 			// The configuration form is being submitted and needs to be processed.
 			Vector<String> processingSuccess = new Vector<String>();
 			Vector<String> processingErrors = new Vector<String>();
@@ -104,7 +106,6 @@ public class LoginAdmin extends MetacatAdmin {
 			// Authenticate the user
 			String adminTokenUser = "";
 			String authHeader = request.getHeader("Authorization");
-			Boolean authenticatedAdmin = false;
 			// Check if the Authorization header is present and starts with "Bearer"
 			if (authHeader != null && authHeader.startsWith("Bearer ")) {
 				// Extract the token value after "Bearer "
@@ -120,7 +121,7 @@ public class LoginAdmin extends MetacatAdmin {
 					for (String admin : adminList) {
 						String adminFormatted = "http://orcid.org/" + admin;
 						if (adminFormatted.equals(adminTokenUser)) {
-							authenticatedAdmin = true;
+							logMetacat.debug("LoginAdmin - User has been authenticated");
 						}
 					}
 				} catch (IOException ioe) {
@@ -129,6 +130,7 @@ public class LoginAdmin extends MetacatAdmin {
 					logMetacat.error("Unable to retrieve Metacat administrators list: " + mue.getMessage());
 				}
 			} else {
+				logMetacat.debug("LoginAdmin - Authorization Header is missing");
 				processingErrors.add(
 					"Unable to authenticate Metacat Admin user - missing authentication token."
 				);
@@ -136,11 +138,14 @@ public class LoginAdmin extends MetacatAdmin {
 
 			try {
 				if (validationErrors.size() > 0 || processingErrors.size() > 0) {
+					logMetacat.debug("LoginAdmin - User is not authenticated, redirecting user "
+										 + "back home.");
 					RequestUtil.clearRequestMessages(request);
 					RequestUtil.setRequestFormErrors(request, validationErrors);
 					RequestUtil.setRequestErrors(request, processingErrors);
 					RequestUtil.forwardRequest(request, response, "/admin", null);
 				} else {
+					logMetacat.debug("LoginAdmin - User has been authenticated and authorized");
 					// Reload the main metacat configuration page
 					processingSuccess.add("User logged in as: " + adminTokenUser);
 					RequestUtil.clearRequestMessages(request);
