@@ -101,30 +101,27 @@ public class MetacatAdminServlet extends HttpServlet {
         Vector<String> processingMessage = new Vector<String>();
         Vector<String> processingErrors = new Vector<String>();
         // TODO: Double-check to see how user's get registered in the CN after registering for ORCID
+        String jwtToken = null;
         try {
-            // Verify client has the appropriate credentials before redirecting
             boolean isAdminSession = false;
-            String httpAuthHeader = request.getHeader("Authorization");
+            String authHeader = request.getHeader("Authorization");
+            logMetacat.debug("MAS - Authorization Header: " + authHeader);
             // Check if the Authorization header is present and starts with "Bearer"
-            if (httpAuthHeader != null && httpAuthHeader.startsWith("Bearer ")) {
-                // Extract the token value after "Bearer "
-                String token = httpAuthHeader.substring(7); // "Bearer ".length() == 7
-                logMetacat.debug(token);
-                // Parse and validate the token
-                Session adminSession = TokenGenerator.getInstance().getSession(token);
-                // Get the value and compare it with the saved admin user
-                String bearerUser = adminSession.getSubject().getValue();
-
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                jwtToken = authHeader.substring(7); // "Bearer ".length() == 7
+                // Validate the token
+                Session adminSession = TokenGenerator.getInstance().getSession(jwtToken);
+                // Get administrator list
                 Vector<String> adminList = AuthUtil.getAdministrators();
+                String jwtTokenUserId = adminSession.getSubject().getValue();
                 // Iterate over adminList to get ORCID
                 for (String admin : adminList) {
                     String adminFormatted = "http://orcid.org/" + admin;
-                    if (adminFormatted.equals(bearerUser)) {
+                    if (adminFormatted.equals(jwtTokenUserId)) {
                         isAdminSession = true;
+                        action = "configure";
                     }
                 }
-            } else {
-                logMetacat.debug("Authorization Header Not Found.");
             }
 
             if (!ConfigurationUtil.isBackupDirConfigured()) {
@@ -180,7 +177,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 return;
             } else if (action.equals("login")) {
                 // process login
-                LoginAdmin.getInstance().authenticateUser(request, response);
+                LoginAdmin.getInstance().authenticateUser(request, response, authHeader);
                 return;
             } else if (action.equals("backup")) {
                 // process login

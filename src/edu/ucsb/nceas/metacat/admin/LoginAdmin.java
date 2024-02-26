@@ -31,6 +31,7 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -58,7 +59,7 @@ public class LoginAdmin extends MetacatAdmin {
 
 	/**
 	 * Get the single instance of LoginAdmin.
-	 * 
+	 *
 	 * @return the single instance of LoginAdmin
 	 */
 	public static LoginAdmin getInstance() {
@@ -70,12 +71,13 @@ public class LoginAdmin extends MetacatAdmin {
 
 	/**
 	 * Handle configuration of the Authentication properties
-	 * 
+	 *
 	 * @param request  The http request information
 	 * @param response The http response to be sent back to the client
 	 * @throws AdminException
 	 */
-	public void authenticateUser(HttpServletRequest request, HttpServletResponse response)
+	public void authenticateUser(HttpServletRequest request, HttpServletResponse response,
+								 String AuthorizationHeader)
 		throws AdminException {
 
 		String processForm = request.getParameter("processForm");
@@ -104,12 +106,12 @@ public class LoginAdmin extends MetacatAdmin {
 			// validationErrors.addAll(validateOptions(request));
 
 			// Authenticate the user
+			boolean isAdminUser = false;
 			String adminTokenUser = "";
-			String authHeader = request.getHeader("Authorization");
 			// Check if the Authorization header is present and starts with "Bearer"
-			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			if (AuthorizationHeader != null) {
 				// Extract the token value after "Bearer "
-				String token = authHeader.substring(7); // "Bearer ".length() == 7
+				String token = AuthorizationHeader.substring(7); // "Bearer ".length() == 7
 				// Parse and validate the token
 				try {
 					Session adminSession = TokenGenerator.getInstance().getSession(token);
@@ -121,9 +123,17 @@ public class LoginAdmin extends MetacatAdmin {
 					for (String admin : adminList) {
 						String adminFormatted = "http://orcid.org/" + admin;
 						if (adminFormatted.equals(adminTokenUser)) {
+							isAdminUser = true;
 							logMetacat.debug("LoginAdmin - User has been authenticated");
 						}
 					}
+					if (!isAdminUser) {
+						processingErrors.add(
+							"Current ORCID user is not an Metacat Admin user. Please sign in with"
+								+ " the correct ORCID"
+						);
+					}
+
 				} catch (IOException ioe) {
 					logMetacat.error("LoginAdmin - Unexpected Token Exception: " + ioe.getMessage());
 				} catch (MetacatUtilException mue) {
@@ -137,7 +147,8 @@ public class LoginAdmin extends MetacatAdmin {
 			}
 
 			try {
-				if (validationErrors.size() > 0 || processingErrors.size() > 0) {
+//				if (validationErrors.size() > 0 || processingErrors.size() > 0) {
+				if (processingErrors.size() > 0) {
 					logMetacat.debug("LoginAdmin - User is not authenticated, redirecting user "
 										 + "back home.");
 					RequestUtil.clearRequestMessages(request);
@@ -168,7 +179,7 @@ public class LoginAdmin extends MetacatAdmin {
 	 * Validate the relevant configuration options submitted by the user.
 	 * There are no options to validate at this time as the user is not submitting a form.
 	 * Only ORCID authentication is available.
-	 * 
+	 *
 	 * @return A vector holding error messages for any fields that fail validation.
 	 */
 	protected Vector<String> validateOptions(HttpServletRequest request) {

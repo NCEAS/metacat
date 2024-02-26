@@ -82,31 +82,53 @@
 	</body>
 	<script>
 	    window.onload = function() {
-            // Attempt to get the JWT token
-            var xhr = new XMLHttpRequest();
+	        const localJWTToken = localStorage.getItem("metacatAdminJWTToken");
 
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200 && xhr.responseText.length !== 0) {
-                        var jwtAdminToken = xhr.responseText;
-                        console.log(jwtAdminToken)
+            if (localJWTToken !== null) {
+                // Get request with token
+                console.log("JWT Token Found! Token: " + localJWTToken)
 
-                        // Redirect with Authorization header
-                        var xhr2 = new XMLHttpRequest();
-                        xhr2.open('GET', '.', true);
-                        xhr2.setRequestHeader('Authorization', 'Bearer ' + jwtAdminToken);
-                        xhr2.withCredentials = true;
-                        xhr2.send();
-                        console.log(xhr2.responseURL)
-                    } else {
-                        console.log("Unable to retrieve token: " + xhr.status)
-                    }
-                };
+                var xhr2 = new XMLHttpRequest();
+
+                xhr2.onreadystatechange = function() {
+                    if (xhr2.readyState === XMLHttpRequest.DONE) {
+                        if (xhr2.status === 200) {
+                            // Reload page
+                            const adminUrl = '<%= request.getContextPath()%>/admin?configureType=login&processForm=true'
+                            console.log("Admin URL Manual:" + adminUrl)
+                            window.location.replace(adminUrl)
+                        }
+                    };
+                }
+
+                xhr2.open('GET', '.', true);
+                xhr2.setRequestHeader('Authorization', 'Bearer ' + localJWTToken);
+                xhr2.withCredentials = true;
+                xhr2.send();
+
+            } else {
+                // Attempt to get the JWT token
+                var xhr = new XMLHttpRequest();
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200 && xhr.responseText.length !== 0) {
+                            let jwtAdminToken = xhr.responseText;
+                            console.log("Retrieved Token:" + jwtAdminToken)
+                            localStorage.setItem("metacatAdminJWTToken", jwtAdminToken);
+                            let setToken = localStorage.getItem("metacatAdminJWTToken");
+                            console.log("Confirm local storage item has been set: " + setToken)
+                            window.location.reload()
+                        } else {
+                            console.log("Unable to retrieve token: " + xhr.status)
+                        }
+                    };
+                }
+
+                xhr.open('GET', 'https://cn.dataone.org/portal/token', true);
+                xhr.withCredentials = true; // Include credentials (cookies) in the request
+                xhr.send();
             }
-
-            xhr.open('GET', 'https://cn.dataone.org/portal/token', true);
-            xhr.withCredentials = true; // Include credentials (cookies) in the request
-            xhr.send();
 	    }
 	</script>
 </html>
