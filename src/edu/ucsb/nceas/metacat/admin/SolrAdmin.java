@@ -614,10 +614,8 @@ public class SolrAdmin extends MetacatAdmin {
             } catch (NullPointerException e) {
                 //The getInstanceDirectory method doesn't handle the scenario that the core
                 //doesn't exist. It will give a null exception.
-                if (!isFreshInstall()) {
-                    throw new SolrServerException("The core " + coreName + " was not found in the "
-                           + "solr server. Please check if the solr service is running correctly.");
-                }
+                logMetacat.warn("SolrAdmin.getInstanceDir - Solr didn't find the core " + coreName
+                                + " So the instance directory will be null.");
             }
         }
         return instanceDir;
