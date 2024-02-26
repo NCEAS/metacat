@@ -93,8 +93,8 @@
                 xhr2.onreadystatechange = function() {
                     if (xhr2.readyState === XMLHttpRequest.DONE) {
                         if (xhr2.status === 200) {
-                            // Reload page
-                            const adminUrl = '<%= request.getContextPath()%>/admin?configureType=login&processForm=true'
+                            // Replace href with intended end point
+                            const adminUrl = '<%= request.getContextPath()%>/admin/metacat-configuration.jsp?configureType=configure?'
                             console.log("Admin URL Manual:" + adminUrl)
                             window.location.replace(adminUrl)
                         }
