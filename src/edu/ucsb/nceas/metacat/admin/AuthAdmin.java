@@ -255,7 +255,8 @@ public class AuthAdmin extends MetacatAdmin {
 			errorVector.add("Error: ORCID Cannot be empty.");
 		} else {
 			// ORCID Format ID to match
-			String regex = "\\d{4}-\\d{4}-\\d{4}-\\d{4}";
+			// String regex = "\\d{4}-\\d{4}-\\d{4}-\\d{4}";
+			String regex = "\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)";
 			Pattern pattern = Pattern.compile(regex);
 			for (String adminUser : adminUserList) {
 				Matcher matcher = pattern.matcher(adminUser);
