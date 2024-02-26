@@ -114,7 +114,7 @@ public class IdentifierManager {
         }
         return self;
     }
-    
+
     /*public SystemMetadata asSystemMetadata(Date dateUploaded, String rightsHolder,
             String checksum, String checksumAlgorithm, String originMemberNode,
             String authoritativeMemberNode, Date dateModified, String submitter, 
@@ -144,14 +144,14 @@ public class IdentifierManager {
         sysMeta.setSubmitter(submitterSubject);
         ObjectFormatIdentifier fmtid = null;
         try {
-        	ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
-        	formatId.setValue(fmtidStr);
-        	fmtid = ObjectFormatCache.getInstance().getFormat(formatId).getFormatId();
-        	sysMeta.setFormatId(fmtid);
-        	
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue(fmtidStr);
+            fmtid = ObjectFormatCache.getInstance().getFormat(formatId).getFormatId();
+            sysMeta.setFormatId(fmtid);
+            
         } catch (BaseException nfe) {
             logMetacat.error("The objectFormat " + fmtidStr +
-          	" is not registered. Setting the default format id.");
+              " is not registered. Setting the default format id.");
             fmtid = new ObjectFormatIdentifier();
             fmtid.setValue("application/octet-stream");
             sysMeta.setFormatId(fmtid);
@@ -162,7 +162,7 @@ public class IdentifierManager {
         
         return sysMeta;
     }*/
-    
+
     /**
      * return a hash of all of the info that is in the systemmetadata table
      * @param localId
@@ -253,7 +253,7 @@ public class IdentifierManager {
      * @throws McdbDocNotFoundException 
      */
     public SystemMetadata getSystemMetadata(String guid)
-    	throws McdbDocNotFoundException
+        throws McdbDocNotFoundException
     {
         
         SystemMetadata sysMeta = new SystemMetadata();
@@ -313,34 +313,34 @@ public class IdentifierManager {
                 checksumObject.setAlgorithm(checksumAlgorithm);
                 sysMeta.setChecksum(checksumObject);
                 if (originMemberNode != null) {
-	                NodeReference omn = new NodeReference();
-	                omn.setValue(originMemberNode);
-	                sysMeta.setOriginMemberNode(omn);
+                    NodeReference omn = new NodeReference();
+                    omn.setValue(originMemberNode);
+                    sysMeta.setOriginMemberNode(omn);
                 }
                 if (authoritativeMemberNode != null) {
-	                NodeReference amn = new NodeReference();
-	                amn.setValue(authoritativeMemberNode);
-	                sysMeta.setAuthoritativeMemberNode(amn);
+                    NodeReference amn = new NodeReference();
+                    amn.setValue(authoritativeMemberNode);
+                    sysMeta.setAuthoritativeMemberNode(amn);
                 }
                 sysMeta.setDateSysMetadataModified(dateModified);
                 if (submitter != null) {
-	                Subject submitterSubject = new Subject();
-	                submitterSubject.setValue(submitter);
-	                sysMeta.setSubmitter(submitterSubject);
+                    Subject submitterSubject = new Subject();
+                    submitterSubject.setValue(submitter);
+                    sysMeta.setSubmitter(submitterSubject);
                 }
                 ObjectFormatIdentifier fmtid = new ObjectFormatIdentifier();
                 fmtid.setValue(fmtidStr);
-            	sysMeta.setFormatId(fmtid);
+                sysMeta.setFormatId(fmtid);
                 sysMeta.setSize(size);
                 if (obsoletes != null) {
-	                Identifier obsoletesId = new Identifier();
-	                obsoletesId.setValue(obsoletes);
-	                sysMeta.setObsoletes(obsoletesId);
+                    Identifier obsoletesId = new Identifier();
+                    obsoletesId.setValue(obsoletes);
+                    sysMeta.setObsoletes(obsoletesId);
                 }
                 if (obsoletedBy != null) {
-		            Identifier obsoletedById = new Identifier();
-		            obsoletedById.setValue(obsoletedBy);
-		            sysMeta.setObsoletedBy(obsoletedById);
+                    Identifier obsoletedById = new Identifier();
+                    obsoletedById.setValue(obsoletedBy);
+                    sysMeta.setObsoletedBy(obsoletedById);
                 }
                 sysMeta.setArchived(archived);
                 if(series_id != null) {
@@ -351,7 +351,7 @@ public class IdentifierManager {
                 if(file_name != null ) {
                     sysMeta.setFileName(file_name);
                 }
-                
+
                 if(media_type != null ) {
                     MediaType mediaType = new MediaType();
                     mediaType.setName(media_type);
@@ -380,7 +380,7 @@ public class IdentifierManager {
                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
                 throw new McdbDocNotFoundException("Could not find " + guid);
             }
-            
+
         } 
         catch (SQLException e) 
         {
@@ -398,114 +398,114 @@ public class IdentifierManager {
         ReplicationPolicy replicationPolicy = new ReplicationPolicy();
         if ( numberOfReplicas != null  && numberOfReplicas.intValue() != -1 ) {
             replicationPolicy.setNumberReplicas(numberOfReplicas.intValue());
-            
+
         }
-        
+
         if ( replicationAllowed != null ) {
             replicationPolicy.setReplicationAllowed(replicationAllowed);
-            
+
         }
         replicationPolicy.setBlockedMemberNodeList(getReplicationPolicy(guid, "blocked"));
         replicationPolicy.setPreferredMemberNodeList(getReplicationPolicy(guid, "preferred"));
-		    sysMeta.setReplicationPolicy(replicationPolicy);
-		
-		    // look up replication status
-		    sysMeta.setReplicaList(getReplicationStatus(guid));
-		
-		    // look up access policy
-		    try {
-		    	sysMeta.setAccessPolicy(getAccessPolicy(guid));
-		    } catch (AccessException e) {
-		    	throw new McdbDocNotFoundException(e);
-		    }
-        
+            sysMeta.setReplicationPolicy(replicationPolicy);
+
+            // look up replication status
+            sysMeta.setReplicaList(getReplicationStatus(guid));
+
+            // look up access policy
+            try {
+                sysMeta.setAccessPolicy(getAccessPolicy(guid));
+            } catch (AccessException e) {
+                throw new McdbDocNotFoundException(e);
+            }
+
         return sysMeta;
     }
-    
-    
+
+
     private List<NodeReference> getReplicationPolicy(String guid, String policy)
-		throws McdbDocNotFoundException {
-		
-		List<NodeReference> nodes = new ArrayList<NodeReference>();
-		String sql = "select guid, policy, member_node " +
-			"from smReplicationPolicy where guid = ? and policy = ? order by policy_id ASC";
-	    DBConnection dbConn = null;
-	    int serialNumber = -1;
-	    try {
-	        // Get a database connection from the pool
-	        dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getReplicationPolicy");
-	        serialNumber = dbConn.getCheckOutSerialNumber();
-	
-	        // Execute the statement
-	        PreparedStatement stmt = dbConn.prepareStatement(sql);
-	        stmt.setString(1, guid);
-	        stmt.setString(2, policy);
-	        ResultSet rs = stmt.executeQuery();
-	        while (rs.next()) 
-	        {
-	            String memberNode = rs.getString(3);
-	            NodeReference node = new NodeReference();
-	            node.setValue(memberNode);
-	            nodes.add(node);
-	        
-	        } 
-	        stmt.close();
-	        
-	    } catch (SQLException e) {
-	        logMetacat.error("Error while getting system metadata replication policy for guid " + guid, e);
-	    } 
-	    finally {
-	        // Return database connection to the pool
-	        DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-	    }
-	    
-	    return nodes;
-	}
-    
+        throws McdbDocNotFoundException {
+
+        List<NodeReference> nodes = new ArrayList<NodeReference>();
+        String sql = "select guid, policy, member_node " +
+            "from smReplicationPolicy where guid = ? and policy = ? order by policy_id ASC";
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getReplicationPolicy");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+
+            // Execute the statement
+            PreparedStatement stmt = dbConn.prepareStatement(sql);
+            stmt.setString(1, guid);
+            stmt.setString(2, policy);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next())
+            {
+                String memberNode = rs.getString(3);
+                NodeReference node = new NodeReference();
+                node.setValue(memberNode);
+                nodes.add(node);
+
+            }
+            stmt.close();
+
+        } catch (SQLException e) {
+            logMetacat.error("Error while getting system metadata replication policy for guid " + guid, e);
+        }
+        finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+
+        return nodes;
+    }
+
     private List<Replica> getReplicationStatus(String guid) throws McdbDocNotFoundException {
-		
-		List<Replica> replicas = new ArrayList<Replica>();
-		String sql = "select guid, member_node, status, date_verified " +
-			"from smReplicationStatus where guid = ?";
-	    DBConnection dbConn = null;
-	    int serialNumber = -1;
-	    try {
-	        // Get a database connection from the pool
-	        dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getReplicas");
-	        serialNumber = dbConn.getCheckOutSerialNumber();
-	
-	        // Execute the statement
-	        PreparedStatement stmt = dbConn.prepareStatement(sql);
-	        stmt.setString(1, guid);
-	        ResultSet rs = stmt.executeQuery();
-	        while (rs.next()) 
-	        {
-	            String memberNode = rs.getString(2);
-	            String status = rs.getString(3);
-	            java.sql.Timestamp verified = rs.getTimestamp(4);
-	            
-	            Replica replica = new Replica();	            
-	            NodeReference node = new NodeReference();
-	            node.setValue(memberNode);
-	            replica.setReplicaMemberNode(node);
-	            replica.setReplicationStatus(ReplicationStatus.valueOf(status));
-	            replica.setReplicaVerified(new Date(verified.getTime()));
-	            replicas.add(replica);
-	        } 
-	        stmt.close();
-	        
-	    } catch (SQLException e) {
-	        logMetacat.error("Error while getting system metadata replication policy for guid " + guid, e);
-	    } 
-	    finally {
-	        // Return database connection to the pool
-	        DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-	    }
-	    
-	    return replicas;
-	}
-    
-    
+
+        List<Replica> replicas = new ArrayList<Replica>();
+        String sql = "select guid, member_node, status, date_verified " +
+            "from smReplicationStatus where guid = ?";
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getReplicas");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+
+            // Execute the statement
+            PreparedStatement stmt = dbConn.prepareStatement(sql);
+            stmt.setString(1, guid);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next())
+            {
+                String memberNode = rs.getString(2);
+                String status = rs.getString(3);
+                java.sql.Timestamp verified = rs.getTimestamp(4);
+
+                Replica replica = new Replica();
+                NodeReference node = new NodeReference();
+                node.setValue(memberNode);
+                replica.setReplicaMemberNode(node);
+                replica.setReplicationStatus(ReplicationStatus.valueOf(status));
+                replica.setReplicaVerified(new Date(verified.getTime()));
+                replicas.add(replica);
+            }
+            stmt.close();
+
+        } catch (SQLException e) {
+            logMetacat.error("Error while getting system metadata replication policy for guid " + guid, e);
+        }
+        finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+
+        return replicas;
+    }
+
+
     /**
      * return the newest rev for a given localId
      * @param localId
@@ -541,19 +541,19 @@ public class IdentifierManager {
             {
                 rev = rs.getInt(1);
                 stmt.close();
-            } 
+            }
             else
             {
                 stmt.close();
                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
                 throw new McdbDocNotFoundException("While trying to get the latest rev, could not find document " + localId);
             }
-        } 
+        }
         catch (SQLException e) 
         {
             logMetacat.error("Error while looking up the guid: " 
                     + e.getMessage());
-        } 
+        }
         finally 
         {
             // Return database connection to the pool
@@ -561,7 +561,7 @@ public class IdentifierManager {
         }
         return rev;
     }
-    
+
     /**
      * return all local ids in the object store that do not have associated
      * system metadata
@@ -570,23 +570,23 @@ public class IdentifierManager {
     {
         Vector<String> ids = new Vector<String>();
         String sql = "select docid, rev from xml_documents " +
-        		"where docid not in " +
-        		"(select docid from identifier where guid in (select guid from systemmetadata))";
+                "where docid not in " +
+                "(select docid from identifier where guid in (select guid from systemmetadata))";
         if (serverLocation > 0) {
-        	sql = sql + " and server_location = ? ";
+            sql = sql + " and server_location = ? ";
         }
-        
+
         String revisionSql = "select docid, rev from xml_revisions " +
-				"where docid not in " +
-				"(select docid from identifier where guid in (select guid from systemmetadata))";
+                "where docid not in " +
+                "(select docid from identifier where guid in (select guid from systemmetadata))";
         if (serverLocation > 0) {
-        	revisionSql = revisionSql + " and server_location = ? ";
+            revisionSql = revisionSql + " and server_location = ? ";
         }
-        
+
         if (includeRevisions) {
-        	sql = sql + " UNION ALL " + revisionSql;
+            sql = sql + " UNION ALL " + revisionSql;
         }
-        
+
         DBConnection dbConn = null;
         int serialNumber = -1;
         try 
@@ -599,10 +599,10 @@ public class IdentifierManager {
             PreparedStatement stmt = dbConn.prepareStatement(sql);
             // set params based on what we have in the query string
             if (serverLocation > 0) {
-            	stmt.setInt(1, serverLocation);
-            	if (includeRevisions) {
-            		stmt.setInt(2, serverLocation);
-            	}
+                stmt.setInt(1, serverLocation);
+                if (includeRevisions) {
+                    stmt.setInt(2, serverLocation);
+                }
             }
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) 
@@ -615,20 +615,20 @@ public class IdentifierManager {
             } 
             stmt.close();
         } 
-        catch (SQLException e) 
+        catch (SQLException e)
         {
-            logMetacat.error("Error while looking up the guid: " 
+            logMetacat.error("Error while looking up the guid: "
                     + e.getMessage());
-        } 
+        }
         finally 
         {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
-        
+
         return ids;
     }
-    
+
     /**
      * return a listing of all local ids in the object store
      * @return a list of all local ids in metacat
@@ -669,8 +669,8 @@ public class IdentifierManager {
         }
         return ids;
     }
-    
-    
+
+
     /**
      * return a listing of all guids in the object store
      * @return a list of all GUIDs in metacat
@@ -681,7 +681,7 @@ public class IdentifierManager {
         String sql = "select guid from systemmetadata";
         DBConnection dbConn = null;
         int serialNumber = -1;
-        try 
+        try
         {
             // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getAllGUIDs");
@@ -694,12 +694,12 @@ public class IdentifierManager {
             {
                 String guid = rs.getString(1);
                 guids.add(guid);
-            } 
+            }
             stmt.close();
-        } 
+        }
         catch (SQLException e) 
         {
-            logMetacat.error("Error while retrieving the guid: " 
+            logMetacat.error("Error while retrieving the guid: "
                     + e.getMessage());
         } 
         finally 
@@ -709,7 +709,7 @@ public class IdentifierManager {
         }
         return guids;
     }
-    
+
     /**
      * Get all pids in the series chain
      * @param sid  the id of the series chain
@@ -732,7 +732,7 @@ public class IdentifierManager {
             while (rs.next()) {
                 String guid = rs.getString(1);
                 guids.add(guid);
-            } 
+            }
             stmt.close();
         } finally {
             // Return database connection to the pool
@@ -740,8 +740,8 @@ public class IdentifierManager {
         }
         return guids;
     }
-    
-    
+
+
     /**
      * returns a list of system metadata-only guids since the given date
      * @return a list of system ids in metacat that do not correspond to objects
@@ -752,10 +752,10 @@ public class IdentifierManager {
     {
         List<String> ids = new Vector<String>();
         String sql = 
-        	"select guid from " + TYPE_SYSTEM_METADATA +
-        	" where guid not in " +
-        	" (select guid from " + TYPE_IDENTIFIER + ") " +
-        	" and date_modified > ?";
+            "select guid from " + TYPE_SYSTEM_METADATA +
+            " where guid not in " +
+            " (select guid from " + TYPE_IDENTIFIER + ") " +
+            " and date_modified > ?";
         DBConnection dbConn = null;
         int serialNumber = -1;
         try 
@@ -779,15 +779,15 @@ public class IdentifierManager {
         {
             logMetacat.error("Error while looking up the updated guids: " 
                     + e.getMessage());
-        } 
-        finally 
+        }
+        finally
         {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
         return ids;
     }
-    
+
     /**
      * returns a list of system metadata-only guids since the given date
      * @return a list of system ids in metacat that do not correspond to objects
@@ -798,7 +798,7 @@ public class IdentifierManager {
 
         List<String> ids = new Vector<String>();
         String sql = 
-        	"select max(date_modified) from " + TYPE_SYSTEM_METADATA;
+            "select max(date_modified) from " + TYPE_SYSTEM_METADATA;
         DBConnection dbConn = null;
         int serialNumber = -1;
         try 
@@ -811,16 +811,16 @@ public class IdentifierManager {
             PreparedStatement stmt = dbConn.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-            	maxDate = rs.getDate(1);
+                maxDate = rs.getDate(1);
             } 
             stmt.close();
-        } 
-        catch (SQLException e) 
+        }
+        catch (SQLException e)
         {
-            logMetacat.error("Error while looking up the latest update date: " 
+            logMetacat.error("Error while looking up the latest update date: "
                     + e.getMessage());
         } 
-        finally 
+        finally
         {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
@@ -846,19 +846,19 @@ public class IdentifierManager {
                 idExists = true;
             }
         } catch (McdbDocNotFoundException e) {
-        	// try system metadata only
-        	    //this will check if the guid field on the system metadata table has the id
-        		idExists = systemMetadataPIDExists(guid);
-        		if(!idExists) {
-        		    //if the guid field of the system metadata table doesn't have the id,
-        		    //we will check if the serial_id field of the system metadata table has it
-        		    idExists=systemMetadataSIDExists(guid);
-        		}
+            // try system metadata only
+                //this will check if the guid field on the system metadata table has the id
+                idExists = systemMetadataPIDExists(guid);
+                if(!idExists) {
+                    //if the guid field of the system metadata table doesn't have the id,
+                    //we will check if the serial_id field of the system metadata table has it
+                    idExists=systemMetadataSIDExists(guid);
+                }
             
         }
         return idExists;
     }
-    
+
     /**
      * Determine if an identifier mapping exists already, 
      * returning true if so.
@@ -875,11 +875,11 @@ public class IdentifierManager {
                 idExists = true;
             }
         } catch (McdbDocNotFoundException e) {
-        	// nope!
+            // nope!
         }
         return idExists;
     }
-    
+
     /**
      * 
      * @param guid
@@ -945,7 +945,7 @@ public class IdentifierManager {
         
         return localId;
     }
-    
+
     /**
      * given a local identifer, look up the guid.  Throw McdbDocNotFoundException
      * if the docid, rev is not found in the identifiers or systemmetadata tables
@@ -961,7 +961,7 @@ public class IdentifierManager {
         logMetacat.debug("getting guid for " + docid);
         String query = "select guid from identifier where docid = ? and rev = ?";
         String guid = null;
-        
+
         DBConnection dbConn = null;
         int serialNumber = -1;
         PreparedStatement stmt = null;
@@ -975,13 +975,13 @@ public class IdentifierManager {
             stmt.setString(1, docid);
             stmt.setInt(2, rev);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) 
+            if (rs.next())
             {
                 guid = rs.getString(1);
-            } 
+            }
             else
             {
-            	throw new McdbDocNotFoundException("No guid registered for docid " + docid + "." + rev);
+                throw new McdbDocNotFoundException("No guid registered for docid " + docid + "." + rev);
             }
             if(rs != null) {
                 rs.close();
@@ -1000,12 +1000,12 @@ public class IdentifierManager {
                 // Return database connection to the pool
                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
             }
-            
+
         }
-        
+
         return guid;
     }
-    
+
     /**
      * Get the list of identifiers which system metadata matches the given format id and original member node id and guid or series id start with the scheme (doi for example).
      * @param formatId  the format id of the identifier must match the given formatId. 
@@ -1040,7 +1040,7 @@ public class IdentifierManager {
                 rs.close();
             }
         } catch (SQLException e) {
-            logMetacat.error("Error while looking up the guid: " 
+            logMetacat.error("Error while looking up the guid: "
                     + e.getMessage());
         } finally {
             try {
@@ -1052,11 +1052,11 @@ public class IdentifierManager {
             } finally {
                 // Return database connection to the pool
                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-            }   
+            }
         }
         return guids;
     }
-    
+
     /**
      * Get the pid of the head (current) version of objects match the specified sid.
      * 1. locate all candidate chain-ends for S1:
@@ -1212,14 +1212,14 @@ public class IdentifierManager {
                             pid = checkObsoletesChain(endsList.get(0), obsoletesIdGuidMap);
                         }
                     }
-                    
+
                 } else {
                     //it is not a sid or at least we don't have anything to match it.
                     //do nothing, so null will be returned
                     logMetacat.info("We don't find anything matching the id "+sid.getValue()+" as sid. The null will be returned since it is probably a pid");
                 }
-                
-                
+
+
             } catch (SQLException e) {
                 logMetacat.error("Error while get the head pid for the sid "+sid.getValue()+" : " 
                         + e.getMessage());
@@ -1251,10 +1251,10 @@ public class IdentifierManager {
         } else if(pid == null && sid != null) {
             logMetacat.info("The head of chain for sid "+sid.getValue()+" is null. So it is pid.");
         }
-        
+
         return pid;
     }
-    
+
     /*
      * For the non-ideal chain, we used to return the latest Dateupload object as the head pid. However, Dateupload
      * sometimes doesn't refect the obsoletes chain. We need to check if any other objects obsoletes it recursively.
@@ -1272,7 +1272,7 @@ public class IdentifierManager {
             }
             pid = new Identifier();
             pid.setValue(pidStr);
-            
+
         }
         if(pid != null && latestDateUpload != null){
             logMetacat.debug("IdnetifierManager.checkObsoletesChain - The final return value is "+pid.getValue()+ " for given value "+latestDateUpload.getValue());
@@ -1292,7 +1292,7 @@ public class IdentifierManager {
             return false;
         }
     }
-    
+
     /**
      * Check if the specified sid exists on the serial id field on the system metadata table
      * @param id
@@ -1340,7 +1340,7 @@ public class IdentifierManager {
         }
         return exists;
     }
-    
+
     /**
      * Determine if the specified identifier object exists or not.
      * @param pid - the specified identifier
@@ -1355,54 +1355,54 @@ public class IdentifierManager {
             return false;
         }
     }
-    
+
     public boolean systemMetadataPIDExists(String guid) throws SQLException {
-		logMetacat.debug("looking up system metadata for guid " + guid);
-		boolean exists = false;
-		String query = "select guid from systemmetadata where guid = ?";
-		DBConnection dbConn = null;
-		int serialNumber = -1;
-		PreparedStatement stmt = null;
-		if(guid != null && !guid.trim().equals("")) {
-		    try {
-	            // Get a database connection from the pool
-	            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.systemMetadataExisits");
-	            serialNumber = dbConn.getCheckOutSerialNumber();
+        logMetacat.debug("looking up system metadata for guid " + guid);
+        boolean exists = false;
+        String query = "select guid from systemmetadata where guid = ?";
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        PreparedStatement stmt = null;
+        if(guid != null && !guid.trim().equals("")) {
+            try {
+                // Get a database connection from the pool
+                dbConn = DBConnectionPool.getDBConnection("IdentifierManager.systemMetadataExisits");
+                serialNumber = dbConn.getCheckOutSerialNumber();
 
-	            // Execute the insert statement
-	            stmt = dbConn.prepareStatement(query);
-	            stmt.setString(1, guid);
-	            ResultSet rs = stmt.executeQuery();
-	            if (rs.next()) {
-	                exists = true;
-	            }
-	            if(rs != null) {
-	                rs.close();
-	            }
+                // Execute the insert statement
+                stmt = dbConn.prepareStatement(query);
+                stmt.setString(1, guid);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    exists = true;
+                }
+                if(rs != null) {
+                    rs.close();
+                }
 
-	        } catch (SQLException e) {
-	            logMetacat.error("Error while looking up the system metadata: "
-	                    + e.getMessage());
-	            throw e;
-	        } finally {
-	            try {
-	                if(stmt != null) {
-	                    stmt.close();
-	                }
-	            } catch (Exception e) {
-	                logMetacat.warn("Couldn't close the prepared statement since "+e.getMessage());
-	            } finally {
-	                // Return database connection to the pool
-	                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-	            }
-	        }
-		}
-		return exists;
-	}
-    
-    
-        
-    
+            } catch (SQLException e) {
+                logMetacat.error("Error while looking up the system metadata: "
+                        + e.getMessage());
+                throw e;
+            } finally {
+                try {
+                    if(stmt != null) {
+                        stmt.close();
+                    }
+                } catch (Exception e) {
+                    logMetacat.warn("Couldn't close the prepared statement since "+e.getMessage());
+                } finally {
+                    // Return database connection to the pool
+                    DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+                }
+            }
+        }
+        return exists;
+    }
+
+
+
+
     /**
      * update a mapping
      * @param guid
@@ -1410,7 +1410,7 @@ public class IdentifierManager {
      */
     public void updateMapping(String guid, String localId)
     {
-    	
+
         logMetacat.debug("$$$$$$$$$$$$$$ updating mapping table");
         int serialNumber = -1;
         DBConnection dbConn = null;
@@ -1456,9 +1456,9 @@ public class IdentifierManager {
         }
         logMetacat.debug("done updating mapping");
     }
-        
 
-    
+
+
     /**
      * Lookup access policy from Metacat
      * @param guid
@@ -1469,53 +1469,53 @@ public class IdentifierManager {
     public AccessPolicy getAccessPolicy(String guid) throws McdbDocNotFoundException, AccessException {
         AccessPolicy accessPolicy = new AccessPolicy();
 
-    	// use GUID to look up the access
+        // use GUID to look up the access
         XMLAccessAccess accessController  = new XMLAccessAccess();
         List<XMLAccessDAO> accessDAOs = accessController.getXMLAccessForDoc(guid);
         
         for (XMLAccessDAO accessDAO: accessDAOs) {
-        	// only add allow rule
-        	if (accessDAO.getPermType().equals(AccessControlInterface.ALLOW)) {
-	        	AccessRule accessRule = new AccessRule();    	
-	        	List <Permission> permissions = convertPermission(accessDAO.getPermission().intValue());
-	        	// cannot include if we have no permissions
-	        	if (permissions == null || permissions.isEmpty()) {
-	        		logMetacat.warn("skipping empty access rule permissions for " + guid);
-	        		continue;
-	        	}
-	        	accessRule.setPermissionList(permissions);
-	        	Subject subject = new Subject();
-	        	subject.setValue(accessDAO.getPrincipalName());
-	        	accessRule.addSubject(subject);
-	            accessPolicy.addAllow(accessRule);
-        	}
+            // only add allow rule
+            if (accessDAO.getPermType().equals(AccessControlInterface.ALLOW)) {
+                AccessRule accessRule = new AccessRule();
+                List <Permission> permissions = convertPermission(accessDAO.getPermission().intValue());
+                // cannot include if we have no permissions
+                if (permissions == null || permissions.isEmpty()) {
+                    logMetacat.warn("skipping empty access rule permissions for " + guid);
+                    continue;
+                }
+                accessRule.setPermissionList(permissions);
+                Subject subject = new Subject();
+                subject.setValue(accessDAO.getPrincipalName());
+                accessRule.addSubject(subject);
+                accessPolicy.addAllow(accessRule);
+            }
         }
         return accessPolicy;
     }
-    
+
     public List<Permission> convertPermission(int permission) {
-    	
-    	List<Permission> permissions = new ArrayList<Permission>();
-    	if (permission == AccessControlInterface.ALL) {
-    		permissions.add(Permission.READ);
-    		permissions.add(Permission.WRITE);
-    		permissions.add(Permission.CHANGE_PERMISSION);
-    		return permissions;
-    	}
-    	
-    	if ((permission & AccessControlInterface.CHMOD) == AccessControlInterface.CHMOD) {
-    		permissions.add(Permission.CHANGE_PERMISSION);
-    	}
-    	if ((permission & AccessControlInterface.READ) == AccessControlInterface.READ) {
-    		permissions.add(Permission.READ);
-    	}
-    	if ((permission & AccessControlInterface.WRITE) == AccessControlInterface.WRITE) {
-    		permissions.add(Permission.WRITE);
-    	}
-    	
-		return permissions;
+
+        List<Permission> permissions = new ArrayList<Permission>();
+        if (permission == AccessControlInterface.ALL) {
+            permissions.add(Permission.READ);
+            permissions.add(Permission.WRITE);
+            permissions.add(Permission.CHANGE_PERMISSION);
+            return permissions;
+        }
+
+        if ((permission & AccessControlInterface.CHMOD) == AccessControlInterface.CHMOD) {
+            permissions.add(Permission.CHANGE_PERMISSION);
+        }
+        if ((permission & AccessControlInterface.READ) == AccessControlInterface.READ) {
+            permissions.add(Permission.READ);
+        }
+        if ((permission & AccessControlInterface.WRITE) == AccessControlInterface.WRITE) {
+            permissions.add(Permission.WRITE);
+        }
+
+        return permissions;
     }
-    
+
     /**
      * Lookup a localId given the GUID. If
      * the identifier is not found, throw an exception.
@@ -1525,20 +1525,20 @@ public class IdentifierManager {
      * @throws McdbDocNotFoundException if the identifier is not found
      */
     public String getLocalId(String guid) throws McdbDocNotFoundException, SQLException {
-      
+
       String db_guid = "";
       String docid = "";
       int rev = 0;
-      
+
       String query = "select guid, docid, rev from " + TYPE_IDENTIFIER + " where guid = ?";
-      
+
       DBConnection dbConn = null;
       int serialNumber = -1;
       try {
           // Get a database connection from the pool
           dbConn = DBConnectionPool.getDBConnection("Identifier.getLocalId");
           serialNumber = dbConn.getCheckOutSerialNumber();
-          
+
           // Execute the insert statement
           PreparedStatement stmt = dbConn.prepareStatement(query);
           stmt.setString(1, guid);
@@ -1562,7 +1562,7 @@ public class IdentifierManager {
       }
       return docid + "." + rev;
     }
-    
+
     /**
      * query the systemmetadata table based on the given parameters
      * @param startTime
@@ -1572,9 +1572,9 @@ public class IdentifierManager {
      * @param start
      * @param count
      * @return ObjectList
-     * @throws SQLException 
-     * @throws ServiceException 
-     * @throws PropertyNotFoundException 
+     * @throws SQLException
+     * @throws ServiceException
+     * @throws PropertyNotFoundException
      */
     public ObjectList querySystemMetadata(Date startTime, Date endTime,
         ObjectFormatIdentifier objectFormatId, NodeReference nodeId,
@@ -1592,13 +1592,13 @@ public class IdentifierManager {
             String fieldSql = "select guid, date_uploaded, rights_holder, checksum, "
                     + "checksum_algorithm, origin_member_node, authoritive_member_node, "
                     + "date_modified, submitter, object_format, size from systemmetadata";
-            
+
             // handle special case quickly
             String countSql = "select count(guid) from systemmetadata";
             
             // the clause
             String whereClauseSql = "";
-            
+
 
             boolean f1 = false;
             boolean f2 = false;
@@ -1658,7 +1658,7 @@ public class IdentifierManager {
                         currentNodeId.trim() + "'";
                 }
             }*/
-            
+
             if (nodeId != null && nodeId.getValue() != null && !nodeId.getValue().trim().equals("")) {
                 if (!f1 && !f2 && !f3 && !f4) {
                     whereClauseSql += " where authoritive_member_node = '" +
@@ -1669,7 +1669,7 @@ public class IdentifierManager {
                 }
                 f5 = true;
             }
-            
+
           //add a filter to remove pids whith white spaces
             if(filterWhiteSpaces) {
                 logMetacat.debug("IdnetifierManager.querySystemMetadata - the default value of the property \"dataone.listingidentifier.filteringwhitespaces\" is true, so we will filter the white spaces in the query");
@@ -1681,8 +1681,8 @@ public class IdentifierManager {
             } else {
                 logMetacat.debug("IdnetifierManager.querySystemMetadata - the property \"dataone.listingidentifier.filteringwhitespaces\" is configured to be false, so we don't filter the white spaces in the query.");
             }
-           
-            
+
+
             // connection
             dbConn = DBConnectionPool.getDBConnection("IdentifierManager.querySystemMetadata");
             serialNumber = dbConn.getCheckOutSerialNumber();
@@ -1692,7 +1692,7 @@ public class IdentifierManager {
             String fieldQuery = fieldSql + whereClauseSql + orderBySql;
             String finalQuery = DatabaseService.getInstance().getDBAdapter().getPagedQuery(fieldQuery, start, count);
             fieldStmt = dbConn.prepareStatement(finalQuery);
-            
+
             // construct the count query and statment
             String countQuery = countSql + whereClauseSql;
             countStmt = dbConn.prepareStatement(countQuery);
@@ -1796,84 +1796,84 @@ public class IdentifierManager {
             }
 
             logMetacat.info("list objects fieldStmt: " + fieldStmt.toString());
-            
+
             logMetacat.info("list objects countStmt: " + countStmt.toString());
-            
+
             // get the total object count no matter what
             int total = 0;
             totalResult = countStmt.executeQuery();
             if (totalResult.next()) {
-            	total = totalResult.getInt(1);
+                total = totalResult.getInt(1);
             }
-            
+
             logMetacat.debug("list objects total: " + total);
 
-        	// set the totals
-        	ol.setStart(start);
+            // set the totals
+            ol.setStart(start);
             ol.setCount(count);
-            
+
             // retrieve the actual records if requested
             if (count != 0) {
-            	
-                rs = fieldStmt.executeQuery();
-	            while (rs.next()) {                
-	                
-	                String guid = rs.getString(1);
-	                logMetacat.debug("query found object with guid " + guid);
-	                // Timestamp dateUploaded = rs.getTimestamp(2);
-	                // String rightsHolder = rs.getString(3);
-	                String checksum = rs.getString(4);
-	                String checksumAlgorithm = rs.getString(5);
-	                // String originMemberNode = rs.getString(6);
-	                // String authoritiveMemberNode = rs.getString(7);
-	                Timestamp dateModified = rs.getTimestamp(8);
-	                // String submitter = rs.getString(9);
-	                String fmtidStr = rs.getString(10);
-	                String sz = rs.getString(11);
-	                BigInteger size = new BigInteger("0");
-	
-	                if (sz != null && !sz.trim().equals("")) {
-	                    size = new BigInteger(rs.getString(11));
-	                }
-	
-	                ObjectInfo oi = new ObjectInfo();
-	
-	                Identifier id = new Identifier();
-	                id.setValue(guid);
-	                oi.setIdentifier(id);
-	
-	                if (dateModified != null) {
-	                    oi.setDateSysMetadataModified(dateModified);
-	                }
-	
-	                Checksum cs = new Checksum();
-	                cs.setValue(checksum);
-	                try {
-	                    // cs.setAlgorithm(ChecksumAlgorithm.valueOf(checksumAlgorithm));
-	                    cs.setAlgorithm(checksumAlgorithm);
-	                } catch (Exception e) {
-	                    logMetacat.error("could not parse checksum algorithm", e);
-	                    continue;
-	                }
-	                oi.setChecksum(cs);
-	
-	                // set the format type
-	                ObjectFormatIdentifier fmtid = new ObjectFormatIdentifier();
-	                fmtid.setValue(fmtidStr);
-	                oi.setFormatId(fmtid);
-	
-	                oi.setSize(size);
-	                
-	                ol.addObjectInfo(oi);                    
 
-	            }
-	            
-	            logMetacat.debug("list objects count: " + ol.sizeObjectInfoList());
-	            // set the actual count retrieved
-	            ol.setCount(ol.sizeObjectInfoList());
-	            
-	
-	        }
+                rs = fieldStmt.executeQuery();
+                while (rs.next()) {
+
+                    String guid = rs.getString(1);
+                    logMetacat.debug("query found object with guid " + guid);
+                    // Timestamp dateUploaded = rs.getTimestamp(2);
+                    // String rightsHolder = rs.getString(3);
+                    String checksum = rs.getString(4);
+                    String checksumAlgorithm = rs.getString(5);
+                    // String originMemberNode = rs.getString(6);
+                    // String authoritiveMemberNode = rs.getString(7);
+                    Timestamp dateModified = rs.getTimestamp(8);
+                    // String submitter = rs.getString(9);
+                    String fmtidStr = rs.getString(10);
+                    String sz = rs.getString(11);
+                    BigInteger size = new BigInteger("0");
+
+                    if (sz != null && !sz.trim().equals("")) {
+                        size = new BigInteger(rs.getString(11));
+                    }
+
+                    ObjectInfo oi = new ObjectInfo();
+
+                    Identifier id = new Identifier();
+                    id.setValue(guid);
+                    oi.setIdentifier(id);
+
+                    if (dateModified != null) {
+                        oi.setDateSysMetadataModified(dateModified);
+                    }
+
+                    Checksum cs = new Checksum();
+                    cs.setValue(checksum);
+                    try {
+                        // cs.setAlgorithm(ChecksumAlgorithm.valueOf(checksumAlgorithm));
+                        cs.setAlgorithm(checksumAlgorithm);
+                    } catch (Exception e) {
+                        logMetacat.error("could not parse checksum algorithm", e);
+                        continue;
+                    }
+                    oi.setChecksum(cs);
+
+                    // set the format type
+                    ObjectFormatIdentifier fmtid = new ObjectFormatIdentifier();
+                    fmtid.setValue(fmtidStr);
+                    oi.setFormatId(fmtid);
+
+                    oi.setSize(size);
+
+                    ol.addObjectInfo(oi);
+
+                }
+
+                logMetacat.debug("list objects count: " + ol.sizeObjectInfoList());
+                // set the actual count retrieved
+                ol.setCount(ol.sizeObjectInfoList());
+
+
+            }
             ol.setTotal(total);
         } finally {
             // Return database connection to the pool
@@ -1892,10 +1892,10 @@ public class IdentifierManager {
                 }
                 
             } catch (SQLException sql) {
-                
+
             }
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-            
+
         }
         if(ol != null) {
             logMetacat.debug("list objects start(before returning): " + ol.getStart());
@@ -1904,15 +1904,15 @@ public class IdentifierManager {
         }
         return ol;
     }
-    
+
     /**
      * create a mapping in the identifier table
      * @param guid
      * @param localId
      */
     public void createMapping(String guid, String localId)
-    {        
-        
+    {
+
         int serialNumber = -1;
         DBConnection dbConn = null;
         try {
@@ -1956,15 +1956,15 @@ public class IdentifierManager {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
     }
-    
+
     /**
      * remove a mapping in the identifier table
      * @param guid
      * @param localId
      */
     public void removeMapping(String guid, String localId)
-    {        
-        
+    {
+
         int serialNumber = -1;
         DBConnection dbConn = null;
         try {
@@ -2008,11 +2008,11 @@ public class IdentifierManager {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
     }
-    
-   
-    
+
+
+
     public boolean deleteSystemMetadata(String guid)
-    {        
+    {
         boolean success = false;
         int serialNumber = -1;
         DBConnection dbConn = null;
@@ -2021,11 +2021,11 @@ public class IdentifierManager {
         int rows = 0;
         try {
 
-        	 // Get a database connection from the pool
+             // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("IdentifierManager.deleteSystemMetadata");
             serialNumber = dbConn.getCheckOutSerialNumber();
             dbConn.setAutoCommit(false);
-        	
+
             // remove the smReplicationPolicy
             query = "delete from smReplicationPolicy " + 
             "where guid = ?";
@@ -2034,7 +2034,7 @@ public class IdentifierManager {
             logMetacat.debug("delete smReplicationPolicy: " + stmt.toString());
             rows = stmt.executeUpdate();
             stmt.close();
-            
+
             // remove the smReplicationStatus
             query = "delete from smReplicationStatus " + 
             "where guid = ?";
@@ -2043,7 +2043,7 @@ public class IdentifierManager {
             logMetacat.debug("delete smReplicationStatus: " + stmt.toString());
             rows = stmt.executeUpdate();
             stmt.close();
-            
+
             // remove the smmediatypeproperties
             query = "delete from smMediaTypeProperties " + 
                     "where guid = ?";
@@ -2052,7 +2052,7 @@ public class IdentifierManager {
             logMetacat.debug("delete smMediaTypeProperties: " + stmt.toString());
             rows = stmt.executeUpdate();
             stmt.close();
-            
+
             // remove the xml_access
             query = "delete from xml_access " + 
                     "where guid = ?";
@@ -2061,7 +2061,7 @@ public class IdentifierManager {
             logMetacat.debug("delete xml_access: " + stmt.toString());
             rows = stmt.executeUpdate();
             stmt.close();
-            
+
             // remove main system metadata entry
             query = "delete from " + TYPE_SYSTEM_METADATA + " where guid = ? ";
             stmt = dbConn.prepareStatement(query);
@@ -2075,21 +2075,21 @@ public class IdentifierManager {
             success = true;
             // TODO: remove the access?
             // Metacat keeps "deleted" documents so we should not remove access rules.
-            
+
         } catch (Exception e) {
             logMetacat.error("Error while deleting " + TYPE_SYSTEM_METADATA + " record: " + guid, e );
             try {
-				dbConn.rollback();
-			} catch (SQLException sqle) {
-	            logMetacat.error("Error while rolling back delete for record: " + guid, sqle );
-			}
+                dbConn.rollback();
+            } catch (SQLException sqle) {
+                logMetacat.error("Error while rolling back delete for record: " + guid, sqle );
+            }
         } finally {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
         return success;
     }
-    
+
     /**
      * Determine if the object file exist for the given localId.
      * @param localId
@@ -2107,9 +2107,9 @@ public class IdentifierManager {
             }
         } 
         logMetacat.debug("IdentifierManager.ObjectFileExist - Does the object file for the local id "+localId+" which is science metadata "+isScienceMetadata+" exist in the Metacast file system? The answer is "+exist);
-        return exist;   
+        return exist;
     }
-    
+
     /**
      *Get the the file path for the given object local id
      * @param localId
@@ -2128,11 +2128,11 @@ public class IdentifierManager {
                 documentDir = PropertyService.getProperty("application.datafilepath");
             }
             documentPath = documentDir + FileUtil.getFS() + localId;
-        } 
+        }
         logMetacat.debug("IdentifierManager.getObjectFilePath - the file path for the object with localId "+localId+" which is scienceMetacat "+isScienceMetadata+", is "+documentPath+". If the value is null, this means we can't find it.");
-        return documentPath;   
+        return documentPath;
     }
-    
+
     /**
      * IF the given localId exists on the xml_revisions table
      * @param localId
@@ -2178,7 +2178,7 @@ public class IdentifierManager {
         logMetacat.info("IdentifierManager.existsInXmlLRevisionTable - Does the docid "+docid+"."+rev+ " exist in the xml_revision table? - "+exist);
         return exist;
     }
-    
+
     /**
      * Determine if the given pid exists on the identifier table.
      * @param pid must be a PID
@@ -2209,7 +2209,7 @@ public class IdentifierManager {
                 }
                 conn.increaseUsageCount(1);
             }
-            
+
         } catch (Exception e) {
             throw new SQLException(e.getMessage());
         } finally {
@@ -2225,9 +2225,9 @@ public class IdentifierManager {
         logMetacat.info("IdentifierManager.existsInIdentifierTable - Does the guid "+pid.getValue()+ " exist in the xml_revision table? - "+exists);
         return exists;
     }
-    
+
     /**
-     * Get the list of guids whose modification dates are in the range of 
+     * Get the list of guids whose modification dates are in the range of
      * the given start and end times.
      * @param start  the start time of the range
      * @param end  the end time of the range
@@ -2248,7 +2248,7 @@ public class IdentifierManager {
                 sql = sql + " where date_modified >= ?";
                 hasStart = true;
             }
-            
+
             if (end != null) {
                 hasEnd = true;
                 if (!hasStart) {
@@ -2271,10 +2271,10 @@ public class IdentifierManager {
             while (rs.next()) {
                 String guid = rs.getString(1);
                 guids.add(guid);
-            } 
+            }
             stmt.close();
         } catch (SQLException e) {
-            logMetacat.error("Error while retrieving the guid: " 
+            logMetacat.error("Error while retrieving the guid: "
                     + e.getMessage());
         } finally {
             // Return database connection to the pool
