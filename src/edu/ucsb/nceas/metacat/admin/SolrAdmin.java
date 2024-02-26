@@ -328,9 +328,6 @@ public class SolrAdmin extends MetacatAdmin {
             } catch (SolrServerException e) {
                 throw new AdminException("SolrAdmin.configureSolr- solr problem while initializing "
                         + "solr page:" + e.getMessage());
-            } catch (SQLException e) {
-                throw new AdminException("SolrAdmin.configureSolr- sql problem while initializing "
-                        + "solr page:" + e.getMessage());
             }
         } else if (bypass != null && bypass.equals("true")) {
             Vector<String> processingErrors = new Vector<String>();
@@ -600,9 +597,8 @@ public class SolrAdmin extends MetacatAdmin {
      * @throws IOException
      * @throws SAXException
      * @throws SolrServerException
-     * @throws SQLException
      */
-    private String getInstanceDir(String coreName) throws UnsupportedType, SQLException,
+    private String getInstanceDir(String coreName) throws UnsupportedType,
                       ParserConfigurationException, IOException, SAXException, SolrServerException {
         String instanceDir = null;
         SolrClient client = SolrServerFactory.createSolrAdminClient();
