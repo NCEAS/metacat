@@ -1,27 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2010 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- *   '$Author: jones $'
- *     '$Date: 2010-02-03 17:58:12 -0900 (Wed, 03 Feb 2010) $'
- * '$Revision: 5211 $'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat;
 
 import java.io.File;
@@ -33,16 +9,12 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
-import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
@@ -87,7 +59,8 @@ public class IdentifierManager {
     public static final String TYPE_SYSTEM_METADATA = "systemmetadata";
     public static final String TYPE_IDENTIFIER = "identifier";
     
-    private static boolean filterWhiteSpaces = Settings.getConfiguration().getBoolean("dataone.listingidentifier.filteringwhitespaces", true);
+    private static boolean filterWhiteSpaces =
+            Settings.getConfiguration().getBoolean("dataone.listingidentifier.filteringwhitespaces", true);
   
     /**
      * The single instance of the manager that is always returned.
@@ -115,137 +88,7 @@ public class IdentifierManager {
         return self;
     }
 
-    /*public SystemMetadata asSystemMetadata(Date dateUploaded, String rightsHolder,
-            String checksum, String checksumAlgorithm, String originMemberNode,
-            String authoritativeMemberNode, Date dateModified, String submitter, 
-            String guid, String fmtidStr, BigInteger size, BigInteger serialVersion) {
-        SystemMetadata sysMeta = new SystemMetadata();
 
-        Identifier sysMetaId = new Identifier();
-        sysMetaId.setValue(guid);
-        sysMeta.setIdentifier(sysMetaId);
-        sysMeta.setDateUploaded(dateUploaded);
-        Subject rightsHolderSubject = new Subject();
-        rightsHolderSubject.setValue(rightsHolder);
-        sysMeta.setRightsHolder(rightsHolderSubject);
-        Checksum checksumObject = new Checksum();
-        checksumObject.setValue(checksum);
-        checksumObject.setAlgorithm(checksumAlgorithm);
-        sysMeta.setChecksum(checksumObject);
-        NodeReference omn = new NodeReference();
-        omn.setValue(originMemberNode);
-        sysMeta.setOriginMemberNode(omn);
-        NodeReference amn = new NodeReference();
-        amn.setValue(authoritativeMemberNode);
-        sysMeta.setAuthoritativeMemberNode(amn);
-        sysMeta.setDateSysMetadataModified(dateModified);
-        Subject submitterSubject = new Subject();
-        submitterSubject.setValue(submitter);
-        sysMeta.setSubmitter(submitterSubject);
-        ObjectFormatIdentifier fmtid = null;
-        try {
-            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
-            formatId.setValue(fmtidStr);
-            fmtid = ObjectFormatCache.getInstance().getFormat(formatId).getFormatId();
-            sysMeta.setFormatId(fmtid);
-            
-        } catch (BaseException nfe) {
-            logMetacat.error("The objectFormat " + fmtidStr +
-              " is not registered. Setting the default format id.");
-            fmtid = new ObjectFormatIdentifier();
-            fmtid.setValue("application/octet-stream");
-            sysMeta.setFormatId(fmtid);
-            
-        }
-        sysMeta.setSize(size);
-        sysMeta.setSerialVersion(serialVersion);
-        
-        return sysMeta;
-    }*/
-
-    /**
-     * return a hash of all of the info that is in the systemmetadata table
-     * @param localId
-     * @return
-     */
-    /*public Hashtable<String, String> getSystemMetadataInfo(String localId)
-    throws McdbDocNotFoundException
-    {
-        try
-        {
-            AccessionNumber acc = new AccessionNumber(localId, "NONE");
-            localId = acc.getDocid();
-        }
-        catch(Exception e)
-        {
-            //do nothing. just try the localId as it is
-        }
-        Hashtable<String, String> h = new Hashtable<String, String>();
-        String sql = "select guid, date_uploaded, rights_holder, checksum, checksum_algorithm, " +
-          "origin_member_node, authoritive_member_node, date_modified, submitter, object_format, size " +
-          "from systemmetadata where docid = ?";
-        DBConnection dbConn = null;
-        int serialNumber = -1;
-        try 
-        {
-            // Get a database connection from the pool
-            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getDocumentInfo");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-
-            // Execute the insert statement
-            PreparedStatement stmt = dbConn.prepareStatement(sql);
-            stmt.setString(1, localId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) 
-            {
-                String guid = rs.getString(1);
-                Timestamp dateUploaded = rs.getTimestamp(2);
-                String rightsHolder = rs.getString(3);
-                String checksum = rs.getString(4);
-                String checksumAlgorithm = rs.getString(5);
-                String originMemberNode = rs.getString(6);
-                String authoritativeMemberNode = rs.getString(7);
-                Timestamp dateModified = rs.getTimestamp(8);
-                String submitter = rs.getString(9);
-                String objectFormat = rs.getString(10);
-                long size = new Long(rs.getString(11)).longValue();
-                
-                h.put("guid", guid);
-                h.put("date_uploaded", new Long(dateUploaded.getTime()).toString());
-                h.put("rights_holder", rightsHolder);
-                h.put("checksum", checksum);
-                h.put("checksum_algorithm", checksumAlgorithm);
-                h.put("origin_member_node", originMemberNode);
-                h.put("authoritative_member_node", authoritativeMemberNode);
-                h.put("date_modified", new Long(dateModified.getTime()).toString());
-                h.put("submitter", submitter);
-                h.put("object_format", objectFormat);
-                h.put("size", new Long(size).toString());
-                
-                stmt.close();
-            } 
-            else
-            {
-                stmt.close();
-                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-                throw new McdbDocNotFoundException("2Could not find document " + localId);
-            }
-            
-        } 
-        catch (SQLException e) 
-        {
-            e.printStackTrace();
-            logMetacat.error("Error while getting system metadata info for localid " + localId + " : "  
-                    + e.getMessage());
-        } 
-        finally 
-        {
-            // Return database connection to the pool
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-        }
-        return h;
-    }*/
-    
     /**
      * return a hash of all of the info that is in the systemmetadata table
      * @param guid
@@ -255,7 +98,7 @@ public class IdentifierManager {
     public SystemMetadata getSystemMetadata(String guid)
         throws McdbDocNotFoundException
     {
-        
+
         SystemMetadata sysMeta = new SystemMetadata();
         String sql = "select guid, date_uploaded, rights_holder, checksum, checksum_algorithm, " +
           "origin_member_node, authoritive_member_node, date_modified, submitter, object_format, size, " +
@@ -1007,7 +850,8 @@ public class IdentifierManager {
     }
 
     /**
-     * Get the list of identifiers which system metadata matches the given format id and original member node id and guid or series id start with the scheme (doi for example).
+     * Get the list of identifiers which system metadata matches the given format id and original
+     * member node id and guid or series id start with the scheme (doi for example).
      * @param formatId  the format id of the identifier must match the given formatId. 
      * @param nodeId  the original member node of the identifier must match the given nodeId. 
      * @param scheme  the guid or series id must start with the given scheme (doi for exampe)
@@ -1060,11 +904,13 @@ public class IdentifierManager {
     /**
      * Get the pid of the head (current) version of objects match the specified sid.
      * 1. locate all candidate chain-ends for S1:
-     *      determined by:  seriesId == S1 AND (obsoletedBy == null  OR obsoletedBy.seriesId != S1) // these are the type1 and type2 ends
+     *      determined by:  seriesId == S1 AND (obsoletedBy == null  OR obsoletedBy.seriesId != S1)
+     *      these are the type1 and type2 ends
      *      If obsoletedBy is missing, we generally consider it a type 2 end except:
-     *      there is another object in the chain (has the same series id) that obsoletes the missing object. 
+     *      there is another object in the chain (has the same series id) that obsoletes the missing object.
      * 2. if only 1 candidate chain-end, return it as the HEAD
-     * 3. otherwise return the one in the chain with the latest dateUploaded value. However, we find that dateUpload doesn't refect the obsoletes information
+     * 3. otherwise return the one in the chain with the latest dateUploaded value. However, we find
+     * that dateUpload doesn't refect the obsoletes information
      * (espically on the cn), so we will check osoletes information as well. https://redmine.dataone.org/issues/7624
      * @param sid specified sid which should match.
      * @return the pid of the head version. The null will be returned if there is no pid found.
@@ -1081,9 +927,10 @@ public class IdentifierManager {
             PreparedStatement stmt2 = null;
             ResultSet rs = null;
             ResultSet result = null;
-            //int endsCount = 0;
+
             boolean hasError = false;
-            HashMap<String, String> obsoletesIdGuidMap = new HashMap<String, String>();//the key is an obsoletes id, the value is an guid
+            //the key is an obsoletes id, the value is an guid
+            HashMap<String, String> obsoletesIdGuidMap = new HashMap<String, String>();
             Vector<Identifier> endsList = new Vector<Identifier>();//the vector storing ends
             try {
                 // Get a database connection from the pool
@@ -1178,13 +1025,18 @@ public class IdentifierManager {
                                     break;
                                 }*/
                                 if(obsoletesIdGuidMap != null && obsoletesIdGuidMap.containsKey(obsoletedByStr)) {
-                                   //This is the exception - another object in the chain (has the same series id) that obsoletes the missing object
+                                   //This is the exception - another object in the chain (has the same series id)
+                                    //that obsoletes the missing object
                                     //The obsoletesIdGuidMap maintains the relationship (with the same  series id)
-                                    logMetacat.debug("Though the object "+obsoletedBy+" which obsoletes "+guidStr+" is missing."+
-                                            " However, there is another object "+obsoletesIdGuidMap.get(obsoletedByStr)+" in the chain obsoleting it. So it is not an end.");
+                                    logMetacat.debug("Though the object " + obsoletedBy
+                                               + " which obsoletes " + guidStr + " is missing."
+                                               + " However, there is another object "
+                                               + obsoletesIdGuidMap.get(obsoletedByStr)
+                                               + " in the chain obsoleting it. So it is not an end.");
                                   
                                 } else {
-                                    //the exception (another object in the chain (has the same series id) that obsoletes the missing object) doesn't exist
+                                    //the exception (another object in the chain (has the same series id)
+                                    //that obsoletes the missing object) doesn't exist
                                     // it is a type 2 end
                                     logMetacat.debug(""+guidStr+" is a type 2 end for sid "+sid.getValue());
                                     //pid = guid;
@@ -1196,7 +1048,8 @@ public class IdentifierManager {
                         hasNext = rs.next();
                     }
                     if(hasError) {
-                        logMetacat.info("The sid chain "+sid.getValue()+" was messed up and we will return the object with the latest upload date.");
+                        logMetacat.info("The sid chain " + sid.getValue()
+                        + " was messed up and we will return the object with the latest upload date.");
                         pid = firstOne;
                     } else {
                         if(endsList.size() == 1) {
@@ -1207,7 +1060,8 @@ public class IdentifierManager {
                             logMetacat.info("This is weird situation and we don't find any end. We use the latest DateOfupload");
                             pid=checkObsoletesChain(firstOne, obsoletesIdGuidMap);
                         } else if(endsList.size() >1) {
-                            // it is not an ideal chain, use the one with latest upload date(the first one in the result set since we have the desc order)
+                            // it is not an ideal chain, use the one with latest upload date
+                            //(the first one in the result set since we have the desc order)
                             logMetacat.info("It is NOT an ideal chain for sid "+sid.getValue());
                             pid = checkObsoletesChain(endsList.get(0), obsoletesIdGuidMap);
                         }
@@ -1648,16 +1502,6 @@ public class IdentifierManager {
                 f4 = true;
             }
 
-            /*if (!replicaStatus) {
-                String currentNodeId = PropertyService.getInstance().getProperty("dataone.nodeId");
-                if (!f1 && !f2 && !f3 && !f4) {
-                    whereClauseSql += " where authoritive_member_node = '" +
-                        currentNodeId.trim() + "'";
-                } else {
-                    whereClauseSql += " and authoritive_member_node = '" +
-                        currentNodeId.trim() + "'";
-                }
-            }*/
 
             if (nodeId != null && nodeId.getValue() != null && !nodeId.getValue().trim().equals("")) {
                 if (!f1 && !f2 && !f3 && !f4) {
@@ -1672,14 +1516,18 @@ public class IdentifierManager {
 
           //add a filter to remove pids whith white spaces
             if(filterWhiteSpaces) {
-                logMetacat.debug("IdnetifierManager.querySystemMetadata - the default value of the property \"dataone.listingidentifier.filteringwhitespaces\" is true, so we will filter the white spaces in the query");
+                logMetacat.debug("IdnetifierManager.querySystemMetadata - the default value of the "
+                                  + "property \"dataone.listingidentifier.filteringwhitespaces\" is "
+                                  + "true, so we will filter the white spaces in the query");
                 if(!f1 && !f2 && !f3 && !f4 && !f5) {
                     whereClauseSql += " where guid not like '% %' ";
                 } else {
                     whereClauseSql += " and guid not like '% %' ";
                 }
             } else {
-                logMetacat.debug("IdnetifierManager.querySystemMetadata - the property \"dataone.listingidentifier.filteringwhitespaces\" is configured to be false, so we don't filter the white spaces in the query.");
+                logMetacat.debug("IdnetifierManager.querySystemMetadata - the property "
+                                 + "\"dataone.listingidentifier.filteringwhitespaces\" is "
+                     + "configured to be false, so we don't filter the white spaces in the query.");
             }
 
 
@@ -1940,17 +1788,14 @@ public class IdentifierManager {
 
             stmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
-            logMetacat.error("createGenericMapping: SQL error while creating a mapping to the " + TYPE_IDENTIFIER + " identifier: " 
-                    + e.getMessage());
+            logMetacat.error("createGenericMapping: SQL error while creating a mapping to the "
+                            + TYPE_IDENTIFIER + " identifier: " + e.getMessage());
         } catch (NumberFormatException e) {
-            e.printStackTrace();
-            logMetacat.error("createGenericMapping: NumberFormat error while creating a mapping to the " + TYPE_IDENTIFIER + " identifier: " 
-                    + e.getMessage());
+            logMetacat.error("createGenericMapping: NumberFormat error while creating a mapping to the "
+                           + TYPE_IDENTIFIER + " identifier: " + e.getMessage());
         } catch (AccessionNumberException e) {
-            e.printStackTrace();
-            logMetacat.error("createGenericMapping: AccessionNumber error while creating a mapping to the " + TYPE_IDENTIFIER + " identifier: " 
-                    + e.getMessage());
+            logMetacat.error("createGenericMapping: AccessionNumber error while creating a mapping to the "
+                           + TYPE_IDENTIFIER + " identifier: " + e.getMessage());
         } finally {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
@@ -2106,7 +1951,9 @@ public class IdentifierManager {
                 exist = file.exists();
             }
         } 
-        logMetacat.debug("IdentifierManager.ObjectFileExist - Does the object file for the local id "+localId+" which is science metadata "+isScienceMetadata+" exist in the Metacast file system? The answer is "+exist);
+        logMetacat.debug("IdentifierManager.ObjectFileExist - Does the object file for the local id "
+                          + localId + " which is science metadata " + isScienceMetadata
+                          + " exist in the Metacast file system? The answer is " + exist);
         return exist;
     }
 
@@ -2129,7 +1976,9 @@ public class IdentifierManager {
             }
             documentPath = documentDir + FileUtil.getFS() + localId;
         }
-        logMetacat.debug("IdentifierManager.getObjectFilePath - the file path for the object with localId "+localId+" which is scienceMetacat "+isScienceMetadata+", is "+documentPath+". If the value is null, this means we can't find it.");
+        logMetacat.debug("IdentifierManager.getObjectFilePath - the file path for the object with localId "
+                        + localId + " which is scienceMetacat " + isScienceMetadata + ", is "
+                        + documentPath + ". If the value is null, this means we can't find it.");
         return documentPath;
     }
 
@@ -2152,7 +2001,8 @@ public class IdentifierManager {
             serialNumber = conn.getCheckOutSerialNumber();
             // Check if the document exists in xml_revisions table.
             //this only archives a document from xml_documents to xml_revisions (also archive the xml_nodes table as well)
-            logMetacat.debug("IdentifierManager.existsInXmlLRevisionTable - check if the document "+docid+"."+rev+ " exists in the xml_revision table");
+            logMetacat.debug("IdentifierManager.existsInXmlLRevisionTable - check if the document "
+                              + docid + "." + rev + " exists in the xml_revision table");
             pstmt = conn.prepareStatement("SELECT rev, docid FROM xml_revisions WHERE docid = ? AND rev = ?");
             pstmt.setString(1, docid);
             pstmt.setInt(2, rev);
@@ -2175,7 +2025,8 @@ public class IdentifierManager {
                 pstmt.close();
             }
         }
-        logMetacat.info("IdentifierManager.existsInXmlLRevisionTable - Does the docid "+docid+"."+rev+ " exist in the xml_revision table? - "+exist);
+        logMetacat.info("IdentifierManager.existsInXmlLRevisionTable - Does the docid " + docid
+                        + "." + rev + " exist in the xml_revision table? - " + exist);
         return exist;
     }
 
@@ -2198,7 +2049,8 @@ public class IdentifierManager {
                 serialNumber = conn.getCheckOutSerialNumber();
                 // Check if the document exists in xml_revisions table.
                 //this only archives a document from xml_documents to xml_revisions (also archive the xml_nodes table as well)
-                logMetacat.debug("IdentifierManager.existsInIdentifierTable - check if the document "+ pid.getValue() +" exists in the identifier table");
+                logMetacat.debug("IdentifierManager.existsInIdentifierTable - check if the document "
+                                  + pid.getValue() + " exists in the identifier table");
                 pstmt = conn.prepareStatement("SELECT guid FROM identifier WHERE guid = ?");
                 pstmt.setString(1, pid.getValue());
                 logMetacat.debug("IdentifierManager.existsInXmlLRevisionTable - executing SQL: " + pstmt.toString());
@@ -2222,7 +2074,8 @@ public class IdentifierManager {
                 pstmt.close();
             }
         }
-        logMetacat.info("IdentifierManager.existsInIdentifierTable - Does the guid "+pid.getValue()+ " exist in the xml_revision table? - "+exists);
+        logMetacat.info("IdentifierManager.existsInIdentifierTable - Does the guid "
+                     + pid.getValue() + " exist in the xml_revision table? - " + exists);
         return exists;
     }
 
