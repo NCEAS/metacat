@@ -121,11 +121,19 @@
 	<script>
 		window.onload = function() {
 			var field = document.getElementById("auth.administrators");
-			field.addEventListener("input", function(event) {
-				var value = event.target.value.replace(/\D/g, "").slice(0, 16); // Remove non-digits and limit to 16 characters
-				var formattedValue = value.replace(/(\d{4})(?=\d)/g, "$1-"); // Add hyphens
-				event.target.value = formattedValue;
-			});
+            field.addEventListener("input", function(event) {
+                var value = event.target.value.replace(/\D/g, "").slice(0, 15);
+                var lastValue = event.target.value.replace(/[^\dX]/g, "").slice(15, 16);
+                var formattedValue = '';
+                for (var i = 0; i < value.length; i++) {
+                    formattedValue += value.charAt(i);
+                    // Add a hyphen after every 4 digits
+                    if ((i + 1) % 4 === 0 && (i + 1) !== value.length) {
+                        formattedValue += '-';
+                    }
+                }
+                event.target.value = formattedValue + lastValue;
+            });
 		};
 	</script>
 	<%@ include file="./footer-section.jsp"%>
