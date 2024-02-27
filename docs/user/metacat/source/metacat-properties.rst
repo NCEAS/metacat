@@ -77,7 +77,7 @@ others are managed with the properties configuration utility.
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _application.envSecretKeys:       |                                                                             |                               |
 |                                      |                                                                             |                               |
-| application.envSecretKeys            | See :ref:`secret-properties`                                                |                               |
+| application.envSecretKeys*           | See :ref:`secret-properties`                                                |                               |
 |                                      | A colon-delimited list of mappings between "secret" properties              |                               |
 |                                      | (e.g. passwords) and environment variables used to pass them to Metacat.    |                               |
 |                                      | Passing secrets to Metacat via environment variables avoids having them in  |                               |
@@ -161,11 +161,17 @@ others are managed with the properties configuration utility.
 | application.tempDir                  | The directory where the Metacat data registry stores temporary              | /var/metacat/temporary        |
 |                                      | files. The directory should not be the same as ``application.datafilepath`` |                               |
 |                                      | or ``application.inlinedatafilepath`` (or any other persistent file path)   |                               |
-|                                      | because all files in this may be purged programmatically. The temporary     |                               |
-|                                      | file directory must be writable by the user that starts Apache.             |                               |
-|                                      |                                                                             |                               |
-|                                      | Default Value: /var/metacat/temporary                                       |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _cn.server.publiccert.filename:   |                                                                             |                               |
+|                                      |                                                                             |                               |
+| cn.server.publiccert.filename        | The location(s) of one or more certificate files containing public keys     |                               |
+|                                      | that will be used to verify incoming request auth (JWT) tokens, in addition |                               |
+|                                      | to verifying them against the configured CN server.                         |                               |
+|                                      | Multiple paths should be delimited by semicolons (;)                        |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: (empty: only cn is used for token verification)              |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+
 
 Solr Properties
 ----------------------
