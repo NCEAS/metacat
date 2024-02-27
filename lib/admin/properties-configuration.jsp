@@ -140,8 +140,16 @@
 						<input class="textinput" id="<%= metaDataProperty.getKey() %>" 
 								name="<%= metaDataProperty.getKey() %>" 
 		    			        value="<%= request.getAttribute(metaDataProperty.getKey()) %>"	             		    	    	           		    	             			
-		           		    	type="<%= fieldType %> "/>	
+		           		    	type="<%= fieldType %> "/>
 						<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
+    <%
+                        int propIndexNo = metaDataProperty.getIndex();
+						if (propIndexNo == 13 || propIndexNo == 14) {
+    %>
+                        <span class="new-badge">New</span>
+    <%
+						}
+    %>
 					</div>          		    
 	<%   			
 					}
