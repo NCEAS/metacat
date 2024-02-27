@@ -318,6 +318,8 @@ public class MNodeService extends D1NodeService
             throw na2;
         }
 
+        // defer to superclass implementation
+        super.delete(session.getSubject().getValue(), id);
         try {
             String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
             QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta,
@@ -331,10 +333,7 @@ public class MNodeService extends D1NodeService
                 "The quota service in the delete action has an invalid request - "
                     + e.getMessage());
         }
-
-
-        // defer to superclass implementation
-        return super.delete(session.getSubject().getValue(), id);
+        return id;
     }
 
     /**
