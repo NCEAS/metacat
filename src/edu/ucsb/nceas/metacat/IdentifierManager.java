@@ -55,13 +55,13 @@ import edu.ucsb.nceas.utilities.access.XMLAccessDAO;
  * @author Matthew Jones
  */
 public class IdentifierManager {
-    
+
     public static final String TYPE_SYSTEM_METADATA = "systemmetadata";
     public static final String TYPE_IDENTIFIER = "identifier";
     
     private static boolean filterWhiteSpaces =
             Settings.getConfiguration().getBoolean("dataone.listingidentifier.filteringwhitespaces", true);
-  
+
     /**
      * The single instance of the manager that is always returned.
      */
@@ -106,10 +106,10 @@ public class IdentifierManager {
           "from systemmetadata where guid = ?";
         DBConnection dbConn = null;
         int serialNumber = -1;
-        Boolean replicationAllowed = new Boolean(false);
+        Boolean replicationAllowed = Boolean.valueOf(false);
         BigInteger numberOfReplicas = new BigInteger("-1");
         BigInteger serialVersion = new BigInteger("-1");
-        Boolean archived = new Boolean(false);
+        Boolean archived = Boolean.valueOf(false);
 
         try 
         {
@@ -133,12 +133,12 @@ public class IdentifierManager {
                 String submitter = rs.getString(9);
                 String fmtidStr = rs.getString(10);
                 BigInteger size = new BigInteger(rs.getString(11));
-                replicationAllowed = new Boolean(rs.getBoolean(12));
+                replicationAllowed = Boolean.valueOf(rs.getBoolean(12));
                 numberOfReplicas = new BigInteger(rs.getString(13));
                 String obsoletes = rs.getString(14);
                 String obsoletedBy = rs.getString(15);
                 serialVersion = new BigInteger(rs.getString(16));
-                archived = new Boolean(rs.getBoolean(17));
+                archived = Boolean.valueOf(rs.getBoolean(17));
                 String series_id = rs.getString(18);
                 String file_name = rs.getString(19);
                 String media_type = rs.getString(20);
@@ -1275,7 +1275,7 @@ public class IdentifierManager {
             int rev = 1;
             if(acc.getRev() != null)
             {
-              rev = (new Integer(acc.getRev()).intValue());
+              rev = Integer.parseInt(acc.getRev());
             }
 
             // Get a database connection from the pool
@@ -1770,7 +1770,7 @@ public class IdentifierManager {
             String docid = acc.getDocid();
             int rev = 1;
             if (acc.getRev() != null) {
-              rev = (new Integer(acc.getRev()).intValue());
+              rev = Integer.parseInt(acc.getRev());
             }
 
             // Get a database connection from the pool
@@ -1819,7 +1819,7 @@ public class IdentifierManager {
             String docid = acc.getDocid();
             int rev = 1;
             if (acc.getRev() != null) {
-              rev = (new Integer(acc.getRev()).intValue());
+              rev = Integer.parseInt(acc.getRev());
             }
 
             // Get a database connection from the pool
@@ -1856,84 +1856,7 @@ public class IdentifierManager {
 
 
 
-    public boolean deleteSystemMetadata(String guid)
-    {
-        boolean success = false;
-        int serialNumber = -1;
-        DBConnection dbConn = null;
-        String query = null;
-        PreparedStatement stmt = null;
-        int rows = 0;
-        try {
 
-             // Get a database connection from the pool
-            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.deleteSystemMetadata");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-            dbConn.setAutoCommit(false);
-
-            // remove the smReplicationPolicy
-            query = "delete from smReplicationPolicy " + 
-            "where guid = ?";
-            stmt = dbConn.prepareStatement(query);
-            stmt.setString(1, guid);
-            logMetacat.debug("delete smReplicationPolicy: " + stmt.toString());
-            rows = stmt.executeUpdate();
-            stmt.close();
-
-            // remove the smReplicationStatus
-            query = "delete from smReplicationStatus " + 
-            "where guid = ?";
-            stmt = dbConn.prepareStatement(query);
-            stmt.setString(1, guid);
-            logMetacat.debug("delete smReplicationStatus: " + stmt.toString());
-            rows = stmt.executeUpdate();
-            stmt.close();
-
-            // remove the smmediatypeproperties
-            query = "delete from smMediaTypeProperties " + 
-                    "where guid = ?";
-            stmt = dbConn.prepareStatement(query);
-            stmt.setString(1, guid);
-            logMetacat.debug("delete smMediaTypeProperties: " + stmt.toString());
-            rows = stmt.executeUpdate();
-            stmt.close();
-
-            // remove the xml_access
-            query = "delete from xml_access " + 
-                    "where guid = ?";
-            stmt = dbConn.prepareStatement(query);
-            stmt.setString(1, guid);
-            logMetacat.debug("delete xml_access: " + stmt.toString());
-            rows = stmt.executeUpdate();
-            stmt.close();
-
-            // remove main system metadata entry
-            query = "delete from " + TYPE_SYSTEM_METADATA + " where guid = ? ";
-            stmt = dbConn.prepareStatement(query);
-            stmt.setString(1, guid);
-            logMetacat.debug("delete system metadata: " + stmt.toString());
-            rows = stmt.executeUpdate();
-            stmt.close();
-            
-            dbConn.commit();
-            dbConn.setAutoCommit(true);
-            success = true;
-            // TODO: remove the access?
-            // Metacat keeps "deleted" documents so we should not remove access rules.
-
-        } catch (Exception e) {
-            logMetacat.error("Error while deleting " + TYPE_SYSTEM_METADATA + " record: " + guid, e );
-            try {
-                dbConn.rollback();
-            } catch (SQLException sqle) {
-                logMetacat.error("Error while rolling back delete for record: " + guid, sqle );
-            }
-        } finally {
-            // Return database connection to the pool
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-        }
-        return success;
-    }
 
     /**
      * Determine if the object file exist for the given localId.
