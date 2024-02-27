@@ -321,7 +321,6 @@ public class CNodeService extends D1NodeService
      * @throws NotAuthorized
      * @throws NotFound
      * @throws NotImplemented
-     * @throws InvalidRequest
      */
     @Override
     public Identifier delete(Session session, Identifier pid)
@@ -395,6 +394,8 @@ public class CNodeService extends D1NodeService
                     "4962", "Couldn't delete " + pid.getValue() + ". The error message was: "
                     + re.getMessage());
 
+            } catch (InvalidRequest re) {
+                throw new InvalidToken("4963", e.getMessage());
             }
 
         } catch (SQLException e) {
