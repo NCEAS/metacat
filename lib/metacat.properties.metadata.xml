@@ -411,7 +411,7 @@
             The path to the admin jwt token that will be used in dataone-indexer to access the
             private objects' system metadata.
         </description>
-        <helpFile>docs/metacat-properties.html</helpFile>
+        <helpFile>docs/metacat-properties.html/#admin-token</helpFile>
     </config>
 
     <!-- handler plugin -->
