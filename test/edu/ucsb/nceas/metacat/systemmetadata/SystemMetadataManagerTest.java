@@ -28,6 +28,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNull;
 
 public class SystemMetadataManagerTest {
 
@@ -48,9 +49,10 @@ public class SystemMetadataManagerTest {
 
     /**
      * Method to test new system metadata field such as media type and file name.
+     * Also test the delete method.
      */
     @Test
-    public void testMediaType() throws Exception {
+    public void testMediaTypeAndDelete() throws Exception {
         String fileName = "new file name";
         String name = "text/plain";
         String p1Name = "charset";
@@ -119,7 +121,14 @@ public class SystemMetadataManagerTest {
 
         //Thread.sleep(100000);
         //remove the system metadata
+        SystemMetadata sys = SystemMetadataManager.getInstance().get(id);
+        assertTrue("The system metadata should exist for " + id.getValue(),
+                                            sys.getIdentifier().getValue().equals(id.getValue()));
         SystemMetadataManager.getInstance().delete(id);
+        sys = SystemMetadataManager.getInstance().get(id);
+        assertNull("The system metadata should be null after deleted ", sys);
+        SystemMetadataManager.getInstance().delete(id);
+
         //remove the mapping
         im.removeMapping(guid, docid);
     }
