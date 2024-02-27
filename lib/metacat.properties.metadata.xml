@@ -402,6 +402,18 @@
         <helpFile>docs/metacat-properties.html#cn-server-publiccert-filename</helpFile>
     </config>
 
+    <config>
+        <key>dataone.nodeToken.file</key>
+        <label>Admin Token Path</label>
+        <group>4</group>
+        <index>14</index>
+        <description>
+            The path to the admin jwt token that will be used in dataone-indexer to access the
+            private objects' system metadata.
+        </description>
+        <helpFile>docs/metacat-properties.html</helpFile>
+    </config>
+
     <!-- handler plugin -->
     <config>
         <key>plugin.handlers</key>
