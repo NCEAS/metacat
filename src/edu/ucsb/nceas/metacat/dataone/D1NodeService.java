@@ -242,12 +242,12 @@ public abstract class D1NodeService {
                                 + pid.getValue()
                                 + " doesn't exist in the system. But we will continute to delete "
                                 + "the system metadata of the object.");
-            //Lock lock = null;
+            //in cn, data objects only have system metadata without real data.
             try {
                 SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(pid);
                 if (sysMeta != null) {
+                    SystemMetadataManager.getInstance().delete(pid);
                     try {
-                        SystemMetadataManager.getInstance().delete(pid);
                         MetacatSolrIndex.getInstance().submitDeleteTask(pid, sysMeta);
                     } catch (Exception ee) {
                         logMetacat.warn(
@@ -273,6 +273,9 @@ public abstract class D1NodeService {
                     "1350", "Couldn't delete " + pid.getValue() + ". The error message was: "
                     + re.getMessage());
 
+            } catch (InvalidRequest ire) {
+                throw new InvalidToken("1351", "Couldn't delete " + pid.getValue() + " since "
+                                        + ire.getMessage());
             }
             return pid;
         } catch (SQLException e) {
@@ -297,9 +300,6 @@ public abstract class D1NodeService {
                 + e.getMessage());
 
         } catch (InsufficientKarmaException e) {
-            if (logMetacat.isDebugEnabled()) {
-                e.printStackTrace();
-            }
             throw new NotAuthorized(
                 "1320", "The provided identity does not have "
                 + "permission to DELETE objects on the Member Node.");
