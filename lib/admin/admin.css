@@ -100,6 +100,10 @@ table{
     background: none;
 }
 
+em {
+    color: #EE3333;
+    font-style: normal;
+}
 
 /* NAVIGATION AND HEADER AND FOOTER
 ------------------------------------- */
@@ -203,7 +207,7 @@ input[type="text"] {
     font-size: 0.8em;
     clear: both;
     min-height: 2em;
-    max-width: 500px;
+    max-width: 420px;
     position: relative;
     top: -5px;
 }
