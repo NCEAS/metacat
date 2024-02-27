@@ -1,105 +1,76 @@
-/*
-  *   '$RCSfile$'
-  *     Purpose: Default style sheet for KNB project web pages 
-  *              Using this stylesheet rather than placing styles directly in 
-  *              the KNB web documents allows us to globally change the 
-  *              formatting styles of the entire site in one easy place.
-  *   Copyright: 2008 Regents of the University of California and the
-  *               National Center for Ecological Analysis and Synthesis
-  *     Authors: Michael Daigle
-  *
-  *    '$Author$'
-  *      '$Date$'
-  *  '$Revision$'
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation; either version 2 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program; if not, write to the Free Software
-  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-  */
-
 /* Import the Metacat documentation stylesheet */
 @import url(../docs/_static/metacatui.css);
 
 /* THE BASICS
 -------------------------------------------------- */
 html{
-	margin: 0;
-	padding: 0;
-	width: 100%;
-	height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
 }
 body{
-	 font-family: "Helvetica", "Source Sans Pro", sans-serif;
+     font-family: "Helvetica", "Source Sans Pro", sans-serif;
 }
 
 h3 {
-	font-size: 1.2em;
-	line-height: 2em;
-	display: block;
-	clear: both;
-	margin: 0px;
+    font-size: 1.2em;
+    line-height: 2em;
+    display: block;
+    clear: both;
+    margin: 0px;
 }
 
 h2{
-	font-size: 2em;
-	line-height: 2.1em;
-	font-weight: 400;
-	display: block;
-	clear: both;
-	margin: 0px;
+    font-size: 2em;
+    line-height: 2.1em;
+    font-weight: 400;
+    display: block;
+    clear: both;
+    margin: 0px;
 }
 
 h1{
-	font-size: 2.5em;
-	line-height: 2.8em;
-	display: inline-block;
-	clear: both;
-	margin: 0px;
+    font-size: 2.5em;
+    line-height: 2.8em;
+    display: inline-block;
+    clear: both;
+    margin: 0px;
 }
 
-h1 > a, 
+h1 > a,
 h2 > a,
 h3 > a,
 h4 > a{
-	color: #333333;
+    color: #333333;
 }
-	
+
 input {
-	padding-left: 4px;
-	width: 400px;
-	border: 1px solid #AAAAAA;
-	font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
-	background-color:#FFFFFF;
-	color: #333333;
-	border-radius: 5px;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
+    padding-left: 4px;
+    width: 400px;
+    border: 1px solid #AAAAAA;
+    font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
+    background-color:#FFFFFF;
+    color: #333333;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
 }
 
 select{
-	border: 1px solid #AAAAAA;
-	font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
-	height: 2em;
+    border: 1px solid #AAAAAA;
+    font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
+    height: 2em;
 }
 
 input[type="submit"],
 input[type="button"] {
-	min-width: 100px;
-	margin-right: 5px;
-	margin-top: 20px;
-	cursor: pointer;
-	background-color: #555;
-	color: #FFF;
+    min-width: 100px;
+    margin-right: 5px;
+    margin-top: 20px;
+    cursor: pointer;
+    background-color: #555;
+    color: #FFF;
 }
 
 input[type="radio"] {
@@ -121,53 +92,55 @@ input[type="checkbox"] {
 }
 
 label {
-	/* font-size: 1.1em; */
 	line-height: 1.1em;
 	display: block;
 	margin-top: 10px;
 }
 
 table{
-	background: none;
+    background: none;
 }
 
-
+em {
+    color: #EE3333;
+    font-style: normal;
+}
 
 /* NAVIGATION AND HEADER AND FOOTER
 ------------------------------------- */
 .footer{
-	width: 100%;
-	padding: 20px 20px 0 0;
-	bottom: 0;
+    width: 100%;
+    padding: 20px 20px 0 0;
+    bottom: 0;
 }
 
 .footer > p{
-	color: white;
-	float: right;
-	clear: both;
-	display: block;
-	text-transform: none;
-	margin-right: 20px;
+    color: white;
+    float: right;
+    clear: both;
+    display: block;
+    text-transform: none;
+    margin-right: 20px;
 }
 
 .footer > ul{
-	clear: both;
-	float: right;
-	margin-right: 20px;
+    clear: both;
+    float: right;
+    margin-right: 20px;
 }
 
 .footer li {
-	list-style: none;
-	float: left;
-	margin-left: 20px;
+    list-style: none;
+    float: left;
+    margin-left: 20px;
 }
 
 .header{
-	background-color: #166194;
-	margin: 0px;
+    background-color: #166194;
+    margin: 0px;
 }
 .header > ul{
-	float: left;
+    float: left;
 }
 .header > ul > li > img {
     height: 50px;
@@ -176,36 +149,37 @@ table{
 
 .footer li > a,
 .header li > a{
-	color: #FFFFFF;
-	font: 400 1.5em/1.5em Oswald, Arial;
-	text-transform: uppercase;
+    color: #FFFFFF;
+    font: 400 1.5em/1.5em Oswald, Arial;
+    text-transform: uppercase;
 }
 
 .footer li > a:hover,
 .header li > a:hover{
-	opacity: 0.6;
-	text-decoration: none;
+    opacity: 0.6;
+    text-decoration: none;
 }
 
 .header{
-	height: 60px;
-	margin: 0px;
-	padding-top: 10px;
+    height: 60px;
+    margin: 0px;
+    padding-top: 10px;
 }
+
 
 /* FORMS
 ----------------------------------------*/
 .textinput,
 input[type="password"],
 input[type="text"] {
-	vertical-align: middle;
-	width: 30em;
-	height: 2.2em;
-	font: 400 1em/2em Source Sans Pro;
-	border-radius: 5px;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
-	border: 1px solid #aaa;
+    vertical-align: middle;
+    width: 30em;
+    height: 2.2em;
+    font: 400 1em/2em Source Sans Pro;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border: 1px solid #aaa;
 }
 
 .hiddenabletextinput {
@@ -222,51 +196,49 @@ input[type="text"] {
 }
 
 .textinput-label {
-	text-align: right;
-	float: left;
-	width: 200px;
-	clear: left;
+    text-align: right;
+    float: left;
+    width: 210px;
+    clear: left;
 }
 
 .textinput-description {
-	margin-left: 215px;
-	color: #666666;
-	font-size: 0.8em;
-	clear: both;
-	min-height: 2em;
-	max-width: 500px;
-	position: relative;
-	top: -5px;
+    margin-left: 225px;
+    color: #666666;
+    font-size: 0.8em;
+    clear: both;
+    min-height: 2em;
+    max-width: 420px;
+    position: relative;
+    top: -5px;
 }
 
-
-
 .checkradio-label-inline {
- 	display: inline;
-	vertical-align: middle;
+     display: inline;
+    vertical-align: middle;
 }
 
 .checkradio-label{
-	margin: 0.7em 0px 0px 10px;
-	float: left;
+    margin: 0.7em 0px 0px 10px;
+    float: left;
 }
 .checkradio-description {
-	font: 400 .8em/.8em Source Sans Pro;
-	color: #666666;
-	clear: both;
-	margin: 8px 0px 10px 38px;
+    font: 400 .8em/.8em Source Sans Pro;
+    color: #666666;
+    clear: both;
+    margin: 8px 0px 10px 38px;
 }
 
 .radiowrapper{
-	padding-top: 10px;
+    padding-top: 10px;
 }
 .icon-question-sign {
-	color: #166194;
-	font-size: 1.2em;
-	cursor: pointer;
-	margin-left: 10px;
-	margin-top: 0.5em;
-	display: inline-block;
+    color: #166194;
+    font-size: 1.2em;
+    cursor: pointer;
+    margin-left: 10px;
+    margin-top: 0.5em;
+    display: inline-block;
 }
 
 .icon-plus-sign {
@@ -287,106 +259,105 @@ input[type="text"] {
     display: inline-block;
 }
 
-.checkbox-help{			/*For question mark icons next to checkboxes (need different vertical positioning) */
-	margin-top: 0.7em;	
+.checkbox-help{
+    /*For question mark icons next to checkboxes (need different vertical positioning) */
+    margin-top: 0.7em;
 }
 
 .form-row {
-	height: 2em;
-	clear: both;
+    height: 2em;
+    clear: both;
 }
 
 .form-row input,
 .form-row select,
 .form-row span{
-	float: left;
-	margin-left: 1em;
-	margin-bottom: 10px;
+    float: left;
+    margin-left: 1em;
+    margin-bottom: 10px;
 }
+
 
 /* OTHER
 ----------------------------------------*/
 
 .clear{
-	clear: both;
+    clear: both;
 }
 
 .admin-login > tbody > tr > td{
-	padding: 0px 10px 0px 0px;
+    padding: 0px 10px 0px 0px;
 }
 
 .admin-login > tbody > tr{
-	padding: 0px;
+    padding: 0px;
 }
 
 .username-input, login-input {
-	width: auto;
-	margin-bottom: 0px;
+    width: auto;
+    margin-bottom: 0px;
 }
 
 .buttons-wrapper{
-	clear:both;
-	margin: auto;
-	max-width: 350px;
+    clear:both;
+    margin: auto;
+    max-width: 350px;
 }
 .heading-comment {
-	margin-bottom: 0px;
+    margin-bottom: 0px;
 }
 
-
 .configured-tag {
-	color: green;
-	width: 115px;
-	height: 30px;
+    color: green;
+    width: 115px;
+    height: 30px;
 }
 
 .unconfigured-tag {
-	color: red;
-	width: 125px;
+    color: red;
+    width: 125px;
 }
 
-
 .skin-name {
-	font-size: 14pt;
-	width: 300px;
+    font-size: 14pt;
+    width: 300px;
 }
 
 .smaller-text {
-	font-size: 0.5em;
-	display: inline;
+    font-size: 0.5em;
+    display: inline;
 }
 
 .configuration-table{
-	border-collapse: separate;
-	border-spacing: 6px;
-	background: none;
+    border-collapse: separate;
+    border-spacing: 6px;
+    background: none;
 }
 
 .configure-link a{
-	background: rgba(255, 255, 255, 0.7);
-	border-radius: 10px;
-	-moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
-	color: #333333;
-	width: 207px;
-	display: block;
-	text-align: center;
-	padding-top: 5px;
-	padding-bottom: 5px;
-	border: 1px solid #333;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    color: #333333;
+    width: 207px;
+    display: block;
+    text-align: center;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border: 1px solid #333;
 }
-
 
 .configure-link > i,
 .configure-link > a{
-	color: inherit;
-	vertical-align: middle;
+    color: inherit;
+    vertical-align: middle;
 }
 
 .hiding-section {
-	display: none;
-	width: 100%;
-	margin-left: 2em;
+    display: none;
+    width: 100%;
+    margin-left: 2em;
 }
 
 .h3-label {
@@ -400,23 +371,21 @@ input[type="text"] {
 
 frame[name="bottom"] table
 {
-	border-collapse: collapse;
-	border: 1px solid #333;
-	font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
+    border-collapse: collapse;
+    border: 1px solid #333;
+    font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
 }
 
 frame[name="bottom"] table > tbody > td
 {
-	padding: 5px;
+    padding: 5px;
 }
 
 i{
-	margin-right: 10px;
+    margin-right: 10px;
 }
 
 /* ORCID Authentication & Related CSS */
-
-
 
 /** The ORCID Sign In button **/
 .orcid-btn{
