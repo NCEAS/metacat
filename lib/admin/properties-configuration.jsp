@@ -56,7 +56,6 @@
 			Map<Integer, MetaDataGroup> groupMap = metadata.getGroups();
 			Set<Integer> groupIdSet = groupMap.keySet();
 
-
 			for (Integer groupId : groupIdSet) {
 				// for this group, display the header (group name)
 				MetaDataGroup metaDataGroup = (MetaDataGroup)groupMap.get(groupId);
@@ -86,36 +85,36 @@
 					metadata.getPropertiesInGroup(metaDataGroup.getIndex());
 				Set<Integer> propertyIndexes = propertyMap.keySet();
 				// iterate through each property and display appropriately
-				for (Integer propertyIndex : propertyIndexes) {
-					MetaDataProperty metaDataProperty = propertyMap.get(propertyIndex);
-	    			String fieldType = metaDataProperty.getFieldType(); 
-	    			if (fieldType.equals("select")) {
+					for (Integer propertyIndex : propertyIndexes) {
+						MetaDataProperty metaDataProperty = propertyMap.get(propertyIndex);
+	    				String fieldType = metaDataProperty.getFieldType(); 
+	    				if (fieldType.equals("select")) {
 	%> 
-					<div class="form-row">
-	   				<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>
-						<select class="textinput" name="<%= metaDataProperty.getKey() %>">
+							<div class="form-row">
+	   						<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>
+							<select class="textinput" name="<%= metaDataProperty.getKey() %>">
 	<%
-						Vector<String> fieldOptionValues = metaDataProperty.getFieldOptionValues();
-						Vector<String> fieldOptionNames = metaDataProperty.getFieldOptionNames();
-						for (int i = 0; i < fieldOptionNames.size(); i++) {
+							Vector<String> fieldOptionValues = metaDataProperty.getFieldOptionValues();
+							Vector<String> fieldOptionNames = metaDataProperty.getFieldOptionNames();
+							for (int i = 0; i < fieldOptionNames.size(); i++) {
 	%>
-						<option value="<%= fieldOptionValues.elementAt(i) %>"
+								<option value="<%= fieldOptionValues.elementAt(i) %>"
 	<%
-							if (fieldOptionValues.elementAt(i).equals(request.getAttribute(metaDataProperty.getKey()))) {
+								if (fieldOptionValues.elementAt(i).equals(request.getAttribute(metaDataProperty.getKey()))) {
 	%>
-								selected="yes"
+									selected="yes"
 	<%
-							}
+								}
 	%>
 						> <%= fieldOptionNames.elementAt(i) %>
 	<%
-					}
+							}
 	%>
-						</select>
+							</select>
 						<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
 					</div>
 	<%		
-					} else if (fieldType.equals("password")) {
+						} else if (fieldType.equals("password")) {
 	%>
 					<div class="form-row">
 						<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>" ><%= metaDataProperty.getLabel() %></label></div>
@@ -126,14 +125,14 @@
 						<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
 					</div>
 	<%
-					} else if (fieldType.equals("hidden")) {
-						%>
+						} else if (fieldType.equals("hidden")) {
+	%>
 							<input id="<%= metaDataProperty.getKey() %>" 
 									name="<%= metaDataProperty.getKey() %>" 	             		    	    	           		    	             			
 			           		    	value="<%= request.getAttribute(metaDataProperty.getKey()) %>"
 			           		    	type="<%= fieldType %>"/> 
-		<%
-					} else {
+	<%
+						} else {
 	%>
 					<div class="form-row">
 						<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %> "><%= metaDataProperty.getLabel() %></label>	</div>					
@@ -144,23 +143,22 @@
 						<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
 					</div>          		    
 	<%   			
-					}
+						}
 	    			
-	    			if (metaDataProperty.getDescription() != null && metaDataProperty.getDescription().trim().length() > 0 ) {
-	    			    if (!metaDataProperty.getDescription().contains("new-badge")) {
+	    				if (metaDataProperty.getDescription() != null && metaDataProperty.getDescription().trim().length() > 0 ) {
+	    			    	if (!metaDataProperty.getDescription().contains("new-badge")) {
 	%>
-						    <div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
+						    	<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
 	<%
-						} else {
+							} else {
 	%>
-						    <div class="textinput-description">[<%= metaDataProperty.getDescription().replace(". &lt;", ".] &lt;") %></div>
+						    	<div class="textinput-description">[<%= metaDataProperty.getDescription().replace(". &lt;", ".] &lt;") %></div>
 	<%
-	                    }
-	    			}
-				}
+	                    	}
+	    				}
+					}
 				}
 			}
-				
 		}
 	%>
 	
