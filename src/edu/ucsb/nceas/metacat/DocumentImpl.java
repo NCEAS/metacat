@@ -1563,10 +1563,11 @@ public class DocumentImpl {
             // Check if the document exists.
             //this only archives a document from xml_documents to xml_revisions
             logMetacat.debug("DocumentImp.archive - archive the document " + accnum);
-            String query = "SELECT rev, docid FROM xml_documents WHERE docid = ?";
+            String query = "SELECT rev, docid FROM xml_documents WHERE docid = ? and rev = ?";
             boolean inXmlDocTable = true;
             try (PreparedStatement pstmt = conn.prepareStatement(query)) {
                 pstmt.setString(1, docid);
+                pstmt.setInt(2, rev);
                 logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
                 try (ResultSet rs = pstmt.executeQuery()) {
                     conn.increaseUsageCount(1);

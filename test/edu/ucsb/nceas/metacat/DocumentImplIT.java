@@ -32,6 +32,7 @@ import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -39,6 +40,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.withSettings;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 
 
 /**
@@ -459,6 +465,367 @@ public class DocumentImplIT {
             input = MetacatHandler.read(accnum);
             assertNotNull("The file should exist", input);
             input.close();
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+    }
+
+    /**
+     * Test the archive method
+     * @throws Exception
+     */
+    @Test
+    public void testArchiveData() throws Exception {
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+             // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("SystemMetadataManager.deleteData");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            Session session = d1NodeTest.getTestSession();
+            Identifier guid = new Identifier();
+            guid.setValue("DocumentImpl_archiveData." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta = D1NodeServiceTest
+                                            .createSystemMetadata(guid, session.getSubject(), object);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            //check record
+            assertTrue("The identifier table should have value",
+                                  hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                             hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The xml_access table should have value",
+                                 hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationpolicy table should not have value",
+                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationstatus table should not have value",
+                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smmediatypeproperties table should not have value",
+                       hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+            String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
+            String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            assertTrue("The xml_documents table should have value",
+                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+            assertFalse("The xml_revisions table should not have value",
+                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+            InputStream input = MetacatHandler.read(accnum);
+            assertNotNull("The file should exist", input);
+            input.close();
+            SystemMetadata sys = SystemMetadataManager.getInstance().get(guid);
+            assertFalse("System metadata should have archived false", sys.getArchived());
+
+            //archive
+            String user = "test";
+            DocumentImpl.archive(accnum, guid, user);
+            assertTrue("The identifier table should have value",
+                                hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                            hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The xml_access table should have value",
+                                hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationpolicy table should not have value",
+                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationstatus table should not have value",
+                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smmediatypeproperties table should not have value",
+                      hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+            docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            assertFalse("The xml_documents table should have value",
+                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
+            assertTrue("The xml_revisions table should have value",
+                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+            input = MetacatHandler.read(accnum);
+            assertNotNull("The file should exist", input);
+            input.close();
+            sys = SystemMetadataManager.getInstance().get(guid);
+            assertTrue("System metadata should have archived true", sys.getArchived());
+
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+    }
+
+
+    /**
+     * Test the archive method
+     * @throws Exception
+     */
+    @Test
+    public void testArchiveMetadata() throws Exception {
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+             // Get a database connection from the pool
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+            dbConn = DBConnectionPool.getDBConnection("SystemMetadataManager.deleteData");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            Session session = d1NodeTest.getTestSession();
+            Identifier guid = new Identifier();
+            guid.setValue("DocumentImpl_archiveMetadata." + System.currentTimeMillis());
+            InputStream object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+            SystemMetadata sysmeta = D1NodeServiceTest
+                                          .createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(formatId);
+            object.close();
+            object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            object.close();
+            //check record
+            assertTrue("The identifier table should have value",
+                                  hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                             hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The xml_access table should have value",
+                                 hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationpolicy table should not have value",
+                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationstatus table should not have value",
+                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smmediatypeproperties table should not have value",
+                       hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+            String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
+            String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            assertTrue("The xml_documents table should have value",
+                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+            assertFalse("The xml_revisions table should not have value",
+                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+            InputStream input = MetacatHandler.read(accnum);
+            assertNotNull("The file should exist", input);
+            input.close();
+            SystemMetadata sys = SystemMetadataManager.getInstance().get(guid);
+            assertFalse("System metadata should have archived false", sys.getArchived());
+
+            //update
+            Identifier newPid = new Identifier();
+            newPid.setValue("DocumentImpl_archiveMetaData." + (System.currentTimeMillis() + 1));
+            object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+            sysmeta = D1NodeServiceTest.createSystemMetadata(newPid, session.getSubject(), object);
+            object.close();
+            sysmeta.setFormatId(formatId);
+            ReplicationPolicy policy = new ReplicationPolicy();
+            NodeReference node = new NodeReference();
+            node.setValue("test_node");
+            policy.addPreferredMemberNode(node);
+            policy.setReplicationAllowed(true);
+            policy.setNumberReplicas(2);
+            sysmeta.setReplicationPolicy(policy);
+            Replica replica = new Replica();
+            replica.setReplicaMemberNode(node);
+            replica.setReplicationStatus(ReplicationStatus.COMPLETED);
+            replica.setReplicaVerified(new Date());
+            sysmeta.addReplica(replica);
+            MediaTypeProperty property = new MediaTypeProperty();
+            property.setName("test_media_name");
+            property.setValue("test_media_value");
+            MediaType type = new MediaType();
+            type.addProperty(property);
+            sysmeta.setMediaType(type);
+            object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
+            MNodeService.getInstance(request).update(session, guid, object, newPid, sysmeta);
+            object.close();
+            //check record
+            assertTrue("The identifier table should have value",
+                                 hasRecord("identifier", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                            hasRecord("systemmetadata", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The xml_access table should have value",
+                                 hasRecord("xml_access", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The smreplicationpolicy table should have value",
+                       hasRecord("smreplicationpolicy", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The smreplicationstatus table should have value",
+                     hasRecord("smreplicationstatus", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The smmediatypeproperties table should have value",
+                     hasRecord("smmediatypeproperties", dbConn, " guid like ?", newPid.getValue()));
+            String accnum2 = IdentifierManager.getInstance().getLocalId(newPid.getValue());
+            docid = DocumentUtil.getDocIdFromAccessionNumber(accnum2);
+            assertTrue("The xml_documents table should have value",
+                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
+            assertFalse("The xml_documents table should not have value",
+                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 1));
+            assertFalse("The xml_revisions table should not have value",
+                    hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 2));
+            assertTrue("The xml_revisions table should have value",
+                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+            input = MetacatHandler.read(accnum2);
+            assertNotNull("The file should exist", input);
+            input.close();
+            sys = SystemMetadataManager.getInstance().get(guid);
+            assertFalse("System metadata should have archived false", sys.getArchived());
+            sys = SystemMetadataManager.getInstance().get(newPid);
+            assertFalse("System metadata should have archived false", sys.getArchived());
+
+            //Archive
+            String user = "test";
+            DocumentImpl.archive(accnum, guid, user);
+            assertTrue("The identifier table should have value",
+                                hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                            hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The xml_access table should have value",
+                                hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationpolicy table should not have value",
+                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationstatus table should not have value",
+                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+            assertFalse("The smmediatypeproperties table should not have value",
+                      hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+            docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            // the version 2 still exists
+            assertTrue("The xml_documents table should have value",
+                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
+            assertFalse("The xml_documents table should not have value",
+                          hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 1));
+            assertTrue("The xml_revisions table should have value",
+                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+            assertFalse("The xml_revisions table should not have value",
+                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 2));
+            input = MetacatHandler.read(accnum);
+            assertNotNull("The file should exist", input);
+            input.close();
+            sys = SystemMetadataManager.getInstance().get(guid);
+            assertTrue("System metadata should have archived true", sys.getArchived());
+            sys = SystemMetadataManager.getInstance().get(newPid);
+            assertFalse("System metadata should have archived false", sys.getArchived());
+
+            DocumentImpl.archive(accnum2, newPid, user);
+            //check record
+            assertTrue("The identifier table should have value",
+                                hasRecord("identifier", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                           hasRecord("systemmetadata", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The xml_access table should have value",
+                               hasRecord("xml_access", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The smreplicationpolicy table should have value",
+                      hasRecord("smreplicationpolicy", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The smreplicationstatus table should have value",
+                      hasRecord("smreplicationstatus", dbConn, " guid like ?", newPid.getValue()));
+            assertTrue("The smmediatypeproperties table should have value",
+                    hasRecord("smmediatypeproperties", dbConn, " guid like ?", newPid.getValue()));
+            docid = DocumentUtil.getDocIdFromAccessionNumber(accnum2);
+            assertFalse("The xml_documents table should not have value",
+                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
+            assertFalse("The xml_documents table should not have value",
+                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 1));
+            assertTrue("The xml_revisions table should have value",
+                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+            assertTrue("The xml_revisions table should have value",
+                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 2));
+            input = MetacatHandler.read(accnum2);
+            assertNotNull("The file should exist", input);
+            input.close();
+            sys = SystemMetadataManager.getInstance().get(guid);
+            assertTrue("System metadata should have archived true", sys.getArchived());
+            sys = SystemMetadataManager.getInstance().get(newPid);
+            assertTrue("System metadata should have archived true", sys.getArchived());
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+    }
+
+    /**
+     * Test the delete method
+     * @throws Exception
+     */
+    @Test
+    public void testFailedArchive() throws Exception {
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+             // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("SystemMetadataManager.testFailedArchive");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            Session session = d1NodeTest.getTestSession();
+            Identifier guid = new Identifier();
+            guid.setValue("DocumentImpl_failedArchiveData." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta = D1NodeServiceTest
+                                          .createSystemMetadata(guid, session.getSubject(), object);
+            ReplicationPolicy policy = new ReplicationPolicy();
+            NodeReference node = new NodeReference();
+            node.setValue("test_node");
+            policy.addPreferredMemberNode(node);
+            policy.setReplicationAllowed(true);
+            policy.setNumberReplicas(2);
+            sysmeta.setReplicationPolicy(policy);
+            Replica replica = new Replica();
+            replica.setReplicaMemberNode(node);
+            replica.setReplicationStatus(ReplicationStatus.COMPLETED);
+            replica.setReplicaVerified(new Date());
+            sysmeta.addReplica(replica);
+            MediaTypeProperty property = new MediaTypeProperty();
+            property.setName("test_media_name");
+            property.setValue("test_media_value");
+            MediaType type = new MediaType();
+            type.addProperty(property);
+            sysmeta.setMediaType(type);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            //check record
+            assertTrue("The identifier table should have value",
+                                  hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                             hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The xml_access table should have value",
+                                 hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The smreplicationpolicy table should have value",
+                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The smreplicationstatus table should not have value",
+                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The smmediatypeproperties table should not have value",
+                       hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+            String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
+            String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            assertTrue("The xml_documents table should have value",
+                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+            assertFalse("The xml_revisions table should not have value",
+                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+            InputStream input = MetacatHandler.read(accnum);
+            assertNotNull("The file should exist", input);
+            input.close();
+            SystemMetadata sys = SystemMetadataManager.getInstance().get(guid);
+            assertFalse("System metadata should have archived false", sys.getArchived());
+
+            //Mock a failed archiving
+            try (MockedStatic<SystemMetadataManager> mock = Mockito
+                            .mockStatic(SystemMetadataManager.class, CALLS_REAL_METHODS)) {
+                SystemMetadataManager mockManager = Mockito.mock(SystemMetadataManager.class,
+                                 withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+                Mockito.doThrow(ServiceFailure.class).when(mockManager)
+                           .store(any(SystemMetadata.class), anyBoolean(), any(DBConnection.class));
+                Mockito.when(SystemMetadataManager.getInstance()).thenReturn(mockManager);
+                try {
+                    String user = "test";
+                    DocumentImpl.archive(accnum, guid, user);
+                    fail("The test can't be here since archive should throw an exception");
+                } catch (Exception e) {
+                    assertTrue("The exception class should be ServiceFailure",
+                                                                      e instanceof ServiceFailure);
+                }
+            }
+            //Records in the db shouldn't change
+            assertTrue("The identifier table should have value",
+                                hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                            hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The xml_access table should have value",
+                   hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The smreplicationpolicy table should have value",
+                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The smreplicationstatus table should not have value",
+                        hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The smmediatypeproperties table should not have value",
+                      hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+            assertTrue("The xml_documents table should have value",
+                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
+            assertFalse("The xml_revisions table should not have value",
+                                       hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+            input = MetacatHandler.read(accnum);
+            assertNotNull("The file should exist", input);
+            input.close();
+            sys = SystemMetadataManager.getInstance().get(guid);
+            assertFalse("System metadata should have archived false", sys.getArchived());
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
