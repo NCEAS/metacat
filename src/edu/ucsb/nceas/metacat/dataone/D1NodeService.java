@@ -2257,7 +2257,6 @@ public abstract class D1NodeService {
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
         String localId = null;
-        boolean allowed = false;
         String username = Constants.SUBJECT_PUBLIC;
         if (session == null) {
             throw new InvalidToken("1330", "No session has been provided");
@@ -2285,12 +2284,8 @@ public abstract class D1NodeService {
                 "1350", "The object with the provided identifier " + pid.getValue()
                 + " couldn't be identified since " + e.getMessage());
         }
-
-
         try {
-            // archive the document
-            boolean ignoreRev = false;
-            DocumentImpl.delete(localId, ignoreRev, null, null, null, false);
+            DocumentImpl.archive(localId, pid, username);
             if (log) {
                 try {
                     EventLog.getInstance()
@@ -2302,52 +2297,10 @@ public abstract class D1NodeService {
                             + e.getMessage());
                 }
             }
-
-        } catch (McdbDocNotFoundException e) {
-            try {
-                AccessionNumber acc = new AccessionNumber(localId, "NOACTION");
-                String docid = acc.getDocid();
-                int rev = 1;
-                if (acc.getRev() != null) {
-                    rev = (new Integer(acc.getRev()).intValue());
-                }
-                if (IdentifierManager.getInstance().existsInXmlLRevisionTable(docid, rev)) {
-                    //somehow the document is in the xml_revision table.
-                    // archive it
-                    sysMeta.setArchived(true);
-                    if (needModifyDate) {
-                        sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-                    }
-                    try {
-                        SystemMetadataManager.getInstance().store(sysMeta, needModifyDate);
-                    } catch (InvalidRequest ee) {
-                        throw new InvalidToken(
-                            "1340", "Can't archive the identifier " + pid.getValue() + " since "
-                            + ee.getMessage());
-                    }
-                } else {
-                    throw new NotFound(
-                        "1340", "The provided identifier " + pid.getValue() + " is invalid");
-                }
-            } catch (SQLException ee) {
-                ee.printStackTrace();
-                throw new NotFound(
-                    "1340", "The provided identifier " + pid.getValue() + " is invalid");
-            } catch (AccessionNumberException ee) {
-                ee.printStackTrace();
-                throw new NotFound(
-                    "1340", "The provided identifier " + pid.getValue() + " is invalid");
-            }
         } catch (SQLException e) {
             throw new ServiceFailure(
                 "1350", "There was a problem archiving the object." + "The error message was: "
                 + e.getMessage());
-
-        } catch (InsufficientKarmaException e) {
-            throw new NotAuthorized(
-                "1320", "The provided identity does not have "
-                + "permission to archive this object.");
-
         } catch (Exception e) { // for some reason DocumentImpl throws a general Exception
             throw new ServiceFailure(
                 "1350", "There was a problem archiving the object." + "The error message was: "

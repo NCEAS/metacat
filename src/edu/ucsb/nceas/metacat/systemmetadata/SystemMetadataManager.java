@@ -184,6 +184,8 @@ public class SystemMetadataManager {
                     //pid. If not, secure the lock; otherwise wait until the lock is available.
                     synchronized (lockedIds) {
                         while (lockedIds.contains(pid.getValue())) {
+                            logMetacat.info("SystemMetadataManager.store - waiting for the lock "
+                                            + " to store system metadata for " + pid.getValue());
                             try {
                                 lockedIds.wait(TIME_OUT_MILLISEC);
                             } catch (InterruptedException e) {
@@ -662,6 +664,8 @@ public class SystemMetadataManager {
                 //pid. If not, secure the lock; otherwise wait until the lock is available.
                 synchronized (lockedIds) {
                     while (lockedIds.contains(guid.getValue())) {
+                        logMetacat.info("SystemMetadataManager.delete - waiting for the lock "
+                                            + " to delete system metadata for " + guid.getValue());
                         try {
                             lockedIds.wait(TIME_OUT_MILLISEC);
                         } catch (InterruptedException e) {
