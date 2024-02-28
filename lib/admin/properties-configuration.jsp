@@ -152,7 +152,7 @@
 	<%
 							} else {
 	%>
-						    	<div class="textinput-description">[<%= metaDataProperty.getDescription().replace(". &lt;", ".] &lt;") %></div>
+						    	<div class="textinput-description"><%= metaDataProperty.getDescription() %></div>
 	<%
 	                    	}
 	    				}
