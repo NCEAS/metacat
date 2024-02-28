@@ -280,9 +280,8 @@ input[type="text"] {
 .new-badge {
     background: green;
     color: white;
-    margin-top: 3px;
     border-radius: 10px;
-    padding: 2px 4px;
+    padding: 0px 4px;
     display: inline-block;
     margin-left: 0 !important;
 }

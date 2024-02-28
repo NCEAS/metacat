@@ -55,8 +55,8 @@
 			// each group describes a section of properties
 			Map<Integer, MetaDataGroup> groupMap = metadata.getGroups();
 			Set<Integer> groupIdSet = groupMap.keySet();
-	
-			
+
+
 			for (Integer groupId : groupIdSet) {
 				// for this group, display the header (group name)
 				MetaDataGroup metaDataGroup = (MetaDataGroup)groupMap.get(groupId);
@@ -142,23 +142,20 @@
 		    			        value="<%= request.getAttribute(metaDataProperty.getKey()) %>"	             		    	    	           		    	             			
 		           		    	type="<%= fieldType %> "/>
 						<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
-    <%
-                        int propIndexNo = metaDataProperty.getIndex();
-						if (propIndexNo == 13 || propIndexNo == 14) {
-    %>
-                        <span class="new-badge">New</span>
-    <%
-						}
-    %>
 					</div>          		    
 	<%   			
 					}
 	    			
 	    			if (metaDataProperty.getDescription() != null && metaDataProperty.getDescription().trim().length() > 0 ) {
+	    			    if (!metaDataProperty.getDescription().contains("new-badge")) {
 	%>
-	
-						<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
+						    <div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
 	<%
+						} else {
+	%>
+						    <div class="textinput-description">[<%= metaDataProperty.getDescription().replace(". &lt;", ".] &lt;") %></div>
+	<%
+	                    }
 	    			}
 				}
 				}

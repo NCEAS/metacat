@@ -397,7 +397,7 @@
         <description>
             Semicolon-separated list of paths to certificate files, containing public keys to be
             used by d1_portal to verify incoming request jwt tokens (in addition to verifying
-            against the CN server).
+            against the CN server). &lt;span class="new-badge"&gt;New&lt;/span&gt;
         </description>
         <helpFile>docs/metacat-properties.html#cn-server-publiccert-filename</helpFile>
     </config>
@@ -409,7 +409,7 @@
         <index>14</index>
         <description>
             The path to the admin jwt token that will be used in dataone-indexer to access the
-            private objects' system metadata.
+            private objects' system metadata. &lt;span class="new-badge"&gt;New&lt;/span&gt;
         </description>
         <helpFile>docs/metacat-properties.html/#admin-token</helpFile>
     </config>
