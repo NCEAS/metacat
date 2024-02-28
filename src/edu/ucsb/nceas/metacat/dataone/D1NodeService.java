@@ -286,7 +286,8 @@ public abstract class D1NodeService {
 
         try {
             // delete the document, as admin
-            DocumentImpl.delete(localId, null, null, null, true);
+            // the index task submission is handle in this method
+            DocumentImpl.delete(localId, pid);
             EventLog.getInstance()
                 .log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId,
                      Event.DELETE.xmlValue());
@@ -298,12 +299,6 @@ public abstract class D1NodeService {
             throw new ServiceFailure(
                 "1350", "There was a problem deleting the object." + "The error message was: "
                 + e.getMessage());
-
-        } catch (InsufficientKarmaException e) {
-            throw new NotAuthorized(
-                "1320", "The provided identity does not have "
-                + "permission to DELETE objects on the Member Node.");
-
         } catch (Exception e) { // for some reason DocumentImpl throws a general Exception
             throw new ServiceFailure(
                 "1350", "There was a problem deleting the object." + "The error message was: "

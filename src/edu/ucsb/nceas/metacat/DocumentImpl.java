@@ -51,6 +51,7 @@ import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -871,7 +872,7 @@ public class DocumentImpl {
     }
 
     private static String getFilePath(String accNumber, boolean isXml) throws McdbException {
-        if (accNumber == null) {
+        if (accNumber == null || accNumber.trim().equals("")) {
             throw new McdbException(
                 "Could not get the file path since the Accession Number number is null");
         }
@@ -1376,27 +1377,144 @@ public class DocumentImpl {
 
 
     /**
-     * Archive an object from the xml_documents table to the xml_revision table (including other
-     * changes as well). Or delete an object totally from the db. The parameter "removeAll" decides
-     * which action will be taken.
-     *
-     * @param accnum       the local id (including the rev) will be applied.
-     * @param user         the subject who does the action.
-     * @param groups       the groups which the user belongs to.
-     * @param notifyServer the server will be notified in the replication. It can be null.
-     * @param removeAll    it will be the delete action if this is true; otherwise it will be the
-     *                     archive action
+     * Delete an object totally from the db and file system. It doesn't check permission
+     * @param accnum  the local id (including the rev) will be deleted
+     * @param guid  the dataone identifier associated with accnum
      * @throws SQLException
-     * @throws InsufficientKarmaException
      * @throws McdbDocNotFoundException
-     * @throws Exception
+     * @throws ServiceFailure
      */
-    public static void delete(
-        String accnum, String user, String[] groups, String notifyServer, boolean removeAll)
-        throws SQLException, InsufficientKarmaException, McdbDocNotFoundException, Exception {
-        //default, we only match the docid part on archive action
-        boolean ignoreRev = true;
-        delete(accnum, ignoreRev, user, groups, notifyServer, removeAll);
+    public static void delete(String accnum, Identifier guid) throws SQLException,
+                                                        McdbDocNotFoundException, ServiceFailure {
+        DBConnection conn = null;
+        int serialNumber = -1;
+        boolean isXML = true;
+        boolean inRevisionTable = false;
+        double start = System.currentTimeMillis() / 1000;
+        try {
+            //check out DBConnection
+            conn = DBConnectionPool.getDBConnection("DocumentImpl.delete");
+            serialNumber = conn.getCheckOutSerialNumber();
+            // CLIENT SHOULD ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV
+            String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            int rev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
+            // Check if the document exists.
+            logMetacat.info("DocumentImp.delete - complete delete the document " + accnum);
+            String query = "SELECT * FROM xml_documents WHERE docid = ? and rev = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setString(1, docid);
+                pstmt.setInt(2, rev);
+                logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
+                pstmt.execute();
+                try (ResultSet rs = pstmt.getResultSet()) {
+                    if (!rs.next()) {
+                        //look at the xml_revisions table
+                        logMetacat.debug("DocumentImpl.delete - look at the docid " + accnum
+                                             + " in the xml_revision table");
+                        String query2 = "SELECT * FROM xml_revisions WHERE docid = ? AND rev = ?";
+                        try (PreparedStatement pstmt2 = conn.prepareStatement(query2)) {
+                            pstmt2.setString(1, docid);
+                            pstmt2.setInt(2, rev);
+                            logMetacat.debug("DocumentImpl.delete - executing SQL: "
+                                                                               + pstmt2.toString());
+                            pstmt2.execute();
+                            try (ResultSet rs2 = pstmt2.getResultSet()) {
+                                if (!rs2.next()) {
+                                    conn.increaseUsageCount(1);
+                                    throw new McdbDocNotFoundException("Docid " + accnum
+                                                        + " does not exist in eiter xml_documents "
+                                                        + "or xml_revisions table. "
+                                                        + "Please check and try again.");
+                                } else {
+                                    logMetacat.debug("DocumentImpl.delete - the docid " + accnum
+                                            + " is in the xml_revisions table");
+                                    conn.increaseUsageCount(1);
+                                    inRevisionTable = true;
+                                }
+                            }
+                        }
+                    } else {
+                        logMetacat.debug("DocumentImpl.delete - the docid " + accnum
+                                + " is in the xml_document table");
+                        conn.increaseUsageCount(1);
+                    }
+                }
+            }
+            // get the type of deleting docid, this will be used in forcereplication
+            String type = null;
+            if (!inRevisionTable) {
+                type = getDocTypeFromDB(conn, "xml_documents", docid);
+            } else {
+                type = getDocTypeFromDB(conn, "xml_revisions", docid);
+            }
+            logMetacat.info("DocumentImpl.delete - the deleting doc type is " + type + "...");
+            if (type != null && type.trim().equals("BIN")) {
+                isXML = false;
+            }
+            logMetacat.info("DocumentImpl.delete - Start deleting doc " + docid + "...");
+            conn.setAutoCommit(false);
+            if (!inRevisionTable) {
+                // Delete it from xml_documents table
+                logMetacat.debug("DocumentImpl.delete - deleting from xml_documents");
+                String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
+                try (PreparedStatement pstmtDelete = conn.prepareStatement(deleteQuery)) {
+                    pstmtDelete.setString(1, docid);
+                    logMetacat.debug("DocumentImpl.delete - running sql: " + pstmtDelete.toString());
+                    pstmtDelete.execute();
+                    //Usaga count increase 1
+                    conn.increaseUsageCount(1);
+                }
+            } else {
+                logMetacat.debug("DocumentImpl.delete - deleting from xml_revisions");
+                String deleteQuery = "DELETE FROM xml_revisions WHERE docid = ? AND rev = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
+                    pstmt.setString(1, docid);
+                    pstmt.setInt(2, rev);
+                    logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                    pstmt.execute();
+                    conn.increaseUsageCount(1);
+                }
+            }
+            //update systemmetadata table and solr index
+            SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
+            if (sysMeta != null) {
+                SystemMetadataManager.getInstance().delete(guid, conn);
+                try {
+                    MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
+                } catch (Exception ee) {
+                    logMetacat.error("DocumentImpl.delete - Metacat failed to submit index task: "
+                                                                           + ee.getMessage());
+                }
+            }
+            deleteFromFileSystem(accnum, isXML);
+            // only commit if all of this was successful
+            conn.commit();
+        } catch (Exception e) {
+            // rollback the delete if there was an error
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException sqe) {
+                    throw new ServiceFailure("0000", "DocumentImpl.delete - failed: " + e.getMessage()
+                                                    + " Also the database cannot roll back since "
+                                                    + sqe.getMessage());
+                }
+            }
+            logMetacat.error("DocumentImpl.delete -  Error: " + e.getMessage());
+            throw new ServiceFailure("0000", "DocumentImpl.delete - failed: " + e.getMessage());
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException e) {
+                    logMetacat.warn("DocumentImpl.delete - Metacat can't set DBConnection "
+                                    + "auto-commit back to true since " + e.getMessage());
+                }
+                DBConnectionPool.returnDBConnection(conn, serialNumber);
+            }
+        }
+        double end = System.currentTimeMillis() / 1000;
+        logMetacat.info("DocumentImpl.delete - total delete time is:  " + (end - start));
     }
 
     /**
@@ -1435,7 +1553,6 @@ public class DocumentImpl {
             //AccessionNumber ac = new AccessionNumber(accnum, "DELETE");
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             int rev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
-            ;
 
             // Check if the document exists.
             if (!removeAll) {
