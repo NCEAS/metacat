@@ -1460,61 +1460,64 @@ public class DocumentImpl {
             if (type != null && type.trim().equals("BIN")) {
                 isXML = false;
             }
-            logMetacat.info("DocumentImpl.delete - Start deleting doc " + docid + "...");
-            conn.setAutoCommit(false);
-            if (!inRevisionTable) {
-                // Delete it from xml_documents table
-                logMetacat.debug("DocumentImpl.delete - deleting from xml_documents");
-                String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
-                try (PreparedStatement pstmtDelete = conn.prepareStatement(deleteQuery)) {
-                    pstmtDelete.setString(1, docid);
-                    logMetacat.debug("DocumentImpl.delete - running sql: " + pstmtDelete.toString());
-                    pstmtDelete.execute();
-                    //Usaga count increase 1
-                    conn.increaseUsageCount(1);
+            logMetacat.debug("DocumentImpl.delete - Start deleting doc " + docid + "...");
+            try {
+                conn.setAutoCommit(false);
+                if (!inRevisionTable) {
+                    // Delete it from xml_documents table
+                    logMetacat.debug("DocumentImpl.delete - deleting from xml_documents");
+                    String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
+                    try (PreparedStatement pstmtDelete = conn.prepareStatement(deleteQuery)) {
+                        pstmtDelete.setString(1, docid);
+                        logMetacat.debug("DocumentImpl.delete - running sql: "
+                                                                         + pstmtDelete.toString());
+                        pstmtDelete.execute();
+                        //Usaga count increase 1
+                        conn.increaseUsageCount(1);
+                    }
+                } else {
+                    logMetacat.debug("DocumentImpl.delete - deleting from xml_revisions");
+                    String deleteQuery = "DELETE FROM xml_revisions WHERE docid = ? AND rev = ?";
+                    try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
+                        pstmt.setString(1, docid);
+                        pstmt.setInt(2, rev);
+                        logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                        pstmt.execute();
+                        conn.increaseUsageCount(1);
+                    }
                 }
-            } else {
-                logMetacat.debug("DocumentImpl.delete - deleting from xml_revisions");
-                String deleteQuery = "DELETE FROM xml_revisions WHERE docid = ? AND rev = ?";
-                try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
-                    pstmt.setString(1, docid);
-                    pstmt.setInt(2, rev);
-                    logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                    pstmt.execute();
-                    conn.increaseUsageCount(1);
+                //update systemmetadata table and solr index
+                SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
+                if (sysMeta != null) {
+                    SystemMetadataManager.getInstance().delete(guid, conn);
+                    try {
+                        MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
+                    } catch (Exception ee) {
+                        logMetacat.error("DocumentImpl.delete - Metacat failed to submit index task: "
+                                                                               + ee.getMessage());
+                    }
                 }
+                deleteFromFileSystem(accnum, isXML);
+                // only commit if all of this was successful
+                conn.commit();
+            } catch (Exception e) {
+                // rollback the delete if there was an error
+                if (conn != null) {
+                    try {
+                        conn.rollback();
+                    } catch (SQLException sqe) {
+                        throw new ServiceFailure("0000", "DocumentImpl.delete - failed for "
+                                                      + guid.getValue() + " since "
+                                                      + e.getMessage()
+                                                      + " Also the database cannot roll back since "
+                                                      + sqe.getMessage());
+                    }
+                }
+                logMetacat.error("DocumentImpl.delete -  failed for " + guid.getValue()
+                                                                      + " since " + e.getMessage());
+                throw new ServiceFailure("0000", "DocumentImpl.delete - failed for "
+                                                     + guid.getValue() + " since "+ e.getMessage());
             }
-            //update systemmetadata table and solr index
-            SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
-            if (sysMeta != null) {
-                SystemMetadataManager.getInstance().delete(guid, conn);
-                try {
-                    MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
-                } catch (Exception ee) {
-                    logMetacat.error("DocumentImpl.delete - Metacat failed to submit index task: "
-                                                                           + ee.getMessage());
-                }
-            }
-            deleteFromFileSystem(accnum, isXML);
-            // only commit if all of this was successful
-            conn.commit();
-        } catch (Exception e) {
-            // rollback the delete if there was an error
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException sqe) {
-                    throw new ServiceFailure("0000", "DocumentImpl.delete - failed for "
-                                                    + guid.getValue() + " since "
-                                                    + e.getMessage()
-                                                    + " Also the database cannot roll back since "
-                                                    + sqe.getMessage());
-                }
-            }
-            logMetacat.error("DocumentImpl.delete -  failed for " + guid.getValue()
-                                                                    + " since " + e.getMessage());
-            throw new ServiceFailure("0000", "DocumentImpl.delete - failed for " + guid.getValue()
-                                                                    + " since "+ e.getMessage());
         } finally {
             if (conn != null) {
                 try {
@@ -1576,51 +1579,54 @@ public class DocumentImpl {
                     }
                 }
             }
-            conn.setAutoCommit(false);
-            if (inXmlDocTable) {
-                //Copy the record to the xml_revisions table if it exists in the xml_documents table
-                archiveDocToRevision(conn, docid, user);
-                // Delete it from xml_documents table
-                String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
-                try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
-                    pstmt.setString(1, docid);
-                    logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                    pstmt.execute();
-                    //Usaga count increase 1
-                    conn.increaseUsageCount(1);
+            try {
+                conn.setAutoCommit(false);
+                if (inXmlDocTable) {
+                    //Copy the record to the xml_revisions table if it exists in
+                    //the xml_documents table
+                    archiveDocToRevision(conn, docid, user);
+                    // Delete it from xml_documents table
+                    String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
+                    try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
+                        pstmt.setString(1, docid);
+                        logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                        pstmt.execute();
+                        //Usaga count increase 1
+                        conn.increaseUsageCount(1);
+                    }
                 }
-            }
-            //update systemmetadata table and solr index
-            SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
-            if (sysMeta != null) {
-                sysMeta.setArchived(true);
-                //changeModifyTime is set true
-                SystemMetadataManager.getInstance().store(sysMeta, true, conn);
-                try {
-                    //followRevisions is set false
-                    MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
-                } catch (Exception ee) {
-                    logMetacat.error("DocumentImpl.archive - Metacat failed to submit index task: "
-                                                                           + ee.getMessage());
+                //update systemmetadata table and solr index
+                SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
+                if (sysMeta != null) {
+                    sysMeta.setArchived(true);
+                    //changeModifyTime is set true
+                    SystemMetadataManager.getInstance().store(sysMeta, true, conn);
+                    try {
+                        //followRevisions is set false
+                        MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
+                    } catch (Exception ee) {
+                        logMetacat.error("DocumentImpl.archive - Metacat failed to submit index task: "
+                                                                               + ee.getMessage());
+                    }
                 }
-            }
-            // only commit if all of this was successful
-            conn.commit();
-        } catch (Exception e) {
-            // rollback the archive action if there was an error
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException sqe) {
-                    throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
-                                                    + guid.getValue() + " since "+ e.getMessage()
-                                                    + " Also the database cannot roll back since "
-                                                    + sqe.getMessage());
+                // only commit if all of this was successful
+                conn.commit();
+            } catch (Exception e) {
+                // rollback the archive action if there was an error
+                if (conn != null) {
+                    try {
+                        conn.rollback();
+                    } catch (SQLException sqe) {
+                        throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
+                                                        + guid.getValue() + " since "+ e.getMessage()
+                                                        + " Also the database cannot roll back since "
+                                                        + sqe.getMessage());
+                    }
                 }
+                logMetacat.error("DocumentImpl.archive -  Error: " + e.getMessage());
+                throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
+                                                + guid.getValue() + " since " + e.getMessage());
             }
-            logMetacat.error("DocumentImpl.archive -  Error: " + e.getMessage());
-            throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
-                                            + guid.getValue() + " since " + e.getMessage());
         } finally {
             if (conn != null) {
                 try {
