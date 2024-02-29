@@ -2330,6 +2330,13 @@ public abstract class D1NodeService {
                             "4972", "Couldn't archive the object " + pid.getValue()
                             + ". Couldn't obtain the system metadata record.");
                     }
+                    try {
+                        //followRevisions is set false
+                        MetacatSolrIndex.getInstance().submit(pid, sysMeta, false);
+                    } catch (Exception ee) {
+                        logMetacat.warn("D1NodeService.archive - Metacat failed to submit "
+                                          + "index task for pid "+ pid.getValue()+ ee.getMessage());
+                    }
                 } else {
                     throw new ServiceFailure(
                         "4972", "Couldn't archive the object " + pid.getValue()
