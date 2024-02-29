@@ -706,7 +706,7 @@ public class DBAdmin extends MetacatAdmin {
         }
 
         if (metaCatVersion != null) {
-            logMetacat.debug("DBADmin.getUpdateClasses - the version from the propterty file is "
+            logMetacat.debug("DBADmin.getUpdateClasses - the version from the properties file is "
                                                             + metaCatVersion.getVersionString());
         }
         if (databaseVersion != null) {
@@ -736,8 +736,8 @@ public class DBAdmin extends MetacatAdmin {
                     logMetacat.warn("No utility defined for version: " + key);
                     continue;
                 }
-                logMetacat
-                        .debug("DBAdmin.getUpdateClasses - add the class to the list " + className);
+                logMetacat.debug("DBAdmin.getUpdateClasses - add the class to the list "
+                                + className);
                 updateClassList.add(className);
             }
         }
@@ -815,6 +815,8 @@ public class DBAdmin extends MetacatAdmin {
             } catch (SolrSchemaModificationException e) {
                 //don't throw the exception and continue
                // solrSchemaException = e;
+                logMetacat.warn("DBAdmin.upgradeDatabase - The schema or config file is changed: "
+                                + e.getMessage() + ". But Metacat will continue.");
                 continue;
             } catch (Exception e) {
                 try {
