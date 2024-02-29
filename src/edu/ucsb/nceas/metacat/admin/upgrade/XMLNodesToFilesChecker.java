@@ -145,7 +145,7 @@ public class XMLNodesToFilesChecker {
      * table to the file system.
      * @param pstmt  the PreparedStatement object which contains a result set with
      *               a list of docids we need to check
-     * @param talbeName  the table name which contains the xml node data
+     * @param tableName  the table name which contains the xml node data
      * @throws SQLException
      * @throws IOException
      * @throws AdminException
@@ -216,8 +216,8 @@ public class XMLNodesToFilesChecker {
                                     + " since " + e.getMessage());
                         if (rootNodeIdObj != null) {
                             logMetacat.warn("XMLNodestoFilesChecker.checkExportedFiles - "
-                                         + "put root node id " + rootNodeIdObj.longValue()
-                                         +" into the failed vector");
+                                         + "put root node id " + rootNodeIdObj
+                                         + " into the failed vector");
                             failedRootNodeIds.add(rootNodeIdObj);
                         }
                         if (!fileOriginExists && documentFile != null) {

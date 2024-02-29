@@ -21,7 +21,7 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 
 /**
- * The class to backup dropper tables to the csv files during the upgrade process to 3.0.0
+ * The class to back up dropped tables to the csv files during the upgrade process to 3.0.0
  * @author tao
  *
  */
@@ -62,7 +62,7 @@ public class DroppedTableBackupper300 {
         public String getTableName() {
             return this.tableName;
         }
-    };
+    }
 
     /**
      * Constructor
@@ -71,7 +71,7 @@ public class DroppedTableBackupper300 {
      */
     public DroppedTableBackupper300(String backupPath) throws AdminException {
         this.backupPath = backupPath;
-        if(this.backupPath == null || this.backupPath.trim().equals("")) {
+        if(this.backupPath == null || this.backupPath.isBlank()) {
             throw new AdminException("DroppedTableBackupper300.constructor - "
                                                 + "The backup Path cannot be null or blank");
         }
@@ -112,8 +112,7 @@ public class DroppedTableBackupper300 {
                                                                     + getFileName(tableName)))) {
                 writer.write(XML_NODES_HEADER);
                 if (rootNodeIds != null) {
-                    for (int i=0; i< rootNodeIds.size(); i++) {
-                        long rootNodeId = rootNodeIds.get(i).longValue();
+                    for (Long rootNodeId : rootNodeIds) {
                         String query = "SELECT " + XML_NODES_HEADER + " FROM " + tableName
                                                                 + " WHERE rootnodeid=" + rootNodeId;
                         backupTable(query, writer);
@@ -179,31 +178,32 @@ public class DroppedTableBackupper300 {
      * @throws IOException
      */
     private void backupTable(String query, BufferedWriter writer) throws SQLException, IOException {
-        ResultSet result = runQuery(query);
-        ResultSetMetaData metaData = result.getMetaData();
-        int columnCount = metaData.getColumnCount();
-        while (result.next()) {
-            writer.newLine();
-            StringBuffer line = new StringBuffer("");
-            for (int i = 1; i <= columnCount; i++) {
-                Object valueObject = result.getObject(i);
-                String valueString = "";
-                if (valueObject != null) {
-                    valueString = valueObject.toString();
-                }
+        try (ResultSet result = runQuery(query)) {
+            ResultSetMetaData metaData = result.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            while (result.next()) {
+                writer.newLine();
+                StringBuffer line = new StringBuffer("");
+                for (int i = 1; i <= columnCount; i++) {
+                    Object valueObject = result.getObject(i);
+                    String valueString = "";
+                    if (valueObject != null) {
+                        valueString = valueObject.toString();
+                    }
 
-                if (valueObject instanceof String) {
-                    valueString = "\"" + escapeDoubleQuotes(valueString) + "\"";
-                }
+                    if (valueObject instanceof String) {
+                        valueString = "\"" + escapeDoubleQuotes(valueString) + "\"";
+                    }
 
-                line.append(valueString);
-                if (i != columnCount) {
-                    line.append(",");
+                    line.append(valueString);
+                    if (i != columnCount) {
+                        line.append(",");
+                    }
+                    logMetacat.debug("DroppedTableBackupper300.backupTable - the row string is "
+                                    + line.toString());
                 }
-                logMetacat.debug("DroppedTableBackupper300.backupTable - the row string is "
-                                + line.toString());
+                writer.write(line.toString());
             }
-            writer.write(line.toString());
         }
     }
 

@@ -51,6 +51,10 @@ public class SolrConfigUpgrader {
         try {
             hashString = PropertyService.getProperty("index.configFile.released.hash");
             solrHomePath = PropertyService.getProperty("solr.homeDir");
+            if (solrHomePath.endsWith("/")) {
+                //remove the last "/"
+                solrHomePath = solrHomePath.substring(0, solrHomePath.lastIndexOf("/"));
+            }
             String indexContext = PropertyService.getProperty("index.context");
             currentHash = PropertyService.getProperty("index.configFile.current.hash");
             logMetacat.info("SolrConfigUpgrader.constructor - the current hash is " + currentHash);
@@ -58,7 +62,7 @@ public class SolrConfigUpgrader {
             metacatIndexSolrHome = metacatWebInf + "/../../" + indexContext
                                                                     + "/WEB-INF/classes/solr-home";
         } catch (PropertyNotFoundException pnfe) {
-            throw new PropertyNotFoundException("SolrConfigUpdator.Constructor - "
+            throw new PropertyNotFoundException("SolrConfigUpgrader.Constructor - "
                             + "could not get a metacat property in the metacat.properties file - "
                             + pnfe.getMessage());
         }

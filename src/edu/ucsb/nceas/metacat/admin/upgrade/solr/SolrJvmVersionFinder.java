@@ -34,7 +34,6 @@ public class SolrJvmVersionFinder {
     private static final String INFO_APPENDIX = "admin/info/system?wt=xml";
     private static Log logMetacat = LogFactory.getLog(SolrJvmVersionFinder.class);
     private String solrInfoUrl;
-    private DocumentBuilderFactory factory;
     private DocumentBuilder builder;
 
     /**
@@ -55,7 +54,7 @@ public class SolrJvmVersionFinder {
             solrInfoUrl = solrBaseUrl + "/" + INFO_APPENDIX;
         }
         logMetacat.debug("SolrJvmVersionFinder.constructor - the solr info url is " + solrInfoUrl);
-        factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         builder = factory.newDocumentBuilder();
     }
 
@@ -103,7 +102,7 @@ public class SolrJvmVersionFinder {
         URL url = new URI(solrInfoUrl).toURL();
         try (InputStream input = url.openStream()) {
             byte[] result = IOUtils.toByteArray(input);
-            return new String(result, StandardCharsets.UTF_8.name());
+            return new String(result, StandardCharsets.UTF_8);
         }
     }
 

@@ -34,7 +34,7 @@ public class PrerequisiteChecker300 {
             if (version.compareTo(version200) < 0 && version.compareTo(version000) != 0) {
                 throw new AdminException(error + " Also make sure it is compliance with DataONE API"
                                     + ", which means you should generate system metadata for the"
-                                    + " existing objects. Detalis please see"
+                                    + " existing objects. Details please see"
                                     + " https://knb.ecoinformatics.org/knb/docs"
                                     + "/dataone.html#generating-dataone-system-metadata");
             } else if (version.compareTo(version219) < 0 && version.compareTo(version000) != 0) {
