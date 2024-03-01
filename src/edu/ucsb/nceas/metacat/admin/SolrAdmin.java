@@ -165,179 +165,19 @@ public class SolrAdmin extends MetacatAdmin {
      */
     public void configureSolr(HttpServletRequest request,
             HttpServletResponse response) throws AdminException {
-
-        UnsupportedOperationException unsupportedOperException = null;
         String processForm = request.getParameter("processForm");
         String bypass = request.getParameter("bypass");
         String formErrors = (String) request.getAttribute("formErrors");
 
         if (processForm == null || !processForm.equals("true") || formErrors != null) {
-            // The servlet configuration parameters have not been set, or there
-            // were form errors on the last attempt to configure, so redirect to
-            // the web form for configuring metacat
-            // This branch will show the initial solr admin page.
-            try {
-                // get the current configuration values
-                String baseURL = PropertyService.getProperty("solr.baseURL");
-                String coreName = PropertyService.getProperty("solr.coreName");
-                String solrHomePath = PropertyService.getProperty("solr.homeDir");
-                if(coreName == null || coreName.isBlank()) {
-                    throw new AdminException("The Solr core name shouldn't be null or blank. Please"
-                      + " go back to the Metacat Global Properties admin page to configure again.");
-                }
-
-                if(solrHomePath == null || solrHomePath.isBlank()) {
-                    throw new AdminException("The Solr home path shouldn't be null or blank. Please"
-                      + " go back to the Metacat Global Properties admin page to configure again.");
-                }
-                if (solrHomePath.endsWith("/")) {
-                    //remove the last "/"
-                    solrHomePath = solrHomePath.substring(0, solrHomePath.lastIndexOf("/"));
-                }
-
-                boolean solrHomeExists = new File(solrHomePath).exists();
-                if (solrHomeExists) {
-                    // check it
-                    if (!FileUtil.isDirectory(solrHomePath)) {
-                        throw new AdminException("SolrAdmin.configureProperties - SOLR home is not "
-                                                  + "a directory: " + solrHomePath);
-                    }
-                }
-                boolean solrHomeConfExists = new File(solrHomePath + "/" + CONF).exists();
-                boolean solrHomeDataExists = new File(solrHomePath + "/"+ DATA).exists();
-                boolean solrHomeCoreExists = new File(solrHomePath + "/" + CORE_PROPERTY).exists();
-                request.setAttribute("solrHomeExist", (Boolean) solrHomeExists);
-                request.setAttribute("solrHomeValueInProp", solrHomePath);
-
-                boolean updateSchema = false;
-                if(updateClassMap != null && !updateClassMap.isEmpty()) {
-                    updateSchema = true;
-                    if (updateClassMap.containsKey("3.0.0")) {
-                        logMetacat.debug("SolrAdmin.configureSolr - We need to check jvm version "
-                                    + " when we upgrade Metacat from 2.19.0 to 3.*.");
-                        // We need to check the jvm version of solr when we upgrade solr for
-                        // Metacat 3.0.0. The solrconfig.xml and schema.xml in the Metacat 2.* index
-                        // don't work well under java 17.
-                        SolrJvmVersionFinder versionFinder = new SolrJvmVersionFinder(baseURL);
-                        try {
-                            String jvmVersion = versionFinder.find();
-                            if (jvmVersion == null || !jvmVersion.startsWith("1.8")) {
-                                throw new AdminException("SolrAdmin.configureSolr - The Solr "
-                                     + " instance is running against Java " + jvmVersion
-                                     + ". Please restart the Solr instance with Java 1.8 so "
-                                     + "Metacat can determine the Solr instance's status."
-                                     + " Then restart Tomcat and come back to the admin page. "
-                                + "After configuration, you may switch JAVA back to " + jvmVersion);
-                            }
-                        } catch (URISyntaxException | TransformerException e) {
-                            throw new AdminException("SolrAdmin.configureSolr - Metacat couldn't"
-                                    + " determine the jvm version of Solr since " + e.getMessage());
-                        }
-                    }
-                }
-
-                //check the solr-home for given core name
-                String solrHomeForGivenCore = getInstanceDir(coreName);
-                request.setAttribute("solrCore", coreName);
-                if(solrHomeForGivenCore != null) {
-                   //the given core  exists
-                    request.setAttribute("solrHomeForGivenCore", solrHomeForGivenCore);
-                }
-
-                logMetacat.info("SolrAdmin.configureSolr -the solr-home on the properties is "
-                                + solrHomePath + " and doe it exist? " + solrHomeExists);
-                logMetacat.info("SolrAdmin.configureSolr - the instance directory for the core "
-                                 + coreName + " is " + solrHomeForGivenCore
-                                 + " If it is null, this means the core doesn't exit.");
-                logMetacat.info("SolrAdmin.configureSolr - in this upgrade/installation, do we need"
-                                 + " to update the schema file?" + updateSchema);
-                if(solrHomeForGivenCore == null && (!solrHomeExists
-                        || (!solrHomeConfExists && !solrHomeCoreExists && !solrHomeDataExists))) {
-                    //action 1 - create (no core and no solr home)
-                    request.setAttribute(ACTION, CREATE);
-                } else if (solrHomeForGivenCore == null && solrHomeExists && !updateSchema) {
-                    //action 2 - register (no core but having solr home and no schema update)
-                    request.setAttribute(ACTION, REGISTER);
-                } else if (solrHomeForGivenCore == null && solrHomeExists && updateSchema) {
-                    //action 3 - register (no core but having solr home and having schema update)
-                    request.setAttribute(ACTION, REGISTERANDUPDATE);
-                } else if (solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath)
-                                                          && !solrHomeExists && !updateSchema) {
-                   //action 4. createWithWarning - core does exist, but its instance directory is
-                   //different to the solr-home in the properties file, and solr home doesn't exist.
-                   // Ask users to choose a new core name associating with the new solr-home or
-                    // keep the original one. If keeping the original one, no update will need.
-                    request.setAttribute(ACTION, CREATEWITHWARN);
-                } else if (solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath)
-                                                            && !solrHomeExists && updateSchema) {
-                    //4.1 CreateOrUpdateWithWarning - core does exist, but its the instance
-                    // directory is different to the solr-home in the properties file and solr home
-                    // doesn't exist.
-                    //Ask users to choose a new core name associating with the new solr-home or
-                    // keep the original one. If keeping the original one, a schema update will need
-                    request.setAttribute(ACTION, CREATEORUPDATEWITHWARN);
-                } else if (solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath)
-                                                            && solrHomeExists && !updateSchema) {
-                  //action 5. RegisterWithWarning - core does exist, but its instance directory is
-                  // different to the solr-home in the properties file and solr home does exist and
-                  // no schema update.
-                  // Ask users to choose a new core name associating with the new solr-home or
-                    // keep the original one. If keeping the original one, nothing will be done.
-                    request.setAttribute(ACTION, REGISTERWITHWARN);
-                } else if(solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath)
-                                                            && solrHomeExists && updateSchema) {
-                    //action 6. RegisterAndUpdateWithWarning - core does exist, but its instance
-                    // directory is different to the solr-home in the properties file and
-                    // solr home does exist and needing schema update.
-                    // Ask users to choose a new core name associating with the new solr-home or
-                    // keep the original one. If keeping the original one, a schema update will need
-                    request.setAttribute(ACTION, REGISTERANDUPDATEWITHWARN);
-                } else if (solrHomeForGivenCore != null && solrHomeForGivenCore.equals(solrHomePath)
-                                                            && solrHomeExists && !updateSchema) {
-                    //action 7. Keep - both core and solr-home does exist. And the core's instance
-                    //directory is as same as the solr-home. There is no schema update indication
-                    request.setAttribute(ACTION, KEEP);
-                } else if (solrHomeForGivenCore != null && solrHomeForGivenCore.equals(solrHomePath)
-                                                            && solrHomeExists && updateSchema) {
-                    //action 8. Update - both core and solr-home does exist. And the core's
-                    // instance directory is as same as the solr-home. There is a schema
-                    //update indication
-                    request.setAttribute(ACTION, UPDATE);
-                } else {
-                    request.setAttribute(ACTION, UNKNOWN);
-                }
-
-                // Forward the request to the JSP page
-                RequestUtil.forwardRequest(request, response,
-                        "/admin/solr-configuration.jsp", null);
-            } catch (GeneralPropertyException gpe) {
-                throw new AdminException("SolrAdmin.configureSolr - Problem getting or " +
-                        "setting property while initializing solr page: " + gpe.getMessage());
-            } catch (MetacatUtilException mue) {
-                throw new AdminException("SolrAdmin.configureSolr- utility problem while initializing "
-                        + "solr page:" + mue.getMessage());
-            } catch (UnsupportedType e) {
-                throw new AdminException("SolrAdmin.configureSolr- unsupported type problem"
-                                        + " while initializing " + "solr page:" + e.getMessage());
-            } catch (ParserConfigurationException e) {
-                throw new AdminException("SolrAdmin.configureSolr- parser configuration problem "
-                                        + "while initializing " + "solr page:" + e.getMessage());
-            } catch (IOException e) {
-                throw new AdminException("SolrAdmin.configureSolr- io problem while initializing "
-                        + "solr page:" + e.getMessage());
-            } catch (SAXException e) {
-                throw new AdminException("SolrAdmin.configureSolr- SAX problem while initializing "
-                        + "solr page:" + e.getMessage());
-            } catch (SolrServerException e) {
-                throw new AdminException("SolrAdmin.configureSolr- solr problem while initializing "
-                        + "solr page:" + e.getMessage());
-            }
+            // check the current solr status
+            // and send back the possible actions which user can operate.
+            checkSolrStatus(request, response);
         } else if (bypass != null && bypass.equals("true")) {
+            // Bypass the solr configuration. This will not keep
+            // Metacat from running.
             Vector<String> processingErrors = new Vector<String>();
             Vector<String> processingSuccess = new Vector<String>();
-
-            // Bypass the geoserver configuration. This will not keep
-            // Metacat from running.
             try {
                 PropertyService.setProperty("configutil.solrserverConfigured",
                         PropertyService.BYPASSED);
@@ -374,209 +214,390 @@ public class SolrAdmin extends MetacatAdmin {
                 throw new AdminException("Solr.configureSolr - utility problem while processing solr services "
                         + "solr services page: " + mue.getMessage());
             }
-
         } else {
             // The configuration form is being submitted and needs to be
-            // processed. This branch handles the action which users choose.
-            Vector<String> validationErrors = new Vector<String>();
-            Vector<String> processingErrors = new Vector<String>();
-            Vector<String> processingSuccess = new Vector<String>();
+            // processed. This branch handles the action which the users choose.
+            processResponse(request, response);
+        }
+    }
 
-            try {
-                // Validate that the options provided are legitimate. Note that
-                // we've allowed them to persist their entries. As of this point
-                // there is no other easy way to go back to the configure form
-                // and preserve their entries.
-                validationErrors.addAll(validateOptions(request));
-                String action = request.getParameter(ACTION);
-                logMetacat.info("SolrAdmin.configureSolr - the action which users choose is "+action);
-                if(action != null && action.equals(CREATE)) {
-                    //action 1 - create (no core and no solr home)
-                    try {
-                        createSolrHome();
-                        //set the solr_upgraded status true for the current Metacat version
-                        updateSolrStatus(DBAdmin.getInstance().getDBVersion().getVersionString(), true);
-                    }  catch (UnsupportedOperationException usoe) {
-                        unsupportedOperException = usoe;
-                    }
-                    registerSolrCore();
-                } else if (action != null && action.equals(REGISTER)) {
-                    //action 2 - register (no core but having solr home and no schema update)
-                    registerSolrCore();
-                } else if (action != null && action.equals(REGISTERANDUPDATE)) {
-                  //action 3 - register (no core but having solr home and having schema update)
-                    registerSolrCore();
-                    updateSolrSchema();
-                } else if (action != null && (action.equals(CREATEWITHWARN)
-                        || action.equals(CREATEORUPDATEWITHWARN) || action.equals(REGISTERWITHWARN)
-                        || action.equals(REGISTERANDUPDATEWITHWARN))) {
-                    //action 4. createWithWarning - core does exist, but its instance directory
-                    //is different to the solr-home in the properties file, and solr home doesn't exist.
-                    // Ask users to choose a new core name associating with the new solr-home or keep
-                    //the original one. If keeping the original one, no update will need.
-                    //4.1 CreateOrUpdateWithWarning - core does exist, but the instance directory
-                    //is different to the solr-home in the properties file and solr home doesn't exist.
-                    //Ask users to choose a new core name associating with the new solr-home or
-                    //keep the original one. If keeping the original one, a schema update will need
-                    //action 5. RegisterWithWarning - core does exist, but its instance directory
-                    //is different to the solr-home in the properties file and solr home does exist
-                    //and no schema update.
-                    // Ask users to choose a new core name associating with the new solr-home or
-                    //keep the original one. If keeping the original one, nothing will be done.
-                    //action 6. RegisterAndUpdateWithWarning - core does exist, but its instance
-                    //directory is different to the solr-home in the properties file and solr home
-                    //does exist and needing schema update.
-                    // Ask users to choose a new core name associating with the new solr-home or
-                    //keep the original one. If keeping the original one, a schema update will need
-                    String userChoice =  request.getParameter(NEWSOLRCOREORNOT);
-                    logMetacat.info("SolrAdmin.configureSolr - the user's choice is "+userChoice);
-                    if(userChoice != null && userChoice.equals(NEWSOLRCORE)) {
-                        //users choose to use a new core name to associate the solr-home
-                        String newCoreName = request.getParameter(NEWSOLCORENAME);
-                        logMetacat.info("SolrAdmin.configureSolr - the new solr core name users "
-                                            + " chose is " + newCoreName);
-                        if (newCoreName == null || newCoreName.isBlank()) {
-                            //users chose a null as the name.
-                            String error = "The new core name shouldn't be null or blank";
-                            processingErrors.add(error);
-                        } else {
-                            String instanceDirForNewCore = getInstanceDir(newCoreName);
-                            if(instanceDirForNewCore != null) {
-                                //the new core still exists! we need to ask user to choose again.
-                                String error = "The new core name " + newCoreName
-                                         + " is used by another core. Please choose another name";
-                                processingErrors.add(error);
-                            } else {
-                                //change the solr.coreName in the metacat.properties
-                                PropertyService.setPropertyNoPersist("solr.coreName", newCoreName);
-                                // persist them all
-                                PropertyService.persistProperties();
-                                PropertyService.syncToSettings();
-                                // save a backup in case the form has errors, we reload from these
-                                PropertyService.persistMainBackupProperties();
-                                if(action.equals(CREATEWITHWARN) || action.equals(CREATEORUPDATEWITHWARN)) {
-                                    try {
-                                        createSolrHome();
-                                    }  catch (UnsupportedOperationException usoe) {
-                                        unsupportedOperException = usoe;
-                                    }
-                                    registerSolrCore();
-                                } else if (action.equals(REGISTERWITHWARN)) {
-                                    registerSolrCore();
-                                } else if (action.equals(REGISTERANDUPDATEWITHWARN)) {
-                                    registerSolrCore();
-                                    updateSolrSchema();
-                                }
-                            }
-                        }
-                    } else if (userChoice != null && userChoice.equals(EXISTINGCORE)) {
-                        //users choose to keep the core name but use its current instance directory
-                        // as the solr-home we need to change the solr.homeDir in metacat.properties
-                        String currentSolrInstanceDir = request.getParameter(CURRENTCOREINSTANCEDIR);
-                        logMetacat.info("SolrAdmin.configureSolr - the current solr instance directory is "
-                                                                    + currentSolrInstanceDir);
-                        PropertyService.setPropertyNoPersist("solr.homeDir", currentSolrInstanceDir);
-                        // persist them all
-                        PropertyService.persistProperties();
-                        PropertyService.syncToSettings();
-                        // save a backup in case the form has errors, we reload from these
-                        PropertyService.persistMainBackupProperties();
-                        if(action.equals(CREATEORUPDATEWITHWARN)
-                                                    || action.equals(REGISTERANDUPDATEWITHWARN)) {
-                            //we also need to update the schema
-                              updateSolrSchema();
-                          }
-
-                    } else {
-                        throw new AdminException("User's choice "+userChoice+" can't be understood.");
-                    }
-                } else if (action != null && action.equals(KEEP)) {
-                  //action 7. Keep - both core and solr-home does exist. And the core's instance
-                  //directory is as same as the solr-home. There is no schema update indication
-                  //do nothing
-
-                } else if (action != null && action.equals(UPDATE)) {
-                    //action 8. Update - both core and solr-home does exist. And the core's instance
-                    //directory is as same as the solr-home. There is a schema update indication
-                    updateSolrSchema();
-                } else {
-                    throw new Exception("The action " + action
-                                                + " can't be handled in the solr configuration.");
-                }
-                //}
-            }  catch (Exception gpe) {
-                String errorMessage = "SolrAdmin.configureSolr - Problem processing the solr setting since "
-                                                                            + gpe.getMessage();
-                logMetacat.error(errorMessage);
-                processingErrors.add(errorMessage);
+    /**
+     * Check the current solr status - such as if the solr core/solr-home directory exists,
+     * and send back actions which user can choose based on the status.
+     * @param request  the request from the client
+     * @param response  the response which will be sent back to the client
+     * @throws AdminException
+     */
+    protected void checkSolrStatus(HttpServletRequest request, HttpServletResponse response)
+                                                                            throws AdminException {
+        // The servlet configuration parameters have not been set, or there
+        // were form errors on the last attempt to configure, so redirect to
+        // the web form for configuring metacat
+        // This branch will show the initial solr admin page.
+        try {
+            // get the current configuration values
+            String baseURL = PropertyService.getProperty("solr.baseURL");
+            String coreName = PropertyService.getProperty("solr.coreName");
+            String solrHomePath = PropertyService.getProperty("solr.homeDir");
+            if(coreName == null || coreName.isBlank()) {
+                throw new AdminException("The Solr core name shouldn't be null or blank. Please"
+                  + " go back to the Metacat Global Properties admin page to configure again.");
             }
 
-            try {
-                boolean persist = true;
-                if (validationErrors.size() > 0 || processingErrors.size() > 0) {
-                    //set the upgrade process to failure
+            if(solrHomePath == null || solrHomePath.isBlank()) {
+                throw new AdminException("The Solr home path shouldn't be null or blank. Please"
+                  + " go back to the Metacat Global Properties admin page to configure again.");
+            }
+            if (solrHomePath.endsWith("/")) {
+                //remove the last "/"
+                solrHomePath = solrHomePath.substring(0, solrHomePath.lastIndexOf("/"));
+            }
+
+            boolean solrHomeExists = new File(solrHomePath).exists();
+            if (solrHomeExists) {
+                // check it
+                if (!FileUtil.isDirectory(solrHomePath)) {
+                    throw new AdminException("SolrAdmin.configureProperties - SOLR home is not "
+                                              + "a directory: " + solrHomePath);
+                }
+            }
+            boolean solrHomeConfExists = new File(solrHomePath + "/" + CONF).exists();
+            boolean solrHomeDataExists = new File(solrHomePath + "/"+ DATA).exists();
+            boolean solrHomeCoreExists = new File(solrHomePath + "/" + CORE_PROPERTY).exists();
+            request.setAttribute("solrHomeExist", (Boolean) solrHomeExists);
+            request.setAttribute("solrHomeValueInProp", solrHomePath);
+
+            boolean updateSchema = false;
+            if(updateClassMap != null && !updateClassMap.isEmpty()) {
+                updateSchema = true;
+                if (updateClassMap.containsKey("3.0.0")) {
+                    logMetacat.debug("SolrAdmin.configureSolr - We need to check jvm version "
+                                + " when we upgrade Metacat from 2.19.0 to 3.*.");
+                    // We need to check the jvm version of solr when we upgrade solr for
+                    // Metacat 3.0.0. The solrconfig.xml and schema.xml in the Metacat 2.* index
+                    // don't work well under java 17.
+                    SolrJvmVersionFinder versionFinder = new SolrJvmVersionFinder(baseURL);
                     try {
-                        MetacatAdmin.updateUpgradeStatus("configutil.upgrade.solr.status",
-                                                                    MetacatAdmin.FAILURE, persist);
-                    } catch (Exception e) {
-                        logMetacat.warn("SolrAdmin.configureSolr - couldn't update the status of "
-                                        + "the upgrading Solr process since " + e.getMessage());
+                        String jvmVersion = versionFinder.find();
+                        if (jvmVersion == null || !jvmVersion.startsWith("1.8")) {
+                            throw new AdminException("SolrAdmin.configureSolr - The Solr "
+                                 + " instance is running against Java " + jvmVersion
+                                 + ". Please restart the Solr instance with Java 1.8 so "
+                                 + "Metacat can determine the Solr instance's status."
+                                 + " Then restart Tomcat and come back to the admin page. "
+                            + "After configuration, you may switch JAVA back to " + jvmVersion);
+                        }
+                    } catch (URISyntaxException | TransformerException e) {
+                        throw new AdminException("SolrAdmin.configureSolr - Metacat couldn't"
+                                + " determine the jvm version of Solr since " + e.getMessage());
                     }
-                    RequestUtil.clearRequestMessages(request);
-                    RequestUtil.setRequestFormErrors(request, validationErrors);
-                    RequestUtil.setRequestErrors(request, processingErrors);
-                    RequestUtil.forwardRequest(request, response, "/admin", null);
+                }
+            }
+
+            //check the solr-home for given core name
+            String solrHomeForGivenCore = getInstanceDir(coreName);
+            request.setAttribute("solrCore", coreName);
+            if(solrHomeForGivenCore != null) {
+               //the given core  exists
+                request.setAttribute("solrHomeForGivenCore", solrHomeForGivenCore);
+            }
+
+            logMetacat.info("SolrAdmin.configureSolr -the solr-home on the properties is "
+                            + solrHomePath + " and doe it exist? " + solrHomeExists);
+            logMetacat.info("SolrAdmin.configureSolr - the instance directory for the core "
+                             + coreName + " is " + solrHomeForGivenCore
+                             + " If it is null, this means the core doesn't exit.");
+            logMetacat.info("SolrAdmin.configureSolr - in this upgrade/installation, do we need"
+                             + " to update the schema file?" + updateSchema);
+            if(solrHomeForGivenCore == null && (!solrHomeExists
+                    || (!solrHomeConfExists && !solrHomeCoreExists && !solrHomeDataExists))) {
+                //action 1 - create (no core and no solr home)
+                request.setAttribute(ACTION, CREATE);
+            } else if (solrHomeForGivenCore == null && solrHomeExists && !updateSchema) {
+                //action 2 - register (no core but having solr home and no schema update)
+                request.setAttribute(ACTION, REGISTER);
+            } else if (solrHomeForGivenCore == null && solrHomeExists && updateSchema) {
+                //action 3 - register (no core but having solr home and having schema update)
+                request.setAttribute(ACTION, REGISTERANDUPDATE);
+            } else if (solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath)
+                                                      && !solrHomeExists && !updateSchema) {
+               //action 4. createWithWarning - core does exist, but its instance directory is
+               //different to the solr-home in the properties file, and solr home doesn't exist.
+               // Ask users to choose a new core name associating with the new solr-home or
+                // keep the original one. If keeping the original one, no update will need.
+                request.setAttribute(ACTION, CREATEWITHWARN);
+            } else if (solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath)
+                                                        && !solrHomeExists && updateSchema) {
+                //4.1 CreateOrUpdateWithWarning - core does exist, but its the instance
+                // directory is different to the solr-home in the properties file and solr home
+                // doesn't exist.
+                //Ask users to choose a new core name associating with the new solr-home or
+                // keep the original one. If keeping the original one, a schema update will need
+                request.setAttribute(ACTION, CREATEORUPDATEWITHWARN);
+            } else if (solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath)
+                                                        && solrHomeExists && !updateSchema) {
+              //action 5. RegisterWithWarning - core does exist, but its instance directory is
+              // different to the solr-home in the properties file and solr home does exist and
+              // no schema update.
+              // Ask users to choose a new core name associating with the new solr-home or
+                // keep the original one. If keeping the original one, nothing will be done.
+                request.setAttribute(ACTION, REGISTERWITHWARN);
+            } else if(solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath)
+                                                        && solrHomeExists && updateSchema) {
+                //action 6. RegisterAndUpdateWithWarning - core does exist, but its instance
+                // directory is different to the solr-home in the properties file and
+                // solr home does exist and needing schema update.
+                // Ask users to choose a new core name associating with the new solr-home or
+                // keep the original one. If keeping the original one, a schema update will need
+                request.setAttribute(ACTION, REGISTERANDUPDATEWITHWARN);
+            } else if (solrHomeForGivenCore != null && solrHomeForGivenCore.equals(solrHomePath)
+                                                        && solrHomeExists && !updateSchema) {
+                //action 7. Keep - both core and solr-home does exist. And the core's instance
+                //directory is as same as the solr-home. There is no schema update indication
+                request.setAttribute(ACTION, KEEP);
+            } else if (solrHomeForGivenCore != null && solrHomeForGivenCore.equals(solrHomePath)
+                                                        && solrHomeExists && updateSchema) {
+                //action 8. Update - both core and solr-home does exist. And the core's
+                // instance directory is as same as the solr-home. There is a schema
+                //update indication
+                request.setAttribute(ACTION, UPDATE);
+            } else {
+                request.setAttribute(ACTION, UNKNOWN);
+            }
+
+            // Forward the request to the JSP page
+            RequestUtil.forwardRequest(request, response,
+                    "/admin/solr-configuration.jsp", null);
+        } catch (GeneralPropertyException gpe) {
+            throw new AdminException("SolrAdmin.configureSolr - Problem getting or " +
+                    "setting property while initializing solr page: " + gpe.getMessage());
+        } catch (MetacatUtilException mue) {
+            throw new AdminException("SolrAdmin.configureSolr- utility problem while initializing "
+                    + "solr page:" + mue.getMessage());
+        } catch (UnsupportedType e) {
+            throw new AdminException("SolrAdmin.configureSolr- unsupported type problem"
+                                    + " while initializing " + "solr page:" + e.getMessage());
+        } catch (ParserConfigurationException e) {
+            throw new AdminException("SolrAdmin.configureSolr- parser configuration problem "
+                                    + "while initializing " + "solr page:" + e.getMessage());
+        } catch (IOException e) {
+            throw new AdminException("SolrAdmin.configureSolr- io problem while initializing "
+                    + "solr page:" + e.getMessage());
+        } catch (SAXException e) {
+            throw new AdminException("SolrAdmin.configureSolr- SAX problem while initializing "
+                    + "solr page:" + e.getMessage());
+        } catch (SolrServerException e) {
+            throw new AdminException("SolrAdmin.configureSolr- solr problem while initializing "
+                    + "solr page:" + e.getMessage());
+        }
+    }
+
+    /**
+     * Process the user's choices to the solr server
+     * @param request  the request from the client
+     * @param response  the response which will be sent back to the client
+     * @throws AdminException
+     */
+    protected void processResponse(HttpServletRequest request, HttpServletResponse response)
+                                                                            throws AdminException {
+        UnsupportedOperationException unsupportedOperException = null;
+        Vector<String> validationErrors = new Vector<String>();
+        Vector<String> processingErrors = new Vector<String>();
+        Vector<String> processingSuccess = new Vector<String>();
+
+        try {
+            // Validate that the options provided are legitimate. Note that
+            // we've allowed them to persist their entries. As of this point
+            // there is no other easy way to go back to the configure form
+            // and preserve their entries.
+            validationErrors.addAll(validateOptions(request));
+            String action = request.getParameter(ACTION);
+            logMetacat.info("SolrAdmin.configureSolr - the action which users choose is "+action);
+            if(action != null && action.equals(CREATE)) {
+                //action 1 - create (no core and no solr home)
+                try {
+                    createSolrHome();
+                    //set the solr_upgraded status true for the current Metacat version
+                    updateSolrStatus(DBAdmin.getInstance().getDBVersion().getVersionString(), true);
+                }  catch (UnsupportedOperationException usoe) {
+                    unsupportedOperException = usoe;
+                }
+                registerSolrCore();
+            } else if (action != null && action.equals(REGISTER)) {
+                //action 2 - register (no core but having solr home and no schema update)
+                registerSolrCore();
+            } else if (action != null && action.equals(REGISTERANDUPDATE)) {
+              //action 3 - register (no core but having solr home and having schema update)
+                registerSolrCore();
+                updateSolrSchema();
+            } else if (action != null && (action.equals(CREATEWITHWARN)
+                    || action.equals(CREATEORUPDATEWITHWARN) || action.equals(REGISTERWITHWARN)
+                    || action.equals(REGISTERANDUPDATEWITHWARN))) {
+                //action 4. createWithWarning - core does exist, but its instance directory
+                //is different to the solr-home in the properties file, and solr home doesn't exist.
+                // Ask users to choose a new core name associating with the new solr-home or keep
+                //the original one. If keeping the original one, no update will need.
+                //4.1 CreateOrUpdateWithWarning - core does exist, but the instance directory
+                //is different to the solr-home in the properties file and solr home doesn't exist.
+                //Ask users to choose a new core name associating with the new solr-home or
+                //keep the original one. If keeping the original one, a schema update will need
+                //action 5. RegisterWithWarning - core does exist, but its instance directory
+                //is different to the solr-home in the properties file and solr home does exist
+                //and no schema update.
+                // Ask users to choose a new core name associating with the new solr-home or
+                //keep the original one. If keeping the original one, nothing will be done.
+                //action 6. RegisterAndUpdateWithWarning - core does exist, but its instance
+                //directory is different to the solr-home in the properties file and solr home
+                //does exist and needing schema update.
+                // Ask users to choose a new core name associating with the new solr-home or
+                //keep the original one. If keeping the original one, a schema update will need
+                String userChoice =  request.getParameter(NEWSOLRCOREORNOT);
+                logMetacat.info("SolrAdmin.configureSolr - the user's choice is "+userChoice);
+                if(userChoice != null && userChoice.equals(NEWSOLRCORE)) {
+                    //users choose to use a new core name to associate the solr-home
+                    String newCoreName = request.getParameter(NEWSOLCORENAME);
+                    logMetacat.info("SolrAdmin.configureSolr - the new solr core name users "
+                                        + " chose is " + newCoreName);
+                    if (newCoreName == null || newCoreName.isBlank()) {
+                        //users chose a null as the name.
+                        String error = "The new core name shouldn't be null or blank";
+                        processingErrors.add(error);
+                    } else {
+                        String instanceDirForNewCore = getInstanceDir(newCoreName);
+                        if(instanceDirForNewCore != null) {
+                            //the new core still exists! we need to ask user to choose again.
+                            String error = "The new core name " + newCoreName
+                                     + " is used by another core. Please choose another name";
+                            processingErrors.add(error);
+                        } else {
+                            //change the solr.coreName in the metacat.properties
+                            PropertyService.setPropertyNoPersist("solr.coreName", newCoreName);
+                            // persist them all
+                            PropertyService.persistProperties();
+                            PropertyService.syncToSettings();
+                            // save a backup in case the form has errors, we reload from these
+                            PropertyService.persistMainBackupProperties();
+                            if(action.equals(CREATEWITHWARN) || action.equals(CREATEORUPDATEWITHWARN)) {
+                                try {
+                                    createSolrHome();
+                                }  catch (UnsupportedOperationException usoe) {
+                                    unsupportedOperException = usoe;
+                                }
+                                registerSolrCore();
+                            } else if (action.equals(REGISTERWITHWARN)) {
+                                registerSolrCore();
+                            } else if (action.equals(REGISTERANDUPDATEWITHWARN)) {
+                                registerSolrCore();
+                                updateSolrSchema();
+                            }
+                        }
+                    }
+                } else if (userChoice != null && userChoice.equals(EXISTINGCORE)) {
+                    //users choose to keep the core name but use its current instance directory
+                    // as the solr-home we need to change the solr.homeDir in metacat.properties
+                    String currentSolrInstanceDir = request.getParameter(CURRENTCOREINSTANCEDIR);
+                    logMetacat.info("SolrAdmin.configureSolr - the current solr instance directory is "
+                                                                + currentSolrInstanceDir);
+                    PropertyService.setPropertyNoPersist("solr.homeDir", currentSolrInstanceDir);
+                    // persist them all
+                    PropertyService.persistProperties();
+                    PropertyService.syncToSettings();
+                    // save a backup in case the form has errors, we reload from these
+                    PropertyService.persistMainBackupProperties();
+                    if(action.equals(CREATEORUPDATEWITHWARN)
+                                                || action.equals(REGISTERANDUPDATEWITHWARN)) {
+                        //we also need to update the schema
+                          updateSolrSchema();
+                      }
+
                 } else {
-                    // Now that the options have been set, change the
-                    // 'propertiesConfigured' option to 'true'
-                    PropertyService.setProperty("configutil.solrserverConfigured",
-                            PropertyService.CONFIGURED);
-                    //set the upgrade process to success
-                    try {
-                        MetacatAdmin.updateUpgradeStatus("configutil.upgrade.solr.status",
-                                                                    MetacatAdmin.SUCCESS, persist);
-                    } catch (Exception e) {
-                        logMetacat.warn("SolrAdmin.configureSolr - couldn't update the status of the"
-                                            + " upgrading Solr process since " + e.getMessage());
-                    }
-                    if(solrSchemaException != null) {
+                    throw new AdminException("User's choice "+userChoice+" can't be understood.");
+                }
+            } else if (action != null && action.equals(KEEP)) {
+              //action 7. Keep - both core and solr-home does exist. And the core's instance
+              //directory is as same as the solr-home. There is no schema update indication
+              //do nothing
+
+            } else if (action != null && action.equals(UPDATE)) {
+                //action 8. Update - both core and solr-home does exist. And the core's instance
+                //directory is as same as the solr-home. There is a schema update indication
+                updateSolrSchema();
+            } else {
+                throw new Exception("The action " + action
+                                            + " can't be handled in the solr configuration.");
+            }
+            //}
+        }  catch (Exception gpe) {
+            String errorMessage = "SolrAdmin.configureSolr - Problem processing the solr setting since "
+                                                                        + gpe.getMessage();
+            logMetacat.error(errorMessage);
+            processingErrors.add(errorMessage);
+        }
+
+        try {
+            boolean persist = true;
+            if (validationErrors.size() > 0 || processingErrors.size() > 0) {
+                //set the upgrade process to failure
+                try {
+                    MetacatAdmin.updateUpgradeStatus("configutil.upgrade.solr.status",
+                                                                MetacatAdmin.FAILURE, persist);
+                } catch (Exception e) {
+                    logMetacat.warn("SolrAdmin.configureSolr - couldn't update the status of "
+                                    + "the upgrading Solr process since " + e.getMessage());
+                }
+                RequestUtil.clearRequestMessages(request);
+                RequestUtil.setRequestFormErrors(request, validationErrors);
+                RequestUtil.setRequestErrors(request, processingErrors);
+                RequestUtil.forwardRequest(request, response, "/admin", null);
+            } else {
+                // Now that the options have been set, change the
+                // 'propertiesConfigured' option to 'true'
+                PropertyService.setProperty("configutil.solrserverConfigured",
+                        PropertyService.CONFIGURED);
+                //set the upgrade process to success
+                try {
+                    MetacatAdmin.updateUpgradeStatus("configutil.upgrade.solr.status",
+                                                                MetacatAdmin.SUCCESS, persist);
+                } catch (Exception e) {
+                    logMetacat.warn("SolrAdmin.configureSolr - couldn't update the status of the"
+                                        + " upgrading Solr process since " + e.getMessage());
+                }
+                if(solrSchemaException != null) {
+                    //Show the warning message
+                    Vector<String> errorVector = new Vector<String>();
+                    errorVector.add(solrSchemaException.getMessage());
+                    RequestUtil.clearRequestMessages(request);
+                    //request.setAttribute("supportEmail", supportEmail);
+                    RequestUtil.setRequestErrors(request, errorVector);
+                    RequestUtil.forwardRequest(request, response,
+                                    "/admin/solr-schema-warn.jsp", null);
+                } else if (unsupportedOperException != null) {
                         //Show the warning message
                         Vector<String> errorVector = new Vector<String>();
-                        errorVector.add(solrSchemaException.getMessage());
+                        errorVector.add(unsupportedOperException.getMessage());
                         RequestUtil.clearRequestMessages(request);
                         //request.setAttribute("supportEmail", supportEmail);
                         RequestUtil.setRequestErrors(request, errorVector);
                         RequestUtil.forwardRequest(request, response,
-                                        "/admin/solr-schema-warn.jsp", null);
-                    } else if (unsupportedOperException != null) {
-                            //Show the warning message
-                            Vector<String> errorVector = new Vector<String>();
-                            errorVector.add(unsupportedOperException.getMessage());
-                            RequestUtil.clearRequestMessages(request);
-                            //request.setAttribute("supportEmail", supportEmail);
-                            RequestUtil.setRequestErrors(request, errorVector);
-                            RequestUtil.forwardRequest(request, response,
-                                            "/admin/solr-warn.jsp", null);
+                                        "/admin/solr-warn.jsp", null);
 
-                    } else {
-                            // Reload the main metacat configuration page
-                            processingSuccess.add("Solr server was successfully configured");
-                            RequestUtil.clearRequestMessages(request);
-                            RequestUtil.setRequestSuccess(request, processingSuccess);
-                            RequestUtil.forwardRequest(request, response,
-                                    "/admin?configureType=configure&processForm=false", null);
-                    }
+                } else {
+                        // Reload the main metacat configuration page
+                        processingSuccess.add("Solr server was successfully configured");
+                        RequestUtil.clearRequestMessages(request);
+                        RequestUtil.setRequestSuccess(request, processingSuccess);
+                        RequestUtil.forwardRequest(request, response,
+                                "/admin?configureType=configure&processForm=false", null);
                 }
-            } catch (MetacatUtilException mue) {
-                throw new AdminException("SolrAdmin.configureSolr - utility problem while processing"
-                        + "solr services page: " + mue.getMessage());
-            } catch (GeneralPropertyException gpe) {
-                throw new AdminException("SolrAdmin.configureSolr - problem with properties while "
-                        + "processing solr services configuration page: " + gpe.getMessage());
             }
+        } catch (MetacatUtilException mue) {
+            throw new AdminException("SolrAdmin.configureSolr - utility problem while processing"
+                    + "solr services page: " + mue.getMessage());
+        } catch (GeneralPropertyException gpe) {
+            throw new AdminException("SolrAdmin.configureSolr - problem with properties while "
+                    + "processing solr services configuration page: " + gpe.getMessage());
         }
     }
-
     /**
      * Validate the most important configuration options submitted by the user.
      *
