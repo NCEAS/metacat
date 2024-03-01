@@ -238,6 +238,7 @@ input[type="text"] {
     margin-left: 10px;
     margin-top: 0.5em;
     display: inline-block;
+    float: left;
 }
 
 .icon-plus-sign {
@@ -274,6 +275,15 @@ input[type="text"] {
     float: left;
     margin-left: 1em;
     margin-bottom: 10px;
+}
+
+.new-badge {
+    background: green;
+    color: white;
+    border-radius: 10px;
+    padding: 0px 4px;
+    display: inline-block;
+    margin-left: 0 !important;
 }
 
 
