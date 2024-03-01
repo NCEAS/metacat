@@ -140,11 +140,11 @@ public class SolrAdminIT {
         DBVersion dbVersion = new DBVersion(version);
         Vector<DBVersion> list;
         if (originStatus) {
-            list = SolrAdmin.getUnupgradedSolrVersions();
+            list = SolrAdmin.getNonUpgradedSolrVersions();
             assertFalse("Since version 3.0.0 is upgraded, it shouldn't be in the needed "
                                                  + "upgrade versions", contained(list, dbVersion));
         } else {
-            list = SolrAdmin.getUnupgradedSolrVersions();
+            list = SolrAdmin.getNonUpgradedSolrVersions();
             assertTrue("Since version 3.0.0 is not upgraded, it should be in the needed "
                                                  + "upgrade versions", contained(list, dbVersion));
         }
@@ -152,11 +152,11 @@ public class SolrAdminIT {
         boolean newStatus = !originStatus;
         SolrAdmin.updateSolrStatus(version, newStatus);
         if (newStatus) {
-            list = SolrAdmin.getUnupgradedSolrVersions();
+            list = SolrAdmin.getNonUpgradedSolrVersions();
             assertFalse("Since version 3.0.0 is upgraded, it shouldn't be in the needed "
                                                 + "upgrade versions", contained(list, dbVersion));
         } else {
-            list = SolrAdmin.getUnupgradedSolrVersions();
+            list = SolrAdmin.getNonUpgradedSolrVersions();
             assertTrue("Since version 3.0.0 is not upgraded, it should be in the needed "
                                                 + "upgrade versions", contained(list, dbVersion));
         }
