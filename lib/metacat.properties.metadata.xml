@@ -58,7 +58,7 @@
         <index>0</index>
         <fieldType>hidden</fieldType>
         <description>
-            Default skin type. Not shown on config page but we want it to backup.
+            Default skin type. Not shown on config page, but we want it to back up.
         </description>
         <helpFile>docs/metacat-properties.html#application-default-style</helpFile>
     </config>
@@ -158,7 +158,9 @@
         <group>2</group>
         <index>4</index>
         <description>
-            The directory to hold the Solr core. &lt;font color="red"&gt; If you are upgrading Metacat from version 2.12.2 or earlier, please choose a different directory rather than the old one. Make sure the Solr user has the write/read permission on this directory&lt;/font&gt;
+            The directory to hold the Solr core. &lt;em&gt; If you are upgrading Metacat from
+            version 2.12.2 or earlier, please choose a different directory rather than the old one.
+            Make sure the Solr user has the write/read permission on this directory &lt;/em&gt;
         </description>
         <helpFile>docs/metacat-properties.html#solr-homedir</helpFile>
     </config>
@@ -180,7 +182,9 @@
         <group>2</group>
         <index>6</index>
         <description>
-            The path of the script file to overwrite the default Solr environment variables. &lt;font color="red"&gt; Make sure the Tomcat user has the write/read permission on this file.&lt;/font&gt; 
+            The path of the script file to overwrite the default Solr environment variables.
+            &lt;em&gt; Make sure the Tomcat user has the write/read permission on this file.
+            &lt;/em&gt;
         </description>
         <helpFile>docs/metacat-properties.html#solr-env-script-path</helpFile>
     </config>
@@ -332,7 +336,7 @@
         <group>4</group>
         <index>8</index>
         <description>
-            Where to store metadata documents. This should be This should be somewhere outside
+            Where to store metadata documents. This should be somewhere outside
             the 'Deploy Location'
         </description>
         <helpFile>docs/metacat-properties.html#application-documentfilepath</helpFile>
@@ -345,9 +349,9 @@
         <index>9</index>
         <description>
             Where to store temporary documents. This is primarily used by
-            the data registry code. &lt;font color="red"&gt; Note: this must be 
+            the data registry code. &lt;em&gt; Note: this must be
             set to a directory that is dedicated solely to temporary data, 
-            since the contents may be deleted programatically.&lt;/font&gt;
+            since the contents may be deleted programmatically.&lt;/em&gt;
         </description>
         <helpFile>docs/metacat-properties.html#application-tempdir</helpFile>
     </config>
@@ -385,13 +389,41 @@
         <helpFile>docs/metacat-properties.html#ui-context</helpFile>
     </config>
 
+    <config>
+        <key>cn.server.publiccert.filename</key>
+        <label>Token Verification Certificates</label>
+        <group>4</group>
+        <index>13</index>
+        <description>
+            &#91;Semicolon-separated list of paths to certificate files, containing public keys to be
+            used by d1_portal to verify incoming request jwt tokens (in addition to verifying
+            against the CN server).&#93; &lt;span class="new-badge"&gt;New&lt;/span&gt;
+        </description>
+        <helpFile>docs/metacat-properties.html#cn-server-publiccert-filename</helpFile>
+    </config>
+
+    <config>
+        <key>dataone.nodeToken.file</key>
+        <label>Admin Token Path</label>
+        <group>4</group>
+        <index>14</index>
+        <description>
+            &#91;The path to the admin jwt token that will be used in dataone-indexer to access the
+            private objects' system metadata.&#93; &lt;span class="new-badge"&gt;New&lt;/span&gt;
+        </description>
+        <helpFile>docs/metacat-properties.html#dataone-nodetoken-file</helpFile>
+    </config>
+
     <!-- handler plugin -->
     <config>
         <key>plugin.handlers</key>
         <label>Plugin class name[s]</label>
         <group>6</group>
         <index>1</index>
-        <description>Comma-separated list of fully-qualified class names that implement MetacatHandlerPlugin interface</description>
+        <description>
+            Comma-separated list of fully-qualified class names that implement
+            MetacatHandlerPlugin interface
+        </description>
         <helpFile>docs/metacat-properties.html#plugin-handlers</helpFile>
     </config>
 
@@ -570,7 +602,7 @@
     </config>
     <config>
         <key>guid.doi.doishoulder.1</key>
-        <label>DOI Shouder</label>
+        <label>DOI Shoulder</label>
         <group>8</group>
         <index>19</index>
         <fieldType>hidden</fieldType>
