@@ -173,12 +173,8 @@ others are managed with the properties configuration utility.
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _dataone.nodeToken.file:          |                                                                             |                               |
 |                                      |                                                                             |                               |
-| dataone.nodeToken.file               | The path to a file that contains a (JWT) token. This token will be used in  |                               |
-|                                      | the dataone-indexer to authorize access to private objects' system metadata.|                               |
-|                                      | A valid token consists of 3 parts delimited with a period. The first section|                               |
-|                                      | contains the header (and info about how the JWT was signed), the second     |                               |
-|                                      | includes information on the subject (ex. id, issuer, expiry date, etc.),    |                               |
-|                                      | and the last section is the signature                                       |                               |
+| dataone.nodeToken.file               | The path to a file that contains an authentication token. This token will be|                               |
+|                                      | used by the dataone-indexer, to enable indexing of private datasets.        |                               |
 |                                      |                                                                             |                               |
 |                                      | Default Value: /var/metacat/certs/token                                     |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
