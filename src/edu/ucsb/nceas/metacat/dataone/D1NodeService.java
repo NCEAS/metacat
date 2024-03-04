@@ -1232,31 +1232,6 @@ public abstract class D1NodeService {
      * @param pid  the pid associated with the object
      * @param session  the actor of this action
      * @param checksum  the expected checksum for this data object
-     * @return the local id of the inserted object
-     * @throws ServiceFailure
-     * @throws InvalidSystemMetadata
-     * @throws NotAuthorized
-     */
-    protected String insertDataObject(
-        InputStream object, Identifier pid, Session session, Checksum checksum)
-        throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
-        if (ipAddress == null) {
-            ipAddress = request.getRemoteAddr();
-        }
-        if (userAgent == null) {
-            userAgent = request.getHeader("User-Agent");
-        }
-        EventLogData event = new EventLogData(ipAddress, userAgent, null, null, "create");
-        return insertDataObject(object, pid, session, checksum, event);
-
-    }
-
-    /**
-     * Insert a data object into Metacat
-     * @param object  the input stream of the object will be inserted
-     * @param pid  the pid associated with the object
-     * @param session  the actor of this action
-     * @param checksum  the expected checksum for this data object
      * @param event  the event log information associated with this action
      * @return the local id of the inserted object
      * @throws ServiceFailure
