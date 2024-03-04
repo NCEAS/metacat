@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import edu.ucsb.nceas.metacat.MetacatVersion;
+import edu.ucsb.nceas.metacat.admin.upgrade.PrerequisiteChecker300;
 import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
 import edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrSchemaModificationException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -91,8 +92,7 @@ public class DBAdmin extends MetacatAdmin {
     private HashSet<String> sqlCommandSet = new HashSet<String>();
     private Map<String, String> scriptSuffixMap = new HashMap<String, String>();
     private static DBVersion databaseVersion = null;
-    //private SolrSchemaModificationException solrSchemaException = null;
-    private Vector<String> solrUpdateClassesList = new Vector<String> ();
+
 
     /**
      * private constructor since this is a singleton
@@ -125,10 +125,15 @@ public class DBAdmin extends MetacatAdmin {
     /**
      * Get the single instance of DBAdmin.
      * @return the single instance of DBAdmin
+     * @throws AdminException
      */
     public static DBAdmin getInstance() throws AdminException {
         if (dbAdmin == null) {
-            dbAdmin = new DBAdmin();
+            synchronized (DBAdmin.class) {
+                if (dbAdmin == null) {
+                    dbAdmin = new DBAdmin();
+                }
+            }
         }
         return dbAdmin;
     }
@@ -339,14 +344,7 @@ public class DBAdmin extends MetacatAdmin {
         }
         return databaseVersion;
     }
-    
-    /**
-     * Get the list of classes that should be run to update the solr server.
-     * @return the list of classes
-     */
-    public Vector<String> getSolrUpdateClasses() {
-        return solrUpdateClassesList;
-    }
+
 
     /**
      * Gets the version of the database from the db_version table. Usually this
@@ -690,10 +688,15 @@ public class DBAdmin extends MetacatAdmin {
         return updateScriptList;
     }
 
+    /**
+     * Get the list of the Java and Solr update class files which will run in the upgrade process
+     * @return the list of Java class files
+     * @throws AdminException
+     */
     public Vector<String> getUpdateClasses() throws AdminException {
         Vector<String> updateClassList = new Vector<String>();
         MetacatVersion metaCatVersion = null;
-        
+
         // get the location of sql scripts
         try {
             metaCatVersion = SystemUtil.getMetacatVersion();
@@ -701,37 +704,29 @@ public class DBAdmin extends MetacatAdmin {
             throw new AdminException("DBAdmin.getUpdateScripts - Could not get property while trying " 
                     + "to retrieve update utilities: " + pnfe.getMessage());
         }
-        
-        // if either of these is null, we don't want to do anything.  Just
-        // return an empty list.
-        if (metaCatVersion == null || databaseVersion == null) {
+
+        if (metaCatVersion != null) {
+            logMetacat.debug("DBADmin.getUpdateClasses - the version from the properties file is "
+                                                            + metaCatVersion.getVersionString());
+        }
+        if (databaseVersion != null) {
+            logMetacat.debug("DBADmin.getUpdateClasses - the databaseVersion is "
+                                                            + databaseVersion.getVersionString());
+        }
+        // if either of these is null, or the database version is 0.0.0 (a fresh installation),
+        // we don't want to do anything.  Just return an empty list.
+        if (metaCatVersion == null || databaseVersion == null ||
+                                             databaseVersion.getVersionString().equals("0.0.0")) {
             return updateClassList;
         }
 
         // go through all the versions that the the software went through and
         // figure out which ones need to be applied to the database
         for (DBVersion nextVersion : versionSet) {
-
             // add every update script that is > than the db version
             // but <= to the metacat version to the update list.
             if (nextVersion.compareTo(databaseVersion) > 0
                     && nextVersion.compareTo(metaCatVersion) <= 0) {
-                //figured out the solr update class list which will be used by SolrAdmin
-                String solrKey = "solr.upgradeUtility." + nextVersion.getVersionString();
-                String solrClassName = null;
-                try {
-                    solrClassName = PropertyService.getProperty(solrKey);
-                    if(solrClassName != null && !solrClassName.trim().equals("")) {
-                        solrUpdateClassesList.add(solrClassName);
-                    }
-                } catch (PropertyNotFoundException pnfe) {
-                    // there probably isn't a utility needed for this version
-                    logMetacat.warn("No solr update utility defined for version: " + solrKey);
-                } catch (Exception e) {
-                    logMetacat.warn("Can't put the solr update utility class into a vector : "
-                                        + e.getMessage());
-                }
-                
                 String key = "database.upgradeUtility." + nextVersion.getVersionString();
                 String className = null;
                 try {
@@ -741,6 +736,8 @@ public class DBAdmin extends MetacatAdmin {
                     logMetacat.warn("No utility defined for version: " + key);
                     continue;
                 }
+                logMetacat.debug("DBAdmin.getUpdateClasses - add the class to the list "
+                                + className);
                 updateClassList.add(className);
             }
         }
@@ -756,13 +753,15 @@ public class DBAdmin extends MetacatAdmin {
      */
     public void upgradeDatabase() throws AdminException {
         boolean persist = true;
+        PrerequisiteChecker300 checker = new PrerequisiteChecker300();
+        checker.check();
         Vector<String> updateClassList = getUpdateClasses();
         // Update3_0_0 should run before the database update
         if(updateClassList.contains(UPDATE3_0_0_ClASS_NAME)) {
             UpgradeUtilityInterface utility = null;
             try {
-                utility = (UpgradeUtilityInterface) Class
-                                                    .forName(UPDATE3_0_0_ClASS_NAME).newInstance();
+                utility = (UpgradeUtilityInterface) Class.forName(UPDATE3_0_0_ClASS_NAME)
+                                                    .getDeclaredConstructor().newInstance();
                 utility.upgrade();
             } catch (Exception e) {
                 try {
@@ -810,11 +809,14 @@ public class DBAdmin extends MetacatAdmin {
         for (String className : updateClassList) {
             UpgradeUtilityInterface utility = null;
             try {
-                utility = (UpgradeUtilityInterface) Class.forName(className).newInstance();
+                utility = (UpgradeUtilityInterface) Class.forName(className)
+                                                            .getDeclaredConstructor().newInstance();
                 utility.upgrade();
             } catch (SolrSchemaModificationException e) {
                 //don't throw the exception and continue
                // solrSchemaException = e;
+                logMetacat.warn("DBAdmin.upgradeDatabase - The schema or config file is changed: "
+                                + e.getMessage() + ". But Metacat will continue.");
                 continue;
             } catch (Exception e) {
                 try {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -23,6 +24,9 @@ public class Upgrade3_0_0 implements UpgradeUtilityInterface {
         try {
             XMLNodesToFilesChecker checker = new XMLNodesToFilesChecker();
             checker.check();
+            String backupPath = PropertyService.getProperty("application.backupDir");
+            DroppedTableBackupper300 backupper = new DroppedTableBackupper300(backupPath);
+            backupper.backup();
         } catch (PropertyNotFoundException | SQLException | IOException e) {
             throw new AdminException(e.getMessage());
         }
