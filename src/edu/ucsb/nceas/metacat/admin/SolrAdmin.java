@@ -828,7 +828,6 @@ public class SolrAdmin extends MetacatAdmin {
                          throw new AdminException("Metacat cannot update the solr_upgraded status "
                                                  + ee.getMessage());
                      }
-                     continue;
                  } catch (Exception e) {
                      throw new AdminException("Solr.upgradeSolrSchema - error getting utility class: "
                              + className + ". Error message: "
