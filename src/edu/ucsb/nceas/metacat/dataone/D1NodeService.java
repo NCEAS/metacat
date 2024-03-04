@@ -1446,23 +1446,6 @@ public abstract class D1NodeService {
         return objectList;
     }
 
-
-    /**
-     * Update a systemMetadata document
-     *
-     * @param sysMeta - the system metadata object in the system to update
-     */
-    protected void updateSystemMetadata(SystemMetadata sysMeta) throws ServiceFailure {
-        logMetacat.debug("D1NodeService.updateSystemMetadata() called.");
-        try {
-
-            boolean needUpdateModificationDate = true;
-            updateSystemMetadata(sysMeta, needUpdateModificationDate);
-        } catch (Exception e) {
-            throw new ServiceFailure("4862", e.getMessage());
-        }
-    }
-
     /**
      * Update system metadata.
      *
@@ -1470,7 +1453,7 @@ public abstract class D1NodeService {
      * @param needUpdateModificationDate
      * @throws ServiceFailure
      */
-    private void updateSystemMetadata(
+    protected void updateSystemMetadata(
         SystemMetadata sysMeta, boolean needUpdateModificationDate) throws ServiceFailure {
         logMetacat.debug("D1NodeService.updateSystemMetadataWithoutLock() called.");
         // submit for indexing

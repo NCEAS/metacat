@@ -740,8 +740,8 @@ public class MNodeService extends D1NodeService
             current = current.add(BigInteger.ONE);
             //System.out.println("the new current version is "+current);
             existingSysMeta.setSerialVersion(current);
-            // then update the existing system metadata
-            updateSystemMetadata(existingSysMeta);
+            // then update the existing system metadata, set needUpdateModificationTime true
+            updateSystemMetadata(existingSysMeta, true);
 
             // prep the new system metadata, add pid to the affected lists
             sysmeta.setObsoletes(pid);
@@ -2123,7 +2123,8 @@ public class MNodeService extends D1NodeService
                 sysmeta.setAccessPolicy(policy);
             }
             if (needIndex) {
-                this.updateSystemMetadata(sysmeta);
+                // Set needToUpdateModificationTime true
+                this.updateSystemMetadata(sysmeta, true);
             }
         }
 
