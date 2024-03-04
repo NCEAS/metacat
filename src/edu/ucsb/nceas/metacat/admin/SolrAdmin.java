@@ -271,28 +271,6 @@ public class SolrAdmin extends MetacatAdmin {
             boolean updateSchema = false;
             if(updateClassMap != null && !updateClassMap.isEmpty()) {
                 updateSchema = true;
-                if (updateClassMap.containsKey("3.0.0")) {
-                    logMetacat.debug("SolrAdmin.configureSolr - We need to check jvm version "
-                                + " when we upgrade Metacat from 2.19.0 to 3.*.");
-                    // We need to check the jvm version of solr when we upgrade solr for
-                    // Metacat 3.0.0. The solrconfig.xml and schema.xml in the Metacat 2.* index
-                    // don't work well under java 17.
-                    SolrJvmVersionFinder versionFinder = new SolrJvmVersionFinder(baseURL);
-                    try {
-                        String jvmVersion = versionFinder.find();
-                        if (jvmVersion == null || !jvmVersion.startsWith("1.8")) {
-                            throw new AdminException("SolrAdmin.configureSolr - The Solr "
-                                 + " instance is running against Java " + jvmVersion
-                                 + ". Please restart the Solr instance with Java 1.8 so "
-                                 + "Metacat can determine the Solr instance's status."
-                                 + " Then restart Tomcat and come back to the admin page. "
-                            + "After configuration, you may switch JAVA back to " + jvmVersion);
-                        }
-                    } catch (URISyntaxException | TransformerException e) {
-                        throw new AdminException("SolrAdmin.configureSolr - Metacat couldn't"
-                                + " determine the jvm version of Solr since " + e.getMessage());
-                    }
-                }
             }
 
             //check the solr-home for given core name
