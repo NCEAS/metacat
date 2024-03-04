@@ -1,5 +1,8 @@
 package edu.ucsb.nceas.metacat.common.query;
 
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -34,7 +37,7 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
                             ParserConfigurationException, IOException, SAXException {
         String targetVersion = Settings.getConfiguration().getString("solr.targetSpecVersion");
         String version = SolrQueryServiceController.getInstance().getSolrSpecVersion();
-        assertTrue(version != null);
+        assertNotNull(version);
         assertTrue("The version should be " + targetVersion + " rather than " + version,
                                                                     version.equals(targetVersion));
     }
@@ -53,9 +56,9 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
         int targetSize = Settings.getConfiguration().getInt("solr.schemField.size");
         Map<String, SchemaField> fields = SolrQueryServiceController
                                                        .getInstance().getIndexSchemaFields();
-        assertTrue(fields != null);
-        assertTrue("The number of index schema fields should be " + targetSize + " rather than "
-                   + fields.size(), fields.size() == targetSize);
+        assertNotNull(fields);
+        assertEquals("The number of index schema fields should be " + targetSize + " rather than "
+                   + fields.size(), fields.size(), targetSize);
     }
 
     /**
@@ -67,6 +70,6 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
         SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
         InputStream input = SolrQueryServiceController
                                     .getInstance().query(solrParams, null, SolrRequest.METHOD.GET);
-        assertTrue(input != null);
+        assertNotNull(input);
     }
 }
