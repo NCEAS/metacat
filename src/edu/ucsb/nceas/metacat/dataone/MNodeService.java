@@ -736,19 +736,35 @@ public class MNodeService extends D1NodeService
             existingSysMeta.setObsoletedBy(newPid);
             //increase version
             BigInteger current = existingSysMeta.getSerialVersion();
-            //System.out.println("the current version is "+current);
             current = current.add(BigInteger.ONE);
-            //System.out.println("the new current version is "+current);
             existingSysMeta.setSerialVersion(current);
             // then update the existing system metadata, set needUpdateModificationTime true
-            updateSystemMetadata(existingSysMeta, true);
+            SystemMetadataManager.getInstance().store(existingSysMeta, true);
 
             // prep the new system metadata, add pid to the affected lists
             sysmeta.setObsoletes(pid);
-            //sysmeta.addDerivedFrom(pid);
 
-            // and insert the new system metadata
-            insertSystemMetadata(sysmeta);
+            // and insert the new system metadata, set needUpdateModificationTime true
+            SystemMetadataManager.getInstance().store(sysmeta, true);
+
+            // Index the obsoleted object
+            try {
+                // Set isSysmetaChangeOnly true, set the followRevisions false
+                MetacatSolrIndex.getInstance()
+                            .submit(existingSysMeta.getIdentifier(), existingSysMeta, true, false);
+            } catch (Exception e) {
+                logMetacat.error("MNodeService.update - Failed to submit the index task for "
+                                               + existingSysMeta.getIdentifier().getValue()
+                                               + " since " + e.getMessage());
+            }
+            try {
+                // Submit the new object for indexing, set the followRevisions false
+                MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, false);
+            } catch (Exception e) {
+                logMetacat.error("MNodeService.update - Failed to submit the index task for "
+                        + sysmeta.getIdentifier().getValue()
+                        + " since " + e.getMessage());
+            }
 
             long end4 = System.currentTimeMillis();
             logMetacat.debug(

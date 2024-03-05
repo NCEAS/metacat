@@ -1380,23 +1380,6 @@ public abstract class D1NodeService {
     }
 
     /**
-     * Insert a systemMetadata document and return its localId
-     */
-    public void insertSystemMetadata(SystemMetadata sysmeta) throws ServiceFailure {
-
-        logMetacat.debug("Starting to insert SystemMetadata...");
-
-        //insert the system metadata
-        try {
-            SystemMetadataManager.getInstance().store(sysmeta);
-            // submit for indexing
-            MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, false);
-        } catch (Exception e) {
-            throw new ServiceFailure("1190", e.getMessage());
-        }
-    }
-
-    /**
      * Retrieve the list of objects present on the MN that match the calling parameters
      *
      * @param session - the Session object containing the credentials for the Subject
