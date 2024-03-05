@@ -514,7 +514,7 @@ public class MNodeService extends D1NodeService
                         + ee.getDescription());
             }
         }
-
+        isInAllowList(session); //check if the session can upload objects to this instance
         end = System.currentTimeMillis();
         logMetacat.debug(
             "MNodeService.update - the time spending on checking if the user has the permission "

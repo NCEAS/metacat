@@ -390,6 +390,7 @@ public abstract class D1NodeService {
                 + "permission to WRITE to the Node.");
 
         }
+        isInAllowList(session);//check if the session can upload objects to this instance
 
         // verify that pid == SystemMetadata.getIdentifier()
         logMetacat.debug(
@@ -1239,23 +1240,13 @@ public abstract class D1NodeService {
 
     }
 
-    /**
-     * Insert an object into the given directory
-     * @param object  the input stream of the object will be inserted
-     * @param docType  the doc type in the xml_document table
-     * @param pid  the pid associated with the object
-     * @param fileDirectory  the directory where the object will be inserted
-     * @param session  the actor of this action
-     * @param checksum  the expected checksum for this data object
-     * @return the local id of the inserted object
-     * @throws ServiceFailure
-     * @throws InvalidSystemMetadata
-     * @throws NotAuthorized
-     */
-    public static String insertObject(InputStream object, String docType, Identifier pid,
-                                     String fileDirectory, Session session, Checksum checksum)
-        throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
-
+/**
+ * Check if the session is in the allow list which can upload objects to this Metacat instance.
+ * @param session  the identity of the user
+ * @throws NotAuthorized
+ * @throws ServiceFailure
+ */
+    protected void isInAllowList(Session session) throws NotAuthorized, ServiceFailure {
         String username = Constants.SUBJECT_PUBLIC;
         String[] groupnames = null;
         if (session != null) {
@@ -1292,10 +1283,26 @@ public abstract class D1NodeService {
         if (!inWhitelist) {
             logMetacat.error("D1NodeService.insertDataObject - The provided identity " + username
                                  + " does not have " + "permission to WRITE to the Node.");
-            throw new NotAuthorized(
-                "1100", "The provided identity " + username + " does not have "
-                + "permission to WRITE to the Node.");
+            throw new NotAuthorized("1100", "The provided identity " + username + " is not allowed "
+                          + "to insert or update. Check the Allowed and Denied Submitters lists.");
         }
+    }
+
+    /**
+     * Insert an object into the given directory.
+     * @param object  the input stream of the object will be inserted
+     * @param docType  the doc type in the xml_document table
+     * @param pid  the pid associated with the object
+     * @param fileDirectory  the directory where the object will be inserted
+     * @param session  the actor of this action
+     * @param checksum  the expected checksum for this data object
+     * @return the local id of the inserted object
+     * @throws ServiceFailure
+     * @throws InvalidSystemMetadata
+     */
+    public static String insertObject(InputStream object, String docType, Identifier pid,
+                                     String fileDirectory, Session session, Checksum checksum)
+                                                     throws ServiceFailure, InvalidSystemMetadata {
 
         String localId = null;
         try {
@@ -1316,7 +1323,8 @@ public abstract class D1NodeService {
             // if the localId is not acceptable or other untoward things happen
             try {
                 logMetacat.debug("Registering document...");
-                DocumentImpl.registerDocument(localId, docType, localId, username, groupnames);
+                DocumentImpl.registerDocument(localId, docType, localId,
+                                                        session.getSubject().getValue());
                 logMetacat.debug("Registration step completed.");
 
             } catch (SQLException e) {

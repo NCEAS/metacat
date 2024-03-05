@@ -233,26 +233,6 @@ public class MetacatHandler {
         }
 
         try {
-            if (!AuthUtil.canInsertOrUpdate(user, groups)) {
-                String msg = this.PROLOG + this.ERROR + "User '" + user
-                    + "' is not allowed to insert or update. Check the Allowed and Denied "
-                    + "Submitters lists"
-                    + this.ERRORCLOSE;
-                logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " + "User '" + user
-                                     + "' not allowed to insert and update");
-                return msg;
-            }
-        } catch (MetacatUtilException ue) {
-            logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - "
-                                 + "Could not determine if user could insert or update: "
-                                 + ue.getMessage(), ue);
-            String msg = this.PROLOG + this.ERROR + "MetacatHandler.handleInsertOrUpdateAction - "
-                + "Could not determine if user could insert or update: " + ue.getMessage()
-                + this.ERRORCLOSE;
-            return msg;
-        }
-
-        try {
             StringReader dtd = null;
             String doctext = new String(xmlBytes, encoding);
             StringReader xmlReader = new StringReader(doctext);

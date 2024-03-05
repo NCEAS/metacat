@@ -245,11 +245,9 @@ public class DocumentImpl {
      * @param accnum     the accession number to use for the INSERT OR UPDATE, which includes a
      *                   revision number for this revision of the document (e.g., knb.1.1)
      * @param user       the user that owns the document
-     * @param groupnames the groups that owns the document
      */
-    public static void registerDocument(
-        String docname, String doctype, String accnum, String user, String[] groups)
-        throws SQLException, AccessionNumberException, Exception {
+    public static void registerDocument(String docname, String doctype, String accnum, String user)
+                                        throws SQLException, AccessionNumberException, Exception {
         DBConnection conn = null;
         int serialNumber = -1;
         try {
@@ -264,7 +262,7 @@ public class DocumentImpl {
             if (action.equals("UPDATE")) {
                 //archive the old entry
                 // check permissions on the old doc when updating
-                int latestRevision = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
+                /*int latestRevision = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
                 String previousDocid =
                     docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator")
                         + latestRevision;
@@ -272,7 +270,7 @@ public class DocumentImpl {
                     throw new Exception(
                         "User " + user + " does not have permission to update the document"
                             + accnum);
-                }
+                }*/
                 archiveDocToRevision(conn, docIdWithoutRev, user);
             }
 
