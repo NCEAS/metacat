@@ -46,8 +46,8 @@ public class MetacatAdminServlet extends HttpServlet {
         throws IOException {
 
         // Check authorized and populate session
-        AdminAuthHandler authHandler = new AdminAuthHandler(getServletContext(), request, response);
-        authHandler.handle(D1ResourceHandler.GET);
+//        AdminAuthHandler authHandler = new AdminAuthHandler(getServletContext(), request, response);
+//        authHandler.handle(D1ResourceHandler.GET);
 
         // Process the data and send back the response
         handleGetOrPost(request, response);
@@ -58,8 +58,8 @@ public class MetacatAdminServlet extends HttpServlet {
         throws IOException {
 
         // Check authorized and populate session
-        AdminAuthHandler authHandler = new AdminAuthHandler(getServletContext(), request, response);
-        authHandler.handle(D1ResourceHandler.POST);
+//        AdminAuthHandler authHandler = new AdminAuthHandler(getServletContext(), request, response);
+//        authHandler.handle(D1ResourceHandler.POST);
 
         // Process the data and send back the response
         handleGetOrPost(request, response);
