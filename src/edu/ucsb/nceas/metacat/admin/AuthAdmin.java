@@ -69,7 +69,7 @@ public class AuthAdmin extends MetacatAdmin {
 
 	/**
 	 * Get the single instance of the MetaCatConfig.
-	 * 
+	 *
 	 * @return the single instance of MetaCatConfig
 	 */
 	public static AuthAdmin getInstance() {
@@ -84,7 +84,7 @@ public class AuthAdmin extends MetacatAdmin {
 
 	/**
 	 * Handle configuration of the Authentication properties
-	 * 
+	 *
 	 * @param request  the http request information
 	 * @param response the http response to be sent back to the client
 	 */
@@ -167,6 +167,13 @@ public class AuthAdmin extends MetacatAdmin {
 				SortedMap<Integer, MetaDataProperty> globalPropertyMap = authMetaData
 					.getPropertiesInGroup(1);
 				Set<Integer> globalPropertyIndexes = globalPropertyMap.keySet();
+				// Set properties/options in memory to prepare to persist
+				for (Integer globalPropertyIndex : globalPropertyIndexes) {
+					String globalPropertyKey = globalPropertyMap.get(
+						globalPropertyIndex).getKey();
+					PropertyService.checkAndSetProperty(request,
+														globalPropertyKey);
+				}
 
 				// Write the options from memory to the properties file
 				PropertyService.persistProperties();
@@ -236,12 +243,12 @@ public class AuthAdmin extends MetacatAdmin {
 	/**
 	 * Validate that a user has supplied a 16-digit ORCID by parsing the http request's
 	 * 'auth.administrators' parameter.
-	 * 
+	 *
 	 * AuthSessions were previously created based on a selected authentication class.
 	 * As LDAP and Password based authentication is being deprecated, we no longer have
 	 * to check for a valid authentication class. Moving forward, the user is expected
 	 * to provide an ORCID ID, which are 16 digits (####-####-####-####),
-	 * 
+	 *
 	 * @param request Http request
 	 * @return a vector holding error message for any fields that fail validation.
 	 */
