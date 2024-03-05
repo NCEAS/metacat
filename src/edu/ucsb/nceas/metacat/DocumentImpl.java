@@ -259,21 +259,9 @@ public class DocumentImpl {
             int userSpecifyRev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
             action = checkRevInXMLDocuments(docIdWithoutRev, userSpecifyRev);
             logMetacat.debug("after check rev, the action is " + action);
-            if (action.equals("UPDATE")) {
-                //archive the old entry
-                // check permissions on the old doc when updating
-                /*int latestRevision = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
-                String previousDocid =
-                    docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator")
-                        + latestRevision;
-                if (!hasWritePermission(user, groups, previousDocid)) {
-                    throw new Exception(
-                        "User " + user + " does not have permission to update the document"
-                            + accnum);
-                }*/
+            if (action.equalsIgnoreCase("UPDATE")) {
                 archiveDocToRevision(conn, docIdWithoutRev, user);
             }
-
             String rev = Integer.toString(userSpecifyRev);
             modifyRecordsInGivenTable(DOCUMENTTABLE, action, docIdWithoutRev, doctype, docname,
                                       user, rev, null, null, conn);
