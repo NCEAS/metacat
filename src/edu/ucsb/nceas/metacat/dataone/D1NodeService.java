@@ -515,7 +515,6 @@ public abstract class D1NodeService {
 
         }
 
-        //}
 
         logMetacat.debug("Done inserting new object: " + pid.getValue());
 
@@ -537,11 +536,20 @@ public abstract class D1NodeService {
 
         try {
             // submit for indexing
-            MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, false);
+            MetacatSolrIndex.getInstance().submit(pid, sysmeta, false);
         } catch (Exception e) {
             logMetacat.warn("Couldn't create solr index for object " + pid.getValue());
         }
 
+        try {
+            logMetacat.debug("Logging the creation event.");
+            EventLog.getInstance().log(ipAddress, userAgent, session.getSubject().getValue(),
+                                        localId, "create");
+        } catch (Exception e) {
+            logMetacat.warn(
+                "D1NodeService.create - can't log the create event for the object "
+                    + pid.getValue());
+        }
         resultPid = pid;
 
         logMetacat.info("create() complete for object: " + pid.getValue());
@@ -1352,23 +1360,6 @@ public abstract class D1NodeService {
                 throw new ServiceFailure("1190", "Registration failed: " + e.getMessage());
             }
 
-            try {
-                logMetacat.debug("Logging the creation event.");
-                EventLog.getInstance()
-                    .log(event.getIpAddress(), event.getUserAgent(), username, localId,
-                         event.getEvent());
-            } catch (Exception e) {
-                logMetacat.warn(
-                    "D1NodeService.insertDataObject - can't log the create event for the object "
-                        + pid.getValue());
-            }
-
-            // Schedule replication for this data file, the "insert" action is important here!
-            logMetacat.debug("Scheduling replication.");
-            boolean isMeta = true;
-            if (docType != null && docType.equals(DocumentImpl.BIN)) {
-                isMeta = false;
-            }
         } catch (ServiceFailure sfe) {
             removeIdFromIdentifierTable(pid);
             throw sfe;

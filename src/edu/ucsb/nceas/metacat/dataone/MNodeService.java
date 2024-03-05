@@ -782,6 +782,15 @@ public class MNodeService extends D1NodeService
                     + e.getMessage();
                 logMetacat.error(message);
             }
+            try {
+                logMetacat.debug("Logging the update event.");
+                EventLog.getInstance().log(ipAddress, userAgent, session.getSubject().getValue(),
+                                            localId, "update");
+            } catch (Exception e) {
+                logMetacat.warn(
+                    "D1NodeService.update - can't log the update event for the object "
+                        + pid.getValue());
+            }
             long end5 = System.currentTimeMillis();
             logMetacat.debug(
                 "MNodeService.update - the time spending on registering the doi (if it is doi ) "

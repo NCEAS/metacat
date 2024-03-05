@@ -379,9 +379,6 @@ public class MetacatHandler {
                                               user,groups, rule, needValidation, encoding, xmlBytes,
                                               schemaLocation,checksum, objectFile);
 
-                    EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action);
-
-
                     // alert listeners of this event
                     MetacatDocumentEvent mde = new MetacatDocumentEvent();
                     mde.setDocid(accNumber);
