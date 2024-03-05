@@ -210,8 +210,6 @@ public class MetacatHandler {
 
     /**
      * Handle the database putdocument request and write an XML document to the database connection
-     * @param ipAddress  the ip address of the request
-     * @param userAgent  the user agent of the request
      * @param user  the user who sent the request
      * @param groups  the groups to which the user belongs
      * @param encoding  the encoding of the xml document
@@ -223,10 +221,9 @@ public class MetacatHandler {
      * @param action  the action to be performed (INSERT or UPDATE)
      * @return docid
      */
-    public String handleInsertOrUpdateAction(String ipAddress, String userAgent,
-                                    String user, String[] groups, String encoding, byte[] xmlBytes,
-                                    String formatId,Checksum checksum, File objectFile,
-                                    String docid, String action) {
+    public String handleInsertOrUpdateAction( String user, String[] groups, String encoding,
+                                    byte[] xmlBytes, String formatId,Checksum checksum,
+                                    File objectFile, String docid, String action) {
         DBConnection dbConn = null;
         int serialNumber = -1;
         String output = "";

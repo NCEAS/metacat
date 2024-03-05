@@ -43,10 +43,6 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.SystemMetadata;
 
-import edu.ucsb.nceas.metacat.DocumentImpl;
-import edu.ucsb.nceas.metacat.EventLog;
-import edu.ucsb.nceas.metacat.EventLogData;
-import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
@@ -66,7 +62,7 @@ public abstract class NonXMLMetadataHandler {
         try {
             metadataStoragePath = PropertyService.getProperty("application.documentfilepath");
         } catch (PropertyNotFoundException e) {
-           logMetacat.error("NonXMLMetadataHandler.static - cannot find the metadata object storage path since " + e.getMessage());
+           logMetacat.error("Cannot find the metadata object storage path since " + e.getMessage());
         }
     }
     
@@ -75,7 +71,6 @@ public abstract class NonXMLMetadataHandler {
      * @param source  the input stream contains the content of the meta data object
      * @param sysmeta  the sysmeta associated with the input stream
      * @param session  the user's session who makes this call
-     * @param event  the event log information associated with this action
      * @return  the local document id. It can be null.
      * @throws UnsupportedType
      * @throws ServiceFailure
@@ -83,28 +78,30 @@ public abstract class NonXMLMetadataHandler {
      * @throws InvalidSystemMetadata
      * @throws NotAuthorized 
      */
-    public String save(InputStream source, SystemMetadata sysmeta, Session session, EventLogData event) 
+    public String save(InputStream source, SystemMetadata sysmeta, Session session)
                         throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
         if (sysmeta == null) {
-            throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the system metadata parameter should not be null.");
+            throw new InvalidRequest("1102", "The system metadata parameter should not be null.");
         }
         Identifier pid = sysmeta.getIdentifier();
         Checksum expectedChecksum = sysmeta.getChecksum();
         String docType = sysmeta.getFormatId().getValue();
         if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
-            throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the pid parameter should not be blank.");
+            throw new InvalidRequest("1102", "The pid parameter should not be blank.");
         }
-        logMetacat.debug("NonXMLMetadataHandler.save - save the object " + pid.getValue() + " with doctype " + docType);
+        logMetacat.debug("Save the object " + pid.getValue() + " with doctype " + docType);
         String localId = null;
         boolean valid = false;
         InputStream data = checkValidation(source, pid);
         try {
             if (metadataStoragePath == null) {
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot save the metadata object " + pid.getValue() + 
-                        " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
+                throw new ServiceFailure("1190", "Cannot save the metadata object " + pid.getValue()
+                          + " into disk since the property - application.documentfilepath is not "
+                          + "found in the metacat.properties file ");
             }
             //Save the meta data object to disk using "localId" as the name
-            localId = D1NodeService.insertObject(data, docType, pid, metadataStoragePath, session, expectedChecksum, event);
+            localId = D1NodeService.insertObject(data, docType, pid, metadataStoragePath,
+                                                                        session, expectedChecksum);
         } finally {
             if (tmpFile != null) {
                 tmpFile.delete();
@@ -112,12 +109,14 @@ public abstract class NonXMLMetadataHandler {
             try {
                 source.close();
             } catch (IOException ee) {
-                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since " + ee.getMessage());
+                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since "
+                                    + ee.getMessage());
             }
             try {
                 data.close();
             } catch (IOException ee) {
-                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since " + ee.getMessage());
+                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since "
+                                 + ee.getMessage());
             }
         }
         return localId;

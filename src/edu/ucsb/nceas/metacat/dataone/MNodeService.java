@@ -659,15 +659,7 @@ public class MNodeService extends D1NodeService
                         NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
                     if (handler != null) {
                         //non-xml metadata object path
-                        if (ipAddress == null) {
-                            ipAddress = request.getRemoteAddr();
-                        }
-                        if (userAgent == null) {
-                            userAgent = request.getHeader("User-Agent");
-                        }
-                        EventLogData event =
-                            new EventLogData(ipAddress, userAgent, null, null, "update");
-                        localId = handler.save(object, sysmeta, session, event);
+                        localId = handler.save(object, sysmeta, session);
                     } else {
                         String formatId = null;
                         if (sysmeta.getFormatId() != null) {
@@ -706,16 +698,7 @@ public class MNodeService extends D1NodeService
 
                 // update the data object
                 try {
-                    if (ipAddress == null) {
-                        ipAddress = request.getRemoteAddr();
-                    }
-                    if (userAgent == null) {
-                        userAgent = request.getHeader("User-Agent");
-                    }
-                    EventLogData event =
-                        new EventLogData(ipAddress, userAgent, null, null, "update");
-                    localId =
-                        insertDataObject(object, newPid, session, sysmeta.getChecksum(), event);
+                    localId = insertDataObject(object, newPid, session, sysmeta.getChecksum());
                 } catch (Exception e) {
                     logMetacat.error(
                         "MNService.update - couldn't write the data object to the disk since "
@@ -784,8 +767,8 @@ public class MNodeService extends D1NodeService
             }
             try {
                 logMetacat.debug("Logging the update event.");
-                EventLog.getInstance().log(ipAddress, userAgent, session.getSubject().getValue(),
-                                            localId, "update");
+                EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"),
+                                           session.getSubject().getValue(), localId, "update");
             } catch (Exception e) {
                 logMetacat.warn(
                     "D1NodeService.update - can't log the update event for the object "

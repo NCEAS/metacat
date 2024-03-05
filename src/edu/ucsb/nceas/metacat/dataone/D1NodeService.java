@@ -438,15 +438,7 @@ public abstract class D1NodeService {
                     NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
                 if (handler != null) {
                     //non-xml metadata object path
-                    if (ipAddress == null) {
-                        ipAddress = request.getRemoteAddr();
-                    }
-                    if (userAgent == null) {
-                        userAgent = request.getHeader("User-Agent");
-                    }
-                    EventLogData event =
-                        new EventLogData(ipAddress, userAgent, null, null, "create");
-                    localId = handler.save(object, sysmeta, session, event);
+                    localId = handler.save(object, sysmeta, session);
                 } else {
                     String formatId = null;
                     if (sysmeta.getFormatId() != null) {
@@ -489,14 +481,7 @@ public abstract class D1NodeService {
 
             // DEFAULT CASE: DATA (needs to be checked and completed)
             try {
-                if (ipAddress == null) {
-                    ipAddress = request.getRemoteAddr();
-                }
-                if (userAgent == null) {
-                    userAgent = request.getHeader("User-Agent");
-                }
-                EventLogData event = new EventLogData(ipAddress, userAgent, null, null, "create");
-                localId = insertDataObject(object, pid, session, sysmeta.getChecksum(), event);
+                localId = insertDataObject(object, pid, session, sysmeta.getChecksum());
             } catch (ServiceFailure e) {
                 removeSystemMetaAndIdentifier(pid);
                 throw e;
@@ -543,8 +528,8 @@ public abstract class D1NodeService {
 
         try {
             logMetacat.debug("Logging the creation event.");
-            EventLog.getInstance().log(ipAddress, userAgent, session.getSubject().getValue(),
-                                        localId, "create");
+            EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"),
+                                       session.getSubject().getValue(), localId, "create");
         } catch (Exception e) {
             logMetacat.warn(
                 "D1NodeService.create - can't log the create event for the object "
@@ -1188,16 +1173,9 @@ public abstract class D1NodeService {
         }
 
         // do the insert or update action
-        if (ipAddress == null) {
-            ipAddress = request.getRemoteAddr();
-        }
-        if (userAgent == null) {
-            userAgent = request.getHeader("User-Agent");
-        }
         long start = System.currentTimeMillis();
         String result =
-            handler.handleInsertOrUpdateAction(ipAddress, userAgent, username,
-                                               groupnames, encoding, xmlBytes, formatId,
+            handler.handleInsertOrUpdateAction(username, groupnames, encoding, xmlBytes, formatId,
                                                checksum, tempFile, localId, insertOrUpdate);
         long end = System.currentTimeMillis();
         logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue()
@@ -1240,15 +1218,14 @@ public abstract class D1NodeService {
      * @param pid  the pid associated with the object
      * @param session  the actor of this action
      * @param checksum  the expected checksum for this data object
-     * @param event  the event log information associated with this action
      * @return the local id of the inserted object
      * @throws ServiceFailure
      * @throws InvalidSystemMetadata
      * @throws NotAuthorized
      */
-    protected String insertDataObject(
-        InputStream object, Identifier pid, Session session, Checksum checksum, EventLogData event)
-        throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
+    protected String insertDataObject(InputStream object, Identifier pid, Session session,
+                                   Checksum checksum) throws ServiceFailure, InvalidSystemMetadata,
+                                                                                  NotAuthorized {
         String dataFilePath = null;
         try {
             dataFilePath = PropertyService.getProperty("application.datafilepath");
@@ -1258,7 +1235,7 @@ public abstract class D1NodeService {
             sf.initCause(e);
             throw sf;
         }
-        return insertObject(object, DocumentImpl.BIN, pid, dataFilePath, session, checksum, event);
+        return insertObject(object, DocumentImpl.BIN, pid, dataFilePath, session, checksum);
 
     }
 
@@ -1270,15 +1247,13 @@ public abstract class D1NodeService {
      * @param fileDirectory  the directory where the object will be inserted
      * @param session  the actor of this action
      * @param checksum  the expected checksum for this data object
-     * @param event  the event log information associated with this action
      * @return the local id of the inserted object
      * @throws ServiceFailure
      * @throws InvalidSystemMetadata
      * @throws NotAuthorized
      */
-    public static String insertObject(
-        InputStream object, String docType, Identifier pid, String fileDirectory, Session session,
-        Checksum checksum, EventLogData event)
+    public static String insertObject(InputStream object, String docType, Identifier pid,
+                                     String fileDirectory, Session session, Checksum checksum)
         throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
 
         String username = Constants.SUBJECT_PUBLIC;

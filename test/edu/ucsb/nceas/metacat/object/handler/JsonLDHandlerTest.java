@@ -45,7 +45,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
-import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -67,9 +66,7 @@ import static org.junit.Assert.fail;
  */
 public class JsonLDHandlerTest {
     private static String metadataStoragePath = null;
-    private static String ip = "196.168.0.10";
-    private static String agent = "java/junit_test";
-    private static EventLogData event =  new EventLogData(ip, agent, null, null, "create");
+
 
     public static final String JSON_LD_FILE_PATH = "test/json-ld.json";
     private static final String CHECKSUM_JSON_FILE = "847e1655bdc98082804698dbbaf85c35";
@@ -138,7 +135,7 @@ public class JsonLDHandlerTest {
         sysmeta.setIdentifier(pid);
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
-        String localId = handler.save(data, sysmeta, session, event);
+        String localId = handler.save(data, sysmeta, session);
         assertFalse(temp1.exists());
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
@@ -163,7 +160,7 @@ public class JsonLDHandlerTest {
         sysmeta.setIdentifier(pid);
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
-        localId = handler.save(data, sysmeta, session, event);
+        localId = handler.save(data, sysmeta, session);
         assertTrue(!temp2.exists());
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
@@ -194,7 +191,7 @@ public class JsonLDHandlerTest {
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
-            localId = handler.save(data, sysmeta, session, event);
+            localId = handler.save(data, sysmeta, session);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
@@ -218,7 +215,7 @@ public class JsonLDHandlerTest {
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
-            localId = handler.save(data, sysmeta, session, event);
+            localId = handler.save(data, sysmeta, session);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
@@ -245,7 +242,7 @@ public class JsonLDHandlerTest {
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(checksum);
-            localId = handler.save(data, sysmeta, session, event);
+            localId = handler.save(data, sysmeta, session);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidSystemMetadata);
@@ -281,7 +278,7 @@ public class JsonLDHandlerTest {
         sysmeta.setIdentifier(pid);
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
-        String localId = handler.save(data, sysmeta, session, event);
+        String localId = handler.save(data, sysmeta, session);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
@@ -299,7 +296,7 @@ public class JsonLDHandlerTest {
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
-            localId = handler.save(data, sysmeta, session, event);
+            localId = handler.save(data, sysmeta, session);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidSystemMetadata);
@@ -316,7 +313,7 @@ public class JsonLDHandlerTest {
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
-            localId = handler.save(data, sysmeta, session, event);
+            localId = handler.save(data, sysmeta, session);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
@@ -350,7 +347,7 @@ public class JsonLDHandlerTest {
         sysmeta.setIdentifier(pid);
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
-        String localId = handler.save(data, sysmeta, session, event);
+        String localId = handler.save(data, sysmeta, session);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
@@ -369,7 +366,7 @@ public class JsonLDHandlerTest {
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
-            localId = handler.save(data, sysmeta, session, event);
+            localId = handler.save(data, sysmeta, session);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             data.close();
@@ -386,7 +383,7 @@ public class JsonLDHandlerTest {
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
-            localId = handler.save(data, sysmeta, session, event);
+            localId = handler.save(data, sysmeta, session);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             data.close();
