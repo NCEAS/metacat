@@ -26,8 +26,10 @@
 
 package edu.ucsb.nceas.metacat.util;
 
+import java.net.http.HttpRequest;
 import java.util.Calendar;
 import java.util.Vector;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,6 +37,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.portal.PortalCertificateManager;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.Person;
@@ -51,272 +54,267 @@ import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 public class AuthUtil {
-	
+
     public static Log logMetacat = LogFactory.getLog(AuthUtil.class);
-    public static String DELIMITER=":";
-    public static String ESCAPECHAR="\\";
+    public static String DELIMITER = ":";
+    public static String ESCAPECHAR = "\\";
 
 
-	private static Vector<String> administrators = null;
-	private static Vector<String> moderators = null;
-	private static Vector<String> allowedSubmitters = null;
-	private static Vector<String> deniedSubmitters = null;
+    private static Vector<String> administrators = null;
+    private static Vector<String> moderators = null;
+    private static Vector<String> allowedSubmitters = null;
+    private static Vector<String> deniedSubmitters = null;
+    private static final int SESSION_TIMEOUT_MINUTES;
+    private static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 180;
 
-	/**
-	 * private constructor - all methods are static so there is no no need to
-	 * instantiate.
-	 */
-	private AuthUtil() {}
+    static {
+        int sessionTimeoutMins;
+        // get the timeout limit
+        try {
+            sessionTimeoutMins =
+                Integer.parseInt(PropertyService.getProperty("auth.timeoutMinutes"));
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("No properties value found for auth.timeoutMinutes. Defaulting to "
+                                 + DEFAULT_SESSION_TIMEOUT_MINUTES, e);
+            sessionTimeoutMins = DEFAULT_SESSION_TIMEOUT_MINUTES;
+        }
+        SESSION_TIMEOUT_MINUTES = sessionTimeoutMins;
+    }
 
-	/**
-	 * Get the administrators from metacat.properties
-	 * 
-	 * @return a Vector of Strings holding the administrators
-	 */
-	public static Vector<String> getAdministrators() throws MetacatUtilException {
-		if (administrators == null) {
-			populateAdministrators();
-		}
-		return administrators;
-	}
-	
-	/**
-	 * Get the allowed submitters from metacat.properties
-	 * 
-	 * @return a Vector of Strings holding the submitters
-	 */
-	public static Vector<String> getAllowedSubmitters() throws MetacatUtilException {
-		if (allowedSubmitters == null) {			
-			populateAllowedSubmitters();	
-		}
-		return allowedSubmitters;
-	}
-	
-	/**
-	 * Get the denied submitters from metacat.properties
-	 * 
-	 * @return a Vector of Strings holding the denied submitters
-	 */
-	public static Vector<String> getDeniedSubmitters() throws MetacatUtilException {
-		if (deniedSubmitters == null) {
-			populateDeniedSubmitters();
-		}
-		return deniedSubmitters;
-	}
-	
-	/**
-	 * Get the moderators from metacat.properties
-	 * 
-	 * @return a Vector of Strings holding the moderators
-	 */
-	public static Vector<String> getModerators() throws MetacatUtilException {
-		if (moderators == null) {
-			populateModerators();
-		}
-		return moderators;
-	}
-	
-	/**
-	 * Get the vector of administrator credentials from metacat.properties
-	 * and put into global administrators list
-	 */
-	private static void populateAdministrators() throws MetacatUtilException {
-		String administratorString = null;
-		try {
-			administratorString = 
-				PropertyService.getProperty("auth.administrators");
-		} catch (PropertyNotFoundException pnfe) {
-			throw new MetacatUtilException("Could not get metacat property: auth.administrators. "
-							+ "There will be no registered metacat adminstrators: "
-							+ pnfe.getMessage());
-		}
-		administrators = split(administratorString, DELIMITER, ESCAPECHAR);
-		
-		String d1NodeAdmin = null;
-		try {
-			d1NodeAdmin = PropertyService.getProperty("dataone.subject");
-			administrators.add(d1NodeAdmin);
-		} catch (PropertyNotFoundException e) {
-			String msg = "Could not get metacat property: dataone.subject "
-					+ "There will be no registered DataONE adminstrator";
-			logMetacat.error(msg, e);
-			
-		}
-	}
-	
-	/**
-	 * Get the vector of allowed submitter credentials from metacat.properties
-	 * and put into global allowedSubmitters list
-	 */
-	public static void populateAllowedSubmitters() throws MetacatUtilException {
-		String allowedSubmitterString = null;
-		try {
-			allowedSubmitterString = PropertyService.getProperty("auth.allowedSubmitters");
-		} catch (PropertyNotFoundException pnfe) {
-			throw new MetacatUtilException("Could not get metacat property: auth.allowedSubmitters. "
-					+ "Anyone will be allowed to submit: "
-					+ pnfe.getMessage());
-		}		
-		allowedSubmitters = split(allowedSubmitterString, DELIMITER, ESCAPECHAR);		
-	}
-	
-	/**
-	 * Get the vector of denied submitter credentials from metacat.properties
-	 * and put into global deniedSubmitters list
-	 */
-	private static void populateDeniedSubmitters() throws MetacatUtilException {
-		String deniedSubmitterString = null;
-		try {
-			deniedSubmitterString = PropertyService.getProperty("auth.deniedSubmitters");
-		} catch (PropertyNotFoundException pnfe) {
-			throw new MetacatUtilException("Could not get metacat property: auth.deniedSubmitters: "
-					+ pnfe.getMessage());
-		}		
-		deniedSubmitters = split(deniedSubmitterString, DELIMITER, ESCAPECHAR);		
-	}
-	
-	/**
-	 * Get the vector of moderator credentials from metacat.properties
-	 * and put into global administrators list
-	 */
-	private static void populateModerators() throws MetacatUtilException {
-		String moderatorString = null;
-		try {
-			moderatorString = 
-				PropertyService.getProperty("auth.moderators");
-		} catch (PropertyNotFoundException pnfe) {
-			throw new MetacatUtilException("Could not get metacat property: auth.moderators. "
-							+ "There will be no registered metacat moderators: "
-							+ pnfe.getMessage());
-		}
-		moderators = split(moderatorString, DELIMITER, ESCAPECHAR);
-	}
+    /**
+     * private constructor - all methods are static so there is no need to instantiate.
+     */
+    private AuthUtil() {
+    }
 
-	/**
-	 * log the user in against ldap.  If the login is successful, add
-	 * the session information to the session list in SessionUtil.
-	 * 
-	 * @param request the http request.
-	 */
-	public static boolean logUserIn(HttpServletRequest request, String userName, String password) throws MetacatUtilException {
-		AuthSession authSession = null;
+    /**
+     * Get the administrators from metacat.properties
+     *
+     * @return a Vector of Strings holding the administrators
+     */
+    public static Vector<String> getAdministrators() throws MetacatUtilException {
+        if (administrators == null) {
+            populateAdministrators();
+        }
+        return administrators;
+    }
 
-		// make sure we have username and password.
-		if (userName == null || password == null) {
-			throw new MetacatUtilException("null username or password when logging user in");
-		}
+    /**
+     * Get the allowed submitters from metacat.properties
+     *
+     * @return a Vector of Strings holding the submitters
+     */
+    public static Vector<String> getAllowedSubmitters() throws MetacatUtilException {
+        if (allowedSubmitters == null) {
+            populateAllowedSubmitters();
+        }
+        return allowedSubmitters;
+    }
 
-		// Create auth session
-		try {
-			authSession = new AuthSession();
-		} catch (Exception e) {
-			throw new MetacatUtilException("Could not instantiate AuthSession: "
-					+ e.getMessage());
-		}
-		// authenticate user against ldap
-		if(!authSession.authenticate(request, userName,password)) {
-			throw new MetacatUtilException(authSession.getMessage());
-		}
-		
-		// if login was successful, add the session information to the
-		// global session list.
-		HttpSession session = authSession.getSessions();
-		String sessionId = session.getId();
-		
-		try {
-		SessionService.getInstance().registerSession(sessionId, 
-				(String) session.getAttribute("username"), 
-				(String[]) session.getAttribute("groupnames"),
-				(String) session.getAttribute("password"),
-				(String) session.getAttribute("name"));
-		} catch (ServiceException se) {
-			throw new MetacatUtilException("Problem registering session: " + se.getMessage());
-		}
-		
-		return true;
-	}
+    /**
+     * Get the denied submitters from metacat.properties
+     *
+     * @return a Vector of Strings holding the denied submitters
+     */
+    public static Vector<String> getDeniedSubmitters() throws MetacatUtilException {
+        if (deniedSubmitters == null) {
+            populateDeniedSubmitters();
+        }
+        return deniedSubmitters;
+    }
 
-	/**
-	 * Checks to see if the user is logged in by grabbing the session from the
-	 * request and seeing if it exists in the global session list.
-	 * 
-	 * @param request the http request that holds the login session
-	 * @return boolean that is true if the user is logged in, false otherwise
-	 */
-	public static boolean isUserLoggedIn(HttpServletRequest request) throws MetacatUtilException{
-		SessionData sessionData = null;
-		String sessionId = request.getSession().getId();
+    /**
+     * Get the moderators from metacat.properties
+     *
+     * @return a Vector of Strings holding the moderators
+     */
+    public static Vector<String> getModerators() throws MetacatUtilException {
+        if (moderators == null) {
+            populateModerators();
+        }
+        return moderators;
+    }
 
-		try {
+    /**
+     * Get the vector of administrator credentials from metacat.properties and put into global
+     * administrators list
+     */
+    private static void populateAdministrators() throws MetacatUtilException {
+        String administratorString = null;
+        try {
+            administratorString = PropertyService.getProperty("auth.administrators");
+        } catch (PropertyNotFoundException pnfe) {
+            throw new MetacatUtilException("Could not get metacat property: auth.administrators. "
+                                               + "There will be no registered metacat adminstrators: "
+                                               + pnfe.getMessage());
+        }
+        administrators = split(administratorString, ";", ESCAPECHAR);
 
-			if (sessionId != null && SessionService.getInstance().isSessionRegistered(sessionId)) {
-				// get the registered session data
-				sessionData = SessionService.getInstance().getRegisteredSession(sessionId);
+        String d1NodeAdmin = null;
+        try {
+            d1NodeAdmin = PropertyService.getProperty("dataone.subject");
+            administrators.add(d1NodeAdmin);
+        } catch (PropertyNotFoundException e) {
+            String msg = "Could not get metacat property: dataone.subject "
+                + "There will be no registered DataONE adminstrator";
+            logMetacat.error(msg, e);
 
-				// get the timeout limit
-				String sessionTimeout = PropertyService.getProperty("auth.timeoutMinutes");
-				int sessionTimeoutInt = Integer.parseInt(sessionTimeout);
+        }
+    }
 
-				// get the last time the session was accessed
-				Calendar lastAccessedTime = sessionData.getLastAccessedTime();
-				// get the current time and set back "sessionTimoutInt" minutes
-				Calendar now = Calendar.getInstance();
-				now.add(Calendar.MINUTE, 0 - sessionTimeoutInt);
+    /**
+     * Get the vector of allowed submitter credentials from metacat.properties and put into
+     * global allowedSubmitters list
+     */
+    public static void populateAllowedSubmitters() throws MetacatUtilException {
+        String allowedSubmitterString = null;
+        try {
+            allowedSubmitterString = PropertyService.getProperty("auth.allowedSubmitters");
+        } catch (PropertyNotFoundException pnfe) {
+            throw new MetacatUtilException(
+                "Could not get metacat property: auth.allowedSubmitters. "
+                    + "Anyone will be allowed to submit: " + pnfe.getMessage());
+        }
+        allowedSubmitters = split(allowedSubmitterString, DELIMITER, ESCAPECHAR);
+    }
 
-				// if the last accessed time is before now minus the timeout,
-				// the session has expired. Unregister it and return false.
-				if (lastAccessedTime.before(now)) {
-					SessionService.getInstance().unRegisterSession(sessionId);
-					return false;
-				}
+    /**
+     * Get the vector of denied submitter credentials from metacat.properties and put into
+     * global deniedSubmitters list
+     */
+    private static void populateDeniedSubmitters() throws MetacatUtilException {
+        String deniedSubmitterString = null;
+        try {
+            deniedSubmitterString = PropertyService.getProperty("auth.deniedSubmitters");
+        } catch (PropertyNotFoundException pnfe) {
+            throw new MetacatUtilException(
+                "Could not get metacat property: auth.deniedSubmitters: " + pnfe.getMessage());
+        }
+        deniedSubmitters = split(deniedSubmitterString, DELIMITER, ESCAPECHAR);
+    }
 
-				return true;
-			}
-			
-		} catch (PropertyNotFoundException pnfe) {
-			throw new MetacatUtilException("Could not determine if user is logged in because " 
-					+ "of property error: " + pnfe.getMessage());
-		} catch (NumberFormatException nfe) {
-			throw new MetacatUtilException("Could not determine if user is logged in because " 
-					+ "of number conversion error: " + nfe.getMessage());
-		}
+    /**
+     * Get the vector of moderator credentials from metacat.properties and put into global
+     * administrators list
+     */
+    private static void populateModerators() throws MetacatUtilException {
+        String moderatorString = null;
+        try {
+            moderatorString = PropertyService.getProperty("auth.moderators");
+        } catch (PropertyNotFoundException pnfe) {
+            throw new MetacatUtilException("Could not get metacat property: auth.moderators. "
+                                               + "There will be no registered metacat moderators: "
+                                               + pnfe.getMessage());
+        }
+        moderators = split(moderatorString, DELIMITER, ESCAPECHAR);
+    }
 
-		return false;
-	}
+    /**
+     * Authenticate the user against the CN server and/or any locally-configured certificates ()
+     * If the login is successful, add the session information to
+     * the session list in SessionUtil.
+     *
+     * @param request the http request.
+     */
+    public static void logUserIn(HttpServletRequest request) throws MetacatUtilException {
 
-	/**
-	 * Checks to see if the user is logged in as admin by first checking if the
-	 * user is logged in and then seeing if the user's account is on the
-	 * administrators list in metacat.properties.
-	 * 
-	 * @param request
-	 *            the http request that holds the login session
-	 * @return boolean that is true if the user is logged in as admin, false
-	 *         otherwise
-	 */
-	public static boolean isUserLoggedInAsAdmin(HttpServletRequest request) throws MetacatUtilException {
-		if (!isUserLoggedIn(request)) {
-			return false;
-		}
+        Session session = getAuthenticatedSessionFromRequest(request);
 
-		String userName = getUserName(request);
-		boolean isAdmin = isAdministrator(userName, null);
+        String subject = null;
+        if (session != null) {
+            subject = session.getSubject().getValue();
+        }
 
-		return isAdmin;
+        try {
+            SessionService.getInstance()
+                .registerSession(subject, subject, (String[]) null, null, subject);
+        } catch (ServiceException se) {
+            throw new MetacatUtilException("Problem registering session: " + se.getMessage());
+        }
+    }
+
+    /**
+     * Checks to see if the user is logged in by retrieving the token from the auth header and
+     * seeing if a corresponding Session exists in the global session list.
+     *
+     * @param request the http request that holds the auth header
+     * @return org.dataone.service.types.v1.Session if the user is logged in; null otherwise
+     */
+    public static Session getUserSession(HttpServletRequest request) {
+
+        SessionService sessionService = SessionService.getInstance();
+        if (sessionService == null) {
+            return null;
+        }
+        Session session = getAuthenticatedSessionFromRequest(request);
+
+        String sessionId = null;
+        if (session != null) {
+            sessionId = session.getSubject().getValue();
+        }
+
+        if (sessionId != null && sessionService.isSessionRegistered(sessionId)) {
+            // get the registered session data
+            SessionData sessionData = SessionService.getInstance().getRegisteredSession(sessionId);
+            // get the last time the session was accessed
+            Calendar lastAccessedTime = sessionData.getLastAccessedTime();
+            // get the current time and set back "sessionTimoutInt" minutes
+            Calendar now = Calendar.getInstance();
+            now.add(Calendar.MINUTE, -SESSION_TIMEOUT_MINUTES);
+
+            // if the last accessed time is before now minus the timeout,
+            // the session has expired. Unregister it and return false.
+            if (lastAccessedTime.before(now)) {
+                sessionService.unRegisterSession(sessionId);
+                return null;
+            }
+            return session;
+        }
+        return null;
+    }
+
+    /**
+     * Attempts to authenticate the request using the auth token included in the request header as
+     * "Authorization: Bearer $TOKEN"
+     *
+     * @param request the HttpServletRequest
+     * @return org.dataone.service.types.v1.Session, if authentication is successful. Null otherwise
+     */
+    private static Session getAuthenticatedSessionFromRequest(HttpServletRequest request) {
+
+        return PortalCertificateManager.getInstance().getSession(request);
+    }
+
+	private static String getOrcidLast16(String orcid) {
+		return orcid.substring(1 + orcid.lastIndexOf('/'));
 	}
 
-	/**
-	 * Gets the user name from the login session on the http request
-	 * 
-	 * @param request
-	 *            the http request that holds the login session
-	 * @return String that holds the user name
-	 */
-	public static String getUserName(HttpServletRequest request) {
-		String userName = (String)request.getSession().getAttribute("username");
 
-		return userName;
-	}
+    /**
+     * Checks to see if the user is logged in as admin by first checking if the user is logged in
+     * and then seeing if the user's account is on the administrators list in metacat.properties.
+     *
+     * @param request the http request that holds the login session
+     * @return boolean that is true if the user is logged in as admin, false otherwise
+     */
+    public static boolean isUserLoggedInAsAdmin(HttpServletRequest request)
+        throws MetacatUtilException {
+
+        Session adminSession = getUserSession(request);
+
+        if (adminSession == null) {
+            return false;
+        }
+        String userName = adminSession.getSubject().getValue();
+
+        if (adminSession != null) {
+            String jwtTokenUserId = adminSession.getSubject().getValue();
+        }
+
+        boolean isAdmin = isAdministrator(userName, null);
+
+        return isAdmin;
+    }
 
 	/**
 	 * Gets the user group names from the login session on the http request
@@ -379,18 +377,41 @@ public class AuthUtil {
 		return !authConfiguredString.equals(PropertyService.UNCONFIGURED);
 	}
 
-	/**
-	 * Check if the specified user is part of the administrators list
-	 * 
-	 * @param username
-	 *            the user login credentails
-	 * @param groups
-	 *            a list of the user's groups
-	 */
-	public static boolean isAdministrator(String username, String[] groups)
-			throws MetacatUtilException {
-		return onAccessList(getAdministrators(), username, groups);
-	}
+    /**
+     * Check if the specified user is part of the administrators list
+     *
+     * @param username the username or subject
+     * @param groups   an optional list of the user's groups
+     */
+    public static boolean isAdministrator(String username, String[] groups)
+        throws MetacatUtilException {
+
+        if (username == null && groups == null) {
+            logMetacat.warn("received null username AND groups - error in calling code?");
+            return false;
+        }
+        Pattern orcidPattern =
+            Pattern.compile("https?\\://orcid\\.org/\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)");
+
+        boolean isOrcid = (username != null) && orcidPattern.matcher(username).matches();
+        String user = isOrcid ? getOrcidLast16(username) : username;
+
+        for (String nextAdmin : getAdministrators()) {
+            String admin = isOrcid ? getOrcidLast16(nextAdmin) : nextAdmin;
+
+            if (admin.equals(user)) {
+                return true;
+            }
+            if (groups != null) {
+                for (String group : groups) {
+                    if (admin.equals(group)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
 	/**
 	 * Check if the specified user is part of the moderators list
@@ -524,18 +545,17 @@ public class AuthUtil {
      */
     public static Vector<String> split(String text, String delimiter, String escapeChar) {
         Vector<String> results = new Vector<String>();
-        //logMetacat.debug("AuthUtil.split -the text is "+text);
-        //logMetacat.debug("AuthUtil.split - the delimiter is "+delimiter);
-        //logMetacat.debug("AuthUtil.split -the escapeChar is "+ escapeChar);
-        if(text != null && text.length()>0 && delimiter != null && escapeChar != null) {
+        if (text != null && text.length() > 0 && delimiter != null && escapeChar != null) {
             String regex = "(?<!" + Pattern.quote(escapeChar) + ")" + Pattern.quote(delimiter);
-            logMetacat.debug("AuthUtil.split - The regex is "+regex);
+            logMetacat.debug("AuthUtil.split - The regex is " + regex);
             String[] strArray = text.split(regex);
-            if(strArray != null) {
-                for(int i=0; i<strArray.length; i++) {
-                    logMetacat.debug("AuthUtil.split - the splitted original value "+strArray[i]);
-                    String remove = strArray[i].replaceAll(Pattern.quote(escapeChar+delimiter), delimiter);
-                    logMetacat.debug("AuthUtil.split - the value after removed escpate char is "+remove);
+            if (strArray != null) {
+                for (int i = 0; i < strArray.length; i++) {
+                    logMetacat.debug("AuthUtil.split - the splitted original value " + strArray[i]);
+                    String remove =
+                        strArray[i].replaceAll(Pattern.quote(escapeChar + delimiter), delimiter);
+                    logMetacat.debug(
+                        "AuthUtil.split - the value after removing escaped char is " + remove);
                     results.add(remove);
                 }
             }

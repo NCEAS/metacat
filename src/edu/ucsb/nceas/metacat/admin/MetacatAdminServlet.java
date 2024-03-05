@@ -1,58 +1,29 @@
-/**
- * '$RCSfile$' Purpose: A Class that implements utility methods for a metadata catalog Copyright:
- * 2008 Regents of the University of California and the National Center for Ecological Analysis and
- * Synthesis Authors: Michael Daigle
- *
- * '$Author$' '$Date$' '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program; if
- * not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307 USA
- */
-
 package edu.ucsb.nceas.metacat.admin;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Hashtable;
+import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
+import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
-
-import org.dataone.service.types.v1.Session;
-import org.dataone.service.types.v1.SubjectInfo;
-import org.dataone.portal.TokenGenerator;
-
-import java.util.Enumeration;
 
 /**
  * Entry servlet for the metadata configuration utility
@@ -72,7 +43,11 @@ public class MetacatAdminServlet extends HttpServlet {
 
     /** Handle "GET" method requests from HTTP clients */
     public void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+        throws IOException {
+
+        // Check authorized and populate session
+        AdminAuthHandler authHandler = new AdminAuthHandler(getServletContext(), request, response);
+        authHandler.handle(D1ResourceHandler.GET);
 
         // Process the data and send back the response
         handleGetOrPost(request, response);
@@ -80,7 +55,11 @@ public class MetacatAdminServlet extends HttpServlet {
 
     /** Handle "POST" method requests from HTTP clients */
     public void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+        throws IOException {
+
+        // Check authorized and populate session
+        AdminAuthHandler authHandler = new AdminAuthHandler(getServletContext(), request, response);
+        authHandler.handle(D1ResourceHandler.POST);
 
         // Process the data and send back the response
         handleGetOrPost(request, response);
@@ -95,35 +74,18 @@ public class MetacatAdminServlet extends HttpServlet {
      *                 the http response to be sent back to the client
      */
     private void handleGetOrPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+        throws IOException {
         String action = request.getParameter("configureType");
         logMetacat.info("MetacatAdminServlet.handleGetOrPost - Processing admin action: " + action);
-        Vector<String> processingMessage = new Vector<String>();
-        Vector<String> processingErrors = new Vector<String>();
-        // TODO: Double-check to see how user's get registered in the CN after registering for ORCID
-        String jwtToken = null;
-        try {
-            boolean isAdminSession = false;
-            String authHeader = request.getHeader("Authorization");
-            logMetacat.debug("MAS - Authorization Header: " + authHeader);
-            // Check if the Authorization header is present and starts with "Bearer"
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                jwtToken = authHeader.substring(7); // "Bearer ".length() == 7
-                // Validate the token
-                Session adminSession = TokenGenerator.getInstance().getSession(jwtToken);
-                // Get administrator list
-                Vector<String> adminList = AuthUtil.getAdministrators();
-                String jwtTokenUserId = adminSession.getSubject().getValue();
-                // Iterate over adminList to get ORCID
-                for (String admin : adminList) {
-                    String adminFormatted = "http://orcid.org/" + admin;
-                    if (adminFormatted.equals(jwtTokenUserId)) {
-                        isAdminSession = true;
-                        action = "configure";
-                    }
-                }
-            }
 
+        Vector<String> processingMessage = new Vector<>();
+        Vector<String> processingErrors = new Vector<>();
+
+        logMetacat.debug("\n****** START REQUEST PARAMETERS **********************\n"
+                             + getAllParams(request)
+                             + "\n****** END REQUEST PARAMETERS   **********************\n");
+
+        try {
             if (!ConfigurationUtil.isBackupDirConfigured()) {
                 // if the backup dir has not been configured, then show the
                 // backup directory configuration screen.
@@ -132,7 +94,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "backup";
                 logMetacat.debug(
-                    "MetacatAdminServlet.handleGetOrPost - " + " Admin action changed to 'backup'");
+                    "MetacatAdminServlet.handleGetOrPost - Admin action changed to 'backup'");
             } else if (!AuthUtil.isAuthConfigured()) {
                 // if authentication isn't configured, change the action to auth.
                 // Authentication needs to be set up before we do anything else
@@ -141,18 +103,18 @@ public class MetacatAdminServlet extends HttpServlet {
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "auth";
                 logMetacat.debug(
-                    "MetacatAdminServlet.handleGetOrPost - " + "Admin action changed to 'auth'");
-            } else if (!isAdminSession) {
+                    "MetacatAdminServlet.handleGetOrPost - Admin action changed to 'auth'");
+
+            } else if (!AuthUtil.isUserLoggedInAsAdmin(request)) {
                 // If auth is configured, see if the user is logged in
                 // as an administrator.  If not, they need to log in before
                 // they can continue with configuration.
                 processingMessage.add("You must log in as an administrative "
-                                          + "user before you can continue with Metacat "
-                                          + "configuration.");
+                                      + "user before you can continue with Metacat configuration.");
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "login";
                 logMetacat.debug(
-                    "MetacatAdminServlet.handleGetOrPost - " + "Admin action changed to 'login'");
+                    "MetacatAdminServlet.handleGetOrPost - Admin action changed to 'login'");
             }
 
             if (action == null || action.equals("configure")) {
@@ -177,7 +139,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 return;
             } else if (action.equals("login")) {
                 // process login
-                LoginAdmin.getInstance().authenticateUser(request, response, authHeader);
+                LoginAdmin.getInstance().authenticateUser(request, response);
                 return;
             } else if (action.equals("backup")) {
                 // process login
@@ -230,7 +192,7 @@ public class MetacatAdminServlet extends HttpServlet {
             processingErrors.add(errorMessage);
         }
 
-        if (processingErrors.size() > 0) {
+        if (!processingErrors.isEmpty()) {
             RequestUtil.clearRequestMessages(request);
             RequestUtil.setRequestErrors(request, processingErrors);
             //something bad happened. We need to go back to the configuration
@@ -244,13 +206,29 @@ public class MetacatAdminServlet extends HttpServlet {
                                                + ".jsp?configureType=configure",
                                            null);
             } catch (Exception e) {
-                //Wow we can't display the error message on a web page. Only print them out.
+                //We can't display the error message on a web page. Only print them out.
                 logMetacat.error("MetacatAdminServlet.handleGetOrPost - couldn't"
                                      + " forward the error message to the metacat configuration "
                                      + "page since "
                                      + e.getMessage());
             }
         }
+    }
+
+    private static String getAllParams(HttpServletRequest request) {
+        Enumeration<String> parameterNames = request.getParameterNames();
+        StringBuilder returnStr = new StringBuilder();
+        while (parameterNames.hasMoreElements()) {
+            String paramName = parameterNames.nextElement();
+            returnStr.append(paramName).append(":\n");
+            String[] paramValues = request.getParameterValues(paramName);
+            if (paramValues != null) {
+                for (String value : paramValues) {
+                    returnStr.append("    ").append(value).append(";\n");
+                }
+            }
+        }
+        return returnStr.toString();
     }
 
     /*
@@ -280,10 +258,10 @@ public class MetacatAdminServlet extends HttpServlet {
         if (request != null) {
             request.setAttribute("metaCatVersion", SystemUtil.getMetacatVersion());
             request.setAttribute(
-                "propsConfigured", Boolean.valueOf(PropertyService.arePropertiesConfigured()));
-            request.setAttribute("authConfigured", Boolean.valueOf(AuthUtil.isAuthConfigured()));
+                "propsConfigured", PropertyService.arePropertiesConfigured());
+            request.setAttribute("authConfigured", AuthUtil.isAuthConfigured());
             request.setAttribute(
-                "metacatConfigured", Boolean.valueOf(ConfigurationUtil.isMetacatConfigured()));
+                "metacatConfigured", ConfigurationUtil.isMetacatConfigured());
             request.setAttribute(
                 "dataoneConfigured", PropertyService.getProperty("configutil.dataoneConfigured"));
             request.setAttribute(
