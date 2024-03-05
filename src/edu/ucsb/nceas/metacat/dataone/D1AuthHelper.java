@@ -8,6 +8,8 @@ import java.util.Set;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
+import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.commons.logging.Log;
@@ -358,6 +360,21 @@ public class D1AuthHelper {
             }
         } catch (ServiceFailure e) {
             exceptions.add(e);
+        }
+
+        // If subject is not a LocalNodeAdmin or CNAdmin, check to see if subject is a
+        // Metacat admin (auth.administrators) - who also have admin privileges like the above
+        try {
+            String adminUser = session.getSubject().getValue();
+            if (adminUser != null) {
+                logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + adminUser + " for Metacat admin privileges.");
+                if (AuthUtil.isAdministrator(adminUser, null)) {
+                    return;
+                }
+            }
+        } catch (MetacatUtilException mue) {
+            ServiceFailure sf = new ServiceFailure("0000", mue.getMessage());
+            exceptions.add(sf);
         }
 
         if (exceptions.isEmpty()) { 
