@@ -367,7 +367,8 @@ public class D1AuthHelper {
         try {
             String adminUser = session.getSubject().getValue();
             if (adminUser != null) {
-                logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + adminUser + " for Metacat admin privileges.");
+                logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + adminUser +
+                                     " for Metacat admin privileges.");
                 if (AuthUtil.isAdministrator(adminUser, null)) {
                     return;
                 }
