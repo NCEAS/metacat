@@ -1,25 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2021 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- *   '$Author:  $'
- *     '$Date:  $'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.object.handler;
 
 import java.io.ByteArrayInputStream;
@@ -67,7 +45,7 @@ public abstract class NonXMLMetadataHandler {
     }
     
     /**
-     * Save the bytes to the disk 
+     * Save the bytes to the disk
      * @param source  the input stream contains the content of the meta data object
      * @param sysmeta  the sysmeta associated with the input stream
      * @param session  the user's session who makes this call
@@ -79,7 +57,8 @@ public abstract class NonXMLMetadataHandler {
      * @throws NotAuthorized 
      */
     public String save(InputStream source, SystemMetadata sysmeta, Session session)
-                        throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
+                        throws UnsupportedType, ServiceFailure, InvalidRequest,
+                                                           InvalidSystemMetadata, NotAuthorized {
         if (sysmeta == null) {
             throw new InvalidRequest("1102", "The system metadata parameter should not be null.");
         }
@@ -131,13 +110,15 @@ public abstract class NonXMLMetadataHandler {
      * @throws ServiceFailure
      * @throws InvalidRequest
      */
-    private InputStream checkValidation(InputStream validationInput, Identifier pid) throws ServiceFailure, InvalidRequest {
+    private InputStream checkValidation(InputStream validationInput, Identifier pid)
+                                                            throws ServiceFailure, InvalidRequest {
         InputStream data = null;
         boolean canReset = false;
         boolean needCloseValidationInput = false;
         if (validationInput instanceof DetailedFileInputStream) {
-            logMetacat.debug("NonXMLMetadataHandler.checkValidation - in the DetailedFileInputStream route for pid " + pid.getValue());
-            //Metacat can read an input stream from the file associated with the DetailedFileInputStream for the next step
+            logMetacat.debug("In the DetailedFileInputStream route for pid " + pid.getValue());
+            //Metacat can read an input stream from the file associated
+            //with the DetailedFileInputStream for the next step
             DetailedFileInputStream input = (DetailedFileInputStream) validationInput;
             File sourceFile = input.getFile();
             try {
@@ -145,18 +126,19 @@ public abstract class NonXMLMetadataHandler {
                 data = input;
                 needCloseValidationInput = true;
             } catch (FileNotFoundException e) {
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.checkValidation - cannot valid the meta data object " + 
-                        " because cannot find the file associated with the detailed file input stream " + 
-                        " for the object " + pid.getValue() + " since " + e.getMessage());
+                throw new ServiceFailure("1190", "Cannot valid the meta data object "
+                        + "because cannot find the file associated with the detailed file input "
+                        + "stream for the object " + pid.getValue() + " since " + e.getMessage());
             }
         } else if (validationInput.markSupported() && validationInput instanceof ByteArrayInputStream) {
-            logMetacat.debug("NonXMLMetadataHandler.checkValidation - in the resetable input stream route for pid " + pid.getValue());
+            logMetacat.debug("In the resetable input stream route for pid " + pid.getValue());
             //Metacat can reset input stream for the next step
             data = validationInput;
             canReset = true;
         } else {
-            logMetacat.debug("NonXMLMetadataHandler.checkValidation - in the another type of the input stream route for pid " + pid.getValue());
-            //Metacat has to save the source input stream into a temp file and read the file later for the next step
+            logMetacat.debug("In the another type of the input stream route for pid " + pid.getValue());
+            //Metacat has to save the source input stream into a temp file and read the file later
+            //for the next step
             FileOutputStream out = null;
             try {
                 tmpFile = generateTempFile("NonXML");
@@ -168,13 +150,13 @@ public abstract class NonXMLMetadataHandler {
                 if (tmpFile != null) {
                     tmpFile.delete();
                 }
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.checkValidation - cannot save the meta data object " + 
-                                          pid.getValue() + " into a temporary file since " + e.getMessage());
+                throw new ServiceFailure("1190", "Cannot save the meta data object " + pid.getValue()
+                                          + " into a temporary file since " + e.getMessage());
             } finally {
                 try {
                     IOUtils.close(out);
                 } catch (IOException e) {
-                    logMetacat.warn("NonXMLMetadataHandler.checkValidation - cannot close the out put stream after saving the object for pid " 
+                    logMetacat.warn("Cannot close the out put stream after saving the object for pid "
                                     + pid.getValue() + "into a temporary file");
                 }
             }
@@ -188,10 +170,10 @@ public abstract class NonXMLMetadataHandler {
                try {
                    data.reset();
                } catch (IOException e) {
-                   throw new ServiceFailure("1190", "NonXMLMetadataHandler.checkValidation - cannot save the object " + 
-                           " because Metacat cannot reset the input stream even though the inputstream " + 
-                           data.getClass().getCanonicalName() + " for the object " + pid.getValue() + 
-                           " claim sit is resetable since " + e.getMessage());
+                   throw new ServiceFailure("1190", "Cannot save the object "
+                     + " because Metacat cannot reset the input stream even though the inputstream "
+                     + data.getClass().getCanonicalName() + " for the object " + pid.getValue()
+                     + " claim sit is resetable since " + e.getMessage());
                }
            }
         } catch (InvalidRequest e) {
@@ -203,12 +185,11 @@ public abstract class NonXMLMetadataHandler {
                     validationInput.close();
                 }
             } catch (IOException ee) {
-                logMetacat.warn("NonXMLMetadataHandler.checkValidation - cannot close the invalidation stream since " + ee.getMessage());
+                logMetacat.warn("Cannot close the invalidation stream since " + ee.getMessage());
             }
-            throw new InvalidRequest("1102", "NonXMLMetadataHandler.checkValidation - the metadata object " + pid.getValue() + 
-                                    " is invalid: " + e.getMessage());
+            throw new InvalidRequest("1102", "The metadata object " + pid.getValue()
+                                        + " is invalid: " + e.getMessage());
         }
-        
         if (!valid) {
             try {
                 if (tmpFile != null) {
@@ -218,19 +199,20 @@ public abstract class NonXMLMetadataHandler {
                     validationInput.close();
                 }
             } catch (IOException ee) {
-                logMetacat.warn("NonXMLMetadataHandler.checkValidation - cannot close the invalidation stream since " + ee.getMessage());
+                logMetacat.warn("Cannot close the invalidation stream since " + ee.getMessage());
             }
-            throw new InvalidRequest("1102", "NonXMLMetadataHandler.checkValidation - the metadata object " + pid.getValue() + " is invalid.");
+            throw new InvalidRequest("1102","The metadata object " + pid.getValue() + " is invalid.");
         }
         if (needCloseValidationInput) {
-            //this route handle that the validationInput stream was created as a new input stream. We need to close it. 
+            //this route handle that the validationInput stream was created as a new input stream.
+            //We need to close it.
             try {
                 validationInput.close();
             } catch (IOException e) {
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.checkValidation - cannot save the object " + 
-                        " because Metacat cannot reset the input stream even though the inputstream " + 
-                        data.getClass().getCanonicalName() + " for the object " + pid.getValue() + 
-                        " claim sit is resetable since " + e.getMessage());
+                throw new ServiceFailure("1190", "Cannot save the object because Metacat"
+                        + " cannot reset the input stream even though the inputstream "
+                        + data.getClass().getCanonicalName() + " for the object " + pid.getValue()
+                        + " claim sit is resetable since " + e.getMessage());
             }
         }
         return data;
@@ -238,7 +220,7 @@ public abstract class NonXMLMetadataHandler {
     
     
     /**
-     *The abstract method to validate the non-xml object 
+     *The abstract method to validate the non-xml object
      * @param source  the input stream contains the content of the meta data object
      * @return true if the content is valid; false otherwise.
      * @throws InvalidRequest  when the content is not valid
@@ -271,7 +253,8 @@ public abstract class NonXMLMetadataHandler {
             //try again if the first time fails
             newFile = File.createTempFile(newPrefix, suffix, tmpDir);
         }
-        logMetacat.debug("StreamingMultiplePartRequestResolver.generateTmepFile - the new file  is " + newFile.getCanonicalPath());
+        logMetacat.debug("StreamingMultiplePartRequestResolver.generateTmepFile - the new file is "
+                         + newFile.getCanonicalPath());
         return newFile;
     }
 }
