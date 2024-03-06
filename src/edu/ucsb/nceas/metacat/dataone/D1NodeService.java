@@ -74,6 +74,7 @@ import edu.ucsb.nceas.metacat.AccessionNumberException;
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
@@ -3058,21 +3059,5 @@ public abstract class D1NodeService {
             }
         }
         return consolidatedMap;
-    }
-
-    /**
-     * Return the directory where temp files are stored
-     * @return the temp directory
-     */
-    protected static File getTempDirectory() {
-        File tmpDir = null;
-        try {
-            tmpDir = new File(PropertyService.getProperty("application.tempDir"));
-        }
-        catch(PropertyNotFoundException pnfe) {
-            logMetacat.warn("application.tmpDir not found.  Using /tmp instead.");
-            tmpDir = new File("/tmp");
-        }
-        return tmpDir;
     }
 }
