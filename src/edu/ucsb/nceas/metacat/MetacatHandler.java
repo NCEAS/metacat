@@ -6,10 +6,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Vector;
 
@@ -17,9 +17,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.ecoinformatics.eml.EMLParser;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -32,12 +34,12 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
 import edu.ucsb.nceas.metacat.event.MetacatEventService;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
-import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
-import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.LSIDUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
@@ -409,14 +411,53 @@ public class MetacatHandler {
         return output;
     }
 
-    public void validXmlSciMeta(InputStream object, String formatId) throws IOException,
+    /**
+     * Validate a scientific metadata object. It will throw an exception if it is invalid.
+     * @param object  the content of the object. This is a byte array and so far it has not caused
+     *                the memory issue. In 3.1.0 release, it will be replaced.
+     * @param formatId  format id of the object
+     * @throws InvalidRequest
+     * @throws ServiceFailure
+     * @throws ServiceException
+     * @throws PropertyNotFoundException
+     * @throws IOException
+     * @throws SAXException
+     * @throws MetacatException
+     */
+    public void validateSciMeta(byte[] object, ObjectFormatIdentifier formatId)
+                 throws InvalidRequest, ServiceFailure, ServiceException, PropertyNotFoundException,
+                                                      IOException, SAXException, MetacatException {
+        NonXMLMetadataHandler handler =
+                NonXMLMetadataHandlers.newNonXMLMetadataHandler(formatId);
+            if (handler != null) {
+                // a non-xml metadata object path
+                handler.validate(new ByteArrayInputStream(object));
+            } else {
+                // an XML object
+                validateXmlSciMeta(object, formatId.getValue());
+            }
+    }
+
+    /**
+     * Validate an XML object. If it is not valid, an SAXException will be thrown.
+     * @param object  the content of the object. This is a byte array and so far it has not caused
+     *                the memory issue. In 3.1.0 release, it will be replaced.
+     * @param formatId  format id of the object
+     * @throws IOException
+     * @throws ServiceFailure
+     * @throws ServiceException
+     * @throws PropertyNotFoundException
+     * @throws SAXException
+     * @throws MetacatException
+     */
+    protected void validateXmlSciMeta(byte[] object, String formatId) throws IOException,
                                 ServiceFailure,ServiceException, PropertyNotFoundException,
                                 SAXException, MetacatException {
         boolean needValidation = false;
         String rule = null;
         String namespace = null;
         String schemaLocation = null;
-        String doctext = new String("");
+        String doctext = new String(object, StandardCharsets.UTF_8);
         StringReader xmlReader = new StringReader(doctext);
         needValidation = needDTDValidation(xmlReader);
         if (needValidation) {
@@ -474,7 +515,7 @@ public class MetacatHandler {
                     logMetacat.debug(
                         "MetacatHandler.handleInsertOrUpdateAction - the xml object will "
                             + "be validated by a schema which deoe NOT have a target "
-                            + "namespace.");
+                            + "name space.");
                     schemaLocation = XMLSchemaService.getInstance()
                         .findNoNamespaceSchemaLocalLocation(formatId,
                                                             noNamespaceSchemaLocationAttr);
@@ -495,7 +536,7 @@ public class MetacatHandler {
         // set the dtd part null;
         XMLReader parser =
                DocumentImpl.initializeParser(schemaList, null, rule, needValidation, schemaLocation);
-        parser.parse(new InputSource(object));
+        parser.parse(new InputSource(xmlReader));
     }
 
     /**
