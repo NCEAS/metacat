@@ -1328,10 +1328,7 @@ public class DocumentImpl {
             // null and null are createtime and updatetime
             // null will create current time
             //false means it is not a revision doc
-            parser =
-                initializeParser(conn, action, docid, schemaList, rev, user, groups,
-                                 dtd, ruleBase, needValidation, false, null, null, encoding,
-                                 schemaLocation);
+            parser = initializeParser(schemaList, dtd, ruleBase, needValidation, schemaLocation);
             xmlReader = new InputStreamReader(new ByteArrayInputStream(xmlBytes));
             conn.setAutoCommit(false);
             parser.parse(new InputSource(xmlReader));
@@ -1673,29 +1670,16 @@ public class DocumentImpl {
 
     /**
      * Set up the parser handlers for writing the document to the database
-     * @param dbconn  the connection connected to db
-     * @param action  it can be insert or update
-     * @param docid  the id of the document
      * @param schemaList  the list of schema will be used
-     * @param rev  the revision of the document
-     * @param user  the owner of the document
-     * @param groups  the groups in which the owner is
      * @param dtd  the dtd content
      * @param ruleBase  the validation base - schema or dtd
      * @param needValidation  if the document needs to be validated
-     * @param isRevision  if this document is in the xml_revsion table
-     * @param createDate  the created date of the document
-     * @param updateDate  the updated date of the document
-     * @param encoding  the encoding code of the document
      * @param schemaLocation  the string contains the schema location
      * @return the XMLReader object
      * @throws Exception
      */
-    private static XMLReader initializeParser(
-        DBConnection dbconn, String action, String docid, Vector<XMLSchema> schemaList, String rev,
-        String user, String[] groups, Reader dtd, String ruleBase,
-        boolean needValidation, boolean isRevision, Date createDate, Date updateDate,
-        String encoding, String schemaLocation) throws Exception {
+    public static XMLReader initializeParser( Vector<XMLSchema> schemaList, Reader dtd,
+                  String ruleBase, boolean needValidation, String schemaLocation) throws Exception {
         XMLReader parser = null;
         try {
             // handler
@@ -1708,10 +1692,7 @@ public class DocumentImpl {
             //XMLSchemaService.getInstance().populateRegisteredSchemaList();
             //create a DBSAXHandler object which has the revision
             // specification
-            chandler = new DBSAXHandler(dbconn, action, docid, rev, user, groups,
-                                        createDate, updateDate);
-            chandler.setIsRevisionDoc(isRevision);
-            chandler.setEncoding(encoding);
+            chandler = new DBSAXHandler();
             parser.setContentHandler((ContentHandler) chandler);
             parser.setErrorHandler((ErrorHandler) chandler);
             parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
@@ -1738,7 +1719,7 @@ public class DocumentImpl {
                 if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
                     parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY, schemaLocation);
                 } else {
-                    throw new Exception("The schema for the document " + docid
+                    throw new Exception("The schema for the document "
                                             + " can't be found in any place. So we can't validate"
                                             + " the xml instance.");
                 }
@@ -1757,7 +1738,7 @@ public class DocumentImpl {
                 if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
                     parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY, schemaLocation);
                 } else {
-                    throw new Exception("The schema for the document " + docid
+                    throw new Exception("The schema for the document "
                                             + " can't be found in any place. So we can't validate"
                                             + " the xml instance.");
                 }
@@ -1765,16 +1746,16 @@ public class DocumentImpl {
                 logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
                 // turn on dtd validaton feature
                 parser.setFeature(VALIDATIONFEATURE, true);
-                eresolver = new DBEntityResolver(dbconn, (DBSAXHandler) chandler, dtd);
-                dtdhandler = new DBDTDHandler(dbconn);
+                eresolver = new DBEntityResolver((DBSAXHandler) chandler, dtd);
+                dtdhandler = new DBDTDHandler();
                 parser.setEntityResolver((EntityResolver) eresolver);
                 parser.setDTDHandler((DTDHandler) dtdhandler);
             } else {
                 logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
                 // non validation
                 parser.setFeature(VALIDATIONFEATURE, false);
-                eresolver = new DBEntityResolver(dbconn, (DBSAXHandler) chandler, dtd);
-                dtdhandler = new DBDTDHandler(dbconn);
+                eresolver = new DBEntityResolver((DBSAXHandler) chandler, dtd);
+                dtdhandler = new DBDTDHandler();
                 parser.setEntityResolver((EntityResolver) eresolver);
                 parser.setDTDHandler((DTDHandler) dtdhandler);
             }
