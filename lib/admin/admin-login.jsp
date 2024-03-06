@@ -1,12 +1,15 @@
 <%
     Vector<String> adminList = (Vector<String>) request.getAttribute("adminList");
-    boolean isAuthInProgress = Boolean.parseBoolean((String)request.getAttribute("inProgress"));
-
+    boolean loggingOut = Boolean.parseBoolean((String)request.getAttribute("logout"));
+    if (loggingOut) {
+        request.getSession().removeAttribute("userId");
+    }
+    final String contextPath = request.getContextPath();
     String url = request.getRequestURL().toString();
     String baseURL = url.substring(0, url.length() - request.getRequestURI().length())
-            + request.getContextPath() + "/";
-    String targetURL = baseURL + "admin?loginAction=Login&amp;processForm=true";
-    // TODO - use cn from properties instead
+            + contextPath + "/";
+    String targetURL = baseURL + "admin?loginAction=Login&amp;orcidDone=true";
+    // TODO - use cn url from properties instead
     String oAuthUrl = "https://cn.dataone.org/portal/oauth?action=start&amp;target=" + targetURL;
 %>
 <html>
@@ -50,7 +53,7 @@
         <div class="orcid-flex">
             <a href="<%= oAuthUrl %>" class="signin orcid-btn update-orcid-sign-in-url orcid-flex"
                id="orcidLogin">
-                <img src="<%= request.getContextPath() %>/admin/images/orcid_64x64.png"
+                <img src="<%= contextPath %>/admin/images/orcid_64x64.png"
                      alt="orcid logo">
                 <span>Sign in with ORCID</span>
             </a>
@@ -59,10 +62,20 @@
 </div>
 </body>
 <script>
+
     window.onload =
 
         function () {
-            alert("window.location.pathname = " + window.location.pathname);
+
+            const backToLogin = <%= loggingOut %>;
+            alert("onload: loggingOut = " + backToLogin);
+
+            if (backToLogin === true) {
+                alert("Back To Login... <%= baseURL %>/admin/admin-login.jsp?configureType=logout");
+                window.location.replace(
+                    "<%= baseURL %>/admin/admin-login.jsp?configureType=logout");
+            }
+
             if (getLocalToken() === null) {
                 console.log("No token found in local storage - querying CN")
                 getTokenFromCN();
@@ -81,7 +94,7 @@
                             localStorage.setItem("metacatAdminJWTToken", jwtAdminToken);
                             console.log("saved token; sending login request to metacat. "
                                 + "xhr.status = " + xhr.status);
-                            requestWithToken("/admin/?loginAction=Login&processForm=true");
+                            requestWithToken("/admin/?loginAction=Login&orcidDone=true");
                         } else {
                             console.log("Unable to retrieve token; need to log in via orcid; "
                                 + "xhr.readyState = " + xhr.readyState + "; xhr.status = "
@@ -103,7 +116,7 @@
 
             function requestWithToken(uri) {
                 const xhr2 = new XMLHttpRequest();
-                const targetUrl = '<%= request.getContextPath()%>' + uri;
+                const targetUrl = '<%= contextPath %>' + uri;
                 xhr2.open('GET', targetUrl, true);
                 xhr2.setRequestHeader('Authorization', 'Bearer ' + getLocalToken());
                 xhr2.setRequestHeader('Cache-Control', 'no-cache');

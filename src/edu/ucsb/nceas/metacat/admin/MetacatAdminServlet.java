@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -45,10 +44,6 @@ public class MetacatAdminServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
         throws IOException {
 
-        // Check authorized and populate session
-//        AdminAuthHandler authHandler = new AdminAuthHandler(getServletContext(), request, response);
-//        authHandler.handle(D1ResourceHandler.GET);
-
         // Process the data and send back the response
         handleGetOrPost(request, response);
     }
@@ -56,10 +51,6 @@ public class MetacatAdminServlet extends HttpServlet {
     /** Handle "POST" method requests from HTTP clients */
     public void doPost(HttpServletRequest request, HttpServletResponse response)
         throws IOException {
-
-        // Check authorized and populate session
-//        AdminAuthHandler authHandler = new AdminAuthHandler(getServletContext(), request, response);
-//        authHandler.handle(D1ResourceHandler.POST);
 
         // Process the data and send back the response
         handleGetOrPost(request, response);
@@ -134,12 +125,15 @@ public class MetacatAdminServlet extends HttpServlet {
                 DBAdmin.getInstance().configureDatabase(request, response);
                 return;
             } else if (action.equals("auth")) {
-                // process authentication
+                // configure authentication
                 AuthAdmin.getInstance().configureAuth(request, response);
                 return;
             } else if (action.equals("login")) {
                 // process login
-                LoginAdmin.getInstance().authenticateUser(request, response);
+                LoginAdmin.getInstance().logInAdminUser(request, response);
+                return;
+            } else if (action.equals("logout")) {
+                LoginAdmin.getInstance().logOutAdminUser(request, response);
                 return;
             } else if (action.equals("backup")) {
                 // process login

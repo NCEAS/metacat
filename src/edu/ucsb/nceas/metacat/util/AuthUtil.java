@@ -216,20 +216,16 @@ public class AuthUtil {
      *
      * @param request the http request.
      */
-    public static void logUserIn(HttpServletRequest request) throws MetacatUtilException {
+    public static void logAdminUserIn(HttpServletRequest request) throws MetacatUtilException {
 
-        Session session = getAuthenticatedSessionFromRequest(request);
+        String userId = getAuthenticatedUserId(request);
 
-        String subject = null;
-        if (session != null) {
-            subject = session.getSubject().getValue();
-        }
-
-        try {
-            SessionService.getInstance()
-                .registerSession(subject, subject, (String[]) null, null, subject);
-        } catch (ServiceException se) {
-            throw new MetacatUtilException("Problem registering session: " + se.getMessage());
+        if (userId != null && !userId.isEmpty()) {
+            request.getSession().setAttribute("userId", userId);
+            logMetacat.info("User successfully logged in: " + userId);
+        } else {
+            throw new MetacatUtilException(
+                "Problem logging user in; getAuthenticatedUserId returned: <" + userId + ">");
         }
     }
 
@@ -240,38 +236,38 @@ public class AuthUtil {
      * @param request the http request that holds the auth header
      * @return org.dataone.service.types.v1.Session if the user is logged in; null otherwise
      */
-    public static Session getUserSession(HttpServletRequest request) {
-
-        SessionService sessionService = SessionService.getInstance();
-        if (sessionService == null) {
-            return null;
-        }
-        Session session = getAuthenticatedSessionFromRequest(request);
-
-        String sessionId = null;
-        if (session != null) {
-            sessionId = session.getSubject().getValue();
-        }
-
-        if (sessionId != null && sessionService.isSessionRegistered(sessionId)) {
-            // get the registered session data
-            SessionData sessionData = SessionService.getInstance().getRegisteredSession(sessionId);
-            // get the last time the session was accessed
-            Calendar lastAccessedTime = sessionData.getLastAccessedTime();
-            // get the current time and set back "sessionTimoutInt" minutes
-            Calendar now = Calendar.getInstance();
-            now.add(Calendar.MINUTE, -SESSION_TIMEOUT_MINUTES);
-
-            // if the last accessed time is before now minus the timeout,
-            // the session has expired. Unregister it and return false.
-            if (lastAccessedTime.before(now)) {
-                sessionService.unRegisterSession(sessionId);
-                return null;
-            }
-            return session;
-        }
-        return null;
-    }
+//    public static Session getUserSession(HttpServletRequest request) {
+//
+//        SessionService sessionService = SessionService.getInstance();
+//        if (sessionService == null) {
+//            return null;
+//        }
+//        Session session = getAuthenticatedSessionFromRequest(request);
+//
+//        String sessionId = null;
+//        if (session != null) {
+//            sessionId = session.getSubject().getValue();
+//        }
+//
+//        if (sessionId != null && sessionService.isSessionRegistered(sessionId)) {
+//            // get the registered session data
+//            SessionData sessionData = SessionService.getInstance().getRegisteredSession(sessionId);
+//            // get the last time the session was accessed
+//            Calendar lastAccessedTime = sessionData.getLastAccessedTime();
+//            // get the current time and set back "sessionTimoutInt" minutes
+//            Calendar now = Calendar.getInstance();
+//            now.add(Calendar.MINUTE, -SESSION_TIMEOUT_MINUTES);
+//
+//            // if the last accessed time is before now minus the timeout,
+//            // the session has expired. Unregister it and return false.
+//            if (lastAccessedTime.before(now)) {
+//                sessionService.unRegisterSession(sessionId);
+//                return null;
+//            }
+//            return session;
+//        }
+//        return null;
+//    }
 
     /**
      * Attempts to authenticate the request using the auth token included in the request header as
@@ -280,10 +276,10 @@ public class AuthUtil {
      * @param request the HttpServletRequest
      * @return org.dataone.service.types.v1.Session, if authentication is successful. Null otherwise
      */
-    private static Session getAuthenticatedSessionFromRequest(HttpServletRequest request) {
-
-        return PortalCertificateManager.getInstance().getSession(request);
-    }
+//    private static Session getAuthenticatedSessionFromRequest(HttpServletRequest request) {
+//
+//        return PortalCertificateManager.getInstance().getSession(request);
+//    }
 
 	private static String getOrcidLast16(String orcid) {
 		return orcid.substring(1 + orcid.lastIndexOf('/'));
@@ -300,23 +296,31 @@ public class AuthUtil {
     public static boolean isUserLoggedInAsAdmin(HttpServletRequest request)
         throws MetacatUtilException {
 
-        Session adminSession = getUserSession(request);
+        // Can user be authenticated via header token?
+        String userId = getAuthenticatedUserId(request);
 
-        if (adminSession == null) {
+        if (userId == null || userId.isEmpty()) {
             return false;
         }
-        String userName = adminSession.getSubject().getValue();
 
-        if (adminSession != null) {
-            String jwtTokenUserId = adminSession.getSubject().getValue();
-        }
-
-        boolean isAdmin = isAdministrator(userName, null);
-
-        return isAdmin;
+        // Can user be authorized as an administrator?
+        return isAdministrator(userId, null);
     }
 
-	/**
+    // Try to authenticate user via jwt token in header.
+    private static String getAuthenticatedUserId(HttpServletRequest request) {
+
+        Session adminSession = PortalCertificateManager.getInstance().getSession(request);
+
+        if (adminSession == null) {
+            logMetacat.debug("Unable to authenticate user via header token - "
+                                 + "PortalCertificateManager returned null session");
+            return null;
+        }
+        return adminSession.getSubject().getValue();
+    }
+
+    /**
 	 * Gets the user group names from the login session on the http request
 	 * 
 	 * @param request
