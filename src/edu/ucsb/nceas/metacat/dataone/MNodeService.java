@@ -28,6 +28,9 @@ import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
@@ -115,6 +118,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -1151,18 +1155,33 @@ public class MNodeService extends D1NodeService
 
             // add it to local store
             Identifier retPid;
+            File newFile = null;
             try {
                 // skip the MN.create -- this mutates the system metadata and we don't want it to
                 if (localId == null) {
                     // TODO: this will fail if we already "know" about the identifier
                     // FIXME: see https://redmine.dataone.org/issues/2572
                     objectExists(pid);
-                    boolean changedModificationDate = false;
-                    retPid = super.create(session, pid, object, sysmeta, changedModificationDate);
-                    result = (retPid.getValue().equals(pid.getValue()));
+                    // Save the input stream into a checked file, with the prefix checked-object
+                    // and the suffix null.
+                    newFile = File.createTempFile("checked-replicate-object-"
+                                            + System.currentTimeMillis(), null, getTempDirectory());
+                    CheckedFile checkedFile =
+                           StreamingMultipartRequestResolver.writeStreamToCheckedFile(newFile,
+                                     object, sysmeta.getChecksum().getAlgorithm(), pid.getValue());
+                    try (DetailedFileInputStream dataStream =
+                            new DetailedFileInputStream(checkedFile, checkedFile.getChecksum())) {
+                        boolean changedModificationDate = false;
+                        retPid = super.create(session, pid, dataStream, sysmeta,
+                                                                        changedModificationDate);
+                        result = (retPid.getValue().equals(pid.getValue()));
+                    }
                 }
 
             } catch (Exception e) {
+                if (newFile != null) {
+                    newFile.delete();
+                }
                 String msg =
                     "Could not save object to local store (" + e.getClass().getName() + "): "
                         + e.getMessage();
