@@ -51,6 +51,7 @@ import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -59,6 +60,7 @@ import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
@@ -1676,91 +1678,86 @@ public class DocumentImpl {
      * @param needValidation  if the document needs to be validated
      * @param schemaLocation  the string contains the schema location
      * @return the XMLReader object
-     * @throws Exception
+     * @throws PropertyNotFoundException
+     * @throws SAXException
+     * @throws ServiceFailure
      */
     public static XMLReader initializeParser( Vector<XMLSchema> schemaList, Reader dtd,
-                  String ruleBase, boolean needValidation, String schemaLocation) throws Exception {
+                  String ruleBase, boolean needValidation, String schemaLocation)
+                          throws ServiceFailure, PropertyNotFoundException, SAXException {
         XMLReader parser = null;
-        try {
-            // handler
-            DBSAXHandler chandler;
-            EntityResolver eresolver;
-            DTDHandler dtdhandler;
-            // Get an instance of the parser
-            String parserName = PropertyService.getProperty("xml.saxparser");
-            parser = XMLReaderFactory.createXMLReader(parserName);
-            //XMLSchemaService.getInstance().populateRegisteredSchemaList();
-            //create a DBSAXHandler object which has the revision
-            // specification
-            chandler = new DBSAXHandler();
-            parser.setContentHandler((ContentHandler) chandler);
-            parser.setErrorHandler((ErrorHandler) chandler);
-            parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
-            parser.setProperty(LEXICALPROPERTY, chandler);
-            if (ruleBase != null && (ruleBase.equals(SCHEMA) || ruleBase.equals(EML200)
-                || ruleBase.equals(EML210)) && needValidation) {
-                XMLSchemaService xmlss = XMLSchemaService.getInstance();
-                //xmlss.doRefresh();
-                logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
-                // turn on schema validation feature
-                parser.setFeature(VALIDATIONFEATURE, true);
-                parser.setFeature(NAMESPACEFEATURE, true);
-                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
+        // handler
+        DBSAXHandler chandler;
+        EntityResolver eresolver;
+        DTDHandler dtdhandler;
+        // Get an instance of the parser
+        String parserName = PropertyService.getProperty("xml.saxparser");
+        parser = XMLReaderFactory.createXMLReader(parserName);
+        //XMLSchemaService.getInstance().populateRegisteredSchemaList();
+        //create a DBSAXHandler object which has the revision
+        // specification
+        chandler = new DBSAXHandler();
+        parser.setContentHandler((ContentHandler) chandler);
+        parser.setErrorHandler((ErrorHandler) chandler);
+        parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
+        parser.setProperty(LEXICALPROPERTY, chandler);
+        if (ruleBase != null && (ruleBase.equals(SCHEMA) || ruleBase.equals(EML200)
+            || ruleBase.equals(EML210)) && needValidation) {
+            XMLSchemaService xmlss = XMLSchemaService.getInstance();
+            logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
+            // turn on schema validation feature
+            parser.setFeature(VALIDATIONFEATURE, true);
+            parser.setFeature(NAMESPACEFEATURE, true);
+            parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
 
-                boolean allSchemasRegistered = xmlss.areAllSchemasRegistered(schemaList);
-                if (xmlss.useFullSchemaValidation() && !allSchemasRegistered && !ruleBase.equals(
-                    EML210) && !ruleBase.equals(EML200)) {
-                    parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
-                }
-                logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: "
-                                    + schemaLocation);
-                // Set external schemalocation.
-                if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
-                    parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY, schemaLocation);
-                } else {
-                    throw new Exception("The schema for the document "
-                                            + " can't be found in any place. So we can't validate"
-                                            + " the xml instance.");
-                }
-            } else if (ruleBase != null && ruleBase.equals(NONAMESPACESCHEMA) && needValidation) {
-                //xmlss.doRefresh();
-                logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
-                // turn on schema validation feature
-                parser.setFeature(VALIDATIONFEATURE, true);
-                parser.setFeature(NAMESPACEFEATURE, true);
-                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                logMetacat.info(
-                    "DocumentImpl.initalizeParser - Generic external no-namespace schema location: "
-                        + schemaLocation);
-                // Set external schemalocation.
-                if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
-                    parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY, schemaLocation);
-                } else {
-                    throw new Exception("The schema for the document "
-                                            + " can't be found in any place. So we can't validate"
-                                            + " the xml instance.");
-                }
-            } else if (ruleBase != null && ruleBase.equals(DTD) && needValidation) {
-                logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
-                // turn on dtd validaton feature
-                parser.setFeature(VALIDATIONFEATURE, true);
-                eresolver = new DBEntityResolver((DBSAXHandler) chandler, dtd);
-                dtdhandler = new DBDTDHandler();
-                parser.setEntityResolver((EntityResolver) eresolver);
-                parser.setDTDHandler((DTDHandler) dtdhandler);
-            } else {
-                logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
-                // non validation
-                parser.setFeature(VALIDATIONFEATURE, false);
-                eresolver = new DBEntityResolver((DBSAXHandler) chandler, dtd);
-                dtdhandler = new DBDTDHandler();
-                parser.setEntityResolver((EntityResolver) eresolver);
-                parser.setDTDHandler((DTDHandler) dtdhandler);
+            boolean allSchemasRegistered = xmlss.areAllSchemasRegistered(schemaList);
+            if (xmlss.useFullSchemaValidation() && !allSchemasRegistered && !ruleBase.equals(
+                EML210) && !ruleBase.equals(EML200)) {
+                parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
             }
-        } catch (Exception e) {
-            throw e;
+            logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: "
+                                + schemaLocation);
+            // Set external schemalocation.
+            if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
+                parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY, schemaLocation);
+            } else {
+                throw new ServiceFailure("0000", "The schema for the document "
+                                        + " can't be found in any place. So we can't validate"
+                                        + " the xml instance.");
+            }
+        } else if (ruleBase != null && ruleBase.equals(NONAMESPACESCHEMA) && needValidation) {
+            logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
+            // turn on schema validation feature
+            parser.setFeature(VALIDATIONFEATURE, true);
+            parser.setFeature(NAMESPACEFEATURE, true);
+            parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
+            logMetacat.info(
+                "DocumentImpl.initalizeParser - Generic external no-namespace schema location: "
+                    + schemaLocation);
+            // Set external schemalocation.
+            if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
+                parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY, schemaLocation);
+            } else {
+                throw new ServiceFailure("0000", "The schema for the document "
+                                        + " can't be found in any place. So we can't validate"
+                                        + " the xml instance.");
+            }
+        } else if (ruleBase != null && ruleBase.equals(DTD) && needValidation) {
+            logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
+            // turn on dtd validaton feature
+            parser.setFeature(VALIDATIONFEATURE, true);
+            eresolver = new DBEntityResolver((DBSAXHandler) chandler, dtd);
+            dtdhandler = new DBDTDHandler();
+            parser.setEntityResolver((EntityResolver) eresolver);
+            parser.setDTDHandler((DTDHandler) dtdhandler);
+        } else {
+            logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
+            // non validation
+            parser.setFeature(VALIDATIONFEATURE, false);
+            eresolver = new DBEntityResolver((DBSAXHandler) chandler, dtd);
+            dtdhandler = new DBDTDHandler();
+            parser.setEntityResolver((EntityResolver) eresolver);
+            parser.setDTDHandler((DTDHandler) dtdhandler);
         }
         return parser;
     }

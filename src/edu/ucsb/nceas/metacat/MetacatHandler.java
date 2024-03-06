@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.ecoinformatics.eml.EMLParser;
@@ -408,8 +409,9 @@ public class MetacatHandler {
         return output;
     }
 
-    public void validXmlSciMeta(InputStream object, String formatId) throws IOException, Exception,
-                    ServiceException, PropertyNotFoundException, SAXException, MetacatException {
+    public void validXmlSciMeta(InputStream object, String formatId) throws IOException,
+                                ServiceFailure,ServiceException, PropertyNotFoundException,
+                                SAXException, MetacatException {
         boolean needValidation = false;
         String rule = null;
         String namespace = null;
@@ -452,7 +454,7 @@ public class MetacatHandler {
                         new EMLParser(doctext);
                 } else {
                     if (!XMLSchemaService.isNamespaceRegistered(namespace)) {
-                        throw new MetacatException("The namespace " + namespace
+                        throw new ServiceFailure("000", "The namespace " + namespace
                                                 + " used in the xml object hasn't been "
                                                 + "registered in the Metacat. Metacat "
                                                 + "can't validate the object and rejected"
