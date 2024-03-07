@@ -321,7 +321,6 @@ public class CNodeService extends D1NodeService
      * @throws NotAuthorized
      * @throws NotFound
      * @throws NotImplemented
-     * @throws InvalidRequest
      */
     @Override
     public Identifier delete(Session session, Identifier pid)
@@ -369,41 +368,7 @@ public class CNodeService extends D1NodeService
 
         // Don't defer to superclass implementation without a locally registered identifier
         // Check for the existing identifier
-        try {
-            localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-            super.delete(session.getSubject().getValue(), pid);
-
-        } catch (McdbDocNotFoundException e) {
-            // This object is not registered in the identifier table. Assume it is of formatType
-            // DATA,
-            // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
-
-            try {
-                //remove the systemmetadata object from the map and delete the records in the
-                // systemmetadata database table
-                //since this is cn, we don't need worry about the mn solr index.
-                SystemMetadataManager.getInstance().delete(pid);
-                String username = session.getSubject().getValue();//just for logging purpose
-                //since data objects were not registered in the identifier table, we use pid as
-                // the docid
-                EventLog.getInstance()
-                    .log(request.getRemoteAddr(), request.getHeader("User-Agent"), username,
-                         pid.getValue(), Event.DELETE.xmlValue());
-
-            } catch (RuntimeException re) {
-                throw new ServiceFailure(
-                    "4962", "Couldn't delete " + pid.getValue() + ". The error message was: "
-                    + re.getMessage());
-
-            }
-
-        } catch (SQLException e) {
-            throw new ServiceFailure(
-                "4962", "Couldn't delete " + pid.getValue()
-                + ". The local id of the object with the identifier can't be identified since "
-                + e.getMessage());
-        }
-
+        super.delete(session.getSubject().getValue(), pid);
         // get the node list
         try {
             nodeList = getCNNodeList().getNodeList();

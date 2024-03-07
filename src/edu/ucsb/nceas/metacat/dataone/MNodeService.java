@@ -331,8 +331,6 @@ public class MNodeService extends D1NodeService
                 "The quota service in the delete action has an invalid request - "
                     + e.getMessage());
         }
-
-
         // defer to superclass implementation
         return super.delete(session.getSubject().getValue(), id);
     }
