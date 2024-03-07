@@ -57,7 +57,6 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * @author Matthew Jones
  */
 public class MetacatHandler {
-    public static final String BIN = "BIN";
     private static Log logMetacat = LogFactory.getLog(MetacatHandler.class);
 
     // Constants -- these should be final in a servlet
@@ -94,29 +93,10 @@ public class MetacatHandler {
     }
 
     /**
-     * Read a document from metacat and return the InputStream. The dataType will be null.
-     *
-     * @param docid - the metacat docid to read
-     * @return the document as an input stream
-     * @throws PropertyNotFoundException
-     * @throws ClassNotFoundException
-     * @throws ParseLSIDException
-     * @throws McdbException
-     * @throws SQLException
-     * @throws IOException
-     */
-    public static InputStream read(String docid)
-        throws PropertyNotFoundException, ClassNotFoundException, ParseLSIDException, McdbException,
-        SQLException, IOException {
-        String dataType = null;
-        return read(docid, dataType);
-    }
-
-    /**
      * Read a document from metacat and return the InputStream.  The XML or data document should be
      * on disk, but if not, read from the metacat database.
      *
-     * @param docid    - the metacat docid to read
+     * @param localId    - the metacat docid to read
      * @param dataType - the type of the object associated with docid
      * @return objectStream - the document as an InputStream
      * @throws InsufficientKarmaException
@@ -127,7 +107,7 @@ public class MetacatHandler {
      * @throws ClassNotFoundException
      * @throws IOException
      */
-    public static InputStream read(String docid, String dataType)
+    public static InputStream read(String localId, String dataType)
         throws ParseLSIDException, PropertyNotFoundException, McdbException, SQLException,
         ClassNotFoundException, IOException {
         logMetacat.debug("MetacatHandler.read() called and the data type is " + dataType);
@@ -135,9 +115,9 @@ public class MetacatHandler {
         InputStream inputStream = null;
 
         // be sure we have a local ID from an LSID
-        if (docid.startsWith("urn:")) {
+        if (localId.startsWith("urn:")) {
             try {
-                docid = LSIDUtil.getDocId(docid, true);
+                localId = LSIDUtil.getDocId(localId, true);
             } catch (ParseLSIDException ple) {
                 logMetacat.debug(
                     "There was a problem parsing the LSID. The " + "error message was: "
@@ -145,7 +125,8 @@ public class MetacatHandler {
                 throw ple;
             }
         }
-
+        // accommodate old clients that send docids without revision numbers
+        localId = DocumentUtil.appendRev(localId);
         if (dataType != null && dataType.equalsIgnoreCase(D1NodeService.METADATA)) {
             logMetacat.debug("MetacatHandler.read - the data type is specified as the meta data");
             String filepath = PropertyService.getProperty("application.documentfilepath");
@@ -153,44 +134,42 @@ public class MetacatHandler {
             if (!(filepath.endsWith("/"))) {
                 filepath += "/";
             }
-            String filename = filepath + docid;
+            String filename = filepath + localId;
             inputStream = readFromFilesystem(filename);
         } else {
-            // accommodate old clients that send docids without revision numbers
-            docid = DocumentUtil.appendRev(docid);
-            DocumentImpl doc = new DocumentImpl(docid, false);
             // deal with data or metadata cases
-            if (doc.getRootNodeID() == 0) {
-                // this is a data file
-                // get the path to the file to read
-                try {
-                    String filepath = PropertyService.getProperty("application.datafilepath");
-                    // ensure it is a directory path
-                    if (!(filepath.endsWith("/"))) {
-                        filepath += "/";
-                    }
-                    String filename = filepath + docid;
-                    inputStream = readFromFilesystem(filename);
-                } catch (PropertyNotFoundException pnf) {
-                    logMetacat.debug("There was a problem finding the "
-                                         + "application.datafilepath property. The error "
-                                         + "message was: " + pnf.getMessage());
-                    throw pnf;
-                } // end try()
-            } else {
-                // this is a metadata document
+            // this is a data file
+            // get the path to the file to read
+            try {
+                String filepath = PropertyService.getProperty("application.datafilepath");
+                // ensure it is a directory path
+                if (!(filepath.endsWith("/"))) {
+                    filepath += "/";
+                }
+                String filename = filepath + localId;
+                inputStream = readFromFilesystem(filename);
+            } catch (PropertyNotFoundException pnf) {
+                logMetacat.debug("There was a problem finding the "
+                                     + "application.datafilepath property. The error "
+                                     + "message was: " + pnf.getMessage());
+                throw pnf;
+            } catch (McdbException e) {
+                DocumentImpl doc = new DocumentImpl(localId, false);
+                 // this is a metadata document
                 // Get the xml (will try disk then DB)
                 try {
                     // force the InputStream to be returned
                     OutputStream nout = null;
                     inputStream = doc.toXml(nout, null, null, true);
-                } catch (McdbException e) {
+                } catch (McdbException ee) {
                     // report the error
-                    logMetacat.error(
-                        "MetacatHandler.readFromMetacat() " + "- could not read document " + docid
-                            + ": " + e.getMessage(), e);
+                    logMetacat.warn(
+                        "MetacatHandler.readFromMetacat() " + "- could not read document " + localId
+                            + ": " + e.getMessage(), ee);
+                    throw ee;
                 }
             }
+
         }
         return inputStream;
     }
@@ -415,7 +394,9 @@ public class MetacatHandler {
     }
 
     public String registerToDB(Identifier pid, String action, DBConnection conn,
-                                    SystemMetadata sysmeta, String docType) throws ServiceFailure {
+                                    String user, String docType) throws SQLException,
+                                                    AccessionNumberException, ServiceFailure,
+                                                    PropertyNotFoundException, MetacatException {
         String localId;
         if (action.equals("insert")) {
             localId = IdentifierManager.getInstance().generateLocalId(pid.getValue(), 1);
@@ -446,10 +427,9 @@ public class MetacatHandler {
                     + " is in the identifier table since " + e.getMessage());
             }
         }
+        DocumentImpl.registerDocument(docType, docType, conn, localId, user);
         return localId;
     }
-
-    
 
     /**
      * Validate a scientific metadata object. It will throw an exception if it is invalid.

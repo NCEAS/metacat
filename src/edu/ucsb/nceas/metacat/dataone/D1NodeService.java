@@ -1282,7 +1282,7 @@ public abstract class D1NodeService {
             // if the localId is not acceptable or other untoward things happen
             try {
                 logMetacat.debug("Registering document...");
-                DocumentImpl.registerDocument(localId, docType, localId,
+                DocumentImpl.registerDocument(docType, docType, null, localId,
                                                         session.getSubject().getValue());
                 logMetacat.debug("Registration step completed.");
 
