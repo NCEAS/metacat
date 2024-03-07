@@ -1,27 +1,21 @@
 /**
- *  '$RCSfile$'
- *    Purpose: A Class that implements administrative methods 
- *  Copyright: 2008 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Michael Daigle
- * 
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
+ * '$RCSfile$' Purpose: A Class that implements administrative methods Copyright: 2008 Regents of
+ * the University of California and the National Center for Ecological Analysis and Synthesis
+ * Authors: Michael Daigle
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * '$Author$' '$Date$' '$Revision$'
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program; if
+ * not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307  USA
  */
 
 package edu.ucsb.nceas.metacat.util;
@@ -145,7 +139,8 @@ public class AuthUtil {
             administratorString = PropertyService.getProperty("auth.administrators");
         } catch (PropertyNotFoundException pnfe) {
             throw new MetacatUtilException("Could not get metacat property: auth.administrators. "
-                                               + "There will be no registered metacat adminstrators: "
+                                               + "There will be no registered metacat "
+                                               + "adminstrators: "
                                                + pnfe.getMessage());
         }
         administrators = split(administratorString, ";", ESCAPECHAR);
@@ -251,7 +246,8 @@ public class AuthUtil {
 //
 //        if (sessionId != null && sessionService.isSessionRegistered(sessionId)) {
 //            // get the registered session data
-//            SessionData sessionData = SessionService.getInstance().getRegisteredSession(sessionId);
+//            SessionData sessionData = SessionService.getInstance().getRegisteredSession
+//            (sessionId);
 //            // get the last time the session was accessed
 //            Calendar lastAccessedTime = sessionData.getLastAccessedTime();
 //            // get the current time and set back "sessionTimoutInt" minutes
@@ -280,10 +276,9 @@ public class AuthUtil {
 //
 //        return PortalCertificateManager.getInstance().getSession(request);
 //    }
-
-	private static String getOrcidLast16(String orcid) {
-		return orcid.substring(1 + orcid.lastIndexOf('/'));
-	}
+    private static String getOrcidLast16(String orcid) {
+        return orcid.substring(1 + orcid.lastIndexOf('/'));
+    }
 
 
     /**
@@ -310,76 +305,84 @@ public class AuthUtil {
     // Try to authenticate user via jwt token in header.
     private static String getAuthenticatedUserId(HttpServletRequest request) {
 
+        String token = request.getHeader("Authorization");
+        if (token == null || token.isEmpty()) {
+            logMetacat.debug("Couldn't find a valid auth token in Authorization header");
+            return null;
+        }
         Session adminSession = PortalCertificateManager.getInstance().getSession(request);
 
         if (adminSession == null) {
-            logMetacat.debug("Unable to authenticate user via header token - "
-                                 + "PortalCertificateManager returned null session");
+            logMetacat.debug("Header auth token found, but unable to authenticate - "
+                                 + "PortalCertificateManager returned a null session");
             return null;
         }
         return adminSession.getSubject().getValue();
     }
 
     /**
-	 * Gets the user group names from the login session on the http request
-	 * 
-	 * @param request
-	 *            the http request that holds the login session
-	 * @return String array that holds the user groups
-	 */
-	public static String[] getGroupNames(HttpServletRequest request) {
-		String sessionId = request.getSession().getId();;
-		SessionData sessionData = SessionService.getInstance().getRegisteredSession(sessionId);
-		String[] groupNames = { "" };
+     * Gets the user group names from the login session on the http request
+     *
+     * @param request
+     *            the http request that holds the login session
+     * @return String array that holds the user groups
+     */
+    public static String[] getGroupNames(HttpServletRequest request) {
+        String sessionId = request.getSession().getId();
+        ;
+        SessionData sessionData = SessionService.getInstance().getRegisteredSession(sessionId);
+        String[] groupNames = {""};
 
-		if (sessionData != null) {
-			groupNames = sessionData.getGroupNames();
-		}
+        if (sessionData != null) {
+            groupNames = sessionData.getGroupNames();
+        }
 
-		return groupNames;
-	}
+        return groupNames;
+    }
 
-	/**
-	 * Creates an ldap credentail string from the username, organization
-	 * and dn list.
-	 * 
-	 * @param username the user name
-	 * @param organization the organization
-	 * @param dnList a list of dns
-	 * @return String holding the ldap login string
-	 */	
-	public static String createLDAPString(String username, String organization,
-			Vector<String> dnList) throws MetacatUtilException {
+    /**
+     * Creates an ldap credentail string from the username, organization
+     * and dn list.
+     *
+     * @param username the user name
+     * @param organization the organization
+     * @param dnList a list of dns
+     * @return String holding the ldap login string
+     */
+    public static String createLDAPString(
+        String username, String organization, Vector<String> dnList) throws MetacatUtilException {
 
-		if (username == null || organization == null || dnList == null || dnList.size() == 0) {
-			throw new MetacatUtilException("Could not generate LDAP user string.  One of the following is null: username, organization or dnlist");
-		}
+        if (username == null || organization == null || dnList == null || dnList.size() == 0) {
+            throw new MetacatUtilException(
+                "Could not generate LDAP user string.  One of the following is null: username, "
+                    + "organization or dnlist");
+        }
 
-		String ldapString = "uid=" + username + ",o=" + organization;
+        String ldapString = "uid=" + username + ",o=" + organization;
 
-		for (String dn : dnList) {
-			ldapString += "," + dn;
-		}
+        for (String dn : dnList) {
+            ldapString += "," + dn;
+        }
 
-		return ldapString;
-	}
+        return ldapString;
+    }
 
-	/**
-	 * Reports whether LDAP is fully configured.
-	 * 
-	 * @return a boolean that is true if all sections are configured and false
-	 *         otherwise
-	 */
-	public static boolean isAuthConfigured() throws MetacatUtilException {
-		String authConfiguredString = PropertyService.UNCONFIGURED;
-		try {
-			authConfiguredString = PropertyService.getProperty("configutil.authConfigured");
-		} catch (PropertyNotFoundException pnfe) {
-			throw new MetacatUtilException("Could not determine if LDAP is configured: "
-					+ pnfe.getMessage());
-		}
-		return !authConfiguredString.equals(PropertyService.UNCONFIGURED);
-	}
+    /**
+     * Reports whether LDAP is fully configured.
+     *
+     * @return a boolean that is true if all sections are configured and false
+     *         otherwise
+     */
+    public static boolean isAuthConfigured() throws MetacatUtilException {
+        String authConfiguredString = PropertyService.UNCONFIGURED;
+        try {
+            authConfiguredString = PropertyService.getProperty("configutil.authConfigured");
+        } catch (PropertyNotFoundException pnfe) {
+            throw new MetacatUtilException(
+                "Could not determine if LDAP is configured: " + pnfe.getMessage());
+        }
+        return !authConfiguredString.equals(PropertyService.UNCONFIGURED);
+    }
 
     /**
      * Check if the specified user is part of the administrators list
@@ -417,135 +420,139 @@ public class AuthUtil {
         return false;
     }
 
-	/**
-	 * Check if the specified user is part of the moderators list
-	 * 
-	 * @param username
-	 *            the user login credentails
-	 * @param groups
-	 *            a list of the user's groups
-	 */
-	public static boolean isModerator(String username, String[] groups) throws MetacatUtilException{
-		return onAccessList(getModerators(), username, groups);
-	}
+    /**
+     * Check if the specified user is part of the moderators list
+     *
+     * @param username
+     *            the user login credentails
+     * @param groups
+     *            a list of the user's groups
+     */
+    public static boolean isModerator(String username, String[] groups)
+        throws MetacatUtilException {
+        return onAccessList(getModerators(), username, groups);
+    }
 
-	/**
-	 * Check if the specified user is part of the moderators list
-	 * 
-	 * @param username
-	 *            the user login credentails
-	 * @param groups
-	 *            a list of the user's groups
-	 */
-	public static boolean isAllowedSubmitter(String username, String[] groups)
-			throws MetacatUtilException {
-		if (getAllowedSubmitters().size() == 0) {
-			// no allowedSubmitters list specified -
-			// hence everyone should be allowed
-			return true;
-		}
-		boolean allow = onAccessList(getAllowedSubmitters(), username, groups);
-		if (!allow) {
-		    //check if it is the mn subject
-		    D1AuthHelper helper = new D1AuthHelper(null, null, null, null);
-		    Session session = buildSession(username, groups);
-		    try {
-		        allow = helper.isLocalMNAdmin(session);
-		    } catch (ServiceFailure e) {
-		        throw new MetacatUtilException(e.getMessage());
-		    }
-		}
-		return allow;
-	}
+    /**
+     * Check if the specified user is part of the moderators list
+     *
+     * @param username
+     *            the user login credentails
+     * @param groups
+     *            a list of the user's groups
+     */
+    public static boolean isAllowedSubmitter(String username, String[] groups)
+        throws MetacatUtilException {
+        if (getAllowedSubmitters().size() == 0) {
+            // no allowedSubmitters list specified -
+            // hence everyone should be allowed
+            return true;
+        }
+        boolean allow = onAccessList(getAllowedSubmitters(), username, groups);
+        if (!allow) {
+            //check if it is the mn subject
+            D1AuthHelper helper = new D1AuthHelper(null, null, null, null);
+            Session session = buildSession(username, groups);
+            try {
+                allow = helper.isLocalMNAdmin(session);
+            } catch (ServiceFailure e) {
+                throw new MetacatUtilException(e.getMessage());
+            }
+        }
+        return allow;
+    }
 
-	/**
-	 * Check if the specified user is part of the moderators list
-	 * 
-	 * @param username
-	 *            the user login credentails
-	 * @param groups
-	 *            a list of the user's groups
-	 */
-	public static boolean isDeniedSubmitter(String username, String[] groups)
-			throws MetacatUtilException {
-		return (onAccessList(getDeniedSubmitters(), username, groups));
-	}
+    /**
+     * Check if the specified user is part of the moderators list
+     *
+     * @param username
+     *            the user login credentails
+     * @param groups
+     *            a list of the user's groups
+     */
+    public static boolean isDeniedSubmitter(String username, String[] groups)
+        throws MetacatUtilException {
+        return (onAccessList(getDeniedSubmitters(), username, groups));
+    }
 
-	/**
-	 * Check if the specified user can insert the document
-	 * 
-	 * @param username
-	 *            the user login credentails
-	 * @param groups
-	 *            a list of the user's groups
-	 */
-	public static boolean canInsertOrUpdate(String username, String[] groups)
-			throws MetacatUtilException {
-	    if(logMetacat.isDebugEnabled()) {
-        	    logMetacat.debug("AuthUtil.canInsertOrUpdate - The user is "+ username);
-        	    if(groups == null) {
-        	        logMetacat.debug("AuthUtil.canInsertOrUpdate -The group is null");
-        	    } else {
-        	        if(groups.length == 0) {
-        	            logMetacat.debug("AuthUtil.canInsertOrUpdate -The group is empty");
-        	        } else {
-        	            logMetacat.debug("AuthUtil.canInsertOrUpdate -And this user is in the group(s)");
-        	            for (int i=0;i<groups.length; i++) {
-        	                logMetacat.debug("AuthUtil.canInsertOrUpdate -Group "+groups[i]);
-        	            }
-        	        }
-        	    }
-	    }
-	    
-		return (isAllowedSubmitter(username, groups) && !isDeniedSubmitter(username,
-				groups));
-	}
+    /**
+     * Check if the specified user can insert the document
+     *
+     * @param username
+     *            the user login credentails
+     * @param groups
+     *            a list of the user's groups
+     */
+    public static boolean canInsertOrUpdate(String username, String[] groups)
+        throws MetacatUtilException {
+        if (logMetacat.isDebugEnabled()) {
+            logMetacat.debug("AuthUtil.canInsertOrUpdate - The user is " + username);
+            if (groups == null) {
+                logMetacat.debug("AuthUtil.canInsertOrUpdate -The group is null");
+            } else {
+                if (groups.length == 0) {
+                    logMetacat.debug("AuthUtil.canInsertOrUpdate -The group is empty");
+                } else {
+                    logMetacat.debug(
+                        "AuthUtil.canInsertOrUpdate -And this user is in the group(s)");
+                    for (int i = 0; i < groups.length; i++) {
+                        logMetacat.debug("AuthUtil.canInsertOrUpdate -Group " + groups[i]);
+                    }
+                }
+            }
+        }
 
-	/**
-	 * Check if the user is on a given access list.  This is true if either the 
-	 * user or the user's group is on the list.
-	 * 
-	 * @param accessList the list we want to check against
-	 * @param username the name of the user we want to check
-	 * @param groups a list of the user's groups
-	 */
-	private static boolean onAccessList(Vector<String> accessList, String username,
-			String[] groups) {
+        return (isAllowedSubmitter(username, groups) && !isDeniedSubmitter(username, groups));
+    }
 
-		// this should never happen.  All calls to this method should use the 
-		// appropriate getter to retrieve the accessList.  That should guarentee
-		// that the access is at least an empty Vector.
-		if (accessList == null) {
-			return false;
-		}
+    /**
+     * Check if the user is on a given access list.  This is true if either the
+     * user or the user's group is on the list.
+     *
+     * @param accessList the list we want to check against
+     * @param username the name of the user we want to check
+     * @param groups a list of the user's groups
+     */
+    private static boolean onAccessList(
+        Vector<String> accessList, String username, String[] groups) {
 
-		// Check that the user is authenticated as an administrator account
-		for (String accessString : accessList)  {
-		     // is a user dn
+        // this should never happen.  All calls to this method should use the
+        // appropriate getter to retrieve the accessList.  That should guarentee
+        // that the access is at least an empty Vector.
+        if (accessList == null) {
+            return false;
+        }
+
+        // Check that the user is authenticated as an administrator account
+        for (String accessString : accessList) {
+            // is a user dn
             if (username != null && username.equals(accessString)) {
-                logMetacat.debug("AuthUtil.onAccessList - user "+username +" is in the access list.");
+                logMetacat.debug(
+                    "AuthUtil.onAccessList - user " + username + " is in the access list.");
                 return true;
             }
-			// check the given admin dn is a group dn...
-			if (groups != null) {
-				// is a group dn
-				for (int j = 0; j < groups.length; j++) {
-					if (groups[j] != null && groups[j].equals(accessString)) {
-					    logMetacat.debug("AuthUtil.onAccessList - user "+username +" has a grouup which is in the access list.");
-						return true;
-					}
-				}
-			} 
-		}
-		return false;
-	}
-	
-	/**
+            // check the given admin dn is a group dn...
+            if (groups != null) {
+                // is a group dn
+                for (int j = 0; j < groups.length; j++) {
+                    if (groups[j] != null && groups[j].equals(accessString)) {
+                        logMetacat.debug("AuthUtil.onAccessList - user " + username
+                                             + " has a grouup which is in the access list.");
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Convert a delimited string to a Vector by splitting on a particular character
      * @param text  the text to be split into components
      * @param delimiter  the string to specify the delimiter
      * @param escapeChar  the string to escape a delimiter.
-     * @return a vector holding the values. An empty vector will be returned if the text is null or empty.
+     * @return a vector holding the values. An empty vector will be returned if the text is null
+     * or empty.
      */
     public static Vector<String> split(String text, String delimiter, String escapeChar) {
         Vector<String> results = new Vector<String>();
@@ -566,12 +573,12 @@ public class AuthUtil {
         }
         return results;
     }
-    
+
     /**
      * Construct a session object base the given user and group name
      * @param user  the user name for the session
      * @param groups  the groups name for the session
-     * @return  a session object
+     * @return a session object
      */
     private static Session buildSession(String user, String[] groups) {
         Session session = new Session();
@@ -582,7 +589,7 @@ public class AuthUtil {
         Person person = new Person();
         person.setSubject(userSubject);
         if (groups != null && groups.length > 0) {
-            for (String groupName: groups) {
+            for (String groupName : groups) {
                 Group group = new Group();
                 group.setGroupName(groupName);
                 Subject groupSubject = new Subject();

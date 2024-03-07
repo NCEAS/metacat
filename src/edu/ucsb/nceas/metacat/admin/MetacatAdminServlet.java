@@ -2,6 +2,8 @@ package edu.ucsb.nceas.metacat.admin;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -11,6 +13,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -30,6 +33,11 @@ import edu.ucsb.nceas.utilities.GeneralPropertyException;
 public class MetacatAdminServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
+    private static final String LOGOUT_PATH = "/admin?configureType=logout";
+    private static final String LOGIN_PATH = "/admin?configureType=login";
+    public static final String ADMIN_HOMEPAGE_PATH = "/admin?configureType=configure";
+    public static final String D1_PORTAL_OAUTH_PATH = "/portal/oauth?action=start&amp;target=";
+    public static final String D1_PORTAL_TOKEN_PATH = "/portal/token";
 
     private Log logMetacat = LogFactory.getLog(MetacatAdminServlet.class);
 
@@ -38,6 +46,27 @@ public class MetacatAdminServlet extends HttpServlet {
      */
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+
+        String cnUrl = "NOT SET";
+        final String cnBaseUrl;
+        try {
+            cnUrl = PropertyService.getProperty("D1Client.CN_URL");
+            // example D1Client.CN_URL:  'https://cn.dataone.org/cn' - so for the base url, we need
+            // to retrieve just the scheme & host - in this case 'https://cn.dataone.org'
+            cnBaseUrl = getDomainPart(cnUrl);
+        } catch (PropertyNotFoundException e) {
+            throw new RuntimeException("Cannot continue - no value found for D1Client.CN_URL in "
+                                           + "metacat.properties or metacat-site.properties", e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Cannot continue - got D1Client.CN_URL (" + cnUrl
+                                           + "), but unable to parse base URL from it", e);
+        }
+        // add to context; access using `application.getAttribute(String);`
+        getServletContext().setAttribute("cnBaseUrl", cnBaseUrl);
+
+        String contextPath = getServletContext().getContextPath();
+        getServletContext().setAttribute("loginUri", contextPath + LOGIN_PATH);
+        getServletContext().setAttribute("logoutUri", contextPath + LOGOUT_PATH);
     }
 
     /** Handle "GET" method requests from HTTP clients */
@@ -96,6 +125,9 @@ public class MetacatAdminServlet extends HttpServlet {
                 logMetacat.debug(
                     "MetacatAdminServlet.handleGetOrPost - Admin action changed to 'auth'");
 
+            } else if (action != null && action.equals("logout")) {
+                LoginAdmin.getInstance().logOutAdminUser(request, response);
+                return;
             } else if (!AuthUtil.isUserLoggedInAsAdmin(request)) {
                 // If auth is configured, see if the user is logged in
                 // as an administrator.  If not, they need to log in before
@@ -112,8 +144,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 // Forward the request main configuration page
                 initialConfigurationParameters(request);
                 RequestUtil.forwardRequest(request, response,
-                                           "/admin/metacat-configuration"
-                                               + ".jsp?configureType=configure",
+                        "/admin/metacat-configuration.jsp?configureType=configure",
                                            null);
                 return;
             } else if (action.equals("properties")) {
@@ -131,9 +162,6 @@ public class MetacatAdminServlet extends HttpServlet {
             } else if (action.equals("login")) {
                 // process login
                 LoginAdmin.getInstance().logInAdminUser(request, response);
-                return;
-            } else if (action.equals("logout")) {
-                LoginAdmin.getInstance().logOutAdminUser(request, response);
                 return;
             } else if (action.equals("backup")) {
                 // process login
@@ -207,6 +235,24 @@ public class MetacatAdminServlet extends HttpServlet {
                                      + e.getMessage());
             }
         }
+    }
+
+    // Get the scheme + host -- i.e. the first part of the url, up to the first slash after the
+    // top-level domain. Example:
+    //     input:    https://cn.dataone.org/cn/some/other/stuff?etc=true
+    //     output:   https://cn.dataone.org/
+    private static String getDomainPart(String url) throws URISyntaxException {
+        URI uri = new URI(url);
+        String protocol = uri.getScheme();
+        String host = uri.getHost();
+        int port = uri.getPort();
+
+        StringBuilder domainPart = new StringBuilder();
+        domainPart.append(protocol).append("://").append(host);
+        if (port != -1) {
+            domainPart.append(":").append(port);
+        }
+        return domainPart.toString();
     }
 
     private static String getAllParams(HttpServletRequest request) {

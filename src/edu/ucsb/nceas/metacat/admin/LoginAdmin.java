@@ -49,6 +49,7 @@ public class LoginAdmin extends MetacatAdmin {
 		HttpServletRequest request, HttpServletResponse response)
 		throws AdminException {
 
+		// has the user authenticated on the ORCID site, yet?
 		String orcidDone = request.getParameter("orcidDone");
 		String formErrors = (String) request.getAttribute("formErrors");
 
@@ -75,6 +76,7 @@ public class LoginAdmin extends MetacatAdmin {
 						+ ". Please try again";
 				processingErrors.add(errorMessage);
 				logMetacat.error(errorMessage);
+				logOutAdminUser(request, response);
 			}
 
 			try {
@@ -90,7 +92,6 @@ public class LoginAdmin extends MetacatAdmin {
 					// Reload the main metacat configuration page
 					processingSuccess.add("User logged in");
 					RequestUtil.clearRequestMessages(request);
-//				RequestUtil.setUserId(request, adminTokenUser);
 					RequestUtil.setRequestSuccess(request, processingSuccess);
 					RequestUtil.forwardRequest(
 						request, response, "/admin?configureType=configure&processForm=false",
@@ -116,6 +117,8 @@ public class LoginAdmin extends MetacatAdmin {
 
 		request.getSession().removeAttribute("userId");
 		request.setAttribute("logout", "true");
+		logMetacat.debug(
+			"logOutAdminUser - logging out..." + request.getSession().getAttribute("userId"));
 		try {
 			forwardToLoginPage(request, response);
 		} catch (MetacatUtilException mue) {
