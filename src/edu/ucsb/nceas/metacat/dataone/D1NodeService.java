@@ -1403,23 +1403,28 @@ public abstract class D1NodeService {
     }
 
     /**
-     * Update system metadata.
-     *
+     * Update system metadata. And the index task is submitted as well. This method only apply
+     * to the cases involving the only change of the system metadata.
      * @param sysMeta
      * @param needUpdateModificationDate
      * @throws ServiceFailure
      */
-    protected void updateSystemMetadata(
-        SystemMetadata sysMeta, boolean needUpdateModificationDate) throws ServiceFailure {
+    protected void updateSystemMetadata(SystemMetadata sysMeta, boolean needUpdateModificationDate)
+                                                                           throws ServiceFailure {
         logMetacat.debug("D1NodeService.updateSystemMetadataWithoutLock() called.");
-        // submit for indexing
+        boolean isSysmetaChangeOnly = true;
         try {
             SystemMetadataManager.getInstance().store(sysMeta, needUpdateModificationDate);
-            boolean isSysmetaChangeOnly = true;
+        } catch (Exception e) {
+            throw new ServiceFailure("4862", e.getMessage());
+        }
+        // submit for indexing
+        try {
             MetacatSolrIndex.getInstance()
                 .submit(sysMeta.getIdentifier(), sysMeta, isSysmetaChangeOnly, false);
         } catch (Exception e) {
-            throw new ServiceFailure("4862", e.getMessage());
+            logMetacat.warn("Cannot submit the index task for " + sysMeta.getIdentifier().getValue()
+                            + " since " + e.getMessage());
         }
     }
 
