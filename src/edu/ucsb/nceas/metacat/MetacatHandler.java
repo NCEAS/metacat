@@ -15,6 +15,7 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -458,85 +459,96 @@ public class MetacatHandler {
         String namespace = null;
         String schemaLocation = null;
         String doctext = new String(object, StandardCharsets.UTF_8);
-        StringReader xmlReader = new StringReader(doctext);
-        needValidation = needDTDValidation(xmlReader);
-        if (needValidation) {
-            // set a dtd base validation parser
-            logMetacat.debug(
-                "MetacatHandler.handleInsertOrUpdateAction - the xml object will be "
-                    + "validate by a dtd");
-            rule = DocumentImpl.DTD;
-        } else {
-            XMLSchemaService.getInstance().doRefresh();
-            namespace = XMLSchemaService.findDocumentNamespace(xmlReader);
-            if (namespace != null) {
+        StringReader xmlReader = null;
+        try {
+            xmlReader = new StringReader(doctext);
+            needValidation = needDTDValidation(xmlReader);
+            if (needValidation) {
+                // set a dtd base validation parser
                 logMetacat.debug(
                     "MetacatHandler.handleInsertOrUpdateAction - the xml object will be "
-                        + "validated by a schema which has a target namespace: "
-                        + namespace);
-                schemaLocation = XMLSchemaService.getInstance()
-                    .findNamespaceAndSchemaLocalLocation(formatId, namespace);
-                if (namespace.compareTo(DocumentImpl.EML2_0_0NAMESPACE) == 0
-                    || namespace.compareTo(DocumentImpl.EML2_0_1NAMESPACE) == 0) {
-                    // set eml2 base     validation parser
-                    rule = DocumentImpl.EML200;
-                    needValidation = true;
-                    // using emlparser to check id validation
-                    @SuppressWarnings("unused") EMLParser parser =
-                        new EMLParser(doctext);
-                } else if (namespace.compareTo(DocumentImpl.EML2_1_0NAMESPACE) == 0
-                    || namespace.compareTo(DocumentImpl.EML2_1_1NAMESPACE) == 0
-                    || namespace.compareTo(DocumentImpl.EML2_2_0NAMESPACE) == 0) {
-                    // set eml2 base validation parser
-                    rule = DocumentImpl.EML210;
-                    needValidation = true;
-                    // using emlparser to check id validation
-                    @SuppressWarnings("unused") EMLParser parser =
-                        new EMLParser(doctext);
-                } else {
-                    if (!XMLSchemaService.isNamespaceRegistered(namespace)) {
-                        throw new ServiceFailure("000", "The namespace " + namespace
-                                                + " used in the xml object hasn't been "
-                                                + "registered in the Metacat. Metacat "
-                                                + "can't validate the object and rejected"
-                                                + " it. Please contact the operator of "
-                                                + "the Metacat for regsitering the "
-                                                + "namespace.");
-                    }
-                    // set schema base validation parser
-                    rule = DocumentImpl.SCHEMA;
-                    needValidation = true;
-                }
+                        + "validate by a dtd");
+                rule = DocumentImpl.DTD;
             } else {
+                XMLSchemaService.getInstance().doRefresh();
                 xmlReader = new StringReader(doctext);
-                String noNamespaceSchemaLocationAttr =
-                    XMLSchemaService.findNoNamespaceSchemaLocationAttr(xmlReader);
-                if (noNamespaceSchemaLocationAttr != null) {
+                namespace = XMLSchemaService.findDocumentNamespace(xmlReader);
+                if (namespace != null) {
                     logMetacat.debug(
-                        "MetacatHandler.handleInsertOrUpdateAction - the xml object will "
-                            + "be validated by a schema which deoe NOT have a target "
-                            + "name space.");
+                        "MetacatHandler.handleInsertOrUpdateAction - the xml object will be "
+                            + "validated by a schema which has a target namespace: "
+                            + namespace);
                     schemaLocation = XMLSchemaService.getInstance()
-                        .findNoNamespaceSchemaLocalLocation(formatId,
-                                                            noNamespaceSchemaLocationAttr);
-                    rule = DocumentImpl.NONAMESPACESCHEMA;
-                    needValidation = true;
+                        .findNamespaceAndSchemaLocalLocation(formatId, namespace);
+                    if (namespace.compareTo(DocumentImpl.EML2_0_0NAMESPACE) == 0
+                        || namespace.compareTo(DocumentImpl.EML2_0_1NAMESPACE) == 0) {
+                        // set eml2 base     validation parser
+                        rule = DocumentImpl.EML200;
+                        needValidation = true;
+                        // using emlparser to check id validation
+                        @SuppressWarnings("unused") EMLParser parser =
+                            new EMLParser(doctext);
+                    } else if (namespace.compareTo(DocumentImpl.EML2_1_0NAMESPACE) == 0
+                        || namespace.compareTo(DocumentImpl.EML2_1_1NAMESPACE) == 0
+                        || namespace.compareTo(DocumentImpl.EML2_2_0NAMESPACE) == 0) {
+                        // set eml2 base validation parser
+                        rule = DocumentImpl.EML210;
+                        needValidation = true;
+                        // using emlparser to check id validation
+                        @SuppressWarnings("unused") EMLParser parser =
+                            new EMLParser(doctext);
+                    } else {
+                        if (!XMLSchemaService.isNamespaceRegistered(namespace)) {
+                            throw new ServiceFailure("000", "The namespace " + namespace
+                                                    + " used in the xml object hasn't been "
+                                                    + "registered in the Metacat. Metacat "
+                                                    + "can't validate the object and rejected"
+                                                    + " it. Please contact the operator of "
+                                                    + "the Metacat for regsitering the "
+                                                    + "namespace.");
+                        }
+                        // set schema base validation parser
+                        rule = DocumentImpl.SCHEMA;
+                        needValidation = true;
+                    }
                 } else {
-                    logMetacat.debug(
-                        "MetacatHandler.handleInsertOrUpdateAction - the xml object will "
-                            + "NOT be validated.");
-                    rule = "";
-                    needValidation = false;
-                }
+                    xmlReader = new StringReader(doctext);
+                    String noNamespaceSchemaLocationAttr =
+                        XMLSchemaService.findNoNamespaceSchemaLocationAttr(xmlReader);
+                    if (noNamespaceSchemaLocationAttr != null) {
+                        logMetacat.debug(
+                            "MetacatHandler.handleInsertOrUpdateAction - the xml object will "
+                                + "be validated by a schema which deoe NOT have a target "
+                                + "name space.");
+                        schemaLocation = XMLSchemaService.getInstance()
+                            .findNoNamespaceSchemaLocalLocation(formatId,
+                                                                noNamespaceSchemaLocationAttr);
+                        rule = DocumentImpl.NONAMESPACESCHEMA;
+                        needValidation = true;
+                    } else {
+                        logMetacat.debug(
+                            "MetacatHandler.handleInsertOrUpdateAction - the xml object will "
+                                + "NOT be validated.");
+                        rule = "";
+                        needValidation = false;
+                    }
 
+                }
+            }
+            xmlReader = new StringReader(doctext);
+            Vector<XMLSchema> schemaList = XMLSchemaService.getInstance().
+                    findSchemasInXML(xmlReader);
+            xmlReader = new StringReader(doctext);
+            // set the dtd part null;
+            XMLReader parser = DocumentImpl.initializeParser(schemaList, null, rule, needValidation,
+                                                             schemaLocation);
+            parser.parse(new InputSource(xmlReader));
+        } finally {
+            if (xmlReader != null) {
+                // We don't use try-resource since the xmlReade object is assigned multiple times.
+                IOUtils.closeQuietly(xmlReader);
             }
         }
-        Vector<XMLSchema> schemaList = XMLSchemaService.getInstance().
-                findSchemasInXML(xmlReader);
-        // set the dtd part null;
-        XMLReader parser =
-               DocumentImpl.initializeParser(schemaList, null, rule, needValidation, schemaLocation);
-        parser.parse(new InputSource(xmlReader));
     }
 
     /**
