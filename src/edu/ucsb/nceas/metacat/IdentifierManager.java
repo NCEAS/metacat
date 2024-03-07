@@ -1754,51 +1754,61 @@ public class IdentifierManager {
     }
 
     /**
-     * create a mapping in the identifier table
-     * @param guid
-     * @param localId
+     * Create a mapping between the dataone identifier and local docid in the identifier table
+     * @param guid  the dataone identifier
+     * @param localId  the local docid
+     * @throws SQLException
+     * @throws AccessionNumberException
+     * @throws NumberFormatException
      */
-    public void createMapping(String guid, String localId)
-    {
-
+    public void createMapping(String guid, String localId) {
         int serialNumber = -1;
         DBConnection dbConn = null;
         try {
-
-            // Parse the localId into scope and rev parts
-            AccessionNumber acc = new AccessionNumber(localId, "NOACTION");
-            String docid = acc.getDocid();
-            int rev = 1;
-            if (acc.getRev() != null) {
-              rev = Integer.parseInt(acc.getRev());
-            }
-
             // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("IdentifierManager.createMapping");
             serialNumber = dbConn.getCheckOutSerialNumber();
+            createMapping(guid, localId, dbConn);
+        } catch (SQLException e) {
+            logMetacat.error("SQL error while creating a mapping to the "
+                            + TYPE_IDENTIFIER + " identifier: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            logMetacat.error("NumberFormat error while creating a mapping to the "
+                           + TYPE_IDENTIFIER + " identifier: " + e.getMessage());
+        } catch (AccessionNumberException e) {
+            logMetacat.error("AccessionNumber error while creating a mapping to the "
+                           + TYPE_IDENTIFIER + " identifier: " + e.getMessage());
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+    }
 
-            // Execute the insert statement
-            String query = "insert into " + TYPE_IDENTIFIER + " (guid, docid, rev) values (?, ?, ?)";
-            PreparedStatement stmt = dbConn.prepareStatement(query);
+    /**
+     * Create a mapping between the dataone identifier and local docid in the identifier table
+     * @param guid  the dataone identifier
+     * @param localId  the local metacat docid
+     * @throws SQLException
+     * @throws AccessionNumberException
+     * @throws NumberFormatException
+     */
+    public void createMapping(String guid, String localId, DBConnection dbConn)
+                            throws NumberFormatException, AccessionNumberException, SQLException {
+        // Parse the localId into scope and rev parts
+        AccessionNumber acc = new AccessionNumber(localId, "NOACTION");
+        String docid = acc.getDocid();
+        int rev = 1;
+        if (acc.getRev() != null) {
+          rev = Integer.parseInt(acc.getRev());
+        }
+        // Execute the insert statement
+        String query = "insert into " + TYPE_IDENTIFIER + " (guid, docid, rev) values (?, ?, ?)";
+        try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
             stmt.setString(1, guid);
             stmt.setString(2, docid);
             stmt.setInt(3, rev);
             logMetacat.debug("mapping query: " + stmt.toString());
             int rows = stmt.executeUpdate();
-
-            stmt.close();
-        } catch (SQLException e) {
-            logMetacat.error("createGenericMapping: SQL error while creating a mapping to the "
-                            + TYPE_IDENTIFIER + " identifier: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            logMetacat.error("createGenericMapping: NumberFormat error while creating a mapping to the "
-                           + TYPE_IDENTIFIER + " identifier: " + e.getMessage());
-        } catch (AccessionNumberException e) {
-            logMetacat.error("createGenericMapping: AccessionNumber error while creating a mapping to the "
-                           + TYPE_IDENTIFIER + " identifier: " + e.getMessage());
-        } finally {
-            // Return database connection to the pool
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
     }
 

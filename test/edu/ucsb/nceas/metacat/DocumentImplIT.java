@@ -107,7 +107,7 @@ public class DocumentImplIT {
                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
                                         hasRecord("xml_revisions", dbConn, " docid like ?", docid));
-            InputStream input = MetacatHandler.read(accnum);
+            InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
 
@@ -155,7 +155,7 @@ public class DocumentImplIT {
                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
                            hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
-            input = MetacatHandler.read(accnum2);
+            input = MetacatHandler.read(accnum2, null);
             assertNotNull("The file should exist", input);
             input.close();
 
@@ -179,7 +179,7 @@ public class DocumentImplIT {
             assertFalse("The xml_revisions table should not have value",
                                         hasRecord("xml_revisions", dbConn, " docid like ?", docid));
             try {
-                input = MetacatHandler.read(accnum);
+                input = MetacatHandler.read(accnum, null);
                 fail("The test can not get here since it should throw an exception");
             } catch (Exception e) {
                 assertTrue(e instanceof McdbException);
@@ -205,7 +205,7 @@ public class DocumentImplIT {
             assertFalse("The xml_revisions table should not have value",
                            hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
             try {
-                input = MetacatHandler.read(accnum2);
+                input = MetacatHandler.read(accnum2, null);
                 fail("The test can not get here since it should throw an exception");
             } catch (Exception e) {
                 assertTrue(e instanceof McdbException);
@@ -259,7 +259,7 @@ public class DocumentImplIT {
                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
                                         hasRecord("xml_revisions", dbConn, " docid like ?", docid));
-            InputStream input = MetacatHandler.read(accnum);
+            InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
 
@@ -310,7 +310,7 @@ public class DocumentImplIT {
                            hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
             assertTrue("The xml_revisions table should have value",
                            hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
-            input = MetacatHandler.read(accnum2);
+            input = MetacatHandler.read(accnum2, null);
             assertNotNull("The file should exist", input);
             input.close();
 
@@ -335,7 +335,7 @@ public class DocumentImplIT {
             assertFalse("The xml_revisions table should not have value",
                                         hasRecord("xml_revisions", dbConn, " docid like ?", docid));
             try {
-                input = MetacatHandler.read(accnum);
+                input = MetacatHandler.read(accnum, null);
                 fail("The test can not get here since it should throw an exception");
             } catch (Exception e) {
                 assertTrue(e instanceof McdbException);
@@ -361,7 +361,7 @@ public class DocumentImplIT {
             assertFalse("The xml_revisions table should not have value",
                            hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
             try {
-                input = MetacatHandler.read(accnum2);
+                input = MetacatHandler.read(accnum2, null);
                 fail("The test can not get here since it should throw an exception");
             } catch (Exception e) {
                 assertTrue(e instanceof McdbException);
@@ -428,7 +428,7 @@ public class DocumentImplIT {
                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
                                         hasRecord("xml_revisions", dbConn, " docid like ?", docid));
-            InputStream input = MetacatHandler.read(accnum);
+            InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
 
@@ -462,7 +462,7 @@ public class DocumentImplIT {
                                         hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
-            input = MetacatHandler.read(accnum);
+            input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
         } finally {
@@ -509,7 +509,7 @@ public class DocumentImplIT {
                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
                                         hasRecord("xml_revisions", dbConn, " docid like ?", docid));
-            InputStream input = MetacatHandler.read(accnum);
+            InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
             SystemMetadata sys = SystemMetadataManager.getInstance().get(guid);
@@ -535,7 +535,7 @@ public class DocumentImplIT {
                                         hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertTrue("The xml_revisions table should have value",
                                         hasRecord("xml_revisions", dbConn, " docid like ?", docid));
-            input = MetacatHandler.read(accnum);
+            input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
             sys = SystemMetadataManager.getInstance().get(guid);
@@ -591,7 +591,7 @@ public class DocumentImplIT {
                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
                                         hasRecord("xml_revisions", dbConn, " docid like ?", docid));
-            InputStream input = MetacatHandler.read(accnum);
+            InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
             SystemMetadata sys = SystemMetadataManager.getInstance().get(guid);
@@ -648,7 +648,7 @@ public class DocumentImplIT {
                     hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 2));
             assertTrue("The xml_revisions table should have value",
                            hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
-            input = MetacatHandler.read(accnum2);
+            input = MetacatHandler.read(accnum2, null);
             assertNotNull("The file should exist", input);
             input.close();
             sys = SystemMetadataManager.getInstance().get(guid);
@@ -681,7 +681,7 @@ public class DocumentImplIT {
                            hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
             assertFalse("The xml_revisions table should not have value",
                            hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 2));
-            input = MetacatHandler.read(accnum);
+            input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
             sys = SystemMetadataManager.getInstance().get(guid);
@@ -712,7 +712,7 @@ public class DocumentImplIT {
                            hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
             assertTrue("The xml_revisions table should have value",
                            hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 2));
-            input = MetacatHandler.read(accnum2);
+            input = MetacatHandler.read(accnum2, null);
             assertNotNull("The file should exist", input);
             input.close();
             sys = SystemMetadataManager.getInstance().get(guid);
@@ -781,7 +781,7 @@ public class DocumentImplIT {
                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
                                         hasRecord("xml_revisions", dbConn, " docid like ?", docid));
-            InputStream input = MetacatHandler.read(accnum);
+            InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
             SystemMetadata sys = SystemMetadataManager.getInstance().get(guid);
@@ -821,7 +821,7 @@ public class DocumentImplIT {
                                         hasRecord("xml_documents", dbConn, " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
-            input = MetacatHandler.read(accnum);
+            input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
             sys = SystemMetadataManager.getInstance().get(guid);
