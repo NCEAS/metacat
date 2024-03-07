@@ -193,44 +193,6 @@ public class DocumentImpl {
         this(docid, true);
     }
 
-    /**
-     * Construct a new document instance, writing the contents to the database. This method is
-     * called from DBSAXHandler because we need to know the root element name for documents without
-     * a DOCTYPE before creating it.
-     *
-     * In this constructor, the docid is without rev. There is a string rev to specify the revision
-     * user want to upadate. The revion is only need to be greater than current one. It is not need
-     * to be sequent number just after current one. So it is only used in update action
-     *
-     * @param conn       the JDBC Connection to which all information is written
-     * @param rootnodeid - sequence id of the root node in the document
-     * @param docname    - the name of DTD, i.e. the name immediately following the DOCTYPE keyword
-     *                   ( should be the root element name ) or the root element name if no DOCTYPE
-     *                   declaration provided (Oracle's and IBM parsers are not aware if it is not
-     *                   the root element name)
-     * @param doctype    - Public ID of the DTD, i.e. the name immediately following the PUBLIC
-     *                   keyword in DOCTYPE declaration or the docname if no Public ID provided or
-     *                   null if no DOCTYPE declaration provided
-     * @param docid      the docid to use for the UPDATE, no version number
-     * @param newVersion,   need to be update
-     * @param action     the action to be performed (INSERT OR UPDATE)
-     * @param user       the user that owns the document
-     * @param catalogId  the identifier of catalog which this document belongs to
-     * @param createDate  the created date of this document
-     * @param updateDate  the updated date of this document
-     */
-    public DocumentImpl(
-        DBConnection conn, long rootNodeId, String docName, String docType, String docId,
-        String newRevision, String action, String user, String catalogId,
-        Date createDate, Date updateDate) throws SQLException, Exception {
-        this.connection = conn;
-        this.rootnodeid = rootNodeId;
-        this.docname = docName;
-        this.doctype = docType;
-        this.docid = docId;
-        this.rev = Integer.parseInt(newRevision);
-        writeDocumentToDB(action, user, catalogId, createDate, updateDate);
-    }
 
     /**
      * Register a document that resides on the filesystem with the database. (ie, just an entry in
@@ -1820,5 +1782,42 @@ public class DocumentImpl {
                         + ee.getMessage());
             }
         }
+    }
+
+    /**
+     * Get the catalog id for the given document type
+     * @param docType  the document type which will be checked
+     * @return the catalog id associated with the document type. -1 will be returned if Metacat
+     *         cannot find it.
+     * @throws SQLException
+     */
+    private static int getCatalogId(String docType) throws SQLException {
+        int catalogId = -1;
+        // Because this is select statement and it needn't to roll back
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        if (docType != null && !docType.isBlank()) {
+            try {
+                // Get dbconnection
+                dbConn = DBConnectionPool
+                        .getDBConnection("DBSAXHandler.startElement");
+                serialNumber = dbConn.getCheckOutSerialNumber();
+                String sql = "SELECT catalog_id FROM xml_catalog WHERE public_id = ?";
+                PreparedStatement pstmt = dbConn.prepareStatement(sql);
+                pstmt.setString(1, docType);
+                ResultSet rs = pstmt.executeQuery();
+                boolean hasRow = rs.next();
+                if (hasRow) {
+                    catalogId = rs.getInt(1);
+                }
+                pstmt.close();
+            }//try
+            finally {
+                // Return dbconnection
+                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            }//finally
+        }
+        logMetacat.debug("The catalog id for " + docType + " is " + catalogId);
+        return catalogId;
     }
 }

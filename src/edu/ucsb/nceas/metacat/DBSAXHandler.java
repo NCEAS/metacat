@@ -142,58 +142,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler, Decl
                 doctype = docname;
                 logMetacat.debug("DBSaxHandler.startElement - DOCTYPE-b: " + doctype);
             }
-
-            /*try {
-                // for validated XML Documents store a reference to XML DB
-                // Catalog
-                // Because this is select statement and it needn't to roll back
-                // if
-                // insert document action failed.
-                // In order to decrease DBConnection usage count, we get a new
-                // dbconnection from pool
-               
-                DBConnection dbConn = null;
-                int serialNumber = -1;
-               
-                if (doctype != null) {
-                    try {
-                        // Get dbconnection
-                        dbConn = DBConnectionPool
-                                .getDBConnection("DBSAXHandler.startElement");
-                        serialNumber = dbConn.getCheckOutSerialNumber();
-
-                        String sql = "SELECT catalog_id FROM xml_catalog "
-                            + "WHERE public_id = ?";
-
-                        PreparedStatement pstmt = dbConn.prepareStatement(sql);
-                        pstmt.setString(1, doctype);
-                        ResultSet rs = pstmt.executeQuery();
-                        boolean hasRow = rs.next();
-                        if (hasRow) {
-                            catalogid = rs.getString(1);
-                        }
-                        pstmt.close();
-                    }//try
-                    finally {
-                        // Return dbconnection
-                        DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-                    }//finally
-                }
-
-                //create documentImpl object by the constructor which can
-                // specify
-                //the revision
-              
-                if (!isRevisionDoc) {
-                  currentDocument = new DocumentImpl(connection, NODE_ID,
-                         docname, doctype, docid, revision,
-                        action, user, catalogid,
-                        createDate, updateDate);
-                }
-            } catch (Exception ane) {
-                throw (new SAXException("Error in DBSaxHandler.startElement for action "
-                        + action + " : " + ane.getMessage(), ane));
-            }*/
         }
 
         // Add all of the namespaces

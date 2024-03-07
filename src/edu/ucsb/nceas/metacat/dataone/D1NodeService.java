@@ -1120,41 +1120,6 @@ public abstract class D1NodeService {
         byte[] xmlBytes = IOUtils.toByteArray(xmlStream);
         IOUtils.closeQuietly(xmlStream);
         String xmlStr = new String(xmlBytes, encoding);
-        if (insertOrUpdate.equals("insert")) {
-            localId = im.generateLocalId(pid.getValue(), 1);
-
-        } else {
-            //localid should already exist in the identifier table, so just find it
-            try {
-                logMetacat.debug("Updating pid " + pid.getValue());
-                logMetacat.debug("looking in identifier table for pid " + pid.getValue());
-
-                localId = im.getLocalId(pid.getValue());
-
-                logMetacat.debug("localId: " + localId);
-                //increment the revision
-                String docid = localId.substring(0, localId.lastIndexOf("."));
-                String revS = localId.substring(localId.lastIndexOf(".") + 1, localId.length());
-                int rev = new Integer(revS).intValue();
-                rev++;
-                docid = docid + "." + rev;
-                localId = docid;
-                logMetacat.debug("incremented localId: " + localId);
-
-            } catch (McdbDocNotFoundException e) {
-                throw new ServiceFailure(
-                    "1030", "D1NodeService.insertOrUpdateDocument(): " + "pid " + pid.getValue()
-                    + " should have been in the identifier table, but it wasn't: "
-                    + e.getMessage());
-
-            } catch (SQLException e) {
-                throw new ServiceFailure(
-                    "1030", "D1NodeService.insertOrUpdateDocument() -"
-                    + " couldn't identify if the pid " + pid.getValue()
-                    + " is in the identifier table since " + e.getMessage());
-            }
-
-        }
 
         String username = Constants.SUBJECT_PUBLIC;
         String[] groupnames = null;

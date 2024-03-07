@@ -23,6 +23,7 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -56,6 +57,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * @author Matthew Jones
  */
 public class MetacatHandler {
+    public static final String BIN = "BIN";
     private static Log logMetacat = LogFactory.getLog(MetacatHandler.class);
 
     // Constants -- these should be final in a servlet
@@ -411,6 +413,43 @@ public class MetacatHandler {
         }
         return output;
     }
+
+    public String registerToDB(Identifier pid, String action, DBConnection conn,
+                                    SystemMetadata sysmeta, String docType) throws ServiceFailure {
+        String localId;
+        if (action.equals("insert")) {
+            localId = IdentifierManager.getInstance().generateLocalId(pid.getValue(), 1);
+        } else {
+            //localid should already exist in the identifier table, so just find it
+            try {
+                logMetacat.debug("Updating pid " + pid.getValue());
+                logMetacat.debug("looking in identifier table for pid " + pid.getValue());
+                localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+                logMetacat.debug("localId: " + localId);
+                //increment the revision
+                String docid = localId.substring(0, localId.lastIndexOf("."));
+                String revS = localId.substring(localId.lastIndexOf(".") + 1, localId.length());
+                int rev = Integer.parseInt(revS);
+                rev++;
+                localId = docid + "." + rev;
+                logMetacat.debug("incremented localId: " + localId);
+            } catch (McdbDocNotFoundException e) {
+                throw new ServiceFailure(
+                    "1030", "D1NodeService.insertOrUpdateDocument(): " + "pid " + pid.getValue()
+                    + " should have been in the identifier table, but it wasn't: "
+                    + e.getMessage());
+
+            } catch (SQLException e) {
+                throw new ServiceFailure(
+                    "1030", "D1NodeService.insertOrUpdateDocument() -"
+                    + " couldn't identify if the pid " + pid.getValue()
+                    + " is in the identifier table since " + e.getMessage());
+            }
+        }
+        return localId;
+    }
+
+    
 
     /**
      * Validate a scientific metadata object. It will throw an exception if it is invalid.
