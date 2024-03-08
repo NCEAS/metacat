@@ -175,41 +175,42 @@ public class D1AuthHelperTest {
     }
 
     /**
-     * Confirm that 'doAdminAuthorization' accepts Metacat auth.administrator
+     * Confirm that 'doAdminAuthorization' accepts a Metacat auth.administrator
      */
     @Test
     public void testDoAdminAuthorization_metacatAdmin() throws Exception {
-        Session sessionTwo = new Session();
-        sessionTwo.setSubject(TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
+        Session sessionMetacatAdmin = new Session();
+        sessionMetacatAdmin.setSubject(TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
 
-        authDel.doAdminAuthorization(sessionTwo);
+        authDel.doAdminAuthorization(sessionMetacatAdmin);
     }
 
     /**
-     * Confirm that 'doAdminAuthorization' accepts correct cnAdmin
+     * Confirm that 'doAdminAuthorization' accepts cnAdmin
      */
     @Test
     public void testDoAdminAuthorization_cnAdmin() throws Exception {
-        Session sessionTwo = new Session();
-        sessionTwo.setSubject(TypeFactory.buildSubject("CN=urn:node:CN,DC=dataone,DC=org"));
+        Session sessionCnAdmin = new Session();
+        sessionCnAdmin.setSubject(TypeFactory.buildSubject("CN=urn:node:CN,DC=dataone,DC=org"));
 
-        authDel.doAdminAuthorization(sessionTwo);
+        authDel.doAdminAuthorization(sessionCnAdmin);
     }
 
     /**
-     * Confirm that 'doAdminAuthorization' accepts correct localNodeAdmin
+     * Confirm that 'doAdminAuthorization' accepts localNodeAdmin
      */
     @Test
     public void testDoAdminAuthorization_localNodeAdmin() throws Exception {
-        Session sessionThree = new Session();
-        sessionThree.setSubject(TypeFactory.buildSubject("CN=urn:node:METACAT1,DC=dataone,DC=org"));
+        Session sessionLocalNodeAdmin = new Session();
+        sessionLocalNodeAdmin.setSubject(TypeFactory.buildSubject("CN=urn:node:METACAT1,DC=dataone,DC=org"));
 
-        authDel.doAdminAuthorization(sessionThree);
+        authDel.doAdminAuthorization(sessionLocalNodeAdmin);
     }
 
 
     /**
-     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception with unauthorized
+     * subject.
      */
     @Test(expected = NotAuthorized.class)
     public void testDoAdminAuthorization_notAuthorized() throws Exception {
