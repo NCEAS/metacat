@@ -71,6 +71,7 @@ public class MetacatHandler {
             + "Equivalent API methods now are available through "
             + "the DataONE API (see <https://knb.ecoinformatics.org/api>)." + ERRORCLOSE;
 
+    public enum Action {INSERT, UPDATE};
 
     /**
      * Default constructor.
@@ -393,20 +394,49 @@ public class MetacatHandler {
         return output;
     }
 
-    public String registerToDB(Identifier pid, String action, DBConnection conn,
-                                    String user, String docType) throws SQLException,
+    /**
+     * Register the dataone identifier into database (the xml_documents/revisions, identifier
+     * tables). It also generate a local Metacat doc id.
+     * @param pid  the dataone identifier
+     * @param action  insert or update
+     * @param conn  the connection to db
+     * @param user  the user who requests the action
+     * @param docType  BIN for data objects; the format id for metadata objects
+     * @param prePid  the old identifier which will be updated. If this is an update action, you
+     *                 should specify it. For the insert action, it is ignored and can be null.
+     * @return the generated Metacat local docid
+     * @throws SQLException
+     * @throws AccessionNumberException
+     * @throws ServiceFailure
+     * @throws PropertyNotFoundException
+     * @throws MetacatException
+     */
+    public String registerToDB(Identifier pid, Action action, DBConnection conn,
+                                String user, String docType, Identifier prePid) throws SQLException,
                                                     AccessionNumberException, ServiceFailure,
                                                     PropertyNotFoundException, MetacatException {
+        if (pid == null || pid.getValue() == null || pid.getValue().isBlank()) {
+            throw new MetacatException("MetacatHandler.registerToDB - Metacat cannot register "
+                                        + "a blank identifier into database.");
+        }
+        if (docType == null || docType.isBlank()) {
+            throw new MetacatException("MetacatHandler.registerToDB - Metacat cannot register "
+                    + pid.getValue() + " into database since the doc type is blank.");
+        }
         String localId;
-        if (action.equals("insert")) {
-            localId = IdentifierManager.getInstance().generateLocalId(pid.getValue(), 1);
+        if (action == Action.INSERT) {
+            localId = DocumentUtil.generateDocumentId(1);
         } else {
+            // Update action
             //localid should already exist in the identifier table, so just find it
+            if (prePid == null || prePid.getValue() == null || prePid.getValue().isBlank()) {
+                throw new MetacatException("MetacatHandler.registerToDB - Metacat cannot register "
+                                   + "records into database since it tries to update a blank pid.");
+            }
             try {
-                logMetacat.debug("Updating pid " + pid.getValue());
-                logMetacat.debug("looking in identifier table for pid " + pid.getValue());
-                localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-                logMetacat.debug("localId: " + localId);
+                logMetacat.debug("looking in identifier table for pid " + prePid.getValue());
+                localId = IdentifierManager.getInstance().getLocalId(prePid.getValue());
+                logMetacat.debug("localId: " + localId + " for the pid " + prePid.getValue());
                 //increment the revision
                 String docid = localId.substring(0, localId.lastIndexOf("."));
                 String revS = localId.substring(localId.lastIndexOf(".") + 1, localId.length());
@@ -427,7 +457,15 @@ public class MetacatHandler {
                     + " is in the identifier table since " + e.getMessage());
             }
         }
-        DocumentImpl.registerDocument(docType, docType, conn, localId, user);
+        logMetacat.debug("Mapping pid " + pid.getValue() + " with docid " + localId);
+        IdentifierManager.getInstance().createMapping(pid.getValue(), localId, conn);
+        String docName = docType;
+        if (docType.equals(DocumentImpl.BIN)) {
+            docName = localId;
+        }
+        logMetacat.debug("Register the docid " + localId + " with doc type " + docType
+                         + " into xml_documents/xml_revsions table");
+        DocumentImpl.registerDocument(docName, docType, conn, localId, user);
         return localId;
     }
 
@@ -451,9 +489,11 @@ public class MetacatHandler {
                 NonXMLMetadataHandlers.newNonXMLMetadataHandler(formatId);
             if (handler != null) {
                 // a non-xml metadata object path
+                logMetacat.debug("Validate the non-XML scientific metadata object.");
                 handler.validate(new ByteArrayInputStream(object));
             } else {
                 // an XML object
+                logMetacat.debug("Validate the XML scientific metadata object.");
                 validateXmlSciMeta(object, formatId.getValue());
             }
     }

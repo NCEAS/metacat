@@ -4,8 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.Date;
 
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
@@ -25,6 +23,7 @@ import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import edu.ucsb.nceas.IntegrationTestUtils;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -90,23 +89,31 @@ public class DocumentImplIT {
             MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
-                                  hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                    IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                             hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                                     IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                         IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                                    IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                                    IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                       hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                                   IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             assertTrue("The xml_documents table should have value",
-                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                           " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                        " docid like ?", docid));
             InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -138,23 +145,31 @@ public class DocumentImplIT {
             MNodeService.getInstance(request).update(session, guid, object, newPid, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
-                                 hasRecord("identifier", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                             " guid like ?", newPid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", newPid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                " guid like ?", newPid.getValue()));
             assertTrue("The xml_access table should have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smreplicationpolicy table should have value",
-                       hasRecord("smreplicationpolicy", dbConn, " guid like ?", newPid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smreplicationstatus table should have value",
-                     hasRecord("smreplicationstatus", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smmediatypeproperties table should have value",
-                     hasRecord("smmediatypeproperties", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             String accnum2 = IdentifierManager.getInstance().getLocalId(newPid.getValue());
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum2);
             assertTrue("The xml_documents table should have value",
-                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                           " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+                           IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                             " rev=? and docid like ?", 1, docid));
             input = MetacatHandler.read(accnum2, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -162,22 +177,30 @@ public class DocumentImplIT {
             //Delete
             DocumentImpl.delete(accnum, guid);
             assertTrue("The identifier table should have value",
-                                hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The systemmetadata table should not have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The xml_access table should not have value",
-                                hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", guid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                      hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                      IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                  " guid like ?", guid.getValue()));
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             assertFalse("The xml_documents table should not have value",
-                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                        " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                        " docid like ?", docid));
             try {
                 input = MetacatHandler.read(accnum, null);
                 fail("The test can not get here since it should throw an exception");
@@ -188,22 +211,30 @@ public class DocumentImplIT {
             DocumentImpl.delete(accnum2, newPid);
             //check record
             assertTrue("The identifier table should have value",
-                                 hasRecord("identifier", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                              " guid like ?", newPid.getValue()));
             assertFalse("The systemmetadata table should not have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", newPid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                            " guid like ?", newPid.getValue()));
             assertFalse("The xml_access table should not have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                " guid like ?", newPid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                       hasRecord("smreplicationpolicy", dbConn, " guid like ?", newPid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", newPid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                     hasRecord("smreplicationstatus", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                             " guid like ?", newPid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                     hasRecord("smmediatypeproperties", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                             " guid like ?", newPid.getValue()));
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum2);
             assertFalse("The xml_documents table should have value",
-                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                           " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+                           IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                           " rev=? and docid like ?", 1, docid));
             try {
                 input = MetacatHandler.read(accnum2, null);
                 fail("The test can not get here since it should throw an exception");
@@ -242,23 +273,31 @@ public class DocumentImplIT {
             object.close();
             //check record
             assertTrue("The identifier table should have value",
-                                  hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                  IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                              " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                             hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                             IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", guid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                       hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                               " guid like ?", guid.getValue()));
             String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             assertTrue("The xml_documents table should have value",
-                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                       " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                        " docid like ?", docid));
             InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -293,23 +332,31 @@ public class DocumentImplIT {
             object.close();
             //check record
             assertTrue("The identifier table should have value",
-                                 hasRecord("identifier", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                             " guid like ?", newPid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", newPid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                " guid like ?", newPid.getValue()));
             assertTrue("The xml_access table should have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                             " guid like ?", newPid.getValue()));
             assertTrue("The smreplicationpolicy table should have value",
-                       hasRecord("smreplicationpolicy", dbConn, " guid like ?", newPid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smreplicationstatus table should have value",
-                     hasRecord("smreplicationstatus", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smmediatypeproperties table should have value",
-                     hasRecord("smmediatypeproperties", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                             " guid like ?", newPid.getValue()));
             String accnum2 = IdentifierManager.getInstance().getLocalId(newPid.getValue());
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum2);
             assertTrue("The xml_documents table should have value",
-                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
+                           IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                           " rev=? and docid like ?", 2, docid));
             assertTrue("The xml_revisions table should have value",
-                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+                           IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                              " rev=? and docid like ?", 1, docid));
             input = MetacatHandler.read(accnum2, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -317,23 +364,31 @@ public class DocumentImplIT {
             //Delete
             DocumentImpl.delete(accnum, guid);
             assertTrue("The identifier table should have value",
-                                hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The systemmetadata table should not have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The xml_access table should not have value",
-                                hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                      hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                      IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             // the version 2 still exists
             assertTrue("The xml_documents table should have value",
-                            hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
+                            IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                            " rev=? and docid like ?", 2, docid));
             assertFalse("The xml_revisions table should not have value",
-                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                        " docid like ?", docid));
             try {
                 input = MetacatHandler.read(accnum, null);
                 fail("The test can not get here since it should throw an exception");
@@ -344,22 +399,30 @@ public class DocumentImplIT {
             DocumentImpl.delete(accnum2, newPid);
             //check record
             assertTrue("The identifier table should have value",
-                                 hasRecord("identifier", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                             " guid like ?", newPid.getValue()));
             assertFalse("The systemmetadata table should not have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", newPid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                " guid like ?", newPid.getValue()));
             assertFalse("The xml_access table should not have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                       hasRecord("smreplicationpolicy", dbConn, " guid like ?", newPid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                     hasRecord("smreplicationstatus", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                     hasRecord("smmediatypeproperties", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum2);
             assertFalse("The xml_documents table should have value",
-                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
+                           IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                       " rev=? and docid like ?", 2, docid));
             assertFalse("The xml_revisions table should not have value",
-                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+                           IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                           " rev=? and docid like ?", 1, docid));
             try {
                 input = MetacatHandler.read(accnum2, null);
                 fail("The test can not get here since it should throw an exception");
@@ -411,23 +474,31 @@ public class DocumentImplIT {
             MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
-                                  hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                  IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                  " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                             hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                             IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The smreplicationpolicy table should have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The smmediatypeproperties table should not have value",
-                       hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                " guid like ?", guid.getValue()));
             String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             assertTrue("The xml_documents table should have value",
-                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                       " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                        " docid like ?", docid));
             InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -447,21 +518,29 @@ public class DocumentImplIT {
             }
             //Records in the db shouldn't change
             assertTrue("The identifier table should have value",
-                                hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                   hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                   IntegrationTestUtils.hasRecord("xml_access", dbConn, " guid like ?",
+                                                               guid.getValue()));
             assertTrue("The smreplicationpolicy table should have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                            " guid like ?", guid.getValue()));
             assertTrue("The smreplicationstatus table should not have value",
-                        hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                            " guid like ?", guid.getValue()));
             assertTrue("The smmediatypeproperties table should not have value",
-                      hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                      IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The xml_documents table should have value",
-                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                        " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                                       hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                       " docid like ?", docid));
             input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -492,23 +571,31 @@ public class DocumentImplIT {
             MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
-                                  hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                  IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                  " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                             hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                             IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                       hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             assertTrue("The xml_documents table should have value",
-                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                       " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                        " docid like ?", docid));
             InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -519,22 +606,30 @@ public class DocumentImplIT {
             String user = "test";
             DocumentImpl.archive(accnum, guid, user);
             assertTrue("The identifier table should have value",
-                                hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                                hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", guid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                      hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                      IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                  " guid like ?", guid.getValue()));
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             assertFalse("The xml_documents table should have value",
-                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_documents",
+                                                                dbConn, " docid like ?", docid));
             assertTrue("The xml_revisions table should have value",
-                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_revisions",
+                                                                  dbConn, " docid like ?", docid));
             input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -574,23 +669,31 @@ public class DocumentImplIT {
             object.close();
             //check record
             assertTrue("The identifier table should have value",
-                                  hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                  IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                  " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                             hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                             IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", guid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                       hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             assertTrue("The xml_documents table should have value",
-                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                       " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                        " docid like ?", docid));
             InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -627,27 +730,37 @@ public class DocumentImplIT {
             object.close();
             //check record
             assertTrue("The identifier table should have value",
-                                 hasRecord("identifier", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                             " guid like ?", newPid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", newPid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                            " guid like ?", newPid.getValue()));
             assertTrue("The xml_access table should have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", newPid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                             " guid like ?", newPid.getValue()));
             assertTrue("The smreplicationpolicy table should have value",
-                       hasRecord("smreplicationpolicy", dbConn, " guid like ?", newPid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smreplicationstatus table should have value",
-                     hasRecord("smreplicationstatus", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smmediatypeproperties table should have value",
-                     hasRecord("smmediatypeproperties", dbConn, " guid like ?", newPid.getValue()));
+                     IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             String accnum2 = IdentifierManager.getInstance().getLocalId(newPid.getValue());
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum2);
             assertTrue("The xml_documents table should have value",
-                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
+                           IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                           " rev=? and docid like ?", 2, docid));
             assertFalse("The xml_documents table should not have value",
-                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 1));
+                           IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                           " rev=? and docid like ?", 1, docid));
             assertFalse("The xml_revisions table should not have value",
-                    hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 2));
+                    IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                            " rev=? and docid like ?", 2, docid));
             assertTrue("The xml_revisions table should have value",
-                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+                           IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                           " rev=? and docid like ?", 1, docid));
             input = MetacatHandler.read(accnum2, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -660,27 +773,37 @@ public class DocumentImplIT {
             String user = "test";
             DocumentImpl.archive(accnum, guid, user);
             assertTrue("The identifier table should have value",
-                                hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                  " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                                hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertFalse("The smreplicationpolicy table should not have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertFalse("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertFalse("The smmediatypeproperties table should not have value",
-                      hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                      IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                  " guid like ?", guid.getValue()));
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             // the version 2 still exists
             assertTrue("The xml_documents table should have value",
-                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
+                           IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                              " rev=? and docid like ?", 2, docid));
             assertFalse("The xml_documents table should not have value",
-                          hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 1));
+                          IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                              " rev=? and docid like ?", 1, docid));
             assertTrue("The xml_revisions table should have value",
-                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+                           IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                             " rev=? and docid like ?", 1, docid));
             assertFalse("The xml_revisions table should not have value",
-                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 2));
+                           IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                             " rev=? and docid like ?", 2, docid));
             input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -692,26 +815,36 @@ public class DocumentImplIT {
             DocumentImpl.archive(accnum2, newPid, user);
             //check record
             assertTrue("The identifier table should have value",
-                                hasRecord("identifier", dbConn, " guid like ?", newPid.getValue()));
+                                IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                           hasRecord("systemmetadata", dbConn, " guid like ?", newPid.getValue()));
+                           IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The xml_access table should have value",
-                               hasRecord("xml_access", dbConn, " guid like ?", newPid.getValue()));
+                               IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smreplicationpolicy table should have value",
-                      hasRecord("smreplicationpolicy", dbConn, " guid like ?", newPid.getValue()));
+                      IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smreplicationstatus table should have value",
-                      hasRecord("smreplicationstatus", dbConn, " guid like ?", newPid.getValue()));
+                      IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", newPid.getValue()));
             assertTrue("The smmediatypeproperties table should have value",
-                    hasRecord("smmediatypeproperties", dbConn, " guid like ?", newPid.getValue()));
+                    IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                " guid like ?", newPid.getValue()));
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum2);
             assertFalse("The xml_documents table should not have value",
-                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 2));
+                           IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                           " rev=? and docid like ?", 2, docid));
             assertFalse("The xml_documents table should not have value",
-                           hasRecord("xml_documents", dbConn, " docid like ? and rev=?", docid, 1));
+                           IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                           " rev=? and docid like ?", 1, docid));
             assertTrue("The xml_revisions table should have value",
-                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 1));
+                           IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                              " rev=? and docid like ?", 1, docid));
             assertTrue("The xml_revisions table should have value",
-                           hasRecord("xml_revisions", dbConn, " docid like ? and rev=?", docid, 2));
+                           IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                              " rev=? and docid like ?", 2, docid));
             input = MetacatHandler.read(accnum2, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -764,23 +897,31 @@ public class DocumentImplIT {
             MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
-                                  hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                  IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                  " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                             hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                             IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                                 hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The smreplicationpolicy table should have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The smreplicationstatus table should not have value",
-                       hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                               " guid like ?", guid.getValue()));
             assertTrue("The smmediatypeproperties table should not have value",
-                       hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                       IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             assertTrue("The xml_documents table should have value",
-                                       hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                           " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                                        hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                        " docid like ?", docid));
             InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -806,21 +947,29 @@ public class DocumentImplIT {
             }
             //Records in the db shouldn't change
             assertTrue("The identifier table should have value",
-                                hasRecord("identifier", dbConn, " guid like ?", guid.getValue()));
+                                IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                                  " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
-                            hasRecord("systemmetadata", dbConn, " guid like ?", guid.getValue()));
+                            IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
-                   hasRecord("xml_access", dbConn, " guid like ?", guid.getValue()));
+                   IntegrationTestUtils.hasRecord("xml_access", dbConn, " guid like ?",
+                                                  guid.getValue()));
             assertTrue("The smreplicationpolicy table should have value",
-                        hasRecord("smreplicationpolicy", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The smreplicationstatus table should not have value",
-                        hasRecord("smreplicationstatus", dbConn, " guid like ?", guid.getValue()));
+                        IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                                " guid like ?", guid.getValue()));
             assertTrue("The smmediatypeproperties table should not have value",
-                      hasRecord("smmediatypeproperties", dbConn, " guid like ?", guid.getValue()));
+                      IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                                 " guid like ?", guid.getValue()));
             assertTrue("The xml_documents table should have value",
-                                        hasRecord("xml_documents", dbConn, " docid like ?", docid));
+                                        IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                                        " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",
-                                       hasRecord("xml_revisions", dbConn, " docid like ?", docid));
+                                       IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                                       " docid like ?", docid));
             input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
@@ -829,37 +978,6 @@ public class DocumentImplIT {
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
-    }
-
-    private boolean hasRecord(String table, DBConnection dbconn, String whereClause,
-                                                                String value) throws Exception {
-        boolean hasRecord = false;
-        String query = "SELECT * FROM " + table + " WHERE " + whereClause;
-        try (PreparedStatement statement = dbconn.prepareStatement(query)) {
-             statement.setString(1, value);
-             try (ResultSet rs = statement.executeQuery()) {
-                 if (rs.next()) {
-                     hasRecord = true;
-                 }
-             }
-        }
-        return hasRecord;
-    }
-
-    private boolean hasRecord(String table, DBConnection dbconn, String whereClause,
-                                                         String value, int rev) throws Exception {
-        boolean hasRecord = false;
-        String query = "SELECT * FROM " + table + " WHERE " + whereClause;
-        try (PreparedStatement statement = dbconn.prepareStatement(query)) {
-             statement.setString(1, value);
-             statement.setInt(2, rev);
-             try (ResultSet rs = statement.executeQuery()) {
-                 if (rs.next()) {
-                     hasRecord = true;
-                 }
-             }
-        }
-        return hasRecord;
     }
 
 }

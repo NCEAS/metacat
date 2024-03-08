@@ -17,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
@@ -135,10 +136,7 @@ public class DocumentImpl {
     public static final String DOCNAME = "docname";
     public static final String PUBLICID = "publicid";
     public static final String SYSTEMID = "systemid";
-    static final int ALL = 1;
-    static final int WRITE = 2;
-    static final int READ = 4;
-    protected DBConnection connection = null;
+
     protected String docname = null;
     protected String doctype = null;
     private String validateType = null; //base on dtd or schema
@@ -266,7 +264,7 @@ public class DocumentImpl {
             sql.append("?, ");
             sql.append("?, ");
             sql.append("?, ");
-            sql.append("? )");
+            sql.append("?, ");
             sql.append("?, ");
             sql.append("? )");
             // set the values
@@ -281,12 +279,15 @@ public class DocumentImpl {
             pstmt.setTimestamp(8, new Timestamp(updateDate.getTime()));
             if (!doctype.equals(BIN)) {
                 pstmt.setLong(9, DBSAXHandler.NODE_ID);
+            } else {
+                pstmt.setNull(9, Types.BIGINT);
             }
             if (catalogId != -1) {
                 pstmt.setInt(10, catalogId);
+            } else {
+                pstmt.setNull(10, Types.BIGINT);
             }
-            logMetacat.debug(
-                "DocumentImpl.modifyRecordsInGivenTable - executing SQL: " + pstmt.toString());
+            logMetacat.debug("Executing SQL: " + pstmt.toString());
             pstmt.execute();
         } finally {
             if (pstmt != null) {
@@ -1580,10 +1581,18 @@ public class DocumentImpl {
             pstmt.setString(1, docid);
             pstmt.setString(2, user);
             pstmt.setString(3, docid);
-            logMetacat.debug(
-                "DocumentImpl.archiveDocToRevision - executing SQL: " + pstmt.toString());
+            logMetacat.debug("DocumentImpl.archiveDocToRevision - Executing SQL: "
+                                + pstmt.toString());
             pstmt.execute();
-            pstmt.close();
+            // Delete the record on xml_documents
+            String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
+            try (PreparedStatement pstmt2 = dbconn.prepareStatement(deleteQuery)) {
+                pstmt2.setString(1, docid);
+                logMetacat.debug("Running sql: " + pstmt2.toString());
+                pstmt2.execute();
+                //Usaga count increase 1
+                dbconn.increaseUsageCount(1);
+            }
             double end = System.currentTimeMillis() / 1000;
             logMetacat.debug(
                 "DocumentImpl.archiveDocToRevision - moving docs from xml_documents to "
