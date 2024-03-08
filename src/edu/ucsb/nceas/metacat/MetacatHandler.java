@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -30,7 +29,6 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v1.Session;
 import org.ecoinformatics.eml.EMLParser;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -41,8 +39,6 @@ import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
-import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
-import edu.ucsb.nceas.metacat.event.MetacatEventService;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -77,6 +73,8 @@ public class MetacatHandler {
             + "and so this request is no longer supported. "
             + "Equivalent API methods now are available through "
             + "the DataONE API (see <https://knb.ecoinformatics.org/api>)." + ERRORCLOSE;
+    private static File dataDir = null;
+    private static File metadataDir = null;
 
     public enum Action {INSERT, UPDATE};
 
@@ -84,7 +82,67 @@ public class MetacatHandler {
      * Default constructor.
      */
     public MetacatHandler() {
+        String documentPath = null;
+        try {
+            documentPath = PropertyService.getProperty("application.documentfilepath");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("Can't find the document file path property " + e.getMessage());
+            documentPath = null;
+        }
+        metadataDir = initializeDir(documentPath);
+        String dataPath = null;
+        try {
+            dataPath = PropertyService.getProperty("application.datafilepath");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("Can't find the data file path property " + e.getMessage());
+            dataPath = null;
+        }
+        dataDir = initializeDir(dataPath);
+    }
 
+    /**
+     * Create a directory based on the given path.
+     * If Metacat can't read/write an exiting directory or create a new directory, or it is not
+     * a directory, this method will return null;
+     * @param path  the path of the directory
+     * @return the file directory representing the path. Return null if bad things happen.
+     */
+    private File initializeDir(String path) {
+        File dir = null;
+        if (path != null && !path.isBlank()) {
+            dir = new File(path);
+            if (!dir.exists()) {
+                try {
+                    boolean success = dir.mkdirs();
+                    if (!success) {
+                        logMetacat.error("Can't create the object storage directory " + path);
+                        dir = null;
+                    }
+                } catch (Exception e) {
+                    logMetacat.error("Can't create the object storage directory " + path
+                                    + " sicne " + e.getMessage());
+                    dir = null;
+                }
+            } else if (!dir.canRead() || !dir.canWrite() || !dir.isDirectory()){
+                //if we can read/write the directory or the file is not a directory. Set it null
+                logMetacat.error("Metacat cannot read/write the object storage directory "
+                                + path + " specified in the property. Or it is not a directory.");
+                dir = null;
+            }
+        }
+        return dir;
+    }
+
+    /**
+     * Check if the object storage directories exist.
+     * @throws ServiceFailure
+     */
+    private static void checkObjectDirs() throws IOException {
+        if (dataDir == null || metadataDir == null) {
+            throw new IOException("Metacat doesn't have the valid data or metadata "
+                                      + "storage directories. Either they are not set in the "
+                                      + "properties file or Tomcat can read/write it.");
+        }
     }
 
     /**
@@ -101,12 +159,10 @@ public class MetacatHandler {
     }
 
     /**
-     * Read a document from metacat and return the InputStream.  The XML or data document should be
-     * on disk, but if not, read from the metacat database.
-     *
-     * @param localId    - the metacat docid to read
-     * @param dataType - the type of the object associated with docid
-     * @return objectStream - the document as an InputStream
+     * Read a document from metacat and return the InputStream.
+     * @param localId  the metacat docid to read
+     * @param dataType  the type of the object associated with docid
+     * @return objectStream  the document as an InputStream
      * @throws InsufficientKarmaException
      * @throws ParseLSIDException
      * @throws PropertyNotFoundException
@@ -119,7 +175,8 @@ public class MetacatHandler {
         throws ParseLSIDException, PropertyNotFoundException, McdbException, SQLException,
         ClassNotFoundException, IOException {
         logMetacat.debug("MetacatHandler.read() called and the data type is " + dataType);
-
+        // Check if the object storage directory is in a good condition
+        checkObjectDirs();
         InputStream inputStream = null;
 
         // be sure we have a local ID from an LSID
@@ -133,62 +190,31 @@ public class MetacatHandler {
                 throw ple;
             }
         }
-        // accommodate old clients that send docids without revision numbers
-        localId = DocumentUtil.appendRev(localId);
         if (dataType != null && dataType.equalsIgnoreCase(D1NodeService.METADATA)) {
             logMetacat.debug("MetacatHandler.read - the data type is specified as the meta data");
-            String filepath = PropertyService.getProperty("application.documentfilepath");
-            // ensure it is a directory path
-            if (!(filepath.endsWith("/"))) {
-                filepath += "/";
-            }
-            String filename = filepath + localId;
-            inputStream = readFromFilesystem(filename);
-        } else {
-            // deal with data or metadata cases
-            // this is a data file
-            // get the path to the file to read
             try {
-                String filepath = PropertyService.getProperty("application.datafilepath");
-                // ensure it is a directory path
-                if (!(filepath.endsWith("/"))) {
-                    filepath += "/";
-                }
-                String filename = filepath + localId;
-                inputStream = readFromFilesystem(filename);
-            } catch (PropertyNotFoundException pnf) {
-                logMetacat.debug("There was a problem finding the "
-                                     + "application.datafilepath property. The error "
-                                     + "message was: " + pnf.getMessage());
-                throw pnf;
-            } catch (McdbException e) {
-                DocumentImpl doc = new DocumentImpl(localId, false);
-                 // this is a metadata document
-                // Get the xml (will try disk then DB)
-                try {
-                    // force the InputStream to be returned
-                    OutputStream nout = null;
-                    inputStream = doc.toXml(nout, null, null, true);
-                } catch (McdbException ee) {
-                    // report the error
-                    logMetacat.warn(
-                        "MetacatHandler.readFromMetacat() " + "- could not read document " + localId
-                            + ": " + e.getMessage(), ee);
-                    throw ee;
-                }
+                inputStream = readFromFilesystem(metadataDir, localId);
+            } catch (McdbDocNotFoundException e) {
+                inputStream = readFromFilesystem(dataDir, localId);
             }
-
+        } else {
+            // deal with data case
+            try {
+                inputStream = readFromFilesystem(dataDir, localId);
+            } catch (McdbDocNotFoundException e) {
+                inputStream = readFromFilesystem(metadataDir, localId);
+            }
         }
         return inputStream;
     }
 
     /**
      * Read a file from Metacat's configured file system data directory.
-     *
-     * @param filename The full path file name of the file to read
+     * @param dir  the directory where the file is located
+     * @param filename  The file name of the file to read
      * @return fileInputStream  The file to read as a FileInputStream
      */
-    private static FileInputStream readFromFilesystem(String filename)
+    private static FileInputStream readFromFilesystem(File dir, String filename)
         throws McdbDocNotFoundException {
 
         logMetacat.debug("MetacatHandler.readFromFilesystem() called.");
@@ -196,7 +222,7 @@ public class MetacatHandler {
         FileInputStream fileInputStream = null;
 
         try {
-            fileInputStream = new FileInputStream(filename);
+            fileInputStream = new FileInputStream(new File(dir,filename));
 
         } catch (FileNotFoundException fnfe) {
             logMetacat.warn("There was an error reading the file " + filename + ". The error was: "
@@ -209,10 +235,42 @@ public class MetacatHandler {
     }
 
 
+    /**
+     * Save the bytes from a input stream into disk.
+     * @param object  the input stream of the object
+     * @param localId  the docid which serves as the file name
+     * @param checksum  checksum of the input stream from the system metadata declaration.
+     * @param docType  the type of object. BIN means data; otherwise means metadata
+     * @param pid  the identifier of object. It is only used for debug information.
+     * @return the file which has the input stream content
+     * @throws ServiceFailure
+     * @throws InvalidSystemMetadata
+     * @throws InvalidRequest
+     */
     public File saveBytes(InputStream object, String localId, Checksum checksum,
                                                             String docType, Identifier pid)
-                                      throws ServiceFailure, InvalidSystemMetadata, InvalidRequest{
+                                      throws ServiceFailure, InvalidSystemMetadata, InvalidRequest {
+        try {
+            checkObjectDirs();
+        } catch (IOException e) {
+            throw new ServiceFailure("1030", e.getMessage());
+        }
+        if (docType == null || docType.isBlank()) {
+            throw new InvalidRequest("1181", "Metacat cannot save bytes for "
+                                     + pid.getValue() + " into disk since the doc type is blank.");
+        }
         File dataDirectory = null;
+        if (!docType.equals(DocumentImpl.BIN)) {
+            dataDirectory = metadataDir;
+        } else {
+            dataDirectory = dataDir;
+        }
+        try {
+            logMetacat.debug("File " + localId + " will be saved to "
+                                     + dataDirectory.getCanonicalPath());
+        } catch (IOException e) {
+            //do nothing
+        }
         return writeStreamToFile(dataDirectory, localId, object, checksum, pid);
     }
 
