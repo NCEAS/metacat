@@ -8,9 +8,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
-
-
-
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -33,7 +30,10 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-
+import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
+import edu.ucsb.nceas.metacat.properties.PropertiesWrapper;
+import org.mockito.Mockito;
 
 public class D1AuthHelperTest {
 
@@ -96,6 +96,8 @@ public class D1AuthHelperTest {
     
     @Before
     public void setUp() throws Exception {
+
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         
         authDel = new D1AuthHelper(null,TypeFactory.buildIdentifier("foo"),"1234NA","5678SF");
         
@@ -175,10 +177,46 @@ public class D1AuthHelperTest {
         fail("Not yet implemented");
     }
 
-    @Ignore("requires client communication...")
+    /**
+     * Confirm that 'doAdminAuthorization' accepts Metacat auth.administrator
+     */
     @Test
-    public void testDoAdminAuthorization() {
-        fail("Not yet implemented");
+    public void testDoAdminAuthorization_metacatAdmin() throws Exception {
+        Session sessionTwo = new Session();
+        sessionTwo.setSubject(TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
+
+        authDel.doAdminAuthorization(sessionTwo);
+    }
+
+    /**
+     * Confirm that 'doAdminAuthorization' accepts correct cnAdmin
+     */
+    @Test
+    public void testDoAdminAuthorization_cnAdmin() throws Exception {
+        Session sessionTwo = new Session();
+        sessionTwo.setSubject(TypeFactory.buildSubject("CN=urn:node:CN,DC=dataone,DC=org"));
+
+        authDel.doAdminAuthorization(sessionTwo);
+    }
+
+    /**
+     * Confirm that 'doAdminAuthorization' accepts correct localNodeAdmin
+     */
+    @Test
+    public void testDoAdminAuthorization_localNodeAdmin() throws Exception {
+        Session sessionThree = new Session();
+        sessionThree.setSubject(TypeFactory.buildSubject("CN=urn:node:METACAT1,DC=dataone,DC=org"));
+
+        authDel.doAdminAuthorization(sessionThree);
+    }
+
+
+    /**
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoAdminAuthorization_notAuthorized() throws Exception {
+        authDel.doAdminAuthorization(session);
     }
 
     @Ignore("requires client communication...")
@@ -225,7 +263,6 @@ public class D1AuthHelperTest {
 
     @Test
     public void testIsReplicaMNodeAdmin() {
-        
         authDel.isReplicaMNodeAdmin(session, sysmeta, nl);
     }
 
@@ -238,7 +275,7 @@ public class D1AuthHelperTest {
     public void testIsCNAdmin() {
         authDel.isCNAdmin(cn1CNSession, nl);
     }
-    
+
     @Test
     public void testIsOther() {
 
@@ -251,7 +288,7 @@ public class D1AuthHelperTest {
                 authDel.isAuthorizedBySysMetaSubjects(otherMNSession, sysmeta, Permission.READ));
 
     }
-    
+
     @Test
     public void testSessionIsNull() {
 
