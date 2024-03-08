@@ -4,26 +4,33 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.DatatypeConverter;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v1.Session;
 import org.ecoinformatics.eml.EMLParser;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -39,6 +46,8 @@ import edu.ucsb.nceas.metacat.event.MetacatEventService;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -61,8 +70,6 @@ public class MetacatHandler {
 
     // Constants -- these should be final in a servlet
     private static final String PROLOG = "<?xml version=\"1.0\"?>";
-    private static final String SUCCESS = "<success>";
-    private static final String SUCCESSCLOSE = "</success>";
     private static final String ERROR = "<error>";
     private static final String ERRORCLOSE = "</error>";
     private static final String NOT_SUPPORT_MESSAGE =
@@ -202,196 +209,174 @@ public class MetacatHandler {
     }
 
 
-    /**
-     * Handle the database putdocument request and write an XML document to the database connection
-     * @param user  the user who sent the request
-     * @param groups  the groups to which the user belongs
-     * @param encoding  the encoding of the xml document
-     * @param xmlBytes  the content of the xml document
-     * @param formatId  the format id of the xml document
-     * @param checksum  the checksum of the xml document
-     * @param objectFile  the temporary file which the xml document is stored
-     * @param docid  the docid of the document
-     * @param action  the action to be performed (INSERT or UPDATE)
-     * @return docid
-     */
-    public String handleInsertOrUpdateAction( String user, String[] groups, String encoding,
-                                    byte[] xmlBytes, String formatId,Checksum checksum,
-                                    File objectFile, String docid, String action) {
-        DBConnection dbConn = null;
-        int serialNumber = -1;
-        String output = "";
-        if (docid == null || docid.trim().equals("")) {
-            String msg = this.PROLOG + this.ERROR + "Docid not specified" + this.ERRORCLOSE;
-            return msg;
-        }
+    public File saveBytes(InputStream object, String localId, Checksum checksum,
+                                                            String docType, Identifier pid)
+                                      throws ServiceFailure, InvalidSystemMetadata, InvalidRequest{
+        File dataDirectory = null;
+        return writeStreamToFile(dataDirectory, localId, object, checksum, pid);
+    }
 
+    /**
+     * Write a stream to a file
+     *
+     * @param dir  the directory to write to
+     * @param localId  the file name to write to
+     * @param dataStream  the object bytes as an input stream
+     * @param cheksum  the checksum from system metadata. We need to compare it to the one, which
+     *                  Metacat calculate during the saving process.
+     * @param pid  only for debugging purpose
+     * @return newFile - the new file created
+     *
+     * @throws ServiceFailure
+     * @throws InvalidSystemMetadata
+     * @throws InvalidRequest
+     */
+    private File writeStreamToFile(File dir, String localId, InputStream dataStream,
+                                          Checksum checksum, Identifier pid) throws ServiceFailure,
+                                                            InvalidSystemMetadata, InvalidRequest {
+        if(checksum == null) {
+             throw new InvalidSystemMetadata("1180", "The checksum from the system metadata for "
+                                             + pid.getValue() + "shouldn't be null.");
+        }
+        if (localId == null || localId.isBlank()) {
+             throw new InvalidRequest("1181", "The docid which will be used as file name for "
+                                      + pid.getValue() + " should not be blank");
+        }
+        File newFile = null;
+        logMetacat.debug("Starting to write to disk.");
+        newFile = new File(dir, localId);
+        File tempFile = null;
+        logMetacat.debug( "Filename for write is: " + newFile.getAbsolutePath()
+                                + " for the data object pid " + pid.getValue());
         try {
-            StringReader dtd = null;
-            String doctext = new String(xmlBytes, encoding);
-            StringReader xmlReader = new StringReader(doctext);
-            boolean needValidation = false;
-            String rule = null;
-            String namespace = null;
-            String schemaLocation = null;
-            try {
-                // look inside XML Document for <!DOCTYPE ... PUBLIC/SYSTEM ...
-                // >
-                // in order to decide whether to use validation parser
-                needValidation = needDTDValidation(xmlReader);
-                if (needValidation) {
-                    // set a dtd base validation parser
-                    logMetacat.debug(
-                        "MetacatHandler.handleInsertOrUpdateAction - the xml object will be "
-                            + "validate by a dtd");
-                    rule = DocumentImpl.DTD;
-                } else {
-                    XMLSchemaService.getInstance().doRefresh();
-                    namespace = XMLSchemaService.findDocumentNamespace(xmlReader);
-                    if (namespace != null) {
-                        logMetacat.debug(
-                            "MetacatHandler.handleInsertOrUpdateAction - the xml object will be "
-                                + "validated by a schema which has a target namespace: "
-                                + namespace);
-                        schemaLocation = XMLSchemaService.getInstance()
-                            .findNamespaceAndSchemaLocalLocation(formatId, namespace);
-                        if (namespace.compareTo(DocumentImpl.EML2_0_0NAMESPACE) == 0
-                            || namespace.compareTo(DocumentImpl.EML2_0_1NAMESPACE) == 0) {
-                            // set eml2 base     validation parser
-                            rule = DocumentImpl.EML200;
-                            needValidation = true;
-                            // using emlparser to check id validation
-                            @SuppressWarnings("unused") EMLParser parser =
-                                new EMLParser(doctext);
-                        } else if (namespace.compareTo(DocumentImpl.EML2_1_0NAMESPACE) == 0
-                            || namespace.compareTo(DocumentImpl.EML2_1_1NAMESPACE) == 0
-                            || namespace.compareTo(DocumentImpl.EML2_2_0NAMESPACE) == 0) {
-                            // set eml2 base validation parser
-                            rule = DocumentImpl.EML210;
-                            needValidation = true;
-                            // using emlparser to check id validation
-                            @SuppressWarnings("unused") EMLParser parser =
-                                new EMLParser(doctext);
+            String checksumValue = checksum.getValue();
+            logMetacat.debug("The checksum value from the system " + "metadata is "
+                                + checksumValue + " for the object " + pid.getValue());
+            if (checksumValue == null || checksumValue.isBlank()) {
+                throw new InvalidSystemMetadata("1180",
+                       "The checksum value from the system metadata shouldn't be null or blank.");
+            }
+            String algorithm = checksum.getAlgorithm();
+            logMetacat.debug("The algorithm to calculate the checksum "
+                                + "from the system metadata is "
+                                + algorithm + " for the data object " + pid.getValue());
+            if (algorithm == null || algorithm.isBlank()) {
+                throw new InvalidSystemMetadata("1180",
+                                "The algorithm to calculate the checksum from the system metadata "
+                                 + "shouldn't be null or blank.");
+            }
+            long start = System.currentTimeMillis();
+            //if the input stream is an object DetailedFileInputStream, it means this object
+            // may already have the checksum information when Metacat save request from the clients.
+            if (dataStream instanceof DetailedFileInputStream) {
+                DetailedFileInputStream stream = (DetailedFileInputStream) dataStream;
+                tempFile = stream.getFile();
+                Checksum expectedChecksum = stream.getExpectedChecksum();
+                if (expectedChecksum != null) {
+                    //Good, Metacat has already calculated the checksum during the first place.
+                    //This Metacat calculated checksum is considered as the true value.
+                    //We need to compare the true value with the declaration from the systemmetadata
+                    String expectedAlgorithm = expectedChecksum.getAlgorithm();
+                    String expectedChecksumValue = expectedChecksum.getValue();
+                    if (expectedAlgorithm != null
+                                               && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
+                        //The algorithm is the same and the checksum is same, we just need to
+                        // move the file from the temporary location (serialized by the
+                        // multiple parts handler) to the permanent location
+                        if (expectedChecksumValue != null
+                            && expectedChecksumValue.equalsIgnoreCase(checksumValue)) {
+                            FileUtils.moveFile(tempFile, newFile);
+                            long end = System.currentTimeMillis();
+                            logMetacat.info("Metacat only needs the "
+                                            + "move the data file from temporary location to the "
+                                            + "permanent location for the object "
+                                            + pid.getValue());
+                            logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG
+                                    + pid.getValue()
+                       + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
+                                    + " Only move the data file from the temporary location "
+                                    + "to the permanent location since the multiparts handler"
+                                    + " has calculated the checksum"
+                                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION
+                                    + (end - start) / 1000);
+                            return newFile;
                         } else {
-                            if (!XMLSchemaService.isNamespaceRegistered(namespace)) {
-                                throw new Exception("The namespace " + namespace
-                                                        + " used in the xml object hasn't been "
-                                                        + "registered in the Metacat. Metacat "
-                                                        + "can't validate the object and rejected"
-                                                        + " it. Please contact the operator of "
-                                                        + "the Metacat for regsitering the "
-                                                        + "namespace.");
-                            }
-                            // set schema base validation parser
-                            rule = DocumentImpl.SCHEMA;
-                            needValidation = true;
+                            throw new InvalidSystemMetadata("1180", "The check sum calculated "
+                                   + "from the saved local file is "
+                                    + expectedChecksumValue
+                                    + ". But it doesn't match the value from the system "
+                                    + "metadata " + checksumValue
+                                    + " for the object " + pid.getValue());
                         }
                     } else {
-                        xmlReader = new StringReader(doctext);
-                        String noNamespaceSchemaLocationAttr =
-                            XMLSchemaService.findNoNamespaceSchemaLocationAttr(xmlReader);
-                        if (noNamespaceSchemaLocationAttr != null) {
-                            logMetacat.debug(
-                                "MetacatHandler.handleInsertOrUpdateAction - the xml object will "
-                                    + "be validated by a schema which deoe NOT have a target "
-                                    + "namespace.");
-                            schemaLocation = XMLSchemaService.getInstance()
-                                .findNoNamespaceSchemaLocalLocation(formatId,
-                                                                    noNamespaceSchemaLocationAttr);
-                            rule = DocumentImpl.NONAMESPACESCHEMA;
-                            needValidation = true;
-                        } else {
-                            logMetacat.debug(
-                                "MetacatHandler.handleInsertOrUpdateAction - the xml object will "
-                                    + "NOT be validated.");
-                            rule = "";
-                            needValidation = false;
-                        }
-
+                        logMetacat.info( "The checksum algorithm which "
+                                        + "the multipart handler used is "
+                                        + expectedAlgorithm
+                                        + " and it is different to one on the system metadata "
+                                        + algorithm + ". So we have to calculate again.");
                     }
                 }
-
-                String newdocid = null;
-
-                String doAction = null;
-                if (action.equals("insert") || action.equals("insertmultipart")) {
-                    doAction = "INSERT";
-                } else if (action.equals("update")) {
-                    doAction = "UPDATE";
-                } else {
-                    String msg = this.PROLOG + this.ERROR
-                                   + "MetacatHandler.handleInsertOrUpdateAction - "
-                                   + "Could not handle this action: " + action
-                                   + this.ERRORCLOSE;
-                        return msg;
-                }
-
-                try {
-                    // get a connection from the pool
-                    dbConn = DBConnectionPool.getDBConnection(
-                        "Metacathandler.handleInsertOrUpdateAction");
-                    serialNumber = dbConn.getCheckOutSerialNumber();
-
-                    // write the document to the database and disk
-                    String accNumber = docid;
-                    logMetacat.info( "MetacatHandler.handleInsertOrUpdateAction - "
-                               + doAction + " " + accNumber + " with needValidation "
-                               + needValidation + " and validation type " + rule);
-                    Identifier identifier = new Identifier();
-                    identifier.setValue(accNumber);
-                    if (!D1NodeService.isValidIdentifier(identifier)) {
-                        String error = "The docid " + accNumber
-                            + " is not valid since it is null or contians the white space(s).";
-                        logMetacat.warn("MetacatHandler.handleInsertOrUpdateAction - " + error);
-                        throw new Exception(error);
-                    }
-
-                    newdocid = DocumentImpl.write(dbConn, dtd, doAction, accNumber,
-                                              user,groups, rule, needValidation, encoding, xmlBytes,
-                                              schemaLocation,checksum, objectFile);
-
-                    // alert listeners of this event
-                    MetacatDocumentEvent mde = new MetacatDocumentEvent();
-                    mde.setDocid(accNumber);
-                    mde.setDoctype(namespace);
-                    mde.setAction(doAction);
-                    mde.setUser(user);
-                    mde.setGroups(groups);
-                    MetacatEventService.getInstance().notifyMetacatEventObservers(mde);
-                } finally {
-                    // Return db connection
-                    DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-                }
-
-                // set content type and other response header fields first
-                //response.setContentType("text/xml");
-                output += this.PROLOG;
-                output += this.SUCCESS;
-                output += "<docid>" + newdocid + "</docid>";
-                output += this.SUCCESSCLOSE;
-
-            } catch (NullPointerException npe) {
-                //response.setContentType("text/xml");
-                output += this.PROLOG;
-                output += this.ERROR;
-                output += npe.getMessage();
-                output += this.ERRORCLOSE;
-                logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - "
-                                     + "Null pointer error when writing eml "
-                                     + "document to the database: " + npe.getMessage());
-                npe.printStackTrace();
             }
-        } catch (Exception e) {
-            //response.setContentType("text/xml");
-            output += this.PROLOG;
-            output += this.ERROR;
-            output += e.getMessage();
-            output += this.ERRORCLOSE;
-            logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - "
-                                 + "General error when writing the xml object "
-                                 + "document to the database: " + e.getMessage(), e);
+            //The input stream is not a DetaileFileInputStream or the algorithm doesn't
+            // match, we have to calculate the checksum.
+            MessageDigest md = MessageDigest.getInstance(algorithm);//use the one from the systemeta
+            // write data stream to desired file
+            try (DigestOutputStream os = new DigestOutputStream(new FileOutputStream(newFile), md)) {
+                long length = IOUtils.copyLarge(dataStream, os);
+                os.flush();
+            }
+            String localChecksum = DatatypeConverter.printHexBinary(md.digest());
+            logMetacat.info("The check sum calculated from the finally saved process is "
+                             + localChecksum);
+            if (localChecksum == null || localChecksum.isBlank()
+                || !localChecksum.equalsIgnoreCase(checksumValue)) {
+                logMetacat.error(
+                    "D1NodeService.writeStreamToFile - the check sum calculated from the "
+                    + "saved local file is "
+                        + localChecksum
+                        + ". But it doesn't match the value from the system metadata "
+                        + checksumValue + " for the object " + pid.getValue());
+                boolean success = newFile.delete();
+                logMetacat.info(
+                    "delete the file " + newFile.getAbsolutePath() + " for the object "
+                        + pid.getValue() + " sucessfully?" + success);
+                throw new InvalidSystemMetadata("1180",
+                        "The checksum calculated from the saved local file is "
+                                + localChecksum
+                                + ". But it doesn't match the value from the system metadata "
+                                + checksumValue + ".");
+            }
+            long end = System.currentTimeMillis();
+            logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue()
+                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
+                    + " Need to read the data file from the temporary location and write it "
+                    + "to the permanent location since the multiparts handler has NOT "
+                    + "calculated the checksum"
+                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION
+                    + (end - start) / 1000);
+            if (tempFile != null) {
+                StreamingMultipartRequestResolver.deleteTempFile(tempFile);
+            }
+        } catch (FileNotFoundException e) {
+            logMetacat.error(
+                "FNF: " + e.getMessage() + " for the data object " + pid.getValue(), e);
+            throw new ServiceFailure(
+                "1190", "File not found: " + localId + " " + e.getMessage());
+        } catch (IOException e) {
+            logMetacat.error(
+                "IOE: " + e.getMessage() + " for the data object " + pid.getValue(), e);
+            throw new ServiceFailure(
+                "1190", "File was not written: " + localId + " " + e.getMessage());
+        } catch (NoSuchAlgorithmException e) {
+            logMetacat.error(
+                "D1NodeService.writeStreamToFile - no such checksum algorithm exception "
+                    + e.getMessage() + " for the data object " + pid.getValue(), e);
+            throw new ServiceFailure(
+                "1190", "No such checksum algorithm: " + " " + e.getMessage());
+        } finally {
+            IOUtils.closeQuietly(dataStream);
         }
-        return output;
+        return newFile;
     }
 
     /**

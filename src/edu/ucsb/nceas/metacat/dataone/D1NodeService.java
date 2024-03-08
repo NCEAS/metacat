@@ -1134,9 +1134,9 @@ public abstract class D1NodeService {
 
         // do the insert or update action
         long start = System.currentTimeMillis();
-        String result =
-            handler.handleInsertOrUpdateAction(username, groupnames, encoding, xmlBytes, formatId,
-                                               checksum, tempFile, localId, insertOrUpdate);
+        String result = null;
+            /*handler.handleInsertOrUpdateAction(username, groupnames, encoding, xmlBytes, formatId,
+                                               checksum, tempFile, localId, insertOrUpdate);*/
         long end = System.currentTimeMillis();
         logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue()
                             + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
@@ -1274,7 +1274,8 @@ public abstract class D1NodeService {
             logMetacat.debug("Case DATA: starting to write to disk.");
             File dataDirectory = new File(fileDirectory);
             dataDirectory.mkdirs();
-            File newFile = writeStreamToFile(dataDirectory, localId, object, checksum, pid);
+            File newFile = null;
+            //writeStreamToFile(dataDirectory, localId, object, checksum, pid);
 
             // TODO: Check that the file size matches SystemMetadata
 
@@ -1305,9 +1306,9 @@ public abstract class D1NodeService {
         } catch (ServiceFailure sfe) {
             removeIdFromIdentifierTable(pid);
             throw sfe;
-        } catch (InvalidSystemMetadata ise) {
+        /*} catch (InvalidSystemMetadata ise) {
             removeIdFromIdentifierTable(pid);
-            throw ise;
+            throw ise;*/
         }
         return localId;
     }
@@ -1905,185 +1906,7 @@ public abstract class D1NodeService {
         return expandedPermissions;
     }
 
-    /*
-     * Write a stream to a file
-     *
-     * @param dir - the directory to write to
-     * @param localId - the file name to write to
-     * @param data - the object bytes as an input stream
-     *
-     * @return newFile - the new file created
-     *
-     * @throws ServiceFailure
-     */
-    public static File writeStreamToFile(
-        File dir, String localId, InputStream dataStream, Checksum checksum, Identifier pid)
-        throws ServiceFailure, InvalidSystemMetadata {
-        File newFile = null;
 
-        logMetacat.debug("Case DATA: starting to write to disk.");
-        newFile = new File(dir, localId);
-        File tempFile = null;
-        logMetacat.debug(
-            "Filename for write is: " + newFile.getAbsolutePath() + " for the data object pid "
-                + pid.getValue());
-
-        try {
-            String checksumValue = checksum.getValue();
-            logMetacat.info(
-                "D1NodeService.writeStreamToFile - the checksum value from the system "
-                + "metadata is "
-                    + checksumValue + " for the data object " + pid.getValue());
-            if (checksumValue == null || checksumValue.trim().equals("")) {
-                logMetacat.error(
-                    "D1NodeService.writeStreamToFile - the checksum value from the system "
-                    + "metadata shouldn't be null or blank for the data object "
-                        + pid.getValue());
-                throw new InvalidSystemMetadata(
-                    "1180",
-                    "The checksum value from the system metadata shouldn't be null or blank.");
-            }
-            String algorithm = checksum.getAlgorithm();
-            logMetacat.info(
-                "D1NodeService.writeStreamToFile - the algorithm to calculate the checksum "
-                + "from the system metadata is "
-                    + algorithm + " for the data object " + pid.getValue());
-            if (algorithm == null || algorithm.trim().equals("")) {
-                logMetacat.error(
-                    "D1NodeService.writeStreamToFile - the algorithm to calculate the "
-                    + "checksum from the system metadata shouldn't be null or blank for the "
-                    + "data object "
-                        + pid.getValue());
-                throw new InvalidSystemMetadata(
-                    "1180",
-                    "The algorithm to calculate the checksum from the system metadata "
-                    + "shouldn't be null or blank.");
-            }
-            long start = System.currentTimeMillis();
-            //if the input stream is an object DetailedFileInputStream, it means this object
-            // already has the checksum information.
-            if (dataStream instanceof DetailedFileInputStream) {
-                DetailedFileInputStream stream = (DetailedFileInputStream) dataStream;
-                tempFile = stream.getFile();
-                Checksum expectedChecksum = stream.getExpectedChecksum();
-                if (expectedChecksum != null) {
-                    String expectedAlgorithm = expectedChecksum.getAlgorithm();
-                    String expectedChecksumValue = expectedChecksum.getValue();
-                    if (expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(
-                        algorithm)) {
-                        //The algorithm is the same and the checksum is same, we just need to
-                        // move the file from the temporary location (serialized by the
-                        // multiple parts handler)  to the permanent location
-                        if (expectedChecksumValue != null
-                            && expectedChecksumValue.equalsIgnoreCase(checksumValue)) {
-                            FileUtils.moveFile(tempFile, newFile);
-                            long end = System.currentTimeMillis();
-                            logMetacat.info(
-                                "D1NodeService.writeStreamToFile - Metacat only needs the "
-                                + "move the data file from temporary location to the "
-                                + "permanent location for the object "
-                                    + pid.getValue());
-                            logMetacat.info(
-                                edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG
-                                    + pid.getValue()
-                                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
-                                    + " Only move the data file from the temporary location "
-                                    + "to the permanent location since the multiparts handler"
-                                    + " has calculated the checksum"
-                                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION
-                                    + (end - start) / 1000);
-                            return newFile;
-                        } else {
-                            logMetacat.error(
-                                "D1NodeService.writeStreamToFile - the check sum calculated "
-                                + "from the saved local file is "
-                                    + expectedChecksumValue
-                                    + ". But it doesn't match the value from the system "
-                                    + "metadata "
-                                    + checksumValue + " for the object " + pid.getValue());
-                            throw new InvalidSystemMetadata(
-                                "1180",
-                                "D1NodeService.writeStreamToFile - the check sum calculated "
-                                + "from the saved local file is "
-                                    + expectedChecksumValue
-                                    + ". But it doesn't match the value from the system "
-                                    + "metadata "
-                                    + checksumValue + " for the object " + pid.getValue());
-                        }
-                    } else {
-                        logMetacat.info(
-                            "D1NodeService.writeStreamToFile - the checksum algorithm which "
-                            + "the multipart handler used is "
-                                + expectedAlgorithm
-                                + " and it is different to one on the system metadata "
-                                + algorithm + ". So we have to calculate again.");
-                    }
-                }
-            }
-            //The input stream is not a DetaileFileInputStream or the algorithm doesn't
-            // match, we have to calculate the checksum.
-            MessageDigest md = MessageDigest.getInstance(algorithm);
-            // write data stream to desired file
-            DigestOutputStream os = new DigestOutputStream(new FileOutputStream(newFile), md);
-            long length = IOUtils.copyLarge(dataStream, os);
-            os.flush();
-            os.close();
-            String localChecksum = DatatypeConverter.printHexBinary(md.digest());
-            logMetacat.info(
-                "D1NodeService.writeStreamToFile - the check sum calculated from the saved "
-                + "local file is "
-                    + localChecksum);
-            if (localChecksum == null || localChecksum.trim().equals("")
-                || !localChecksum.equalsIgnoreCase(checksumValue)) {
-                logMetacat.error(
-                    "D1NodeService.writeStreamToFile - the check sum calculated from the "
-                    + "saved local file is "
-                        + localChecksum
-                        + ". But it doesn't match the value from the system metadata "
-                        + checksumValue + " for the object " + pid.getValue());
-                boolean success = newFile.delete();
-                logMetacat.info(
-                    "delete the file " + newFile.getAbsolutePath() + " for the object "
-                        + pid.getValue() + " sucessfully?" + success);
-                throw new InvalidSystemMetadata(
-                    "1180", "The checksum calculated from the saved local file is "
-                    + localChecksum
-                    + ". But it doesn't match the value from the system metadata "
-                    + checksumValue + ".");
-            }
-            long end = System.currentTimeMillis();
-            logMetacat.info(
-                edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue()
-                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
-                    + " Need to read the data file from the temporary location and write it "
-                    + "to the permanent location since the multiparts handler has NOT "
-                    + "calculated the checksum"
-                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION
-                    + (end - start) / 1000);
-            if (tempFile != null) {
-                StreamingMultipartRequestResolver.deleteTempFile(tempFile);
-            }
-        } catch (FileNotFoundException e) {
-            logMetacat.error(
-                "FNF: " + e.getMessage() + " for the data object " + pid.getValue(), e);
-            throw new ServiceFailure(
-                "1190", "File not found: " + localId + " " + e.getMessage());
-        } catch (IOException e) {
-            logMetacat.error(
-                "IOE: " + e.getMessage() + " for the data object " + pid.getValue(), e);
-            throw new ServiceFailure(
-                "1190", "File was not written: " + localId + " " + e.getMessage());
-        } catch (NoSuchAlgorithmException e) {
-            logMetacat.error(
-                "D1NodeService.writeStreamToFile - no such checksum algorithm exception "
-                    + e.getMessage() + " for the data object " + pid.getValue(), e);
-            throw new ServiceFailure(
-                "1190", "No such checksum algorithm: " + " " + e.getMessage());
-        } finally {
-            IOUtils.closeQuietly(dataStream);
-        }
-        return newFile;
-    }
 
     /**
      * Calls CN.listNodes() to assemble a list of nodes that have been registered with the
