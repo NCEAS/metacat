@@ -29,6 +29,7 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -47,6 +48,7 @@ import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestRes
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.LSIDUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
@@ -135,7 +137,7 @@ public class MetacatHandler {
 
     /**
      * Check if the object storage directories exist.
-     * @throws ServiceFailure
+     * @throws IOException
      */
     private static void checkObjectDirs() throws IOException {
         if (dataDir == null || metadataDir == null) {
@@ -209,6 +211,141 @@ public class MetacatHandler {
     }
 
     /**
+     * Save the object into disk
+     * @param pid  the pid of the object
+     * @param sysmeta  the system metadata of the object
+     * @param action  the action of the request: insert (new) or update
+     * @param docType  the type of object - data (BIN) or metadata
+     * @param object  the input stream contains the content of the object
+     * @param preSys  the system metadata of the obsoleted object in the update action.
+     *                It will be ignore in the update action.
+     * @param user  the user initializing the request
+     * @return the local Metacat docid for this object. It also serves as its file name.
+     * @throws InvalidRequest
+     * @throws ServiceFailure
+     * @throws InvalidSystemMetadata
+     * @throws IOException
+     */
+    public String save(Identifier pid, SystemMetadata sysmeta, Action action, String docType,
+                        InputStream object, SystemMetadata preSys, String user)
+                                                            throws InvalidRequest, ServiceFailure,
+                                                             InvalidSystemMetadata, IOException {
+        String localId = null;
+        if (pid == null || pid.getValue() == null || pid.getValue().isBlank()) {
+            throw new InvalidRequest("1181", "Metacat cannot save an object with a blank pid");
+        }
+        if (docType == null || docType.isBlank()) {
+            throw new InvalidRequest("1181", "Metacat cannot save the object for "
+                                     + pid.getValue() + " into disk since the doc type is blank.");
+        }
+        if (action == null) {
+            throw new InvalidRequest("1181", "Metacat cannot save the object for "
+                    + pid.getValue() + " into disk since the action value (which should be `insert`"
+                    + " or `update`) is blank.");
+        }
+        if (sysmeta == null) {
+            throw new InvalidRequest("1181", "Metacat cannot save the object for "
+                            + pid.getValue() + " into disk since its system metadata is blank");
+        }
+        if (user == null || user.isBlank()) {
+            throw new InvalidRequest("1181", "Metacat cannot save the object for "
+                            + pid.getValue() + " into disk since the client identity is blank");
+        }
+        InputStream dataStream = null; // we will assign different stream for this variable.
+        if (!docType.equals(DocumentImpl.BIN)) {
+            // Handle the metadata objects and it needs validation
+            // Validation will consume the input stream. If the original input
+            // stream (the case is in the MN.replicate method) can't be reset, it will be an issue.
+            // So we put it in the memory. This has a been a long practice and doesn't cause issues.
+            // The hash-map storage will fix it eventually
+            byte[] metaBytes = IOUtils.toByteArray(object);
+            validateSciMeta(metaBytes, sysmeta.getFormatId());
+            if (object instanceof DetailedFileInputStream) {
+                DetailedFileInputStream detailedStream = (DetailedFileInputStream) object;
+                if (detailedStream.getExpectedChecksum() == null) {
+                    dataStream = new ByteArrayInputStream(metaBytes);
+                    logMetacat.info("The DetailedInputStream doesn't have the checksum."
+                              + "So Metacat will use ByteArrayInputStream as the source for "
+                              + "saving to disk because of its higher performance.");
+                } else {
+                    dataStream = object;
+                    logMetacat.info("The DetailedInputStream does have the checksum."
+                            + "So Metacat will use DetailedInputStream as the source for "
+                            + "saving to disk because of no need to calculate checksum.");
+                }
+            } else {
+                dataStream = new ByteArrayInputStream(metaBytes);
+                logMetacat.info("Be default, Metacat will use ByteArrayInputStream as "
+                              + "the source for saving to disk.");
+            }
+        }
+        int serialNumber = -1;
+        DBConnection conn = null;
+        try {
+            conn = DBConnectionPool.getDBConnection("D1NodeService.existsInFields");
+            serialNumber = conn.getCheckOutSerialNumber();
+            try {
+                conn.setAutoCommit(false);
+                Identifier prePid = null;
+                if (preSys != null) {
+                    prePid = preSys.getIdentifier();
+                }
+                // Register the new object into the xml_documents and identifier table.
+                localId = registerToDB(pid, action, conn, user, docType, prePid);
+                // Save the system metadata for the new object
+                // Set needChangeModificationTime true
+                SystemMetadataManager.getInstance().store(sysmeta, true, conn);
+                if (action == Action.UPDATE) {
+                    if(preSys ==  null) {
+                        throw new InvalidRequest("1181", "Metacat cannot save the object for "
+                                + pid.getValue() + " into disk since the system metadata of the "
+                                + "obsoleted object should not be blank.");
+                    }
+                    //It is update, we need to store the system metadata of the obsoleted pid as well
+                    // Set needChangeModificationTime true
+                    SystemMetadataManager.getInstance().store(preSys, true, conn);
+                }
+                // Save bytes into disk
+                saveBytes(dataStream, localId, sysmeta.getChecksum(), docType, pid);
+                conn.commit();
+                conn.setAutoCommit(true);
+            } catch (InvalidSystemMetadata e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ee) {
+                    throw new InvalidSystemMetadata("1180", "Metacat cannot save the object into "
+                                                    + " disk since " + ee.getMessage()
+                                                    + "Also, it cannot roll back the change in DB");
+                }
+                throw e;
+            } catch (Exception e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ee) {
+                    throw new ServiceFailure("1190", "Metacat cannot save the object into "
+                                                + " disk since " + ee.getMessage()
+                                                + "Also, it cannot roll back the change in DB");
+                }
+                throw new ServiceFailure("1190", "Metacat cannot save the object into disk since "
+                                          + e.getMessage());
+            }
+        } catch (SQLException e) {
+            throw new ServiceFailure("1190", "Metacat cannot save the object into disk since "
+                                    + " it can't get a DBConnection: "+ e.getMessage());
+        } finally {
+            try {
+                conn.setAutoCommit(true);
+            } catch (SQLException e) {
+                logMetacat.warn("Metacat cannot set back autoCommit true for DBConnection since "
+                                + e.getMessage());
+            }
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+        }
+        return localId;
+    }
+
+    /**
      * Read a file from Metacat's configured file system data directory.
      * @param dir  the directory where the file is located
      * @param filename  The file name of the file to read
@@ -247,13 +384,13 @@ public class MetacatHandler {
      * @throws InvalidSystemMetadata
      * @throws InvalidRequest
      */
-    public File saveBytes(InputStream object, String localId, Checksum checksum,
+    protected File saveBytes(InputStream object, String localId, Checksum checksum,
                                                             String docType, Identifier pid)
                                       throws ServiceFailure, InvalidSystemMetadata, InvalidRequest {
         try {
             checkObjectDirs();
         } catch (IOException e) {
-            throw new ServiceFailure("1030", e.getMessage());
+            throw new ServiceFailure("1190", e.getMessage());
         }
         if (docType == null || docType.isBlank()) {
             throw new InvalidRequest("1181", "Metacat cannot save bytes for "
@@ -294,11 +431,15 @@ public class MetacatHandler {
                                                             InvalidSystemMetadata, InvalidRequest {
         if(checksum == null) {
              throw new InvalidSystemMetadata("1180", "The checksum from the system metadata for "
-                                             + pid.getValue() + "shouldn't be null.");
+                              + " saving " + pid.getValue() + " into disk shouldn't be null.");
         }
         if (localId == null || localId.isBlank()) {
              throw new InvalidRequest("1181", "The docid which will be used as file name for "
-                                      + pid.getValue() + " should not be blank");
+                                 + " saving " + pid.getValue() + " to disk should not be blank");
+        }
+        if (dataStream == null) {
+            throw new InvalidRequest("1181", "The source stream for saving "
+                                     + pid.getValue() + " into disk should not be blank");
         }
         File newFile = null;
         logMetacat.debug("Starting to write to disk.");
@@ -343,6 +484,7 @@ public class MetacatHandler {
                         // multiple parts handler) to the permanent location
                         if (expectedChecksumValue != null
                             && expectedChecksumValue.equalsIgnoreCase(checksumValue)) {
+                            // This method should throw an exception if the target file exists.
                             FileUtils.moveFile(tempFile, newFile);
                             long end = System.currentTimeMillis();
                             logMetacat.info("Metacat only needs the "
@@ -379,6 +521,11 @@ public class MetacatHandler {
             // match, we have to calculate the checksum.
             MessageDigest md = MessageDigest.getInstance(algorithm);//use the one from the systemeta
             // write data stream to desired file
+            if (newFile.exists()) {
+                // Something is wrong
+                throw new ServiceFailure("1190", "The file " + localId + " already exists. "
+                                        + "Metacat cannot continue to overwrite the file.");
+            }
             try (DigestOutputStream os = new DigestOutputStream(new FileOutputStream(newFile), md)) {
                 long length = IOUtils.copyLarge(dataStream, os);
                 os.flush();
@@ -448,22 +595,18 @@ public class MetacatHandler {
      * @param prePid  the old identifier which will be updated. If this is an update action, you
      *                 should specify it. For the insert action, it is ignored and can be null.
      * @return the generated Metacat local docid
-     * @throws SQLException
-     * @throws AccessionNumberException
      * @throws ServiceFailure
-     * @throws PropertyNotFoundException
-     * @throws MetacatException
+     * @throws InvalidRequest
      */
-    public String registerToDB(Identifier pid, Action action, DBConnection conn,
-                                String user, String docType, Identifier prePid) throws SQLException,
-                                                    AccessionNumberException, ServiceFailure,
-                                                    PropertyNotFoundException, MetacatException {
+    protected String registerToDB(Identifier pid, Action action, DBConnection conn,
+                                String user, String docType, Identifier prePid)
+                                                    throws ServiceFailure, InvalidRequest {
         if (pid == null || pid.getValue() == null || pid.getValue().isBlank()) {
-            throw new MetacatException("MetacatHandler.registerToDB - Metacat cannot register "
+            throw new InvalidRequest("1181", "Metacat cannot register "
                                         + "a blank identifier into database.");
         }
         if (docType == null || docType.isBlank()) {
-            throw new MetacatException("MetacatHandler.registerToDB - Metacat cannot register "
+            throw new InvalidRequest("1181", "Metacat cannot register "
                     + pid.getValue() + " into database since the doc type is blank.");
         }
         String localId;
@@ -473,7 +616,7 @@ public class MetacatHandler {
             // Update action
             //localid should already exist in the identifier table, so just find it
             if (prePid == null || prePid.getValue() == null || prePid.getValue().isBlank()) {
-                throw new MetacatException("MetacatHandler.registerToDB - Metacat cannot register "
+                throw new InvalidRequest("1181", "Metacat cannot register "
                                    + "records into database since it tries to update a blank pid.");
             }
             try {
@@ -489,31 +632,36 @@ public class MetacatHandler {
                 logMetacat.debug("incremented localId: " + localId);
             } catch (McdbDocNotFoundException e) {
                 throw new ServiceFailure(
-                    "1030", "D1NodeService.insertOrUpdateDocument(): " + "pid " + pid.getValue()
+                    "1190", "The object " + "pid " + pid.getValue()
                     + " should have been in the identifier table, but it wasn't: "
                     + e.getMessage());
 
             } catch (SQLException e) {
                 throw new ServiceFailure(
-                    "1030", "D1NodeService.insertOrUpdateDocument() -"
-                    + " couldn't identify if the pid " + pid.getValue()
-                    + " is in the identifier table since " + e.getMessage());
+                    "1190", "Metacat couldn't identify if the pid " + pid.getValue()
+                        + " is in the identifier table since " + e.getMessage());
             }
         }
         logMetacat.debug("Mapping pid " + pid.getValue() + " with docid " + localId);
-        IdentifierManager.getInstance().createMapping(pid.getValue(), localId, conn);
-        String docName = docType;
-        if (docType.equals(DocumentImpl.BIN)) {
-            docName = localId;
+        try {
+            IdentifierManager.getInstance().createMapping(pid.getValue(), localId, conn);
+            String docName = docType;
+            if (docType.equals(DocumentImpl.BIN)) {
+                docName = localId;
+            }
+            logMetacat.debug("Register the docid " + localId + " with doc type " + docType
+                             + " into xml_documents/xml_revsions table");
+            DocumentImpl.registerDocument(docName, docType, conn, localId, user);
+        } catch (PropertyNotFoundException | MetacatException | SQLException
+                                                | AccessionNumberException e) {
+            throw new ServiceFailure("1190", "Metacat couldn't register " + pid.getValue()
+                                  + " into the database since " + e.getMessage());
         }
-        logMetacat.debug("Register the docid " + localId + " with doc type " + docType
-                         + " into xml_documents/xml_revsions table");
-        DocumentImpl.registerDocument(docName, docType, conn, localId, user);
         return localId;
     }
 
     /**
-     * Validate a scientific metadata object. It will throw an exception if it is invalid.
+     * Validate a scientific metadata object. It will throw an InvalidRequest if it is invalid.
      * @param object  the content of the object. This is a byte array and so far it has not caused
      *                the memory issue. In 3.1.0 release, it will be replaced.
      * @param formatId  format id of the object
@@ -525,9 +673,8 @@ public class MetacatHandler {
      * @throws SAXException
      * @throws MetacatException
      */
-    public void validateSciMeta(byte[] object, ObjectFormatIdentifier formatId)
-                 throws InvalidRequest, ServiceFailure, ServiceException, PropertyNotFoundException,
-                                                      IOException, SAXException, MetacatException {
+    protected void validateSciMeta(byte[] object, ObjectFormatIdentifier formatId)
+                                         throws InvalidRequest, ServiceFailure, IOException {
         NonXMLMetadataHandler handler =
                 NonXMLMetadataHandlers.newNonXMLMetadataHandler(formatId);
             if (handler != null) {
@@ -542,20 +689,16 @@ public class MetacatHandler {
     }
 
     /**
-     * Validate an XML object. If it is not valid, an SAXException will be thrown.
+     * Validate an XML object. If it is not valid, an InvalidRequest will be thrown.
      * @param object  the content of the object. This is a byte array and so far it has not caused
      *                the memory issue. In 3.1.0 release, it will be replaced.
      * @param formatId  format id of the object
      * @throws IOException
      * @throws ServiceFailure
-     * @throws ServiceException
-     * @throws PropertyNotFoundException
-     * @throws SAXException
-     * @throws MetacatException
+     * @throws InvalidRequest
      */
     protected void validateXmlSciMeta(byte[] object, String formatId) throws IOException,
-                                ServiceFailure,ServiceException, PropertyNotFoundException,
-                                SAXException, MetacatException {
+                                                            ServiceFailure, InvalidRequest {
         boolean needValidation = false;
         String rule = null;
         String namespace = null;
@@ -601,7 +744,7 @@ public class MetacatHandler {
                             new EMLParser(doctext);
                     } else {
                         if (!XMLSchemaService.isNamespaceRegistered(namespace)) {
-                            throw new ServiceFailure("000", "The namespace " + namespace
+                            throw new ServiceFailure("1190", "The namespace " + namespace
                                                     + " used in the xml object hasn't been "
                                                     + "registered in the Metacat. Metacat "
                                                     + "can't validate the object and rejected"
@@ -644,7 +787,14 @@ public class MetacatHandler {
             // set the dtd part null;
             XMLReader parser = DocumentImpl.initializeParser(schemaList, null, rule, needValidation,
                                                              schemaLocation);
-            parser.parse(new InputSource(xmlReader));
+            try {
+                parser.parse(new InputSource(xmlReader));
+            } catch (SAXException e) {
+                throw new InvalidRequest("1181", "Invalid metadata: " + e.getMessage());
+            }
+        } catch (ServiceException | MetacatException | PropertyNotFoundException | SAXException e) {
+            throw new ServiceFailure("1190", "Metacat cannot validate the object since "
+                                                                            + e.getMessage());
         } finally {
             if (xmlReader != null) {
                 // We don't use try-resource since the xmlReade object is assigned multiple times.

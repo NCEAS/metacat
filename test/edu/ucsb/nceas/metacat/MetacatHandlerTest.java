@@ -2,16 +2,19 @@ package edu.ucsb.nceas.metacat;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.security.MessageDigest;
 import java.sql.PreparedStatement;
 
+import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.IOUtils;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.junit.Before;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertFalse;
@@ -20,10 +23,10 @@ import static org.junit.Assert.assertTrue;
 import edu.ucsb.nceas.IntegrationTestUtils;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.MetacatHandler.Action;
-import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 
 
 /**
@@ -32,6 +35,7 @@ import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
  *
  */
 public class MetacatHandlerTest {
+    private static final String MD5 = "MD5";
     private MetacatHandler handler;
 
     /**
@@ -74,7 +78,7 @@ public class MetacatHandlerTest {
             handler.validateSciMeta(xmlBytes, formatId);
             fail("Test can reach here since the eml object is invalid");
         } catch (Exception e) {
-            assertTrue("The exception should be SAXException", e instanceof SAXException);
+            assertTrue("The exception should be InvalidRequest", e instanceof InvalidRequest);
             assertTrue("The message should say the element principal1 is incorrect",
                         e.getMessage().contains("principal1"));
         }
@@ -121,19 +125,19 @@ public class MetacatHandlerTest {
             try {
                 // Blank pid will be rejected
                 handler.registerToDB(pid, Action.INSERT, dbConn, "user-foo", DocumentImpl.BIN, prePid);
-                fail("Test can not reach here since it should throw a MetacatException");
+                fail("Test can not reach here since it should throw an exception");
             } catch (Exception e) {
-                assertTrue("The exception should be MetacatException ",
-                            e instanceof MetacatException);
+                assertTrue("The exception should be InvalidRequest rather than "
+                            + e.getClass().getName(), e instanceof InvalidRequest);
             }
             pid.setValue("testRegisterToDBData1-" + System.currentTimeMillis());
             try {
                 // doctype null will be rejected.
                 handler.registerToDB(pid, Action.INSERT, dbConn, "user-foo", null, prePid);
-                fail("Test can not reach here since it should throw a MetacatException");
+                fail("Test can not reach here since it should throw a Exception");
             } catch (Exception e) {
-                assertTrue("The exception should be MetacatException ",
-                            e instanceof MetacatException);
+                assertTrue("The exception should be InvalidRequest rather than "
+                            + e.getClass().getName(), e instanceof InvalidRequest);
             }
             // Register a inserted data object
             String localId = handler.registerToDB(pid, Action.INSERT, dbConn, "user-data",
@@ -278,4 +282,54 @@ public class MetacatHandlerTest {
         }
     }
 
+    /**
+     * Test the saveBytes method
+     * @throws Exception
+     */
+    @Test
+    public void testSaveBytesAndReadWithDetailedInputStream() throws Exception {
+        
+    }
+
+    /**
+     * Generated a DetailedFileInputStream object with checksum and a temp file from the source file
+     * @param filePath  the source file paht
+     * @return a DetailedFileInputStream object
+     * @throws Exception
+     */
+    private DetailedFileInputStream generateDetailedInputStream(String filePath)
+                                                                            throws Exception{
+        byte[] buffer = new byte[1024];
+        MessageDigest md5 = MessageDigest.getInstance(MD5);
+        File tmpFile = File.createTempFile("MetacatHandler-test", null);
+        try (FileInputStream dataStream = new FileInputStream(filePath)) {
+            try (FileOutputStream os = new FileOutputStream(tmpFile)) {
+                int bytesRead;
+                while ((bytesRead = dataStream.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                    md5.update(buffer, 0, bytesRead);
+                }
+            }
+        }
+        String md5Digest = DatatypeConverter.printHexBinary(md5.digest()).toLowerCase();
+        Checksum checksum = new Checksum();
+        checksum.setValue(md5Digest);
+        checksum.setAlgorithm(MD5);
+        return new DetailedFileInputStream(tmpFile, checksum);
+    }
+
+    private DetailedFileInputStream generateDetailedInputStream(String path, Checksum checksum)
+                                                                                throws Exception{
+        byte[] buffer = new byte[1024];
+        File tmpFile = File.createTempFile("MetacatHandler-test", null);
+        try (FileInputStream dataStream = new FileInputStream(path)) {
+            try (FileOutputStream os = new FileOutputStream(tmpFile)) {
+                int bytesRead;
+                while ((bytesRead = dataStream.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+            }
+        }
+        return new DetailedFileInputStream(tmpFile, checksum);
+    }
 }
