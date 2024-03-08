@@ -31,9 +31,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.ucsb.nceas.LeanTestUtils;
-import edu.ucsb.nceas.metacat.util.AuthUtil;
-import edu.ucsb.nceas.metacat.properties.PropertiesWrapper;
-import org.mockito.Mockito;
 
 public class D1AuthHelperTest {
 
