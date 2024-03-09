@@ -278,11 +278,14 @@ public class MetacatHandler {
                 logMetacat.info("Be default, Metacat will use ByteArrayInputStream as "
                               + "the source for saving to disk.");
             }
+        } else {
+            dataStream = object;
+            logMetacat.info("In the data route, dataStream will use the original object stream.");
         }
         int serialNumber = -1;
         DBConnection conn = null;
         try {
-            conn = DBConnectionPool.getDBConnection("D1NodeService.existsInFields");
+            conn = DBConnectionPool.getDBConnection("MetacatHandler.save");
             serialNumber = conn.getCheckOutSerialNumber();
             try {
                 conn.setAutoCommit(false);

@@ -17,11 +17,14 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import edu.ucsb.nceas.IntegrationTestUtils;
@@ -29,9 +32,11 @@ import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.MetacatHandler.Action;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 
 
 /**
@@ -42,6 +47,9 @@ import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 public class MetacatHandlerTest {
     private static final String test_file_path = "test/clienttestfiles/tpc02-water-flow-base.xml";
     private static final String another_test_file = "test/macbeth.xml";
+    private static final String test_eml_file = "test/eml-2.2.0.xml";
+    private static final String test_eml_essdive_file = "test/eml-ess-dive.xml";
+    private static final String eml_format = "https://eml.ecoinformatics.org/eml-2.2.0";
     private static final String MD5 = "MD5";
     private MetacatHandler handler;
     private String dataDir;
@@ -309,7 +317,7 @@ public class MetacatHandlerTest {
         String checkStr = "19776e05bc62d92ab24e0597ab6f12c6";
         String localId = "autogen." + System.currentTimeMillis() +".1";
         Identifier pid = new Identifier();
-        pid.setValue("foo");
+        pid.setValue("foo");//Just for the log purpose
         Checksum checksum = new Checksum();
         checksum.setAlgorithm(MD5);
         checksum.setValue(checkStr);
@@ -367,7 +375,7 @@ public class MetacatHandlerTest {
                        e instanceof ServiceFailure);
         }
         // Running the saveBytes method again with the same local id should fail
-        // since the target file does exist. This time test different code route.
+        // since the target file does exist. This time it tests a different code route.
         DetailedFileInputStream dataStream3 = generateDetailedInputStream(another_test_file, null);
         try {
             handler.saveBytes(dataStream3, localId, anotherChecksum, DocumentImpl.BIN, pid);
@@ -378,6 +386,7 @@ public class MetacatHandlerTest {
         }
         // Test checksum doesn't match
         dataStream3 = generateDetailedInputStream(another_test_file);
+        // A new localId
         localId = "autogen." + System.currentTimeMillis() +".1";
         Checksum fakeChecksum = new Checksum();
         try {
@@ -387,6 +396,7 @@ public class MetacatHandlerTest {
             assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
                        e instanceof InvalidSystemMetadata);
         }
+        localId = "autogen." + System.currentTimeMillis() +".2";
         fakeChecksum.setAlgorithm(MD5);
         try {
             handler.saveBytes(dataStream3, localId, fakeChecksum, "eml", pid);
@@ -395,6 +405,7 @@ public class MetacatHandlerTest {
             assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
                        e instanceof InvalidSystemMetadata);
         }
+        localId = "autogen." + System.currentTimeMillis() +".3";
         fakeChecksum.setAlgorithm("");
         fakeChecksum.setValue(anotherChecksum.getValue());
         try {
@@ -404,6 +415,7 @@ public class MetacatHandlerTest {
             assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
                        e instanceof InvalidSystemMetadata);
         }
+        localId = "autogen." + System.currentTimeMillis() +".4";
         fakeChecksum.setAlgorithm(MD5);
         fakeChecksum.setValue("56453F");
         try {
@@ -438,7 +450,7 @@ public class MetacatHandlerTest {
         String checkStr = "19776e05bc62d92ab24e0597ab6f12c6";
         String localId = "autogen." + System.currentTimeMillis() +".1";
         Identifier pid = new Identifier();
-        pid.setValue("foo21");
+        pid.setValue("foo21");//Just for the log purpose
         Checksum checksum = new Checksum();
         checksum.setAlgorithm(MD5);
         checksum.setValue(checkStr);
@@ -488,6 +500,7 @@ public class MetacatHandlerTest {
         }
         fakeChecksum.setAlgorithm(MD5);
         dataStream3 = new FileInputStream(another_test_file);
+        localId = "autogen." + System.currentTimeMillis() +".2";
         try {
             handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
             fail("Test shouldn't get there since the declared checksum is incorrect.");
@@ -498,6 +511,7 @@ public class MetacatHandlerTest {
         fakeChecksum.setAlgorithm("");
         fakeChecksum.setValue(anotherChecksum.getValue());
         dataStream3 = new FileInputStream(another_test_file);
+        localId = "autogen." + System.currentTimeMillis() +".3";
         try {
             handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
             fail("Test shouldn't get there since the declared checksum is incorrect.");
@@ -508,6 +522,7 @@ public class MetacatHandlerTest {
         fakeChecksum.setAlgorithm(MD5);
         fakeChecksum.setValue("5645334567F");
         dataStream3 = new FileInputStream(another_test_file);
+        localId = "autogen." + System.currentTimeMillis() +".4";
         try {
             handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
             fail("Test shouldn't get there since the declared checksum is incorrect.");
@@ -519,6 +534,7 @@ public class MetacatHandlerTest {
         fakeChecksum.setAlgorithm(MD5);
         fakeChecksum.setValue(str.toUpperCase());
         dataStream3 = new FileInputStream(another_test_file);
+        localId = "autogen." + System.currentTimeMillis() +".5";
         handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
         dataStream3.close();
         result = new File(dataDir + localId);
@@ -528,6 +544,434 @@ public class MetacatHandlerTest {
         assertTrue("The checksum from handler.read should be " + str + " rather than "
                 + readFrom, readFrom.equals(str));
         in.close();
+    }
+
+    /**
+     * Test the save method
+     * @throws Excetpion
+     */
+    @Test
+    public void testSaveDetailedInputStreamData() throws Exception {
+        String checkStr = "19776e05bc62d92ab24e0597ab6f12c6";
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm(MD5);
+        checksum.setValue(checkStr);
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testsave-" + System.currentTimeMillis());
+        DetailedFileInputStream dataStream = generateDetailedInputStream(test_file_path, checksum);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
+        dataStream = generateDetailedInputStream(test_file_path, checksum);
+        // null is the obsoleted system metadata. Inserting should succeed
+        handler.save(pid, sysmeta, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
+                    dataStream, null, user);
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
+        String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        InputStream readObj = handler.read(localId, DocumentImpl.BIN);
+        String readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+
+        // Updating
+        Identifier newPid = new Identifier();
+        newPid.setValue("MetacatHandler.testsave.new-" + System.currentTimeMillis());
+        Checksum anotherChecksum = new Checksum();
+        anotherChecksum.setAlgorithm(MD5);
+        String anotherChecksumStr = "ef4b3d26ad713ecc9aa5988bbdfeded7";
+        anotherChecksum.setValue(anotherChecksumStr);
+        dataStream = generateDetailedInputStream(another_test_file, null);
+        SystemMetadata newSys = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
+        newSys.setObsoletes(pid);
+        sysmeta.setObsoletedBy(newPid);
+        Checksum incorrectChecksum = new Checksum();
+        incorrectChecksum.setAlgorithm(MD5);
+        incorrectChecksum.setValue("234dfa343af");
+        newSys.setChecksum(incorrectChecksum);
+        try {
+            handler.save(newPid, newSys, MetacatHandler.Action.UPDATE,
+                        DocumentImpl.BIN, dataStream, sysmeta, user);
+            fail("Test cannot get here since the checksum is wrong in the system metadata");
+        } catch (Exception e) {
+            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
+                    e instanceof InvalidSystemMetadata);
+        }
+        // Since it is a transaction and the update process failed,
+        // the old object shouldn't change anything and new object doesn't exist
+        readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
+        localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+        // Newpid object doesn't exist.
+        SystemMetadata newReadSys = SystemMetadataManager.getInstance().get(newPid);
+        assertNull("The system metadata for the new object should be null.", newReadSys);
+        try {
+            localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
+            fail("Test shouldn't get here since the local can't be found");
+        } catch (Exception e) {
+            assertTrue("The exception should be McdbDocNotFoundException, rather than "
+                       + e.getClass().getName(), e instanceof McdbDocNotFoundException);
+        }
+        // This time, the upgrade should succeed.
+        newSys.setChecksum(anotherChecksum);
+        sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        // Recreate the stream since it was closed in the previous failure
+        dataStream = generateDetailedInputStream(another_test_file, null);
+        handler.save(newPid, newSys, MetacatHandler.Action.UPDATE,
+                     DocumentImpl.BIN, dataStream, sysmeta, user);
+        // Check the objects
+        readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertTrue("The obsoletedBy of systemmeta from db should be " + newPid.getValue(),
+                        newPid.getValue().equals(readSys.getObsoletedBy().getValue()));
+        localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+        // Newpid object exists.
+        newReadSys = SystemMetadataManager.getInstance().get(newPid);
+        assertTrue("The pid of systemmeta from db should be " + newPid.getValue() + " rather than "
+                        + newReadSys.getIdentifier().getValue(),
+                        newPid.getValue().equals(newReadSys.getIdentifier().getValue()));
+        assertTrue("The obsoletes of systemmeta from db should be " + pid.getValue(),
+                        pid.getValue().equals(newReadSys.getObsoletes().getValue()));
+        localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The object should have the checksum " + anotherChecksumStr + " rather than "
+                    + readChecksum, anotherChecksumStr.equals(readChecksum));
+    }
+
+    /**
+     * Test the save method
+     * @throws Excetpion
+     */
+    @Test
+    public void testSaveDetailedInputStreamMetadata() throws Exception {
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue(eml_format);
+        String checkStr = "f4ea2d07db950873462a064937197b0f";
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm(MD5);
+        checksum.setValue(checkStr);
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testsave-" + System.currentTimeMillis());
+        DetailedFileInputStream dataStream = generateDetailedInputStream(test_eml_file, checksum);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
+        Checksum incorrectChecksum = new Checksum();
+        incorrectChecksum.setAlgorithm(MD5);
+        incorrectChecksum.setValue("234dfa343af");
+        sysmeta.setChecksum(incorrectChecksum);
+        sysmeta.setFormatId(formatId);
+        dataStream = generateDetailedInputStream(test_eml_file, checksum);
+        try {
+         // null is the obsoleted system metadata. Inserting should succeed
+            handler.save(pid, sysmeta, MetacatHandler.Action.INSERT, eml_format,
+                        dataStream, null, user);
+            fail("Test cannot get here since the checksum is wrong in the system metadata");
+        } catch (Exception e) {
+            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
+                    e instanceof InvalidSystemMetadata);
+        }
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
+        assertNull("The systemmeta from db should be null.", readSys);
+        String localId = null;
+        try {
+            localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+            fail("Test shouldn't get here since the local can't be found");
+        } catch (Exception e) {
+            assertTrue("The exception should be McdbDocNotFoundException, rather than "
+                       + e.getClass().getName(), e instanceof McdbDocNotFoundException);
+        }
+
+        // This time the insert should succeed
+        sysmeta.setChecksum(checksum);
+        dataStream = generateDetailedInputStream(test_eml_file, checksum);
+        // null is the obsoleted system metadata. Inserting should succeed
+        handler.save(pid, sysmeta, MetacatHandler.Action.INSERT, eml_format,
+                        dataStream, null, user);
+        readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
+        localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        InputStream readObj = handler.read(localId, DocumentImpl.BIN);
+        String readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+
+        // Updating
+        Identifier newPid = new Identifier();
+        newPid.setValue("MetacatHandler.testsave.new-" + System.currentTimeMillis());
+        Checksum anotherChecksum = new Checksum();
+        anotherChecksum.setAlgorithm(MD5);
+        String anotherChecksumStr = "24aafe49284350445bb1ff9281e3c3c5";
+        anotherChecksum.setValue(anotherChecksumStr);
+        dataStream = generateDetailedInputStream(test_eml_essdive_file, null);
+        SystemMetadata newSys = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
+        newSys.setObsoletes(pid);
+        sysmeta.setObsoletedBy(newPid);
+        sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        // Recreate the stream since it was closed in the generating sysmeta method
+        dataStream = generateDetailedInputStream(test_eml_essdive_file, null);
+        handler.save(newPid, newSys, MetacatHandler.Action.UPDATE,
+                     eml_format, dataStream, sysmeta, user);
+        // Check the objects
+        readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertTrue("The obsoletedBy of systemmeta from db should be " + newPid.getValue(),
+                        newPid.getValue().equals(readSys.getObsoletedBy().getValue()));
+        localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+        // Newpid object exists.
+        SystemMetadata newReadSys = SystemMetadataManager.getInstance().get(newPid);
+        assertTrue("The pid of systemmeta from db should be " + newPid.getValue() + " rather than "
+                        + newReadSys.getIdentifier().getValue(),
+                        newPid.getValue().equals(newReadSys.getIdentifier().getValue()));
+        assertTrue("The obsoletes of systemmeta from db should be " + pid.getValue(),
+                        pid.getValue().equals(newReadSys.getObsoletes().getValue()));
+        localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The object should have the checksum " + anotherChecksumStr + " rather than "
+                    + readChecksum, anotherChecksumStr.equals(readChecksum));
+    }
+
+    /**
+     * Test the save method
+     * @throws Excetpion
+     */
+    @Test
+    public void testSaveInputStreamData() throws Exception {
+        String checkStr = "19776e05bc62d92ab24e0597ab6f12c6";
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm(MD5);
+        checksum.setValue(checkStr);
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testsave-" + System.currentTimeMillis());
+        InputStream dataStream = new FileInputStream(test_file_path);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
+        dataStream = new FileInputStream(test_file_path);
+        // null is the obsoleted system metadata. Inserting should succeed
+        handler.save(pid, sysmeta, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
+                    dataStream, null, user);
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
+        String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        InputStream readObj = handler.read(localId, DocumentImpl.BIN);
+        String readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+
+        // Updating
+        Identifier newPid = new Identifier();
+        newPid.setValue("MetacatHandler.testsave.new-" + System.currentTimeMillis());
+        Checksum anotherChecksum = new Checksum();
+        anotherChecksum.setAlgorithm(MD5);
+        String anotherChecksumStr = "ef4b3d26ad713ecc9aa5988bbdfeded7";
+        anotherChecksum.setValue(anotherChecksumStr);
+        dataStream = new FileInputStream(another_test_file);
+        SystemMetadata newSys = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
+        newSys.setObsoletes(pid);
+        sysmeta.setObsoletedBy(newPid);
+        Checksum incorrectChecksum = new Checksum();
+        incorrectChecksum.setAlgorithm(MD5);
+        incorrectChecksum.setValue("234dfa343af");
+        newSys.setChecksum(incorrectChecksum);
+        try {
+            handler.save(newPid, newSys, MetacatHandler.Action.UPDATE,
+                        DocumentImpl.BIN, dataStream, sysmeta, user);
+            fail("Test cannot get here since the checksum is wrong in the system metadata");
+        } catch (Exception e) {
+            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
+                    e instanceof InvalidSystemMetadata);
+        }
+        // Since it is a transaction and the update process failed,
+        // the old object shouldn't change anything and new object doesn't exist
+        readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
+        localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+        // Newpid object doesn't exist.
+        SystemMetadata newReadSys = SystemMetadataManager.getInstance().get(newPid);
+        assertNull("The system metadata for the new object should be null.", newReadSys);
+        try {
+            localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
+            fail("Test shouldn't get here since the local can't be found");
+        } catch (Exception e) {
+            assertTrue("The exception should be McdbDocNotFoundException, rather than "
+                       + e.getClass().getName(), e instanceof McdbDocNotFoundException);
+        }
+        // This time, the upgrade should succeed.
+        newSys.setChecksum(anotherChecksum);
+        sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        // Recreate the stream since it was closed in the previous failure
+        dataStream = new FileInputStream(another_test_file);
+        handler.save(newPid, newSys, MetacatHandler.Action.UPDATE,
+                     DocumentImpl.BIN, dataStream, sysmeta, user);
+        // Check the objects
+        readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertTrue("The obsoletedBy of systemmeta from db should be " + newPid.getValue(),
+                        newPid.getValue().equals(readSys.getObsoletedBy().getValue()));
+        localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+        // Newpid object exists.
+        newReadSys = SystemMetadataManager.getInstance().get(newPid);
+        assertTrue("The pid of systemmeta from db should be " + newPid.getValue() + " rather than "
+                        + newReadSys.getIdentifier().getValue(),
+                        newPid.getValue().equals(newReadSys.getIdentifier().getValue()));
+        assertTrue("The obsoletes of systemmeta from db should be " + pid.getValue(),
+                        pid.getValue().equals(newReadSys.getObsoletes().getValue()));
+        localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The object should have the checksum " + anotherChecksumStr + " rather than "
+                    + readChecksum, anotherChecksumStr.equals(readChecksum));
+    }
+
+    /**
+     * Test the save method
+     * @throws Excetpion
+     */
+    @Test
+    public void testSaveInputStreamMetadata() throws Exception {
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue(eml_format);
+        String checkStr = "f4ea2d07db950873462a064937197b0f";
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm(MD5);
+        checksum.setValue(checkStr);
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testsave-" + System.currentTimeMillis());
+        InputStream dataStream = new FileInputStream(test_eml_file);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
+        Checksum incorrectChecksum = new Checksum();
+        incorrectChecksum.setAlgorithm(MD5);
+        incorrectChecksum.setValue("234dfa343af");
+        sysmeta.setChecksum(incorrectChecksum);
+        sysmeta.setFormatId(formatId);
+        dataStream = new FileInputStream(test_eml_file);
+        try {
+         // null is the obsoleted system metadata. Inserting should succeed
+            handler.save(pid, sysmeta, MetacatHandler.Action.INSERT, eml_format,
+                        dataStream, null, user);
+            fail("Test cannot get here since the checksum is wrong in the system metadata");
+        } catch (Exception e) {
+            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
+                    e instanceof InvalidSystemMetadata);
+        }
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
+        assertNull("The systemmeta from db should be null.", readSys);
+        String localId = null;
+        try {
+            localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+            fail("Test shouldn't get here since the local can't be found");
+        } catch (Exception e) {
+            assertTrue("The exception should be McdbDocNotFoundException, rather than "
+                       + e.getClass().getName(), e instanceof McdbDocNotFoundException);
+        }
+
+        // This time the insert should succeed
+        sysmeta.setChecksum(checksum);
+        dataStream = new FileInputStream(test_eml_file);
+        // null is the obsoleted system metadata. Inserting should succeed
+        handler.save(pid, sysmeta, MetacatHandler.Action.INSERT, eml_format,
+                        dataStream, null, user);
+        readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
+        localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        InputStream readObj = handler.read(localId, DocumentImpl.BIN);
+        String readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+
+        // Updating
+        Identifier newPid = new Identifier();
+        newPid.setValue("MetacatHandler.testsave.new-" + System.currentTimeMillis());
+        Checksum anotherChecksum = new Checksum();
+        anotherChecksum.setAlgorithm(MD5);
+        String anotherChecksumStr = "24aafe49284350445bb1ff9281e3c3c5";
+        anotherChecksum.setValue(anotherChecksumStr);
+        dataStream = new FileInputStream(test_eml_essdive_file);
+        SystemMetadata newSys = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
+        newSys.setObsoletes(pid);
+        sysmeta.setObsoletedBy(newPid);
+        sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        // Recreate the stream since it was closed in the generating sysmeta method
+        dataStream = new FileInputStream(test_eml_essdive_file);
+        handler.save(newPid, newSys, MetacatHandler.Action.UPDATE,
+                     eml_format, dataStream, sysmeta, user);
+        // Check the objects
+        readSys = SystemMetadataManager.getInstance().get(pid);
+        assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
+                              + readSys.getIdentifier().getValue(),
+                              pid.getValue().equals(readSys.getIdentifier().getValue()));
+        assertTrue("The obsoletedBy of systemmeta from db should be " + newPid.getValue(),
+                        newPid.getValue().equals(readSys.getObsoletedBy().getValue()));
+        localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The read object should have the checksum " + checkStr + " rather than "
+                    + readChecksum, checkStr.equals(readChecksum));
+        // Newpid object exists.
+        SystemMetadata newReadSys = SystemMetadataManager.getInstance().get(newPid);
+        assertTrue("The pid of systemmeta from db should be " + newPid.getValue() + " rather than "
+                        + newReadSys.getIdentifier().getValue(),
+                        newPid.getValue().equals(newReadSys.getIdentifier().getValue()));
+        assertTrue("The obsoletes of systemmeta from db should be " + pid.getValue(),
+                        pid.getValue().equals(newReadSys.getObsoletes().getValue()));
+        localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
+        readObj = handler.read(localId, DocumentImpl.BIN);
+        readChecksum = getChecksum(readObj, MD5);
+        assertTrue("The object should have the checksum " + anotherChecksumStr + " rather than "
+                    + readChecksum, anotherChecksumStr.equals(readChecksum));
     }
 
     /**
