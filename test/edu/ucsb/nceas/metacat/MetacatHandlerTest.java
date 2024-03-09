@@ -429,6 +429,108 @@ public class MetacatHandlerTest {
     }
 
     /**
+     * Test the saveBytes method
+     * @throws Exception
+     */
+    @Test
+    public void testSaveBytesAndReadWithInputStream() throws Exception {
+        // Save a document file
+        String checkStr = "19776e05bc62d92ab24e0597ab6f12c6";
+        String localId = "autogen." + System.currentTimeMillis() +".1";
+        Identifier pid = new Identifier();
+        pid.setValue("foo21");
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm(MD5);
+        checksum.setValue(checkStr);
+        InputStream dataStream = new FileInputStream(test_file_path);
+        try {
+            //checksum is null
+            handler.saveBytes(dataStream, localId, null, "eml", pid);
+            fail("The test should not get here since the local id is null");
+        } catch (Exception e ) {
+            assertTrue("Should be InvalidSystemMetadata, rather than " + e.getClass().getName(),
+                      e instanceof InvalidSystemMetadata);
+        }
+        handler.saveBytes(dataStream, localId, checksum, "eml", pid);
+        dataStream.close();
+        File result = new File(documentDir + localId);
+        assertTrue("File " + result + " should exist.", result.exists());
+        InputStream in = handler.read(localId, "eml");
+        String readChecksum = getChecksum(in, MD5);
+        in.close();
+        assertTrue("The checksum from handler.read should be " + checkStr + " rather than "
+                    + readChecksum, readChecksum.equals(checkStr));
+        // Running the saveBytes method again with the same local id should fail
+        // since the target file does exist
+        InputStream dataStream2 = new FileInputStream(another_test_file);
+        Checksum anotherChecksum = new Checksum();
+        anotherChecksum.setAlgorithm(MD5);
+        String str = "ef4b3d26ad713ecc9aa5988bbdfeded7";
+        anotherChecksum.setValue(str);
+        try {
+            handler.saveBytes(dataStream2, localId, anotherChecksum, "eml", pid);
+            fail("Test should get here since the target file does exist");
+        } catch (Exception e) {
+            assertTrue("Should be ServiceFailure rather than " + e.getClass().getName(),
+                       e instanceof ServiceFailure);
+        }
+        dataStream2.close();
+        // Test checksum doesn't match
+        InputStream dataStream3 = new FileInputStream(another_test_file);
+        localId = "autogen." + System.currentTimeMillis() +".1";
+        Checksum fakeChecksum = new Checksum();
+        try {
+            handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
+            fail("Test shouldn't get there since the declared checksum is incorrect.");
+        } catch (Exception e) {
+            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
+                       e instanceof InvalidSystemMetadata);
+        }
+        fakeChecksum.setAlgorithm(MD5);
+        dataStream3 = new FileInputStream(another_test_file);
+        try {
+            handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
+            fail("Test shouldn't get there since the declared checksum is incorrect.");
+        } catch (Exception e) {
+            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
+                       e instanceof InvalidSystemMetadata);
+        }
+        fakeChecksum.setAlgorithm("");
+        fakeChecksum.setValue(anotherChecksum.getValue());
+        dataStream3 = new FileInputStream(another_test_file);
+        try {
+            handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
+            fail("Test shouldn't get there since the declared checksum is incorrect.");
+        } catch (Exception e) {
+            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
+                       e instanceof InvalidSystemMetadata);
+        }
+        fakeChecksum.setAlgorithm(MD5);
+        fakeChecksum.setValue("5645334567F");
+        dataStream3 = new FileInputStream(another_test_file);
+        try {
+            handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
+            fail("Test shouldn't get there since the declared checksum is incorrect.");
+        } catch (Exception e) {
+            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
+                       e instanceof InvalidSystemMetadata);
+        }
+        // Success if the checksum value is the upper case letters.
+        fakeChecksum.setAlgorithm(MD5);
+        fakeChecksum.setValue(str.toUpperCase());
+        dataStream3 = new FileInputStream(another_test_file);
+        handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
+        dataStream3.close();
+        result = new File(dataDir + localId);
+        assertTrue("File " + result + " should exist.", result.exists());
+        in = handler.read(localId, "eml");
+        String readFrom = getChecksum(in, MD5);
+        assertTrue("The checksum from handler.read should be " + str + " rather than "
+                + readFrom, readFrom.equals(str));
+        in.close();
+    }
+
+    /**
      * Generated a DetailedFileInputStream object with checksum and a temp file from the source file
      * @param filePath  the source file paht
      * @return a DetailedFileInputStream object
