@@ -50,6 +50,7 @@ import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
+import edu.ucsb.nceas.utilities.IOUtil;
 import edu.ucsb.nceas.utilities.LSIDUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -264,6 +265,7 @@ public class MetacatHandler {
                 DetailedFileInputStream detailedStream = (DetailedFileInputStream) object;
                 if (detailedStream.getExpectedChecksum() == null) {
                     dataStream = new ByteArrayInputStream(metaBytes);
+                    IOUtils.closeQuietly(object);
                     logMetacat.info("The DetailedInputStream doesn't have the checksum."
                               + "So Metacat will use ByteArrayInputStream as the source for "
                               + "saving to disk because of its higher performance.");
@@ -275,6 +277,7 @@ public class MetacatHandler {
                 }
             } else {
                 dataStream = new ByteArrayInputStream(metaBytes);
+                IOUtils.closeQuietly(object);
                 logMetacat.info("Be default, Metacat will use ByteArrayInputStream as "
                               + "the source for saving to disk.");
             }
@@ -341,6 +344,15 @@ public class MetacatHandler {
             } catch (SQLException e) {
                 logMetacat.warn("Metacat cannot set back autoCommit true for DBConnection since "
                                 + e.getMessage());
+            }
+            // It doesn't use the IOUtils.closeQuietly method for the purpose of the mock test
+            try {
+                if (dataStream != null) {
+                    dataStream.close();
+                }
+            } catch (IOException ee) {
+                logMetacat.warn("Metacat cannot finally close the input stream after saving the "
+                                 + " object since " + ee.getMessage());
             }
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(conn, serialNumber);
