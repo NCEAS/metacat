@@ -157,22 +157,9 @@ public class D1AuthHelperTest {
 
     @Ignore("requires client communication...")
     @Test
-    public void testDoIsAuthorized() {
-        fail("Not yet implemented");
-    }
-
-    @Ignore("requires client communication...")
-    @Test
-    public void testDoAuthoritativeMNAuthorization() {
-        fail("Not yet implemented");
-    }
-
-    @Ignore("requires client communication...")
-    @Test
     public void testDoUpdateAuth() {
         fail("Not yet implemented");
     }
-
 
     /**
      * Confirm that 'doCNOnlyAuthorization' does not throw exception with good subject
