@@ -31,6 +31,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.ucsb.nceas.LeanTestUtils;
+import org.mockito.Mockito;
 
 public class D1AuthHelperTest {
 
@@ -84,6 +85,7 @@ public class D1AuthHelperTest {
     }
 
     D1AuthHelper authDel;
+    D1AuthHelper authDelMock;
     Session session;
     Session authMNSession;
     Session otherMNSession;
@@ -97,6 +99,9 @@ public class D1AuthHelperTest {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         
         authDel = new D1AuthHelper(null,TypeFactory.buildIdentifier("foo"),"1234NA","5678SF");
+        // Create a D1AuthHelper mock to prevent network dependencies
+        authDelMock = Mockito.spy(authDel);
+        Mockito.doReturn(nl).when(authDelMock).getCNNodeList();
         
         //build a SystemMetadata object
         sysmeta = TypeFactory.buildMinimalSystemMetadata(
@@ -180,20 +185,21 @@ public class D1AuthHelperTest {
     @Test
     public void testDoAdminAuthorization_metacatAdmin() throws Exception {
         Session sessionMetacatAdmin = new Session();
-        sessionMetacatAdmin.setSubject(TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
+        sessionMetacatAdmin.setSubject(
+            TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
 
-        authDel.doAdminAuthorization(sessionMetacatAdmin);
+        authDelMock.doAdminAuthorization(sessionMetacatAdmin);
     }
 
     /**
-     * Confirm that 'doAdminAuthorization' accepts cnAdmin
+     * Confirm that 'doAdminAuthorization' accepts cnAdmin ("cn1Subject")
      */
     @Test
     public void testDoAdminAuthorization_cnAdmin() throws Exception {
         Session sessionCnAdmin = new Session();
-        sessionCnAdmin.setSubject(TypeFactory.buildSubject("CN=urn:node:CN,DC=dataone,DC=org"));
+        sessionCnAdmin.setSubject(TypeFactory.buildSubject("cn1Subject"));
 
-        authDel.doAdminAuthorization(sessionCnAdmin);
+        authDelMock.doAdminAuthorization(sessionCnAdmin);
     }
 
     /**
@@ -202,9 +208,10 @@ public class D1AuthHelperTest {
     @Test
     public void testDoAdminAuthorization_localNodeAdmin() throws Exception {
         Session sessionLocalNodeAdmin = new Session();
-        sessionLocalNodeAdmin.setSubject(TypeFactory.buildSubject("CN=urn:node:METACAT1,DC=dataone,DC=org"));
+        sessionLocalNodeAdmin.setSubject(
+            TypeFactory.buildSubject("CN=urn:node:METACAT1,DC=dataone,DC=org"));
 
-        authDel.doAdminAuthorization(sessionLocalNodeAdmin);
+        authDelMock.doAdminAuthorization(sessionLocalNodeAdmin);
     }
 
 
@@ -214,7 +221,7 @@ public class D1AuthHelperTest {
      */
     @Test(expected = NotAuthorized.class)
     public void testDoAdminAuthorization_notAuthorized() throws Exception {
-        authDel.doAdminAuthorization(session);
+        authDelMock.doAdminAuthorization(session);
     }
 
     @Ignore("requires client communication...")
