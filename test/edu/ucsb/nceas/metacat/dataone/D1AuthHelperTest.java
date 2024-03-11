@@ -246,10 +246,17 @@ public class D1AuthHelperTest {
         fail("Not yet implemented");
     }
 
-    @Ignore("requires Metacat configuration...")
+    /**
+     * Confirm that isLocalNodeAdmin returns true with valid NodeAdmin subject
+     */
     @Test
     public void testIsLocalNodeAdmin() throws ServiceFailure {
-        authDel.isLocalNodeAdmin(cn1CNSession, NodeType.CN);
+        Session sessionLocalNodeAdmin = new Session();
+        sessionLocalNodeAdmin.setSubject(
+            TypeFactory.buildSubject("CN=urn:node:METACAT1,DC=dataone,DC=org"));
+
+        boolean isLocalCnNodeAdmin = authDel.isLocalNodeAdmin(sessionLocalNodeAdmin, null);
+        assertTrue(isLocalCnNodeAdmin);
     }
 
     @Test
