@@ -306,7 +306,8 @@ public class D1AuthHelperTest {
 
     @Test
     public void testIsCNAdmin() {
-        authDel.isCNAdmin(cn1CNSession, nl);
+        boolean isCNAdmin = authDel.isCNAdmin(cn1CNSession, nl);
+        assertTrue(isCNAdmin);
     }
 
     @Test
