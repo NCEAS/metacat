@@ -304,6 +304,9 @@ public class D1AuthHelperTest {
         authDel.isAuthoritativeMNodeAdmin(session, TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"), nl);
     }
 
+    /**
+     * Confirm that isCNAdmin recognizes a CN session.
+     */
     @Test
     public void testIsCNAdmin() {
         boolean isCNAdmin = authDel.isCNAdmin(cn1CNSession, nl);
