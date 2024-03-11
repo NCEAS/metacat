@@ -93,6 +93,26 @@ public class D1AuthHelperTest {
     Session cn1CNSession;
     SystemMetadata sysmeta;
 
+    /**
+     * Get a minimal SystemMetadata object with default values
+     *
+     * @return
+     */
+    private SystemMetadata getGenericSysmetaObject() throws Exception {
+        SystemMetadata sysmeta =
+            TypeFactory.buildMinimalSystemMetadata(TypeFactory.buildIdentifier("dip"),
+                                                   new ByteArrayInputStream(
+                                                       ("tra la la la la").getBytes("UTF-8")),
+                                                   "MD5",
+                                                   TypeFactory.buildFormatIdentifier("text/csv"),
+                                                   TypeFactory.buildSubject(
+                                                       "submitterRightsHolder"));
+        AccessPolicy ap = new AccessPolicy();
+        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
+        sysmeta.setAccessPolicy(ap);
+        return sysmeta;
+    }
+
     @Before
     public void setUp() throws Exception {
 
@@ -103,15 +123,8 @@ public class D1AuthHelperTest {
         authDelMock = Mockito.spy(authDel);
         Mockito.doReturn(nl).when(authDelMock).getCNNodeList();
 
-        //build a SystemMetadata object
-        sysmeta = TypeFactory.buildMinimalSystemMetadata(TypeFactory.buildIdentifier("dip"),
-                                                         new ByteArrayInputStream(
-                                                             ("tra la la la la").getBytes("UTF-8")),
-                                                         "MD5", TypeFactory.buildFormatIdentifier(
-                "text/csv"), TypeFactory.buildSubject("submitterRightsHolder"));
-        AccessPolicy ap = new AccessPolicy();
-        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
-        sysmeta.setAccessPolicy(ap);
+        // Build/get a SystemMetadata object
+        sysmeta = getGenericSysmetaObject();
 
         Replica replicaA = new Replica();
         replicaA.setReplicaMemberNode(TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
@@ -151,26 +164,6 @@ public class D1AuthHelperTest {
 
     }
 
-    /**
-     * Get a minimal SystemMetadata object with default values
-     *
-     * @return
-     */
-    private SystemMetadata getGenericSysmetaObject() throws Exception {
-        SystemMetadata sysmeta =
-            TypeFactory.buildMinimalSystemMetadata(TypeFactory.buildIdentifier("dip"),
-                                                   new ByteArrayInputStream(
-                                                       ("tra la la la la").getBytes("UTF-8")),
-                                                   "MD5",
-                                                   TypeFactory.buildFormatIdentifier("text/csv"),
-                                                   TypeFactory.buildSubject(
-                                                       "submitterRightsHolder"));
-        AccessPolicy ap = new AccessPolicy();
-        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
-        sysmeta.setAccessPolicy(ap);
-        return sysmeta;
-    }
-
     @Ignore("Not yet implemented...")
     @Test
     public void testExpandRightsHolder() {
@@ -183,12 +176,12 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testDoUpdateAuth() throws Exception {
-        SystemMetadata sysmeta = getGenericSysmetaObject();
-        sysmeta.setAuthoritativeMemberNode(
+        SystemMetadata sysmetaEdited = getGenericSysmetaObject();
+        sysmetaEdited.setAuthoritativeMemberNode(
             TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
 
         try {
-            authDelMock.doUpdateAuth(session, sysmeta, Permission.CHANGE_PERMISSION,
+            authDelMock.doUpdateAuth(session, sysmetaEdited, Permission.CHANGE_PERMISSION,
                                      TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
         } catch (Exception e) {
             fail(e.getMessage());
@@ -294,8 +287,6 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testDoGetSysmetaAuthorization() throws Exception {
-        SystemMetadata sysmeta = getGenericSysmetaObject();
-
         try {
             authDel.doGetSysmetaAuthorization(session, sysmeta, Permission.WRITE);
         } catch (Exception e) {
@@ -309,8 +300,6 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testIsAuthorizedBySysMetaSubjects() throws Exception {
-        SystemMetadata sysmeta = getGenericSysmetaObject();
-
         boolean isAuthBySysmetaSubjects =
             authDel.isAuthorizedBySysMetaSubjects(session, sysmeta, Permission.WRITE);
         assertTrue(isAuthBySysmetaSubjects);
