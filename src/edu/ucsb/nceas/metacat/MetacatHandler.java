@@ -2,15 +2,16 @@ package edu.ucsb.nceas.metacat;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.security.DigestOutputStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
@@ -19,7 +20,6 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.DatatypeConverter;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,7 +50,6 @@ import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.utilities.IOUtil;
 import edu.ucsb.nceas.utilities.LSIDUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -76,8 +75,8 @@ public class MetacatHandler {
             + "and so this request is no longer supported. "
             + "Equivalent API methods now are available through "
             + "the DataONE API (see <https://knb.ecoinformatics.org/api>)." + ERRORCLOSE;
-    private static File dataDir = null;
-    private static File metadataDir = null;
+    private static String dataDir = null;
+    private static String metadataDir = null;
 
     public enum Action {INSERT, UPDATE};
 
@@ -88,50 +87,76 @@ public class MetacatHandler {
         String documentPath = null;
         try {
             documentPath = PropertyService.getProperty("application.documentfilepath");
+            if (!documentPath.endsWith("/")) {
+                documentPath = documentPath + "/";
+            }
         } catch (PropertyNotFoundException e) {
             logMetacat.error("Can't find the document file path property " + e.getMessage());
             documentPath = null;
         }
-        metadataDir = initializeDir(documentPath);
+        Path dir = initializeDir(documentPath);
+        if (dir != null) {
+            // The metadata storage directory either was successfully created and exists with
+            // the proper permissions. So we just use it as the value of metadataDir.
+            metadataDir = documentPath;
+        }
+        logMetacat.info("The Metacat metadata storage directory is " + metadataDir);
         String dataPath = null;
         try {
             dataPath = PropertyService.getProperty("application.datafilepath");
+            if (!dataPath.endsWith("/")) {
+                dataPath = dataPath + "/";
+            }
         } catch (PropertyNotFoundException e) {
             logMetacat.error("Can't find the data file path property " + e.getMessage());
             dataPath = null;
         }
-        dataDir = initializeDir(dataPath);
+        Path dir2 = initializeDir(dataPath);
+        if (dir2 != null) {
+            // The data storage directory either was successfully created or exists with
+            // the proper permissions. So we just use it as the value of dataDir
+            dataDir = dataPath;
+        }
+        logMetacat.info("The Metacat data storage directory is " + dataDir);
     }
 
     /**
-     * Create a directory based on the given path.
-     * If Metacat can't read/write an exiting directory or create a new directory, or it is not
-     * a directory, this method will return null;
+     * Create a directory based on the given path if it is necessary.
+     * If Metacat can't read/write/exectue an exiting directory or create a new directory, null will
+     * be return. The return value is an indicator if we can use the given path as the storage path.
      * @param path  the path of the directory
-     * @return the file directory representing the path. Return null if bad things happen.
+     * @return the path of the created directory or existing directory with proper permissions.
+     *         Return null if bad things happen.
      */
-    private File initializeDir(String path) {
-        File dir = null;
+    protected Path initializeDir(String path) {
+        Path dir;
         if (path != null && !path.isBlank()) {
-            dir = new File(path);
-            if (!dir.exists()) {
+            dir = Paths.get(path);
+            if (!Files.exists(dir)) {
+                // The new directory route
                 try {
-                    boolean success = dir.mkdirs();
-                    if (!success) {
-                        logMetacat.error("Can't create the object storage directory " + path);
-                        dir = null;
-                    }
+                    dir = Files.createDirectories(dir);
                 } catch (Exception e) {
+                    // Sallow the exception and return null.
+                    // We will check if the dataDir and documentDir are null before using them
                     logMetacat.error("Can't create the object storage directory " + path
                                     + " sicne " + e.getMessage());
                     dir = null;
                 }
-            } else if (!dir.canRead() || !dir.canWrite() || !dir.isDirectory()){
-                //if we can read/write the directory or the file is not a directory. Set it null
-                logMetacat.error("Metacat cannot read/write the object storage directory "
+            } else if (!Files.isReadable(dir) || !Files.isWritable(dir)
+                                        || !Files.isExecutable(dir) || !Files.isDirectory(dir)) {
+                // The bad case for the existing directory route. Other cases we just use the
+                // existing directory.
+                // If we can't read/write/execute the directory or the file is not a directory,
+                // set it null
+                logMetacat.error("Metacat cannot read/write/create the object storage directory "
                                 + path + " specified in the property. Or it is not a directory.");
                 dir = null;
             }
+        } else {
+            logMetacat.error("Users should specify the data and document directory in "
+                                + "the property files ");
+            dir = null;
         }
         return dir;
     }
@@ -144,7 +169,7 @@ public class MetacatHandler {
         if (dataDir == null || metadataDir == null) {
             throw new IOException("Metacat doesn't have the valid data or metadata "
                                       + "storage directories. Either they are not set in the "
-                                      + "properties file or Tomcat can read/write it.");
+                                      + "properties file or Tomcat can read/write/excute it.");
         }
     }
 
@@ -159,6 +184,22 @@ public class MetacatHandler {
             response.setStatus(301);
             out.println(NOT_SUPPORT_MESSAGE);
         }
+    }
+
+    /**
+     * Get the metadata object directory
+     * @return the metadata object directory
+     */
+    public String getMetadataDir() {
+        return this.metadataDir;
+    }
+
+    /**
+     * Get the data object directory
+     * @return the data object directory
+     */
+    public String getDataDir() {
+        return this.dataDir;
     }
 
     /**
@@ -290,6 +331,10 @@ public class MetacatHandler {
         try {
             conn = DBConnectionPool.getDBConnection("MetacatHandler.save");
             serialNumber = conn.getCheckOutSerialNumber();
+            Path newObject = null;
+            StringBuffer error = new StringBuffer();
+            error.append("Metacat cannot save the object ").append(pid.getValue())
+                                                                .append(" into disk since ");
             try {
                 conn.setAutoCommit(false);
                 Identifier prePid = null;
@@ -311,29 +356,17 @@ public class MetacatHandler {
                     // Set needChangeModificationTime true
                     SystemMetadataManager.getInstance().store(preSys, true, conn);
                 }
-                // Save bytes into disk
-                saveBytes(dataStream, localId, sysmeta.getChecksum(), docType, pid);
+                // Save bytes into disk. If the localId already exists, the saveBytes should
+                // throw an exception
+                newObject = saveBytes(dataStream, localId, sysmeta.getChecksum(), docType, pid);
                 conn.commit();
                 conn.setAutoCommit(true);
             } catch (InvalidSystemMetadata e) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ee) {
-                    throw new InvalidSystemMetadata("1180", "Metacat cannot save the object into "
-                                                    + " disk since " + ee.getMessage()
-                                                    + "Also, it cannot roll back the change in DB");
-                }
-                throw e;
+                error = clearUp(e, newObject, error, conn);
+                throw new InvalidSystemMetadata("1180", error.toString());
             } catch (Exception e) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ee) {
-                    throw new ServiceFailure("1190", "Metacat cannot save the object into "
-                                                + " disk since " + ee.getMessage()
-                                                + "Also, it cannot roll back the change in DB");
-                }
-                throw new ServiceFailure("1190", "Metacat cannot save the object into disk since "
-                                          + e.getMessage());
+                error = clearUp(e, newObject, error, conn);
+                throw new ServiceFailure("1190", error.toString());
             }
         } catch (SQLException e) {
             throw new ServiceFailure("1190", "Metacat cannot save the object into disk since "
@@ -361,29 +394,63 @@ public class MetacatHandler {
     }
 
     /**
-     * Read a file from Metacat's configured file system data directory.
+     * Clear up database and object file when the save failed. Try to restore the original state.
+     * @param e  the exception arose in the save method
+     * @param newObject  the object which might create in the save method
+     * @param error  the string buffer holding the error message
+     * @param conn  the connection to db
+     * @return the string buffer which holds all error message.
+     */
+    private StringBuffer clearUp(Exception e, Path newObject,
+                                                    StringBuffer error, DBConnection conn) {
+        error.append(e.getMessage());
+        // Clean up database
+        try {
+            conn.rollback();
+        } catch (SQLException ee) {
+            error.append(" Moreover, it cannot roll back the change in DB since ")
+                            .append(ee.getMessage());
+        }
+        // Metacat also needs to delete the new created file. Null is the indicator if an object
+        // was created.
+        if (newObject != null) {
+            // This means that we successfully created a new object in the saveBytes method.
+            // Note: even though the dir+localId may physically point to an existing object,
+            // the newObject still should be null when the saveBytes method throws an exception.
+            try {
+                Files.delete(newObject);
+            } catch (IOException ie) {
+                error.append(". Moreover, it cannot delete generated object since ")
+                                                                .append(ie.getMessage());
+            }
+        }
+        return error;
+    }
+
+    /**
+     * Read a file from Metacat's configured file system object directories.
      * @param dir  the directory where the file is located
      * @param filename  The file name of the file to read
-     * @return fileInputStream  The file to read as a FileInputStream
+     * @return InputStream  The file to read as an InputStream object
      */
-    private static FileInputStream readFromFilesystem(File dir, String filename)
-        throws McdbDocNotFoundException {
+    private static InputStream readFromFilesystem(String dir, String filename)
+        throws McdbDocNotFoundException, IOException {
 
         logMetacat.debug("MetacatHandler.readFromFilesystem() called.");
 
-        FileInputStream fileInputStream = null;
+        InputStream inputStream = null;
 
         try {
-            fileInputStream = new FileInputStream(new File(dir,filename));
+            inputStream = Files.newInputStream(Paths.get(dir,filename));
 
-        } catch (FileNotFoundException fnfe) {
+        } catch (NoSuchFileException fnfe) {
             logMetacat.warn("There was an error reading the file " + filename + ". The error was: "
                                 + fnfe.getMessage());
             throw new McdbDocNotFoundException(fnfe.getMessage());
 
         }
 
-        return fileInputStream;
+        return inputStream;
     }
 
 
@@ -399,7 +466,7 @@ public class MetacatHandler {
      * @throws InvalidSystemMetadata
      * @throws InvalidRequest
      */
-    protected File saveBytes(InputStream object, String localId, Checksum checksum,
+    protected Path saveBytes(InputStream object, String localId, Checksum checksum,
                                                             String docType, Identifier pid)
                                       throws ServiceFailure, InvalidSystemMetadata, InvalidRequest {
         try {
@@ -411,23 +478,20 @@ public class MetacatHandler {
             throw new InvalidRequest("1181", "Metacat cannot save bytes for "
                                      + pid.getValue() + " into disk since the doc type is blank.");
         }
-        File dataDirectory = null;
+        String objectDirectory = null;
         if (!docType.equals(DocumentImpl.BIN)) {
-            dataDirectory = metadataDir;
+            objectDirectory = metadataDir;
         } else {
-            dataDirectory = dataDir;
+            objectDirectory = dataDir;
         }
-        try {
-            logMetacat.debug("File " + localId + " will be saved to "
-                                     + dataDirectory.getCanonicalPath());
-        } catch (IOException e) {
-            //do nothing
-        }
-        return writeStreamToFile(dataDirectory, localId, object, checksum, pid);
+        logMetacat.debug("File " + localId + " will be saved to " + objectDirectory);
+        // The object stream will be closed in the writeStreamToFile method
+        return writeStreamToFile(objectDirectory, localId, object, checksum, pid);
     }
 
     /**
-     * Write a stream to a file
+     * Write a stream to a file. This method prevents the overwriting of an existing object by
+     * using the Files.move and Files.copy methods.
      *
      * @param dir  the directory to write to
      * @param localId  the file name to write to
@@ -435,13 +499,13 @@ public class MetacatHandler {
      * @param cheksum  the checksum from system metadata. We need to compare it to the one, which
      *                  Metacat calculate during the saving process.
      * @param pid  only for debugging purpose
-     * @return newFile - the new file created
+     * @return a Path object - the new file created
      *
      * @throws ServiceFailure
      * @throws InvalidSystemMetadata
      * @throws InvalidRequest
      */
-    private File writeStreamToFile(File dir, String localId, InputStream dataStream,
+    private Path writeStreamToFile(String dir, String localId, InputStream dataStream,
                                           Checksum checksum, Identifier pid) throws ServiceFailure,
                                                             InvalidSystemMetadata, InvalidRequest {
         if(checksum == null) {
@@ -456,12 +520,12 @@ public class MetacatHandler {
             throw new InvalidRequest("1181", "The source stream for saving "
                                      + pid.getValue() + " into disk should not be blank");
         }
-        File newFile = null;
+        Path newFile = null;
         logMetacat.debug("Starting to write to disk.");
-        newFile = new File(dir, localId);
+        newFile = Paths.get(dir, localId);
         File tempFile = null;
-        logMetacat.debug( "Filename for write is: " + newFile.getAbsolutePath()
-                                + " for the data object pid " + pid.getValue());
+        logMetacat.debug( "The file path for writing is: " + newFile + " for the data object pid "
+                          + pid.getValue());
         try {
             String checksumValue = checksum.getValue();
             logMetacat.debug("The checksum value from the system " + "metadata is "
@@ -499,13 +563,21 @@ public class MetacatHandler {
                         // multiple parts handler) to the permanent location
                         if (expectedChecksumValue != null
                             && expectedChecksumValue.equalsIgnoreCase(checksumValue)) {
-                            // This method should throw an exception if the target file exists.
-                            FileUtils.moveFile(tempFile, newFile);
+                            //**********************************************************************
+                            //**********************************************************************
+                            // This is the first place (the total places is two) to write bytes to
+                            // the permanent object storage location. This is a fast one - moving.
+                            // According to documentation, By default, the move method attempts to
+                            // move the file to the target file, failing if the target file
+                            // exists except if the source and target are the same file, in
+                            // which case this method has no effect. So It should not overwrite an
+                            // existing data object.
+                            // https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html
+                            Files.move(tempFile.toPath(), newFile);
                             long end = System.currentTimeMillis();
-                            logMetacat.info("Metacat only needs the "
-                                            + "move the data file from temporary location to the "
-                                            + "permanent location for the object "
-                                            + pid.getValue());
+                            logMetacat.info("Metacat only needs the move the object file from "
+                                    + "temporary location to the permanent location for the object "
+                                    + pid.getValue());
                             logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG
                                     + pid.getValue()
                        + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
@@ -532,39 +604,42 @@ public class MetacatHandler {
                     }
                 }
             }
-            //The input stream is not a DetaileFileInputStream or the algorithm doesn't
-            // match, we have to calculate the checksum.
+            //**************************************************************************************
+            //**************************************************************************************
+            // This is the second place (the total places is two) to write bytes to
+            // the permanent object storage location. This is a slow one - Writing bytes into disk
+            // while calculating the checksum. This place handle all other scenarios except the
+            // first quick one, which already has the checksum and we can compare it to the one from
+            // the system metadata.
+            // According to documentation, by default, the Files.copy fails if the target file
+            // already exists or is a symbolic link. So It should not overwrite an
+            // existing data object, which is good.
+            // https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html
             MessageDigest md = MessageDigest.getInstance(algorithm);//use the one from the systemeta
-            // write data stream to desired file
-            if (newFile.exists()) {
-                // Something is wrong
-                throw new ServiceFailure("1190", "The file " + localId + " already exists. "
-                                        + "Metacat cannot continue to overwrite the file.");
-            }
-            try (DigestOutputStream os = new DigestOutputStream(new FileOutputStream(newFile), md)) {
-                long length = IOUtils.copyLarge(dataStream, os);
-                os.flush();
+            try (DigestInputStream is = new DigestInputStream(dataStream, md)) {
+                Files.copy(is, newFile);
             }
             String localChecksum = DatatypeConverter.printHexBinary(md.digest());
-            logMetacat.info("The check sum calculated from the finally saved process is "
+            logMetacat.debug("The check sum calculated from the finally saved process is "
                              + localChecksum);
             if (localChecksum == null || localChecksum.isBlank()
                 || !localChecksum.equalsIgnoreCase(checksumValue)) {
-                logMetacat.error(
-                    "D1NodeService.writeStreamToFile - the check sum calculated from the "
-                    + "saved local file is "
-                        + localChecksum
-                        + ". But it doesn't match the value from the system metadata "
-                        + checksumValue + " for the object " + pid.getValue());
-                boolean success = newFile.delete();
-                logMetacat.info(
-                    "delete the file " + newFile.getAbsolutePath() + " for the object "
-                        + pid.getValue() + " sucessfully?" + success);
-                throw new InvalidSystemMetadata("1180",
-                        "The checksum calculated from the saved local file is "
-                                + localChecksum
-                                + ". But it doesn't match the value from the system metadata "
-                                + checksumValue + ".");
+                StringBuffer error = new StringBuffer();
+                error.append("The checksum calculated from the saved local file is ")
+                     .append(localChecksum)
+                     .append(". But it doesn't match the value from the system metadata ")
+                     .append(checksumValue).append(" for the object ").append(pid.getValue());
+                // The new object file was already generated even though the checksum in the
+                // system metadata is incorrect. So we have to delete it to restore to the original
+                // state and throw an exception
+                try {
+                    Files.delete(newFile);
+                } catch (IOException io) {
+                    error.append(" Moreover Metacat tried to delete the already generated file ")
+                         .append(newFile).append(" but failed since ").append(io.getMessage());
+                }
+                logMetacat.error(error.toString());
+                throw new InvalidSystemMetadata("1180", error.toString());
             }
             long end = System.currentTimeMillis();
             logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue()
@@ -575,13 +650,9 @@ public class MetacatHandler {
                     + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION
                     + (end - start) / 1000);
             if (tempFile != null) {
+                // Clean up
                 StreamingMultipartRequestResolver.deleteTempFile(tempFile);
             }
-        } catch (FileNotFoundException e) {
-            logMetacat.error(
-                "FNF: " + e.getMessage() + " for the data object " + pid.getValue(), e);
-            throw new ServiceFailure(
-                "1190", "File not found: " + localId + " " + e.getMessage());
         } catch (IOException e) {
             logMetacat.error(
                 "IOE: " + e.getMessage() + " for the data object " + pid.getValue(), e);
