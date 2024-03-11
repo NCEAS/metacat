@@ -360,7 +360,6 @@ public class MetacatHandler {
                 // throw an exception
                 newObject = saveBytes(dataStream, localId, sysmeta.getChecksum(), docType, pid);
                 conn.commit();
-                conn.setAutoCommit(true);
             } catch (InvalidSystemMetadata e) {
                 error = clearUp(e, newObject, error, conn);
                 throw new InvalidSystemMetadata("1180", error.toString());
@@ -373,22 +372,18 @@ public class MetacatHandler {
                                     + " it can't get a DBConnection: "+ e.getMessage());
         } finally {
             try {
-                conn.setAutoCommit(true);
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                }
             } catch (SQLException e) {
                 logMetacat.warn("Metacat cannot set back autoCommit true for DBConnection since "
                                 + e.getMessage());
             }
-            // It doesn't use the IOUtils.closeQuietly method for the purpose of the mock test
-            try {
-                if (dataStream != null) {
-                    dataStream.close();
-                }
-            } catch (IOException ee) {
-                logMetacat.warn("Metacat cannot finally close the input stream after saving the "
-                                 + " object since " + ee.getMessage());
-            }
             // Return database connection to the pool
-            DBConnectionPool.returnDBConnection(conn, serialNumber);
+            if (conn != null) {
+                DBConnectionPool.returnDBConnection(conn, serialNumber);
+            }
+            IOUtils.closeQuietly(dataStream);
         }
         return localId;
     }

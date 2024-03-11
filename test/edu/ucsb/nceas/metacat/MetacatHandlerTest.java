@@ -1,16 +1,15 @@
 package edu.ucsb.nceas.metacat;
 
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
 
 import javax.xml.bind.DatatypeConverter;
@@ -47,7 +46,7 @@ import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -1197,9 +1196,21 @@ public class MetacatHandlerTest {
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
         dataStream = generateDetailedInputStream(test_eml_file, checksum);
         //Mock
-        /*try (MockedStatic<IOUtils> ingored = Mockito.mockStatic(IOUtils.class)) {
-            Mockito.doThrow(IOException.class).when(IOUtils.closeQuietly(any(InputStream.class)));
-        }*/
+        try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                                                Mockito.mockStatic(DBConnectionPool.class)) {
+            DBConnection mockConnection = Mockito.mock(DBConnection.class,
+                    withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                                                                .thenReturn(mockConnection);
+            Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+            try {
+                handler.save(pid, sysmeta, MetacatHandler.Action.INSERT, eml_format,
+                            dataStream, null, user);
+                fail("Test shouldn't get there since the above method should throw an exception");
+            } catch (Exception e) {
+                assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
+            }
+        }
         // The failure change nothing.
         long sysCount = getRecordCount("systemmetadata");
         assertEquals("The records in systemmetadata should be " + originSysCount,
@@ -1217,30 +1228,44 @@ public class MetacatHandlerTest {
         SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
         assertNull("The systemmetadata for pid " + pid.getValue() + " should be null", readSys);
 
-        // Insert a data object
-        Identifier newPid = new Identifier();
-        newPid.setValue("MetacatHandler.testsave2-" + System.currentTimeMillis());
-        InputStream dataStream2 = new FileInputStream(test_file_path);
-        SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream2);
-        dataStream2 = new FileInputStream(test_file_path);
-        // After a failed saving, nothing should change
-        /*handler.save(newPid, sysmeta2, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
-                        dataStream2, null, user);*/
-        sysCount = getRecordCount("systemmetadata");
-        assertEquals("The records in systemmetadata should be " + originSysCount,
-                                                            originSysCount, sysCount);
-        idCount = getRecordCount("identifier");
-        assertEquals("The identifier count should be " + originIdCount, originIdCount, idCount);
-        docCount = getRecordCount("xml_documents");
-        assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
-        documentDirSize = (new File(handler.getMetadataDir()).list()).length;
-        assertEquals("The document file count in the dir is " + originDocumentDirSize,
-                                    originDocumentDirSize, documentDirSize);
-        dataDirSize = (new File(handler.getDataDir()).list()).length;
-        assertEquals("The data file count in the dir is " + originDataDirSize,
-                                                                originDataDirSize, dataDirSize);
-        readSys = SystemMetadataManager.getInstance().get(newPid);
-        assertNull("The systemmetadata for pid " + newPid.getValue() + " should be null", readSys);
+            // Insert a data object
+            Identifier newPid = new Identifier();
+            newPid.setValue("MetacatHandler.testsave2-" + System.currentTimeMillis());
+            InputStream dataStream2 = new FileInputStream(test_file_path);
+            SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream2);
+            dataStream2 = new FileInputStream(test_file_path);
+            try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                    Mockito.mockStatic(DBConnectionPool.class)) {
+                DBConnection mockConnection = Mockito.mock(DBConnection.class,
+                        withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+                Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                                                                    .thenReturn(mockConnection);
+                Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+                try {
+                    handler.save(newPid, sysmeta2, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
+                            dataStream2, null, user);
+                    fail("Test shouldn't get there since the above method should throw an exception");
+                } catch (Exception e) {
+                    assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
+                }
+            }
+            // After a failed saving, nothing should change
+            sysCount = getRecordCount("systemmetadata");
+            assertEquals("The records in systemmetadata should be " + originSysCount,
+                                                                originSysCount, sysCount);
+            idCount = getRecordCount("identifier");
+            assertEquals("The identifier count should be " + originIdCount, originIdCount, idCount);
+            docCount = getRecordCount("xml_documents");
+            assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
+            documentDirSize = (new File(handler.getMetadataDir()).list()).length;
+            assertEquals("The document file count in the dir is " + originDocumentDirSize,
+                                        originDocumentDirSize, documentDirSize);
+            dataDirSize = (new File(handler.getDataDir()).list()).length;
+            assertEquals("The data file count in the dir is " + originDataDirSize,
+                                                                    originDataDirSize, dataDirSize);
+            readSys = SystemMetadataManager.getInstance().get(newPid);
+            assertNull("The systemmetadata for pid " + newPid.getValue() + " should be null", readSys);
+
     }
 
     /**
