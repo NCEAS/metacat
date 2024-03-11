@@ -36,7 +36,7 @@ import org.mockito.Mockito;
 public class D1AuthHelperTest {
 
     static NodeList nl;
-    
+
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         nl = new NodeList();
@@ -47,7 +47,7 @@ public class D1AuthHelperTest {
         sublist.add(TypeFactory.buildSubject("cn1Subject"));
         cn1.setSubjectList(sublist);
         nl.addNode(cn1);
-        
+
         Node cn2 = new Node();
         cn2.setType(NodeType.CN);
         cn2.setIdentifier(TypeFactory.buildNodeReference("urn:node:unitTestCN2"));
@@ -55,29 +55,29 @@ public class D1AuthHelperTest {
         sublist2.add(TypeFactory.buildSubject("cn2Subject"));
         cn2.setSubjectList(sublist2);
         nl.addNode(cn2);
-        
+
         Node replMN = new Node();
         replMN.setType(NodeType.MN);
         replMN.setIdentifier(TypeFactory.buildNodeReference("urn:node:unitTestReplMN"));
-       
+
         List<Subject> sublist3 = new ArrayList<>();
         sublist3.add(TypeFactory.buildSubject("replMNSubject"));
         replMN.setSubjectList(sublist3);
         nl.addNode(replMN);
-        
+
         Node authMN = new Node();
         authMN.setType(NodeType.MN);
         authMN.setIdentifier(TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
-               
+
         List<Subject> sublist4 = new ArrayList<>();
         sublist4.add(TypeFactory.buildSubject("authMNSubject"));
         authMN.setSubjectList(sublist4);
         nl.addNode(authMN);
-        
+
         Node otherMN = new Node();
         otherMN.setType(NodeType.MN);
         otherMN.setIdentifier(TypeFactory.buildNodeReference("urn:node:unitTestOtherMN"));
-               
+
         List<Subject> sublist5 = new ArrayList<>();
         sublist5.add(TypeFactory.buildSubject("otherMNSubject"));
         otherMN.setSubjectList(sublist5);
@@ -92,42 +92,39 @@ public class D1AuthHelperTest {
     Session replMNSession;
     Session cn1CNSession;
     SystemMetadata sysmeta;
-    
+
     @Before
     public void setUp() throws Exception {
 
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
-        
-        authDel = new D1AuthHelper(null,TypeFactory.buildIdentifier("foo"),"1234NA","5678SF");
+
+        authDel = new D1AuthHelper(null, TypeFactory.buildIdentifier("foo"), "1234NA", "5678SF");
         // Create a D1AuthHelper mock for tests that make network calls (ex. getCNNodeList)
         authDelMock = Mockito.spy(authDel);
         Mockito.doReturn(nl).when(authDelMock).getCNNodeList();
-        
+
         //build a SystemMetadata object
-        sysmeta = TypeFactory.buildMinimalSystemMetadata(
-                TypeFactory.buildIdentifier("dip"), 
-                new ByteArrayInputStream(("tra la la la la").getBytes("UTF-8")), 
-                "MD5", 
-                TypeFactory.buildFormatIdentifier("text/csv"), 
-                TypeFactory.buildSubject("submitterRightsHolder"));
+        sysmeta = TypeFactory.buildMinimalSystemMetadata(TypeFactory.buildIdentifier("dip"),
+                                                         new ByteArrayInputStream(
+                                                             ("tra la la la la").getBytes("UTF-8")),
+                                                         "MD5", TypeFactory.buildFormatIdentifier(
+                "text/csv"), TypeFactory.buildSubject("submitterRightsHolder"));
         AccessPolicy ap = new AccessPolicy();
         ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
         sysmeta.setAccessPolicy(ap);
-        
-        
+
         Replica replicaA = new Replica();
         replicaA.setReplicaMemberNode(TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
-        replicaA.setReplicationStatus(ReplicationStatus.COMPLETED);       
-        
+        replicaA.setReplicationStatus(ReplicationStatus.COMPLETED);
+
         Replica replicaR = new Replica();
         replicaR.setReplicaMemberNode(TypeFactory.buildNodeReference("urn:node:unitTestReplMN"));
         replicaR.setReplicationStatus(ReplicationStatus.COMPLETED);
 
         sysmeta.addReplica(replicaA);
         sysmeta.addReplica(replicaR);
-        
 
-        
+
         // build a matching Session
         session = new Session();
         session.setSubject(TypeFactory.buildSubject("principal_subject"));
@@ -138,7 +135,7 @@ public class D1AuthHelperTest {
         p1.addEquivalentIdentity(TypeFactory.buildSubject("eq2"));
         subjectInfo.addPerson(p1);
         session.setSubjectInfo(subjectInfo);
-        
+
 
         authMNSession = new Session();
         authMNSession.setSubject(TypeFactory.buildSubject("authMNSubject"));
@@ -148,24 +145,26 @@ public class D1AuthHelperTest {
 
         otherMNSession = new Session();
         otherMNSession.setSubject(TypeFactory.buildSubject("otherMNSubject"));
-        
+
         cn1CNSession = new Session();
         cn1CNSession.setSubject(TypeFactory.buildSubject("cn1Subject"));
 
-        
     }
 
     /**
      * Get a minimal SystemMetadata object with default values
+     *
      * @return
      */
     private SystemMetadata getGenericSysmetaObject() throws Exception {
-        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
-            TypeFactory.buildIdentifier("dip"),
-            new ByteArrayInputStream(("tra la la la la").getBytes("UTF-8")),
-            "MD5",
-            TypeFactory.buildFormatIdentifier("text/csv"),
-            TypeFactory.buildSubject("submitterRightsHolder"));
+        SystemMetadata sysmeta =
+            TypeFactory.buildMinimalSystemMetadata(TypeFactory.buildIdentifier("dip"),
+                                                   new ByteArrayInputStream(
+                                                       ("tra la la la la").getBytes("UTF-8")),
+                                                   "MD5",
+                                                   TypeFactory.buildFormatIdentifier("text/csv"),
+                                                   TypeFactory.buildSubject(
+                                                       "submitterRightsHolder"));
         AccessPolicy ap = new AccessPolicy();
         ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
         sysmeta.setAccessPolicy(ap);
@@ -185,13 +184,12 @@ public class D1AuthHelperTest {
     @Test
     public void testDoUpdateAuth() throws Exception {
         SystemMetadata sysmeta = getGenericSysmetaObject();
-        sysmeta.setAuthoritativeMemberNode(TypeFactory.buildNodeReference(
-            "urn:node:unitTestAuthMN"));
+        sysmeta.setAuthoritativeMemberNode(
+            TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
 
         try {
             authDelMock.doUpdateAuth(session, sysmeta, Permission.CHANGE_PERMISSION,
-                                     TypeFactory.buildNodeReference(
-                "urn:node:unitTestAuthMN"));
+                                     TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -269,7 +267,8 @@ public class D1AuthHelperTest {
     }
 
     /**
-     * Confirm that prepareAndThrowNotAuthorized throws NotAuthorized exception with invalid session
+     * Confirm that prepareAndThrowNotAuthorized throws NotAuthorized exception with invalid
+     * session
      */
     @Test(expected = NotAuthorized.class)
     public void testPrepareAndThrowNotAuthorized() throws Exception {
@@ -312,7 +311,8 @@ public class D1AuthHelperTest {
     public void testIsAuthorizedBySysMetaSubjects() throws Exception {
         SystemMetadata sysmeta = getGenericSysmetaObject();
 
-        boolean isAuthBySysmetaSubjects = authDel.isAuthorizedBySysMetaSubjects(session, sysmeta, Permission.WRITE);
+        boolean isAuthBySysmetaSubjects =
+            authDel.isAuthorizedBySysMetaSubjects(session, sysmeta, Permission.WRITE);
         assertTrue(isAuthBySysmetaSubjects);
     }
 
@@ -382,13 +382,17 @@ public class D1AuthHelperTest {
     @Test
     public void testIsOther() {
 
-        Assert.assertFalse("otherSession should not be authorized as a CN", authDel.isCNAdmin(otherMNSession, nl));
-        Assert.assertFalse("otherSession should not be authorized as the authMN", 
-                authDel.isAuthoritativeMNodeAdmin(otherMNSession, TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"), nl));
-        Assert.assertFalse("otherSession should not be authorized as a replica MN", 
-                authDel.isReplicaMNodeAdmin(otherMNSession, sysmeta, nl));
+        Assert.assertFalse(
+            "otherSession should not be authorized as a CN", authDel.isCNAdmin(otherMNSession, nl));
+        Assert.assertFalse("otherSession should not be authorized as the authMN",
+                           authDel.isAuthoritativeMNodeAdmin(otherMNSession,
+                                                             TypeFactory.buildNodeReference(
+                                                                 "urn:node:unitTestAuthMN"), nl));
+        Assert.assertFalse("otherSession should not be authorized as a replica MN",
+                           authDel.isReplicaMNodeAdmin(otherMNSession, sysmeta, nl));
         Assert.assertFalse("otherSession should not be authorized via sysmeta subjects",
-                authDel.isAuthorizedBySysMetaSubjects(otherMNSession, sysmeta, Permission.READ));
+                           authDel.isAuthorizedBySysMetaSubjects(otherMNSession, sysmeta,
+                                                                 Permission.READ));
 
     }
 
@@ -398,13 +402,15 @@ public class D1AuthHelperTest {
     @Test
     public void testSessionIsNull() {
 
-        Assert.assertFalse("null Session should not be authorized as a CN", authDel.isCNAdmin(null, nl));
-        Assert.assertFalse("null Session should not be authorized as the authMN", 
-                authDel.isAuthoritativeMNodeAdmin(null, TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"), nl));
-        Assert.assertFalse("null Session should not be authorized as a replica MN", 
-                authDel.isReplicaMNodeAdmin(null, sysmeta, nl));
+        Assert.assertFalse(
+            "null Session should not be authorized as a CN", authDel.isCNAdmin(null, nl));
+        Assert.assertFalse("null Session should not be authorized as the authMN",
+                           authDel.isAuthoritativeMNodeAdmin(null, TypeFactory.buildNodeReference(
+                               "urn:node:unitTestAuthMN"), nl));
+        Assert.assertFalse("null Session should not be authorized as a replica MN",
+                           authDel.isReplicaMNodeAdmin(null, sysmeta, nl));
         Assert.assertFalse("null Session should not be authorized via sysmeta subjects",
-                authDel.isAuthorizedBySysMetaSubjects(null, sysmeta, Permission.READ));
+                           authDel.isAuthorizedBySysMetaSubjects(null, sysmeta, Permission.READ));
 
     }
 
