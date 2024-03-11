@@ -97,11 +97,13 @@ public class RequestUtil {
 	public static void forwardRequest(HttpServletRequest request, HttpServletResponse response, 
 			String destinationUrl, Hashtable<String, String[]> params) throws MetacatUtilException {
 
-		destinationUrl += "?" + paramsToQuery(params);
-		
+		String paramsString = paramsToQuery(params);
+		if (paramsString != null && !paramsString.isBlank()) {
+			String separator = (destinationUrl.contains("?")) ? "&" : "?";
+			destinationUrl += separator + paramsString;
+		}
 		logMetacat.debug("Forwarding request to " + destinationUrl);
-		ServletContext servletContext = request.getSession()
-				.getServletContext();
+		ServletContext servletContext = request.getSession().getServletContext();
 
 		try {
 			servletContext.getRequestDispatcher(destinationUrl).forward(request, response);

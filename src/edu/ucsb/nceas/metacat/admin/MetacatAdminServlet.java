@@ -33,11 +33,20 @@ import edu.ucsb.nceas.utilities.GeneralPropertyException;
 public class MetacatAdminServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
+
     private static final String LOGOUT_PATH = "/admin?configureType=logout";
-    private static final String LOGIN_PATH = "/admin?configureType=login";
-    public static final String ADMIN_HOMEPAGE_PATH = "/admin?configureType=configure";
-    public static final String D1_PORTAL_OAUTH_PATH = "/portal/oauth?action=start&amp;target=";
-    public static final String D1_PORTAL_TOKEN_PATH = "/portal/token";
+    private static final String LOGIN_PRE_ORCID_PATH = "/admin?configureType=login";
+    private static final String LOGIN_ORCID_FLOW_PATH = "/admin?configureType=orcidFlow";
+
+    public static final String ACTION_PARAM = "configureType";
+    public static final String ACTION_ORCID_FLOW = "orcidFlow";
+    public static final String ACTION_LOGIN_MC = "mcLogin";
+    public static final String ACTION_LOGOUT = "logout";
+
+    public static final String PATH_ADMIN_HOMEPAGE =
+        "/admin?" + ACTION_PARAM + "=configure&processForm=false";
+    public static final String PATH_D1_PORTAL_OAUTH = "/portal/oauth?action=start&amp;target=";
+    public static final String PATH_D1_PORTAL_TOKEN = "/portal/token";
 
     private Log logMetacat = LogFactory.getLog(MetacatAdminServlet.class);
 
@@ -65,7 +74,8 @@ public class MetacatAdminServlet extends HttpServlet {
         getServletContext().setAttribute("cnBaseUrl", cnBaseUrl);
 
         String contextPath = getServletContext().getContextPath();
-        getServletContext().setAttribute("loginUri", contextPath + LOGIN_PATH);
+        getServletContext().setAttribute("loginPreOrcidUri", contextPath + LOGIN_PRE_ORCID_PATH);
+        getServletContext().setAttribute("loginOrcidFlowUri", contextPath + LOGIN_ORCID_FLOW_PATH);
         getServletContext().setAttribute("logoutUri", contextPath + LOGOUT_PATH);
     }
 
@@ -95,14 +105,14 @@ public class MetacatAdminServlet extends HttpServlet {
      */
     private void handleGetOrPost(HttpServletRequest request, HttpServletResponse response)
         throws IOException {
-        String action = request.getParameter("configureType");
-        logMetacat.info("MetacatAdminServlet.handleGetOrPost - Processing admin action: " + action);
+        String action = request.getParameter(ACTION_PARAM);
+        logMetacat.info("MetacatAdminServlet - Processing admin action: " + action);
 
         Vector<String> processingMessage = new Vector<>();
         Vector<String> processingErrors = new Vector<>();
 
         logMetacat.debug("\n****** START REQUEST PARAMETERS **********************\n"
-                             + getAllParams(request)
+                             + RequestUtil.getParameters(request)
                              + "\n****** END REQUEST PARAMETERS   **********************\n");
 
         try {
@@ -114,7 +124,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "backup";
                 logMetacat.debug(
-                    "MetacatAdminServlet.handleGetOrPost - Admin action changed to 'backup'");
+                    "MetacatAdminServlet - Admin action changed to 'backup'");
             } else if (!AuthUtil.isAuthConfigured()) {
                 // if authentication isn't configured, change the action to auth.
                 // Authentication needs to be set up before we do anything else
@@ -123,21 +133,16 @@ public class MetacatAdminServlet extends HttpServlet {
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "auth";
                 logMetacat.debug(
-                    "MetacatAdminServlet.handleGetOrPost - Admin action changed to 'auth'");
-
-            } else if (action != null && action.equals("logout")) {
-                LoginAdmin.getInstance().logOutAdminUser(request, response);
+                    "MetacatAdminServlet - Admin action changed to 'auth'");
+            } else if (ACTION_LOGOUT.equals(action)) {
+                logMetacat.debug("MetacatAdminServlet - Admin action is 'logout'");
+                LoginAdmin.getInstance().handle(request, response);
                 return;
             } else if (!AuthUtil.isUserLoggedInAsAdmin(request)) {
-                // If auth is configured, see if the user is logged in
-                // as an administrator.  If not, they need to log in before
-                // they can continue with configuration.
-                processingMessage.add("You must log in as an administrative "
-                                      + "user before you can continue with Metacat configuration.");
-                RequestUtil.setRequestMessage(request, processingMessage);
-                action = "login";
                 logMetacat.debug(
-                    "MetacatAdminServlet.handleGetOrPost - Admin action changed to 'login'");
+                    "MetacatAdminServlet - User not yet logged in (action was '" + action + "'");
+                LoginAdmin.getInstance().handle(request, response);
+                return;
             }
 
             if (action == null || action.equals("configure")) {
@@ -158,10 +163,6 @@ public class MetacatAdminServlet extends HttpServlet {
             } else if (action.equals("auth")) {
                 // configure authentication
                 AuthAdmin.getInstance().configureAuth(request, response);
-                return;
-            } else if (action.equals("login")) {
-                // process login
-                LoginAdmin.getInstance().logInAdminUser(request, response);
                 return;
             } else if (action.equals("backup")) {
                 // process login
@@ -188,7 +189,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 clearStylesheetCache(response);
                 return;
             } else {
-                String errorMessage = "MetacatAdminServlet.handleGetOrPost - "
+                String errorMessage = "MetacatAdminServlet - "
                     + "Invalid action in configuration request: " + action;
                 logMetacat.error(errorMessage);
                 processingErrors.add(errorMessage);
@@ -196,19 +197,19 @@ public class MetacatAdminServlet extends HttpServlet {
 
         } catch (GeneralPropertyException ge) {
             String errorMessage =
-                "MetacatAdminServlet.handleGetOrPost - Property problem while handling request: "
+                "MetacatAdminServlet - Property problem while handling request: "
                     + ge.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
         } catch (AdminException ae) {
             String errorMessage =
-                "MetacatAdminServlet.handleGetOrPost - Admin problem while handling request: "
+                "MetacatAdminServlet - Admin problem while handling request: "
                     + ae.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
         } catch (MetacatUtilException ue) {
             String errorMessage =
-                "MetacatAdminServlet.handleGetOrPost - Utility problem while handling request: "
+                "MetacatAdminServlet - Utility problem while handling request: "
                     + ue.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
@@ -229,10 +230,8 @@ public class MetacatAdminServlet extends HttpServlet {
                                            null);
             } catch (Exception e) {
                 //We can't display the error message on a web page. Only print them out.
-                logMetacat.error("MetacatAdminServlet.handleGetOrPost - couldn't"
-                                     + " forward the error message to the metacat configuration "
-                                     + "page since "
-                                     + e.getMessage());
+                logMetacat.error("MetacatAdminServlet - couldn't forward the error message to "
+                                     + "the metacat configuration page since " + e.getMessage());
             }
         }
     }

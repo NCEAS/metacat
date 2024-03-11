@@ -20,14 +20,12 @@
 
 package edu.ucsb.nceas.metacat.util;
 
-import java.net.http.HttpRequest;
-import java.util.Calendar;
 import java.util.Vector;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,12 +37,10 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 
-import edu.ucsb.nceas.metacat.AuthSession;
 import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 public class AuthUtil {
@@ -52,6 +48,7 @@ public class AuthUtil {
     public static Log logMetacat = LogFactory.getLog(AuthUtil.class);
     public static String DELIMITER = ":";
     public static String ESCAPECHAR = "\\";
+    private static final String AUTH_COOKIE_NAME = "jwtToken";
 
 
     private static Vector<String> administrators = null;
@@ -213,14 +210,14 @@ public class AuthUtil {
      */
     public static void logAdminUserIn(HttpServletRequest request) throws MetacatUtilException {
 
-        String userId = getAuthenticatedUserId(request);
+        String userId = getAuthenticatedAdminUserId(request);
 
         if (userId != null && !userId.isEmpty()) {
-            request.getSession().setAttribute("userId", userId);
+            RequestUtil.setUserId(request, userId);
             logMetacat.info("User successfully logged in: " + userId);
         } else {
             throw new MetacatUtilException(
-                "Problem logging user in; getAuthenticatedUserId returned: <" + userId + ">");
+                "Problem logging user in; getAuthenticatedAdminUserId returned: <" + userId + ">");
         }
     }
 
@@ -292,7 +289,7 @@ public class AuthUtil {
         throws MetacatUtilException {
 
         // Can user be authenticated via header token?
-        String userId = getAuthenticatedUserId(request);
+        String userId = getAuthenticatedAdminUserId(request);
 
         if (userId == null || userId.isEmpty()) {
             return false;
@@ -303,22 +300,48 @@ public class AuthUtil {
     }
 
     // Try to authenticate user via jwt token in header.
-    private static String getAuthenticatedUserId(HttpServletRequest request) {
+    private static String getAuthenticatedAdminUserId(HttpServletRequest request) {
 
-        String token = request.getHeader("Authorization");
-        if (token == null || token.isEmpty()) {
-            logMetacat.debug("Couldn't find a valid auth token in Authorization header");
+        HttpServletRequest requestWithHeader = getRequestWithAuthHeader(request);
+        if (requestWithHeader == null) {
             return null;
         }
-        Session adminSession = PortalCertificateManager.getInstance().getSession(request);
+
+        Session adminSession = PortalCertificateManager.getInstance().getSession(requestWithHeader);
 
         if (adminSession == null) {
-            logMetacat.debug("Header auth token found, but unable to authenticate - "
+            logMetacat.debug("Auth token found, but unable to authenticate - "
                                  + "PortalCertificateManager returned a null session");
             return null;
         }
         return adminSession.getSubject().getValue();
     }
+
+    public static HttpServletRequest getRequestWithAuthHeader(HttpServletRequest request) {
+
+        String token = request.getHeader("Authorization");
+
+        if (token != null && !token.isBlank()) {
+            logMetacat.debug("Found existing auth header with token in request");
+            return request;
+
+        } else {
+            logMetacat.debug("No auth token in header; trying cookie...");
+            Cookie authCookie = RequestUtil.getCookie(request, AUTH_COOKIE_NAME);
+            if (isCookieTokenEmpty(authCookie)) {
+                logMetacat.debug("Couldn't find an auth token in cookie, either");
+                return null;
+            } else {
+                logMetacat.debug("Found auth cookie: " + AUTH_COOKIE_NAME);
+                if (!authCookie.isHttpOnly()) {
+                    logMetacat.warn(
+                        "Client security concern: Auth cookie was NOT created as HTTP-ONLY!");
+                }
+                return new AuthRequestWrapper(request, authCookie.getValue());
+            }
+        }
+    }
+
 
     /**
      * Gets the user group names from the login session on the http request
@@ -604,4 +627,28 @@ public class AuthUtil {
         return session;
     }
 
+    private static boolean isCookieTokenEmpty(Cookie cookie) {
+        return cookie == null || cookie.getValue() == null || cookie.getValue().isBlank();
+    }
+
+
+    // Inner class to allow adding token to auth header, since HttpServletRequest is read-only
+    private static class AuthRequestWrapper extends HttpServletRequestWrapper {
+
+        private final String tokenHeaderValue;
+
+        public AuthRequestWrapper(HttpServletRequest request, final String token) {
+            super(request);
+            tokenHeaderValue = "Bearer " + token;
+        }
+
+        @Override
+        public String getHeader(String name) {
+
+            if ("Authorization".equals(name)) {
+                return tokenHeaderValue;
+            }
+            return super.getHeader(name);
+        }
+    }
 }
