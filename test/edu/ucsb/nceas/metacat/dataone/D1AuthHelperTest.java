@@ -95,8 +95,6 @@ public class D1AuthHelperTest {
 
     /**
      * Get a minimal SystemMetadata object with default values
-     *
-     * @return
      */
     private SystemMetadata getGenericSysmetaObject() throws Exception {
         SystemMetadata sysmeta =
@@ -164,6 +162,7 @@ public class D1AuthHelperTest {
 
     }
 
+    // TODO: This test should be implemented when time permitting.
     @Ignore("Not yet implemented...")
     @Test
     public void testExpandRightsHolder() {
