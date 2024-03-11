@@ -99,7 +99,7 @@ public class D1AuthHelperTest {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         
         authDel = new D1AuthHelper(null,TypeFactory.buildIdentifier("foo"),"1234NA","5678SF");
-        // Create a D1AuthHelper mock to prevent network dependencies
+        // Create a D1AuthHelper mock for tests that make network calls (ex. getCNNodeList)
         authDelMock = Mockito.spy(authDel);
         Mockito.doReturn(nl).when(authDelMock).getCNNodeList();
         
