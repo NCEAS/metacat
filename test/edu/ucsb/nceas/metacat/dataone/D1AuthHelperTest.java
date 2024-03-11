@@ -155,6 +155,23 @@ public class D1AuthHelperTest {
         
     }
 
+    /**
+     * Get a minimal SystemMetadata object with default values
+     * @return
+     */
+    private SystemMetadata getGenericSysmetaObject() throws Exception {
+        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
+            TypeFactory.buildIdentifier("dip"),
+            new ByteArrayInputStream(("tra la la la la").getBytes("UTF-8")),
+            "MD5",
+            TypeFactory.buildFormatIdentifier("text/csv"),
+            TypeFactory.buildSubject("submitterRightsHolder"));
+        AccessPolicy ap = new AccessPolicy();
+        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
+        sysmeta.setAccessPolicy(ap);
+        return sysmeta;
+    }
+
     @Ignore("Not yet implemented...")
     @Test
     public void testExpandRightsHolder() {
@@ -167,15 +184,7 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testDoUpdateAuth() throws Exception {
-        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
-            TypeFactory.buildIdentifier("dip"),
-            new ByteArrayInputStream(("tra la la la la").getBytes("UTF-8")),
-            "MD5",
-            TypeFactory.buildFormatIdentifier("text/csv"),
-            TypeFactory.buildSubject("submitterRightsHolder"));
-        AccessPolicy ap = new AccessPolicy();
-        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
-        sysmeta.setAccessPolicy(ap);
+        SystemMetadata sysmeta = getGenericSysmetaObject();
         sysmeta.setAuthoritativeMemberNode(TypeFactory.buildNodeReference(
             "urn:node:unitTestAuthMN"));
 
@@ -286,15 +295,7 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testDoGetSysmetaAuthorization() throws Exception {
-        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
-            TypeFactory.buildIdentifier("dip"),
-            new ByteArrayInputStream(("tra la la la la").getBytes("UTF-8")),
-            "MD5",
-            TypeFactory.buildFormatIdentifier("text/csv"),
-            TypeFactory.buildSubject("submitterRightsHolder"));
-        AccessPolicy ap = new AccessPolicy();
-        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
-        sysmeta.setAccessPolicy(ap);
+        SystemMetadata sysmeta = getGenericSysmetaObject();
 
         try {
             authDel.doGetSysmetaAuthorization(session, sysmeta, Permission.WRITE);
@@ -308,18 +309,10 @@ public class D1AuthHelperTest {
      * Confirm that isAuthorizedBySysMetaSubjects returns true with valid sysmeta subject
      */
     @Test
-    public void testIsAuthorizedBySysMetaSubjects() throws NoSuchAlgorithmException, NotFound, ServiceFailure, IOException {
-        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
-                TypeFactory.buildIdentifier("dip"), 
-                new ByteArrayInputStream(("tra la la la la").getBytes("UTF-8")), 
-                "MD5", 
-                TypeFactory.buildFormatIdentifier("text/csv"), 
-                TypeFactory.buildSubject("submitterRightsHolder"));
-        AccessPolicy ap = new AccessPolicy();
-        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
-        sysmeta.setAccessPolicy(ap);
-        boolean isAuthBySysmetaSubjects = authDel.isAuthorizedBySysMetaSubjects(session, sysmeta, Permission.WRITE);
+    public void testIsAuthorizedBySysMetaSubjects() throws Exception {
+        SystemMetadata sysmeta = getGenericSysmetaObject();
 
+        boolean isAuthBySysmetaSubjects = authDel.isAuthorizedBySysMetaSubjects(session, sysmeta, Permission.WRITE);
         assertTrue(isAuthBySysmetaSubjects);
     }
 
