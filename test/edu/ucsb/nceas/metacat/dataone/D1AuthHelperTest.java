@@ -161,10 +161,31 @@ public class D1AuthHelperTest {
         fail("Not yet implemented");
     }
 
-    @Ignore("Not yet implemented...")
+    /**
+     * Confirm that doUpdateAuth does not throw exception with approved 'authoritativeMemberNode'
+     * value on sysmeta object.
+     */
     @Test
-    public void testDoUpdateAuth() {
-        fail("Not yet implemented");
+    public void testDoUpdateAuth() throws Exception {
+        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
+            TypeFactory.buildIdentifier("dip"),
+            new ByteArrayInputStream(("tra la la la la").getBytes("UTF-8")),
+            "MD5",
+            TypeFactory.buildFormatIdentifier("text/csv"),
+            TypeFactory.buildSubject("submitterRightsHolder"));
+        AccessPolicy ap = new AccessPolicy();
+        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
+        sysmeta.setAccessPolicy(ap);
+        sysmeta.setAuthoritativeMemberNode(TypeFactory.buildNodeReference(
+            "urn:node:unitTestAuthMN"));
+
+        try {
+            authDelMock.doUpdateAuth(session, sysmeta, Permission.CHANGE_PERMISSION,
+                                     TypeFactory.buildNodeReference(
+                "urn:node:unitTestAuthMN"));
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
     }
 
     /**
