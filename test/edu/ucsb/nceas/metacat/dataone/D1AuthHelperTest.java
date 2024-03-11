@@ -155,7 +155,13 @@ public class D1AuthHelperTest {
         
     }
 
-    @Ignore("requires client communication...")
+    @Ignore("Not yet implemented...")
+    @Test
+    public void testExpandRightsHolder() {
+        fail("Not yet implemented");
+    }
+
+    @Ignore("Not yet implemented...")
     @Test
     public void testDoUpdateAuth() {
         fail("Not yet implemented");
@@ -239,12 +245,6 @@ public class D1AuthHelperTest {
     public void testPrepareAndThrowNotAuthorized() throws Exception {
         authDel.prepareAndThrowNotAuthorized(
             session, TypeFactory.buildIdentifier("dip"), Permission.READ, "3456dc");
-    }
-
-    @Ignore("requires client communication...")
-    @Test
-    public void testExpandRightsHolder() {
-        fail("Not yet implemented");
     }
 
     /**
@@ -361,6 +361,10 @@ public class D1AuthHelperTest {
         assertTrue(isCNAdmin);
     }
 
+    /**
+     * Test commonly used methods return false when session (otherMNSession) subject is
+     * otherMNSubject (not approved)
+     */
     @Test
     public void testIsOther() {
 
@@ -374,6 +378,9 @@ public class D1AuthHelperTest {
 
     }
 
+    /**
+     * Test commonly used methods return false when session is null
+     */
     @Test
     public void testSessionIsNull() {
 
