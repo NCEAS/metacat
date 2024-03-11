@@ -251,14 +251,13 @@ public class D1AuthHelperTest {
         fail("Not yet implemented");
     }
 
-    @Test
-    public void testPrepareAndThrowNotAuthorized() {
-        try {
-            authDel.prepareAndThrowNotAuthorized(session, TypeFactory.buildIdentifier("dip"), Permission.READ, "3456dc");
-        } catch (NotAuthorized e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+    /**
+     * Confirm that prepareAndThrowNotAuthorized throws NotAuthorized exception with invalid session
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testPrepareAndThrowNotAuthorized() throws Exception {
+        authDel.prepareAndThrowNotAuthorized(
+            session, TypeFactory.buildIdentifier("dip"), Permission.READ, "3456dc");
     }
 
     @Ignore("requires client communication...")
