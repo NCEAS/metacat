@@ -67,7 +67,7 @@ public class D1AuthHelperTest {
         
         Node authMN = new Node();
         authMN.setType(NodeType.MN);
-        authMN.setIdentifier(TypeFactory.buildNodeReference("urn:node:unitTestauthMN"));
+        authMN.setIdentifier(TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
                
         List<Subject> sublist4 = new ArrayList<>();
         sublist4.add(TypeFactory.buildSubject("authMNSubject"));
@@ -299,9 +299,30 @@ public class D1AuthHelperTest {
         authDel.isReplicaMNodeAdmin(session, sysmeta, nl);
     }
 
+    /**
+     * Confirm isAuthoritativeMNodeAdmin returns true with correct session subject
+     */
     @Test
-    public void testIsAuthoritativeMNodeAdmin() {
-        authDel.isAuthoritativeMNodeAdmin(session, TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"), nl);
+    public void testIsAuthoritativeMNodeAdmin_validMnSubject() {
+        Session sessionAuthMNSubject = new Session();
+        sessionAuthMNSubject.setSubject(TypeFactory.buildSubject("authMNSubject"));
+        boolean isAuthMNNodeAdmin = authDel.isAuthoritativeMNodeAdmin(sessionAuthMNSubject,
+                                                                      TypeFactory.buildNodeReference(
+                                                                          "urn:node:unitTestAuthMN"),
+                                                                      nl);
+        assertTrue(isAuthMNNodeAdmin);
+    }
+
+    /**
+     * Confirm isAuthoritativeMNodeAdmin returns false with incorrect session subject
+     */
+    @Test
+    public void testIsAuthoritativeMNodeAdmin_invalidMnSubject() {
+        boolean isAuthMNNodeAdmin = authDel.isAuthoritativeMNodeAdmin(session,
+                                                                      TypeFactory.buildNodeReference(
+                                                                          "urn:node:unitTestAuthMN"),
+                                                                      nl);
+        assertFalse(isAuthMNNodeAdmin);
     }
 
     /**
