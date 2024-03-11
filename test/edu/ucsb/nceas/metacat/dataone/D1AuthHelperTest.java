@@ -280,6 +280,9 @@ public class D1AuthHelperTest {
         assertTrue(isLocalCnNodeAdmin);
     }
 
+    /**
+     * Confirm that isAuthorizedBySysMetaSubjects returns true with valid sysmeta subject
+     */
     @Test
     public void testIsAuthorizedBySysMetaSubjects() throws NoSuchAlgorithmException, NotFound, ServiceFailure, IOException {
         SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
@@ -291,7 +294,9 @@ public class D1AuthHelperTest {
         AccessPolicy ap = new AccessPolicy();
         ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
         sysmeta.setAccessPolicy(ap);
-        authDel.isAuthorizedBySysMetaSubjects(session, sysmeta, Permission.WRITE);
+        boolean isAuthBySysmetaSubjects = authDel.isAuthorizedBySysMetaSubjects(session, sysmeta, Permission.WRITE);
+
+        assertTrue(isAuthBySysmetaSubjects);
     }
 
 
