@@ -294,9 +294,28 @@ public class D1AuthHelperTest {
         authDel.isAuthorizedBySysMetaSubjects(session, sysmeta, Permission.WRITE);
     }
 
+
+    /**
+     * Confirm isReplicaMNNodeAdmin returns false with incorrect session subject
+     */
     @Test
-    public void testIsReplicaMNodeAdmin() {
-        authDel.isReplicaMNodeAdmin(session, sysmeta, nl);
+    public void testIsReplicaMNodeAdmin_validMnSubject() {
+        Session sessionReplicaMNSubject = new Session();
+        sessionReplicaMNSubject.setSubject(TypeFactory.buildSubject("replMNSubject"));
+        boolean isReplicaMNNodeAdmin =
+            authDel.isReplicaMNodeAdmin(sessionReplicaMNSubject, sysmeta, nl);
+
+        assertTrue(isReplicaMNNodeAdmin);
+    }
+
+    /**
+     * Confirm isReplicaMNNodeAdmin returns false with incorrect session subject
+     */
+    @Test
+    public void testIsReplicaMNodeAdmin_invalidMnSubject() {
+        boolean isReplicaMNNodeAdmin = authDel.isReplicaMNodeAdmin(session, sysmeta, nl);
+
+        assertFalse(isReplicaMNNodeAdmin);
     }
 
     /**
