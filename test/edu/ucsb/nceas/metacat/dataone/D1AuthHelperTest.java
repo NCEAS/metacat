@@ -173,10 +173,31 @@ public class D1AuthHelperTest {
         fail("Not yet implemented");
     }
 
-    @Ignore("requires client communication...")
+
+    /**
+     * Confirm that 'doCNOnlyAuthorization' does not throw exception with good subject
+     */
     @Test
     public void testDoCNOnlyAuthorization() {
-        fail("Not yet implemented");
+        Session sessionCnAdmin = new Session();
+        sessionCnAdmin.setSubject(TypeFactory.buildSubject("cn1Subject"));
+
+        try {
+            authDelMock.doCNOnlyAuthorization(sessionCnAdmin);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    /**
+     * Confirm that 'doCNOnlyAuthorization' throws exception with bad subject
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoCNOnlyAuthorization_notApprovedSubject() throws Exception {
+        Session sessionCnAdmin = new Session();
+        sessionCnAdmin.setSubject(TypeFactory.buildSubject("notAFriend"));
+
+        authDelMock.doCNOnlyAuthorization(sessionCnAdmin);
     }
 
     /**
