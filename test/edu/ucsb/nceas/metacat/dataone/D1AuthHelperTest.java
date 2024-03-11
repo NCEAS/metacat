@@ -245,12 +245,6 @@ public class D1AuthHelperTest {
         authDelMock.doAdminAuthorization(session);
     }
 
-    @Ignore("requires client communication...")
-    @Test
-    public void testDoGetSysmetaAuthorization() {
-        fail("Not yet implemented");
-    }
-
     /**
      * Confirm that prepareAndThrowNotAuthorized throws NotAuthorized exception with invalid session
      */
@@ -277,6 +271,29 @@ public class D1AuthHelperTest {
 
         boolean isLocalCnNodeAdmin = authDel.isLocalNodeAdmin(sessionLocalNodeAdmin, null);
         assertTrue(isLocalCnNodeAdmin);
+    }
+
+    /**
+     * Confirm doGetSysmetaAuthorization does not throw exception with authorized subject
+     */
+    @Test
+    public void testDoGetSysmetaAuthorization() throws Exception {
+        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
+            TypeFactory.buildIdentifier("dip"),
+            new ByteArrayInputStream(("tra la la la la").getBytes("UTF-8")),
+            "MD5",
+            TypeFactory.buildFormatIdentifier("text/csv"),
+            TypeFactory.buildSubject("submitterRightsHolder"));
+        AccessPolicy ap = new AccessPolicy();
+        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
+        sysmeta.setAccessPolicy(ap);
+
+        try {
+            authDel.doGetSysmetaAuthorization(session, sysmeta, Permission.WRITE);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+
     }
 
     /**
