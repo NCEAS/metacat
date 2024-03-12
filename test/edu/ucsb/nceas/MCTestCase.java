@@ -42,27 +42,27 @@ public class MCTestCase
     extends TestCase {
 
     private static boolean printDebug = false;
-    protected static String EML2_0_0 = "EML2_0_0";
-    protected static String EML2_0_1 = "EML2_0_1";
-    protected static String EML2_1_0 = "EML2_1_0";
-    protected static String EML2_1_1 = "EML2_1_1";
+    public static final String EML2_0_0 = "EML2_0_0";
+    public static final String EML2_0_1 = "EML2_0_1";
+    public static final String EML2_1_0 = "EML2_1_0";
+    public static final String EML2_1_1 = "EML2_1_1";
     protected static final String AUTHFILECLASSNAME = "edu.ucsb.nceas.metacat.authentication.AuthFile";
     private static final String KNBUSERGOURP = "cn=knb-usr,o=NCEAS,dc=ecoinformatics,dc=org";
 
-    protected boolean SUCCESS = true;
-    protected boolean FAILURE = false;
+    public static final boolean SUCCESS = true;
+    public static final boolean FAILURE = false;
 
     protected static final String ALLOWFIRST = "allowFirst";
     protected static final String DENYFIRST = "denyFirst";
 
-    protected String testdatadir = "test/clienttestfiles/";
-    protected String prefix = "test";
+    protected static String testdatadir = "test/clienttestfiles/";
+    protected static String prefix = "test";
     protected String testdocument = "";
 
     protected static HttpClient httpClient = null;
 
     protected static boolean metacatConnectionNeeded = false;
-    protected Metacat m;
+    protected static Metacat m;
 
     protected static String metacatUrl;
     protected static String username;
@@ -143,47 +143,47 @@ public class MCTestCase
     }
 
     // header blocks
-    protected String testEml_200_Header = "<?xml version=\"1.0\"?><eml:eml"
+    protected static String testEml_200_Header = "<?xml version=\"1.0\"?><eml:eml"
         + " xmlns:eml=\"eml://ecoinformatics.org/eml-2.0.0\""
         + " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
         + " packageId=\"eml.1.1\" system=\"knb\""
         + " xsi:schemaLocation=\"eml://ecoinformatics.org/eml-2.0.0 eml.xsd\""
         + " scope=\"system\">";
 
-    protected String testEml_201_Header = "<?xml version=\"1.0\"?><eml:eml"
+    protected static String testEml_201_Header = "<?xml version=\"1.0\"?><eml:eml"
         + " xmlns:eml=\"eml://ecoinformatics.org/eml-2.0.1\""
         + " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
         + " packageId=\"eml.1.1\" system=\"knb\""
         + " xsi:schemaLocation=\"eml://ecoinformatics.org/eml-2.0.1 eml.xsd\""
         + " scope=\"system\">";
 
-    protected String testEml_210_Header = "<?xml version=\"1.0\"?><eml:eml"
+    protected static String testEml_210_Header = "<?xml version=\"1.0\"?><eml:eml"
             + " xmlns:eml=\"eml://ecoinformatics.org/eml-2.1.0\""
             + " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
             + " packageId=\"eml.1.1\" system=\"knb\""
             + " xsi:schemaLocation=\"eml://ecoinformatics.org/eml-2.1.0 eml.xsd\""
             + " scope=\"system\">";
 
-    protected String testEml_211_Header = "<?xml version=\"1.0\"?><eml:eml"
+    protected static String testEml_211_Header = "<?xml version=\"1.0\"?><eml:eml"
         + " xmlns:eml=\"eml://ecoinformatics.org/eml-2.1.1\""
         + " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
         + " packageId=\"eml.1.1\" system=\"knb\""
         + " xsi:schemaLocation=\"eml://ecoinformatics.org/eml-2.1.1 eml.xsd\""
         + " scope=\"system\">";
 
-    protected String testEmlCreatorBlock = "<creator scope=\"document\">                                       "
+    protected static String testEmlCreatorBlock = "<creator scope=\"document\">                                       "
             + " <individualName>                                                  "
             + "    <surName>Smith</surName>                                       "
             + " </individualName>                                                 "
             + "</creator>                                                         ";
 
-    protected String testEmlContactBlock = "<contact scope=\"document\">                                       "
+    protected static String testEmlContactBlock = "<contact scope=\"document\">                                       "
             + " <individualName>                                                  "
             + "    <surName>Jackson</surName>                                     "
             + " </individualName>                                                 "
             + "</contact>                                                         ";
 
-    protected String testEmlInlineBlock1 = "<inline>                                                           "
+    protected static String testEmlInlineBlock1 = "<inline>                                                           "
             + "  <admin>                                                          "
             + "    <contact>                                                      "
             + "      <name>Operator</name>                                        "
@@ -192,7 +192,7 @@ public class MCTestCase
             + "  </admin>                                                         "
             + "</inline>                                                          ";
 
-    protected String testEmlInlineBlock2 = "<inline>                                                           "
+    protected static String testEmlInlineBlock2 = "<inline>                                                           "
             + "  <instrument>                                                     "
             + "    <instName>LCQ</instName>                                       "
             + "    <source type=\"ESI\"></source>                                 "
@@ -205,7 +205,7 @@ public class MCTestCase
      * title of documents. This function is for eml-2.0.1+ only. For
      * other eml versions, this function might have to be modified.
      */
-    protected String getTestEmlQuery(String titlePart, String emlVersion) {
+    public static String getTestEmlQuery(String titlePart, String emlVersion) {
 
         String docType;
         if (emlVersion.equals(EML2_0_1)) {
@@ -239,7 +239,7 @@ public class MCTestCase
      * @param emlVersion the EML version - e.g. MCTestCase.EML2_1_1
      * @param result are we expecting SUCCESS or FAILURE
      */
-    protected void queryDocWhichHasTitle(String titlePart, String testTitle,
+    public static void queryDocWhichHasTitle(String titlePart, String testTitle,
                                          String emlVersion, boolean result) {
         try {
             String sQuery = getTestEmlQuery(titlePart, emlVersion);
@@ -270,7 +270,7 @@ public class MCTestCase
     /*
      * Returns an access block base on params passed and the default perm order - allow first
      */
-    protected String getAccessBlock(String principal, boolean grantAccess, boolean read,
+    public static String getAccessBlock(String principal, boolean grantAccess, boolean read,
             boolean write, boolean changePermission, boolean all) {
         return getAccessBlock(principal, grantAccess, read, write, changePermission, all,
                 ALLOWFIRST);
@@ -279,7 +279,7 @@ public class MCTestCase
     /**
      * This function returns an access block based on the params passed
      */
-    protected String getAccessBlock(String principal, boolean grantAccess, boolean read,
+    public static String getAccessBlock(String principal, boolean grantAccess, boolean read,
             boolean write, boolean changePermission, boolean all, String permOrder) {
         String accessBlock = "<access "
                 + "authSystem=\"ldap://ldap.ecoinformatics.org:389/dc=ecoinformatics,dc=org\""
@@ -296,7 +296,7 @@ public class MCTestCase
     /*
      * Gets eml access block base on given acccess rules and perm order
      */
-    protected String getAccessBlock(Vector<String> accessRules, String permOrder) {
+    public static String getAccessBlock(Vector<String> accessRules, String permOrder) {
         String accessBlock = "<access "
                 + "authSystem=\"ldap://ldap.ecoinformatics.org:389/dc=ecoinformatics,dc=org\""
                 + " order=\"" + permOrder + "\"" + " scope=\"document\"" + ">";
@@ -316,7 +316,7 @@ public class MCTestCase
      * Generates an access rule for given parameter. Note this xml portion
      * doesn't include <access></access>
      */
-    protected String generateOneAccessRule(String principal, boolean grantAccess,
+    public static String generateOneAccessRule(String principal, boolean grantAccess,
             boolean read, boolean write, boolean changePermission, boolean all) {
         String accessBlock = "";
 
@@ -354,7 +354,7 @@ public class MCTestCase
     /**
      * This function returns a valid eml document with public read access
      */
-    protected String getTestEmlDoc(String title, String emlVersion) {
+    public static String getTestEmlDoc(String title, String emlVersion) {
 
         String testDocument = "";
 
@@ -393,7 +393,7 @@ public class MCTestCase
     /**
      * This function returns a valid eml document with no access rules
      */
-    protected String getTestEmlDoc(String title, String emlVersion, String inlineData1,
+    public static String getTestEmlDoc(String title, String emlVersion, String inlineData1,
             String inlineData2, String onlineUrl1, String onlineUrl2,
             String docAccessBlock, String inlineAccessBlock1, String inlineAccessBlock2,
             String onlineAccessBlock1, String onlineAccessBlock2) {
@@ -496,7 +496,7 @@ public class MCTestCase
     /**
      *
      */
-    protected String getTestDocFromFile(String filePath) throws IOException{
+    public static String getTestDocFromFile(String filePath) throws IOException{
         StringBuffer output = new StringBuffer();
 
         FileReader fileReader = new FileReader(new File(filePath));
@@ -634,7 +634,7 @@ public class MCTestCase
      *
      * @return a String docid based on the current date and time
      */
-    public String generateDocumentId() {
+    public static String generateDocumentId() {
         try {
             Thread.sleep(5);
         } catch (InterruptedException ie) {
