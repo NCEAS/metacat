@@ -306,13 +306,7 @@ public class MetacatHandler {
                 DetailedFileInputStream detailedStream = (DetailedFileInputStream) object;
                 if (detailedStream.getExpectedChecksum() == null) {
                     dataStream = new ByteArrayInputStream(metaBytes);
-                    // Metacat need to delete the temp file in the input stream; otherwise
-                    // it will accumulate a lot temp files
-                    if (detailedStream.getFile() != null) {
-                        StreamingMultipartRequestResolver.deleteTempFile(detailedStream.getFile());
-                    }
-                    IOUtils.closeQuietly(detailedStream);
-                    IOUtils.close(object);
+                    IOUtils.closeQuietly(object);
                     logMetacat.info("The DetailedInputStream doesn't have the checksum."
                               + "So Metacat will use ByteArrayInputStream as the source for "
                               + "saving to disk because of its higher performance.");
