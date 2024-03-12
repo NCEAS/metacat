@@ -32,6 +32,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.apache.commons.io.IOUtils;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -95,10 +96,10 @@ public class DryadTest
 			ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
 			formatId.setValue("http://datadryad.org/profile/v3.1");
 			sysmeta.setFormatId(formatId);
-			sysmeta.setSize(BigInteger.valueOf(IOUtils.toByteArray(documentContents).length));
+			sysmeta.setSize(BigInteger.valueOf(documentContents.getBytes().length));
 			MNodeService.getInstance(request).create(session, pid, IOUtils.toInputStream(documentContents, "UTF-8"), sysmeta);
 			InputStream results = MNodeService.getInstance(request).get(session, pid);
-			String resultString = IOUtils.toString(results);
+			String resultString = IOUtils.toString(results, "UTF-8");
 			assertEquals(documentContents, resultString);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -121,13 +122,11 @@ public class DryadTest
 			ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
 			formatId.setValue("http://datadryad.org/profile/v3.1");
 			sysmeta.setFormatId(formatId);
-			sysmeta.setSize(BigInteger.valueOf(IOUtils.toByteArray(documentContents).length));
+			sysmeta.setSize(BigInteger.valueOf(documentContents.getBytes().length));
 			try {
 				MNodeService.getInstance(request).create(session, pid, IOUtils.toInputStream(documentContents, "UTF-8"), sysmeta);
 			} catch (Exception expectedException) {
-
-				// expected exception
-				assertTrue(expectedException instanceof ServiceFailure);
+			    assertTrue(expectedException instanceof InvalidRequest);
 				return;
 			}
 			fail("Should not allow inserting invalid Dryad content");
