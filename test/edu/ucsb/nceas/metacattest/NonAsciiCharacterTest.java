@@ -37,6 +37,7 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.ecoinformatics.eml.EMLParserException;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -201,8 +202,9 @@ public class NonAsciiCharacterTest extends D1NodeServiceTest {
             sysmeta.setFormatId(eml_2_0_1_format);
             Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("It shouldn't get there since the uploaded object is invalid");
-        } catch (ServiceFailure e) {
-            assertTrue(e.getMessage().contains(newdocid));
+        } catch (Exception e) {
+            assertTrue("The exception should be EMLParserException",
+                    e instanceof EMLParserException);
             assertTrue(e.getMessage().contains("'&'"));
         }
     }
@@ -224,8 +226,9 @@ public class NonAsciiCharacterTest extends D1NodeServiceTest {
             sysmeta.setFormatId(eml_2_1_0_format);
             Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("It shouldn't get there since the uploaded object is invalid");
-        } catch (ServiceFailure e) {
-            assertTrue(e.getMessage().contains(newdocid));
+        } catch (Exception e) {
+            assertTrue("The exception should be EMLParserException",
+                            e instanceof EMLParserException);
             assertTrue(e.getMessage().contains("'&'"));
         }
     }
@@ -445,7 +448,7 @@ public class NonAsciiCharacterTest extends D1NodeServiceTest {
      * character (¬µ).
      */
     public void nonLatinUnicodeCharacter210Test() {
-    	debug("\nRunning: nonLatinUnicodeCharacter210Test");
+        debug("\nRunning: nonLatinUnicodeCharacter210Test");
         try {
             String newdocid = generateDocid();
             String testTitle = "Checking characters like µ in doc: " + newdocid;
