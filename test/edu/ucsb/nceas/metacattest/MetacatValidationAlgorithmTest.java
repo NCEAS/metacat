@@ -37,6 +37,7 @@ import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
 import org.apache.commons.io.FileUtils;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -133,9 +134,10 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
             object = new FileInputStream(new File("./test/jones.204.22.xml.invalid"));
             mnCreate(session, guid, object, sysmeta);
             fail("We shouldn't get here since the create should fail.");
-        } catch (ServiceFailure e) {
-            assertTrue(e.getMessage().contains("title1"));
-            assertTrue(e.getMessage().contains(guid.getValue()));
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest", e instanceof InvalidRequest);
+            assertTrue("The error message should have 'title1' ",
+                                                          e.getMessage().contains("title1"));
         }
     }
     
@@ -284,9 +286,10 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
             sysmeta.setFormatId(formatId);
             Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
-        } catch (ServiceFailure e) {
-            assertTrue(e.getMessage().contains("<error>"));
-            assertTrue(e.getMessage().contains("access1"));
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest", e instanceof InvalidRequest);
+            assertTrue("The error message should have 'access1' ",
+                                                          e.getMessage().contains("access1"));
         } 
     }
     
@@ -344,10 +347,11 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
             sysmeta.setFormatId(formatId);
             Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
-        } catch (ServiceFailure e) {
-            assertTrue(e.getMessage().contains("<error>"));
-            assertTrue(e.getMessage().contains("access1"));
-        } 
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest", e instanceof InvalidRequest);
+            assertTrue("The error message should have 'access1' ",
+                                                          e.getMessage().contains("access1"));
+        }
     }
     
     /**
@@ -402,9 +406,10 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
             sysmeta.setFormatId(formatId);
             Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
-        } catch (ServiceFailure e) {
-            assertTrue(e.getMessage().contains("bad"));
-            assertTrue(e.getMessage().contains("<error>"));
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest", e instanceof InvalidRequest);
+            assertTrue("The error message should have 'bad' ",
+                                                          e.getMessage().contains("bad"));
         } 
         
     }
@@ -498,9 +503,10 @@ public class MetacatValidationAlgorithmTest extends D1NodeServiceTest {
             sysmeta.setFormatId(formatId);
             Identifier pid = mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
-        } catch (ServiceFailure e) {
-            assertTrue(e.getMessage().contains("metadata1"));
-            assertTrue(e.getMessage().contains("<error>"));
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest", e instanceof InvalidRequest);
+            assertTrue("The error message should have 'metadata1' ",
+                                                          e.getMessage().contains("metadata1"));
         } 
     }
 
