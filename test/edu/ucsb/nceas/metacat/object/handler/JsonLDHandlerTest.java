@@ -17,15 +17,18 @@ import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Before;
 import org.junit.Test;
 
+import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -49,6 +52,8 @@ public class JsonLDHandlerTest {
     private static final String CHECKSUM_JSON_FILE = "847e1655bdc98082804698dbbaf85c35";
     public static final String INVALID_JSON_LD_FILE_PATH = "test/invalid-json-ld.json";
     private static final String CHECKSUM_INVALID_JSON_FILE = "ede435691fa0c68e9a3c23697ffc92d4";
+    private String user = "foo-jsonld";
+    private Subject subject;
 
     /**
      * Set up the test fixtures
@@ -56,6 +61,9 @@ public class JsonLDHandlerTest {
      */
     @Before
     public void setUp() throws PropertyNotFoundException {
+        subject = new Subject();
+        subject.setValue(user);
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         metadataStoragePath = PropertyService.getProperty("application.documentfilepath");
     }
 
@@ -85,7 +93,6 @@ public class JsonLDHandlerTest {
      */
     @Test
     public void testSave() throws Exception {
-        String user = "foo-jsonld";
         Checksum expectedChecksum = new Checksum();
         expectedChecksum.setAlgorithm("MD5");
         expectedChecksum.setValue(CHECKSUM_JSON_FILE);
@@ -106,11 +113,12 @@ public class JsonLDHandlerTest {
         Identifier pid = new Identifier();
         pid.setValue("test-id1-" + System.currentTimeMillis());
         assertTrue(temp1.exists());
-        sysmeta.setIdentifier(pid);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
-        sysmeta.setChecksum(expectedChecksum);
+        data = new DetailedFileInputStream(temp1, checksum);
         String localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                                        NonXMLMetadataHandlers.JSON_LD, data, null, user);
+
         assertFalse(temp1.exists());
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
@@ -131,10 +139,9 @@ public class JsonLDHandlerTest {
         pid = new Identifier();
         pid.setValue("test-id2-" + System.currentTimeMillis());
         assertTrue(temp2.exists());
-        sysmeta = new SystemMetadata();
-        sysmeta.setIdentifier(pid);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
-        sysmeta.setChecksum(expectedChecksum);
+        data = new DetailedFileInputStream(temp2, expectedChecksum);
         localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                 NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(!temp2.exists());
@@ -163,10 +170,9 @@ public class JsonLDHandlerTest {
         pid.setValue("test-id3-" + System.currentTimeMillis());
         assertTrue(temp3.exists());
         try {
-            sysmeta = new SystemMetadata();
-            sysmeta.setIdentifier(pid);
+            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setFormatId(format);
-            sysmeta.setChecksum(expectedChecksumForInvalidJson);
+            data = new DetailedFileInputStream(temp3, checksum);
             localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                               NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
@@ -188,10 +194,9 @@ public class JsonLDHandlerTest {
         pid.setValue("test-id4-" + System.currentTimeMillis());
         assertTrue(temp4.exists());
         try {
-            sysmeta = new SystemMetadata();
-            sysmeta.setIdentifier(pid);
+            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setFormatId(format);
-            sysmeta.setChecksum(expectedChecksumForInvalidJson);
+            data = new DetailedFileInputStream(temp4, expectedChecksumForInvalidJson);
             localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
@@ -216,17 +221,16 @@ public class JsonLDHandlerTest {
             checksum = new Checksum();
             checksum.setAlgorithm("MD5");
             checksum.setValue(CHECKSUM_INVALID_JSON_FILE);
-            sysmeta = new SystemMetadata();
-            sysmeta.setIdentifier(pid);
+            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setFormatId(format);
-            sysmeta.setChecksum(checksum);
+            data = new DetailedFileInputStream(temp5, checksum);
             localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidSystemMetadata);
         }
-        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
+        assertFalse(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         temp5.delete();
     }
 
@@ -236,7 +240,6 @@ public class JsonLDHandlerTest {
      */
     @Test
     public void testSaveByteArray() throws Exception {
-        String user = "foo-jsonld2";
         ObjectFormatIdentifier format = new ObjectFormatIdentifier();
         format.setValue(NonXMLMetadataHandlers.JSON_LD);
         Checksum expectedChecksum = new Checksum();
@@ -253,10 +256,9 @@ public class JsonLDHandlerTest {
         MetacatHandler handler = new MetacatHandler();
         Identifier pid = new Identifier();
         pid.setValue("testbye-id1-" + System.currentTimeMillis());
-        SystemMetadata sysmeta = new SystemMetadata();
-        sysmeta.setIdentifier(pid);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
-        sysmeta.setChecksum(expectedChecksum);
+        data = new ByteArrayInputStream(content.getBytes());
         String localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
@@ -272,10 +274,11 @@ public class JsonLDHandlerTest {
         pid = new Identifier();
         pid.setValue("testbye-id2-" + System.currentTimeMillis());
         try {
-            sysmeta = new SystemMetadata();
+            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
+            data = new ByteArrayInputStream(content.getBytes());
             localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
@@ -290,10 +293,11 @@ public class JsonLDHandlerTest {
         pid = new Identifier();
         pid.setValue("testbye-id3-" + System.currentTimeMillis());
         try {
-            sysmeta = new SystemMetadata();
+            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
+            data = new ByteArrayInputStream(content.getBytes());
             localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
@@ -309,7 +313,6 @@ public class JsonLDHandlerTest {
      */
     @Test
     public void testSaveFile() throws Exception {
-        String user = "foo-jsonld3";
         ObjectFormatIdentifier format = new ObjectFormatIdentifier();
         format.setValue(NonXMLMetadataHandlers.JSON_LD);
         Checksum expectedChecksum = new Checksum();
@@ -325,10 +328,11 @@ public class JsonLDHandlerTest {
         MetacatHandler handler = new MetacatHandler();
         Identifier pid = new Identifier();
         pid.setValue("testSaveFile-id1-" + System.currentTimeMillis());
-        SystemMetadata sysmeta = new SystemMetadata();
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setIdentifier(pid);
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
+        data = new FileInputStream(new File(JSON_LD_FILE_PATH));
         String localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
@@ -345,10 +349,11 @@ public class JsonLDHandlerTest {
         pid = new Identifier();
         pid.setValue("testSaveFile-id2-" + System.currentTimeMillis());
         try {
-            sysmeta = new SystemMetadata();
+            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
+            data = new FileInputStream(new File(JSON_LD_FILE_PATH));
             localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                         NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
@@ -363,10 +368,11 @@ public class JsonLDHandlerTest {
         pid.setValue("test-saveFile-id3-" + System.currentTimeMillis());
         data = new FileInputStream(new File(INVALID_JSON_LD_FILE_PATH));
         try {
-            sysmeta = new SystemMetadata();
+            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setIdentifier(pid);
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
+            data = new FileInputStream(new File(INVALID_JSON_LD_FILE_PATH));
             localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
