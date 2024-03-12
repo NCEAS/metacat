@@ -41,7 +41,7 @@ public class MetacatValidationAlgorithmTest {
             + " xsi:schemaLocation=\"http://www.w3schools.com https://www.loc.gov/ead/ead.xsd\"> "
             + "<to>Tove</to><from>Jani</from><heading>Reminder</heading><body>"
             + "Don't forget me this weekend!</body></note:note>";
-    
+
     private static final String UNREGISTERED_NONAMESPACE_SCHEMA_XML_INSTANCE =
                                     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> "
                         + "<metadata xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
@@ -68,7 +68,6 @@ public class MetacatValidationAlgorithmTest {
         request = d1NodeTest.getServletRequest();
         session = d1NodeTest.getTestSession();
     }
-    
 
     /** 
      * Insert a test document which's dtd was registered, returning the docid that was used. 
@@ -88,7 +87,7 @@ public class MetacatValidationAlgorithmTest {
                         MNodeService.getInstance(request).getSystemMetadata(session, guid);
         assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
     }
-    
+
     /** 
      * Insert a test document which's dtd was registered. But the xml doesn't follow the dta and returning an error. 
      */
@@ -98,7 +97,8 @@ public class MetacatValidationAlgorithmTest {
         try {
             InputStream object = new FileInputStream(new File("./test/jones.204.22.xml.invalid"));
             guid.setValue("testRegisteredDTDInvalidDucoment." + System.currentTimeMillis());
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             object.close();
             sysmeta.setFormatId(D1NodeServiceTest.eml_dataset_beta_6_format);
             object = new FileInputStream(new File("./test/jones.204.22.xml.invalid"));
@@ -121,7 +121,8 @@ public class MetacatValidationAlgorithmTest {
         Identifier guid = new Identifier();
         guid.setValue("testUnRegisteredDTDDucoment." + System.currentTimeMillis());
         InputStream object = new ByteArrayInputStream(xml.getBytes());
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("-//ecoinformatics.org//foo");
         sysmeta.setFormatId(formatId);
@@ -130,7 +131,7 @@ public class MetacatValidationAlgorithmTest {
                 MNodeService.getInstance(request).getSystemMetadata(session, pid);
         assertTrue(!D1NodeService.isScienceMetadata(sysmetaFromServer));
     }
-    
+
     /** 
      * Insert test documents which don't need to be validated: with embeded dtd or
      * no declaration at all. Dataone will treat them as the data files
@@ -139,10 +140,12 @@ public class MetacatValidationAlgorithmTest {
     public void testValidationUnneededDucoment() throws Exception {
         Identifier guid = new Identifier();
         //with embedded dtd
-        String xml = FileUtils.readFileToString(new File("./test/doc_with_embedded_dtd.xml"), "UTF-8");
+        String xml =
+                  FileUtils.readFileToString(new File("./test/doc_with_embedded_dtd.xml"), "UTF-8");
         guid.setValue("testValidationUnneededDucoment1." + System.currentTimeMillis());
         InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("test");
         sysmeta.setFormatId(formatId);
@@ -150,7 +153,7 @@ public class MetacatValidationAlgorithmTest {
         SystemMetadata sysmetaFromServer = 
                 MNodeService.getInstance(request).getSystemMetadata(session, guid);
         assertTrue(!D1NodeService.isScienceMetadata(sysmetaFromServer));
-        
+
         //without dtd and scheam declaration
         xml = FileUtils.readFileToString(new File("./test/doc_without_declaration.xml"), "UTF-8");
         guid.setValue("testValidationUnneededDucoment2." + System.currentTimeMillis());
@@ -173,8 +176,10 @@ public class MetacatValidationAlgorithmTest {
         try {
             Identifier guid = new Identifier();
             guid.setValue("testUnregisteredNamespaceSchema1." + System.currentTimeMillis());
-            InputStream object = new ByteArrayInputStream(UNREGISTERED_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            InputStream object =
+                       new ByteArrayInputStream(UNREGISTERED_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             formatId.setValue("http://www.w3schools.com");
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
@@ -190,8 +195,10 @@ public class MetacatValidationAlgorithmTest {
             Session session = d1NodeTest.getCNSession();
             Identifier guid = new Identifier();
             guid.setValue("testUnregisteredNamespaceSchema2." + System.currentTimeMillis());
-            InputStream object = new ByteArrayInputStream(UNREGISTERED_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            InputStream object =
+                    new ByteArrayInputStream(UNREGISTERED_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             formatId.setValue("http://www.w3schools.com");
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.cnCreate(session, guid, object, sysmeta);
@@ -220,7 +227,8 @@ public class MetacatValidationAlgorithmTest {
             Identifier guid = new Identifier();
             guid.setValue("testEML20111." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(eml200.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
@@ -237,7 +245,8 @@ public class MetacatValidationAlgorithmTest {
             Identifier guid = new Identifier();
             guid.setValue("testEML2012." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(eml200.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.cnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
@@ -250,12 +259,12 @@ public class MetacatValidationAlgorithmTest {
 
         //insert a invalid eml 201
         String invalidEml2 = eml200.replaceAll("access", "access1");
-        //System.out.println(""+invalidEml2);
         try {
             Identifier guid = new Identifier();
             guid.setValue("testEML201234." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(invalidEml2.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
@@ -282,7 +291,8 @@ public class MetacatValidationAlgorithmTest {
             Identifier guid = new Identifier();
             guid.setValue("testEML2111." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(eml211.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
@@ -299,7 +309,8 @@ public class MetacatValidationAlgorithmTest {
             Identifier guid = new Identifier();
             guid.setValue("testEML2112." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(eml211.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session1.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session1.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.cnCreate(session1, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
@@ -317,7 +328,8 @@ public class MetacatValidationAlgorithmTest {
             Identifier guid = new Identifier();
             guid.setValue("testEML21134." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(invalidEml2.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                    D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
@@ -334,7 +346,8 @@ public class MetacatValidationAlgorithmTest {
      */
     @Test
     public void testRegisteredNamespaceOrFormatIdSchema() throws Exception {
-        String xml = FileUtils.readFileToString(new File("./test/dryad-metadata-profile-sample.xml"), "UTF-8");
+        String xml =
+          FileUtils.readFileToString(new File("./test/dryad-metadata-profile-sample.xml"), "UTF-8");
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("http://datadryad.org/profile/v3.1");
         //DaaONEAPI - MN.create
@@ -342,7 +355,8 @@ public class MetacatValidationAlgorithmTest {
             Identifier guid = new Identifier();
             guid.setValue("testRegisteredNamespaceOrFormatIdSchema1." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
@@ -359,7 +373,8 @@ public class MetacatValidationAlgorithmTest {
             Identifier guid = new Identifier();
             guid.setValue("testRegisteredNamespaceOrFormatIdSchema23." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.cnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
@@ -371,13 +386,14 @@ public class MetacatValidationAlgorithmTest {
         }
 
         //insert a invalid dryad
-        String invalidXml = FileUtils.readFileToString(new File("./test/dryad-metadata-profile-invalid.xml"), "UTF-8");
-        //System.out.println(""+invalidEml2);
+        String invalidXml =
+          FileUtils.readFileToString(new File("./test/dryad-metadata-profile-invalid.xml"), "UTF-8");
         try {
             Identifier guid = new Identifier();
             guid.setValue("testRegisteredNamespaceOrFormatIdSchema5." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(invalidXml.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                          D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
@@ -402,8 +418,11 @@ public class MetacatValidationAlgorithmTest {
         try {
             Identifier guid = new Identifier();
             guid.setValue("testUnregisteredNoNamespaceSchema1." + System.currentTimeMillis());
-            InputStream object = new ByteArrayInputStream(UNREGISTERED_NONAMESPACE_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            InputStream object =
+                               new ByteArrayInputStream(UNREGISTERED_NONAMESPACE_SCHEMA_XML_INSTANCE
+                                                   .getBytes("UTF-8"));
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             SystemMetadata sysmetaFromServer = 
@@ -418,8 +437,11 @@ public class MetacatValidationAlgorithmTest {
             Session session = d1NodeTest.getCNSession();
             Identifier guid = new Identifier();
             guid.setValue("testUnregisteredNoNamespaceSchema." + System.currentTimeMillis());
-            InputStream object = new ByteArrayInputStream(UNREGISTERED_NONAMESPACE_SCHEMA_XML_INSTANCE.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            InputStream object =
+                            new ByteArrayInputStream(UNREGISTERED_NONAMESPACE_SCHEMA_XML_INSTANCE
+                                                .getBytes("UTF-8"));
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.cnCreate(session, guid, object, sysmeta);
             SystemMetadata sysmetaFromServer = 
@@ -445,7 +467,8 @@ public class MetacatValidationAlgorithmTest {
             Identifier guid = new Identifier();
             guid.setValue("testRegisteredNoNamespaceSchema1." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
@@ -454,15 +477,16 @@ public class MetacatValidationAlgorithmTest {
             assertTrue(D1NodeService.isScienceMetadata(sysmetaFromServer));
         } catch (Exception e) {
             fail("The test failed since "+e.getMessage());
-        } 
-        
+        }
+
         //DaaONEAPI - CN.create
         try {
             Session session = d1NodeTest.getCNSession();
             Identifier guid = new Identifier();
             guid.setValue("testRegisteredNoNamespaceSchema2." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(xml.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.cnCreate(session, guid, object, sysmeta);
             assertTrue(pid.getValue().equals(guid.getValue()));
@@ -472,15 +496,15 @@ public class MetacatValidationAlgorithmTest {
         } catch(Exception e) {
             fail("The test failed since "+e.getMessage());
         }
-        
+
         //insert a invalid fgdc
         String invalidXml = xml.replace("metadata", "metadata1");
-        //System.out.println(""+invalidEml2);
         try {
             Identifier guid = new Identifier();
             guid.setValue("testRegisteredNoNamespaceSchema3." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream(invalidXml.getBytes("UTF-8"));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(formatId);
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             fail("We can't get here since the document is invalid.");
