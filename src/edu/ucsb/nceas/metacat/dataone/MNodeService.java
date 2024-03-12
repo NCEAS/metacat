@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat.dataone;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
+import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
@@ -642,91 +643,38 @@ public class MNodeService extends D1NodeService
                     + "old pid " + pid.getValue() + " and the new pid " + newPid.getValue() + " is "
                     + (end2 - end) + " milli seconds.");
 
-
-            isScienceMetadata = isScienceMetadata(sysmeta);
-
-            // do we have XML metadata or a data object?
-            if (isScienceMetadata) {
-
-                // update the science metadata XML document
-                // TODO: handle non-XML metadata/data documents (like netCDF)
-                // TODO: don't put objects into memory using stream to string
-                //String objectAsXML = "";
-                try {
-                    NonXMLMetadataHandler handler =
-                        NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
-                    if (handler != null) {
-                        //non-xml metadata object path
-                        localId = handler.save(object, sysmeta, session);
-                    } else {
-                        String formatId = null;
-                        if (sysmeta.getFormatId() != null) {
-                            formatId = sysmeta.getFormatId().getValue();
-                        }
-                        localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update",
-                            formatId, sysmeta.getChecksum());
-                    }
-                    // register the newPid and the generated localId
-                    if (newPid != null) {
-                        IdentifierManager.getInstance().createMapping(newPid.getValue(), localId);
-                    }
-
-                } catch (IOException e) {
-                    String msg = "The Node is unable to create the object: " + pid.getValue()
-                        + "There was a problem converting the object to XML";
-                    logMetacat.error(msg, e);
-                    removeIdFromIdentifierTable(newPid);
-                    throw new ServiceFailure("1310", msg + ": " + e.getMessage());
-
-                } catch (PropertyNotFoundException e) {
-                    String msg = "The Node is unable to create the object. " + pid.getValue()
-                        + " since the properties are not configured well " + e.getMessage();
-                    logMetacat.error(msg, e);
-                    removeIdFromIdentifierTable(newPid);
-                    throw new ServiceFailure("1310", msg);
-                } catch (Exception e) {
-                    logMetacat.error(
-                        "MNService.update - couldn't write the metadata object to the disk since "
-                            + e.getMessage(), e);
-                    removeIdFromIdentifierTable(newPid);
-                    throw e;
-                }
-
-            } else {
-
-                // update the data object
-                try {
-                    localId = insertDataObject(object, newPid, session, sysmeta.getChecksum());
-                } catch (Exception e) {
-                    logMetacat.error(
-                        "MNService.update - couldn't write the data object to the disk since "
-                            + e.getMessage(), e);
-                    removeIdFromIdentifierTable(newPid);
-                    throw e;
-                }
-
-
-            }
-
-            long end3 = System.currentTimeMillis();
-            logMetacat.debug(
-                "MNodeService.update - the time spending on saving the object with the new pid "
-                    + newPid.getValue() + " is " + (end3 - end2) + " milli seconds.");
-
             // add the newPid to the obsoletedBy list for the existing sysmeta
             existingSysMeta.setObsoletedBy(newPid);
             //increase version
             BigInteger current = existingSysMeta.getSerialVersion();
             current = current.add(BigInteger.ONE);
             existingSysMeta.setSerialVersion(current);
-            // then update the existing system metadata, set needUpdateModificationTime true
-            SystemMetadataManager.getInstance().store(existingSysMeta, true);
-
             // prep the new system metadata, add pid to the affected lists
             sysmeta.setObsoletes(pid);
 
-            // and insert the new system metadata, set needUpdateModificationTime true
-            SystemMetadataManager.getInstance().store(sysmeta, true);
+            isScienceMetadata = isScienceMetadata(sysmeta);
+            // do we have XML metadata or a data object?
+            try {
+                String docType;
+                if (isScienceMetadata) {
+                    docType = sysmeta.getFormatId().getValue();
+                } else {
+                    docType = DocumentImpl.BIN;
+                }
+                // update the object
+                // handler will register the object into DB, and save systemmetadata and bytes
+                // for the new object. The sysmeta of the obsoleted object will be stored as well.
+                localId = handler.save(newPid, sysmeta, MetacatHandler.Action.UPDATE, docType,
+                                       object, existingSysMeta, subject.getValue());
+            } catch (IOException ioe) {
+                throw new ServiceFailure("1310", "Metacat cannot update " + pid.getValue()
+                                        + " by " + newPid.getValue() + " : " + ioe.getMessage());
+            }
+
+            long end3 = System.currentTimeMillis();
+            logMetacat.debug(
+                "MNodeService.update - the time spending on saving the object with the new pid "
+                    + newPid.getValue() + " is " + (end3 - end2) + " milli seconds.");
 
             // Index the obsoleted object
             try {

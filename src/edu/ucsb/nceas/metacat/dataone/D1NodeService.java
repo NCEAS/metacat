@@ -407,113 +407,24 @@ public abstract class D1NodeService {
                 "1180", "The checksum object from the system metadata shouldn't be null.");
         }
 
-
-        // save the sysmeta
         try {
-            // lock and unlock of the pid happens in the subclass
-            SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate);
-        } catch (Exception e) {
-            logMetacat.error(
-                "D1Node.create - There was problem to save the system metadata: " + pid.getValue(),
-                e);
-            throw new ServiceFailure(
-                "1190", "There was problem to save the system metadata: " + pid.getValue()
-                + " since " + e.getMessage());
-        }
-        boolean isScienceMetadata = false;
-        // Science metadata (XML) or science data object?
-        // TODO: there are cases where certain object formats are science metadata
-        // but are not XML (netCDF ...).  Handle this.
-        if (isScienceMetadata(sysmeta)) {
-            isScienceMetadata = true;
-            // CASE METADATA:
-            //String objectAsXML = "";
-            try {
-                NonXMLMetadataHandler handler =
-                    NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
-                if (handler != null) {
-                    //non-xml metadata object path
-                    localId = handler.save(object, sysmeta, session);
-                } else {
-                    String formatId = null;
-                    if (sysmeta.getFormatId() != null) {
-                        formatId = sysmeta.getFormatId().getValue();
-                    }
-                    localId =
-                        insertOrUpdateDocument(object, "UTF-8", pid, session, "insert", formatId,
-                                               sysmeta.getChecksum());
-                }
-            } catch (IOException e) {
-                removeSystemMetaAndIdentifier(pid);
-                String msg = "The Node is unable to create the object " + pid.getValue()
-                    + " There was a problem converting the object to XML";
-                logMetacat.error(msg, e);
-                throw new ServiceFailure("1190", msg + ": " + e.getMessage());
-
-            } catch (ServiceFailure e) {
-                removeSystemMetaAndIdentifier(pid);
-                logMetacat.error(
-                    "D1NodeService.create - the node couldn't create the object " + pid.getValue()
-                        + " since " + e.getMessage(), e);
-                throw e;
-            } catch (InvalidRequest e) {
-                removeSystemMetaAndIdentifier(pid);
-                logMetacat.error(
-                    "D1NodeService.create - the node couldn't create the object " + pid.getValue()
-                        + " since " + e.getMessage(), e);
-                throw e;
-            } catch (Exception e) {
-                removeSystemMetaAndIdentifier(pid);
-                logMetacat.error(
-                    "The node is unable to create the object: " + pid.getValue() + " since "
-                        + e.getMessage(), e);
-                throw new ServiceFailure(
-                    "1190", "The node is unable to create the object: " + pid.getValue() + " since "
-                    + e.getMessage());
+            String docType;
+            if (isScienceMetadata(sysmeta)) {
+                // CASE METADATA:
+                docType = sysmeta.getFormatId().getValue();
+            } else {
+                // DEFAULT CASE: DATA (needs to be checked and completed)
+                docType = DocumentImpl.BIN;
             }
-
-        } else {
-
-            // DEFAULT CASE: DATA (needs to be checked and completed)
-            try {
-                localId = insertDataObject(object, pid, session, sysmeta.getChecksum());
-            } catch (ServiceFailure e) {
-                removeSystemMetaAndIdentifier(pid);
-                throw e;
-            } catch (InvalidSystemMetadata e) {
-                removeSystemMetaAndIdentifier(pid);
-                throw e;
-            } catch (NotAuthorized e) {
-                removeSystemMetaAndIdentifier(pid);
-                throw e;
-            } catch (Exception e) {
-                removeSystemMetaAndIdentifier(pid);
-                throw new ServiceFailure(
-                    "1190", "The node is unable to create the object " + pid.getValue() + " since "
-                    + e.getMessage());
-            }
-
+            // handler will register the object into DB, and save systemmetadata and bytes
+            // The sysmeta of the  obsoleted object set null
+            localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+                                   docType, object, null, subject.getValue());
+        } catch (IOException ioe) {
+            throw new ServiceFailure("1190", "Metacat cannot save the object " + pid.getValue()
+                                    + ioe.getMessage());
         }
-
-
         logMetacat.debug("Done inserting new object: " + pid.getValue());
-
-        // setting the resulting identifier failed. We will check if the object does exist.
-        try {
-            if (localId == null || !IdentifierManager.getInstance()
-                .objectFileExists(localId, isScienceMetadata)) {
-                removeSystemMetaAndIdentifier(pid);
-                throw new ServiceFailure(
-                    "1190", "The Node is unable to create the object. " + pid.getValue());
-            }
-        } catch (PropertyNotFoundException e) {
-            removeSystemMetaAndIdentifier(pid);
-            throw new ServiceFailure(
-                "1190", "The Node is unable to create the object. " + pid.getValue() + " since "
-                + e.getMessage());
-        }
-
-
         try {
             // submit for indexing
             MetacatSolrIndex.getInstance().submit(pid, sysmeta, false);
@@ -943,21 +854,6 @@ public abstract class D1NodeService {
     }
 
 
-    /*
-     * parse a logEntry and get the relevant field from it
-     *
-     * @param fieldname
-     * @param entry
-     * @return
-     */
-    private String getLogEntryField(String fieldname, String entry) {
-        String begin = "<" + fieldname + ">";
-        String end = "</" + fieldname + ">";
-        String s = entry.substring(entry.indexOf(begin) + begin.length(), entry.indexOf(end));
-        logMetacat.debug("entry " + fieldname + " : " + s);
-        return s;
-    }
-
     /**
      * Determine if a given object should be treated as an XML science metadata
      * object.
@@ -1006,170 +902,6 @@ public abstract class D1NodeService {
             valid = false;
         }
         return valid;
-    }
-
-
-    /**
-     * Insert or update an XML document into Metacat
-     *
-     * @param xml - the XML document to insert or update
-     * @param pid - the identifier to be used for the resulting object
-     *
-     * @return localId - the resulting docid of the document created or updated
-     *
-     */
-    public String insertOrUpdateDocument(
-        InputStream xmlStream, String encoding, Identifier pid, Session session,
-        String insertOrUpdate, String formatId, Checksum checksum)
-        throws ServiceFailure, IOException, PropertyNotFoundException, InvalidSystemMetadata {
-
-        logMetacat.debug("Starting to insert xml document...");
-        IdentifierManager im = IdentifierManager.getInstance();
-
-        String checksumValue = checksum.getValue();
-        logMetacat.info(
-            "D1NodeService.insertOrUpdateDocument - the checksum value from the system metadata is "
-                + checksumValue + " for the metdata object " + pid.getValue());
-        if (checksumValue == null || checksumValue.trim().equals("")) {
-            logMetacat.error(
-                "D1NodeService.insertOrUpdateDocument - the checksum value from the system "
-                + "metadata shouldn't be null or blank for the metadata object "
-                    + pid.getValue());
-            throw new InvalidSystemMetadata(
-                "1180",
-                "The checksum value from the system metadata shouldn't be null or blank for the "
-                + "ojbect "
-                    + pid.getValue());
-        }
-        String algorithm = checksum.getAlgorithm();
-        logMetacat.info(
-            "D1NodeService.insertOrUpdateDocument - the algorithm to calculate the checksum from "
-            + "the system metadata is "
-                + algorithm + " for the metadata object " + pid.getValue());
-        if (algorithm == null || algorithm.trim().equals("")) {
-            logMetacat.error(
-                "D1NodeService.insertOrUpdateDocument - the algorithm to calculate the checksum "
-                + "from the system metadata shouldn't be null or blank for the metadata object "
-                    + pid.getValue());
-            throw new InvalidSystemMetadata(
-                "1180",
-                "The algorithm to calculate the checksum from the system metadata shouldn't be "
-                + "null or blank for the metadata object "
-                    + pid.getValue());
-        }
-
-        //if the input stream is an object DetailedFileInputStream, it means this object already
-        // has the checksum information.
-        File tempFile = null;
-        if (xmlStream instanceof DetailedFileInputStream) {
-            logMetacat.info(
-                "D1NodeService.insertOrUpdateDocument - in the detailedFileInputstream branch");
-            boolean checksumMatched = false;
-            DetailedFileInputStream stream = (DetailedFileInputStream) xmlStream;
-            tempFile = stream.getFile();
-            Checksum expectedChecksum = stream.getExpectedChecksum();
-            if (expectedChecksum != null) {
-                String expectedAlgorithm = expectedChecksum.getAlgorithm();
-                String expectedChecksumValue = expectedChecksum.getValue();
-                if (expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
-                    //The algorithm is the same and the checksum is same, we don't need to check
-                    // the checksum again
-                    if (expectedChecksumValue != null && expectedChecksumValue.equalsIgnoreCase(
-                        checksumValue)) {
-                        logMetacat.info(
-                            "D1NodeService.insertOrUpdateDocument - Metacat already verified the "
-                            + "checksum of the object "
-                                + pid.getValue());
-                        checksumMatched = true;
-                    } else {
-                        logMetacat.error(
-                            "D1NodeService.insertOrUpdateDocument - the check sum calculated from"
-                            + " the saved local file is "
-                                + expectedChecksumValue
-                                + ". But it doesn't match the value from the system metadata "
-                                + checksumValue + " for the object " + pid.getValue());
-                        throw new InvalidSystemMetadata(
-                            "1180",
-                            "D1NodeService.insertOrUpdateDocument - the check sum calculated from"
-                            + " the saved local file is "
-                                + expectedChecksumValue
-                                + ". But it doesn't match the value from the system metadata "
-                                + checksumValue + " for the object " + pid.getValue());
-                    }
-                }
-            }
-            if (!checksumMatched && tempFile != null) {
-                logMetacat.info(
-                    "D1NodeService.insertOrUpdateDocument - mark the temp file to be deleted on "
-                    + "exist.");
-                //tempFile.deleteOnExit(); //since we will write bytes from the stream to the
-                // disk in this case, the temp file can be deleted when the programm ends.
-                StreamingMultipartRequestResolver.deleteTempFile(tempFile);
-                tempFile =
-                    null; //tempFile being null implicitly means that Metacat will write the
-                    // bytes to the final destination.
-            }
-        }
-        // generate pid/localId pair for sysmeta
-        String localId = null;
-        byte[] xmlBytes = IOUtils.toByteArray(xmlStream);
-        IOUtils.closeQuietly(xmlStream);
-        String xmlStr = new String(xmlBytes, encoding);
-
-        String username = Constants.SUBJECT_PUBLIC;
-        String[] groupnames = null;
-        if (session != null) {
-            username = session.getSubject().getValue();
-            Set<Subject> otherSubjects = AuthUtils.authorizedClientSubjects(session);
-            if (otherSubjects != null) {
-                groupnames = new String[otherSubjects.size()];
-                int i = 0;
-                Iterator<Subject> iter = otherSubjects.iterator();
-                while (iter.hasNext()) {
-                    groupnames[i] = iter.next().getValue();
-                    i++;
-                }
-            }
-        }
-
-        // do the insert or update action
-        long start = System.currentTimeMillis();
-        String result = null;
-            /*handler.handleInsertOrUpdateAction(username, groupnames, encoding, xmlBytes, formatId,
-                                               checksum, tempFile, localId, insertOrUpdate);*/
-        long end = System.currentTimeMillis();
-        logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue()
-                            + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
-                            + " Parse and write the metadata object into database (if the "
-                            + "multiparts handler hasn't calculated the checksum, it will write "
-                            + "the content to the disk again)"
-                            + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION
-                            + (end - start) / 1000);
-        boolean isScienceMetadata = true;
-        if (result.indexOf("<error>") != -1 || !IdentifierManager.getInstance()
-            .objectFileExists(localId, isScienceMetadata)) {
-            String detailCode = "";
-            if (insertOrUpdate.equals("insert")) {
-                // make sure to remove the mapping so that subsequent attempts do not fail with
-                // IdentifierNotUnique
-                im.removeMapping(pid.getValue(), localId);
-                detailCode = "1190";
-
-            } else if (insertOrUpdate.equals("update")) {
-                detailCode = "1310";
-
-            }
-            logMetacat.error(
-                "D1NodeService.insertOrUpdateDocument - Error inserting or updating document: "
-                    + pid.getValue() + " since " + result);
-            throw new ServiceFailure(detailCode,
-                                     "Error inserting or updating document: " + pid.getValue()
-                                         + " since " + result);
-        }
-        logMetacat.info(
-            "D1NodeService.insertOrUpdateDocument - Finsished inserting xml document with local id "
-                + localId + " and its pid is " + pid.getValue());
-        return localId;
     }
 
     /**
