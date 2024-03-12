@@ -1,17 +1,11 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigInteger;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,9 +22,8 @@ import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.bind.DatatypeConverter;
 
-import org.apache.commons.io.FileUtils;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.LogFactory;
@@ -50,7 +43,6 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
-import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -69,26 +61,20 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.util.Constants;
 
-import edu.ucsb.nceas.metacat.AccessionNumber;
-import edu.ucsb.nceas.metacat.AccessionNumberException;
+
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
-import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
-import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
-import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
-import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
-import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
@@ -523,29 +509,6 @@ public abstract class D1NodeService {
 
     }
 
-    /*
-     * Roll-back method when inserting data object fails.
-     */
-    protected static void removeIdFromIdentifierTable(Identifier id) {
-        if (id != null) {
-            try {
-                if (IdentifierManager.getInstance().mappingExists(id.getValue())) {
-                    String localId = IdentifierManager.getInstance().getLocalId(id.getValue());
-                    IdentifierManager.getInstance().removeMapping(id.getValue(), localId);
-                    logMetacat.info(
-                        "MNodeService.removeIdFromIdentifierTable - the identifier " + id.getValue()
-                            + " and local id " + localId
-                            + " have been removed from the identifier table since the object "
-                            + "creation failed");
-                }
-            } catch (Exception e) {
-                logMetacat.warn(
-                    "MNodeService.removeIdFromIdentifierTable - can't decide if the mapping of  "
-                        + "the pid "
-                        + id.getValue() + " exists on the identifier table.");
-            }
-        }
-    }
 
     /**
      * Return the log records associated with a given event between the start and
@@ -904,33 +867,6 @@ public abstract class D1NodeService {
         return valid;
     }
 
-    /**
-     * Insert a data object into Metacat
-     * @param object  the input stream of the object will be inserted
-     * @param pid  the pid associated with the object
-     * @param session  the actor of this action
-     * @param checksum  the expected checksum for this data object
-     * @return the local id of the inserted object
-     * @throws ServiceFailure
-     * @throws InvalidSystemMetadata
-     * @throws NotAuthorized
-     */
-    protected String insertDataObject(InputStream object, Identifier pid, Session session,
-                                   Checksum checksum) throws ServiceFailure, InvalidSystemMetadata,
-                                                                                  NotAuthorized {
-        String dataFilePath = null;
-        try {
-            dataFilePath = PropertyService.getProperty("application.datafilepath");
-        } catch (PropertyNotFoundException e) {
-            ServiceFailure sf =
-                new ServiceFailure("1190", "Lookup data file path" + e.getMessage());
-            sf.initCause(e);
-            throw sf;
-        }
-        return insertObject(object, DocumentImpl.BIN, pid, dataFilePath, session, checksum);
-
-    }
-
 /**
  * Check if the session is in the allow list which can upload objects to this Metacat instance.
  * @param session  the identity of the user
@@ -979,71 +915,6 @@ public abstract class D1NodeService {
         }
     }
 
-    /**
-     * Insert an object into the given directory.
-     * @param object  the input stream of the object will be inserted
-     * @param docType  the doc type in the xml_document table
-     * @param pid  the pid associated with the object
-     * @param fileDirectory  the directory where the object will be inserted
-     * @param session  the actor of this action
-     * @param checksum  the expected checksum for this data object
-     * @return the local id of the inserted object
-     * @throws ServiceFailure
-     * @throws InvalidSystemMetadata
-     */
-    public static String insertObject(InputStream object, String docType, Identifier pid,
-                                     String fileDirectory, Session session, Checksum checksum)
-                                                     throws ServiceFailure, InvalidSystemMetadata {
-
-        String localId = null;
-        try {
-            // generate pid/localId pair for object
-            logMetacat.debug("Generating a pid/localId mapping");
-            IdentifierManager im = IdentifierManager.getInstance();
-            localId = im.generateLocalId(pid.getValue(), 1);
-
-            // Save the data file to disk using "localId" as the name
-            logMetacat.debug("Case DATA: starting to write to disk.");
-            File dataDirectory = new File(fileDirectory);
-            dataDirectory.mkdirs();
-            File newFile = null;
-            //writeStreamToFile(dataDirectory, localId, object, checksum, pid);
-
-            // TODO: Check that the file size matches SystemMetadata
-
-            // Register the file in the database (which generates an exception
-            // if the localId is not acceptable or other untoward things happen
-            try {
-                logMetacat.debug("Registering document...");
-                DocumentImpl.registerDocument(docType, docType, null, localId,
-                                                        session.getSubject().getValue());
-                logMetacat.debug("Registration step completed.");
-
-            } catch (SQLException e) {
-                logMetacat.debug("SQLE: " + e.getMessage());
-                e.printStackTrace(System.out);
-                throw new ServiceFailure("1190", "Registration failed: " + e.getMessage());
-
-            } catch (AccessionNumberException e) {
-                logMetacat.debug("ANE: " + e.getMessage());
-                e.printStackTrace(System.out);
-                throw new ServiceFailure("1190", "Registration failed: " + e.getMessage());
-
-            } catch (Exception e) {
-                logMetacat.debug("Exception: " + e.getMessage());
-                e.printStackTrace(System.out);
-                throw new ServiceFailure("1190", "Registration failed: " + e.getMessage());
-            }
-
-        } catch (ServiceFailure sfe) {
-            removeIdFromIdentifierTable(pid);
-            throw sfe;
-        /*} catch (InvalidSystemMetadata ise) {
-            removeIdFromIdentifierTable(pid);
-            throw ise;*/
-        }
-        return localId;
-    }
 
     /**
      * Retrieve the list of objects present on the MN that match the calling parameters
