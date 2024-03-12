@@ -68,10 +68,10 @@ import java.util.Vector;
 public class D1NodeServiceTest extends MCTestCase {
     public static final int MAX_TRIES = 100;
     protected MockHttpServletRequest request;
-    protected static ObjectFormatIdentifier eml_2_1_1_format = new ObjectFormatIdentifier();
-    protected static ObjectFormatIdentifier eml_2_0_1_format = new ObjectFormatIdentifier();
-    protected static ObjectFormatIdentifier eml_2_1_0_format = new ObjectFormatIdentifier();
-    protected static ObjectFormatIdentifier eml_dataset_beta_6_format = new ObjectFormatIdentifier();
+    public static final ObjectFormatIdentifier eml_2_1_1_format = new ObjectFormatIdentifier();
+    public static final ObjectFormatIdentifier eml_2_0_1_format = new ObjectFormatIdentifier();
+    public static final ObjectFormatIdentifier eml_2_1_0_format = new ObjectFormatIdentifier();
+    public static final ObjectFormatIdentifier eml_dataset_beta_6_format = new ObjectFormatIdentifier();
     private MockedStatic<Settings> mockStaticSettings;
 
     static {
@@ -967,7 +967,7 @@ public class D1NodeServiceTest extends MCTestCase {
      * Read a document from metacat and check if it is equal to a given string.
      * The expected result is passed as result
      */
-    protected void readDocidWhichEqualsDoc(String docid, String testDoc, 
+    public void readDocidWhichEqualsDoc(String docid, String testDoc,
                                             boolean result, Session session) {
         try {
             Identifier guid = new Identifier();
@@ -988,7 +988,7 @@ public class D1NodeServiceTest extends MCTestCase {
      * Use the solr query to query a title. If the result doesn't contain the given
      * guid, test will fail.
      */
-    protected void queryTile(String title, String guid, Session session) throws Exception {
+    public void queryTile(String title, String guid, Session session) throws Exception {
         String query = "q=title:" +"\"" + title +"\"";
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
