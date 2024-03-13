@@ -664,7 +664,8 @@ public class MNodeService extends D1NodeService
                 // update the object
                 // handler will register the object into DB, and save systemmetadata and bytes
                 // for the new object. The sysmeta of the obsoleted object will be stored as well.
-                localId = handler.save(newPid, sysmeta, MetacatHandler.Action.UPDATE, docType,
+                // True means always change the modification date when it saves system metadata.
+                localId = handler.save(sysmeta, true, MetacatHandler.Action.UPDATE, docType,
                                        object, existingSysMeta, subject.getValue());
             } catch (IOException ioe) {
                 throw new ServiceFailure("1310", "Metacat cannot update " + pid.getValue()

@@ -254,8 +254,9 @@ public class MetacatHandler {
 
     /**
      * Save the object into disk
-     * @param pid  the pid of the object
-     * @param sysmeta  the system metadata of the object
+     * @param sysmeta  the system metadata of the object, which contains the identifier
+     * @param changeModificationDate  if Metacat needs to update the modification date of the system
+     *              metadata when Metacat stores it.
      * @param action  the action of the request: insert (new) or update
      * @param docType  the type of object - data (BIN) or metadata
      * @param object  the input stream contains the content of the object
@@ -268,11 +269,16 @@ public class MetacatHandler {
      * @throws InvalidSystemMetadata
      * @throws IOException
      */
-    public String save(Identifier pid, SystemMetadata sysmeta, Action action, String docType,
-                        InputStream object, SystemMetadata preSys, String user)
+    public String save(SystemMetadata sysmeta, boolean changeModificationDate, Action action,
+                        String docType, InputStream object, SystemMetadata preSys, String user)
                                                             throws InvalidRequest, ServiceFailure,
                                                              InvalidSystemMetadata, IOException {
         String localId = null;
+        if (sysmeta == null) {
+            throw new InvalidRequest("1181", "Metacat cannot save the object "
+                            + " into disk since its system metadata is blank");
+        }
+        Identifier pid = sysmeta.getIdentifier();
         if (pid == null || pid.getValue() == null || pid.getValue().isBlank()) {
             throw new InvalidRequest("1181", "Metacat cannot save an object with a blank pid");
         }
@@ -284,10 +290,6 @@ public class MetacatHandler {
             throw new InvalidRequest("1181", "Metacat cannot save the object for "
                     + pid.getValue() + " into disk since the action value (which should be `insert`"
                     + " or `update`) is blank.");
-        }
-        if (sysmeta == null) {
-            throw new InvalidRequest("1181", "Metacat cannot save the object for "
-                            + pid.getValue() + " into disk since its system metadata is blank");
         }
         if (user == null || user.isBlank()) {
             throw new InvalidRequest("1181", "Metacat cannot save the object for "
@@ -350,7 +352,7 @@ public class MetacatHandler {
                 localId = registerToDB(pid, action, conn, user, docType, prePid);
                 // Save the system metadata for the new object
                 // Set needChangeModificationTime true
-                SystemMetadataManager.getInstance().store(sysmeta, true, conn);
+                SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate, conn);
                 if (action == Action.UPDATE) {
                     if(preSys ==  null) {
                         throw new InvalidRequest("1181", "Metacat cannot save the object for "

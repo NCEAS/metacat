@@ -404,7 +404,7 @@ public abstract class D1NodeService {
             }
             // handler will register the object into DB, and save systemmetadata and bytes
             // The sysmeta of the  obsoleted object set null
-            localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+            localId = handler.save(sysmeta, changeModificationDate, MetacatHandler.Action.INSERT,
                                    docType, object, null, subject.getValue());
         } catch (IOException ioe) {
             throw new ServiceFailure("1190", "Metacat cannot save the object " + pid.getValue()
