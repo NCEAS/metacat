@@ -171,7 +171,13 @@ others are managed with the properties configuration utility.
 |                                      |                                                                             |                               |
 |                                      | Default Value: (empty: only cn is used for token verification)              |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-
+| .. _dataone.nodeToken.file:          |                                                                             |                               |
+|                                      |                                                                             |                               |
+| dataone.nodeToken.file               | The path to a file that contains an authentication token. This token will be|                               |
+|                                      | used by the dataone-indexer, to enable indexing of private datasets.        |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: /var/metacat/certs/token                                     |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 
 Solr Properties
 ----------------------
