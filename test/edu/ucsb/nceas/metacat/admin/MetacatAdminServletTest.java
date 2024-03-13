@@ -8,9 +8,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.MockedStatic;
-import org.springframework.mock.web.MockServletConfig;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -53,7 +53,9 @@ public class MetacatAdminServletTest {
         Enumeration blankParams = new StringTokenizer("");
         when(request.getParameterNames()).thenReturn(blankParams);
         servlet = new MetacatAdminServlet();
-        servlet.init(new MockServletConfig());
+        ServletConfig config = mock(ServletConfig.class);
+        when(config.getServletContext()).thenReturn(context);
+        servlet.init(config);
 
         withProperties = new Properties();
         String testBackupPath = tempFolder.getRoot().toPath().toString();
