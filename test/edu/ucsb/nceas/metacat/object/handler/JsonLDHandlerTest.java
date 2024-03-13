@@ -116,7 +116,8 @@ public class JsonLDHandlerTest {
         sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
         data = new DetailedFileInputStream(temp1, checksum);
-        String localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+        // True means changing the modification date in the system metadata
+        String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                                        NonXMLMetadataHandlers.JSON_LD, data, null, user);
 
         assertFalse(temp1.exists());
@@ -142,7 +143,8 @@ public class JsonLDHandlerTest {
         sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
         data = new DetailedFileInputStream(temp2, expectedChecksum);
-        localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+        // True means changing the modification date in the system metadata
+        localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                 NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(!temp2.exists());
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
@@ -173,7 +175,8 @@ public class JsonLDHandlerTest {
             sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setFormatId(format);
             data = new DetailedFileInputStream(temp3, checksum);
-            localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+            // True means changing the modification date in the system metadata
+            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                               NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
@@ -197,7 +200,8 @@ public class JsonLDHandlerTest {
             sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setFormatId(format);
             data = new DetailedFileInputStream(temp4, expectedChecksumForInvalidJson);
-            localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+            // True means changing the modification date in the system metadata
+            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
@@ -224,7 +228,8 @@ public class JsonLDHandlerTest {
             sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setFormatId(format);
             data = new DetailedFileInputStream(temp5, checksum);
-            localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+            // True means changing the modification date in the system metadata
+            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
@@ -259,7 +264,8 @@ public class JsonLDHandlerTest {
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
         data = new ByteArrayInputStream(content.getBytes());
-        String localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+        // True means changing the modification date in the system metadata
+        String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
@@ -279,7 +285,8 @@ public class JsonLDHandlerTest {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new ByteArrayInputStream(content.getBytes());
-            localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+            // True means changing the modification date in the system metadata
+            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
@@ -298,7 +305,8 @@ public class JsonLDHandlerTest {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new ByteArrayInputStream(content.getBytes());
-            localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+            // True means changing the modification date in the system metadata
+            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
@@ -333,7 +341,8 @@ public class JsonLDHandlerTest {
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
         data = new FileInputStream(new File(JSON_LD_FILE_PATH));
-        String localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+        // True means changing the modification date in the system metadata
+        String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
@@ -354,7 +363,8 @@ public class JsonLDHandlerTest {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new FileInputStream(new File(JSON_LD_FILE_PATH));
-            localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+            // True means changing the modification date in the system metadata
+            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                         NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
@@ -373,7 +383,8 @@ public class JsonLDHandlerTest {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new FileInputStream(new File(INVALID_JSON_LD_FILE_PATH));
-            localId = handler.save(pid, sysmeta, MetacatHandler.Action.INSERT,
+            // True means changing the modification date in the system metadata
+            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
