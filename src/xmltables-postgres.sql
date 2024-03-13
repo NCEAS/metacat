@@ -329,6 +329,7 @@ CREATE TABLE db_version (
   version         VARCHAR(250),     -- the version number
   status          INT8,             -- status of the version
   date_created    TIMESTAMP,        -- the datetime on which the version was created
+  solr_upgraded   boolean,          -- specifies whether the solr server was upgraded
   CONSTRAINT db_version_pk PRIMARY KEY (db_version_id)
 );
 

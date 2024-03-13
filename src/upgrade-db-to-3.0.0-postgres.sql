@@ -12,6 +12,11 @@ CREATE TABLE IF NOT EXISTS node_id_revisions (
 );
 
 /*
+ * Add a new column into the db_version table
+ */
+ALTER TABLE db_version ADD  COLUMN  IF NOT EXISTS solr_upgraded boolean;
+
+/*
  * Drop some unneeded constraint in the xml_revisions table
  */
 ALTER TABLE xml_revisions DROP CONSTRAINT IF EXISTS xml_revisions_root_fk;
