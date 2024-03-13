@@ -3,13 +3,10 @@
     if (request.getSession().getAttribute("userId") != null) {
 %>
 <div class="footer">
-    <p>You are logged in as: <%= request.getSession().getAttribute("userId") %>
-    </p>
+    <p>You are logged in as: <%= userId %></p>
     <ul>
-        <li><a href="<%= application.getAttribute("logoutUri") %>">log in as different user</a></li>
-        <li><a href="<%= application.getAttribute("logoutUri") %>">logout</a></li>
-        <li><a href="<%= request.getContextPath() %>/docs/user/index.html" target="_blank">metacat
-            user documentation</a></li>
+        <li><a href="<%= logoutUri %>">log out</a></li>
+        <li><a href="<%= docsUri %>" target="_blank">metacat user documentation</a></li>
     </ul>
 </div>
 <%
@@ -18,9 +15,8 @@
 <div class="footer">
     <p>You are not logged in.</p>
     <ul>
-        <li><a href="<%= application.getAttribute("loginUri") %>">log in</a></li>
-        <li><a href="<%= request.getContextPath() %>/docs/user/index.html" target="_blank">metacat
-            user documentation</a></li>
+        <li><a href="<%= loginUri %>">log in</a></li>
+        <li><a href="<%= docsUri %>" target="_blank">metacat user documentation</a></li>
     </ul>
 </div>
 <%
