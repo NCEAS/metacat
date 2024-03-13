@@ -4317,6 +4317,104 @@ public class MNodeServiceIT {
     }
 
     /**
+     * Test the scenario the identifier doesn't match the one in the system metadata
+     * in the create and update methods.
+     * @throws Exception
+     */
+    @Test
+    public void testIdNotMatchSysmetaInCreateAndUpdate() throws Exception {
+        Session session = d1NodeTest.getTestSession();
+        //a data file
+        Identifier guid = new Identifier();
+        guid.setValue("testIdNotMatchSysmetaInCreateAndUpdate." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        // Set to another pid into system metadata to make it invalid
+        Identifier another = new Identifier();
+        another.setValue("testIdNotMatchSysmetaInCreateAndUpdate2." + System.currentTimeMillis());
+        sysmeta.setIdentifier(another);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid and the create method should succeed
+        sysmeta.setIdentifier(guid);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue("The returned pid should be " + guid.getValue(),
+                    guid.getValue().equals(pid.getValue()));
+        // Update it by a wrong pid in the systemetadata
+        Identifier newId = new Identifier();
+        newId.setValue("testIdNotMatchSysmetaInCreateAndUpdate." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setIdentifier(another);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        try {
+            MNodeService.getInstance(request).update(session, pid, object, newId, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid
+        sysmeta.setIdentifier(newId);
+        pid = MNodeService.getInstance(request).update(session, pid, object, newId, sysmeta);
+        assertTrue("The returned pid should be " + newId.getValue(),
+                            newId.getValue().equals(pid.getValue()));
+
+        // An eml metadata object
+        guid = new Identifier();
+        guid.setValue("testIdNotMatchSysmetaInCreateAndUpdate." + System.currentTimeMillis());
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
+        // Make the system metadata not match the guid
+        sysmeta.setIdentifier(another);
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid and the create method should succeed
+        sysmeta.setIdentifier(guid);
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue("The returned pid should be " + guid.getValue(),
+                                guid.getValue().equals(pid.getValue()));
+        // Update it by a wrong pid in the systemetadata
+        newId = new Identifier();
+        newId.setValue("testIdNotMatchSysmetaInCreateAndUpdate2." + System.currentTimeMillis());
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatId);
+        sysmeta.setIdentifier(another);
+        try {
+            MNodeService.getInstance(request).update(session, pid, object, newId, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid
+        sysmeta.setIdentifier(newId);
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        pid = MNodeService.getInstance(request).update(session, pid, object, newId, sysmeta);
+        assertTrue("The returned pid should be " + newId.getValue(),
+                                    newId.getValue().equals(pid.getValue()));
+    }
+
+    /**
      * Get a new update time from the doi metadata, which should be different to the original one.
      * If we can't get a different update time after multiple tries, it throws an exception.
      * @param pid  the identifier of the object

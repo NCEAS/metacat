@@ -377,7 +377,7 @@ public abstract class D1NodeService {
             "Comparing pid|sysmeta_pid: " + pid.getValue() + "|" + sysmeta.getIdentifier()
                 .getValue());
         if (!pid.getValue().equals(sysmeta.getIdentifier().getValue())) {
-            throw new InvalidSystemMetadata("1180", "The supplied system metadata is invalid. "
+            throw new InvalidRequest("1102", "The supplied system metadata is invalid. "
                 + "The identifier " + pid.getValue() + " does not match identifier"
                 + "in the system metadata identified by " + sysmeta.getIdentifier().getValue()
                 + ".");
