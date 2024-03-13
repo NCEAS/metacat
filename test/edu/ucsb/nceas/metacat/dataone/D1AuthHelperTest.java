@@ -3,13 +3,10 @@ package edu.ucsb.nceas.metacat.dataone;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.dataone.service.exceptions.NotAuthorized;
-import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.NodeType;
@@ -38,7 +35,7 @@ public class D1AuthHelperTest {
     static NodeList nl;
 
     @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
+    public static void setUpBeforeClass() {
         nl = new NodeList();
         Node cn1 = new Node();
         cn1.setType(NodeType.CN);
@@ -285,7 +282,7 @@ public class D1AuthHelperTest {
      * Confirm doGetSysmetaAuthorization does not throw exception with authorized subject
      */
     @Test
-    public void testDoGetSysmetaAuthorization() throws Exception {
+    public void testDoGetSysmetaAuthorization() {
         try {
             authDel.doGetSysmetaAuthorization(session, sysmeta, Permission.WRITE);
         } catch (Exception e) {
@@ -298,7 +295,7 @@ public class D1AuthHelperTest {
      * Confirm that isAuthorizedBySysMetaSubjects returns true with valid sysmeta subject
      */
     @Test
-    public void testIsAuthorizedBySysMetaSubjects() throws Exception {
+    public void testIsAuthorizedBySysMetaSubjects() {
         boolean isAuthBySysmetaSubjects =
             authDel.isAuthorizedBySysMetaSubjects(session, sysmeta, Permission.WRITE);
         assertTrue(isAuthBySysmetaSubjects);
