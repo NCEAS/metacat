@@ -769,7 +769,6 @@ public class MetacatHandlerTest {
         newSys.setObsoletes(pid);
         long originModificationDateOfSecondObj = newSys.getDateSysMetadataModified().getTime();
         long originUploadDateOfSecondObj = newSys.getDateUploaded().getTime();
-
         sysmeta.setObsoletedBy(newPid);
         sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
         // Recreate the stream since it was closed in the generating sysmeta method
@@ -828,8 +827,11 @@ public class MetacatHandlerTest {
         pid.setValue("MetacatHandler.testsave-" + System.currentTimeMillis());
         InputStream dataStream = new FileInputStream(test_file_path);
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
+        long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
+        long originUploadDate = sysmeta.getDateUploaded().getTime();
         dataStream = new FileInputStream(test_file_path);
         // null is the obsoleted system metadata. Inserting should succeed
+        // False means not to change the modification date of system metadata
         handler.save(sysmeta, false, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
                     dataStream, null, user);
         SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
@@ -842,6 +844,10 @@ public class MetacatHandlerTest {
         String readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum " + test_file_checksum + " rather than "
                     + readChecksum, test_file_checksum.equals(readChecksum));
+        assertEquals("The modification time in system metadata should not change.",
+                originModificationDate, readSys.getDateSysMetadataModified().getTime());
+        assertEquals("The upload time in system metadata should not change.",
+                                originUploadDate, readSys.getDateUploaded().getTime());
 
         // Updating
         Identifier newPid = new Identifier();
@@ -859,6 +865,7 @@ public class MetacatHandlerTest {
         incorrectChecksum.setValue("234dfa343af");
         newSys.setChecksum(incorrectChecksum);
         try {
+            // False means not to change the modification date
             handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                         DocumentImpl.BIN, dataStream, sysmeta, user);
             fail("Test cannot get here since the checksum is wrong in the system metadata");
@@ -891,8 +898,11 @@ public class MetacatHandlerTest {
         // This time, the upgrade should succeed.
         newSys.setChecksum(anotherChecksum);
         sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        long originModificationDateOfSecondObj = newSys.getDateSysMetadataModified().getTime();
+        long originUploadDateOfSecondObj = newSys.getDateUploaded().getTime();
         // Recreate the stream since it was closed in the previous failure
         dataStream = new FileInputStream(another_test_file);
+        // False means not changing the modification date in system metadata
         handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                      DocumentImpl.BIN, dataStream, sysmeta, user);
         // Check the objects
@@ -914,6 +924,11 @@ public class MetacatHandlerTest {
                         newPid.getValue().equals(newReadSys.getIdentifier().getValue()));
         assertTrue("The obsoletes of systemmeta from db should be " + pid.getValue(),
                         pid.getValue().equals(newReadSys.getObsoletes().getValue()));
+        assertEquals("The modification time in system metadata should not change.",
+                        originModificationDateOfSecondObj,
+                        newReadSys.getDateSysMetadataModified().getTime());
+        assertEquals("The upload time in system metadata should not change.",
+                        originUploadDateOfSecondObj, newReadSys.getDateUploaded().getTime());
         localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
         readObj = handler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
@@ -967,8 +982,11 @@ public class MetacatHandlerTest {
 
         // This time the insert should succeed
         sysmeta.setChecksum(checksum);
+        long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
+        long originUploadDate = sysmeta.getDateUploaded().getTime();
         dataStream = new FileInputStream(test_eml_file);
         // null is the obsoleted system metadata. Inserting should succeed
+        // True means changing the modification date in system metadata
         handler.save(sysmeta, true, MetacatHandler.Action.INSERT, eml_format,
                         dataStream, null, user);
         readSys = SystemMetadataManager.getInstance().get(pid);
@@ -976,6 +994,10 @@ public class MetacatHandlerTest {
                               + readSys.getIdentifier().getValue(),
                               pid.getValue().equals(readSys.getIdentifier().getValue()));
         assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
+        assertNotEquals("The modification time in system metadata should change.",
+                        originModificationDate, readSys.getDateSysMetadataModified().getTime());
+        assertEquals("The upload time in system metadata should not change.",
+                                originUploadDate, readSys.getDateUploaded().getTime());
         localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
         InputStream readObj = handler.read(localId, DocumentImpl.BIN);
         String readChecksum = getChecksum(readObj, MD5);
@@ -994,6 +1016,8 @@ public class MetacatHandlerTest {
         newSys.setObsoletes(pid);
         sysmeta.setObsoletedBy(newPid);
         sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        long originModificationDateOfSecondObj = newSys.getDateSysMetadataModified().getTime();
+        long originUploadDateOfSecondObj = newSys.getDateUploaded().getTime();
         // Recreate the stream since it was closed in the generating sysmeta method
         dataStream = new FileInputStream(test_eml_essdive_file);
         handler.save(newSys, true, MetacatHandler.Action.UPDATE,
@@ -1017,6 +1041,11 @@ public class MetacatHandlerTest {
                         newPid.getValue().equals(newReadSys.getIdentifier().getValue()));
         assertTrue("The obsoletes of systemmeta from db should be " + pid.getValue(),
                         pid.getValue().equals(newReadSys.getObsoletes().getValue()));
+        assertNotEquals("The modification time in system metadata should change.",
+                            originModificationDateOfSecondObj,
+                            newReadSys.getDateSysMetadataModified().getTime());
+        assertEquals("The upload time in system metadata should not change.",
+                originUploadDateOfSecondObj, newReadSys.getDateUploaded().getTime());
         localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
         readObj = handler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
