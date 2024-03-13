@@ -267,9 +267,7 @@ public class MNodeServiceIT {
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             fail("It should fail since the checksum doesn't match.");
         } catch (InvalidSystemMetadata ee) {
-            //ee.printStackTrace();
             try {
-                Thread.sleep(5000);
                 MNodeService.getInstance(request).getSystemMetadata(session, guid);
                 fail("We shouldn't get here since the guid " + guid.getValue() + " was deleted.");
             } catch (NotFound e) {
@@ -320,10 +318,8 @@ public class MNodeServiceIT {
             Identifier pid =
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             fail("It should fail since the checksum doesn't match.");
-        } catch (ServiceFailure ee) {
-            //ee.printStackTrace();
+        } catch (InvalidSystemMetadata ee) {
             try {
-                Thread.sleep(5000);
                 MNodeService.getInstance(request).getSystemMetadata(session, guid);
                 fail("We shouldn't get here since the guid " + guid.getValue() + " was deleted.");
             } catch (NotFound e) {
@@ -792,22 +788,18 @@ public class MNodeServiceIT {
             try {
                 MNodeService.getInstance(request).update(session, guid, object, newPid, sysmeta2);
                 fail("we shouldn't get here since the checksum is wrong");
-            } catch (ServiceFailure ee) {
+            } catch (InvalidSystemMetadata ee) {
                 try {
                     MNodeService.getInstance(request).getSystemMetadata(session, newPid);
                     fail("we shouldn't get here since the newPid " + newPid.getValue()
                              + " shouldn't be created.");
                 } catch (NotFound eeee) {
-
+                    // Do nothing
                 }
-
             } catch (Exception eee) {
-                eee.printStackTrace();
                 fail("Unexpected error in the update: " + eee.getMessage());
             }
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
 
         }
@@ -3652,7 +3644,7 @@ public class MNodeServiceIT {
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             fail("testAllowList - the test session shouldn't be allowed to create an object");
         } catch (Exception e) {
-            assertTrue(e.getMessage().contains("does not have permission to WRITE to the Node"));
+            assertTrue("The exception should be NotAuthorized", e instanceof NotAuthorized);
         }
         //use a session with the subject of the MN to create an object
         Subject subject = new Subject();
@@ -3856,7 +3848,7 @@ public class MNodeServiceIT {
         object.close();
         result = getEventLogs(guid7);
         assertTrue(result.next());
-        assertEquals("insert", result.getString(1));
+        assertEquals("The event of log should be create", "create", result.getString(1));
         assertFalse(result.next());
         result.close();
 
