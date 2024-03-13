@@ -365,13 +365,24 @@ public class D1AuthHelper {
         // If subject is not a LocalNodeAdmin or CNAdmin, check to see if subject is a
         // Metacat admin (auth.administrators) - who also have admin privileges like the above
         try {
-            String adminUser = session.getSubject().getValue();
-            if (adminUser != null) {
-                logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + adminUser +
-                                     " for Metacat admin privileges.");
-                if (AuthUtil.isAdministrator(adminUser, null)) {
-                    return;
+            // If session is null, there is no user so admin is not authorized.
+            if (session != null) {
+                String adminUser = session.getSubject().getValue();
+                if (adminUser != null) {
+                    logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + adminUser
+                        + " for Metacat admin privileges.");
+                    if (adminUser.trim().isEmpty()) {
+                        throw new NotAuthorized(
+                            "0000", "Session is not null, but adminUser is empty.");
+                    }
+                    if (AuthUtil.isAdministrator(adminUser, null)) {
+                        return;
+                    }
+                } else {
+                    throw new NotAuthorized("0000", "Session is not null, but adminUser is null.");
                 }
+            } else {
+                throw new NotAuthorized("0000", "Session is null.");
             }
         } catch (MetacatUtilException mue) {
             ServiceFailure sf = new ServiceFailure("0000", mue.getMessage());

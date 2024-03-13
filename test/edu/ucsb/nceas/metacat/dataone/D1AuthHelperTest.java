@@ -256,6 +256,43 @@ public class D1AuthHelperTest {
     }
 
     /**
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception with session is not null
+     * and subject is null.
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoAdminAuthorization_nullSessionSubject() throws Exception {
+        Session sessionLocalNodeAdmin = new Session();
+        sessionLocalNodeAdmin.setSubject(
+            TypeFactory.buildSubject(null));
+
+
+        authDelMock.doAdminAuthorization(null);
+    }
+
+    /**
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception with session is not null
+     * and subject is empty.
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoAdminAuthorization_emptySessionSubject() throws Exception {
+        Session sessionLocalNodeAdmin = new Session();
+        sessionLocalNodeAdmin.setSubject(
+            TypeFactory.buildSubject(""));
+
+        authDelMock.doAdminAuthorization(null);
+    }
+
+
+    /**
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception with session is null
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoAdminAuthorization_nullSession() throws Exception {
+        authDelMock.doAdminAuthorization(null);
+    }
+
+
+    /**
      * Confirm that prepareAndThrowNotAuthorized throws NotAuthorized exception with invalid
      * session
      */
