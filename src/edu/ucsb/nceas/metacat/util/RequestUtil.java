@@ -423,6 +423,7 @@ public class RequestUtil {
 	 *     paramValue2a
 	 * ...etc
 	 * </pre>
+	 *     If no parameters are found, returns an empty string. Will never return null.
 	 */
 	public static String getParametersAsString(HttpServletRequest request) {
 		Enumeration<String> parameterNames = request.getParameterNames();
@@ -455,6 +456,7 @@ public class RequestUtil {
 	 * attribName2 = attribValue2
 	 * ...etc
 	 * </pre>
+	 *     If no attributes are found, returns an empty string. Will never return null.
 	 */
 	public static String getAttributesAsString(HttpServletRequest request) {
 		Enumeration<String> attributeNames = request.getAttributeNames();
