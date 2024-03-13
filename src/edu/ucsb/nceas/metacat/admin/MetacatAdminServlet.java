@@ -2,9 +2,9 @@ package edu.ucsb.nceas.metacat.admin;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.servlet.ServletConfig;
@@ -32,21 +32,29 @@ import edu.ucsb.nceas.utilities.GeneralPropertyException;
  */
 public class MetacatAdminServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final String LOGOUT_PATH = "/admin?configureType=logout";
-    private static final String LOGIN_PRE_ORCID_PATH = "/admin?configureType=login";
-    private static final String LOGIN_ORCID_FLOW_PATH = "/admin?configureType=orcidFlow";
+    public static final String ATTR_LOGIN_PRE_ORCID_URI = "loginPreOrcidUri";
+    public static final String ATTR_LOGIN_ORCID_FLOW_URI = "loginOrcidFlowUri";
+    public static final String ATTR_LOGIN_METACAT_URI = "loginMetacatUri";
+    public static final String ATTR_LOGOUT_URI = "logoutUri";
+    public static final String ATTR_CN_BASE_URL = "cnBaseUrl";
 
     public static final String ACTION_PARAM = "configureType";
     public static final String ACTION_ORCID_FLOW = "orcidFlow";
     public static final String ACTION_LOGIN_MC = "mcLogin";
     public static final String ACTION_LOGOUT = "logout";
 
+    private static final String PATH_LOGOUT = "/admin?" + ACTION_PARAM + "=logout";
+    private static final String PATH_LOGIN_PRE_ORCID = "/admin";
+    private static final String PATH_LOGIN_ORCID_FLOW = "/admin?" + ACTION_PARAM + "=" + ACTION_ORCID_FLOW;
+    private static final String PATH_LOGIN_METACAT = "/admin?" + ACTION_PARAM + "=" + ACTION_LOGIN_MC;
     public static final String PATH_ADMIN_HOMEPAGE =
         "/admin?" + ACTION_PARAM + "=configure&processForm=false";
     public static final String PATH_D1_PORTAL_OAUTH = "/portal/oauth?action=start&amp;target=";
     public static final String PATH_D1_PORTAL_TOKEN = "/portal/token";
+    public static final String PATH_D1_PORTAL_LOGOUT = "/portal/logout?target=";
 
     private Log logMetacat = LogFactory.getLog(MetacatAdminServlet.class);
 
@@ -71,12 +79,13 @@ public class MetacatAdminServlet extends HttpServlet {
                                            + "), but unable to parse base URL from it", e);
         }
         // add to context; access using `application.getAttribute(String);`
-        getServletContext().setAttribute("cnBaseUrl", cnBaseUrl);
+        getServletContext().setAttribute(ATTR_CN_BASE_URL, cnBaseUrl);
 
         String contextPath = getServletContext().getContextPath();
-        getServletContext().setAttribute("loginPreOrcidUri", contextPath + LOGIN_PRE_ORCID_PATH);
-        getServletContext().setAttribute("loginOrcidFlowUri", contextPath + LOGIN_ORCID_FLOW_PATH);
-        getServletContext().setAttribute("logoutUri", contextPath + LOGOUT_PATH);
+        getServletContext().setAttribute(ATTR_LOGIN_PRE_ORCID_URI, contextPath + PATH_LOGIN_PRE_ORCID);
+        getServletContext().setAttribute(ATTR_LOGIN_ORCID_FLOW_URI, contextPath + PATH_LOGIN_ORCID_FLOW);
+        getServletContext().setAttribute(ATTR_LOGIN_METACAT_URI, contextPath + PATH_LOGIN_METACAT);
+        getServletContext().setAttribute(ATTR_LOGOUT_URI, contextPath + PATH_LOGOUT);
     }
 
     /** Handle "GET" method requests from HTTP clients */
@@ -111,8 +120,12 @@ public class MetacatAdminServlet extends HttpServlet {
         Vector<String> processingMessage = new Vector<>();
         Vector<String> processingErrors = new Vector<>();
 
+        logMetacat.debug("\n****** USERID IN SESSION: "
+                             + request.getSession().getAttribute(RequestUtil.ATTR_USER_ID) +
+                             "**********************\n");
+
         logMetacat.debug("\n****** START REQUEST PARAMETERS **********************\n"
-                             + RequestUtil.getParameters(request)
+                             + RequestUtil.getParametersAsString(request)
                              + "\n****** END REQUEST PARAMETERS   **********************\n");
 
         try {
@@ -134,65 +147,43 @@ public class MetacatAdminServlet extends HttpServlet {
                 action = "auth";
                 logMetacat.debug(
                     "MetacatAdminServlet - Admin action changed to 'auth'");
-            } else if (ACTION_LOGOUT.equals(action)) {
-                logMetacat.debug("MetacatAdminServlet - Admin action is 'logout'");
-                LoginAdmin.getInstance().handle(request, response);
-                return;
-            } else if (!AuthUtil.isUserLoggedInAsAdmin(request)) {
-                logMetacat.debug(
-                    "MetacatAdminServlet - User not yet logged in (action was '" + action + "'");
+            } else if (LoginAdmin.getInstance().needsLoginAdminHandling(request, action)) {
+                logMetacat.debug("MetacatAdminServlet - Admin action is: " + ACTION_LOGOUT
+                                     + "; intervention by LoginAdmin is required");
                 LoginAdmin.getInstance().handle(request, response);
                 return;
             }
 
-            if (action == null || action.equals("configure")) {
+            if (action == null) {
                 // Forward the request main configuration page
-                initialConfigurationParameters(request);
-                RequestUtil.forwardRequest(request, response,
-                        "/admin/metacat-configuration.jsp?configureType=configure",
-                                           null);
-                return;
-            } else if (action.equals("properties")) {
-                // process properties
-                PropertiesAdmin.getInstance().configureProperties(request, response);
-                return;
-            } else if (action.equals("database")) {
-                // process database
-                DBAdmin.getInstance().configureDatabase(request, response);
-                return;
-            } else if (action.equals("auth")) {
-                // configure authentication
-                AuthAdmin.getInstance().configureAuth(request, response);
-                return;
-            } else if (action.equals("backup")) {
-                // process login
-                BackupAdmin.getInstance().configureBackup(request, response);
-                return;
-            } else if (action.equals("dataone")) {
-                // TODO: Double check that orcid auth did not create issues here
-                // process dataone config
-                D1Admin.getInstance().configureDataONE(request, response);
-                return;
-            } else if (action.equals("ezid")) {
-                // process replication config
-                EZIDAdmin.getInstance().configureEZID(request, response);
-                return;
-            } else if (action.equals("quota")) {
-                // process the quota config
-                QuotaAdmin.getInstance().configureQuota(request, response);
-                return;
-            } else if (action.equals("solrserver")) {
-                // process replication config
-                SolrAdmin.getInstance().configureSolr(request, response);
-                return;
-            } else if (action.equals("refreshStylesheets")) {
-                clearStylesheetCache(response);
-                return;
-            } else {
-                String errorMessage = "MetacatAdminServlet - "
-                    + "Invalid action in configuration request: " + action;
-                logMetacat.error(errorMessage);
-                processingErrors.add(errorMessage);
+                action = "configure";
+                logMetacat.debug("MetacatAdminServlet - null action changed to 'configure'");
+            }
+
+            switch (action) {
+                case "configure" -> {
+                    // Forward the request main configuration page
+                    initialConfigurationParameters(request);
+                    RequestUtil.forwardRequest(request, response,
+                                               "/admin/metacat-configuration.jsp?" + ACTION_PARAM
+                                                   + "=configure", null);
+                }
+                case "properties" ->
+                    PropertiesAdmin.getInstance().configureProperties(request, response);
+                case "database" -> DBAdmin.getInstance().configureDatabase(request, response);
+                case "auth" -> AuthAdmin.getInstance().configureAuth(request, response);
+                case "backup" -> BackupAdmin.getInstance().configureBackup(request, response);
+                case "dataone" -> D1Admin.getInstance().configureDataONE(request, response);
+                case "ezid" -> EZIDAdmin.getInstance().configureEZID(request, response);
+                case "quota" -> QuotaAdmin.getInstance().configureQuota(request, response);
+                case "solrserver" -> SolrAdmin.getInstance().configureSolr(request, response);
+                case "refreshStylesheets" -> clearStylesheetCache(response);
+                default -> {
+                    String errorMessage =
+                        "MetacatAdminServlet - Invalid action in configuration request: " + action;
+                    logMetacat.error(errorMessage);
+                    processingErrors.add(errorMessage);
+                }
             }
 
         } catch (GeneralPropertyException ge) {
@@ -226,7 +217,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 initialConfigurationParameters(request);
                 RequestUtil.forwardRequest(request, response,
                                            "/admin/metacat-configuration"
-                                               + ".jsp?configureType=configure",
+                                               + ".jsp?" + ACTION_PARAM + "=configure",
                                            null);
             } catch (Exception e) {
                 //We can't display the error message on a web page. Only print them out.
@@ -252,22 +243,6 @@ public class MetacatAdminServlet extends HttpServlet {
             domainPart.append(":").append(port);
         }
         return domainPart.toString();
-    }
-
-    private static String getAllParams(HttpServletRequest request) {
-        Enumeration<String> parameterNames = request.getParameterNames();
-        StringBuilder returnStr = new StringBuilder();
-        while (parameterNames.hasMoreElements()) {
-            String paramName = parameterNames.nextElement();
-            returnStr.append(paramName).append(":\n");
-            String[] paramValues = request.getParameterValues(paramName);
-            if (paramValues != null) {
-                for (String value : paramValues) {
-                    returnStr.append("    ").append(value).append(";\n");
-                }
-            }
-        }
-        return returnStr.toString();
     }
 
     /*

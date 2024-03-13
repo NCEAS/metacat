@@ -1,30 +1,30 @@
-<%@ page %>
+<%@ page import="edu.ucsb.nceas.metacat.admin.MetacatAdminServlet" %>
+<%@ page import="edu.ucsb.nceas.metacat.util.RequestUtil" %>
 <%
-    String userId = (String) request.getSession().getAttribute("userId");
-    if (userId != null && !userId.isEmpty()) {
+    final String userId =
+            String.valueOf(request.getSession().getAttribute(RequestUtil.ATTR_USER_ID));
+    final String loginUri =
+            String.valueOf(application.getAttribute(MetacatAdminServlet.ATTR_LOGIN_PRE_ORCID_URI));
+    final String logoutUri =
+            String.valueOf(application.getAttribute(MetacatAdminServlet.ATTR_LOGOUT_URI));
+    final String docsUri = request.getContextPath() + "/docs";
 %>
+<noscript>Please enable JavaScript to continue using this application.</noscript>
 <div class="header">
     <ul>
         <li><img src="<%= request.getContextPath() %>/docs/_static/metacat-logo-white.png"
                  width="100px" style="float:left" alt="metacat logo"/></li>
-        <li><a href="<%= application.getAttribute("logoutUri") %>">log in as different user</a></li>
-        <li><a href="<%= application.getAttribute("logoutUri") %>">logout</a></li>
-        <li><a href="<%= request.getContextPath() %>/docs" target="_blank">metacat user
-            documentation</a></li>
-    </ul>
-</div>
+<%
+    if (!"null".equals(userId) && !userId.isBlank()) {
+%>
+        <li><a href="<%= logoutUri %>">log out</a></li>
 <%
     } else {
 %>
-<div class="header">
-    <ul>
-        <li><img src="<%= request.getContextPath() %>/docs/_static/metacat-logo-white.png"
-                 width="100px" style="float:left" alt="metacat logo"/></li>
-        <li><a href="<%= application.getAttribute("loginUri") %>">log in</a></li>
-        <li><a href="<%= request.getContextPath() %>/docs" target="_blank">metacat user
-            documentation</a></li>
-    </ul>
-</div>
+        <li><a href="<%= loginUri %>">log in</a></li>
 <%
     }
 %>
+        <li><a href="<%= docsUri %>" target="_blank">metacat user documentation</a></li>
+    </ul>
+</div>
