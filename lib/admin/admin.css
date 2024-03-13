@@ -1,6 +1,11 @@
 /* Import the Metacat documentation stylesheet */
 @import url(../docs/_static/metacatui.css);
 
+/* overrides */
+.document{
+    padding-bottom: 35px;
+}
+
 /* THE BASICS
 -------------------------------------------------- */
 html{
@@ -402,15 +407,25 @@ i{
 	display: inline-block;
 	font-weight: bold;
 }
+
 .orcid-btn img {
     height: 1.5em;
     margin-right: 5px;
 }
+
 .orcid-btn:hover{
 	background-color: #aacf14;
 	transition: all 500ms;
 	text-decoration: none;
 }
+
+.orcid-btn-disabled{
+    color: lightgrey;
+    border: 1px solid dimgray;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .orcid-btn:hover > span{
 	color: #FFF;
 	text-decoration: none;
@@ -420,9 +435,47 @@ i{
     margin: 0 auto;
     float: none;
 	text-align: center;
-	display: block;
+	display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 50vh;
+    padding-top: 5%;
 }
 
 .orcid-flex {
 	display: flex;
+}
+
+.spinner {
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top: 3px solid #899B4D;
+    border-radius: 50%;
+    width: 1em;
+    height: 1em;
+    margin-right: 5px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 40%;
 }
