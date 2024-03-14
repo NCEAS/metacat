@@ -394,10 +394,14 @@ public class D1AuthHelper {
             exceptions.add(sf);
         }
 
+        // This is a guard rail. An exception will be thrown if the JVM reaches this part of
+        // the code and exceptions list is empty. Unless a session subject is explicitly authorized,
+        // the session is not authorized.
         if (exceptions.isEmpty()) {
             prepareAndThrowNotAuthorized(session, requestIdentifier, null, notAuthorizedCode);
         } else {
-            // just use the first one
+            // If there is an error when attempting to determine admin privileges,
+            // pick the first exception and throw it.
             ServiceFailure sf = exceptions.get(0);
             sf.setDetail_code(serviceFailureCode);
             throw sf;
