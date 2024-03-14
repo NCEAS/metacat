@@ -383,11 +383,11 @@ public class D1AuthHelper {
         try {
             logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + sessionSubject
                 + " for Metacat admin privileges.");
-            if (AuthUtil.isAdministrator(sessionSubject, null)) {
-                return;
-            } else {
+            if (!AuthUtil.isAdministrator(sessionSubject, null)) {
                 throw new NotAuthorized(
                     "0000", "Subject is not an administrator: " + sessionSubject);
+            } else {
+                return;
             }
         } catch (MetacatUtilException mue) {
             ServiceFailure sf = new ServiceFailure("0000", mue.getMessage());
