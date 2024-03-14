@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import edu.ucsb.nceas.utilities.StringUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.portal.PortalCertificateManager;
@@ -126,7 +127,7 @@ public class AuthUtil {
                                                + "administrators: "
                                                + pnfe.getMessage());
         }
-        administrators = split(administratorString, ";", ESCAPECHAR);
+        administrators = StringUtil.toVector(administratorString, ';');
 
         String d1NodeAdmin = null;
         try {
@@ -193,18 +194,21 @@ public class AuthUtil {
      * the session list in SessionUtil.
      *
      * @param request the http request.
+     * @return the userId if successful
+     * @throws MetacatUtilException if there's a problem adding the userId to the session
      */
-    public static void logAdminUserIn(HttpServletRequest request) throws MetacatUtilException {
+    public static String authenticateUserWithCN(HttpServletRequest request) throws MetacatUtilException {
 
-        String userId = getAuthenticatedAdminUserId(request);
+        String userId = getCNAuthenticatedUserId(request);
 
         if (userId != null && !userId.isBlank()) {
             RequestUtil.setUserId(request, userId);
-            logMetacat.info("User successfully logged in: " + userId);
+            logMetacat.info("User successfully authenticated with CN: " + userId);
         } else {
             throw new MetacatUtilException(
-                "Problem logging user in; getAuthenticatedAdminUserId returned: <" + userId + ">");
+                "Problem authenticating user with CN; getCNAuthenticatedUserId returned: <" + userId + ">");
         }
+        return userId;
     }
 
     /**
@@ -227,7 +231,7 @@ public class AuthUtil {
     }
 
     // Try to authenticate user via jwt token in header.
-    private static String getAuthenticatedAdminUserId(HttpServletRequest request) {
+    private static String getCNAuthenticatedUserId(HttpServletRequest request) {
 
         HttpServletRequest requestWithHeader = getRequestWithAuthHeader(request);
         if (requestWithHeader == null) {
