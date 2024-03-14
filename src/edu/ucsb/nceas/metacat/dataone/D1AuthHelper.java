@@ -335,14 +335,30 @@ public class D1AuthHelper {
 
     /**
      * Does MN/CN admin authorization
-     * @param session
-     * @throws ServiceFailure
-     * @throws NotAuthorized
+     *
+     * @param session A session object that contains a subject value to check for authorization
+     * @throws ServiceFailure When there is an issue checking for authorization
+     * @throws NotAuthorized  When the session subject is not authorized
      */
     public void doAdminAuthorization(Session session) throws ServiceFailure, NotAuthorized {
-        if(session != null && session.getSubject() != null) {
-            logMetacat.debug("D1AuthHepler.doAdminAuthorization - the session is "+session.getSubject().getValue());
+        // First, ensure that the session is valid.
+        if (session == null) {
+            throw new NotAuthorized("0000", "Session is null.");
         }
+        // If there is no subject or if subject is empty, session is not authorized.
+        String sessionSubject = session.getSubject().getValue();
+        if (sessionSubject == null) {
+            throw new NotAuthorized(
+                "0000", "Session is not null, but subject value is null.");
+        }
+        if (sessionSubject.trim().isEmpty()) {
+            throw new NotAuthorized("0000", "Session is not null, but subject value is empty.");
+        }
+        logMetacat.debug(
+            "D1AuthHelper.doAdminAuthorization - The session subject value to check is: "
+                + sessionSubject);
+
+        // Create exception list that will be checked for errors
         List<ServiceFailure> exceptions = new ArrayList<>();
 
         try {
@@ -363,34 +379,23 @@ public class D1AuthHelper {
         }
 
         // If subject is not a LocalNodeAdmin or CNAdmin, check to see if subject is a
-        // Metacat admin (auth.administrators) - who also have admin privileges like the above
+        // Metacat admin (auth.administrators) - who also has admin privileges like the above
         try {
-            // If session is null, there is no user so admin is not authorized.
-            if (session != null) {
-                String adminUser = session.getSubject().getValue();
-                if (adminUser != null) {
-                    logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + adminUser
-                        + " for Metacat admin privileges.");
-                    if (adminUser.trim().isEmpty()) {
-                        throw new NotAuthorized(
-                            "0000", "Session is not null, but adminUser is empty.");
-                    }
-                    if (AuthUtil.isAdministrator(adminUser, null)) {
-                        return;
-                    }
-                } else {
-                    throw new NotAuthorized("0000", "Session is not null, but adminUser is null.");
-                }
+            logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + sessionSubject
+                + " for Metacat admin privileges.");
+            if (AuthUtil.isAdministrator(sessionSubject, null)) {
+                return;
             } else {
-                throw new NotAuthorized("0000", "Session is null.");
+                throw new NotAuthorized(
+                    "0000", "Subject is not an administrator: " + sessionSubject);
             }
         } catch (MetacatUtilException mue) {
             ServiceFailure sf = new ServiceFailure("0000", mue.getMessage());
             exceptions.add(sf);
         }
 
-        if (exceptions.isEmpty()) { 
-            prepareAndThrowNotAuthorized(session,requestIdentifier, null, notAuthorizedCode); 
+        if (exceptions.isEmpty()) {
+            prepareAndThrowNotAuthorized(session, requestIdentifier, null, notAuthorizedCode);
         } else {
             // just use the first one
             ServiceFailure sf = exceptions.get(0);
