@@ -1,41 +1,31 @@
 <?xml version="1.0"?>
 
 <metadataConfig>
-	<group>
-		<index>1</index>
-		<name>Authentication Configuration Values</name>
-		<comment>
-			Authentication Setup
-		</comment>
-		<description>Authentication Configuration Values.</description>
-	</group>
-	
-	<config>
-        <key>auth.class</key>
-        <label>Authentication Class</label>
-        <group>1</group>
+    <group>
         <index>1</index>
-        <required>true</required>
-        <fieldType>select</fieldType>
-        <option>
-            <name>ORCID Authentication</name>
-            <value>ORCID Authentication</value>
-        </option>
-        <description>Authentication Class.</description>
-        <helpFile>docs/metacat-properties.html#auth-class</helpFile>
-    </config>
-	
-	<config>
+        <name>Authentication Configuration Values</name>
+        <comment>
+            Authentication Setup
+        </comment>
+        <description>Authentication Configuration Values.</description>
+    </group>
+
+    <config>
         <key>auth.administrators</key>
         <label>Metacat Administrators</label>
         <group>1</group>
-        <index>2</index>
+        <index>1</index>
         <required>true</required>
-        <description>Authentication users or groups for Metacat administration. 
-            &lt;font color="red"&gt;&lt;br&gt;Note: If adding a user, a 16-digit ORCID ID
-             is expected&lt;/font&gt;.</description>
+        <description>
+            A list of one or more ORCID identifiers, separated by semicolons (;). For example:
+            &lt;p&gt;http://orcid.org/0000-0003-0958-4367;http://orcid.org/0000-0003-0234-432X
+            &lt;/p&gt;
+            &lt;em&gt;NOTE:&lt;/em&gt; ORCID identifiers must be of the form:
+            &lt;em&gt;http:&lt;/em&gt;//orcid.org/0000-0003-0958-4367 (&lt;em&gt;not
+            https&lt;/em&gt;).
+        </description>
         <helpFile>docs/metacat-properties.html#auth-administrators</helpFile>
         <isRequired>true</isRequired>
     </config>
-    
+
 </metadataConfig>
