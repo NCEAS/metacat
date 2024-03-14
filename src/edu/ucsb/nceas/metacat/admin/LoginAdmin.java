@@ -169,10 +169,14 @@ public class LoginAdmin extends MetacatAdmin {
         Vector<String> processingErrors = new Vector<>();
 
         try {
-            AuthUtil.logAdminUserIn(request);
+            String userId = AuthUtil.authenticateUserWithCN(request);
 
-            AuthUtil.setAuthCookie(request, response, -1);
-
+            if (AuthUtil.isAdministrator(userId, null)) {
+                AuthUtil.setAuthCookie(request, response, -1);
+            } else {
+                processingErrors.add(userId + " is not on the Administrators list. Please contact"
+                                         + " a metacat administrator if you need access.");
+            }
         } catch (MetacatUtilException ue) {
             String errorMessage = "Could not log in (" + ue.getMessage() + "). Please try again";
             processingErrors.add(errorMessage);
@@ -183,8 +187,8 @@ public class LoginAdmin extends MetacatAdmin {
             if (!processingErrors.isEmpty()) {
                 RequestUtil.setRequestErrors(request, processingErrors);
                 logMetacat.debug("Processing errors found (" + processingErrors
-                        + ").  User is not authenticated; going back to login start page");
-                forwardToLoginStartPage(request, response, null);
+                        + ").  User is not logged in; going back to login start page");
+                logOutAdminUser(request, response);
 
             } else {
                 logMetacat.debug("Admin user logged in - authenticated and authorized");
@@ -220,6 +224,7 @@ public class LoginAdmin extends MetacatAdmin {
         request.getSession().removeAttribute("userId");
 
         addProcessingMessage(request, "Successfully logged out");
+
         try {
             AuthUtil.invalidateAuthCookie(request, response);
             forwardToLoginStartPage(request, response, MetacatAdminServlet.ACTION_LOGOUT);
@@ -238,7 +243,12 @@ public class LoginAdmin extends MetacatAdmin {
     private static void forwardToLoginStartPage(
         HttpServletRequest request, HttpServletResponse response, String attribute) throws MetacatUtilException {
 
+        // clean up all messages except processingErrors
+        Vector<String> processingErrors = (Vector<String>)request.getAttribute("processingErrors");
         cleanRequest(request);
+        if (processingErrors != null) {
+            RequestUtil.setRequestErrors(request, processingErrors);
+        }
 
         if (attribute != null) {
             request.removeAttribute(attribute);
@@ -261,15 +271,19 @@ public class LoginAdmin extends MetacatAdmin {
         RequestUtil.setRequestMessage(request, messageVector);
     }
 
-    // clear messages and remove all attributes from request
+    // clear messages and remove all attributes from request except for "processingErrors"
     private static void cleanRequest(HttpServletRequest request) {
 
         RequestUtil.clearRequestMessages(request);
 
         Enumeration<String> attribList = request.getAttributeNames();
         if (attribList != null) {
+            String next;
             while (attribList.hasMoreElements()) {
-                request.removeAttribute(attribList.nextElement());
+                next = attribList.nextElement();
+                if (!"processingErrors".equals(next)) {
+                    request.removeAttribute(next);
+                }
             }
         }
     }
