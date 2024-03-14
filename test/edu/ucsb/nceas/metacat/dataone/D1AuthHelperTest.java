@@ -248,43 +248,47 @@ public class D1AuthHelperTest {
 
     /**
      * Confirm that 'doAdminAuthorization' throws NotAuthorized exception with unauthorized
-     * subject.
+     * subject from session.
      */
     @Test(expected = NotAuthorized.class)
     public void testDoAdminAuthorization_notAuthorized() throws Exception {
-        authDelMock.doAdminAuthorization(session);
+        Session sessionRandomUser = new Session();
+        sessionRandomUser.setSubject(
+            TypeFactory.buildSubject("IAmNotAuthorized"));
+
+        authDelMock.doAdminAuthorization(sessionRandomUser);
     }
 
     /**
-     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception with session is not null
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception when session is not null
      * and subject is null.
      */
     @Test(expected = NotAuthorized.class)
     public void testDoAdminAuthorization_nullSessionSubject() throws Exception {
-        Session sessionLocalNodeAdmin = new Session();
-        sessionLocalNodeAdmin.setSubject(
+        Session sessionNullSubject = new Session();
+        sessionNullSubject.setSubject(
             TypeFactory.buildSubject(null));
 
 
-        authDelMock.doAdminAuthorization(null);
+        authDelMock.doAdminAuthorization(sessionNullSubject);
     }
 
     /**
-     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception with session is not null
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception when session is not null
      * and subject is empty.
      */
     @Test(expected = NotAuthorized.class)
     public void testDoAdminAuthorization_emptySessionSubject() throws Exception {
-        Session sessionLocalNodeAdmin = new Session();
-        sessionLocalNodeAdmin.setSubject(
+        Session sessionEmptySubject = new Session();
+        sessionEmptySubject.setSubject(
             TypeFactory.buildSubject(""));
 
-        authDelMock.doAdminAuthorization(null);
+        authDelMock.doAdminAuthorization(sessionEmptySubject);
     }
 
 
     /**
-     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception with session is null
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception when session is null
      */
     @Test(expected = NotAuthorized.class)
     public void testDoAdminAuthorization_nullSession() throws Exception {
