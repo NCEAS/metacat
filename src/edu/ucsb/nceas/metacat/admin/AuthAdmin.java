@@ -1,32 +1,5 @@
-/**
- * '$RCSfile$'
- * Purpose: A Class that implements ldap configuration methods
- * Copyright: 2008 Regents of the University of California and the
- * National Center for Ecological Analysis and Synthesis
- * Authors: Michael Daigle
- *
- * '$Author$'
- * '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-
 package edu.ucsb.nceas.metacat.admin;
 
-import java.net.ConnectException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.Vector;
@@ -39,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import edu.ucsb.nceas.metacat.AuthSession;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
@@ -57,8 +29,7 @@ public class AuthAdmin extends MetacatAdmin {
 
 	private static AuthAdmin authAdmin = null;
 	private static Log logMetacat = LogFactory.getLog(AuthAdmin.class);
-	private static final String AUTHCLASSKEY = "auth.class";
-	public static final String FILECLASS = "edu.ucsb.nceas.metacat.authentication.AuthFile";
+    public static final String FILECLASS = "edu.ucsb.nceas.metacat.authentication.AuthFile";
 	public static final String LDAPCLASS = "edu.ucsb.nceas.metacat.AuthLdap";
 
 	/**
@@ -78,9 +49,6 @@ public class AuthAdmin extends MetacatAdmin {
 		}
 		return authAdmin;
 	}
-
-	// TODO: Update Authorization Documentation RE: ORCID Authentication
-	// TODO: Double check .jsp page's (i) displays the correct documentation
 
 	/**
 	 * Handle configuration of the Authentication properties
@@ -109,7 +77,7 @@ public class AuthAdmin extends MetacatAdmin {
 				// Add the list of auth options and their values to the request
 				Vector<String> propertyNames = PropertyService.getPropertyNamesByGroup("auth");
 				for (String name : propertyNames) {
-					request.setAttribute(name, PropertyService.getProperty(name));
+					request.setAttribute("auth.administrators", PropertyService.getProperty(name));
 				}
 
 				// Add the list of organization options and their values to the request.
@@ -241,13 +209,13 @@ public class AuthAdmin extends MetacatAdmin {
 	}
 
 	/**
-	 * Validate that a user has supplied a 16-digit ORCID by parsing the http request's
+	 * Validate that a user has supplied an ORCID identifier by parsing the http request's
 	 * 'auth.administrators' parameter.
 	 *
 	 * AuthSessions were previously created based on a selected authentication class.
 	 * As LDAP and Password based authentication is being deprecated, we no longer have
-	 * to check for a valid authentication class. Moving forward, the user is expected
-	 * to provide an ORCID ID, which are 16 digits (####-####-####-####),
+	 * to check for a valid authentication class. The user is now (2024) expected
+	 * to provide an ORCID ID of the form http://orcid.org/0000-0003-0958-4367 (http, NOT https)
 	 *
 	 * @param request Http request
 	 * @return a vector holding error message for any fields that fail validation.
@@ -255,21 +223,30 @@ public class AuthAdmin extends MetacatAdmin {
 	protected Vector<String> validateOptions(HttpServletRequest request) {
 		Vector<String> errorVector = new Vector<String>();
 		String adminUsers = request.getParameter("auth.administrators");
-		Vector<String> adminUserList = StringUtil.toVector(adminUsers, ':');
+		Vector<String> adminUserList = StringUtil.toVector(adminUsers, ';');
 
 		// Ensure that user has supplied an ID
 		if (adminUserList.size() == 0) {
-			errorVector.add("Error: ORCID Cannot be empty.");
+			errorVector.add("Error: must provide at least one valid ORCID identifier.");
 		} else {
-			// ORCID Format ID to match
-			// String regex = "\\d{4}-\\d{4}-\\d{4}-\\d{4}";
-			String regex = "\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)";
+			// match ORCID ID of the form http://orcid.org/0000-0003-0958-4367 (http, NOT https)
+			String regex = "http://orcid.org/\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)";
 			Pattern pattern = Pattern.compile(regex);
 			for (String adminUser : adminUserList) {
+				if (adminUser.isBlank()) {
+					continue;
+				}
 				Matcher matcher = pattern.matcher(adminUser);
 				boolean matched = matcher.matches();
 				if (!matched) {
-					errorVector.add("Error: A 16-digit ORCID is required.");
+					if (adminUser.startsWith("https")) {
+						errorVector.add(
+							"Error: ORCID identifiers must start with http:, not https:");
+					} else {
+						errorVector.add("Error: ORCID identifiers must be of the form: "
+											+ "http://orcid.org/0000-0003-0958-4367 or "
+											+ "http://orcid.org/0000-0003-0589-346X");
+					}
 				}
 			}
 		}
