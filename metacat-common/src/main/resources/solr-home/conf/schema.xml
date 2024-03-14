@@ -205,8 +205,8 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
         <field name="title"                    type="text_general"    multiValued="false" indexed="true" stored="true" />
         <field name="scientificName"           type="string"    multiValued="true" indexed="true" stored="true" />
         <field name="relatedOrganizations"     type="string"    multiValued="true" indexed="true" stored="true" />
-        <field name="datePublished"            type="date"      multiValued="false" indexed="true" stored="true" />
-        <field name="pubDate" 				   type="date" 							indexed="true" stored="true"/>
+        <field name="datePublished"            type="date_range"      multiValued="false" indexed="true" stored="true" />
+        <field name="pubDate"                  type="date_range"    indexed="true" stored="true"/>
 
 		<field name="investigator" 		type="string" 	indexed="true" stored="true" multiValued="true"/>
 		<field name="investigatorText" 	type="text_general" 	indexed="true" stored="false" multiValued="true"/>
