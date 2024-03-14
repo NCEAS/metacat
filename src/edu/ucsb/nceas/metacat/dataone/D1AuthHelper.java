@@ -400,7 +400,7 @@ public class D1AuthHelper {
         if (exceptions.isEmpty()) {
             prepareAndThrowNotAuthorized(session, requestIdentifier, null, notAuthorizedCode);
         } else {
-            // If there is an error when attempting to determine admin privileges,
+            // If there are multiple errors when attempting to determine admin privileges,
             // pick the first exception and throw it.
             ServiceFailure sf = exceptions.get(0);
             sf.setDetail_code(serviceFailureCode);
