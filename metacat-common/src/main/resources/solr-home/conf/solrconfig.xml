@@ -583,7 +583,7 @@
      Circuit Breaker Section - This section consists of configurations for
      circuit breakers
      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-  <circuitBreaker>
+  <!--<circuitBreaker>-->
     <!-- Enable Circuit Breakers
 
      Circuit breakers are designed to allow stability and predictable query
@@ -619,7 +619,7 @@
    <memoryCircuitBreakerThresholdPct>100</memoryCircuitBreakerThresholdPct>
     -->
 
-  </circuitBreaker>
+  <!--</circuitBreaker>-->
 
 
   <!-- Request Dispatcher
