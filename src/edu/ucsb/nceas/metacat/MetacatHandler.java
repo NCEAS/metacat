@@ -707,27 +707,31 @@ public class MetacatHandler {
                 throw new InvalidRequest("1181", "Metacat cannot register "
                                    + "records into database since it tries to update a blank pid.");
             }
-            try {
-                logMetacat.debug("looking in identifier table for pid " + prePid.getValue());
-                localId = IdentifierManager.getInstance().getLocalId(prePid.getValue());
-                logMetacat.debug("localId: " + localId + " for the pid " + prePid.getValue());
-                //increment the revision
-                String docid = localId.substring(0, localId.lastIndexOf("."));
-                String revS = localId.substring(localId.lastIndexOf(".") + 1, localId.length());
-                int rev = Integer.parseInt(revS);
-                rev++;
-                localId = docid + "." + rev;
-                logMetacat.debug("incremented localId: " + localId);
-            } catch (McdbDocNotFoundException e) {
-                throw new ServiceFailure(
-                    "1190", "The object " + "pid " + pid.getValue()
-                    + " should have been in the identifier table, but it wasn't: "
-                    + e.getMessage());
+            if (docType.equals(DocumentImpl.BIN)) {
+                localId = DocumentUtil.generateDocumentId(1);
+            } else {
+                try {
+                    logMetacat.debug("looking in identifier table for pid " + prePid.getValue());
+                    localId = IdentifierManager.getInstance().getLocalId(prePid.getValue());
+                    logMetacat.debug("localId: " + localId + " for the pid " + prePid.getValue());
+                    //increment the revision
+                    String docid = localId.substring(0, localId.lastIndexOf("."));
+                    String revS = localId.substring(localId.lastIndexOf(".") + 1, localId.length());
+                    int rev = Integer.parseInt(revS);
+                    rev++;
+                    localId = docid + "." + rev;
+                    logMetacat.debug("incremented localId: " + localId);
+                } catch (McdbDocNotFoundException e) {
+                    throw new ServiceFailure(
+                        "1190", "The object " + "pid " + pid.getValue()
+                        + " should have been in the identifier table, but it wasn't: "
+                        + e.getMessage());
 
-            } catch (SQLException e) {
-                throw new ServiceFailure(
-                    "1190", "Metacat couldn't identify if the pid " + pid.getValue()
-                        + " is in the identifier table since " + e.getMessage());
+                } catch (SQLException e) {
+                    throw new ServiceFailure(
+                        "1190", "Metacat couldn't identify if the pid " + pid.getValue()
+                            + " is in the identifier table since " + e.getMessage());
+                }
             }
         }
         logMetacat.debug("Mapping pid " + pid.getValue() + " with docid " + localId);

@@ -167,7 +167,7 @@ public class DocumentImplIT {
             assertTrue("The xml_documents table should have value",
                                        IntegrationTestUtils.hasRecord("xml_documents", dbConn,
                                                                            " docid like ?", docid));
-            assertTrue("The xml_revisions table should have value",
+            assertFalse("The xml_revisions table should not have value",
                            IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
                                                              " rev=? and docid like ?", 1, docid));
             input = MetacatHandler.read(accnum2, null);
@@ -195,7 +195,7 @@ public class DocumentImplIT {
                       IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
                                                                   " guid like ?", guid.getValue()));
             docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
-            assertTrue("The xml_documents table should have value",
+            assertFalse("The xml_documents table should not have value",
                                         IntegrationTestUtils.hasRecord("xml_documents", dbConn,
                                                                         " docid like ?", docid));
             assertFalse("The xml_revisions table should not have value",

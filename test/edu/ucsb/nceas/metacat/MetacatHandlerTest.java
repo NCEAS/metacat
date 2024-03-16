@@ -203,23 +203,27 @@ public class MetacatHandlerTest {
             Identifier newPid = new Identifier();
             newPid.setValue("testRegisterToDBData2-" + System.currentTimeMillis());
             prePid = pid;
-            localId = handler.registerToDB(newPid, Action.UPDATE, dbConn, "user-data",
+            String newLocalId = handler.registerToDB(newPid, Action.UPDATE, dbConn, "user-data",
                                         DocumentImpl.BIN, prePid);
+            String newDocid = newLocalId.substring(0, localId.lastIndexOf("."));
             assertTrue("The identifier table should have value",
                     IntegrationTestUtils.hasRecord("identifier", dbConn,
                             " rev=? and guid like ? and docid like ? ", 1, pid.getValue(), docid));
             assertTrue("The identifier table should have value",
                     IntegrationTestUtils.hasRecord("identifier", dbConn,
-                          " rev=? and guid like ? and docid like ? ", 2, newPid.getValue(), docid));
+                       " rev=? and guid like ? and docid like ? ", 1, newPid.getValue(), newDocid));
             assertTrue("The xml_documents table should have value",
                     IntegrationTestUtils.hasRecord("xml_documents", dbConn,
-                                                    " rev=? and docid like ?", 2, docid));
-            assertTrue("The xml_revisions table should have value",
+                                                    " rev=? and docid like ?", 1, docid));
+            assertTrue("The xml_documents table should have value",
+                    IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                    " rev=? and docid like ?", 1, newDocid));
+            assertFalse("The xml_revisions table should not have value",
                    IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
                                                    " rev=? and docid like ?", 1, docid));
             assertFalse("The xml_revisions table should not have value",
                     IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
-                                                    " rev=? and docid like ?", 2, docid));
+                                                    " rev=? and docid like ?", 1, newDocid));
             deleteRecords(docid);//clear
             // Register a inserted metadata object. The prePid will be ignored.
             pid.setValue("testRegisterToDBMetadata1-" + System.currentTimeMillis());
