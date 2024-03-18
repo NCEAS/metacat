@@ -341,26 +341,11 @@ public class D1AuthHelper {
      * @throws NotAuthorized  When the session subject is not authorized
      */
     public void doAdminAuthorization(Session session) throws ServiceFailure, NotAuthorized {
-        // First, ensure that the session is valid.
-        if (session == null) {
-            throw new NotAuthorized("0000", "Session is null.");
-        }
-        // If there is an empty session/no subject or if subject is blank, session is not authorized.
-        String sessionSubject;
-        try {
-            sessionSubject = session.getSubject().getValue();
-            if (sessionSubject == null) {
-                throw new NotAuthorized("0000", "Session is not null, but subject value is null.");
-            }
-            if (sessionSubject.trim().isBlank()) {
-                throw new NotAuthorized("0000", "Session is not null, but subject value is empty.");
-            }
-            logMetacat.debug(
-                "D1AuthHelper.doAdminAuthorization - The session subject value to check is: "
-                    + sessionSubject);
-        } catch (NullPointerException npe) {
-            throw new NotAuthorized("0000", "Session subject is not set.");
-        }
+        // First, ensure that the session and required values are ready to be evaluated.
+        String sessionSubjectValue = checkSessionAndGetSubjectValue(session);
+        logMetacat.debug(
+            "D1AuthHelper.doAdminAuthorization - Session is valid, the subject value to check is: "
+                + sessionSubjectValue);
 
         // Create exception list that will be checked for errors
         List<ServiceFailure> exceptions = new ArrayList<>();
@@ -385,9 +370,9 @@ public class D1AuthHelper {
         // If subject is not a LocalNodeAdmin or CNAdmin, check to see if subject is a
         // Metacat admin (auth.administrators) - who also has admin privileges like the above
         try {
-            logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + sessionSubject
+            logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + sessionSubjectValue
                 + " for Metacat admin privileges.");
-            if (AuthUtil.isAdministrator(sessionSubject, null)) {
+            if (AuthUtil.isAdministrator(sessionSubjectValue, null)) {
                 return;
             }
         } catch (MetacatUtilException mue) {
@@ -409,7 +394,34 @@ public class D1AuthHelper {
         }
     }
 
-    
+    /**
+     * Confirm that a session is not null, that its respective Subject is not null and that the
+     * subject value is not null or empty.
+     *
+     * @param session Session to check
+     * @return Subject value
+     * @throws NotAuthorized When session or subject is null, subject value is null or empty.
+     */
+    private static String checkSessionAndGetSubjectValue(Session session) throws NotAuthorized {
+        if (session == null) {
+            throw new NotAuthorized("0000", "Session is null.");
+        }
+        // Subject cannot be null
+        Subject sessionSubject = session.getSubject();
+        if (sessionSubject == null) {
+            throw new NotAuthorized("0000", "Session is not null, but subject is null.");
+        }
+        // Subject value cannot be null or empty
+        String sessionSubjectValue = sessionSubject.getValue();
+        if (sessionSubjectValue == null) {
+            throw new NotAuthorized("0000", "Session is not null, but subject value is null.");
+        }
+        if (sessionSubjectValue.trim().isBlank()) {
+            throw new NotAuthorized("0000", "Session is not null, but subject value is empty.");
+        }
+        return sessionSubjectValue;
+    }
+
     /**
      * used by getSystemMetadata, describe, and getPackage, the latter two by delegation to getSystemMetadata
      * Very similar to doIsAuthorized, but also allows replica nodes administrative access.
