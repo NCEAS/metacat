@@ -352,7 +352,7 @@ public class D1AuthHelper {
             if (sessionSubject == null) {
                 throw new NotAuthorized("0000", "Session is not null, but subject value is null.");
             }
-            if (sessionSubject.trim().isEmpty()) {
+            if (sessionSubject.trim().isBlank()) {
                 throw new NotAuthorized("0000", "Session is not null, but subject value is empty.");
             }
             logMetacat.debug(
