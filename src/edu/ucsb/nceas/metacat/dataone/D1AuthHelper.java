@@ -359,7 +359,7 @@ public class D1AuthHelper {
                 "D1AuthHelper.doAdminAuthorization - The session subject value to check is: "
                     + sessionSubject);
         } catch (NullPointerException npe) {
-            throw new NotAuthorized("0000", "Subject session is not set.");
+            throw new NotAuthorized("0000", "Session subject is not set.");
         }
 
         // Create exception list that will be checked for errors
