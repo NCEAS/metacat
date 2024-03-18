@@ -269,8 +269,18 @@ public class D1AuthHelperTest {
         sessionNullSubject.setSubject(
             TypeFactory.buildSubject(null));
 
-
         authDelMock.doAdminAuthorization(sessionNullSubject);
+    }
+
+    /**
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception when session subject
+     * is never set (empty session).
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoAdminAuthorization_missingSubject() throws Exception {
+        Session sessionNoSubjectSet = new Session();
+
+        authDelMock.doAdminAuthorization(sessionNoSubjectSet);
     }
 
     /**

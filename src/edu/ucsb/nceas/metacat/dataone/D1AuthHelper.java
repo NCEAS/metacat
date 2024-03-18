@@ -37,7 +37,7 @@ import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v2.util.NodelistUtil;
-
+import org.mockito.internal.matchers.Null;
 
 
 /**
@@ -345,18 +345,22 @@ public class D1AuthHelper {
         if (session == null) {
             throw new NotAuthorized("0000", "Session is null.");
         }
-        // If there is no subject or if subject is empty, session is not authorized.
-        String sessionSubject = session.getSubject().getValue();
-        if (sessionSubject == null) {
-            throw new NotAuthorized(
-                "0000", "Session is not null, but subject value is null.");
+        // If there is an empty session/no subject or if subject is blank, session is not authorized.
+        String sessionSubject;
+        try {
+            sessionSubject = session.getSubject().getValue();
+            if (sessionSubject == null) {
+                throw new NotAuthorized("0000", "Session is not null, but subject value is null.");
+            }
+            if (sessionSubject.trim().isEmpty()) {
+                throw new NotAuthorized("0000", "Session is not null, but subject value is empty.");
+            }
+            logMetacat.debug(
+                "D1AuthHelper.doAdminAuthorization - The session subject value to check is: "
+                    + sessionSubject);
+        } catch (NullPointerException npe) {
+            throw new NotAuthorized("0000", "Subject session is not set.");
         }
-        if (sessionSubject.trim().isEmpty()) {
-            throw new NotAuthorized("0000", "Session is not null, but subject value is empty.");
-        }
-        logMetacat.debug(
-            "D1AuthHelper.doAdminAuthorization - The session subject value to check is: "
-                + sessionSubject);
 
         // Create exception list that will be checked for errors
         List<ServiceFailure> exceptions = new ArrayList<>();
