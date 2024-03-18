@@ -2,10 +2,7 @@ package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
-import edu.ucsb.nceas.metacat.util.RequestUtil;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 
@@ -21,10 +18,7 @@ import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.matches;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
@@ -51,6 +45,8 @@ public class LoginAdminTest {
         context = mock(ServletContext.class);
         requestDispatcher = mock(RequestDispatcher.class);
         when(request.getSession()).thenReturn(session);
+        Cookie[] cookies = new Cookie[]{new Cookie("jwtToken", "my-super-secret-admin-jwt-token")};
+        when(request.getCookies()).thenReturn(cookies);
         when(session.getServletContext()).thenReturn(context);
 
         Enumeration blankParams = new StringTokenizer("");
@@ -102,7 +98,6 @@ public class LoginAdminTest {
         assertNull(request.getAttributeNames());
     }
 
-    @Ignore("failing, needs fixing")
     @Test
     public void handle_logout_param() throws Exception {
         expectForwardURIRegex(LOGIN_JSP);
@@ -151,7 +146,10 @@ public class LoginAdminTest {
         verify(requestDispatcher, times(0)).forward(request, response);
 
         try (MockedStatic<AuthUtil> mockAuthUtil = mockStatic(AuthUtil.class)) {
-            doNothing().when(AuthUtil.class);
+
+            mockAuthUtil.when(() -> AuthUtil.authenticateUserWithCN(any(HttpServletRequest.class))).thenReturn("testUser");
+            mockAuthUtil.when(() -> AuthUtil.isAdministrator(anyString(), any())).thenReturn(true);
+
 
             loginAdmin.doMetacatLogin(request, response);
 
@@ -170,24 +168,17 @@ public class LoginAdminTest {
         verify(requestDispatcher, times(1)).forward(request, response);
     }
 
-    @Ignore("failing, needs fixing")
     @Test
     public void logOutAdminUser() throws Exception {
         expectForwardURIRegex(LOGIN_JSP);
 
-        verify(requestDispatcher, times(0)).forward(request, response);
+        verify(requestDispatcher, times(0)).forward(any(HttpServletRequest.class),
+                                                    any(HttpServletResponse.class));
 
-        try (MockedStatic<RequestUtil> mockRequestUtil = mockStatic(RequestUtil.class)) {
-            Cookie cookie = new Cookie("jwtToken", "my-super-secret-admin-jwt-token");
-            mockRequestUtil
-                .when(() -> RequestUtil.getCookie(isA(HttpServletRequest.class), eq("jwtToken")))
-                .thenReturn(cookie);
+        loginAdmin.logOutAdminUser(request, response);
 
-            loginAdmin.logOutAdminUser(request, response);
-
-            mockRequestUtil.verify(() -> RequestUtil.getCookie(any(HttpServletRequest.class), eq("jwtToken")), times(1));
-        }
-        verify(requestDispatcher, times(1)).forward(request, response);
+        verify(requestDispatcher, times(1)).forward(any(HttpServletRequest.class),
+                                                    any(HttpServletResponse.class));
         verify(request, times(1)).setAttribute(MetacatAdminServlet.ACTION_LOGOUT, true);
         verify(session, times(1)).removeAttribute("userId");
     }
@@ -195,6 +186,13 @@ public class LoginAdminTest {
     private void expectForwardURIRegex(String regex) {
         Pattern uriPattern = Pattern.compile(regex);
         LeanTestUtils.debug("** expectForwardURIRegex: " + uriPattern);
-        when(context.getRequestDispatcher(matches(uriPattern))).thenReturn(requestDispatcher);
+        when(context.getRequestDispatcher(anyString())).thenAnswer(invocation -> {
+            String uri = invocation.getArgument(0);
+            if (uri.matches(String.valueOf(uriPattern))) {
+                return requestDispatcher;
+            } else {
+                throw new IllegalArgumentException("URI does not match the expected pattern");
+            }
+        });
     }
 }
