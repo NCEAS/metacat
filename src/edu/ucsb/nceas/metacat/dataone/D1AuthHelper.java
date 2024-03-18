@@ -387,10 +387,7 @@ public class D1AuthHelper {
         try {
             logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + sessionSubject
                 + " for Metacat admin privileges.");
-            if (!AuthUtil.isAdministrator(sessionSubject, null)) {
-                throw new NotAuthorized(
-                    "0000", "Subject is not an administrator: " + sessionSubject);
-            } else {
+            if (AuthUtil.isAdministrator(sessionSubject, null)) {
                 return;
             }
         } catch (MetacatUtilException mue) {
