@@ -304,14 +304,21 @@ public class AuthUtil {
      *                    value will be set from the "session.timeoutMinutes" config property
      * @throws MetacatUtilException
      */
-    public static void setAuthCookie(HttpServletRequest request, HttpServletResponse response,
-                                     int timeoutMins) throws MetacatUtilException {
+    public static void setAuthCookie(
+        HttpServletRequest request, HttpServletResponse response, int timeoutMins)
+        throws MetacatUtilException {
 
         String token = getTokenFromRequest(request);
         if (token == null || token.isBlank()) {
-            MetacatUtilException mue = new MetacatUtilException("Could not get token from request");
-            mue.fillInStackTrace();
-            throw mue;
+            if (timeoutMins == 0) {
+                // if we're invalidating the cookie, we can proceed with a dummy token
+                token = "INVALID";
+            } else {
+                MetacatUtilException mue =
+                    new MetacatUtilException("Could not get token from " + "request");
+                mue.fillInStackTrace();
+                throw mue;
+            }
         }
 
         boolean isHttps;
