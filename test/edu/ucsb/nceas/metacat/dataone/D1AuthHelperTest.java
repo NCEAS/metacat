@@ -185,6 +185,20 @@ public class D1AuthHelperTest {
     }
 
     /**
+     * Check that doUpdateAuth throws exception when 'authoritativeMemberNode' is not the same
+     * as what is found in the sysmeta object.
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoUpdateAuth_mismatchedAuthMNode() throws Exception {
+        SystemMetadata sysmetaEdited = getGenericSysmetaObject();
+        sysmetaEdited.setAuthoritativeMemberNode(
+            TypeFactory.buildNodeReference("urn:node:unitTestOtherMN"));
+
+        authDelMock.doUpdateAuth(session, sysmetaEdited, Permission.CHANGE_PERMISSION,
+            TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
+    }
+
+    /**
      * Confirm that 'doCNOnlyAuthorization' does not throw exception with good subject
      */
     @Test
@@ -220,6 +234,19 @@ public class D1AuthHelperTest {
             TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
 
         authDelMock.doAdminAuthorization(sessionMetacatAdmin);
+    }
+
+    /**
+     * Confirm that 'doAdminAuthorization' accepts another Metacat admin in the
+     * auth.administrator's list.
+     */
+    @Test
+    public void testDoAdminAuthorization_anotherMetacatAdmin() throws Exception {
+        Session sessionMetacatAdminTwo = new Session();
+        sessionMetacatAdminTwo.setSubject(
+            TypeFactory.buildSubject("http://orcid.org/0000-0003-0077-4738"));
+
+        authDelMock.doAdminAuthorization(sessionMetacatAdminTwo);
     }
 
     /**
