@@ -72,7 +72,8 @@ import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 public class RequestUtil {
-	
+
+	public static final String ATTR_USER_ID = "userId";
 	private static Log logMetacat = LogFactory.getLog(RequestUtil.class);
 	private static String encoding = "UTF-8";
 	
@@ -97,11 +98,13 @@ public class RequestUtil {
 	public static void forwardRequest(HttpServletRequest request, HttpServletResponse response, 
 			String destinationUrl, Hashtable<String, String[]> params) throws MetacatUtilException {
 
-		destinationUrl += "?" + paramsToQuery(params);
-		
+		String paramsString = paramsToQuery(params);
+		if (paramsString != null && !paramsString.isBlank()) {
+			String separator = (destinationUrl.contains("?")) ? "&" : "?";
+			destinationUrl += separator + paramsString;
+		}
 		logMetacat.debug("Forwarding request to " + destinationUrl);
-		ServletContext servletContext = request.getSession()
-				.getServletContext();
+		ServletContext servletContext = request.getSession().getServletContext();
 
 		try {
 			servletContext.getRequestDispatcher(destinationUrl).forward(request, response);
@@ -382,27 +385,93 @@ public class RequestUtil {
 	}
 
 	/**
-	 * Get a cookie from a request by the cookie name
+	 * Get all the parameters from the request, as a Hashtable
 	 * 
-	 * @param request
-	 *            the request from which to get the cookie
-	 * @param cookieName
-	 *            the name of the cookie to look for
+	 * @param request the request from which to get the cookie
+	 * @return a Hashtable containing the parameter names and a string array of values for each
 	 */
 	@SuppressWarnings("unchecked")
 	public static Hashtable<String, String[]> getParameters(HttpServletRequest request)  {
 		Hashtable<String, String[]> params = new Hashtable<String, String[]>();
 		
-		Enumeration<String> paramlist = (Enumeration<String>)request.getParameterNames();
-		while (paramlist.hasMoreElements()) {
-			String name = (String) paramlist.nextElement();
-			String[] value = request.getParameterValues(name);
-			params.put(name, value);
+		Enumeration<String> paramlist = request.getParameterNames();
+		if (paramlist != null) {
+			while (paramlist.hasMoreElements()) {
+				String name = (String) paramlist.nextElement();
+				String[] value = request.getParameterValues(name);
+				params.put(name, value);
+			}
 		}
 		
 		return params;
 	}
-	
+
+	/**
+	 * Get all the parameters from the request, as a String. (The parameters are the name-value
+	 * pairs that are passed as part of the URL, or within a form post.) Note that for a given
+	 * parameter name (e.g. paramName1), there is an array of associated values - (for example:
+	 * { paramValue1a, paramValue1b, ...etc. }
+	 *
+	 * @param request the request from which to get the parameters
+	 * @return a String containing the parameter names and all the values for each, formatted
+	 * as follows:
+	 * <pre>
+	 * paramName1:
+	 *     paramValue1a
+	 *     paramValue1b
+	 * paramName2:
+	 *     paramValue2a
+	 * ...etc
+	 * </pre>
+	 *     If no parameters are found, returns an empty string. Will never return null.
+	 */
+	public static String getParametersAsString(HttpServletRequest request) {
+		Enumeration<String> parameterNames = request.getParameterNames();
+		StringBuilder returnStr = new StringBuilder();
+		if (parameterNames != null) {
+			while (parameterNames.hasMoreElements()) {
+				String paramName = parameterNames.nextElement();
+				returnStr.append(paramName).append(":\n");
+				String[] paramValues = request.getParameterValues(paramName);
+				if (paramValues != null) {
+					for (String value : paramValues) {
+						returnStr.append("    ").append(value).append(";\n");
+					}
+				}
+			}
+		}
+		return returnStr.toString();
+	}
+
+
+	/**
+	 * Get all the attributes from the request, as a String. The attributes are the name=value
+	 * pairs that are added to the request object by calls to request.setAttribute(String, Object).
+	 * Attributes are reset between requests.
+	 *
+	 * @param request the request from which to get the attributes
+	 * @return a String containing the attribute names and the value for each, formatted as follows:
+	 * <pre>
+	 * attribName1 = attribValue1
+	 * attribName2 = attribValue2
+	 * ...etc
+	 * </pre>
+	 *     If no attributes are found, returns an empty string. Will never return null.
+	 */
+	public static String getAttributesAsString(HttpServletRequest request) {
+		Enumeration<String> attributeNames = request.getAttributeNames();
+		StringBuilder returnStr = new StringBuilder();
+		if (attributeNames != null) {
+			while (attributeNames.hasMoreElements()) {
+				String attribName = attributeNames.nextElement();
+				returnStr.append(attribName).append(" = ");
+				String paramValue = String.valueOf(request.getAttribute(attribName));
+				returnStr.append(paramValue).append(";\n");
+			}
+		}
+		return returnStr.toString();
+	}
+
 	/**
 	 * Add a list of errors to the request. The pages will pick up the errors
 	 * and display them where appropriate.
@@ -481,17 +550,17 @@ public class RequestUtil {
 		request.setAttribute("formFieldErrors", null);
 		request.setAttribute("processingErrors", null);
 	}
-	
+
 	/**
 	 * Add the user's login id to the session on this request
-	 * 
+	 *
 	 * @param request
 	 *            the request that will get forwarded
 	 * @param userId
 	 *            the user's login id
 	 */
 	public static void setUserId(HttpServletRequest request, String userId) {
-		request.getSession().setAttribute("userId", userId);
+		request.getSession().setAttribute(ATTR_USER_ID, userId);
 	}
 	
 	private static String paramsToQuery(Hashtable<String, String[]> params) {

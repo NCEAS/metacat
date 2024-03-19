@@ -419,8 +419,6 @@
         }
     %>
 </div>
-
     <%@ include file="./footer-section.jsp"%>
-
 </body>
 </html>

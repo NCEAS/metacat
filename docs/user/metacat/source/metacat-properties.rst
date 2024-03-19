@@ -381,10 +381,9 @@ Authorization and Authentication Properties
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-administrators:          |                                                                               |                                               |
 |                                   |                                                                               |                                               |
-| auth.administrators               | A colon separated list of LDAP users or groups that have administrative       | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
-|                                   | Metacat privileges. At least one user or group must be entered when           | cn=yourgroup,o=NCEAS,dc=ecoinformatics,dc=org |
-|                                   | Metacat is first installed and configured. All accounts must exist            |                                               |
-|                                   | in LDAP in order to continue with the configuration.                          |                                               |
+| auth.administrators               | A semicolon-separated list of ORCID IDs for users who have administrative     | https://orcid.org/0000-0001-2345-6789;        |
+|                                   | Metacat privileges. At least one user must be entered when Metacat is         | https://orcid.org/0000-0002-2345-678X         |
+|                                   | first installed and configured.                                               |                                               |
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-user-management-url:     |                                                                               |                                               |
 |                                   |                                                                               |                                               |
