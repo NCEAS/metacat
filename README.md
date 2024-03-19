@@ -15,7 +15,7 @@ easily searched, compared, merged, or used in other ways because the
 data are well and consistently described.
 
 ## Contributors
-
+# TODO - Revise contributor list
 - Matt Jones (jones@nceas.ucsb.edu)
 - Chad Berkley (berkley@nceas.ucsb.edu)
 - Jing Tao (tao@nceas.ucsb.edu)
