@@ -185,6 +185,20 @@ public class D1AuthHelperTest {
     }
 
     /**
+     * Check that doUpdateAuth throws exception when 'authoritativeMemberNode' is not the same
+     * as what is found in the sysmeta object.
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoUpdateAuth_mismatchedAuthMNode() throws Exception {
+        SystemMetadata sysmetaEdited = getGenericSysmetaObject();
+        sysmetaEdited.setAuthoritativeMemberNode(
+            TypeFactory.buildNodeReference("urn:node:unitTestOtherMN"));
+
+        authDelMock.doUpdateAuth(session, sysmetaEdited, Permission.CHANGE_PERMISSION,
+            TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
+    }
+
+    /**
      * Confirm that 'doCNOnlyAuthorization' does not throw exception with good subject
      */
     @Test
@@ -223,6 +237,19 @@ public class D1AuthHelperTest {
     }
 
     /**
+     * Confirm that 'doAdminAuthorization' accepts another Metacat admin in the
+     * auth.administrator's list.
+     */
+    @Test
+    public void testDoAdminAuthorization_anotherMetacatAdmin() throws Exception {
+        Session sessionMetacatAdminTwo = new Session();
+        sessionMetacatAdminTwo.setSubject(
+            TypeFactory.buildSubject("http://orcid.org/0000-0003-0077-4738"));
+
+        authDelMock.doAdminAuthorization(sessionMetacatAdminTwo);
+    }
+
+    /**
      * Confirm that 'doAdminAuthorization' accepts cnAdmin ("cn1Subject")
      */
     @Test
@@ -248,12 +275,63 @@ public class D1AuthHelperTest {
 
     /**
      * Confirm that 'doAdminAuthorization' throws NotAuthorized exception with unauthorized
-     * subject.
+     * subject from session.
      */
     @Test(expected = NotAuthorized.class)
     public void testDoAdminAuthorization_notAuthorized() throws Exception {
-        authDelMock.doAdminAuthorization(session);
+        Session sessionRandomUser = new Session();
+        sessionRandomUser.setSubject(
+            TypeFactory.buildSubject("IAmNotAuthorized"));
+
+        authDelMock.doAdminAuthorization(sessionRandomUser);
     }
+
+    /**
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception when session is not null
+     * and subject is null.
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoAdminAuthorization_nullSessionSubject() throws Exception {
+        Session sessionNullSubject = new Session();
+        sessionNullSubject.setSubject(
+            TypeFactory.buildSubject(null));
+
+        authDelMock.doAdminAuthorization(sessionNullSubject);
+    }
+
+    /**
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception when session subject
+     * is never set (empty session).
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoAdminAuthorization_missingSubject() throws Exception {
+        Session sessionNoSubjectSet = new Session();
+
+        authDelMock.doAdminAuthorization(sessionNoSubjectSet);
+    }
+
+    /**
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception when session is not null
+     * and subject is empty.
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoAdminAuthorization_emptySessionSubject() throws Exception {
+        Session sessionEmptySubject = new Session();
+        sessionEmptySubject.setSubject(
+            TypeFactory.buildSubject(""));
+
+        authDelMock.doAdminAuthorization(sessionEmptySubject);
+    }
+
+
+    /**
+     * Confirm that 'doAdminAuthorization' throws NotAuthorized exception when session is null
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoAdminAuthorization_nullSession() throws Exception {
+        authDelMock.doAdminAuthorization(null);
+    }
+
 
     /**
      * Confirm that prepareAndThrowNotAuthorized throws NotAuthorized exception with invalid
