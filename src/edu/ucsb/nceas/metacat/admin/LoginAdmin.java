@@ -66,7 +66,7 @@ public class LoginAdmin extends MetacatAdmin {
     /**
      * Handle all login-related cases:
      * 1. the user is not yet logged in, and has not started the orcid flow
-     * 2. the user is not yet logged in, but is part-wat through the orcid flow
+     * 2. the user is not yet logged in, but is part-way through the orcid flow
      * 3. the user wishes to log out
      *
      * @param request  The http request information
@@ -168,8 +168,9 @@ public class LoginAdmin extends MetacatAdmin {
         Vector<String> processingSuccess = new Vector<>();
         Vector<String> processingErrors = new Vector<>();
 
+        String userId = "NOT_SET";
         try {
-            String userId = AuthUtil.authenticateUserWithCN(request);
+            userId = AuthUtil.authenticateUserWithCN(request);
 
             if (AuthUtil.isAdministrator(userId, null)) {
                 AuthUtil.setAuthCookie(request, response, -1);
@@ -192,7 +193,7 @@ public class LoginAdmin extends MetacatAdmin {
 
             } else {
                 logMetacat.debug("Admin user logged in - authenticated and authorized");
-                processingSuccess.add("User logged in as Administrator");
+                processingSuccess.add(userId + " logged in as Administrator");
                 RequestUtil.clearRequestMessages(request);
                 RequestUtil.setRequestSuccess(request, processingSuccess);
                 RequestUtil.forwardRequest(request, response,

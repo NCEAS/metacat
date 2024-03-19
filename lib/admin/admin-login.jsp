@@ -25,13 +25,13 @@
 %>
 <html>
 <head>
-    <title> Administrator Login Page</title>
+    <title>Administrator Login Page</title>
     <%@include file="./head-section.jsp" %>
 </head>
 <body id="bodyContent">
     <%@include file="./header-section.jsp" %>
     <div class="document">
-        <h2> Administrator Login</h2>
+        <h2>Administrator Login</h2>
         <%@include file="./page-message-section.jsp" %>
         <div class="orcid-btn-wrapper">
             <div class="orcid-flex">
