@@ -213,8 +213,6 @@ public class PropertiesAdmin extends MetacatAdmin {
                             + PropertyService.getProperty("dataone.serviceName") + "/"
                             + PropertyService.getProperty("dataone.nodeType");
                     PropertyService.setProperty("dataone.mn.baseURL", mnUrl);
-                    // also set so the co-deployed indexer can access the API locally
-                    PropertyService.setProperty("index.d1node.baseURL", mnUrl);
                 } catch (Exception ue) {
                     String errorString = "PropertiesAdmin.configureProperties - Could not set the property  dataone.mn.baseURL: " +
                     ue.getMessage();
