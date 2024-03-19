@@ -148,7 +148,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 logMetacat.debug(
                     "MetacatAdminServlet - Admin action changed to 'auth'");
             } else if (LoginAdmin.getInstance().needsLoginAdminHandling(request, action)) {
-                logMetacat.debug("MetacatAdminServlet - Admin action is: " + ACTION_LOGOUT
+                logMetacat.debug("MetacatAdminServlet - Admin action is: " + action
                                      + "; intervention by LoginAdmin is required");
                 LoginAdmin.getInstance().handle(request, response);
                 return;
