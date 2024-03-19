@@ -124,7 +124,7 @@ public class LoginAdmin extends MetacatAdmin {
     protected void startLoginFlow(
         HttpServletRequest request, HttpServletResponse response) throws AdminException {
         try {
-            forwardToLoginStartPage(request, response, null);
+            forwardToLoginStartPage(request, response, null, null);
         } catch (MetacatUtilException mue) {
             AdminException adminException = new AdminException(
                 "Problem processing login; ca't forward to start page: " + mue.getMessage());
@@ -145,7 +145,7 @@ public class LoginAdmin extends MetacatAdmin {
         HttpServletRequest request, HttpServletResponse response) throws AdminException {
 
         try {
-            forwardToLoginStartPage(request, response, MetacatAdminServlet.ACTION_ORCID_FLOW);
+            forwardToLoginStartPage(request, response, MetacatAdminServlet.ACTION_ORCID_FLOW, null);
         } catch (MetacatUtilException mue) {
             AdminException adminException = new AdminException(
                 "Problem processing login; forwarding during orcid flow: " + mue.getMessage());
@@ -226,13 +226,12 @@ public class LoginAdmin extends MetacatAdmin {
 
         request.getSession().invalidate();
 
-        addProcessingMessage(
-            request,
-            "You have logged out successfully. If you need to log in as a different user, you may"
-                + " first need to clear your cookies.");
+        String processingMessage = "You have logged out successfully. If you need to log in as a "
+            + "different user, you may first need to clear your cookies.";
 
         try {
-            forwardToLoginStartPage(request, response, MetacatAdminServlet.ACTION_LOGOUT);
+            forwardToLoginStartPage(
+                request, response, MetacatAdminServlet.ACTION_LOGOUT, processingMessage);
         } catch (MetacatUtilException mue) {
 
             AdminException adminException = new AdminException(
@@ -245,11 +244,11 @@ public class LoginAdmin extends MetacatAdmin {
     // Calls cleanRequest(), sets the optional provided `attribute` to `true` in the request, and
     // then forwards to `admin-login.jsp`
     private static void forwardToLoginStartPage(
-        HttpServletRequest request, HttpServletResponse response, String attribute) throws MetacatUtilException {
+        HttpServletRequest request, HttpServletResponse response, String attribute, String processingMessage) throws MetacatUtilException {
 
         // clean up all messages except processingErrors
         Vector<String> processingErrors = (Vector<String>)request.getAttribute("processingErrors");
-        cleanRequest(request);
+//        cleanRequest(request);
         if (processingErrors != null) {
             RequestUtil.setRequestErrors(request, processingErrors);
         }
@@ -257,6 +256,10 @@ public class LoginAdmin extends MetacatAdmin {
         if (attribute != null) {
             request.removeAttribute(attribute);
             request.setAttribute(attribute, true);
+        }
+
+        if (processingMessage != null) {
+            addProcessingMessage(request, processingMessage);
         }
 
         logMetacat.debug(
