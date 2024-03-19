@@ -157,8 +157,8 @@ public class LoginAdmin extends MetacatAdmin {
     /**
      * Use the ORCID auth token to log the admin user in
      *
-     * @param request  The http request information, including the jwt token, either in the
-     *                 'Authorization' header, or an http-only cookie
+     * @param request  The http request information, including the jwt token in the
+     *                 'Authorization' header
      * @param response The http response to be sent back to the client
      * @throws AdminException if unable to forward request
      */
@@ -173,7 +173,7 @@ public class LoginAdmin extends MetacatAdmin {
             userId = AuthUtil.authenticateUserWithCN(request);
 
             if (AuthUtil.isAdministrator(userId, null)) {
-                AuthUtil.setAuthCookie(request, response, -1);
+                RequestUtil.setUserId(request, userId);
             } else {
                 processingErrors.add(userId + " is not on the Administrators list. Please contact"
                                          + " a metacat administrator if you need access.");
@@ -209,12 +209,12 @@ public class LoginAdmin extends MetacatAdmin {
     }
 
     /**
-     * Put user in a logged-out state by removing userId from session, and invalidating auth cookie.
+     * Put user in a logged-out state by removing userId from session, and invalidating session.
      * Then return to login page
      *
      * @param request  The http request information
      * @param response The http response to be sent back to the client
-     * @throws AdminException if unable to invalidate auth cookie or forward request
+     * @throws AdminException if unable to forward request
      */
     protected void logOutAdminUser(
         HttpServletRequest request, HttpServletResponse response) throws AdminException {
@@ -224,20 +224,19 @@ public class LoginAdmin extends MetacatAdmin {
 
         request.getSession().removeAttribute("userId");
 
+        request.getSession().invalidate();
+
         addProcessingMessage(
             request,
             "You have logged out successfully. If you need to log in as a different user, you may"
                 + " first need to clear your cookies.");
 
         try {
-            AuthUtil.invalidateAuthCookie(request, response);
-            request.getSession().invalidate();
             forwardToLoginStartPage(request, response, MetacatAdminServlet.ACTION_LOGOUT);
         } catch (MetacatUtilException mue) {
 
             AdminException adminException = new AdminException(
-                "Problem processing logout; can't invalidate cookie or forward to start page: "
-                    + mue.getMessage());
+                "Problem processing logout; can't forward to start page: " + mue.getMessage());
             adminException.fillInStackTrace();
             throw adminException;
         }

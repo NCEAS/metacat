@@ -3,10 +3,7 @@ package edu.ucsb.nceas.metacat.util;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
 
 import edu.ucsb.nceas.utilities.StringUtil;
 import org.apache.commons.logging.Log;
@@ -29,8 +26,6 @@ public class AuthUtil {
     public static Log logMetacat = LogFactory.getLog(AuthUtil.class);
     public static String DELIMITER = ":";
     public static String ESCAPECHAR = "\\";
-    public static final String AUTH_COOKIE_NAME = "jwtToken";
-
 
     private static Vector<String> administrators = null;
     private static Vector<String> moderators = null;
@@ -103,9 +98,8 @@ public class AuthUtil {
             administratorString = PropertyService.getProperty("auth.administrators");
         } catch (PropertyNotFoundException pnfe) {
             throw new MetacatUtilException("Could not get metacat property: auth.administrators. "
-                                               + "There will be no registered metacat "
-                                               + "administrators: "
-                                               + pnfe.getMessage());
+                                           + "There will be no registered metacat administrators: "
+                                           + pnfe.getMessage());
         }
         administrators = StringUtil.toVector(administratorString, ';');
 
@@ -179,16 +173,23 @@ public class AuthUtil {
      */
     public static String authenticateUserWithCN(HttpServletRequest request) throws MetacatUtilException {
 
-        String userId = getCNAuthenticatedUserId(request);
+        Session portalSession = PortalCertificateManager.getInstance().getSession(request);
 
-        if (userId != null && !userId.isBlank()) {
-            RequestUtil.setUserId(request, userId);
-            logMetacat.info("User successfully authenticated with CN: " + userId);
-        } else {
+        if (portalSession == null) {
             throw new MetacatUtilException(
-                "Problem authenticating user with CN; getCNAuthenticatedUserId returned: <" + userId + ">");
+                "Problem authenticating with CN; PortalCertificateManager returned null session");
+        } else {
+            String userId = portalSession.getSubject().getValue();
+
+            if (userId != null && !userId.isBlank()) {
+                logMetacat.info("User successfully authenticated with CN: " + userId);
+            } else {
+                throw new MetacatUtilException(
+                    "Problem authenticating with CN; PortalCertificateManager 'subject': "
+                        + userId);
+            }
+            return userId;
         }
-        return userId;
     }
 
     /**
@@ -208,145 +209,6 @@ public class AuthUtil {
 
         // Can user be authorized as an administrator?
         return isAdministrator(userId, null);
-    }
-
-    // Try to authenticate user via jwt token in header.
-    private static String getCNAuthenticatedUserId(HttpServletRequest request) {
-
-        HttpServletRequest requestWithHeader = getRequestWithAuthHeader(request);
-        if (requestWithHeader == null) {
-            return null;
-        }
-
-        Session adminSession = PortalCertificateManager.getInstance().getSession(requestWithHeader);
-
-        if (adminSession == null) {
-            logMetacat.debug("Auth token found, but unable to authenticate - "
-                                 + "PortalCertificateManager returned a null session");
-            return null;
-        }
-        return adminSession.getSubject().getValue();
-    }
-
-    /**
-     * Look for a valid jwt auth token, first in the request Authorization header, or if not
-     * found there, in a secure http-only cookie. The returned HttpServletRequest will either be
-     * null, if no token was found, or will contain an Authorization header containing the token
-     *
-     * @param request  an HttpServletRequest possibly containing a jwt token in either an
-     *                  'Authorization' header, or in a secure http-only cookie (@see
-     *                  AUTH_COOKIE_NAME)
-     * @return an HttpServletRequest containing the token in an 'Authorization' header, or null if
-     *                  no token was found
-     */
-    public static HttpServletRequest getRequestWithAuthHeader(HttpServletRequest request) {
-
-        String token = request.getHeader("Authorization");
-
-        if (token != null && !token.isBlank()) {
-            logMetacat.debug("Found existing auth header with token in request");
-            return request;
-
-        } else {
-            logMetacat.debug("No auth token in header; trying cookie...");
-            Cookie authCookie = RequestUtil.getCookie(request, AUTH_COOKIE_NAME);
-            if (isCookieTokenEmpty(authCookie)) {
-                logMetacat.debug("Couldn't find an auth token in cookie, either");
-                return null;
-            } else {
-                logMetacat.debug("Found auth cookie: " + AUTH_COOKIE_NAME);
-                if (!authCookie.isHttpOnly()) {
-                    logMetacat.warn(
-                        "Client security concern: Auth cookie was NOT created as HTTP-ONLY!");
-                }
-                return new AuthRequestWrapper(request, authCookie.getValue());
-            }
-        }
-    }
-
-    /**
-     * Look for a valid jwt auth token, first in the request Authorization header, or if not
-     * found there, in a secure http-only cookie. Then return the token as a String, or null if
-     * no token was found.
-     *
-     * @param request  an HttpServletRequest possibly containing a jwt token in either an
-     *                  'Authorization' header, or in a secure http-only cookie (@see
-     *                  AUTH_COOKIE_NAME)
-     * @return a String containing the token
-     */
-    public static String getTokenFromRequest(HttpServletRequest request) {
-
-        HttpServletRequest requestWithHeader = getRequestWithAuthHeader(request);
-        if (requestWithHeader == null) {
-            logMetacat.debug("No auth token found in request");
-            return null;
-        }
-        //Authorization: Bearer $TOKEN
-        String header = requestWithHeader.getHeader("Authorization");
-        String token = null;
-        if (header != null && !header.isBlank()
-            && header.startsWith("Bearer ") && header.length() > 7) {
-            token = header.substring(7);  // Bearer $TOKEN
-            logMetacat.debug(
-                "Found auth header with token from request: " + token.substring(0,5) + "...");
-        } else {
-            logMetacat.debug("Found non-valid auth token header: <" + header + ">");
-        }
-        return token;
-    }
-
-    /**
-     * Set a secure auth cookie that contains the jwt token
-     *
-     * @param request
-     * @param response
-     * @param timeoutMins the timeout value to set on the cookie. If timeoutMins is negative, the
-     *                    value will be set from the "session.timeoutMinutes" config property
-     * @throws MetacatUtilException
-     */
-    public static void setAuthCookie(
-        HttpServletRequest request, HttpServletResponse response, int timeoutMins)
-        throws MetacatUtilException {
-
-        String token = getTokenFromRequest(request);
-        if (token == null || token.isBlank()) {
-            if (timeoutMins == 0) {
-                // if we're invalidating the cookie, we can proceed with a dummy token
-                token = "INVALID";
-            } else {
-                MetacatUtilException mue =
-                    new MetacatUtilException("Could not get token from " + "request");
-                mue.fillInStackTrace();
-                throw mue;
-            }
-        }
-
-        boolean isHttps;
-        String domain;
-        try {
-            isHttps = Boolean.parseBoolean(PropertyService.getProperty("server.https"));
-            domain = PropertyService.getProperty("server.name");
-            if (timeoutMins < 0) {
-                timeoutMins =
-                    Integer.parseInt(PropertyService.getProperty("session.timeoutMinutes"));
-            }
-        } catch (PropertyNotFoundException e) {
-            MetacatUtilException mue = new MetacatUtilException(
-                "Error getting properties: 'server.https' or 'server.name'");
-            mue.fillInStackTrace();
-            throw mue;
-        }
-        String cookieHeader = AUTH_COOKIE_NAME + "=" + token
-                + "; Domain=" + domain + "; "
-                + ((isHttps) ? "Secure; " : "")
-                + "HttpOnly; SameSite=Strict; Max-Age=" + (60 * timeoutMins);
-
-        response.setHeader("Set-Cookie", cookieHeader);
-    }
-
-    public static void invalidateAuthCookie(
-        HttpServletRequest request, HttpServletResponse response) throws MetacatUtilException {
-        setAuthCookie(request, response, 0);
     }
 
     /**
@@ -582,30 +444,5 @@ public class AuthUtil {
         subjectInfo.addPerson(person);
         session.setSubjectInfo(subjectInfo);
         return session;
-    }
-
-    private static boolean isCookieTokenEmpty(Cookie cookie) {
-        return cookie == null || cookie.getValue() == null || cookie.getValue().isBlank();
-    }
-
-
-    // Inner class to allow adding token to auth header, since HttpServletRequest is read-only
-    private static class AuthRequestWrapper extends HttpServletRequestWrapper {
-
-        private final String tokenHeaderValue;
-
-        public AuthRequestWrapper(HttpServletRequest request, final String token) {
-            super(request);
-            tokenHeaderValue = "Bearer " + token;
-        }
-
-        @Override
-        public String getHeader(String name) {
-
-            if ("Authorization".equals(name)) {
-                return tokenHeaderValue;
-            }
-            return super.getHeader(name);
-        }
     }
 }
