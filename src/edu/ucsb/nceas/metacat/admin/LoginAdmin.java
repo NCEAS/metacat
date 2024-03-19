@@ -223,10 +223,14 @@ public class LoginAdmin extends MetacatAdmin {
 
         request.getSession().removeAttribute("userId");
 
-        addProcessingMessage(request, "Successfully logged out");
+        addProcessingMessage(
+            request,
+            "You have logged out successfully. If you need to log in as a different user, you may"
+                + " first need to clear your cookies.");
 
         try {
             AuthUtil.invalidateAuthCookie(request, response);
+            request.getSession().invalidate();
             forwardToLoginStartPage(request, response, MetacatAdminServlet.ACTION_LOGOUT);
         } catch (MetacatUtilException mue) {
 
