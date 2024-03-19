@@ -147,7 +147,7 @@ To edit the authentication configuration file:
 
   ::
   
-    auth.administrators  - a colon separated list of administrators
+    auth.administrators  - a semicolon-separated list of administrators' ORCID IDs
     auth.url             - the authentication server URL
     auth.surl            - the authentication secure server URL
     auth.file.path       - the authentication password file path
