@@ -68,6 +68,26 @@ for the next release.
 
 ## Release Notes
 
+### Release Notes for 3.0.0
+
+This major release introduces breaking changes:
+- The original Metacat API is no longer supported.
+  - Morpho and any other clients depending on this API will no longer work
+  - Client access must be done via the DataONE API.
+- Skin-based deployments are no longer supported as the original Metacat API is deprecated.
+  - If you wish to upgrade to Metacat 3.0.0, you must use `metacatui` which is shipped with Metacat
+
+Upgrade Notes:
+- In order to upgrade to 3.0.0, **you must be at Metacat v2.19.0**
+- TODO: Discuss with Jing & Matthew
+
+New Features & Enhancements:
+- TODO: Review pull requests and add to this list
+
+Bug Fixes: 
+- TODO: Review pull requests and add to this list
+
+
 ### Release Notes for 2.19.0
 New features and bugs fixed in this release:
 * getPackage implementation doesn't handle duplicate data object filenames
