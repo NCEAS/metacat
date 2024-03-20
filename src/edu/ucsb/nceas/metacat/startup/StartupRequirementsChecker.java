@@ -456,4 +456,25 @@ public class StartupRequirementsChecker {
     private boolean isBlank(String str) {
         return str == null || str.trim().isEmpty();
     }
+
+    /**
+     * Get a status code after connecting the given url
+     * @param urlStr  the url will be connected
+     * @return the status code
+     * @throws IOException
+     */
+    public static int checkUrlStatus(String urlStr) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlStr);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.connect();
+            return connection.getResponseCode();
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
 }
