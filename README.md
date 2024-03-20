@@ -77,9 +77,12 @@ This major release introduces breaking changes:
 - `Skin-based deployments` are no longer supported as the original Metacat API is deprecated.
   - If you wish to upgrade to Metacat 3.0.0, you can use `metacatui` which is shipped with Metacat, create your own
     frontend against the API, or use a metacatui that is not shipped with metacat.
+- TODO: Discuss with Jing & Matthew
 
 Upgrade Notes:
 - In order to upgrade to 3.0.0, **you must be at Metacat v2.19.0**
+- `Metacat.properties` no longer contains custom settings. Any custom settings you have should be backed up and then
+  added to `metacat-site.properties`.
 - TODO: Discuss with Jing & Matthew
 
 New Features & Enhancements:
@@ -97,18 +100,27 @@ New Features & Enhancements:
 - Metacat Containerization MVP & Enhancements
   - Metacat can now be deployed in a Kubernetes cluster (Issue-1623, Issue-1218)
     - Allows `helm` to install or upgrade a Metacat Docker image.
+    - Added property values for admin users to allow an administrator list (PR-1645)
   - Enabled passing of secret credentials to Metacat via environment variables (Issue-1635)
     - Metacat can be deployed via `helm`
+  - Added postgres subchart (PR-1651, PR-1657)
+  - Added Ingress and templatized configuration values via `values.yaml` (PR-1647)
+  - Various optimizations to improve clarity around docker deployment (Issue-1648, PR-1647, PR-1649)
 - Metacat startup now aborts if it is misconfigured and/or critical resources are inaccessible (ex. if
   a `metacat-site.properties` is not found and `/var/metacat` is not writable by the metacat user) (Issue-1631)
   - The related issues can be found in the metacat logs (ex. `/tomcat/logs/catalina.out`) and host logs (
     ex. `/tomcat/logs/hostname(data).log`) with messaging to assist with debugging.
+  - Added `solr` startup configuration check (PR-1656)
 - Added default database properties for `postgres` (PR-1641)
+- Metacat Configuration Enhancements
+  - Added default property values for the required Metacat admin configuration settings to assist operators with
+    configuring an operational Metacat (Issue-1664).
 
 Bug Fixes:
-- Resolved EZID-Related tests breaking due to a new AWS-WAF Rule that denies requests if the body contains a url that
+- Resolved EZID related tests breaking due to a new AWS-WAF Rule that denies requests if the body contains a url that
   includes `localhost` or `127.0.0.1` by adding mock properties (Issue-1625).
-- ...
+- Resolved MetacatAdmin related tests breaking due to new solr property (PR-1643).
+- Resolved `sphinx` auto build docs from breaking due to conflicting indentation (PR-1661)
 
 
 ### Release Notes for 2.19.0
