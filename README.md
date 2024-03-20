@@ -83,7 +83,7 @@ Upgrade Notes:
 - TODO: Discuss with Jing & Matthew
 
 New Features & Enhancements:
-- Metacat Properties Overlay
+- Metacat Properties Overlay (Issue-1611)
   - The `lib/metacat.properties` contain default properties that (typically) do not need to be changed.
   - Properties can now be edited by hand to override the default `metacat.properties`.
     - This is done through `metacat-site.properties` whose default location is found at `/var/metacat/config`, and can be
@@ -94,10 +94,21 @@ New Features & Enhancements:
     - `PropertiesWrapper` which is a wrapper around standard `java.util.Properties` functionality
     - `BackupPropertiesDelegate` which deals with backup properties
     - `AuthPropertiesDelegate` which deals with Auth properties
-- 
+- Metacat Containerization MVP & Enhancements
+  - Metacat can now be deployed in a Kubernetes cluster (Issue-1623, Issue-1218)
+    - Allows `helm` to install or upgrade a Metacat Docker image.
+  - Enabled passing of secret credentials to Metacat via environment variables (Issue-1635)
+    - Metacat can be deployed via `helm`
+- Metacat startup now aborts if it is misconfigured and/or critical resources are inaccessible (ex. if
+  a `metacat-site.properties` is not found and `/var/metacat` is not writable by the metacat user) (Issue-1631)
+  - The related issues can be found in the metacat logs (ex. `/tomcat/logs/catalina.out`) and host logs (
+    ex. `/tomcat/logs/hostname(data).log`) with messaging to assist with debugging.
+- Added default database properties for `postgres` (PR-1641)
 
-Bug Fixes: 
-- TODO: Review pull requests and add to this list
+Bug Fixes:
+- Resolved EZID-Related tests breaking due to a new AWS-WAF Rule that denies requests if the body contains a url that
+  includes `localhost` or `127.0.0.1` by adding mock properties (Issue-1625).
+- ...
 
 
 ### Release Notes for 2.19.0
