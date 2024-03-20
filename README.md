@@ -97,22 +97,27 @@ New Features & Enhancements:
     - `PropertiesWrapper` which is a wrapper around standard `java.util.Properties` functionality
     - `BackupPropertiesDelegate` which deals with backup properties
     - `AuthPropertiesDelegate` which deals with Auth properties
-- Metacat Containerization MVP & Enhancements
+- Metacat Containerization MVP & Enhancements (Issue-1665)
   - Metacat can now be deployed in a Kubernetes cluster (Issue-1623, Issue-1218)
     - Allows `helm` to install or upgrade a Metacat Docker image.
     - Added property values for admin users to allow an administrator list (PR-1645)
-  - Enabled passing of secret credentials to Metacat via environment variables (Issue-1635)
-    - Metacat can be deployed via `helm`
-  - Added postgres subchart (PR-1651, PR-1657)
-  - Added Ingress and templatized configuration values via `values.yaml` (PR-1647)
+    - Enabled passing of secret credentials to Metacat via environment variables (Issue-1635)
+      - Metacat can be deployed via `helm`
+    - Added memory options for `tomcat` and auto updates to 9.0.76 (PR-1675)
+    - Added `postgres` subchart (PR-1651, PR-1657)
+    - Added `ingress` and templatized configuration values via `values.yaml` (PR-1647)
+      - HTTPS access (x509 certs) and DataONE replication via `ingress` is now functional (PR-1672, PR-1677)
+  - DataONE Member Node configuration is now supported in Kubernetes (Issue-1662)
+  - Added new `K8SAdminInitializer` class to streamline startup process, including auto db updates (PR-1691)
+  - Adjusted catalina property settings to resolve issues related to encoded slash and backslashes (Issue-1674)
   - Various optimizations to improve clarity around docker deployment (Issue-1648, PR-1647, PR-1649)
 - Metacat startup now aborts if it is misconfigured and/or critical resources are inaccessible (ex. if
   a `metacat-site.properties` is not found and `/var/metacat` is not writable by the metacat user) (Issue-1631)
   - The related issues can be found in the metacat logs (ex. `/tomcat/logs/catalina.out`) and host logs (
     ex. `/tomcat/logs/hostname(data).log`) with messaging to assist with debugging.
   - Added `solr` startup configuration check (PR-1656)
-- Added default database properties for `postgres` (PR-1641)
 - Metacat Configuration Enhancements
+  - Added default database properties for `postgres` (PR-1641)
   - Added default property values for the required Metacat admin configuration settings to assist operators with
     configuring an operational Metacat (Issue-1664).
 
@@ -121,6 +126,8 @@ Bug Fixes:
   includes `localhost` or `127.0.0.1` by adding mock properties (Issue-1625).
 - Resolved MetacatAdmin related tests breaking due to new solr property (PR-1643).
 - Resolved `sphinx` auto build docs from breaking due to conflicting indentation (PR-1661)
+- Resolved issue where cancelling a configuration item unintentionally saved properties and added default values from
+  memory (PR-1654)
 
 
 ### Release Notes for 2.19.0
