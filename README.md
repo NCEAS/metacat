@@ -86,17 +86,9 @@ Upgrade Notes:
 - TODO: Discuss with Jing & Matthew
 
 New Features & Enhancements:
-- Metacat Properties Overlay (Issue-1611)
-  - The `lib/metacat.properties` contain default properties that (typically) do not need to be changed.
-  - Properties can now be edited by hand to override the default `metacat.properties`.
-    - This is done through `metacat-site.properties` whose default location is found at `/var/metacat/config`, and can be
-      configurable via the admin page.
-    - Additionally, properties set in the admin page will be saved in `metacat-site.properties`
-  - Previously, properties were handled by mostly the `ConfigurableProperties` class, which has now been replaced with
-    three single-responsibilitiy classes:
-    - `PropertiesWrapper` which is a wrapper around standard `java.util.Properties` functionality
-    - `BackupPropertiesDelegate` which deals with backup properties
-    - `AuthPropertiesDelegate` which deals with Auth properties
+- Increased indexing speeds by replacing `hazelcast` with `dataone-indexer` (PR-1695)
+- Implemented new class `SystemMetadataManager` to handle system metadata and removed `hazelcast` dependency, allowing
+  Metacat to upgrade from Java 8 to 17 (PR-1695)
 - Metacat Containerization MVP & Enhancements (Issue-1665)
   - Metacat can now be deployed in a Kubernetes cluster (Issue-1623, Issue-1218)
     - Allows `helm` to install or upgrade a Metacat Docker image.
@@ -116,6 +108,17 @@ New Features & Enhancements:
   - The related issues can be found in the metacat logs (ex. `/tomcat/logs/catalina.out`) and host logs (
     ex. `/tomcat/logs/hostname(data).log`) with messaging to assist with debugging.
   - Added `solr` startup configuration check (PR-1656)
+- Metacat Properties Overlay (Issue-1611)
+  - The `lib/metacat.properties` contain default properties that (typically) do not need to be changed.
+  - Properties can now be edited by hand to override the default `metacat.properties`.
+    - This is done through `metacat-site.properties` whose default location is found at `/var/metacat/config`, and can be
+      configurable via the admin page.
+    - Additionally, properties set in the admin page will be saved in `metacat-site.properties`
+  - Previously, properties were handled by mostly the `ConfigurableProperties` class, which has now been replaced with
+    three single-responsibilitiy classes:
+    - `PropertiesWrapper` which is a wrapper around standard `java.util.Properties` functionality
+    - `BackupPropertiesDelegate` which deals with backup properties
+    - `AuthPropertiesDelegate` which deals with Auth properties
 - Metacat Configuration Enhancements
   - Added default database properties for `postgres` (PR-1641)
   - Added default property values for the required Metacat admin configuration settings to assist operators with
