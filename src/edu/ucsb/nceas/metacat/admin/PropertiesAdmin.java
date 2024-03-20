@@ -7,6 +7,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.startup.StartupRequirementsChecker;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
@@ -22,6 +23,8 @@ import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Paths;
 import java.util.Vector;
@@ -207,18 +210,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 PropertyService.persistProperties();
 
                 //auto generate the dataone.mn.baseURL property
-                try {
-                    String mnUrl =
-                        SystemUtil.getInternalContextURL() + "/"
-                            + PropertyService.getProperty("dataone.serviceName") + "/"
-                            + PropertyService.getProperty("dataone.nodeType");
-                    PropertyService.setProperty("dataone.mn.baseURL", mnUrl);
-                } catch (Exception ue) {
-                    String errorString = "PropertiesAdmin.configureProperties - Could not set the property  dataone.mn.baseURL: " +
-                    ue.getMessage();
-                    logMetacat.error(errorString);
-                    validationErrors.add(errorString);
-                }
+                setMNBaseURL(validationErrors);
 
                 // Validate that the options provided are legitimate. Note that
                 // we've allowed them to persist their entries. As of this point
@@ -497,6 +489,56 @@ public class PropertiesAdmin extends MetacatAdmin {
             property = null; 
         }
         return (property == null || property.trim().equals("")); 
+    }
+
+    /**
+     * Set the property of dataone.mn.baseURL automatically
+     * @param validationErrors the container for error message
+     */
+    protected void setMNBaseURL(Vector<String> validationErrors) {
+        try {
+            String mnUrl = null;
+            // At this point, the connection to base url may throw an exception
+            // since Metacat is not configured, so we will check the admin page.
+            String adminPage = "admin";
+            int status = 500;
+            try {
+                status = StartupRequirementsChecker.checkUrlStatus(SystemUtil.getInternalContextURL()
+                        + "/" + adminPage);
+            } catch (IOException e) {
+                logMetacat.warn("Metacat cannot connect the url "
+                             + SystemUtil.getInternalContextURL() + " since " + e.getMessage());
+            }
+            if (status == 200) {
+                mnUrl = SystemUtil.getInternalContextURL() + "/"
+                            + PropertyService.getProperty("dataone.serviceName") + "/"
+                            + PropertyService.getProperty("dataone.nodeType");
+            } else {
+                try {
+                    status = StartupRequirementsChecker.checkUrlStatus(SystemUtil.getContextURL()
+                                                                        + "/" + adminPage);
+                } catch (IOException e) {
+                    logMetacat.warn("Metacat cannot connect the url "
+                            + SystemUtil.getContextURL() + " since " + e.getMessage());
+                }
+                if (status == 200) {
+                    mnUrl = SystemUtil.getContextURL() + "/"
+                            + PropertyService.getProperty("dataone.serviceName") + "/"
+                            + PropertyService.getProperty("dataone.nodeType");
+                }
+            }
+            if (status != 200) {
+                throw new AdminException("Metacat can't connect to either the internal url "
+                        + SystemUtil.getInternalContextURL() +
+                        " or the external url " + SystemUtil.getContextURL());
+            }
+            logMetacat.debug("Set dataone.mn.baseURL " + mnUrl);
+            PropertyService.setProperty("dataone.mn.baseURL", mnUrl);
+        } catch (Exception e) {
+            String errorString = "Could not set the property dataone.mn.baseURL " + e.getMessage();
+            logMetacat.error(errorString);
+            validationErrors.add(errorString);
+        }
     }
 
 }

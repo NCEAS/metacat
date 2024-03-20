@@ -468,6 +468,7 @@ public class StartupRequirementsChecker {
         try {
             URL url = new URL(urlStr);
             connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(500);
             connection.setRequestMethod("GET");
             connection.connect();
             return connection.getResponseCode();
