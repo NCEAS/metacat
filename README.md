@@ -72,17 +72,29 @@ for the next release.
 
 This major release introduces breaking changes:
 - The original Metacat API is no longer supported.
-  - Morpho and any other clients depending on this API will no longer work
+  - `Morpho` and any other clients depending on this API will no longer work
   - Client access must be done via the DataONE API.
-- Skin-based deployments are no longer supported as the original Metacat API is deprecated.
-  - If you wish to upgrade to Metacat 3.0.0, you must use `metacatui` which is shipped with Metacat
+- `Skin-based deployments` are no longer supported as the original Metacat API is deprecated.
+  - If you wish to upgrade to Metacat 3.0.0, you can use `metacatui` which is shipped with Metacat, create your own
+    frontend against the API, or use a metacatui that is not shipped with metacat.
 
 Upgrade Notes:
 - In order to upgrade to 3.0.0, **you must be at Metacat v2.19.0**
 - TODO: Discuss with Jing & Matthew
 
 New Features & Enhancements:
-- TODO: Review pull requests and add to this list
+- Metacat Properties Overlay
+  - The `lib/metacat.properties` contain default properties that (typically) do not need to be changed.
+  - Properties can now be edited by hand to override the default `metacat.properties`.
+    - This is done through `metacat-site.properties` whose default location is found at `/var/metacat/config`, and can be
+      configurable via the admin page.
+    - Additionally, properties set in the admin page will be saved in `metacat-site.properties`
+  - Previously, properties were handled by mostly the `ConfigurableProperties` class, which has now been replaced with
+    three single-responsibilitiy classes:
+    - `PropertiesWrapper` which is a wrapper around standard `java.util.Properties` functionality
+    - `BackupPropertiesDelegate` which deals with backup properties
+    - `AuthPropertiesDelegate` which deals with Auth properties
+- 
 
 Bug Fixes: 
 - TODO: Review pull requests and add to this list
