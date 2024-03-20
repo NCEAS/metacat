@@ -24,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Paths;
@@ -497,6 +498,12 @@ public class PropertiesAdmin extends MetacatAdmin {
      */
     protected void setMNBaseURL(Vector<String> validationErrors) {
         try {
+            if (!metacatIndexExists()) {
+                // Since metacat-index doesn't exist with metacat in the same tomcat container,
+                // we assume the dataone-mn-baseURL in the metacat.properties will be not used
+                // by the dataone-indexer. So we don't care about its value.
+                return;
+            }
             String mnUrl = null;
             // At this point, the connection to base url may throw an exception
             // since Metacat is not configured, so we will check the admin page.
@@ -539,6 +546,42 @@ public class PropertiesAdmin extends MetacatAdmin {
             logMetacat.error(errorString);
             validationErrors.add(errorString);
         }
+    }
+
+    /**
+     * Determine if the metacat-index context exists with metacat in the same Tomcat container.
+     * Now we use the file directory as the indicator. We maybe change it in future.
+     * @return true if it is; otherwise false.
+     * @throws AdminException
+     */
+    protected boolean metacatIndexExists() throws AdminException {
+        boolean existed = false;
+        String indexContext;
+        try {
+            indexContext = PropertyService.getProperty("index.context");
+        } catch (PropertyNotFoundException e) {
+            // The operator doesn't care about the metacat-index, so we think
+            // it doesn't exist
+            logMetacat.debug("The index.context doesn't exist and we consider that metacat-index"
+                                + " doesn't exist with metacat in the same Tomcat container");
+            return existed;
+        }
+        if (indexContext == null || indexContext.isBlank()) {
+            logMetacat.debug("The index.context is blank and we consider that metacat-index"
+                    + " doesn't exist with metacat in the same Tomcat container");
+            return existed;
+        }
+        try {
+            String webDir = PropertyService.getProperty("application.deployDir");
+            File indexDir  = new File(webDir + "/" + indexContext);
+            logMetacat.debug("The metacat-index directory is " + indexDir.getAbsolutePath());
+            if (indexDir.exists() && indexDir.isDirectory()) {
+                existed = true;
+            }
+        } catch (PropertyNotFoundException e) {
+            throw new AdminException(e.getMessage());
+        }
+        return existed;
     }
 
 }
