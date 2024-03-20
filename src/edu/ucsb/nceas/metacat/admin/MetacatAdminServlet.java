@@ -1,33 +1,10 @@
-/**
- *  '$RCSfile$'
- *    Purpose: A Class that implements utility methods for a metadata catalog
- *  Copyright: 2008 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Michael Daigle
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.admin;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serial;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Vector;
 
 import javax.servlet.ServletConfig;
@@ -35,16 +12,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
@@ -52,13 +27,34 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 
-
 /**
  * Entry servlet for the metadata configuration utility
  */
 public class MetacatAdminServlet extends HttpServlet {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
+    public static final String ATTR_LOGIN_PRE_ORCID_URI = "loginPreOrcidUri";
+    public static final String ATTR_LOGIN_ORCID_FLOW_URI = "loginOrcidFlowUri";
+    public static final String ATTR_LOGIN_METACAT_URI = "loginMetacatUri";
+    public static final String ATTR_LOGOUT_URI = "logoutUri";
+    public static final String ATTR_CN_BASE_URL = "cnBaseUrl";
+
+    public static final String ACTION_PARAM = "configureType";
+    public static final String ACTION_ORCID_FLOW = "orcidFlow";
+    public static final String ACTION_LOGIN_MC = "mcLogin";
+    public static final String ACTION_LOGOUT = "logout";
+
+    private static final String PATH_LOGOUT = "/admin?" + ACTION_PARAM + "=logout";
+    private static final String PATH_LOGIN_PRE_ORCID = "/admin";
+    private static final String PATH_LOGIN_ORCID_FLOW = "/admin?" + ACTION_PARAM + "=" + ACTION_ORCID_FLOW;
+    private static final String PATH_LOGIN_METACAT = "/admin?" + ACTION_PARAM + "=" + ACTION_LOGIN_MC;
+    public static final String PATH_ADMIN_HOMEPAGE =
+        "/admin?" + ACTION_PARAM + "=configure&processForm=false";
+    public static final String PATH_D1_PORTAL_OAUTH = "/portal/oauth?action=start&amp;target=";
+    public static final String PATH_D1_PORTAL_TOKEN = "/portal/token";
+    public static final String PATH_D1_PORTAL_LOGOUT = "/portal/logout?target=";
 
     private Log logMetacat = LogFactory.getLog(MetacatAdminServlet.class);
 
@@ -67,11 +63,34 @@ public class MetacatAdminServlet extends HttpServlet {
      */
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+
+        String cnUrl = "NOT SET";
+        final String cnBaseUrl;
+        try {
+            cnUrl = PropertyService.getProperty("D1Client.CN_URL");
+            // example D1Client.CN_URL:  'https://cn.dataone.org/cn' - so for the base url, we need
+            // to retrieve just the scheme & host - in this case 'https://cn.dataone.org'
+            cnBaseUrl = getDomainPart(cnUrl);
+        } catch (PropertyNotFoundException e) {
+            throw new RuntimeException("Cannot continue - no value found for D1Client.CN_URL in "
+                                           + "metacat.properties or metacat-site.properties", e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Cannot continue - got D1Client.CN_URL (" + cnUrl
+                                           + "), but unable to parse base URL from it", e);
+        }
+        // add to context; access using `application.getAttribute(String);`
+        getServletContext().setAttribute(ATTR_CN_BASE_URL, cnBaseUrl);
+
+        String contextPath = getServletContext().getContextPath();
+        getServletContext().setAttribute(ATTR_LOGIN_PRE_ORCID_URI, contextPath + PATH_LOGIN_PRE_ORCID);
+        getServletContext().setAttribute(ATTR_LOGIN_ORCID_FLOW_URI, contextPath + PATH_LOGIN_ORCID_FLOW);
+        getServletContext().setAttribute(ATTR_LOGIN_METACAT_URI, contextPath + PATH_LOGIN_METACAT);
+        getServletContext().setAttribute(ATTR_LOGOUT_URI, contextPath + PATH_LOGOUT);
     }
 
     /** Handle "GET" method requests from HTTP clients */
     public void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws IOException {
 
         // Process the data and send back the response
         handleGetOrPost(request, response);
@@ -79,7 +98,7 @@ public class MetacatAdminServlet extends HttpServlet {
 
     /** Handle "POST" method requests from HTTP clients */
     public void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws IOException {
 
         // Process the data and send back the response
         handleGetOrPost(request, response);
@@ -89,130 +108,107 @@ public class MetacatAdminServlet extends HttpServlet {
      * Control servlet response depending on the action parameter specified
      *
      * @param request
-     *            the http request information
+     *                 the http request information
      * @param response
-     *            the http response to be sent back to the client
+     *                 the http response to be sent back to the client
      */
-    private void handleGetOrPost(HttpServletRequest request,
-            HttpServletResponse response) throws ServletException, IOException {
-        String action = request.getParameter("configureType");
-        logMetacat.info("MetacatAdminServlet.handleGetOrPost - Processing admin action: " + action);
-        Vector<String> processingMessage = new Vector<String>();
-        Vector<String> processingErrors = new Vector<String>();
+    private void handleGetOrPost(HttpServletRequest request, HttpServletResponse response)
+        throws IOException {
+        String action = request.getParameter(ACTION_PARAM);
+        logMetacat.info("MetacatAdminServlet - Processing admin action: " + action);
+
+        Vector<String> processingMessage = new Vector<>();
+        Vector<String> processingErrors = new Vector<>();
+
+        logMetacat.debug("\n****** USERID IN SESSION: "
+                             + request.getSession().getAttribute(RequestUtil.ATTR_USER_ID) +
+                             "**********************\n");
+
+        logMetacat.debug("\n****** START REQUEST PARAMETERS **********************\n"
+                             + RequestUtil.getParametersAsString(request)
+                             + "\n****** END REQUEST PARAMETERS   **********************\n");
 
         try {
-            // Update the last update time for this user if they are not new
-            HttpSession httpSession = request.getSession(false);
-            if (httpSession != null) {
-                SessionService.getInstance().touchSession(httpSession.getId());
-            }
-
             if (!ConfigurationUtil.isBackupDirConfigured()) {
                 // if the backup dir has not been configured, then show the
                 // backup directory configuration screen.
                 processingMessage.add("You must configure the backup directory"
-                        + " before you can continue with Metacat configuration.");
+                                          + " before you can continue with Metacat configuration.");
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "backup";
-                logMetacat.debug("MetacatAdminServlet.handleGetOrPost - "
-                                        + " Admin action changed to 'backup'");
+                logMetacat.debug(
+                    "MetacatAdminServlet - Admin action changed to 'backup'");
             } else if (!AuthUtil.isAuthConfigured()) {
                 // if authentication isn't configured, change the action to auth.
                 // Authentication needs to be set up before we do anything else
                 processingMessage.add("You must configure authentication before "
-                        + "you can continue with MetaCat configuration.");
+                                          + "you can continue with MetaCat configuration.");
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "auth";
-                logMetacat.debug("MetacatAdminServlet.handleGetOrPost - "
-                                                            + "Admin action changed to 'auth'");
-            } else if (!AuthUtil.isUserLoggedInAsAdmin(request)) {
-                // If auth is configured, see if the user is logged in
-                // as an administrator.  If not, they need to log in before
-                // they can continue with configuration.
-                processingMessage.add("You must log in as an administrative "
-                                 + "user before you can continue with Metacat configuration.");
-                RequestUtil.setRequestMessage(request, processingMessage);
-                action = "login";
-                logMetacat.debug("MetacatAdminServlet.handleGetOrPost - "
-                                                    + "Admin action changed to 'login'");
+                logMetacat.debug(
+                    "MetacatAdminServlet - Admin action changed to 'auth'");
+            } else if (LoginAdmin.getInstance().needsLoginAdminHandling(request, action)) {
+                logMetacat.debug("MetacatAdminServlet - Admin action is: " + action
+                                     + "; intervention by LoginAdmin is required");
+                LoginAdmin.getInstance().handle(request, response);
+                return;
             }
 
-            if (action == null || action.equals("configure")) {
+            if (action == null) {
                 // Forward the request main configuration page
-                initialConfigurationParameters(request);
-                RequestUtil.forwardRequest(request, response,
-                        "/admin/metacat-configuration.jsp?configureType=configure", null);
-                return;
-            } else if (action.equals("properties")) {
-                // process properties
-                PropertiesAdmin.getInstance().configureProperties(request,
-                        response);
-                return;
-            } else if (action.equals("database")) {
-                // process database
-                DBAdmin.getInstance().configureDatabase(request, response);
-                return;
-            } else if (action.equals("auth")) {
-                // process authentication
-                AuthAdmin.getInstance().configureAuth(request, response);
-                return;
-            } else if (action.equals("login")) {
-                // process login
-                LoginAdmin.getInstance().authenticateUser(request, response);
-                return;
-            } else if (action.equals("backup")) {
-                // process login
-                BackupAdmin.getInstance().configureBackup(request, response);
-                return;
-            } else if (action.equals("dataone")) {
-                // process dataone config
-                D1Admin.getInstance().configureDataONE(request, response);
-                return;
-            } else if (action.equals("ezid")) {
-                // process replication config
-                EZIDAdmin.getInstance().configureEZID(request, response);
-                return;
-            } else if (action.equals("quota")) {
-                // process the quota config
-                QuotaAdmin.getInstance().configureQuota(request, response);
-                return;
-            } else if (action.equals("solrserver")) {
-                // process replication config
-                SolrAdmin.getInstance().configureSolr(request, response);
-                return;
-            } else if (action.equals("refreshStylesheets")) {
-                clearStylesheetCache(response);
-                return;
-            } else {
-                String errorMessage = "MetacatAdminServlet.handleGetOrPost - "
-                                        + "Invalid action in configuration request: " + action;
-                logMetacat.error(errorMessage);
-                processingErrors.add(errorMessage);
+                action = "configure";
+                logMetacat.debug("MetacatAdminServlet - null action changed to 'configure'");
+            }
+
+            switch (action) {
+                case "configure" -> {
+                    // Forward the request main configuration page
+                    initialConfigurationParameters(request);
+                    RequestUtil.forwardRequest(request, response,
+                                               "/admin/metacat-configuration.jsp?" + ACTION_PARAM
+                                                   + "=configure", null);
+                }
+                case "properties" ->
+                    PropertiesAdmin.getInstance().configureProperties(request, response);
+                case "database" -> DBAdmin.getInstance().configureDatabase(request, response);
+                case "auth" -> AuthAdmin.getInstance().configureAuth(request, response);
+                case "backup" -> BackupAdmin.getInstance().configureBackup(request, response);
+                case "dataone" -> D1Admin.getInstance().configureDataONE(request, response);
+                case "ezid" -> EZIDAdmin.getInstance().configureEZID(request, response);
+                case "quota" -> QuotaAdmin.getInstance().configureQuota(request, response);
+                case "solrserver" -> SolrAdmin.getInstance().configureSolr(request, response);
+                case "refreshStylesheets" -> clearStylesheetCache(response);
+                default -> {
+                    String errorMessage =
+                        "MetacatAdminServlet - Invalid action in configuration request: " + action;
+                    logMetacat.error(errorMessage);
+                    processingErrors.add(errorMessage);
+                }
             }
 
         } catch (GeneralPropertyException ge) {
             String errorMessage =
-                "MetacatAdminServlet.handleGetOrPost - Property problem while handling request: "
-                                                                            + ge.getMessage();
+                "MetacatAdminServlet - Property problem while handling request: "
+                    + ge.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
         } catch (AdminException ae) {
             String errorMessage =
-                "MetacatAdminServlet.handleGetOrPost - Admin problem while handling request: "
-                                                                                + ae.getMessage();
+                "MetacatAdminServlet - Admin problem while handling request: "
+                    + ae.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
         } catch (MetacatUtilException ue) {
             String errorMessage =
-                "MetacatAdminServlet.handleGetOrPost - Utility problem while handling request: "
-                                                                               + ue.getMessage();
+                "MetacatAdminServlet - Utility problem while handling request: "
+                    + ue.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
         }
 
-        if (processingErrors.size() > 0) {
+        if (!processingErrors.isEmpty()) {
             RequestUtil.clearRequestMessages(request);
-            RequestUtil.setRequestErrors(request,processingErrors);
+            RequestUtil.setRequestErrors(request, processingErrors);
             //something bad happened. We need to go back to the configuration
             //page and display the error message.
             //directly forwarding to the metacat-configuration.jsp page rather than
@@ -220,14 +216,33 @@ public class MetacatAdminServlet extends HttpServlet {
             try {
                 initialConfigurationParameters(request);
                 RequestUtil.forwardRequest(request, response,
-                            "/admin/metacat-configuration.jsp?configureType=configure", null);
+                                           "/admin/metacat-configuration"
+                                               + ".jsp?" + ACTION_PARAM + "=configure",
+                                           null);
             } catch (Exception e) {
-                //Wow we can't display the error message on a web page. Only print them out.
-                logMetacat.error("MetacatAdminServlet.handleGetOrPost - couldn't"
-                        + " forward the error message to the metacat configuration page since "
-                        + e.getMessage());
+                //We can't display the error message on a web page. Only print them out.
+                logMetacat.error("MetacatAdminServlet - couldn't forward the error message to "
+                                     + "the metacat configuration page since " + e.getMessage());
             }
         }
+    }
+
+    // Get the scheme + host -- i.e. the first part of the url, up to the first slash after the
+    // top-level domain. Example:
+    //     input:    https://cn.dataone.org/cn/some/other/stuff?etc=true
+    //     output:   https://cn.dataone.org/
+    private static String getDomainPart(String url) throws URISyntaxException {
+        URI uri = new URI(url);
+        String protocol = uri.getScheme();
+        String host = uri.getHost();
+        int port = uri.getPort();
+
+        StringBuilder domainPart = new StringBuilder();
+        domainPart.append(protocol).append("://").append(host);
+        if (port != -1) {
+            domainPart.append(":").append(port);
+        }
+        return domainPart.toString();
     }
 
     /*
@@ -246,33 +261,34 @@ public class MetacatAdminServlet extends HttpServlet {
 
     /**
      * Initialize the configuration status on the http servlet request
+     *
      * @param request
      * @throws GeneralPropertyException
      * @throws AdminException
      * @throws MetacatUtilException
      */
     private void initialConfigurationParameters(HttpServletRequest request)
-                           throws GeneralPropertyException, AdminException, MetacatUtilException {
+        throws GeneralPropertyException, AdminException, MetacatUtilException {
         if (request != null) {
             request.setAttribute("metaCatVersion", SystemUtil.getMetacatVersion());
-            request.setAttribute("propsConfigured",
-                                    Boolean.valueOf(PropertyService.arePropertiesConfigured()));
-            request.setAttribute("authConfigured", Boolean.valueOf(AuthUtil.isAuthConfigured()));
-            request.setAttribute("metacatConfigured",
-                                        Boolean.valueOf(ConfigurationUtil.isMetacatConfigured()));
-            request.setAttribute("dataoneConfigured",
-                    PropertyService.getProperty("configutil.dataoneConfigured"));
-            request.setAttribute("ezidConfigured",
-                    PropertyService.getProperty("configutil.ezidConfigured"));
-            request.setAttribute("quotaConfigured",
-                    PropertyService.getProperty("configutil.quotaConfigured"));
-            request.setAttribute("solrserverConfigured",
-                    PropertyService.getProperty("configutil.solrserverConfigured"));
-            request.setAttribute("metacatServletInitialized",
-                                            MetacatInitializer.isFullyInitialized());
+            request.setAttribute(
+                "propsConfigured", PropertyService.arePropertiesConfigured());
+            request.setAttribute("authConfigured", AuthUtil.isAuthConfigured());
+            request.setAttribute(
+                "metacatConfigured", ConfigurationUtil.isMetacatConfigured());
+            request.setAttribute(
+                "dataoneConfigured", PropertyService.getProperty("configutil.dataoneConfigured"));
+            request.setAttribute(
+                "ezidConfigured", PropertyService.getProperty("configutil.ezidConfigured"));
+            request.setAttribute(
+                "quotaConfigured", PropertyService.getProperty("configutil.quotaConfigured"));
+            request.setAttribute(
+                "solrserverConfigured",
+                PropertyService.getProperty("configutil.solrserverConfigured"));
+            request.setAttribute(
+                "metacatServletInitialized", MetacatInitializer.isFullyInitialized());
             if (PropertyService.arePropertiesConfigured()) {
-                request.setAttribute("databaseVersion", 
-                        DBAdmin.getInstance().getDBVersion());
+                request.setAttribute("databaseVersion", DBAdmin.getInstance().getDBVersion());
                 request.setAttribute("contextURL", SystemUtil.getContextURL());
             }
         }
