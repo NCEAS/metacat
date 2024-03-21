@@ -24,15 +24,26 @@ This major release introduces breaking changes:
 
 ### New Features & Enhancements:
 
-- TODO: Bullet for new, faster dataone-indexer
-- TODO: Bullet for removal of MetacatAPI
 - TODO: Bullet for new admin login using ORCID (and implications of changing admin identities to ORCIDs)
+- Storage and Indexing Enhancements [PR-1695](https://github.com/NCEAS/metacat/pull/1695)
+  - Re-implemented mechanism to handle index tasks that failed to be put into RabbitMQ [I-1603](https://github.com/NCEAS/metacat/issues/1603)
+  - Increased indexing speeds by replacing hazelcast with dataone-indexer
+  - Removed hazelcast dependency and added new SystemMetadataManager class to handle system metadata
+  - Removed unnecessary monitor/status request endpoint [I-1609](https://github.com/NCEAS/metacat/issues/1609)
+- Upgrade from Java 8 to 17 [I-1481](https://github.com/NCEAS/metacat/issues/1481), [PR-1731](https://github.com/NCEAS/metacat/pull/1731), [PR-1735](https://github.com/NCEAS/metacat/pull/1735)
+- Disabled old MetacatAPI and significant code clean-up (removed obsolete legacy code) [PR-1713](https://github.com/NCEAS/metacat/pull/1713), [PR-1725](https://github.com/NCEAS/metacat/pull/1725), [PR-1726](https://github.com/NCEAS/metacat/pull/1726)
 - Metacat Containerization MVP (Kubernetes, Helm, Docker) [I-1623](https://github.com/NCEAS/metacat/issues/1623)
   - Metacat deployment in a Kubernetes cluster [I-1218](https://github.com/NCEAS/metacat/issues/1218)
+    - Allows helm to install or upgrade a Metacat Docker image.
+  - Added dataone-indexer subchart & dockerfile labels, removed Hazelcast and fixed liveness & readiness probes [PR-1714](https://github.com/NCEAS/metacat/pull/1714)
+    - Removed built-in indexer and related code [PR-1719](https://github.com/NCEAS/metacat/pull/1719), [PR-1720](https://github.com/NCEAS/metacat/pull/1720)
+    - Moved solr authentication settings to indexer [PR-1724](https://github.com/NCEAS/metacat/pull/1724)
+  - Added new K8SAdminInitializer class to streamline startup process, including auto db updates [PR-1691](https://github.com/NCEAS/metacat/pull/1691)
+  - DataONE Member Node Configuration support when running in k8s [I-1662](https://github.com/NCEAS/metacat/issues/1662), [PR-1681](https://github.com/NCEAS/metacat/pull/1681), [PR-1696](https://github.com/NCEAS/metacat/pull/1696)
   - Improved clarity around administrative user set up [PR-1646](https://github.com/NCEAS/metacat/pull/1645)
   - Added postgres subchart [PR-1653](https://github.com/NCEAS/metacat/pull/1653), [PR-1657](https://github.com/NCEAS/metacat/pull/1657)
   - Added ingress, templatized configuration values and removed hardcoded values [PR-1647](https://github.com/NCEAS/metacat/pull/1647)
-    - Enabled HTTPS access (x509 certificates) [PR-1672](https://github.com/NCEAS/metacat/pull/1672)
+    - Enabled HTTPS access (x509 certificates) [PR-1672](https://github.com/NCEAS/metacat/pull/1672), [PR-1677](https://github.com/NCEAS/metacat/pull/1677), [PR-1676](https://github.com/NCEAS/metacat/pull/1676)
       - DataONE Replication is now functional
   - Enabled passing of secret credentials to Metacat via environment variables [I-1635](https://github.com/NCEAS/metacat/issues/1635)
     - Added new secret mapping to use for X-Proxy-Key header [PR-1670](https://github.com/NCEAS/metacat/pull/1670)
@@ -40,7 +51,7 @@ This major release introduces breaking changes:
   - Update tomcat version and added memory options [PR-1675](https://github.com/NCEAS/metacat/pull/1675)
   - Adjusted catalina property settings to resolve issues related to encoded slash and backslashes [I-1674](https://github.com/NCEAS/metacat/pull/1674)
   - Added to default command line tools, fixes for log path issues & tailing, and optimizations to dev environment [P-1648](https://github.com/NCEAS/metacat/pull/1648)
-  - Improvements to test suite and logging exceptions [PR-1663](https://github.com/NCEAS/metacat/pull/1663)
+  - Improvements to test suite and logging exceptions [PR-1663](https://github.com/NCEAS/metacat/pull/1663), [PR-1687](https://github.com/NCEAS/metacat/pull/1687), [PR-1688](https://github.com/NCEAS/metacat/pull/1688), [PR-1737](https://github.com/NCEAS/metacat/pull/1737)
 - Metacat Configuration and Startup Enhancements
   - Added solr startup configuration check [PR-1656](https://github.com/NCEAS/metacat/pull/1656)
   - Improved Metacat startup process by forcing operators to configure settings when it is necessary [PR-1644](https://github.com/NCEAS/metacat/pull/1644/files)
@@ -50,9 +61,11 @@ This major release introduces breaking changes:
 - Metacat Properties Overlay [I-1611](https://github.com/NCEAS/metacat/issues/1611)
   - Properties can now be edited by hand to override the default properties via 'metacat-site.properties' located at '/var/metacat/config'
   - Properties saved in the Metacat admin configuration pages are saved in 'metacat-site.properties'
+- Support recent versions of python3 and sphinx7 for admindoc builds [PR-1728](https://github.com/NCEAS/metacat/pull/1728)
 - Upgraded to speedbagit 1.0.4 to properly handle duplicate filenames [I-1443](https://github.com/NCEAS/metacat/pull/1614)
 - Streamlined ant build process to reduce build time [I-1612](https://github.com/NCEAS/metacat/issues/1612)
 - Improved error messaging when trying to submit data as a denied submitter [I-1573](https://github.com/NCEAS/metacat/issues/1573)
+- Improved test suite execution speeds [PR-1707](https://github.com/NCEAS/metacat/pull/1707)
 
 ### Bug Fixes:
 
