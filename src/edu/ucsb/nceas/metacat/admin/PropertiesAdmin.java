@@ -7,7 +7,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
-import edu.ucsb.nceas.metacat.startup.StartupRequirementsChecker;
+import edu.ucsb.nceas.metacat.util.NetworkUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Vector;
 
@@ -192,9 +193,9 @@ public class PropertiesAdmin extends MetacatAdmin {
         } else {
             // The configuration form is being submitted and needs to be
             // processed.
-            Vector<String> validationErrors = new Vector<String>();
-            Vector<String> processingErrors = new Vector<String>();
-            Vector<String> processingSuccess = new Vector<String>();
+            Vector<String> validationErrors = new Vector<>();
+            Vector<String> processingErrors = new Vector<>();
+            Vector<String> processingSuccess = new Vector<>();
 
             MetacatVersion metacatVersion = null;
 
@@ -314,7 +315,8 @@ public class PropertiesAdmin extends MetacatAdmin {
                     Process pr = rt.exec(command);
                     int ret = pr.waitFor();
                     if (ret > 0) {
-                        logMetacat.error(IOUtils.toString(pr.getErrorStream()));
+                        logMetacat.error(IOUtils.toString(pr.getErrorStream(),
+                                                          StandardCharsets.UTF_8));
                     }
                 } catch (Exception ignorable) {
                     /// just a warning
@@ -334,7 +336,7 @@ public class PropertiesAdmin extends MetacatAdmin {
             }
 
             try {
-                if (validationErrors.size() > 0 || processingErrors.size() > 0) {
+                if (!validationErrors.isEmpty() || !processingErrors.isEmpty()) {
                     RequestUtil.clearRequestMessages(request);
                     RequestUtil.setRequestFormErrors(request, validationErrors);
                     RequestUtil.setRequestErrors(request, processingErrors);
@@ -457,7 +459,7 @@ public class PropertiesAdmin extends MetacatAdmin {
      *         validation.
      */
     protected Vector<String> validateOptions(HttpServletRequest request) {
-        Vector<String> errorVector = new Vector<String>();
+        Vector<String> errorVector = new Vector<>();
 
         // Test database connectivity
         try {
@@ -483,13 +485,13 @@ public class PropertiesAdmin extends MetacatAdmin {
      * @return true if the property is not set; otherwise false
      */
     private boolean isNotSet(String propertyKey) { 
-        String property = null; 
+        String property = null;
         try { 
             property = PropertyService.getProperty(propertyKey); 
         } catch (PropertyNotFoundException ee) { 
             property = null; 
         }
-        return (property == null || property.trim().equals("")); 
+        return (property == null || property.isBlank());
     }
 
     /**
@@ -510,7 +512,7 @@ public class PropertiesAdmin extends MetacatAdmin {
             String adminPage = "admin";
             int status = 500;
             try {
-                status = StartupRequirementsChecker.checkUrlStatus(SystemUtil.getInternalContextURL()
+                status = NetworkUtil.checkUrlStatus(SystemUtil.getInternalContextURL()
                         + "/" + adminPage);
             } catch (IOException e) {
                 logMetacat.warn("Metacat cannot connect the url "
@@ -522,7 +524,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                             + PropertyService.getProperty("dataone.nodeType");
             } else {
                 try {
-                    status = StartupRequirementsChecker.checkUrlStatus(SystemUtil.getContextURL()
+                    status = NetworkUtil.checkUrlStatus(SystemUtil.getContextURL()
                                                                         + "/" + adminPage);
                 } catch (IOException e) {
                     logMetacat.warn("Metacat cannot connect the url "
@@ -555,33 +557,34 @@ public class PropertiesAdmin extends MetacatAdmin {
      * @throws AdminException
      */
     protected boolean metacatIndexExists() throws AdminException {
-        boolean existed = false;
+
         String indexContext;
+        final String noCoDeployMsg =
+            "The index.context doesn't exist, so we assume that metacat-index "
+                + "is not co-deployed with metacat in the same Tomcat container";
+
         try {
             indexContext = PropertyService.getProperty("index.context");
         } catch (PropertyNotFoundException e) {
-            // The operator doesn't care about the metacat-index, so we think
-            // it doesn't exist
-            logMetacat.debug("The index.context doesn't exist and we consider that metacat-index"
-                                + " doesn't exist with metacat in the same Tomcat container");
-            return existed;
+            // metacat-index property not set, so assume indexer not co-deployed
+            logMetacat.debug(noCoDeployMsg);
+            return false;
         }
         if (indexContext == null || indexContext.isBlank()) {
-            logMetacat.debug("The index.context is blank and we consider that metacat-index"
-                    + " doesn't exist with metacat in the same Tomcat container");
-            return existed;
+            // metacat-index property not set, so assume indexer not co-deployed
+            logMetacat.debug(noCoDeployMsg);
+            return false;
         }
         try {
             String webDir = PropertyService.getProperty("application.deployDir");
             File indexDir  = new File(webDir + "/" + indexContext);
             logMetacat.debug("The metacat-index directory is " + indexDir.getAbsolutePath());
             if (indexDir.exists() && indexDir.isDirectory()) {
-                existed = true;
+                return true;
             }
         } catch (PropertyNotFoundException e) {
             throw new AdminException(e.getMessage());
         }
-        return existed;
+        return false;
     }
-
 }

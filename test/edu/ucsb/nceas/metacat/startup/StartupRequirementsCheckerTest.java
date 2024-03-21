@@ -407,46 +407,6 @@ public class StartupRequirementsCheckerTest {
         assertExceptionContains(e1, String.valueOf(HttpURLConnection.HTTP_NOT_FOUND));
     }
 
-    @Test
-    public void testCheckUrlStatus() throws Exception {
-        String url = "https://www.google.com";
-        int status = StartupRequirementsChecker.checkUrlStatus(url);
-        assertEquals("The status of "+ url + " should be 200, rather than " + status, 200, status);
-        url = "http://knb.ecoinformatics.org";
-        status = StartupRequirementsChecker.checkUrlStatus(url);
-        assertEquals("The status of " + url + " should be 301, rather than " + status, 301, status);
-        try {
-            url = "www.google.com";
-            status = StartupRequirementsChecker.checkUrlStatus(url);
-            fail("Test shouldn't get there since the url " + url + " doesn't have a protocol");
-        } catch (IOException e) {
-            assertTrue("The error message should have - no protocol.",
-                        e.getMessage().contains("no protocol"));
-        }
-        try {
-            url = null;
-            status = StartupRequirementsChecker.checkUrlStatus(url);
-            fail("Test shouldn't get there since the url is null");
-        } catch (IOException e) {
-            assertTrue("The error message should have null.", e.getMessage().contains("null"));
-        }
-        try {
-            url = "";
-            status = StartupRequirementsChecker.checkUrlStatus(url);
-            fail("Test shouldn't get there since the url is blank");
-        } catch (IOException e) {
-            assertTrue("The error message should have no protocol.",
-                       e.getMessage().contains("no protocol"));
-        }
-        try {
-            url = "https://foo.edu.fake";
-            status = StartupRequirementsChecker.checkUrlStatus(url);
-            fail("Test shouldn't get there since the url "+ url +" doesn't exist.");
-        } catch (IOException e) {
-            assertTrue("The error message should have fake.", e.getMessage().contains("fake"));
-        }
-    }
-
     private void setUpK8sSiteProps() throws IOException {
         assertNotNull(Files.createDirectories(this.sitePropsFilePath.getParent()));
         Path sitePropsFile = Files.createFile(this.sitePropsFilePath);

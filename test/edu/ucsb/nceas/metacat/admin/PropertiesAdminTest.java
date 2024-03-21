@@ -2,7 +2,7 @@ package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.startup.StartupRequirementsChecker;
+import edu.ucsb.nceas.metacat.util.NetworkUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.UtilException;
 import org.junit.After;
@@ -91,11 +91,11 @@ public class PropertiesAdminTest {
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)) {
             // Connections to both internal and external server succeed.
-            try (MockedStatic<StartupRequirementsChecker> checker =
-                                            Mockito.mockStatic(StartupRequirementsChecker.class)) {
-                Mockito.when(StartupRequirementsChecker.checkUrlStatus(internalAdmin))
+            try (MockedStatic<NetworkUtil> checker =
+                                            Mockito.mockStatic(NetworkUtil.class)) {
+                Mockito.when(NetworkUtil.checkUrlStatus(internalAdmin))
                                                                                    .thenReturn(200);
-                Mockito.when(StartupRequirementsChecker.checkUrlStatus(externalAdmin))
+                Mockito.when(NetworkUtil.checkUrlStatus(externalAdmin))
                                                                                    .thenReturn(200);
                 Vector<String> errors = new Vector<String>();
                 PropertiesAdmin.getInstance().setMNBaseURL(errors);
