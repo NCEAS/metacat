@@ -10,9 +10,8 @@ import org.xml.sax.*;
  */
 public class DBDTDHandler implements DTDHandler {
 
-    /** Construct an instance of the DBDTDHandler clas
-     *
-     * @param conn the JDBC connection to which information is written
+    /**
+     * Construct an instance of the DBDTDHandler class
      */
     public DBDTDHandler() {
 
