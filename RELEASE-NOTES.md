@@ -27,26 +27,37 @@ This major release introduces breaking changes:
 - TODO: Bullet for new, faster dataone-indexer
 - TODO: Bullet for removal of MetacatAPI
 - TODO: Bullet for new admin login using ORCID (and implications of changing admin identities to ORCIDs)
-- Metacat Containerzation MVP (Kubernetes, Helm, Docker) [I-1623](https://github.com/NCEAS/metacat/issues/1623)
+- Metacat Containerization MVP (Kubernetes, Helm, Docker) [I-1623](https://github.com/NCEAS/metacat/issues/1623)
   - Metacat deployment in a Kubernetes cluster [I-1218](https://github.com/NCEAS/metacat/issues/1218)
   - Improved clarity around administrative user set up [PR-1646](https://github.com/NCEAS/metacat/pull/1645)
+  - Added postgres subchart [PR-1653](https://github.com/NCEAS/metacat/pull/1653), [PR-1657](https://github.com/NCEAS/metacat/pull/1657)
+  - Added ingress, templatized configuration values and removed hardcoded values [PR-1647](https://github.com/NCEAS/metacat/pull/1647)
+    - Enabled HTTPS access (x509 certificates) [PR-1672](https://github.com/NCEAS/metacat/pull/1672)
+      - DataONE Replication is now functional
   - Enabled passing of secret credentials to Metacat via environment variables [I-1635](https://github.com/NCEAS/metacat/issues/1635)
+    - Added new secret mapping to use for X-Proxy-Key header [PR-1670](https://github.com/NCEAS/metacat/pull/1670)
   - Prevent startup from aborting within a container if site properties is read-only [PR-1646](https://github.com/NCEAS/metacat/pull/1646)
+  - Update tomcat version and added memory options [PR-1675](https://github.com/NCEAS/metacat/pull/1675)
+  - Adjusted catalina property settings to resolve issues related to encoded slash and backslashes [I-1674](https://github.com/NCEAS/metacat/pull/1674)
+  - Added to default command line tools, fixes for log path issues & tailing, and optimizations to dev environment [P-1648](https://github.com/NCEAS/metacat/pull/1648)
+  - Improvements to test suite and logging exceptions [PR-1663](https://github.com/NCEAS/metacat/pull/1663)
 - Metacat Configuration and Startup Enhancements
+  - Added solr startup configuration check [PR-1656](https://github.com/NCEAS/metacat/pull/1656)
   - Improved Metacat startup process by forcing operators to configure settings when it is necessary [PR-1644](https://github.com/NCEAS/metacat/pull/1644/files)
-  - Added default database properties for `postgres` [PR-1641](https://github.com/NCEAS/metacat/pull/1641)
+  - Added default database properties for postgres [PR-1641](https://github.com/NCEAS/metacat/pull/1641)
 - Metacat startup now aborts if it is misconfigured and/or critical resources are inaccessible [I-1631](https://github.com/NCEAS/metacat/issues/1631)
-  - The related issues can be found in the metacat logs (ex. `/tomcat/logs/catalina.out`) and host logs (ex. `/tomcat/logs/hostname(data).log`) with messaging to assist with debugging.
+  - The related issues can be found in the metacat logs (ex. '/tomcat/logs/catalina.out') and host logs (ex. '/tomcat/logs/hostname(data).log') with messaging to assist with debugging.
 - Metacat Properties Overlay [I-1611](https://github.com/NCEAS/metacat/issues/1611)
-  - Properties can now be edited by hand to override the default properties via `metacat-site.properties` located at `/var/metacat/config`
-  - Properties saved in the Metacat admin configuration pages are saved in `metacat-site.properties`
+  - Properties can now be edited by hand to override the default properties via 'metacat-site.properties' located at '/var/metacat/config'
+  - Properties saved in the Metacat admin configuration pages are saved in 'metacat-site.properties'
 - Upgraded to speedbagit 1.0.4 to properly handle duplicate filenames [I-1443](https://github.com/NCEAS/metacat/pull/1614)
 - Streamlined ant build process to reduce build time [I-1612](https://github.com/NCEAS/metacat/issues/1612)
 - Improved error messaging when trying to submit data as a denied submitter [I-1573](https://github.com/NCEAS/metacat/issues/1573)
 
 ### Bug Fixes:
 
-- Resolved EZID related tests breaking due to a new AWS-WAF Rule that denies requests if the body contains a url that includes `localhost` or `127.0.0.1` by adding mock properties [I-1625](https://github.com/NCEAS/metacat/issues/1625).
+- Resolved 'sphinx' auto build docs from breaking due to conflicting indentation [PR-1661](https://github.com/NCEAS/metacat/pull/1661)
+- Resolved EZID related tests breaking due to a new AWS-WAF Rule that denies requests if the body contains a url that includes 'localhost' or '127.0.0.1' by adding mock properties [I-1625](https://github.com/NCEAS/metacat/issues/1625)
 - Fixed sampling citations not showing up in the view service [I-31](https://github.com/NCEAS/metacat/issues/31)
 
 ## Release Notes for 2.19.0
