@@ -81,56 +81,27 @@ This major release introduces breaking changes:
 
 Upgrade Notes:
 - In order to upgrade to 3.0.0, **you must be at Metacat v2.19.0**
-- `Metacat.properties` no longer contains custom settings. Any custom settings you have should be backed up and then
+- `metacat.properties` no longer contains custom settings. Any custom settings you have should be backed up and then
   added to `metacat-site.properties`.
 - TODO: Discuss with Jing & Matthew
 
 New Features & Enhancements:
-- Increased indexing speeds by replacing `hazelcast` with `dataone-indexer` (PR-1695)
-- Implemented new class `SystemMetadataManager` to handle system metadata and removed `hazelcast` dependency, allowing
-  Metacat to upgrade from Java 8 to 17 (PR-1695)
-- Metacat Containerization MVP & Enhancements (Issue-1665)
-  - Metacat can now be deployed in a Kubernetes cluster (Issue-1623, Issue-1218)
-    - Allows `helm` to install or upgrade a Metacat Docker image.
-    - Added property values for admin users to allow an administrator list (PR-1645)
-    - Enabled passing of secret credentials to Metacat via environment variables (Issue-1635)
-      - Metacat can be deployed via `helm`
-    - Added memory options for `tomcat` and auto updates to 9.0.76 (PR-1675)
-    - Added `postgres` subchart (PR-1651, PR-1657)
-    - Added `ingress` and templatized configuration values via `values.yaml` (PR-1647)
-      - HTTPS access (x509 certs) and DataONE replication via `ingress` is now functional (PR-1672, PR-1677)
-  - DataONE Member Node configuration is now supported in Kubernetes (Issue-1662)
-  - Added new `K8SAdminInitializer` class to streamline startup process, including auto db updates (PR-1691)
-  - Adjusted catalina property settings to resolve issues related to encoded slash and backslashes (Issue-1674)
-  - Various optimizations to improve clarity around docker deployment (Issue-1648, PR-1647, PR-1649)
-- Metacat startup now aborts if it is misconfigured and/or critical resources are inaccessible (ex. if
-  a `metacat-site.properties` is not found and `/var/metacat` is not writable by the metacat user) (Issue-1631)
-  - The related issues can be found in the metacat logs (ex. `/tomcat/logs/catalina.out`) and host logs (
-    ex. `/tomcat/logs/hostname(data).log`) with messaging to assist with debugging.
-  - Added `solr` startup configuration check (PR-1656)
-- Metacat Properties Overlay (Issue-1611)
-  - The `lib/metacat.properties` contain default properties that (typically) do not need to be changed.
-  - Properties can now be edited by hand to override the default `metacat.properties`.
-    - This is done through `metacat-site.properties` whose default location is found at `/var/metacat/config`, and can be
-      configurable via the admin page.
-    - Additionally, properties set in the admin page will be saved in `metacat-site.properties`
-  - Previously, properties were handled by mostly the `ConfigurableProperties` class, which has now been replaced with
-    three single-responsibilitiy classes:
-    - `PropertiesWrapper` which is a wrapper around standard `java.util.Properties` functionality
-    - `BackupPropertiesDelegate` which deals with backup properties
-    - `AuthPropertiesDelegate` which deals with Auth properties
-- Metacat Configuration Enhancements
-  - Added default database properties for `postgres` (PR-1641)
-  - Added default property values for the required Metacat admin configuration settings to assist operators with
-    configuring an operational Metacat (Issue-1664).
+- Metacat Containerzation MVP (Kubernetes, Helm, Docker) [I-1623](https://github.com/NCEAS/metacat/issues/1623)
+  - Metacat deployment in a Kubernetes cluster [I-1218](https://github.com/NCEAS/metacat/issues/1218)
+  - Enabled passing of secret credentials to Metacat via environment variables [I-1635](https://github.com/NCEAS/metacat/issues/1635)
+- Metacat startup now aborts if it is misconfigured and/or critical resources are inaccessible [I-1631](https://github.com/NCEAS/metacat/issues/1631)
+  - The related issues can be found in the metacat logs (ex. `/tomcat/logs/catalina.out`) and host logs (ex. `/tomcat/logs/hostname(data).log`) with messaging to assist with debugging.
+- Metacat Properties Overlay [I-1611](https://github.com/NCEAS/metacat/issues/1611)
+  - Properties can now be edited by hand to override the default properties via `metacat-site.properties` located at `/var/metacat/config`
+  - Properties saved in the Metacat admin configuration pages are saved in `metacat-site.properties`
+- Upgraded to speedbagit 1.0.4 to properly handle duplicate filenames [I-1443](https://github.com/NCEAS/metacat/pull/1614)
+- Streamlined ant build process to reduce build time [I-1612](https://github.com/NCEAS/metacat/issues/1612)
+- Improved error messaging when trying to submit data as a denied submitter [I-1573](https://github.com/NCEAS/metacat/issues/1573)
 
 Bug Fixes:
-- Resolved EZID related tests breaking due to a new AWS-WAF Rule that denies requests if the body contains a url that
-  includes `localhost` or `127.0.0.1` by adding mock properties (Issue-1625).
-- Resolved MetacatAdmin related tests breaking due to new solr property (PR-1643).
-- Resolved `sphinx` auto build docs from breaking due to conflicting indentation (PR-1661)
-- Resolved issue where cancelling a configuration item unintentionally saved properties and added default values from
-  memory (PR-1654)
+- Resolved EZID related tests breaking due to a new AWS-WAF Rule that denies requests if the body contains a url that includes `localhost` or `127.0.0.1` by adding mock properties [I-1625](https://github.com/NCEAS/metacat/issues/1625).
+- Fixed sampling citations not showing up in the view service [I-31](https://github.com/NCEAS/metacat/issues/31)
+
 
 
 ### Release Notes for 2.19.0
