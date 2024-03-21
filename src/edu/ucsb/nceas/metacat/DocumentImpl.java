@@ -891,9 +891,10 @@ public class DocumentImpl {
             // CLIENT SHOULD ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             int rev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
+            String type = null;
             // Check if the document exists.
             logMetacat.info("DocumentImp.delete - completely delete the document " + accnum);
-            String query = "SELECT * FROM xml_documents WHERE docid = ? and rev = ?";
+            String query = "SELECT doctype, docid FROM xml_documents WHERE docid = ? and rev = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(query)) {
                 pstmt.setString(1, docid);
                 pstmt.setInt(2, rev);
@@ -904,7 +905,8 @@ public class DocumentImpl {
                         //look at the xml_revisions table
                         logMetacat.debug("DocumentImpl.delete - look at the docid " + accnum
                                              + " in the xml_revision table");
-                        String query2 = "SELECT * FROM xml_revisions WHERE docid = ? AND rev = ?";
+                        String query2 = "SELECT doctype, docid FROM xml_revisions WHERE docid = ? "
+                                          + "AND rev = ?";
                         try (PreparedStatement pstmt2 = conn.prepareStatement(query2)) {
                             pstmt2.setString(1, docid);
                             pstmt2.setInt(2, rev);
@@ -919,6 +921,7 @@ public class DocumentImpl {
                                                         + "or xml_revisions table. "
                                                         + "Please check and try again.");
                                 } else {
+                                    type = rs2.getString(1);
                                     logMetacat.debug("DocumentImpl.delete - the docid " + accnum
                                             + " is in the xml_revisions table");
                                     conn.increaseUsageCount(1);
@@ -927,18 +930,12 @@ public class DocumentImpl {
                             }
                         }
                     } else {
-                        logMetacat.debug("DocumentImpl.delete - the docid " + accnum
-                                + " is in the xml_document table");
+                        type = rs.getString(1);
+                        logMetacat.debug("DocumentImpl.delete - the docid " + accnum + " and type "
+                                + type + " is in the xml_document table");
                         conn.increaseUsageCount(1);
                     }
                 }
-            }
-            // get the type of deleting docid, this will be used in forcereplication
-            String type = null;
-            if (!inRevisionTable) {
-                type = getDocTypeFromDB(conn, "xml_documents", docid);
-            } else {
-                type = getDocTypeFromDB(conn, "xml_revisions", docid);
             }
             logMetacat.info("DocumentImpl.delete - the deleting doc type is " + type + "...");
             if (type != null && type.trim().equals("BIN")) {
@@ -1101,31 +1098,6 @@ public class DocumentImpl {
         logMetacat.info("DocumentImpl.archive - total delete time is:  " + (end - start));
     }
 
-    /**
-     * Get the doc type for a given docid. If we don't find, null will be returned
-     * @param conn  the db connection which will be used to connect to database
-     * @param tableName  the table name which will be looked up
-     * @param docidWithoutRev  the given docid
-     * @return the doc type
-     * @throws SQLException
-     */
-    private static String getDocTypeFromDB(
-        DBConnection conn, String tableName, String docidWithoutRev) throws SQLException {
-        String type = null;
-        String sql = "SELECT DOCTYPE FROM " + tableName + " WHERE docid LIKE ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, docidWithoutRev);
-            try (ResultSet result = stmt.executeQuery()) {
-                boolean hasResult = result.next();
-                if (hasResult) {
-                    type = result.getString(1);
-                }
-            }
-        }
-        logMetacat.debug(
-            "DocumentImpl.getDocTypeFromDB - The type of docid " + docidWithoutRev + " is " + type);
-        return type;
-    }
 
     /**
      * Check for "WRITE" permission on @docid for @user and/or @groups from DB connection
