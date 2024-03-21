@@ -29,7 +29,12 @@ This major release introduces breaking changes:
 - TODO: Bullet for new admin login using ORCID (and implications of changing admin identities to ORCIDs)
 - Metacat Containerzation MVP (Kubernetes, Helm, Docker) [I-1623](https://github.com/NCEAS/metacat/issues/1623)
   - Metacat deployment in a Kubernetes cluster [I-1218](https://github.com/NCEAS/metacat/issues/1218)
+  - Improved clarity around administrative user set up [PR-1646](https://github.com/NCEAS/metacat/pull/1645)
   - Enabled passing of secret credentials to Metacat via environment variables [I-1635](https://github.com/NCEAS/metacat/issues/1635)
+  - Prevent startup from aborting within a container if site properties is read-only [PR-1646](https://github.com/NCEAS/metacat/pull/1646)
+- Metacat Configuration and Startup Enhancements
+  - Improved Metacat startup process by forcing operators to configure settings when it is necessary [PR-1644](https://github.com/NCEAS/metacat/pull/1644/files)
+  - Added default database properties for `postgres` [PR-1641](https://github.com/NCEAS/metacat/pull/1641)
 - Metacat startup now aborts if it is misconfigured and/or critical resources are inaccessible [I-1631](https://github.com/NCEAS/metacat/issues/1631)
   - The related issues can be found in the metacat logs (ex. `/tomcat/logs/catalina.out`) and host logs (ex. `/tomcat/logs/hostname(data).log`) with messaging to assist with debugging.
 - Metacat Properties Overlay [I-1611](https://github.com/NCEAS/metacat/issues/1611)
