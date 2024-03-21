@@ -60,7 +60,7 @@ import static org.mockito.ArgumentMatchers.any;
  * @author tao
  *
  */
-public class MetacatHandlerTest {
+public class MetacatHandlerIT {
     private static final String test_file_path = "test/clienttestfiles/tpc02-water-flow-base.xml";
     private static final String test_file_checksum = "19776e05bc62d92ab24e0597ab6f12c6";
     private static final String another_test_file = "test/macbeth.xml";
