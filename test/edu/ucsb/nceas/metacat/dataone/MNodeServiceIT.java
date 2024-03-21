@@ -1205,8 +1205,8 @@ public class MNodeServiceIT {
                 .getLogRecords(session, fromDate, toDate, event.xmlValue(), null, start, count);
 
             assertNotNull(log);
-            assertTrue(log.getCount() == count);
-            assertTrue(log.getStart() == start);
+            assertEquals(count, log.getCount());
+            assertEquals(start, log.getStart());
             assertTrue(log.getTotal() >= 1);
 
         } catch (Exception e) {
