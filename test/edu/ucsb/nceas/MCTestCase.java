@@ -635,12 +635,6 @@ public class MCTestCase
      * @return a String docid based on the current date and time
      */
     public static String generateDocumentId() {
-        try {
-            Thread.sleep(5);
-        } catch (InterruptedException ie) {
-            debug("Could not sleep: " + ie.getMessage());
-        }
-
         return DocumentUtil.generateDocumentId(prefix, 0);
     }
 
