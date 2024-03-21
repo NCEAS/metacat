@@ -26,7 +26,7 @@ import static org.junit.Assert.fail;
 /**
  * A JUnit test for testing Dryad documents
  */
-public class DryadTest {
+public class DryadIT {
     private static final String DRYAD_TEST_DOC = "test/dryad-metadata-profile-sample.xml";
     private static final String DRYAD_TEST_DOC_INVALID = "test/dryad-metadata-profile-invalid.xml";
     private D1NodeServiceTest d1NodeTest;
