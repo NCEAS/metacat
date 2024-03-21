@@ -1140,17 +1140,17 @@ public class DocumentImpl {
                           throws ServiceFailure, PropertyNotFoundException, SAXException {
         XMLReader parser = null;
         // handler
-        DBSAXHandler chandler;
+        DBSAXHandler handler;
         EntityResolver eresolver;
         DTDHandler dtdhandler;
         // Get an instance of the parser
         String parserName = PropertyService.getProperty("xml.saxparser");
         parser = XMLReaderFactory.createXMLReader(parserName);
-        chandler = new DBSAXHandler();
-        parser.setContentHandler((ContentHandler) chandler);
-        parser.setErrorHandler((ErrorHandler) chandler);
-        parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
-        parser.setProperty(LEXICALPROPERTY, chandler);
+        handler = new DBSAXHandler();
+        parser.setContentHandler((ContentHandler) handler);
+        parser.setErrorHandler((ErrorHandler) handler);
+        parser.setProperty(DECLARATIONHANDLERPROPERTY, handler);
+        parser.setProperty(LEXICALPROPERTY, handler);
         boolean valid = ruleBase != null && needValidation;
         if (valid && (ruleBase.equals(SCHEMA)
                       || ruleBase.equals(EML200)
@@ -1198,7 +1198,7 @@ public class DocumentImpl {
             logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
             // turn on dtd validaton feature
             parser.setFeature(VALIDATIONFEATURE, true);
-            eresolver = new DBEntityResolver((DBSAXHandler) chandler, dtd);
+            eresolver = new DBEntityResolver((DBSAXHandler) handler, dtd);
             dtdhandler = new DBDTDHandler();
             parser.setEntityResolver((EntityResolver) eresolver);
             parser.setDTDHandler((DTDHandler) dtdhandler);
@@ -1206,7 +1206,7 @@ public class DocumentImpl {
             logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
             // non validation
             parser.setFeature(VALIDATIONFEATURE, false);
-            eresolver = new DBEntityResolver((DBSAXHandler) chandler, dtd);
+            eresolver = new DBEntityResolver((DBSAXHandler) handler, dtd);
             dtdhandler = new DBDTDHandler();
             parser.setEntityResolver((EntityResolver) eresolver);
             parser.setDTDHandler((DTDHandler) dtdhandler);
