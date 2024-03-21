@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat.util;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 
@@ -18,14 +19,14 @@ public class NetworkUtilIT {
     public void testCheckUrlStatus_google200() throws Exception {
         String url = "https://www.google.com";
         int status = NetworkUtil.checkUrlStatus(url);
-        assertEquals("Unexpected status from " + url, 200, status);
+        assertEquals("Unexpected status from " + url, HttpURLConnection.HTTP_OK, status);
     }
 
     @Test
     public void testCheckUrlStatus_knb301() throws Exception {
         String url = "http://knb.ecoinformatics.org";
         int status = NetworkUtil.checkUrlStatus(url);
-        assertEquals("Unexpected status from " + url, 301, status);
+        assertEquals("Unexpected status from " + url, HttpURLConnection.HTTP_MOVED_PERM, status);
     }
 
     @Test

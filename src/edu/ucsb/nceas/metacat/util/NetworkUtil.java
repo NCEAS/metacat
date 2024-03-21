@@ -2,6 +2,8 @@ package edu.ucsb.nceas.metacat.util;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
@@ -26,7 +28,11 @@ public class NetworkUtil {
      *                      connection can be established (@see NetworkUtil.DEFAULT_TIMEOUT_MS).
      */
     public static int checkUrlStatus(String urlStr) throws IOException {
-        return checkUrlStatus(urlStr, -1);
+        try {
+            return checkUrlStatus(urlStr, -1);
+        } catch (URISyntaxException e) {
+            throw new IOException("URISyntaxException trying to parse a URI from: " + urlStr, e);
+        }
     }
 
     /**
@@ -43,13 +49,16 @@ public class NetworkUtil {
      * @throws IOException if an I/ O error occurs while opening the connection. Includes a possible
      *                      SocketTimeoutException – if the timeout expires before the connection
      *                      can be established.
+     * @throws URISyntaxException If the url string violates RFC 2396 or is otherwise non-valid
      */
-    public static int checkUrlStatus(String urlStr, int timeoutMs) throws IOException {
+    public static int checkUrlStatus(String urlStr, int timeoutMs)
+        throws IOException, URISyntaxException {
 
         HttpURLConnection connection = null;
         timeoutMs = (timeoutMs < 0) ? DEFAULT_TIMEOUT_MS : timeoutMs;
         try {
-            URL url = new URL(urlStr);
+            URI uri = new URI(urlStr);
+            URL url = uri.toURL();
             connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(timeoutMs);
             connection.setRequestMethod("GET");
