@@ -25,6 +25,9 @@ public class IntegrationTestUtils {
 
     /**
      * Check if a table has records matching the query
+     * If you want check if the identifier table has a record with guid="uuid:1234" and
+     * docid="foo.1", you need pass "identifier" as the table name, "where guid=? and docid=?" as
+     * the whereClause, "uuid:1234" and "foo.1" as the values.
      * @param table  the name of table will be checked
      * @param dbconn  the connection to database
      * @param whereClause  the where clause part of the query
@@ -53,6 +56,11 @@ public class IntegrationTestUtils {
 
     /**
      * Check if a table has records matching the query.
+     * If you want check if the identifier table has a record with rev=2 and guid="uuid:1234" and
+     * docid="foo.1", you need pass "identifier" as the table name,
+     * "where rev=? and guid=? and docid=?" as whereClause, 2 as rev, "uuid:1234" and "foo.1" as the
+     * values.
+     * the whereClause, "uuid:1234, foo.1" the values vector.
      * @param table  the name of table will be checked
      * @param dbconn  the connection to database
      * @param whereClause  the where clause part of the query
