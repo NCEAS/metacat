@@ -29,7 +29,7 @@ import static org.junit.Assert.fail;
 /**
  * A JUnit test for testing Metacat when Non Ascii Characters are inserted
  */
-public class NonAsciiCharacterTest {
+public class NonAsciiCharacterIT {
     private Session session;
     private String testdocument;
     private D1NodeServiceTest d1NodeTest;
