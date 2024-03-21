@@ -35,6 +35,7 @@ import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -600,12 +601,13 @@ public class DocumentImplIT {
             assertNotNull("The file should exist", input);
             input.close();
             SystemMetadata sys = SystemMetadataManager.getInstance().get(guid);
+            Date originalDateModified = sys.getDateSysMetadataModified();
             assertFalse("System metadata should have archived false", sys.getArchived());
 
             //archive
             String user = "test";
-            // Set changeDateModified true
-            DocumentImpl.archive(accnum, guid, user, true);
+            // Set changeDateModified false
+            DocumentImpl.archive(accnum, guid, user, false);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                 " guid like ?", guid.getValue()));
@@ -636,6 +638,9 @@ public class DocumentImplIT {
             input.close();
             sys = SystemMetadataManager.getInstance().get(guid);
             assertTrue("System metadata should have archived true", sys.getArchived());
+            Date currentDateModified = sys.getDateSysMetadataModified();
+            assertEquals("The current dateModified should equal the original one.",
+                        originalDateModified.getTime(), currentDateModified.getTime());
 
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
@@ -766,6 +771,7 @@ public class DocumentImplIT {
             assertNotNull("The file should exist", input);
             input.close();
             sys = SystemMetadataManager.getInstance().get(guid);
+            Date originalDateModified = sys.getDateSysMetadataModified();
             assertFalse("System metadata should have archived false", sys.getArchived());
             sys = SystemMetadataManager.getInstance().get(newPid);
             assertFalse("System metadata should have archived false", sys.getArchived());
@@ -811,6 +817,9 @@ public class DocumentImplIT {
             input.close();
             sys = SystemMetadataManager.getInstance().get(guid);
             assertTrue("System metadata should have archived true", sys.getArchived());
+            Date currentDateModified = sys.getDateSysMetadataModified();
+            assertTrue("The current dateModified should be greater than the original one.",
+                                    currentDateModified.getTime() > originalDateModified.getTime());
             sys = SystemMetadataManager.getInstance().get(newPid);
             assertFalse("System metadata should have archived false", sys.getArchived());
 
