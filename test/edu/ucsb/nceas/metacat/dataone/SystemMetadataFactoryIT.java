@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * A class for testing the generation of SystemMetadata from defaults
  */
-public class SystemMetadataFactoryTest {
+public class SystemMetadataFactoryIT {
 
     /**
      * Test the getDefaultRepicationPolicy method
