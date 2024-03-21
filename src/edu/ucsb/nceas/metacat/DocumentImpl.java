@@ -2,17 +2,12 @@ package edu.ucsb.nceas.metacat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,41 +21,34 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.bind.DatatypeConverter;
 
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
-import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.UtilException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidRequest;
-import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.ServiceFailure;
-import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -195,7 +183,6 @@ public class DocumentImpl {
     /**
      * Register a document that resides on the filesystem with the database. (ie, just an entry in
      * xml_documents). Creates a reference to a filesystem document (used for non-xml data files).
-     * This class only be called in MetaCatServerlet.
      *
      * @param docname    - the name of DTD, i.e. the name immediately following the DOCTYPE keyword
      *                   ( should be the root element name ) or the root element name if no DOCTYPE
@@ -885,11 +872,11 @@ public class DocumentImpl {
      */
     public static void delete(String accnum, Identifier guid) throws SQLException, InvalidRequest,
                                                         McdbDocNotFoundException, ServiceFailure {
-        if (accnum == null || accnum.trim().equals("")) {
+        if (accnum == null || accnum.isBlank()) {
             throw new InvalidRequest("0000",
                                         "DcoumentImple.delete - the docid can't be null or blank");
         }
-        if (guid == null || guid.getValue() == null || guid.getValue().trim().equals("")) {
+        if (guid == null || guid.getValue() == null || guid.getValue().isBlank()) {
             throw new InvalidRequest("0000", "DcoumentImple.delete -The pid can't be null or blank");
         }
         DBConnection conn = null;
@@ -905,7 +892,7 @@ public class DocumentImpl {
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             int rev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
             // Check if the document exists.
-            logMetacat.info("DocumentImp.delete - complete delete the document " + accnum);
+            logMetacat.info("DocumentImp.delete - completely delete the document " + accnum);
             String query = "SELECT * FROM xml_documents WHERE docid = ? and rev = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(query)) {
                 pstmt.setString(1, docid);
@@ -969,7 +956,6 @@ public class DocumentImpl {
                         logMetacat.debug("DocumentImpl.delete - running sql: "
                                                                          + pstmtDelete.toString());
                         pstmtDelete.execute();
-                        //Usaga count increase 1
                         conn.increaseUsageCount(1);
                     }
                 } else {
@@ -987,16 +973,16 @@ public class DocumentImpl {
                 SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
                 if (sysMeta != null) {
                     SystemMetadataManager.getInstance().delete(guid, conn);
-                    try {
-                        MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
-                    } catch (Exception ee) {
-                        logMetacat.error("DocumentImpl.delete - Metacat failed to submit index task: "
-                                                                               + ee.getMessage());
-                    }
                 }
                 deleteFromFileSystem(accnum, isXML);
                 // only commit if all of this was successful
                 conn.commit();
+                try {
+                    MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
+                } catch (Exception ee) {
+                    logMetacat.error("DocumentImpl.delete - Metacat failed to submit index task: "
+                                                                           + ee.getMessage());
+                }
             } catch (Exception e) {
                 // rollback the delete if there was an error
                 if (conn != null) {
@@ -1043,11 +1029,11 @@ public class DocumentImpl {
      */
     public static void archive(String accnum, Identifier guid, String user) throws SQLException,
                                                         InvalidRequest, ServiceFailure {
-        if (accnum == null || accnum.trim().equals("")) {
+        if (accnum == null || accnum.isBlank()) {
             throw new InvalidRequest("0000",
                                         "DcoumentImple.delete - the docid can't be null or blank");
         }
-        if (guid == null || guid.getValue() == null || guid.getValue().trim().equals("")) {
+        if (guid == null || guid.getValue() == null || guid.getValue().isBlank()) {
             throw new InvalidRequest("0000", "DcoumentImple.delete -The pid can't be null or blank");
         }
         DBConnection conn = null;
@@ -1063,51 +1049,27 @@ public class DocumentImpl {
             // Check if the document exists.
             //this only archives a document from xml_documents to xml_revisions
             logMetacat.debug("DocumentImp.archive - archive the document " + accnum);
-            String query = "SELECT rev, docid FROM xml_documents WHERE docid = ? and rev = ?";
-            boolean inXmlDocTable = true;
-            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-                pstmt.setString(1, docid);
-                pstmt.setInt(2, rev);
-                logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    conn.increaseUsageCount(1);
-                    if (!rs.next()) {
-                        inXmlDocTable = false;
-                    }
-                }
-            }
             try {
                 conn.setAutoCommit(false);
-                if (inXmlDocTable) {
-                    //Copy the record to the xml_revisions table if it exists in
-                    //the xml_documents table
-                    archiveDocToRevision(conn, docid, user);
-                    // Delete it from xml_documents table
-                    String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
-                    try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
-                        pstmt.setString(1, docid);
-                        logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                        pstmt.execute();
-                        //Usaga count increase 1
-                        conn.increaseUsageCount(1);
-                    }
-                }
+                // Copy the record to the xml_revisions table if it exists in
+                // the xml_documents table and also delete the item from xml_documents
+                archiveDocToRevision(conn, docid, user);
                 //update systemmetadata table and solr index
                 SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
                 if (sysMeta != null) {
                     sysMeta.setArchived(true);
                     //changeModifyTime is set true
                     SystemMetadataManager.getInstance().store(sysMeta, true, conn);
-                    try {
-                        //followRevisions is set false
-                        MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
-                    } catch (Exception ee) {
-                        logMetacat.error("DocumentImpl.archive - Metacat failed to submit index task: "
-                                                                               + ee.getMessage());
-                    }
                 }
                 // only commit if all of this was successful
                 conn.commit();
+                try {
+                    //followRevisions is set false
+                    MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
+                } catch (Exception ee) {
+                    logMetacat.error("DocumentImpl.archive - Metacat failed to submit index task: "
+                                                                           + ee.getMessage());
+                }
             } catch (Exception e) {
                 // rollback the archive action if there was an error
                 if (conn != null) {
