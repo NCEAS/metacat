@@ -593,11 +593,14 @@ public class PropertiesAdmin extends MetacatAdmin {
             File indexDir  = new File(webDir + "/" + indexContext);
             logMetacat.debug("The metacat-index directory is " + indexDir.getAbsolutePath());
             if (indexDir.exists() && indexDir.isDirectory()) {
+                logMetacat.debug("The index.context exists, so we assume that metacat-index "
+                                     + "is co-deployed with metacat in the same Tomcat container");
                 return true;
             }
         } catch (PropertyNotFoundException e) {
             throw new AdminException(e.getMessage());
         }
+        logMetacat.debug(noCoDeployMsg);
         return false;
     }
 }
