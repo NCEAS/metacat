@@ -64,13 +64,13 @@ import static org.junit.Assert.fail;
 /**
  * A JUnit test for testing the dataone CNCore implementation
  */
-public class CNodeServiceTest {
+public class CNodeServiceIT {
 
     private final D1NodeServiceTest d1NodeServiceTest;
     /**
      * constructor for the test
      */
-    public CNodeServiceTest() {
+    public CNodeServiceIT() {
         d1NodeServiceTest = new D1NodeServiceTest("CNodeServiceTest");
     }
 
