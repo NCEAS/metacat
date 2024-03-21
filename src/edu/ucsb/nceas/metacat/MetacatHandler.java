@@ -37,6 +37,7 @@ import org.xml.sax.XMLReader;
 
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.client.MetacatException;
+import edu.ucsb.nceas.metacat.common.Settings;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
@@ -257,11 +258,11 @@ public class MetacatHandler {
      * @param sysmeta  the system metadata of the object, which contains the identifier
      * @param changeModificationDate  if Metacat needs to update the modification date of the system
      *              metadata when Metacat stores it.
-     * @param action  the action of the request: insert (new) or update
+     * @param action  the action of the request: Action.INSERT (new) or Action.UPDATE
      * @param docType  the type of object - data (BIN) or metadata
      * @param object  the input stream contains the content of the object
      * @param preSys  the system metadata of the obsoleted object in the update action.
-     *                It will be ignore in the update action.
+     *                It will be ignored in the insert action.
      * @param user  the user initializing the request
      * @return the local Metacat docid for this object. It also serves as its file name.
      * @throws InvalidRequest
@@ -300,12 +301,11 @@ public class MetacatHandler {
             // Handle the metadata objects and it needs validation
             // Validation will consume the input stream. If the original input
             // stream (the case is in the MN.replicate method) can't be reset, it will be an issue.
-            // So we put it in the memory. This has a been a long practice and doesn't cause issues.
+            // So we put it in the memory. This has been a long practice and doesn't cause issues.
             // The hash-map storage will fix it eventually
             byte[] metaBytes = IOUtils.toByteArray(object);
             validateSciMeta(metaBytes, sysmeta.getFormatId());
-            if (object instanceof DetailedFileInputStream) {
-                DetailedFileInputStream detailedStream = (DetailedFileInputStream) object;
+            if (object instanceof DetailedFileInputStream detailedStream) {
                 if (detailedStream.getExpectedChecksum() == null) {
                     dataStream = new ByteArrayInputStream(metaBytes);
                     if (detailedStream.getFile() != null) {
@@ -360,7 +360,7 @@ public class MetacatHandler {
                                 + "obsoleted object should not be blank.");
                     }
                     //It is update, we need to store the system metadata of the obsoleted pid as well
-                    // Set needChangeModificationTime true
+                    // Set changeModifyTime true
                     SystemMetadataManager.getInstance().store(preSys, true, conn);
                 }
                 // Save bytes into disk. If the localId already exists, the saveBytes should
@@ -580,14 +580,12 @@ public class MetacatHandler {
                             logMetacat.info("Metacat only needs the move the object file from "
                                     + "temporary location to the permanent location for the object "
                                     + pid.getValue());
-                            logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG
-                                    + pid.getValue()
-                       + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
+                            logMetacat.info(Settings.PERFORMANCELOG + pid.getValue()
+                                    + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
                                     + " Only move the data file from the temporary location "
                                     + "to the permanent location since the multiparts handler"
                                     + " has calculated the checksum"
-                                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION
-                                    + (end - start) / 1000);
+                                    + Settings.PERFORMANCELOG_DURATION + (end - start)/1000);
                             return newFile;
                         } else {
                             throw new InvalidSystemMetadata("1180", "The check sum calculated "
@@ -644,12 +642,12 @@ public class MetacatHandler {
                 throw new InvalidSystemMetadata("1180", error.toString());
             }
             long end = System.currentTimeMillis();
-            logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue()
-                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
+            logMetacat.info(Settings.PERFORMANCELOG + pid.getValue()
+                    + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
                     + " Need to read the data file from the temporary location and write it "
                     + "to the permanent location since the multiparts handler has NOT "
                     + "calculated the checksum"
-                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION
+                    + Settings.PERFORMANCELOG_DURATION
                     + (end - start) / 1000);
             if (tempFile != null) {
                 // Clean up
@@ -716,7 +714,7 @@ public class MetacatHandler {
                     logMetacat.debug("localId: " + localId + " for the pid " + prePid.getValue());
                     //increment the revision
                     String docid = localId.substring(0, localId.lastIndexOf("."));
-                    String revS = localId.substring(localId.lastIndexOf(".") + 1, localId.length());
+                    String revS = localId.substring(localId.lastIndexOf(".") + 1);
                     int rev = Integer.parseInt(revS);
                     rev++;
                     localId = docid + "." + rev;
@@ -873,8 +871,7 @@ public class MetacatHandler {
                 }
             }
             xmlReader = new StringReader(doctext);
-            Vector<XMLSchema> schemaList = XMLSchemaService.getInstance().
-                    findSchemasInXML(xmlReader);
+            Vector<XMLSchema> schemaList = XMLSchemaService.findSchemasInXML(xmlReader);
             xmlReader = new StringReader(doctext);
             // set the dtd part null;
             XMLReader parser = DocumentImpl.initializeParser(schemaList, null, rule, needValidation,
