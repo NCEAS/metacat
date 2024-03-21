@@ -1147,8 +1147,8 @@ public class DocumentImpl {
         String parserName = PropertyService.getProperty("xml.saxparser");
         parser = XMLReaderFactory.createXMLReader(parserName);
         handler = new DBSAXHandler();
-        parser.setContentHandler((ContentHandler) handler);
-        parser.setErrorHandler((ErrorHandler) handler);
+        parser.setContentHandler(handler);
+        parser.setErrorHandler(handler);
         parser.setProperty(DECLARATIONHANDLERPROPERTY, handler);
         parser.setProperty(LEXICALPROPERTY, handler);
         boolean valid = ruleBase != null && needValidation;
