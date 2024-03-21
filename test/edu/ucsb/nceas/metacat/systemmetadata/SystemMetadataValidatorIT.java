@@ -18,7 +18,7 @@ import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class SystemMetadataValidatorTest {
+public class SystemMetadataValidatorIT {
 
     private D1NodeServiceTest d1NodeTester;
 
