@@ -380,11 +380,10 @@ public class MetacatHandlerTest {
         handler.saveBytes(dataStream, localId, checksum, DocumentImpl.BIN, pid);
         File result = new File(dataDir + localId);
         assertTrue("File " + result + " should exist.", result.exists());
-        InputStream in = handler.read(localId, DocumentImpl.BIN);
+        InputStream in = MetacatHandler.read(localId, DocumentImpl.BIN);
         String readChecksum = getChecksum(in, MD5);
         in.close();
-        assertTrue("The checksum from handler.read should be " + test_file_checksum + " rather than "
-                    + readChecksum, readChecksum.equals(test_file_checksum));
+        assertEquals("Read object has wrong checksum ", test_file_checksum , readChecksum);
         // Running the saveBytes method again with the same local id should fail
         // since the target file does exist
         DetailedFileInputStream dataStream2 = generateDetailedInputStream(another_test_file);
@@ -455,10 +454,9 @@ public class MetacatHandlerTest {
         handler.saveBytes(dataStream3, localId, upper, "eml", pid);
         result = new File(documentDir + localId);
         assertTrue("File " + result + " should exist.", result.exists());
-        in = handler.read(localId, DocumentImpl.BIN);
+        in = MetacatHandler.read(localId, DocumentImpl.BIN);
         String readFrom = getChecksum(in, MD5);
-        assertTrue("The checksum from handler.read should be " + str + " rather than "
-                + readFrom, readFrom.equals(str));
+        assertEquals("Handler.read has a wrong checksum ", str , readFrom);
         in.close();
     }
 
@@ -488,11 +486,10 @@ public class MetacatHandlerTest {
         dataStream.close();
         File result = new File(documentDir + localId);
         assertTrue("File " + result + " should exist.", result.exists());
-        InputStream in = handler.read(localId, "eml");
+        InputStream in = MetacatHandler.read(localId, "eml");
         String readChecksum = getChecksum(in, MD5);
         in.close();
-        assertTrue("The checksum from handler.read should be " + test_file_checksum + " rather than "
-                    + readChecksum, readChecksum.equals(test_file_checksum));
+        assertEquals("The checksum from handler.read is wrong ", test_file_checksum , readChecksum);
         // Running the saveBytes method again with the same local id should fail
         // since the target file does exist
         InputStream dataStream2 = new FileInputStream(another_test_file);
@@ -560,10 +557,9 @@ public class MetacatHandlerTest {
         dataStream3.close();
         result = new File(dataDir + localId);
         assertTrue("File " + result + " should exist.", result.exists());
-        in = handler.read(localId, "eml");
+        in = MetacatHandler.read(localId, "eml");
         String readFrom = getChecksum(in, MD5);
-        assertTrue("The checksum from handler.read should be " + str + " rather than "
-                + readFrom, readFrom.equals(str));
+        assertEquals("The checksum from handler.read is wrong ", str, readFrom);
         in.close();
     }
 
@@ -596,7 +592,7 @@ public class MetacatHandlerTest {
                               pid.getValue().equals(readSys.getIdentifier().getValue()));
         assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
         String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        InputStream readObj = handler.read(localId, DocumentImpl.BIN);
+        InputStream readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         String readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum " + test_file_checksum + " rather than "
                     + readChecksum, test_file_checksum.equals(readChecksum));
@@ -637,10 +633,9 @@ public class MetacatHandlerTest {
                               pid.getValue().equals(readSys.getIdentifier().getValue()));
         assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
         localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
-        assertTrue("The read object should have the checksum " + test_file_checksum + " rather than "
-                    + readChecksum, test_file_checksum.equals(readChecksum));
+        assertEquals("The read object has a wrong checksum ", test_file_checksum, readChecksum);
         // Newpid object doesn't exist.
         SystemMetadata newReadSys = SystemMetadataManager.getInstance().get(newPid);
         assertNull("The system metadata for the new object should be null.", newReadSys);
@@ -669,10 +664,10 @@ public class MetacatHandlerTest {
         assertTrue("The obsoletedBy of systemmeta from db should be " + newPid.getValue(),
                         newPid.getValue().equals(readSys.getObsoletedBy().getValue()));
         localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
-        assertTrue("The read object should have the checksum " + test_file_checksum + " rather than "
-                    + readChecksum, test_file_checksum.equals(readChecksum));
+        assertEquals("The read object should has a wrong checksum ", test_file_checksum,
+                    readChecksum);
         assertNotEquals("The modification time of the obsoleted object in should change.",
                             originModificationDate, readSys.getDateSysMetadataModified().getTime());
         assertEquals("The upload time of the obsoleted object should not change.",
@@ -685,10 +680,9 @@ public class MetacatHandlerTest {
         assertTrue("The obsoletes of systemmeta from db should be " + pid.getValue(),
                         pid.getValue().equals(newReadSys.getObsoletes().getValue()));
         localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
-        assertTrue("The object should have the checksum " + anotherChecksumStr + " rather than "
-                    + readChecksum, anotherChecksumStr.equals(readChecksum));
+        assertEquals("The handler.read has a wrong checksum ", anotherChecksumStr, readChecksum);
         assertNotEquals("The modification time in system metadata should change.",
                             originModificationDateOfSecondObj,
                             newReadSys.getDateSysMetadataModified().getTime());
@@ -759,11 +753,10 @@ public class MetacatHandlerTest {
         assertEquals("The upload time in system metadata should not change.",
                                 originUploadDate, readSys.getDateUploaded().getTime());
         localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        InputStream readObj = handler.read(localId, DocumentImpl.BIN);
+        InputStream readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         String readChecksum = getChecksum(readObj, MD5);
-        assertTrue("The read object should have the checksum " + test_eml_file_checksum
-                                    + " rather than " + readChecksum,
-                                    test_eml_file_checksum.equals(readChecksum));
+        assertEquals("The read object has a wrong checksum ", test_eml_file_checksum
+                     , readChecksum);
 
         // Updating
         Identifier newPid = new Identifier();
@@ -796,7 +789,7 @@ public class MetacatHandlerTest {
         assertEquals("The upload time of the obsoleted object should not change.",
                                 originUploadDate, readSys.getDateUploaded().getTime());
         localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum " + test_eml_file_checksum
                     + " rather than " + readChecksum, test_eml_file_checksum.equals(readChecksum));
@@ -808,7 +801,7 @@ public class MetacatHandlerTest {
         assertTrue("The obsoletes of systemmeta from db should be " + pid.getValue(),
                         pid.getValue().equals(newReadSys.getObsoletes().getValue()));
         localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
         assertTrue("The object should have the checksum " + anotherChecksumStr + " rather than "
                     + readChecksum, anotherChecksumStr.equals(readChecksum));
@@ -848,7 +841,7 @@ public class MetacatHandlerTest {
                               pid.getValue().equals(readSys.getIdentifier().getValue()));
         assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
         String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        InputStream readObj = handler.read(localId, DocumentImpl.BIN);
+        InputStream readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         String readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum " + test_file_checksum + " rather than "
                     + readChecksum, test_file_checksum.equals(readChecksum));
@@ -889,10 +882,9 @@ public class MetacatHandlerTest {
                               pid.getValue().equals(readSys.getIdentifier().getValue()));
         assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
         localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
-        assertTrue("The read object should have the checksum " + test_file_checksum + " rather than "
-                    + readChecksum, test_file_checksum.equals(readChecksum));
+        assertEquals("The read object has a wrong checksum ", test_file_checksum, readChecksum);
         // Newpid object doesn't exist.
         SystemMetadata newReadSys = SystemMetadataManager.getInstance().get(newPid);
         assertNull("The system metadata for the new object should be null.", newReadSys);
@@ -921,10 +913,9 @@ public class MetacatHandlerTest {
         assertTrue("The obsoletedBy of systemmeta from db should be " + newPid.getValue(),
                         newPid.getValue().equals(readSys.getObsoletedBy().getValue()));
         localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
-        assertTrue("The read object should have the checksum " + test_file_checksum + " rather than "
-                    + readChecksum, test_file_checksum.equals(readChecksum));
+        assertEquals("The read object has a wrong checksum ", test_file_checksum, readChecksum);
         assertNotEquals("The modification time of the obsoleted object in should change.",
                     originModificationDate, readSys.getDateSysMetadataModified().getTime());
         assertEquals("The upload time of the obsoleted object should not change.",
@@ -942,10 +933,9 @@ public class MetacatHandlerTest {
         assertEquals("The upload time in system metadata should not change.",
                         originUploadDateOfSecondObj, newReadSys.getDateUploaded().getTime());
         localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
-        assertTrue("The object should have the checksum " + anotherChecksumStr + " rather than "
-                    + readChecksum, anotherChecksumStr.equals(readChecksum));
+        assertEquals("The read object has a wrong checksum ", anotherChecksumStr, readChecksum);
     }
 
     /**
@@ -1011,10 +1001,9 @@ public class MetacatHandlerTest {
         assertEquals("The upload time in system metadata should not change.",
                                 originUploadDate, readSys.getDateUploaded().getTime());
         localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        InputStream readObj = handler.read(localId, DocumentImpl.BIN);
+        InputStream readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         String readChecksum = getChecksum(readObj, MD5);
-        assertTrue("The read object should have the checksum " + test_eml_file_checksum
-                    + " rather than " + readChecksum, test_eml_file_checksum.equals(readChecksum));
+        assertEquals("The read object has a wrong checksum ", test_eml_file_checksum, readChecksum);
 
         // Updating
         Identifier newPid = new Identifier();
@@ -1042,7 +1031,7 @@ public class MetacatHandlerTest {
         assertTrue("The obsoletedBy of systemmeta from db should be " + newPid.getValue(),
                         newPid.getValue().equals(readSys.getObsoletedBy().getValue()));
         localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum " + test_eml_file_checksum
                     + " rather than " + readChecksum, test_eml_file_checksum.equals(readChecksum));
@@ -1063,7 +1052,7 @@ public class MetacatHandlerTest {
         assertEquals("The upload time in system metadata should not change.",
                 originUploadDateOfSecondObj, newReadSys.getDateUploaded().getTime());
         localId = IdentifierManager.getInstance().getLocalId(newPid.getValue());
-        readObj = handler.read(localId, DocumentImpl.BIN);
+        readObj = MetacatHandler.read(localId, DocumentImpl.BIN);
         readChecksum = getChecksum(readObj, MD5);
         assertTrue("The object should have the checksum " + anotherChecksumStr + " rather than "
                     + readChecksum, anotherChecksumStr.equals(readChecksum));
@@ -1097,7 +1086,7 @@ public class MetacatHandlerTest {
                               + readSys.getIdentifier().getValue(),
                               pid.getValue().equals(readSys.getIdentifier().getValue()));
         assertNull("The obsoletedBy of systemmeta from db should be null.", readSys.getObsoletedBy());
-        InputStream readObj = handler.read(localId, eml_format);
+        InputStream readObj = MetacatHandler.read(localId, eml_format);
         String readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum " + test_eml_file_checksum
                     + " rather than " + readChecksum, test_eml_file_checksum.equals(readChecksum));
@@ -1149,7 +1138,7 @@ public class MetacatHandlerTest {
                    test_eml_file_checksum.equals(readSys.getChecksum().getValue()));
         assertEquals("The original date should be " + originalDate.getTime(),
                             originalDate.getTime(), readSys.getDateSysMetadataModified().getTime());
-        readObj = handler.read(localId, eml_format);
+        readObj = MetacatHandler.read(localId, eml_format);
         readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum "
                     + test_eml_file_checksum + " rather than "
@@ -1191,7 +1180,7 @@ public class MetacatHandlerTest {
                 test_eml_file_checksum.equals(readSys.getChecksum().getValue()));
                             assertEquals("The original date should be " + originalDate.getTime(),
                          originalDate.getTime(), readSys.getDateSysMetadataModified().getTime());
-        readObj = handler.read(localId, eml_format);
+        readObj = MetacatHandler.read(localId, eml_format);
         readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum "
                     + test_eml_file_checksum + " rather than "
@@ -1238,7 +1227,7 @@ public class MetacatHandlerTest {
                          originalDate.getTime(), readSys.getDateSysMetadataModified().getTime());
         assertFalse("The checkshum shouldn't be " + test_eml_essdive_file_checksum,
                         test_eml_essdive_file_checksum.equals(readSys.getChecksum().getValue()));
-        readObj = handler.read(localId, eml_format);
+        readObj = MetacatHandler.read(localId, eml_format);
         readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum "
                     + test_eml_file_checksum + " rather than "
