@@ -1545,13 +1545,13 @@ public abstract class D1NodeService {
     }
 
     /**
-     * Archives an object, where the object is either a
-     * data object or a science metadata object.
-     * Note: it doesn't check the authorization; it doesn't lock the system metadata;it only
-     * accept pid.
+     * Archive an object, which is either a data object or a science metadata object.
+     * Note: it doesn't check the authorization; it only accepts a pid.
+     * @param log  indicator if we want to log the event
      * @param session - the Session object containing the credentials for the Subject
      * @param pid - The object identifier to be archived
-     *
+     * @param sysMeta - the system metadata associated with the pid
+     * @param changeDateModified - if we need to modify the dateModified field in the system metadata
      * @return pid - the identifier of the object used for the archiving
      *
      * @throws InvalidToken
@@ -1559,11 +1559,9 @@ public abstract class D1NodeService {
      * @throws NotAuthorized
      * @throws NotFound
      * @throws NotImplemented
-     * @throws InvalidRequest
      */
-    protected Identifier archiveObject(
-        boolean log, Session session, Identifier pid, SystemMetadata sysMeta,
-        boolean needModifyDate)
+    protected Identifier archiveObject(boolean log, Session session, Identifier pid,
+                                        SystemMetadata sysMeta, boolean changeDateModified)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
         String localId = null;
@@ -1595,7 +1593,7 @@ public abstract class D1NodeService {
                 + " couldn't be identified since " + e.getMessage());
         }
         try {
-            DocumentImpl.archive(localId, pid, username);
+            DocumentImpl.archive(localId, pid, username, changeDateModified);
             if (log) {
                 try {
                     EventLog.getInstance()

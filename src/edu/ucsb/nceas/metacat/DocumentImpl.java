@@ -45,10 +45,8 @@ import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -207,10 +205,11 @@ public class DocumentImpl {
         String action = null;
         String docIdWithoutRev = DocumentUtil.getDocIdFromAccessionNumber(accnum);
         int userSpecifyRev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
-        action = checkRevInXMLDocuments(docIdWithoutRev, userSpecifyRev);
+        int revInDataBase = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
+        action = checkRevInXMLDocuments(revInDataBase, docIdWithoutRev, userSpecifyRev);
         logMetacat.debug("after check rev, the action is " + action);
         if (action.equalsIgnoreCase("UPDATE")) {
-            archiveDocToRevision(conn, docIdWithoutRev, user);
+            archiveDocToRevision(conn, docIdWithoutRev, revInDataBase, user);
         }
         String rev = Integer.toString(userSpecifyRev);
         // null and null is createdate and updatedate
@@ -285,15 +284,14 @@ public class DocumentImpl {
 
     /*
      * This method will determine if we need to insert or update xml_document base
-     * on given docid, rev and rev in xml_documents table
+     * on the given rev in xml_documents table, user-specified rev and docid.
      */
-    private static String checkRevInXMLDocuments(String docid, int userSpecifyRev)
-                        throws MetacatException, SQLException, PropertyNotFoundException {
+    private static String checkRevInXMLDocuments(int revInDataBase, String docid, int userSpecifyRev)
+                                        throws MetacatException, PropertyNotFoundException {
         String action = null;
         logMetacat.debug("The docid without rev is " + docid);
         logMetacat.debug("The user specifyRev: " + userSpecifyRev);
         // Revision for this docid in current database
-        int revInDataBase = DBUtil.getLatestRevisionInDocumentTable(docid);
         logMetacat.debug("The rev in data base: " + revInDataBase);
 
         //revIndataBase=-1, there is no record in xml_documents table
@@ -1020,12 +1018,13 @@ public class DocumentImpl {
      * @param accnum  the local id (including the revision) will be applied.
      * @param guid  the dataone identifier associated with the given accnum
      * @param user  the identity of operator
+     * @param changeDateModified  if it needs to change the dateModified field in the system metadata
      * @throws SQLException
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
-    public static void archive(String accnum, Identifier guid, String user) throws SQLException,
-                                                        InvalidRequest, ServiceFailure {
+    public static void archive(String accnum, Identifier guid, String user,
+                boolean changeDateModified) throws SQLException, InvalidRequest, ServiceFailure {
         if (accnum == null || accnum.isBlank()) {
             throw new InvalidRequest("0000",
                                         "DcoumentImple.delete - the docid can't be null or blank");
@@ -1050,13 +1049,12 @@ public class DocumentImpl {
                 conn.setAutoCommit(false);
                 // Copy the record to the xml_revisions table if it exists in
                 // the xml_documents table and also delete the item from xml_documents
-                archiveDocToRevision(conn, docid, user);
+                archiveDocToRevision(conn, docid, rev, user);
                 //update systemmetadata table and solr index
                 SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
                 if (sysMeta != null) {
                     sysMeta.setArchived(true);
-                    //changeModifyTime is set true
-                    SystemMetadataManager.getInstance().store(sysMeta, true, conn);
+                    SystemMetadataManager.getInstance().store(sysMeta, changeDateModified, conn);
                 }
                 // only commit if all of this was successful
                 conn.commit();
@@ -1215,14 +1213,16 @@ public class DocumentImpl {
     }
 
     /**
-     * This method will move a document record from the xml_documents table
-     * to the xml_revisions table
+     * This method will copy a document record from the xml_documents table
+     * to the xml_revisions table if the record exists in the xml_documents table.
+     * It also will delete the record from the xml_documents if it exists.
      * @param dbconn  the jdbc connection will be used to execute query
      * @param docid  the docid of the document
+     * @param rev  the revision of the document
      * @param user  the user who request the action
      * @throws SQLException
      */
-    private static void archiveDocToRevision(DBConnection dbconn, String docid, String user)
+    private static void archiveDocToRevision(DBConnection dbconn, String docid, int rev, String user)
                                                                             throws SQLException {
         //Move the document information to xml_revisions table...
         double start = System.currentTimeMillis() / 1000;
@@ -1233,20 +1233,22 @@ public class DocumentImpl {
                     + "SELECT ?, rootnodeid, docname, doctype, "
                     + "user_owner, ?, date_created, date_updated, "
                     + "rev, catalog_id " + "FROM xml_documents "
-                    + "WHERE docid = ?")) {
+                    + "WHERE docid = ? AND rev = ?")) {
             // Increase dbconnection usage count
             dbconn.increaseUsageCount(1);
             // Bind the values to the query and execute it
             pstmt.setString(1, docid);
             pstmt.setString(2, user);
             pstmt.setString(3, docid);
+            pstmt.setInt(4, rev);
             logMetacat.debug("DocumentImpl.archiveDocToRevision - Executing SQL: "
                                 + pstmt.toString());
             pstmt.execute();
             // Delete the record on xml_documents
-            String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
+            String deleteQuery = "DELETE FROM xml_documents WHERE docid = ? AND rev = ?";
             try (PreparedStatement pstmt2 = dbconn.prepareStatement(deleteQuery)) {
                 pstmt2.setString(1, docid);
+                pstmt2.setInt(2, rev);
                 logMetacat.debug("Running sql: " + pstmt2.toString());
                 pstmt2.execute();
                 //Usaga count increase 1

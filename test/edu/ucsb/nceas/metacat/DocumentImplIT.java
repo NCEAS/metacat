@@ -604,7 +604,8 @@ public class DocumentImplIT {
 
             //archive
             String user = "test";
-            DocumentImpl.archive(accnum, guid, user);
+            // Set changeDateModified true
+            DocumentImpl.archive(accnum, guid, user, true);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                 " guid like ?", guid.getValue()));
@@ -771,7 +772,8 @@ public class DocumentImplIT {
 
             //Archive
             String user = "test";
-            DocumentImpl.archive(accnum, guid, user);
+            // Set changeDateModified true
+            DocumentImpl.archive(accnum, guid, user, true);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                  " guid like ?", guid.getValue()));
@@ -812,7 +814,8 @@ public class DocumentImplIT {
             sys = SystemMetadataManager.getInstance().get(newPid);
             assertFalse("System metadata should have archived false", sys.getArchived());
 
-            DocumentImpl.archive(accnum2, newPid, user);
+            // Set changeDateModified true
+            DocumentImpl.archive(accnum2, newPid, user, true);
             //check record
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -938,7 +941,8 @@ public class DocumentImplIT {
                 Mockito.when(SystemMetadataManager.getInstance()).thenReturn(mockManager);
                 try {
                     String user = "test";
-                    DocumentImpl.archive(accnum, guid, user);
+                    // Set changeDateModified true
+                    DocumentImpl.archive(accnum, guid, user, true);
                     fail("The test can't be here since archive should throw an exception");
                 } catch (Exception e) {
                     assertTrue("The exception class should be ServiceFailure",
