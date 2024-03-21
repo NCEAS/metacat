@@ -1174,16 +1174,15 @@ public class DocumentImpl {
         // Get an instance of the parser
         String parserName = PropertyService.getProperty("xml.saxparser");
         parser = XMLReaderFactory.createXMLReader(parserName);
-        //XMLSchemaService.getInstance().populateRegisteredSchemaList();
-        //create a DBSAXHandler object which has the revision
-        // specification
         chandler = new DBSAXHandler();
         parser.setContentHandler((ContentHandler) chandler);
         parser.setErrorHandler((ErrorHandler) chandler);
         parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
         parser.setProperty(LEXICALPROPERTY, chandler);
-        if (ruleBase != null && (ruleBase.equals(SCHEMA) || ruleBase.equals(EML200)
-            || ruleBase.equals(EML210)) && needValidation) {
+        boolean valid = ruleBase != null && needValidation;
+        if (valid && (ruleBase.equals(SCHEMA)
+                      || ruleBase.equals(EML200)
+                      || ruleBase.equals(EML210))) {
             XMLSchemaService xmlss = XMLSchemaService.getInstance();
             logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
             // turn on schema validation feature
@@ -1191,9 +1190,9 @@ public class DocumentImpl {
             parser.setFeature(NAMESPACEFEATURE, true);
             parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
 
-            boolean allSchemasRegistered = xmlss.areAllSchemasRegistered(schemaList);
-            if (xmlss.useFullSchemaValidation() && !allSchemasRegistered && !ruleBase.equals(
-                EML210) && !ruleBase.equals(EML200)) {
+            boolean allSchemasRegistered = XMLSchemaService.areAllSchemasRegistered(schemaList);
+            if (xmlss.useFullSchemaValidation() && !allSchemasRegistered
+                                      && !ruleBase.equals(EML210) && !ruleBase.equals(EML200)) {
                 parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
             }
             logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: "
@@ -1206,7 +1205,7 @@ public class DocumentImpl {
                                         + " can't be found in any place. So we can't validate"
                                         + " the xml instance.");
             }
-        } else if (ruleBase != null && ruleBase.equals(NONAMESPACESCHEMA) && needValidation) {
+        } else if (valid && ruleBase.equals(NONAMESPACESCHEMA)) {
             logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
             // turn on schema validation feature
             parser.setFeature(VALIDATIONFEATURE, true);
@@ -1216,14 +1215,14 @@ public class DocumentImpl {
                 "DocumentImpl.initalizeParser - Generic external no-namespace schema location: "
                     + schemaLocation);
             // Set external schemalocation.
-            if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
+            if (schemaLocation != null && !schemaLocation.isBlank()) {
                 parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY, schemaLocation);
             } else {
                 throw new ServiceFailure("0000", "The schema for the document "
                                         + " can't be found in any place. So we can't validate"
                                         + " the xml instance.");
             }
-        } else if (ruleBase != null && ruleBase.equals(DTD) && needValidation) {
+        } else if (valid && ruleBase.equals(DTD)) {
             logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
             // turn on dtd validaton feature
             parser.setFeature(VALIDATIONFEATURE, true);
