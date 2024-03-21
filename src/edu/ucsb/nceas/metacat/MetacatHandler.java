@@ -296,43 +296,7 @@ public class MetacatHandler {
             throw new InvalidRequest("1181", "Metacat cannot save the object for "
                             + pid.getValue() + " into disk since the client identity is blank");
         }
-        InputStream dataStream = null; // we will assign different stream for this variable.
-        if (!docType.equals(DocumentImpl.BIN)) {
-            // Handle the metadata objects and it needs validation
-            // Validation will consume the input stream. If the original input
-            // stream (the case is in the MN.replicate method) can't be reset, it will be an issue.
-            // So we put it in the memory. This has been a long practice and doesn't cause issues.
-            // The hash-map storage will fix it eventually
-            byte[] metaBytes = IOUtils.toByteArray(object);
-            validateSciMeta(metaBytes, sysmeta.getFormatId());
-            if (object instanceof DetailedFileInputStream detailedStream) {
-                if (detailedStream.getExpectedChecksum() == null) {
-                    dataStream = new ByteArrayInputStream(metaBytes);
-                    if (detailedStream.getFile() != null) {
-                        // Metacat needs to delete the temp file
-                        StreamingMultipartRequestResolver.deleteTempFile(detailedStream.getFile());
-                    }
-                    IOUtils.closeQuietly(object);
-                    IOUtils.closeQuietly(detailedStream);
-                    logMetacat.info("The DetailedInputStream doesn't have the checksum."
-                              + "So Metacat will use ByteArrayInputStream as the source for "
-                              + "saving to disk because of its higher performance.");
-                } else {
-                    dataStream = object;
-                    logMetacat.info("The DetailedInputStream does have the checksum."
-                            + "So Metacat will use DetailedInputStream as the source for "
-                            + "saving to disk because of no need to calculate checksum.");
-                }
-            } else {
-                dataStream = new ByteArrayInputStream(metaBytes);
-                IOUtils.closeQuietly(object);
-                logMetacat.info("Be default, Metacat will use ByteArrayInputStream as "
-                              + "the source for saving to disk.");
-            }
-        } else {
-            dataStream = object;
-            logMetacat.info("In the data route, dataStream will use the original object stream.");
-        }
+        InputStream dataStream = validate(object, sysmeta, docType);
         int serialNumber = -1;
         DBConnection conn = null;
         try {
@@ -351,7 +315,7 @@ public class MetacatHandler {
                 // Register the new object into the xml_documents and identifier table.
                 localId = registerToDB(pid, action, conn, user, docType, prePid);
                 // Save the system metadata for the new object
-                // Set needChangeModificationTime true
+                // Set changeModifyTime true
                 SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate, conn);
                 if (action == Action.UPDATE) {
                     if(preSys ==  null) {
@@ -391,8 +355,60 @@ public class MetacatHandler {
                 DBConnectionPool.returnDBConnection(conn, serialNumber);
             }
             IOUtils.closeQuietly(dataStream);
+            IOUtils.closeQuietly(object);
         }
         return localId;
+    }
+
+    /**
+     * Validate the object if it is a metadata object and return back the same content
+     * (in a readable InputStream object format) for the next steps
+     * @param object  the InputStream object of the object
+     * @param sysmeta  the system metadata associated with the object
+     * @param docType  the doc type of the object
+     * @return the content of the given object (in a readable InputStream object format)
+     * @throws IOException
+     * @throws InvalidRequest
+     * @throws ServiceFailure
+     */
+    private InputStream validate(InputStream object, SystemMetadata sysmeta, String docType)
+                                               throws IOException, InvalidRequest, ServiceFailure {
+        InputStream dataStream = null; // we will assign different stream for this variable.
+        if (!docType.equals(DocumentImpl.BIN)) {
+            // Handle the metadata objects and it needs validation
+            // Validation will consume the input stream. If the original input
+            // stream (the case is in the MN.replicate method) can't be reset, it will be an issue.
+            // So we put it in the memory. This has been a long practice and doesn't cause issues.
+            // The hash-map storage will fix it eventually
+            byte[] metaBytes = IOUtils.toByteArray(object);
+            validateSciMeta(metaBytes, sysmeta.getFormatId());
+            if (object instanceof DetailedFileInputStream detailedStream) {
+                if (detailedStream.getExpectedChecksum() == null) {
+                    dataStream = new ByteArrayInputStream(metaBytes);
+                    if (detailedStream.getFile() != null) {
+                        // Metacat needs to delete the temp file
+                        StreamingMultipartRequestResolver.deleteTempFile(detailedStream.getFile());
+                    }
+                    IOUtils.closeQuietly(detailedStream);
+                    logMetacat.info("The DetailedInputStream doesn't have the checksum."
+                              + "So Metacat will use ByteArrayInputStream as the source for "
+                              + "saving to disk because of its higher performance.");
+                } else {
+                    dataStream = object;
+                    logMetacat.info("The DetailedInputStream does have the checksum."
+                            + "So Metacat will use DetailedInputStream as the source for "
+                            + "saving to disk because of no need to calculate checksum.");
+                }
+            } else {
+                dataStream = new ByteArrayInputStream(metaBytes);
+                logMetacat.info("Be default, Metacat will use ByteArrayInputStream as "
+                              + "the source for saving to disk.");
+            }
+        } else {
+            dataStream = object;
+            logMetacat.info("In the data route, dataStream will use the original object stream.");
+        }
+        return dataStream;
     }
 
     /**
