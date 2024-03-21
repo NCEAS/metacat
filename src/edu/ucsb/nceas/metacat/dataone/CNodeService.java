@@ -326,9 +326,6 @@ public class CNodeService extends D1NodeService
     public Identifier delete(Session session, Identifier pid)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
-        String localId = null;      // The corresponding docid for this pid
-        //Lock lock = null;           // The lock to be used for this identifier
-        CNode cn = null;            // a reference to the CN to get the node list
         NodeType nodeType = null;   // the nodeType of the replica node being contacted
         List<Node> nodeList = null; // the list of nodes in this CN environment
 
@@ -366,8 +363,6 @@ public class CNodeService extends D1NodeService
             new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
         authDel.doCNOnlyAuthorization(session);
 
-        // Don't defer to superclass implementation without a locally registered identifier
-        // Check for the existing identifier
         super.delete(session.getSubject().getValue(), pid);
         // get the node list
         try {
