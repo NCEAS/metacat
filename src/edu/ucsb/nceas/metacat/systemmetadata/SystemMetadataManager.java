@@ -167,7 +167,9 @@ public class SystemMetadataManager {
     }
 
     /**
-     * Store a system metadata record into the store
+     * Store a system metadata record into the store.
+     * Note: the calling code is responsible for (a) setting setAutoCommit(false) before passing the
+     * DBConnection, and (b) calling commit() after this method has finished execution.
      * @param sysmeta  the new system metadata will be inserted
      * @param changeModifyTIme  if we need to change the modify time
      * @param dbConn  the db connection will be used during storing the system metadata into db
@@ -680,28 +682,28 @@ public class SystemMetadataManager {
                 logMetacat.debug("SystemMetadataManager.delete - delete the identifier"
                                 + guid.getValue());
                 // remove the smReplicationPolicy
-                String query = "delete from smReplicationPolicy " + "where guid = ?";
+                String query = "delete from smReplicationPolicy where guid = ?";
                 try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
                     stmt.setString(1, guid.getValue());
                     logMetacat.debug("delete smReplicationPolicy: " + stmt.toString());
                     stmt.executeUpdate();
                 }
                 // remove the smReplicationStatus
-                query = "delete from smReplicationStatus " + "where guid = ?";
+                query = "delete from smReplicationStatus where guid = ?";
                 try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
                     stmt.setString(1, guid.getValue());
                     logMetacat.debug("delete smReplicationStatus: " + stmt.toString());
                     stmt.executeUpdate();
                 }
                 // remove the smmediatypeproperties
-                query = "delete from smMediaTypeProperties " + "where guid = ?";
+                query = "delete from smMediaTypeProperties where guid = ?";
                 try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
                     stmt.setString(1, guid.getValue());
                     logMetacat.debug("delete smMediaTypeProperties: " + stmt.toString());
                     stmt.executeUpdate();
                 }
                 // remove the xml_access
-                query = "delete from xml_access " + "where guid = ?";
+                query = "delete from xml_access where guid = ?";
                 try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
                     stmt.setString(1, guid.getValue());
                     logMetacat.debug("delete xml_access: " + stmt.toString());
@@ -716,7 +718,6 @@ public class SystemMetadataManager {
                 }
             } finally {
                 try {
-                    // Release the lock
                     synchronized (lockedIds) {
                         lockedIds.remove(guid.getValue());
                         lockedIds.notifyAll();

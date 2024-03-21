@@ -310,7 +310,6 @@ public class MNodeService extends D1NodeService
         try {
             D1AuthHelper authDel =
                 new D1AuthHelper(request, id, notAuthorizedCode, serviceFailureCode);
-            //authDel.doAuthoritativeMNAuthorization(session, sysmeta);
             authDel.doAdminAuthorization(session);
         } catch (NotAuthorized na) {
             NotAuthorized na2 = new NotAuthorized(notAuthorizedCode,
