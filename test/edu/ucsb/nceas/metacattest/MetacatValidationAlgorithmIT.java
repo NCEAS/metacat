@@ -33,7 +33,7 @@ import static org.junit.Assert.fail;
  * @author tao
  *
  */
-public class MetacatValidationAlgorithmTest {
+public class MetacatValidationAlgorithmIT {
 
     private static final String UNREGISTERED_SCHEMA_XML_INSTANCE="<?xml version=\"1.0\"?> "+
            "<note:note xmlns:note=\"http://www.w3schools.com\""
