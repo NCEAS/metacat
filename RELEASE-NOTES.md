@@ -20,11 +20,14 @@ This major release introduces breaking changes:
 - In order to upgrade to 3.0.0, **you must be at Metacat v2.19.0**
 - `metacat.properties` no longer contains custom settings. Any custom settings you have should be backed up and then
   added to `metacat-site.properties`.
+- Metacat admin identities now require ORCIDs. If you previously used LDAP or password-based methods to log into the Metacat admin pages, you will need to sign-up for an ORCID if you do not already have one.
 - TODO: Discuss with Jing & Matthew
 
 ### New Features & Enhancements:
 
-- TODO: Bullet for new admin login using ORCID (and implications of changing admin identities to ORCIDs)
+- Metacat Admin Login with ORCID authentication [I-1694](https://github.com/NCEAS/metacat/issues/1694)
+  - Operators must use an ORCID as an admin identity for Metacat authorization
+  - LDAP and Password-based login is no longer supported
 - Storage and Indexing Enhancements [PR-1695](https://github.com/NCEAS/metacat/pull/1695)
   - Revised use of port numbers to determine https vs. http [I-1697](https://github.com/NCEAS/metacat/issues/1697) 
   - Re-implemented mechanism to handle index tasks that failed to be put into RabbitMQ [I-1603](https://github.com/NCEAS/metacat/issues/1603)
@@ -59,8 +62,9 @@ This major release introduces breaking changes:
   - Update tomcat version and added memory options [PR-1675](https://github.com/NCEAS/metacat/pull/1675)
   - Adjusted catalina property settings to resolve issues related to encoded slash and backslashes [I-1674](https://github.com/NCEAS/metacat/pull/1674)
   - Added to default command line tools, fixes for log path issues & tailing, and optimizations to dev environment [PR-1648](https://github.com/NCEAS/metacat/pull/1648)
-  - Improvements to test suite and logging exceptions [PR-1663](https://github.com/NCEAS/metacat/pull/1663), [PR-1687](https://github.com/NCEAS/metacat/pull/1687), [PR-1688](https://github.com/NCEAS/metacat/pull/1688), [PR-1737](https://github.com/NCEAS/metacat/pull/1737), [PR-1762](https://github.com/NCEAS/metacat/pull/1762),  [PR-1763](https://github.com/NCEAS/metacat/pull/1763), [PR-1770](https://github.com/NCEAS/metacat/pull/1770), [PR-1776](https://github.com/NCEAS/metacat/pull/1776)
-- Metacat Configuration and Startup Enhancements 
+  - Improvements to test suite and logging exceptions [PR-1663](https://github.com/NCEAS/metacat/pull/1663), [PR-1687](https://github.com/NCEAS/metacat/pull/1687), [PR-1688](https://github.com/NCEAS/metacat/pull/1688), [PR-1737](https://github.com/NCEAS/metacat/pull/1737), [PR-1762](https://github.com/NCEAS/metacat/pull/1762),  [PR-1763](https://github.com/NCEAS/metacat/pull/1763), [PR-1770](https://github.com/NCEAS/metacat/pull/1770), [PR-1776](https://github.com/NCEAS/metacat/pull/1776), [I-1796](https://github.com/NCEAS/metacat/issues/1796)
+- Metacat Configuration and Startup Enhancements
+  - Added a new field to specify public certificates to be used by the d1_portal to verify requests [I-1812](https://github.com/NCEAS/metacat/issues/1812)
   - Added new 'MetacatInitializer' class to verify that Metacat has the essential components for start up [I-1721](https://github.com/NCEAS/metacat/issues/1721)
   - Added solr startup configuration checks (configured, not configured) [PR-1752](https://github.com/NCEAS/metacat/pull/1752), [PR-1656](https://github.com/NCEAS/metacat/pull/1656)
   - Improved Metacat startup process by forcing operators to configure settings when it is necessary [PR-1644](https://github.com/NCEAS/metacat/pull/1644/files)
