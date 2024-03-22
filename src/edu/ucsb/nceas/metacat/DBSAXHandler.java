@@ -27,18 +27,14 @@
 
 package edu.ucsb.nceas.metacat;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.Date;
+
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import edu.ucsb.nceas.metacat.database.DBConnection;
-import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+
 import edu.ucsb.nceas.metacat.service.XMLSchema;
-import edu.ucsb.nceas.utilities.triple.Triple;
-import edu.ucsb.nceas.utilities.triple.TripleCollection;
+
 import edu.ucsb.nceas.utilities.StringUtil;
 
 import org.apache.commons.logging.Log;
@@ -54,9 +50,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * A database aware Class implementing callback bethods for the SAX parser to
  * call when processing the XML stream and generating events.
  */
-public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
-        DeclHandler
-{
+public class DBSAXHandler extends DefaultHandler implements LexicalHandler, DeclHandler {
     public final static long NODE_ID = -1;
     
     protected boolean atFirstElement;
@@ -66,32 +60,10 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     protected String docname = null;
 
     protected String doctype;
-    
+
     protected String catalogid = null;
 
     protected String systemid;
-
-    protected DBConnection connection = null;
-
-    protected DocumentImpl currentDocument;
-    
-    protected Date createDate = null;
-    
-    protected Date updateDate = null;
-
-
-    protected String action = null;
-
-    protected String docid = null;
-
-    protected String revision = null;
-
-    protected String user = null;
-
-    protected String[] groups = null;
-
-    protected String encoding = null;
-
 
     protected Hashtable<String,String> namespaces = new Hashtable<String,String>();
 
@@ -107,61 +79,15 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     // methods writeChildNodeToDB, setAttribute, setNamespace,
     // writeTextForDBSAXNode will increase endNodeId.
     protected long endNodeId = -1; // The end node id for a substree
-    
-    private boolean isRevisionDoc  = false;
-    
     protected Vector<XMLSchema> schemaList = new Vector<XMLSchema>();
-
-    //HandlerTriple stuff
-    TripleCollection tripleList = new TripleCollection();
-
-    Triple currentTriple = new Triple();
-
-    boolean startParseTriple = false;
-
-    boolean hasTriple = false;
-    
-    protected boolean ignoreDenyFirst = true;
-
-    public static final String ECOGRID = "ecogrid://";
-
     private Log logMetacat = LogFactory.getLog(DBSAXHandler.class);
+    public static final String ECOGRID = "ecogrid://";
 
     /**
      * Construct an instance of the handler class
-     * @param conn  the JDBC connection to which information is written
-     * @param createDate  the created date of this document
-     * @param updateDate  the updated date of this document
      */
-    private DBSAXHandler(DBConnection conn, Date createDate, Date updateDate) {
-        this.connection = conn;
-        this.atFirstElement = true;
-        this.processingDTD = false;
-        this.createDate = createDate;
-        this.updateDate = updateDate;
-    }
+    public DBSAXHandler() {
 
-    /**
-     * Construct an instance of the handler class In this constructor, user can
-     * specify the version need to update
-     * @param conn  the JDBC connection to which information is written
-     * @param action  - "INSERT" or "UPDATE"
-     * @param docid  the id to be inserted or updated into JDBC connection
-     * @param revision  the user specified the revision need to be update
-     * @param user  the user owns the document
-     * @param groups  the groups to which user belongs
-     * @param createDate  the created date of this document
-     * @param updateDate  the updated date of this document
-     */
-    public DBSAXHandler(DBConnection conn, String action, String docid,
-            String revision, String user, String[] groups,
-            Date createDate, Date updateDate) {
-        this(conn, createDate, updateDate);
-        this.action = action;
-        this.docid = docid;
-        this.revision = revision;
-        this.user = user;
-        this.groups = groups;
     }
 
     /** SAX Handler that receives notification of beginning of the document */
@@ -178,8 +104,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     /** SAX Handler that is called at the start of Namespace */
     public void startPrefixMapping(String prefix, String uri)
-            throws SAXException
-    {
+            throws SAXException {
         logMetacat.trace("DBSaxHandler.startPrefixMapping - Starting namespace");
 
         namespaces.put(prefix, uri);
@@ -187,8 +112,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     /** SAX Handler that is called at the start of each XML element */
     public void startElement(String uri, String localName, String qName,
-            Attributes atts) throws SAXException
-    {
+            Attributes atts) throws SAXException {
         // for element <eml:eml...> qname is "eml:eml", local name is "eml"
         // for element <acl....> both qname and local name is "eml"
         // uri is namespace
@@ -217,58 +141,6 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
                 // so could not be in schema, no namespace
                 doctype = docname;
                 logMetacat.debug("DBSaxHandler.startElement - DOCTYPE-b: " + doctype);
-            }
-           
-            try {
-                // for validated XML Documents store a reference to XML DB
-                // Catalog
-                // Because this is select statement and it needn't to roll back
-                // if
-                // insert document action failed.
-                // In order to decrease DBConnection usage count, we get a new
-                // dbconnection from pool
-               
-                DBConnection dbConn = null;
-                int serialNumber = -1;
-               
-                if (doctype != null) {
-                    try {
-                        // Get dbconnection
-                        dbConn = DBConnectionPool
-                                .getDBConnection("DBSAXHandler.startElement");
-                        serialNumber = dbConn.getCheckOutSerialNumber();
-
-                        String sql = "SELECT catalog_id FROM xml_catalog "
-                            + "WHERE public_id = ?";
-
-                        PreparedStatement pstmt = dbConn.prepareStatement(sql);
-                        pstmt.setString(1, doctype);
-                        ResultSet rs = pstmt.executeQuery();
-                        boolean hasRow = rs.next();
-                        if (hasRow) {
-                            catalogid = rs.getString(1);
-                        }
-                        pstmt.close();
-                    }//try
-                    finally {
-                        // Return dbconnection
-                        DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-                    }//finally
-                }
-
-                //create documentImpl object by the constructor which can
-                // specify
-                //the revision
-              
-                if (!isRevisionDoc) {
-                  currentDocument = new DocumentImpl(connection, NODE_ID,
-                         docname, doctype, docid, revision,
-                        action, user, catalogid,
-                        createDate, updateDate);
-                }
-            } catch (Exception ane) {
-                throw (new SAXException("Error in DBSaxHandler.startElement for action "
-                        + action + " : " + ane.getMessage(), ane));
             }
         }
 
@@ -504,63 +376,23 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
     /**
      * get the document name
      */
-    public String getDocname()
-    {
+    public String getDocname() {
         return docname;
     }
 
     /**
      * get the document processing state
      */
-    public boolean processingDTD()
-    {
+    public boolean processingDTD() {
         return processingDTD;
     }
-    
-    
-    /**
-     * get the the is revision doc
-     * @return
-     */
-    public boolean getIsRevisionDoc()
-    {
-        return isRevisionDoc;
-    }
-    
-    /**
-     * Set the the handler is for revisionDoc
-     * @param isRevisionDoc
-     */
-    public void setIsRevisionDoc(boolean isRevisionDoc)
-    {
-       this.isRevisionDoc = isRevisionDoc;
-    }
 
-    public String getEncoding() {
-        return encoding;
-    }
-
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
-    }
-    
-    public long getRootNodeId()
-    {
-        return NODE_ID;
-    }
-    
-    public String getDocumentType()
-    {
-        return doctype;
-    }
-    
-    public String getDocumentName()
-    {
+    /**
+     * Get the name of the document
+     * @return  the name of the document
+     */
+    public String getDocumentName() {
         return docname;
     }
-    
-    public String getCatalogId()
-    {
-        return catalogid;
-    }
+
 }

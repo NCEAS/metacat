@@ -2,21 +2,17 @@ package edu.ucsb.nceas.metacat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
@@ -25,40 +21,33 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.bind.DatatypeConverter;
 
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
-import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
+import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.database.DatabaseService;
-import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
-import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.UtilException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.service.exceptions.InvalidSystemMetadata;
-import org.dataone.service.types.v1.Checksum;
+import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
@@ -133,10 +122,7 @@ public class DocumentImpl {
     public static final String DOCNAME = "docname";
     public static final String PUBLICID = "publicid";
     public static final String SYSTEMID = "systemid";
-    static final int ALL = 1;
-    static final int WRITE = 2;
-    static final int READ = 4;
-    protected DBConnection connection = null;
+
     protected String docname = null;
     protected String doctype = null;
     private String validateType = null; //base on dtd or schema
@@ -191,49 +177,10 @@ public class DocumentImpl {
         this(docid, true);
     }
 
-    /**
-     * Construct a new document instance, writing the contents to the database. This method is
-     * called from DBSAXHandler because we need to know the root element name for documents without
-     * a DOCTYPE before creating it.
-     *
-     * In this constructor, the docid is without rev. There is a string rev to specify the revision
-     * user want to upadate. The revion is only need to be greater than current one. It is not need
-     * to be sequent number just after current one. So it is only used in update action
-     *
-     * @param conn       the JDBC Connection to which all information is written
-     * @param rootnodeid - sequence id of the root node in the document
-     * @param docname    - the name of DTD, i.e. the name immediately following the DOCTYPE keyword
-     *                   ( should be the root element name ) or the root element name if no DOCTYPE
-     *                   declaration provided (Oracle's and IBM parsers are not aware if it is not
-     *                   the root element name)
-     * @param doctype    - Public ID of the DTD, i.e. the name immediately following the PUBLIC
-     *                   keyword in DOCTYPE declaration or the docname if no Public ID provided or
-     *                   null if no DOCTYPE declaration provided
-     * @param docid      the docid to use for the UPDATE, no version number
-     * @param newVersion,   need to be update
-     * @param action     the action to be performed (INSERT OR UPDATE)
-     * @param user       the user that owns the document
-     * @param catalogId  the identifier of catalog which this document belongs to
-     * @param createDate  the created date of this document
-     * @param updateDate  the updated date of this document
-     */
-    public DocumentImpl(
-        DBConnection conn, long rootNodeId, String docName, String docType, String docId,
-        String newRevision, String action, String user, String catalogId,
-        Date createDate, Date updateDate) throws SQLException, Exception {
-        this.connection = conn;
-        this.rootnodeid = rootNodeId;
-        this.docname = docName;
-        this.doctype = docType;
-        this.docid = docId;
-        this.rev = Integer.parseInt(newRevision);
-        writeDocumentToDB(action, user, catalogId, createDate, updateDate);
-    }
 
     /**
      * Register a document that resides on the filesystem with the database. (ie, just an entry in
      * xml_documents). Creates a reference to a filesystem document (used for non-xml data files).
-     * This class only be called in MetaCatServerlet.
      *
      * @param docname    - the name of DTD, i.e. the name immediately following the DOCTYPE keyword
      *                   ( should be the root element name ) or the root element name if no DOCTYPE
@@ -242,142 +189,92 @@ public class DocumentImpl {
      * @param doctype    - Public ID of the DTD, i.e. the name immediately following the PUBLIC
      *                   keyword in DOCTYPE declaration or the docname if no Public ID provided or
      *                   null if no DOCTYPE declaration provided
+     * @param conn       the connection to database
      * @param accnum     the accession number to use for the INSERT OR UPDATE, which includes a
      *                   revision number for this revision of the document (e.g., knb.1.1)
      * @param user       the user that owns the document
-     * @param groupnames the groups that owns the document
+     * @throws SQLException
+     * @throws AccessionNumberException
+     * @throws MetacatException
+     * @throws PropertyNotFoundException
      */
-    public static void registerDocument(
-        String docname, String doctype, String accnum, String user, String[] groups)
-        throws SQLException, AccessionNumberException, Exception {
-        DBConnection conn = null;
-        int serialNumber = -1;
-        try {
-            conn = DBConnectionPool.getDBConnection("DocumentImpl.registerDocumentInreplication");
-            serialNumber = conn.getCheckOutSerialNumber();
-            conn.setAutoCommit(false);
-            String action = null;
-            String docIdWithoutRev = DocumentUtil.getDocIdFromAccessionNumber(accnum);
-            int userSpecifyRev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
-            action = checkRevInXMLDocuments(docIdWithoutRev, userSpecifyRev);
-            logMetacat.debug("after check rev, the action is " + action);
-            if (action.equals("UPDATE")) {
-                //archive the old entry
-                // check permissions on the old doc when updating
-                int latestRevision = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
-                String previousDocid =
-                    docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator")
-                        + latestRevision;
-                if (!hasWritePermission(user, groups, previousDocid)) {
-                    throw new Exception(
-                        "User " + user + " does not have permission to update the document"
-                            + accnum);
-                }
-                archiveDocToRevision(conn, docIdWithoutRev, user);
-            }
-
-            String rev = Integer.toString(userSpecifyRev);
-            modifyRecordsInGivenTable(DOCUMENTTABLE, action, docIdWithoutRev, doctype, docname,
-                                      user, rev, null, null, conn);
-            // null and null is createdate and updatedate
-            // null will create current time
-            conn.commit();
-            conn.setAutoCommit(true);
-        } catch (Exception e) {
-            conn.rollback();
-            conn.setAutoCommit(true);
-            throw e;
-        } finally {
-            //check in DBConnection
-            DBConnectionPool.returnDBConnection(conn, serialNumber);
+    public static void registerDocument(String docname, String doctype, DBConnection conn,
+                                        String accnum, String user)
+                                        throws SQLException, AccessionNumberException,
+                                                PropertyNotFoundException, MetacatException {
+        String action = null;
+        String docIdWithoutRev = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+        int userSpecifyRev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
+        int revInDataBase = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
+        action = checkRevInXMLDocuments(revInDataBase, docIdWithoutRev, userSpecifyRev);
+        logMetacat.debug("after check rev, the action is " + action);
+        if (action.equalsIgnoreCase("UPDATE")) {
+            archiveDocToRevision(conn, docIdWithoutRev, revInDataBase, user);
         }
-
+        String rev = Integer.toString(userSpecifyRev);
+        // null and null is createdate and updatedate
+        // null will create current time
+        modifyRecordDocumentsTable(docIdWithoutRev, doctype, docname, user, rev, conn);
     }
 
     /**
      * This method will insert or update xml-documents or xml_revision table
-     * @param tableName  the name of the table to which will be insert
-     * @param action  the action to be performed (INSERT OR UPDATE)
      * @param docid  the docid of the document
      * @param doctype  the type of the document
      * @param docname  the name of the document
      * @param user  the owner of the document
      * @param rev  the revision of the document
-     * @param createDate  the created date of the document
-     * @param updateDate  the updated date of the document
      * @param dbconn  the JDBC Connection to which all information is written
-     * @throws Exception
+     * @throws SQLException
      */
-    private static void modifyRecordsInGivenTable(
-        String tableName, String action, String docid, String doctype, String docname, String user,
-        String rev, Date createDate, Date updateDate, DBConnection dbconn)
-        throws Exception {
-
+    private static void modifyRecordDocumentsTable(String docid, String doctype, String docname,
+            String user, String rev, DBConnection dbconn) throws SQLException {
         PreparedStatement pstmt = null;
         int revision = Integer.parseInt(rev);
-        String sqlDateString = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
         Date today = new Date(Calendar.getInstance().getTimeInMillis());
-
-        if (createDate == null) {
-            createDate = today;
-        }
-
-        if (updateDate == null) {
-            updateDate = today;
-        }
+        Date createDate = today;
+        Date updateDate = today;
+        int catalogId = getCatalogId(doctype);
 
         try {
-
             StringBuffer sql = new StringBuffer();
-            if (action != null && action.equals("INSERT")) {
-
-                sql.append("insert into ");
-                sql.append(tableName);
-                sql.append(" (docid, docname, doctype, ");
-                sql.append("user_owner, user_updated, rev, date_created, ");
-                sql.append("date_updated) values (");
-                sql.append("?, ");
-                sql.append("?, ");
-                sql.append("?, ");
-                sql.append("?, ");
-                sql.append("?, ");
-                sql.append("?, ");
-                sql.append("?, ");
-                sql.append("? )");
-                // set the values
-                pstmt = dbconn.prepareStatement(sql.toString());
-                pstmt.setString(1, docid);
-                pstmt.setString(2, docname);
-                pstmt.setString(3, doctype);
-                pstmt.setString(4, user);
-                pstmt.setString(5, user);
-                pstmt.setInt(6, revision);
-                pstmt.setTimestamp(7, new Timestamp(createDate.getTime()));
-                pstmt.setTimestamp(8, new Timestamp(updateDate.getTime()));
-
-            } else if (action != null && action.equals("UPDATE")) {
-
-                sql.append("update xml_documents set docname = ?,");
-                sql.append("user_updated = ?, ");
-                sql.append("rev = ?, ");
-                sql.append("date_updated = ?");
-                sql.append(" where docid = ? ");
-                // set the values
-                pstmt = dbconn.prepareStatement(sql.toString());
-                pstmt.setString(1, docname);
-                pstmt.setString(2, user);
-                pstmt.setInt(3, revision);
-                pstmt.setTimestamp(4, new Timestamp(updateDate.getTime()));
-                pstmt.setString(5, docid);
+            sql.append("insert into ");
+            sql.append("xml_documents");
+            sql.append(" (docid, docname, doctype, ");
+            sql.append("user_owner, user_updated, rev, date_created, ");
+            sql.append("date_updated, rootnodeid, catalog_id) values (");
+            sql.append("?, ");
+            sql.append("?, ");
+            sql.append("?, ");
+            sql.append("?, ");
+            sql.append("?, ");
+            sql.append("?, ");
+            sql.append("?, ");
+            sql.append("?, ");
+            sql.append("?, ");
+            sql.append("? )");
+            // set the values
+            pstmt = dbconn.prepareStatement(sql.toString());
+            pstmt.setString(1, docid);
+            pstmt.setString(2, docname);
+            pstmt.setString(3, doctype);
+            pstmt.setString(4, user);
+            pstmt.setString(5, user);
+            pstmt.setInt(6, revision);
+            pstmt.setTimestamp(7, new Timestamp(createDate.getTime()));
+            pstmt.setTimestamp(8, new Timestamp(updateDate.getTime()));
+            if (!doctype.equals(BIN)) {
+                pstmt.setLong(9, DBSAXHandler.NODE_ID);
+            } else {
+                pstmt.setNull(9, Types.BIGINT);
             }
-            logMetacat.debug(
-                "DocumentImpl.modifyRecordsInGivenTable - executing SQL: " + pstmt.toString());
+            if (catalogId != -1) {
+                pstmt.setInt(10, catalogId);
+            } else {
+                pstmt.setNull(10, Types.BIGINT);
+            }
+            logMetacat.debug("Executing SQL: " + pstmt.toString());
             pstmt.execute();
-            pstmt.close();
-
-        } catch (Exception e) {
-            logMetacat.debug("Caught a general exception: " + e.getMessage());
-            throw e;
         } finally {
             if (pstmt != null) {
                 pstmt.close();
@@ -387,25 +284,21 @@ public class DocumentImpl {
 
     /*
      * This method will determine if we need to insert or update xml_document base
-     * on given docid, rev and rev in xml_documents table
+     * on the given rev in xml_documents table, user-specified rev and docid.
      */
-    private static String checkRevInXMLDocuments(String docid, int userSpecifyRev)
-        throws Exception {
+    private static String checkRevInXMLDocuments(int revInDataBase, String docid, int userSpecifyRev)
+                                        throws MetacatException, PropertyNotFoundException {
         String action = null;
         logMetacat.debug("The docid without rev is " + docid);
         logMetacat.debug("The user specifyRev: " + userSpecifyRev);
         // Revision for this docid in current database
-        int revInDataBase = DBUtil.getLatestRevisionInDocumentTable(docid);
         logMetacat.debug("The rev in data base: " + revInDataBase);
-        // String to store the revision
-//        String rev = null;
 
         //revIndataBase=-1, there is no record in xml_documents table
         //the document is a new one for local server, inert it into table
         //user specified rev should be great than 0
         if (revInDataBase == -1 && userSpecifyRev >= 0) {
             // rev equals user specified
-//            rev = (new Integer(userSpecifyRev)).toString();
             // action should be INSERT
             action = "INSERT";
         }
@@ -413,21 +306,19 @@ public class DocumentImpl {
         // it is a updated file
         else if (userSpecifyRev > revInDataBase && revInDataBase >= 0) {
             // rev equals user specified
-//            rev = (new Integer(userSpecifyRev)).toString();
             // action should be update
             action = "UPDATE";
         }
         // local server has newer version, then notify the remote server
         else if (userSpecifyRev < revInDataBase && revInDataBase > 0) {
-            throw new Exception(
+            throw new MetacatException(
                 "Local server: " + SystemUtil.getServerURL() + " has newer revision of doc: "
                     + docid + "." + revInDataBase
                     + ". Please notify the remote server's administrator.");
         }
         //other situation
         else {
-
-            throw new Exception(
+            throw new MetacatException(
                 "The docid" + docid + "'s revision number couldn't be " + userSpecifyRev);
         }
         return action;
@@ -503,29 +394,6 @@ public class DocumentImpl {
      * Print a string representation of the XML document NOTE: this detects the character encoding,
      * or uses the XML default
      */
-    public String toString(String user, String[] groups, boolean withInlinedata) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            this.toXml(out, user, groups, withInlinedata);
-        } catch (McdbException mcdbe) {
-            return null;
-        }
-        String encoding = null;
-        String document = null;
-        try {
-            XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(out.toByteArray()));
-            encoding = xsr.getEncoding();
-            document = out.toString(encoding);
-        } catch (Exception e) {
-            document = out.toString();
-        }
-        return document;
-    }
-
-    /**
-     * Print a string representation of the XML document NOTE: this detects the character encoding,
-     * or uses the XML default
-     */
     public String toString() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         String userName = null;
@@ -548,21 +416,6 @@ public class DocumentImpl {
         }
         return document;
     }
-
-    public byte[] getBytes() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        String userName = null;
-        String[] groupNames = null;
-        boolean withInlineData = true;
-        try {
-            this.toXml(out, userName, groupNames, withInlineData);
-        } catch (McdbException mcdbe) {
-            logMetacat.warn("Could not convert documentImpl to xml: " + mcdbe.getMessage());
-            return null;
-        }
-        return out.toByteArray();
-    }
-
 
     /**
      * Print a text representation of the XML document to a Writer
@@ -684,160 +537,7 @@ public class DocumentImpl {
 
     }
 
-    /**
-     * Write an XML document to the file system.
-     *
-     * @param xml       the document we want to write out
-     * @param accNumber the document id which is used to name the output file
-     */
-    private static void writeToFileSystem(
-        byte[] xml, String accNumber, Checksum checksum, File objectFile)
-        throws McdbException, InvalidSystemMetadata, IOException {
 
-        // write the document to disk
-        String documentDir = null;
-        String documentPath = null;
-        boolean needCalculateChecksum = false;
-        String checksumValue = null;
-        MessageDigest md = null;
-
-        try {
-            documentDir = PropertyService.getProperty("application.documentfilepath");
-            documentPath = documentDir + FileUtil.getFS() + accNumber;
-
-            if (xml == null || xml.equals("")) {
-                throw new McdbException(
-                    "Attempting to write a file with no xml content: " + documentPath);
-            }
-
-            if (accNumber == null) {
-                throw new McdbException(
-                    "Could not write document file.  Accession Number number is null");
-            }
-
-            if (FileUtil.getFileStatus(documentPath) >= FileUtil.EXISTS_ONLY) {
-                throw new McdbException("The file you are trying to write already exists "
-                                            + " in metacat.  Please update your version number.");
-            }
-
-            if (accNumber != null && (
-                FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
-                    || FileUtil.getFileSize(documentPath) == 0)) {
-                if (objectFile != null && objectFile.exists()) {
-                    logMetacat.info(
-                        "DocumentImpl.writeToFileSystem - the object file already exists at the "
-                            + "temp location and the checksum was checked. Metacat only needs to move"
-                            + " it to the permanent position "
-                            + documentPath);
-                    File permanentFile = new File(documentPath);
-                    FileUtils.moveFile(objectFile, permanentFile);
-                } else {
-                    logMetacat.info(
-                        "DocumentImpl.writeToFileSystem - Metacat needs to write the metadata "
-                            + "bytes into the file  "
-                            + documentPath);
-                    if (checksum != null) {
-                        needCalculateChecksum = true;
-                        checksumValue = checksum.getValue();
-                        logMetacat.info(
-                            "DocumentImpl.writeToFileSystem - the checksum from the system "
-                            + "metadata is "
-                                + checksumValue);
-                        if (checksumValue == null || checksumValue.trim().equals("")) {
-                            logMetacat.error(
-                                "DocumentImpl.writeToFileSystem - the checksum value from the "
-                                + "system metadata shouldn't be null or blank");
-                            throw new InvalidSystemMetadata(
-                                "1180",
-                                "The checksum value from the system metadata shouldn't be null or"
-                                + " blank.");
-                        }
-                        String algorithm = checksum.getAlgorithm();
-                        logMetacat.info(
-                            "DocumentImpl.writeToFileSystem - the algorithm to calculate the "
-                                + "checksum from the system metadata is "
-                                + algorithm);
-                        if (algorithm == null || algorithm.trim().equals("")) {
-                            logMetacat.error(
-                                "DocumentImpl.writeToFileSystem - the algorithm to calculate the "
-                                + "checksum from the system metadata shouldn't be null or blank");
-                            throw new InvalidSystemMetadata(
-                                "1180",
-                                "The algorithm to calculate the checksum from the system metadata"
-                                + " shouldn't be null or blank.");
-                        }
-                        try {
-                            md = MessageDigest.getInstance(algorithm);
-                        } catch (NoSuchAlgorithmException ee) {
-                            logMetacat.error(
-                                "DocumentImpl.writeToFileSystem - we don't support the algorithm "
-                                    + algorithm + " to calculate the checksum.", ee);
-                            throw new InvalidSystemMetadata(
-                                "1180", "The algorithm " + algorithm
-                                + " to calculate the checksum is not supported: "
-                                + ee.getMessage());
-                        }
-                    }
-
-                    OutputStream fos = null;
-                    try {
-                        if (needCalculateChecksum) {
-                            logMetacat.info(
-                                "DocumentImpl.writeToFileSystem - we need to compute the checksum"
-                                + " since it is from DataONE API");
-                            fos = new DigestOutputStream(new FileOutputStream(documentPath), md);
-                        } else {
-                            logMetacat.info(
-                                "DocumentImpl.writeToFileSystem - we don't need to compute the "
-                                + "checksum since it is from Metacat API or the checksum has been"
-                                + " verified.");
-                            fos = new FileOutputStream(documentPath);
-                        }
-
-                        IOUtils.write(xml, fos);
-                        fos.flush();
-                        fos.close();
-                        if (needCalculateChecksum) {
-                            String localChecksum = DatatypeConverter.printHexBinary(md.digest());
-                            logMetacat.info(
-                                "DocumentImpl.writeToFileSystem - the check sum calculated from "
-                                + "the saved local file is "
-                                    + localChecksum);
-                            if (localChecksum == null || localChecksum.trim().equals("")
-                                || !localChecksum.equalsIgnoreCase(checksumValue)) {
-                                logMetacat.error(
-                                    "DocumentImpl.writeToFileSystem - the check sum calculated "
-                                    + "from the saved local file is "
-                                        + localChecksum
-                                        + ". But it doesn't match the value from the system "
-                                        + "metadata "
-                                        + checksumValue);
-                                File newFile = new File(documentPath);
-                                boolean success = newFile.delete();
-                                logMetacat.info("Delete the file " + newFile.getAbsolutePath()
-                                                    + " sucessfully? " + success);
-                                throw new InvalidSystemMetadata(
-                                    "1180", "The checksum calculated from the saved local file is "
-                                    + localChecksum
-                                    + ". But it doesn't match the value from the system metadata "
-                                    + checksumValue + ".");
-                            }
-                        }
-                    } catch (IOException ioe) {
-                        throw new McdbException(
-                            "Could not write file: " + documentPath + " : " + ioe.getMessage());
-                    } finally {
-                        IOUtils.closeQuietly(fos);
-                    }
-                }
-
-            }
-
-        } catch (PropertyNotFoundException pnfe) {
-            throw new McdbException(
-                "Could not write file: " + documentPath + " : " + pnfe.getMessage());
-        }
-    }
 
     /**
      * Deletes a doc or data file from the filesystem using the accession number.
@@ -871,7 +571,7 @@ public class DocumentImpl {
     }
 
     private static String getFilePath(String accNumber, boolean isXml) throws McdbException {
-        if (accNumber == null) {
+        if (accNumber == null || accNumber.trim().equals("")) {
             throw new McdbException(
                 "Could not get the file path since the Accession Number number is null");
         }
@@ -1158,508 +858,244 @@ public class DocumentImpl {
         }
     }
 
+
     /**
-     * Creates the SQL code and inserts new document into DB connection
-     * @param action  it can be insert or update
-     * @param user  the owner of the document
-     * @param catalogid  the catalog identifier to which the document belongs
-     * @param createDate  the created date of the document
-     * @param updateDate  the updated date of the document
+     * Delete an object totally from the db and file system. It doesn't check permission
+     * @param accnum  the local id (including the rev) will be deleted
+     * @param guid  the dataone identifier associated with accnum
      * @throws SQLException
-     * @throws Exception
-     */
-    private void writeDocumentToDB(
-        String action, String user, String catalogid, Date createDate,
-        Date updateDate) throws SQLException, Exception {
-        Date today = Calendar.getInstance().getTime();
-        if (createDate == null) {
-            createDate = today;
-        }
-        if (updateDate == null) {
-            updateDate = today;
-        }
-
-        try {
-            PreparedStatement pstmt = null;
-
-            if (action.equals("INSERT")) {
-                String sql = null;
-                if (catalogid != null) {
-                    sql = "INSERT INTO xml_documents "
-                        + "(docid, rootnodeid, docname, doctype, user_owner, "
-                        + "user_updated, date_created, date_updated, "
-                        + "rev, catalog_id) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                } else {
-                    sql = "INSERT INTO xml_documents "
-                        + "(docid, rootnodeid, docname, doctype, user_owner, "
-                        + "user_updated, date_created, date_updated, "
-                        + "rev) VALUES (?, ?, ?, ?, ?, ?, "
-                        + "?, ?, ?)";
-                }
-                pstmt = connection.prepareStatement(sql);
-                // Increase dbconnection usage count
-                connection.increaseUsageCount(1);
-
-                //note that the server_location is set to 1.
-                //this means that "localhost" in the xml_replication table must
-                //always be the first entry!!!!!
-
-                // Bind the values to the query
-                pstmt.setString(1, this.docid);
-                pstmt.setLong(2, rootnodeid);
-                pstmt.setString(3, docname);
-                pstmt.setString(4, doctype);
-                pstmt.setString(5, user);
-                pstmt.setString(6, user);
-                // dates
-                pstmt.setTimestamp(7, new Timestamp(createDate.getTime()));
-                pstmt.setTimestamp(8, new Timestamp(updateDate.getTime()));
-                pstmt.setInt(9, rev);
-
-                if (catalogid != null) {
-                    pstmt.setInt(10, Integer.parseInt(catalogid));
-                }
-
-            } else if (action.equals("UPDATE")) {
-                int thisrev = DBUtil.getLatestRevisionInDocumentTable(docid);
-                logMetacat.debug("DocumentImpl.writeDocumentToDB - this revision is: " + thisrev);
-                // Save the old document publicaccessentry in a backup table
-                archiveDocToRevision(connection, docid, user);
-                //if the updated vesion is not greater than current one,
-                //throw it into a exception
-                if (rev <= thisrev) {
-                    throw new Exception(
-                        "Next revision number couldn't be less" + " than or equal " + thisrev);
-                } else {
-                    //set the user specified revision
-                    thisrev = rev;
-                }
-                logMetacat.debug("DocumentImpl.writeDocumentToDB - final revision is: " + thisrev);
-
-                // Update the new document to reflect the new node tree
-                String updateSql = null;
-                if (catalogid != null) {
-                    updateSql =
-                        "UPDATE xml_documents " + "SET rootnodeid = ?, docname = ?, doctype = ?, "
-                            + "user_updated = ?, date_updated = ?, "
-                            + "rev = ?, "
-                            + "catalog_id = ? " + "WHERE docid = ?";
-                } else {
-                    updateSql =
-                        "UPDATE xml_documents " + "SET rootnodeid = ?, docname = ?, doctype = ?, "
-                            + "user_updated = ?, date_updated = ?, "
-                            + "rev = ? "
-                            + "WHERE docid = ?";
-                }
-                // Increase dbconnection usage count
-                pstmt = connection.prepareStatement(updateSql);
-                connection.increaseUsageCount(1);
-                // Bind the values to the query
-                pstmt.setLong(1, rootnodeid);
-                pstmt.setString(2, docname);
-                pstmt.setString(3, doctype);
-                pstmt.setString(4, user);
-                pstmt.setTimestamp(5, new Timestamp(updateDate.getTime()));
-                pstmt.setInt(6, thisrev);
-
-                if (catalogid != null) {
-                    pstmt.setInt(7, Integer.parseInt(catalogid));
-                    pstmt.setString(8, this.docid);
-                } else {
-                    pstmt.setString(7, this.docid);
-                }
-
-            } else {
-                logMetacat.error(
-                    "DocumentImpl.writeDocumentToDB - Action not supported: " + action);
-            }
-
-            // Do the insertion
-            logMetacat.debug("DocumentImpl.writeDocumentToDB - executing SQL: " + pstmt.toString());
-            pstmt.execute();
-
-            pstmt.close();
-        } catch (SQLException sqle) {
-            logMetacat.error("DocumentImpl.writeDocumentToDB - SQL error: " + sqle.getMessage());
-            throw sqle;
-        } catch (Exception e) {
-            logMetacat.error("DocumentImpl.writeDocumentToDB - General error: " + e.getMessage());
-            throw e;
-        }
-    }
-
-    /**
-     * Parse and write an XML file to the database
-     * @param conn  the JDBC connection to the database
-     * @param dtd  the dtd to be uploaded on server's file system
-     * @param action  the action to be performed (INSERT or UPDATE)
-     * @param accnum  the docid + rev# to use on INSERT or UPDATE
-     * @param user  the user that owns the document
-     * @param groups  the groups to which user belongs
-     * @param ruleBase  the type (dtd, schema or et al) of validation
-     * @param needValidation  flag indicating if it needs a validate
-     * @param encoding  the encoding of the xml document
-     * @param xmlBytes  the content of the xml document
-     * @param schemaLocation  the schema location string
-     * @param checksum  the checksum of the xml document
-     * @param objectFile  the temporary file of the object 
-     * @return accnum
-     * @throws Exception
-     */
-    public static String write(DBConnection conn, Reader dtd, String action,
-            String accnum, String user, String[] groups, String ruleBase,
-        boolean needValidation, String encoding, byte[] xmlBytes, String schemaLocation,
-        Checksum checksum, File objectFile) throws Exception {
-        // NEW - WHEN CLIENT ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV IN IT
-
-        // Get the xml as a string so we can write to file later
-        InputStreamReader xmlReader = new InputStreamReader(new ByteArrayInputStream(xmlBytes));
-        AccessionNumber ac = new AccessionNumber(accnum, action);
-        String docid = ac.getDocid();
-        String rev = ac.getRev();
-
-        if (action.equals("UPDATE")) {
-            // check for 'write' permission for 'user' to update this document
-            // use the previous revision to check the permissions
-            String docIdWithoutRev = DocumentUtil.getSmartDocId(accnum);
-            int latestRev = DBUtil.getLatestRevisionInDocumentTable(docIdWithoutRev);
-            String latestDocId =
-                docIdWithoutRev + PropertyService.getProperty("document.accNumSeparator")
-                    + latestRev;
-            if (!hasWritePermission(user, groups, latestDocId) && !AuthUtil.isAdministrator(
-                user, groups)) {
-                throw new Exception(
-                    "User " + user + " does not have permission to update XML Document #"
-                        + latestDocId);
-            }
-        }
-        XMLReader parser = null;
-        try {
-            Vector<String> guidsToSync = new Vector<String>();
-            Vector<XMLSchema> schemaList = XMLSchemaService.getInstance().
-                                                            findSchemasInXML(xmlReader);
-            // null and null are createtime and updatetime
-            // null will create current time
-            //false means it is not a revision doc
-            parser =
-                initializeParser(conn, action, docid, schemaList, rev, user, groups,
-                                 dtd, ruleBase, needValidation, false, null, null, encoding,
-                                 schemaLocation);
-            xmlReader = new InputStreamReader(new ByteArrayInputStream(xmlBytes));
-            conn.setAutoCommit(false);
-            parser.parse(new InputSource(xmlReader));
-            //write the file to disk
-            writeToFileSystem(xmlBytes, accnum, checksum, objectFile);
-
-            conn.commit();
-            conn.setAutoCommit(true);
-
-            if (guidsToSync.size() > 0) {
-                try {
-                    SyncAccessPolicy syncAP = new SyncAccessPolicy();
-                    syncAP.sync(guidsToSync);
-                } catch (Exception e) {
-                    logMetacat.error(
-                        "Error syncing pids with CN: " + " Exception " + e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
-            conn.rollback();
-            conn.setAutoCommit(true);
-            throw e;
-        }
-        return (accnum);
-    }
-
-
-
-    /**
-     * Archive an object from the xml_documents table to the xml_revision table (including other
-     * changes as well). Or delete an object totally from the db. The parameter "removeAll" decides
-     * which action will be taken.
-     *
-     * @param accnum       the local id (including the rev) will be applied.
-     * @param user         the subject who does the action.
-     * @param groups       the groups which the user belongs to.
-     * @param notifyServer the server will be notified in the replication. It can be null.
-     * @param removeAll    it will be the delete action if this is true; otherwise it will be the
-     *                     archive action
-     * @throws SQLException
-     * @throws InsufficientKarmaException
+     * @throws InvalidRequest
      * @throws McdbDocNotFoundException
-     * @throws Exception
+     * @throws ServiceFailure
      */
-    public static void delete(
-        String accnum, String user, String[] groups, String notifyServer, boolean removeAll)
-        throws SQLException, InsufficientKarmaException, McdbDocNotFoundException, Exception {
-        //default, we only match the docid part on archive action
-        boolean ignoreRev = true;
-        delete(accnum, ignoreRev, user, groups, notifyServer, removeAll);
-    }
-
-    /**
-     * Archive an object from the xml_documents table to the xml_revision table (including other
-     * changes as well). Or delete an object totally from the db. The parameter "removeAll" decides
-     * which action will be taken.
-     *
-     * @param accnum       the local id (including the rev) will be applied.
-     * @param ignoreRev    if the archive action should only match docid and ignore the rev
-     * @param user         the subject who does the action.
-     * @param groups       the groups which the user belongs to.
-     * @param notifyServer the server will be notified in the replication. It can be null.
-     * @param removeAll    it will be the delete action if this is true; otherwise it will be the
-     *                     archive action.
-     * @throws SQLException
-     * @throws InsufficientKarmaException
-     * @throws McdbDocNotFoundException
-     * @throws Exception
-     */
-    public static void delete(
-        String accnum, boolean ignoreRev, String user, String[] groups, String notifyServer,
-        boolean removeAll)
-        throws SQLException, InsufficientKarmaException, McdbDocNotFoundException, Exception {
-
+    public static void delete(String accnum, Identifier guid) throws SQLException, InvalidRequest,
+                                                        McdbDocNotFoundException, ServiceFailure {
+        if (accnum == null || accnum.isBlank()) {
+            throw new InvalidRequest("0000",
+                                        "DcoumentImple.delete - the docid can't be null or blank");
+        }
+        if (guid == null || guid.getValue() == null || guid.getValue().isBlank()) {
+            throw new InvalidRequest("0000", "DcoumentImple.delete -The pid can't be null or blank");
+        }
         DBConnection conn = null;
         int serialNumber = -1;
-        PreparedStatement pstmt = null;
         boolean isXML = true;
         boolean inRevisionTable = false;
+        double start = System.currentTimeMillis() / 1000;
         try {
             //check out DBConnection
             conn = DBConnectionPool.getDBConnection("DocumentImpl.delete");
             serialNumber = conn.getCheckOutSerialNumber();
-
             // CLIENT SHOULD ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV
-            //AccessionNumber ac = new AccessionNumber(accnum, "DELETE");
             String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
             int rev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
-            ;
-
+            String type = null;
             // Check if the document exists.
-            if (!removeAll) {
-                //this only archives a document from xml_documents to xml_revisions
-                logMetacat.info("DocumentImp.delete - archive the document " + accnum);
-                pstmt =
-                    conn.prepareStatement("SELECT rev, docid FROM xml_documents WHERE docid = ?");
-                pstmt.setString(1, docid);
-                logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
-                pstmt.execute();
-                ResultSet rs = pstmt.getResultSet();
-                if (!rs.next()) {
-                    rs.close();
-                    pstmt.close();
-                    conn.increaseUsageCount(1);
-                    throw new McdbDocNotFoundException(
-                        "Docid " + accnum + " does not exist. Please check that you have also "
-                            + "specified the revision number of the document.");
-                } else {
-                    //Get the rev from the xml_table. If the value is greater than the one user
-                    // specified, we will use this one.
-                    //In ReplicationHandler.handleDeleteSingleDocument method, the code use "1"
-                    // as the revision number not matther what is the actual value
-                    int revFromTable = rs.getInt(1);
-                    if (!ignoreRev && revFromTable != rev) {
-                        pstmt.close();
-                        conn.increaseUsageCount(1);
-                        throw new McdbDocNotFoundException(
-                            "Docid " + accnum + " does not exist. Please check that you have also "
-                                + "specified the revision number of the document.");
-                    }
-                    if (revFromTable > rev) {
-                        logMetacat.info(
-                            "DocumentImpl.delete - in the archive the user specified rev - " + rev
-                                + "is less than the version in xml_document table - " + revFromTable
-                                + ". We will use the one from table.");
-                        rev = revFromTable;
-                    }
-                    rs.close();
-                    pstmt.close();
-                    conn.increaseUsageCount(1);
-
-                }
-            } else {
-                logMetacat.info("DocumentImp.delete - complete delete the document " + accnum);
-                pstmt = conn.prepareStatement(
-                    "SELECT * FROM xml_documents WHERE docid = ? and rev = ?");
+            logMetacat.info("DocumentImp.delete - completely delete the document " + accnum);
+            String query = "SELECT doctype, docid FROM xml_documents WHERE docid = ? and rev = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
                 pstmt.setString(1, docid);
                 pstmt.setInt(2, rev);
                 logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
                 pstmt.execute();
-                ResultSet rs = pstmt.getResultSet();
-                if (!rs.next()) {
-                    //look at the xml_revisions table
-                    logMetacat.debug("DocumentImpl.delete - look at the docid " + accnum
-                                         + " in the xml_revision table");
-                    pstmt = conn.prepareStatement(
-                        "SELECT * FROM xml_revisions WHERE docid = ? AND rev = ?");
-                    pstmt.setString(1, docid);
-                    pstmt.setInt(2, rev);
-                    logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
-                    pstmt.execute();
-                    rs = pstmt.getResultSet();
+                try (ResultSet rs = pstmt.getResultSet()) {
                     if (!rs.next()) {
-                        rs.close();
-                        pstmt.close();
-                        conn.increaseUsageCount(1);
-                        throw new McdbDocNotFoundException("Docid " + accnum
-                                                               + " does not exist. Please check "
-                                                               + "and try to delete it again.");
+                        //look at the xml_revisions table
+                        logMetacat.debug("DocumentImpl.delete - look at the docid " + accnum
+                                             + " in the xml_revision table");
+                        String query2 = "SELECT doctype, docid FROM xml_revisions WHERE docid = ? "
+                                          + "AND rev = ?";
+                        try (PreparedStatement pstmt2 = conn.prepareStatement(query2)) {
+                            pstmt2.setString(1, docid);
+                            pstmt2.setInt(2, rev);
+                            logMetacat.debug("DocumentImpl.delete - executing SQL: "
+                                                                               + pstmt2.toString());
+                            pstmt2.execute();
+                            try (ResultSet rs2 = pstmt2.getResultSet()) {
+                                if (!rs2.next()) {
+                                    conn.increaseUsageCount(1);
+                                    throw new McdbDocNotFoundException("Docid " + accnum
+                                                        + " does not exist in eiter xml_documents "
+                                                        + "or xml_revisions table. "
+                                                        + "Please check and try again.");
+                                } else {
+                                    type = rs2.getString(1);
+                                    logMetacat.debug("DocumentImpl.delete - the docid " + accnum
+                                            + " is in the xml_revisions table");
+                                    conn.increaseUsageCount(1);
+                                    inRevisionTable = true;
+                                }
+                            }
+                        }
                     } else {
-                        rs.close();
-                        pstmt.close();
+                        type = rs.getString(1);
+                        logMetacat.debug("DocumentImpl.delete - the docid " + accnum + " and type "
+                                + type + " is in the xml_document table");
                         conn.increaseUsageCount(1);
-                        inRevisionTable = true;
                     }
-                } else {
-                    rs.close();
-                    pstmt.close();
-                    conn.increaseUsageCount(1);
                 }
-            }
-
-            // get the type of deleting docid, this will be used in forcereplication
-            String type = null;
-            if (!inRevisionTable) {
-                type = getDocTypeFromDB(conn, "xml_documents", docid);
-            } else {
-                type = getDocTypeFromDB(conn, "xml_revisions", docid);
             }
             logMetacat.info("DocumentImpl.delete - the deleting doc type is " + type + "...");
             if (type != null && type.trim().equals("BIN")) {
                 isXML = false;
             }
-
-            logMetacat.info("DocumentImpl.delete - Start deleting doc " + docid + "...");
-            double start = System.currentTimeMillis() / 1000;
-            // check for 'write' permission for 'user' to delete this document
-            if (!hasAllPermission(user, groups, accnum)) {
-                if (!AuthUtil.isAdministrator(user, groups)) {
-                    throw new InsufficientKarmaException(
-                        "User " + user + " does not have permission to delete XML Document #"
-                            + accnum);
-                }
-            }
-
-            conn.setAutoCommit(false);
-            if (!inRevisionTable) {
-                // Copy the record to the xml_revisions table if not a full delete
-                if (!removeAll) {
-                    archiveDocToRevision(conn, docid, user);
-                    logMetacat.info("DocumentImpl.delete - calling archiveDocAndNodesRevision");
-                }
-                double afterArchiveDocAndNode = System.currentTimeMillis() / 1000;
-                logMetacat.info(
-                    "DocumentImpl.delete - The time for archiveDocAndNodesRevision is " + (
-                        afterArchiveDocAndNode - start));
-                // Delete it from xml_documents table
-                logMetacat.info("DocumentImpl.delete - deleting from xml_documents");
-                pstmt = conn.prepareStatement("DELETE FROM xml_documents WHERE docid = ?");
-                pstmt.setString(1, docid);
-                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                pstmt.execute();
-                pstmt.close();
-                //Usaga count increase 1
-                conn.increaseUsageCount(1);
-                double afterDeleteDoc = System.currentTimeMillis() / 1000;
-            } else {
-                logMetacat.info("DocumentImpl.delete - deleting from xml_revisions");
-                pstmt =
-                    conn.prepareStatement("DELETE FROM xml_revisions WHERE docid = ? AND rev = ?");
-                pstmt.setString(1, docid);
-                pstmt.setInt(2, rev);
-                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                pstmt.execute();
-                pstmt.close();
-                conn.increaseUsageCount(1);
-            }
-
-
-            // set as archived in the systemMetadata  if it is not a complete removal
-            String pid = IdentifierManager.getInstance().getGUID(docid, rev);
-            Identifier guid = new Identifier();
-            guid.setValue(pid);
-
-            //update systemmetadata table and solr index
-            SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
-            if (sysMeta != null) {
-                //sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-                sysMeta.setArchived(true);
-                //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-                if (!removeAll) {
-                    SystemMetadataManager.getInstance().store(sysMeta);
-                    MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
+            logMetacat.debug("DocumentImpl.delete - Start deleting doc " + docid + "...");
+            try {
+                conn.setAutoCommit(false);
+                if (inRevisionTable) {
+                    logMetacat.debug("DocumentImpl.delete - deleting from xml_revisions");
+                    String deleteQuery = "DELETE FROM xml_revisions WHERE docid = ? AND rev = ?";
+                    try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
+                        pstmt.setString(1, docid);
+                        pstmt.setInt(2, rev);
+                        logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                        pstmt.execute();
+                        conn.increaseUsageCount(1);
+                    }
                 } else {
-                    try {
-                        SystemMetadataManager.getInstance().delete(guid);
-                        MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
-                    } catch (RuntimeException ee) {
-                        logMetacat.warn(
-                            "we catch the run time exception in deleting system metadata "
-                                + ee.getMessage());
-                        throw new Exception("DocumentImpl.delete -" + ee.getMessage());
+                    // Delete it from xml_documents table
+                    logMetacat.debug("DocumentImpl.delete - deleting from xml_documents");
+                    String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
+                    try (PreparedStatement pstmtDelete = conn.prepareStatement(deleteQuery)) {
+                        pstmtDelete.setString(1, docid);
+                        logMetacat.debug("DocumentImpl.delete - running sql: "
+                                                                         + pstmtDelete.toString());
+                        pstmtDelete.execute();
+                        conn.increaseUsageCount(1);
                     }
                 }
-
-            }
-
-            // only commit if all of this was successful
-            conn.commit();
-            conn.setAutoCommit(true);
-
-            // remove the file if called for
-            if (removeAll) {
-                deleteFromFileSystem(accnum, isXML);
-            }
-
-            double end = System.currentTimeMillis() / 1000;
-            logMetacat.info("DocumentImpl.delete - total delete time is:  " + (end - start));
-
-        } catch (Exception e) {
-            // rollback the delete if there was an error
-            conn.rollback();
-            logMetacat.error("DocumentImpl.delete -  Error: " + e.getMessage());
-            throw e;
-        } finally {
-            try {
-                // close preparedStatement
-                if (pstmt != null) {
-                    pstmt.close();
+                //update systemmetadata table and solr index
+                SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
+                if (sysMeta != null) {
+                    SystemMetadataManager.getInstance().delete(guid, conn);
                 }
-            } finally {
-                //check in DBonnection
+                deleteFromFileSystem(accnum, isXML);
+                // only commit if all of this was successful
+                conn.commit();
+                try {
+                    MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
+                } catch (Exception ee) {
+                    logMetacat.error("DocumentImpl.delete - Metacat failed to submit index task: "
+                                                                           + ee.getMessage());
+                }
+            } catch (Exception e) {
+                // rollback the delete if there was an error
+                if (conn != null) {
+                    try {
+                        conn.rollback();
+                    } catch (SQLException sqe) {
+                        throw new ServiceFailure("0000", "DocumentImpl.delete - failed for "
+                                                      + guid.getValue() + " since "
+                                                      + e.getMessage()
+                                                      + " Also the database cannot roll back since "
+                                                      + sqe.getMessage());
+                    }
+                }
+                logMetacat.error("DocumentImpl.delete -  failed for " + guid.getValue()
+                                                                      + " since " + e.getMessage());
+                throw new ServiceFailure("0000", "DocumentImpl.delete - failed for "
+                                                     + guid.getValue() + " since "+ e.getMessage());
+            }
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException e) {
+                    logMetacat.warn("DocumentImpl.delete - Metacat can't set DBConnection "
+                                    + "auto-commit back to true since " + e.getMessage());
+                }
                 DBConnectionPool.returnDBConnection(conn, serialNumber);
             }
         }
-
+        double end = System.currentTimeMillis() / 1000;
+        logMetacat.info("DocumentImpl.delete - total delete time is:  " + (end - start));
     }
 
     /**
-     * Get the doc type for a given docid. If we don't find, null will be returned
-     * @param conn  the db connection which will be used to connect to database
-     * @param tableName  the table name which will be looked up
-     * @param docidWithoutRev  the given docid
-     * @return the doc type
+     * Archive an object. Set the archived flag true, also move the object from the xml_documents
+     * table to the xml_revisions table if it exists in the xml_documents table.
+     * This method will submit the reindex task as well.
+     * @param accnum  the local id (including the revision) will be applied.
+     * @param guid  the dataone identifier associated with the given accnum
+     * @param user  the identity of operator
+     * @param changeDateModified  if it needs to change the dateModified field in the system metadata
      * @throws SQLException
+     * @throws InvalidRequest
+     * @throws ServiceFailure
      */
-    private static String getDocTypeFromDB(
-        DBConnection conn, String tableName, String docidWithoutRev) throws SQLException {
-        String type = null;
-        String sql = "SELECT DOCTYPE FROM " + tableName + " WHERE docid LIKE ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, docidWithoutRev);
-            try (ResultSet result = stmt.executeQuery()) {
-                boolean hasResult = result.next();
-                if (hasResult) {
-                    type = result.getString(1);
+    public static void archive(String accnum, Identifier guid, String user,
+                boolean changeDateModified) throws SQLException, InvalidRequest, ServiceFailure {
+        if (accnum == null || accnum.isBlank()) {
+            throw new InvalidRequest("0000",
+                                        "DcoumentImple.delete - the docid can't be null or blank");
+        }
+        if (guid == null || guid.getValue() == null || guid.getValue().isBlank()) {
+            throw new InvalidRequest("0000", "DcoumentImple.delete -The pid can't be null or blank");
+        }
+        DBConnection conn = null;
+        int serialNumber = -1;
+        double start = System.currentTimeMillis() / 1000;
+        try {
+            //check out DBConnection
+            conn = DBConnectionPool.getDBConnection("DocumentImpl.archive");
+            serialNumber = conn.getCheckOutSerialNumber();
+            // CLIENT SHOULD ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV
+            String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            int rev = DocumentUtil.getRevisionFromAccessionNumber(accnum);
+            // Check if the document exists.
+            //this only archives a document from xml_documents to xml_revisions
+            logMetacat.debug("DocumentImp.archive - archive the document " + accnum);
+            try {
+                conn.setAutoCommit(false);
+                // Copy the record to the xml_revisions table if it exists in
+                // the xml_documents table and also delete the item from xml_documents
+                archiveDocToRevision(conn, docid, rev, user);
+                //update systemmetadata table and solr index
+                SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
+                if (sysMeta != null) {
+                    sysMeta.setArchived(true);
+                    SystemMetadataManager.getInstance().store(sysMeta, changeDateModified, conn);
                 }
+                // only commit if all of this was successful
+                conn.commit();
+                try {
+                    //followRevisions is set false
+                    MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
+                } catch (Exception ee) {
+                    logMetacat.error("DocumentImpl.archive - Metacat failed to submit index task: "
+                                                                           + ee.getMessage());
+                }
+            } catch (Exception e) {
+                // rollback the archive action if there was an error
+                if (conn != null) {
+                    try {
+                        conn.rollback();
+                    } catch (SQLException sqe) {
+                        throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
+                                                        + guid.getValue() + " since "+ e.getMessage()
+                                                        + " Also the database cannot roll back since "
+                                                        + sqe.getMessage());
+                    }
+                }
+                logMetacat.error("DocumentImpl.archive -  Error: " + e.getMessage());
+                throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
+                                                + guid.getValue() + " since " + e.getMessage());
+            }
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException e) {
+                    logMetacat.warn("DocumentImpl.archive - Metacat can't set DBConnection "
+                                    + "auto-commit back to true since " + e.getMessage());
+                }
+                DBConnectionPool.returnDBConnection(conn, serialNumber);
             }
         }
-        logMetacat.debug(
-            "DocumentImpl.getDocTypeFromDB - The type of docid " + docidWithoutRev + " is " + type);
-        return type;
+        double end = System.currentTimeMillis() / 1000;
+        logMetacat.info("DocumentImpl.archive - total delete time is:  " + (end - start));
     }
+
 
     /**
      * Check for "WRITE" permission on @docid for @user and/or @groups from DB connection
@@ -1687,174 +1123,179 @@ public class DocumentImpl {
 
     /**
      * Set up the parser handlers for writing the document to the database
-     * @param dbconn  the connection connected to db
-     * @param action  it can be insert or update
-     * @param docid  the id of the document
      * @param schemaList  the list of schema will be used
-     * @param rev  the revision of the document
-     * @param user  the owner of the document
-     * @param groups  the groups in which the owner is
      * @param dtd  the dtd content
      * @param ruleBase  the validation base - schema or dtd
      * @param needValidation  if the document needs to be validated
-     * @param isRevision  if this document is in the xml_revsion table
-     * @param createDate  the created date of the document
-     * @param updateDate  the updated date of the document
-     * @param encoding  the encoding code of the document
      * @param schemaLocation  the string contains the schema location
      * @return the XMLReader object
-     * @throws Exception
+     * @throws PropertyNotFoundException
+     * @throws SAXException
+     * @throws ServiceFailure
      */
-    private static XMLReader initializeParser(
-        DBConnection dbconn, String action, String docid, Vector<XMLSchema> schemaList, String rev,
-        String user, String[] groups, Reader dtd, String ruleBase,
-        boolean needValidation, boolean isRevision, Date createDate, Date updateDate,
-        String encoding, String schemaLocation) throws Exception {
+    public static XMLReader initializeParser( Vector<XMLSchema> schemaList, Reader dtd,
+                  String ruleBase, boolean needValidation, String schemaLocation)
+                          throws ServiceFailure, PropertyNotFoundException, SAXException {
         XMLReader parser = null;
-        try {
-            // handler
-            DBSAXHandler chandler;
-            EntityResolver eresolver;
-            DTDHandler dtdhandler;
-            // Get an instance of the parser
-            String parserName = PropertyService.getProperty("xml.saxparser");
-            parser = XMLReaderFactory.createXMLReader(parserName);
-            //XMLSchemaService.getInstance().populateRegisteredSchemaList();
-            //create a DBSAXHandler object which has the revision
-            // specification
-            chandler = new DBSAXHandler(dbconn, action, docid, rev, user, groups,
-                                        createDate, updateDate);
-            chandler.setIsRevisionDoc(isRevision);
-            chandler.setEncoding(encoding);
-            parser.setContentHandler((ContentHandler) chandler);
-            parser.setErrorHandler((ErrorHandler) chandler);
-            parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
-            parser.setProperty(LEXICALPROPERTY, chandler);
-            if (ruleBase != null && (ruleBase.equals(SCHEMA) || ruleBase.equals(EML200)
-                || ruleBase.equals(EML210)) && needValidation) {
-                XMLSchemaService xmlss = XMLSchemaService.getInstance();
-                //xmlss.doRefresh();
-                logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
-                // turn on schema validation feature
-                parser.setFeature(VALIDATIONFEATURE, true);
-                parser.setFeature(NAMESPACEFEATURE, true);
-                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
+        // handler
+        DBSAXHandler handler;
+        EntityResolver eresolver;
+        DTDHandler dtdhandler;
+        // Get an instance of the parser
+        String parserName = PropertyService.getProperty("xml.saxparser");
+        parser = XMLReaderFactory.createXMLReader(parserName);
+        handler = new DBSAXHandler();
+        parser.setContentHandler(handler);
+        parser.setErrorHandler(handler);
+        parser.setProperty(DECLARATIONHANDLERPROPERTY, handler);
+        parser.setProperty(LEXICALPROPERTY, handler);
+        boolean valid = ruleBase != null && needValidation;
+        if (valid && (ruleBase.equals(SCHEMA)
+                      || ruleBase.equals(EML200)
+                      || ruleBase.equals(EML210))) {
+            XMLSchemaService xmlss = XMLSchemaService.getInstance();
+            logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
+            // turn on schema validation feature
+            parser.setFeature(VALIDATIONFEATURE, true);
+            parser.setFeature(NAMESPACEFEATURE, true);
+            parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
 
-                boolean allSchemasRegistered = xmlss.areAllSchemasRegistered(schemaList);
-                if (xmlss.useFullSchemaValidation() && !allSchemasRegistered && !ruleBase.equals(
-                    EML210) && !ruleBase.equals(EML200)) {
-                    parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
-                }
-                logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: "
-                                    + schemaLocation);
-                // Set external schemalocation.
-                if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
-                    parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY, schemaLocation);
-                } else {
-                    throw new Exception("The schema for the document " + docid
-                                            + " can't be found in any place. So we can't validate"
-                                            + " the xml instance.");
-                }
-            } else if (ruleBase != null && ruleBase.equals(NONAMESPACESCHEMA) && needValidation) {
-                //xmlss.doRefresh();
-                logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
-                // turn on schema validation feature
-                parser.setFeature(VALIDATIONFEATURE, true);
-                parser.setFeature(NAMESPACEFEATURE, true);
-                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                logMetacat.info(
-                    "DocumentImpl.initalizeParser - Generic external no-namespace schema location: "
-                        + schemaLocation);
-                // Set external schemalocation.
-                if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
-                    parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY, schemaLocation);
-                } else {
-                    throw new Exception("The schema for the document " + docid
-                                            + " can't be found in any place. So we can't validate"
-                                            + " the xml instance.");
-                }
-            } else if (ruleBase != null && ruleBase.equals(DTD) && needValidation) {
-                logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
-                // turn on dtd validaton feature
-                parser.setFeature(VALIDATIONFEATURE, true);
-                eresolver = new DBEntityResolver(dbconn, (DBSAXHandler) chandler, dtd);
-                dtdhandler = new DBDTDHandler(dbconn);
-                parser.setEntityResolver((EntityResolver) eresolver);
-                parser.setDTDHandler((DTDHandler) dtdhandler);
-            } else {
-                logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
-                // non validation
-                parser.setFeature(VALIDATIONFEATURE, false);
-                eresolver = new DBEntityResolver(dbconn, (DBSAXHandler) chandler, dtd);
-                dtdhandler = new DBDTDHandler(dbconn);
-                parser.setEntityResolver((EntityResolver) eresolver);
-                parser.setDTDHandler((DTDHandler) dtdhandler);
+            boolean allSchemasRegistered = XMLSchemaService.areAllSchemasRegistered(schemaList);
+            if (xmlss.useFullSchemaValidation() && !allSchemasRegistered
+                                      && !ruleBase.equals(EML210) && !ruleBase.equals(EML200)) {
+                parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
             }
-        } catch (Exception e) {
-            throw e;
+            logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: "
+                                + schemaLocation);
+            // Set external schemalocation.
+            if (schemaLocation != null && !(schemaLocation.trim()).equals("")) {
+                parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY, schemaLocation);
+            } else {
+                throw new ServiceFailure("0000", "The schema for the document "
+                                        + " can't be found in any place. So we can't validate"
+                                        + " the xml instance.");
+            }
+        } else if (valid && ruleBase.equals(NONAMESPACESCHEMA)) {
+            logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
+            // turn on schema validation feature
+            parser.setFeature(VALIDATIONFEATURE, true);
+            parser.setFeature(NAMESPACEFEATURE, true);
+            parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
+            logMetacat.info(
+                "DocumentImpl.initalizeParser - Generic external no-namespace schema location: "
+                    + schemaLocation);
+            // Set external schemalocation.
+            if (schemaLocation != null && !schemaLocation.isBlank()) {
+                parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY, schemaLocation);
+            } else {
+                throw new ServiceFailure("0000", "The schema for the document "
+                                        + " can't be found in any place. So we can't validate"
+                                        + " the xml instance.");
+            }
+        } else if (valid && ruleBase.equals(DTD)) {
+            logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
+            // turn on dtd validaton feature
+            parser.setFeature(VALIDATIONFEATURE, true);
+            eresolver = new DBEntityResolver((DBSAXHandler) handler, dtd);
+            dtdhandler = new DBDTDHandler();
+            parser.setEntityResolver((EntityResolver) eresolver);
+            parser.setDTDHandler((DTDHandler) dtdhandler);
+        } else {
+            logMetacat.info("DocumentImpl.initalizeParser - Using other parser");
+            // non validation
+            parser.setFeature(VALIDATIONFEATURE, false);
+            eresolver = new DBEntityResolver((DBSAXHandler) handler, dtd);
+            dtdhandler = new DBDTDHandler();
+            parser.setEntityResolver((EntityResolver) eresolver);
+            parser.setDTDHandler((DTDHandler) dtdhandler);
         }
         return parser;
     }
 
     /**
-     * This method will move a document record from the xml_documents table
-     * to the xml_revisions table
+     * This method will copy a document record from the xml_documents table
+     * to the xml_revisions table if the record exists in the xml_documents table.
+     * It also will delete the record from the xml_documents if it exists.
      * @param dbconn  the jdbc connection will be used to execute query
      * @param docid  the docid of the document
+     * @param rev  the revision of the document
      * @param user  the user who request the action
-     * @throws Exception
+     * @throws SQLException
      */
-    private static void archiveDocToRevision(
-        DBConnection dbconn, String docid, String user) throws Exception {
-        String sysdate = DatabaseService.getInstance().getDBAdapter().getDateTimeFunction();
-        PreparedStatement pstmt = null;
-        try {
-            //Move the document information to xml_revisions table...
-            double start = System.currentTimeMillis() / 1000;
-            pstmt = dbconn.prepareStatement(
+    private static void archiveDocToRevision(DBConnection dbconn, String docid, int rev, String user)
+                                                                            throws SQLException {
+        //Move the document information to xml_revisions table...
+        double start = System.currentTimeMillis() / 1000;
+        try (PreparedStatement pstmt = dbconn.prepareStatement(
                 "INSERT INTO xml_revisions " + "(docid, rootnodeid, docname, doctype, "
                     + "user_owner, user_updated, date_created, date_updated, "
                     + "rev, catalog_id) "
                     + "SELECT ?, rootnodeid, docname, doctype, "
                     + "user_owner, ?, date_created, date_updated, "
                     + "rev, catalog_id " + "FROM xml_documents "
-                    + "WHERE docid = ?");
-
+                    + "WHERE docid = ? AND rev = ?")) {
             // Increase dbconnection usage count
             dbconn.increaseUsageCount(1);
             // Bind the values to the query and execute it
             pstmt.setString(1, docid);
             pstmt.setString(2, user);
             pstmt.setString(3, docid);
-            logMetacat.debug(
-                "DocumentImpl.archiveDocToRevision - executing SQL: " + pstmt.toString());
+            pstmt.setInt(4, rev);
+            logMetacat.debug("DocumentImpl.archiveDocToRevision - Executing SQL: "
+                                + pstmt.toString());
             pstmt.execute();
-            pstmt.close();
+            // Delete the record on xml_documents
+            String deleteQuery = "DELETE FROM xml_documents WHERE docid = ? AND rev = ?";
+            try (PreparedStatement pstmt2 = dbconn.prepareStatement(deleteQuery)) {
+                pstmt2.setString(1, docid);
+                pstmt2.setInt(2, rev);
+                logMetacat.debug("Running sql: " + pstmt2.toString());
+                pstmt2.execute();
+                //Usaga count increase 1
+                dbconn.increaseUsageCount(1);
+            }
             double end = System.currentTimeMillis() / 1000;
             logMetacat.debug(
                 "DocumentImpl.archiveDocToRevision - moving docs from xml_documents to "
                 + "xml_revision takes "
                     + (end - start));
-
-        } catch (SQLException e) {
-            logMetacat.error(
-                "DocumentImpl.archiveDocToRevision - SQL error: " + e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            logMetacat.error(
-                "DocumentImpl.archiveDocToRevision - General error: " + e.getMessage());
-            throw e;
-        } finally {
-            try {
-                pstmt.close();
-            } catch (SQLException ee) {
-                logMetacat.error(
-                    "DocumentImpl.archiveDocToRevision - SQL error when closing prepared "
-                    + "statement: "
-                        + ee.getMessage());
-            }
         }
+    }
+
+    /**
+     * Get the catalog id for the given document type
+     * @param docType  the document type which will be checked
+     * @return the catalog id associated with the document type. -1 will be returned if Metacat
+     *         cannot find it.
+     * @throws SQLException
+     */
+    private static int getCatalogId(String docType) throws SQLException {
+        int catalogId = -1;
+        // Because this is select statement and it needn't to roll back
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        if (docType != null && !docType.isBlank()) {
+            try {
+                // Get dbconnection
+                dbConn = DBConnectionPool
+                        .getDBConnection("DBSAXHandler.startElement");
+                serialNumber = dbConn.getCheckOutSerialNumber();
+                String sql = "SELECT catalog_id FROM xml_catalog WHERE public_id = ?";
+                try (PreparedStatement pstmt = dbConn.prepareStatement(sql)) {
+                    pstmt.setString(1, docType);
+                    ResultSet rs = pstmt.executeQuery();
+                    boolean hasRow = rs.next();
+                    if (hasRow) {
+                        catalogId = rs.getInt(1);
+                    }
+                }
+            }//try
+            finally {
+                // Return dbconnection
+                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            }//finally
+        }
+        logMetacat.debug("The catalog id for " + docType + " is " + catalogId);
+        return catalogId;
     }
 }

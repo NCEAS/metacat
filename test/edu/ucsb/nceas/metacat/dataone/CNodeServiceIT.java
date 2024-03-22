@@ -1,28 +1,7 @@
-/**
- * '$RCSfile$' Copyright: 2010 Regents of the University of California and the National Center for
- * Ecological Analysis and Synthesis Purpose: To test the Access Controls in metacat by JUnit
- *
- * '$Author$' '$Date$' '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program; if
- * not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- * 02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.dataone;
-
 
 import edu.ucsb.nceas.MCTestCase;
 import org.dataone.client.v2.formats.ObjectFormatCache;
-import org.dataone.configuration.Settings;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
@@ -51,13 +30,10 @@ import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.Log;
-import org.dataone.service.types.v2.MediaType;
-import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v2.SystemMetadata;
-import org.dataone.service.types.v2.TypeFactory;
 import org.dataone.service.util.Constants;
 import org.junit.After;
 import org.junit.Before;
@@ -77,10 +53,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 
-import static org.dataone.configuration.Settings.getConfiguration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -90,13 +64,13 @@ import static org.junit.Assert.fail;
 /**
  * A JUnit test for testing the dataone CNCore implementation
  */
-public class CNodeServiceTest {
+public class CNodeServiceIT {
 
     private final D1NodeServiceTest d1NodeServiceTest;
     /**
      * constructor for the test
      */
-    public CNodeServiceTest() {
+    public CNodeServiceIT() {
         d1NodeServiceTest = new D1NodeServiceTest("CNodeServiceTest");
     }
 
@@ -1965,5 +1939,68 @@ public class CNodeServiceTest {
         }
         data.close();
         tempInvalidJsonLDFile.delete();
+    }
+
+    /**
+     * Test the scenario the identifier doesn't match the one in the system metadata
+     * in the create method
+     * @throws Exception
+     */
+    @Test
+    public void testIdNotMatchSysmetaInCreate() throws Exception {
+        Session session = d1NodeServiceTest.getCNSession();
+        //a data file
+        Identifier guid = new Identifier();
+        guid.setValue("testIdNotMatchSysmetaInCreate." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        // Set to another pid into system metadata to make it invalid
+        Identifier another = new Identifier();
+        another.setValue("testIdNotMatchSysmetaInCreate2." + System.currentTimeMillis());
+        sysmeta.setIdentifier(another);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        try {
+            CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                                    .create(session, guid, object, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid and the create method should succeed
+        sysmeta.setIdentifier(guid);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        Identifier pid = CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                                                .create(session, guid, object, sysmeta);
+        assertTrue("The returned pid should be " + guid.getValue(),
+                    guid.getValue().equals(pid.getValue()));
+
+        // An eml metadata object
+        guid = new Identifier();
+        guid.setValue("testIdNotMatchSysmetaInCreate." + System.currentTimeMillis());
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
+        // Make the system metadata not match the guid
+        sysmeta.setIdentifier(another);
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        try {
+            CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                                    .create(session, guid, object, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid and the create method should succeed
+        sysmeta.setIdentifier(guid);
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        pid = CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                                       .create(session, guid, object, sysmeta);
+        assertTrue("The returned pid should be " + guid.getValue(),
+                                guid.getValue().equals(pid.getValue()));
     }
 }

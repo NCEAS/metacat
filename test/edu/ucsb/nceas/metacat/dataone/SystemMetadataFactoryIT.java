@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * A class for testing the generation of SystemMetadata from defaults
  */
-public class SystemMetadataFactoryTest {
+public class SystemMetadataFactoryIT {
 
     /**
      * Test the getDefaultRepicationPolicy method
@@ -63,7 +63,7 @@ public class SystemMetadataFactoryTest {
         Map<String, String> docInfo = SystemMetadataFactory.getDocumentInfoMap(docid);
         assertEquals(docInfo.get("doctype"), "eml://ecoinformatics.org/eml-2.0.1");
         assertEquals(docInfo.get("user_owner"), "cn=test,dc=dataone,dc=org");
-        assertEquals(docInfo.get("docname"), "eml");
+        assertEquals(docInfo.get("docname"), "eml://ecoinformatics.org/eml-2.0.1");
 
         // test to create system metadata
         SystemMetadata generatedSysmeta = SystemMetadataFactory.createSystemMetadata(docid);
