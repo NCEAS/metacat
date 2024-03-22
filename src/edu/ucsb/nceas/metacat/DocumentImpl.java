@@ -942,7 +942,17 @@ public class DocumentImpl {
             logMetacat.debug("DocumentImpl.delete - Start deleting doc " + docid + "...");
             try {
                 conn.setAutoCommit(false);
-                if (!inRevisionTable) {
+                if (inRevisionTable) {
+                    logMetacat.debug("DocumentImpl.delete - deleting from xml_revisions");
+                    String deleteQuery = "DELETE FROM xml_revisions WHERE docid = ? AND rev = ?";
+                    try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
+                        pstmt.setString(1, docid);
+                        pstmt.setInt(2, rev);
+                        logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                        pstmt.execute();
+                        conn.increaseUsageCount(1);
+                    }
+                } else {
                     // Delete it from xml_documents table
                     logMetacat.debug("DocumentImpl.delete - deleting from xml_documents");
                     String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
@@ -951,16 +961,6 @@ public class DocumentImpl {
                         logMetacat.debug("DocumentImpl.delete - running sql: "
                                                                          + pstmtDelete.toString());
                         pstmtDelete.execute();
-                        conn.increaseUsageCount(1);
-                    }
-                } else {
-                    logMetacat.debug("DocumentImpl.delete - deleting from xml_revisions");
-                    String deleteQuery = "DELETE FROM xml_revisions WHERE docid = ? AND rev = ?";
-                    try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
-                        pstmt.setString(1, docid);
-                        pstmt.setInt(2, rev);
-                        logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-                        pstmt.execute();
                         conn.increaseUsageCount(1);
                     }
                 }
