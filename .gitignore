@@ -1,4 +1,6 @@
 **/.idea
+**/.vscode
+metacat.iml
 
 # macOS
 .DS_Store

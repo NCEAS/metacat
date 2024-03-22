@@ -82,6 +82,9 @@ public class UpdateDOITest extends D1NodeServiceTest {
         super.setUp();
         Properties withProperties = new Properties();
         withProperties.setProperty("server.name", "UpdateDOITestMock.edu");
+        withProperties.setProperty("guid.doi.enabled", "true");
+        withProperties.setProperty("guid.doi.password", "apitest");
+        withProperties.setProperty("guid.doi.username", "apitest");
         closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
     }
 
