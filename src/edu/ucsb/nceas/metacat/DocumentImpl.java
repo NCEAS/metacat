@@ -955,9 +955,10 @@ public class DocumentImpl {
                 } else {
                     // Delete it from xml_documents table
                     logMetacat.debug("DocumentImpl.delete - deleting from xml_documents");
-                    String deleteQuery = "DELETE FROM xml_documents WHERE docid = ?";
+                    String deleteQuery = "DELETE FROM xml_documents WHERE docid = ? AND rev = ?";
                     try (PreparedStatement pstmtDelete = conn.prepareStatement(deleteQuery)) {
                         pstmtDelete.setString(1, docid);
+                        pstmtDelete.setInt(2, rev);
                         logMetacat.debug("DocumentImpl.delete - running sql: "
                                                                          + pstmtDelete.toString());
                         pstmtDelete.execute();
