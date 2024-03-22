@@ -25,9 +25,11 @@ This major release introduces breaking changes:
 
 ### New Features & Enhancements:
 
+- DataONE API actions (create, update, delete) are now transactions (fully succeeds or rolls back) [I-1642](https://github.com/NCEAS/metacat/issues/1642)
 - Metacat Admin Login with ORCID authentication [I-1694](https://github.com/NCEAS/metacat/issues/1694)
   - Operators must use an ORCID as an admin identity for Metacat authorization
   - LDAP and Password-based login is no longer supported
+- Metacat admin users now have member node admin privileges [I-1816](https://github.com/NCEAS/metacat/issues/1816)
 - Storage and Indexing Enhancements [PR-1695](https://github.com/NCEAS/metacat/pull/1695)
   - Revised use of port numbers to determine https vs. http [I-1697](https://github.com/NCEAS/metacat/issues/1697) 
   - Re-implemented mechanism to handle index tasks that failed to be put into RabbitMQ [I-1603](https://github.com/NCEAS/metacat/issues/1603)
@@ -64,7 +66,10 @@ This major release introduces breaking changes:
   - Added to default command line tools, fixes for log path issues & tailing, and optimizations to dev environment [PR-1648](https://github.com/NCEAS/metacat/pull/1648)
   - Improvements to test suite and logging exceptions [PR-1663](https://github.com/NCEAS/metacat/pull/1663), [PR-1687](https://github.com/NCEAS/metacat/pull/1687), [PR-1688](https://github.com/NCEAS/metacat/pull/1688), [PR-1737](https://github.com/NCEAS/metacat/pull/1737), [PR-1762](https://github.com/NCEAS/metacat/pull/1762),  [PR-1763](https://github.com/NCEAS/metacat/pull/1763), [PR-1770](https://github.com/NCEAS/metacat/pull/1770), [PR-1776](https://github.com/NCEAS/metacat/pull/1776), [I-1796](https://github.com/NCEAS/metacat/issues/1796)
 - Metacat Configuration and Startup Enhancements
+  - Revised property setting for dataone-indexer url so Metacat-index now works out of box [I-1828](https://github.com/NCEAS/metacat/issues/1828)
+    - PropertiesAdmin now attempts to determine where the indexer is hosted [PR-1834](https://github.com/NCEAS/metacat/pull/1834)
   - Added a new field to specify public certificates to be used by the d1_portal to verify requests [I-1812](https://github.com/NCEAS/metacat/issues/1812)
+  - Improved user experience by highlighting new properties [I-1804](https://github.com/NCEAS/metacat/issues/1804)
   - Added new 'MetacatInitializer' class to verify that Metacat has the essential components for start up [I-1721](https://github.com/NCEAS/metacat/issues/1721)
   - Added solr startup configuration checks (configured, not configured) [PR-1752](https://github.com/NCEAS/metacat/pull/1752), [PR-1656](https://github.com/NCEAS/metacat/pull/1656)
   - Improved Metacat startup process by forcing operators to configure settings when it is necessary [PR-1644](https://github.com/NCEAS/metacat/pull/1644/files)
@@ -85,6 +90,8 @@ This major release introduces breaking changes:
 
 ### Bug Fixes:
 
+- Fixed solr 9.5.0 solrconfig.xml compatibility issue [I-1822](https://github.com/NCEAS/metacat/issues/1822)
+- Resolved issue with submitting a dataset with Chrome version 120.0.6099.71 where a chrome bug prevented data objects from being saved [I-2235](https://github.com/NCEAS/metacatui/issues/2235#issuecomment-1865232012)
 - Fixed potential infinite loop created by cyclic create system metadata calls [I-1779](https://github.com/NCEAS/metacat/issues/1779)
 - Internalized Metacat exception that has no bearing on a request to save a dataset with a resource map created outside of MetacatUI [I-1781](https://github.com/NCEAS/metacat/issues/1781)
 - Fixed orphaned system metadata issue due to Chrome 120 bug [PR-1764](https://github.com/NCEAS/metacat/pull/1764)
