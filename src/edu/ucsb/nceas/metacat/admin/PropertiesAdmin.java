@@ -7,6 +7,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.util.NetworkUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
@@ -22,8 +23,14 @@ import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Vector;
 
 /**
@@ -188,9 +195,9 @@ public class PropertiesAdmin extends MetacatAdmin {
         } else {
             // The configuration form is being submitted and needs to be
             // processed.
-            Vector<String> validationErrors = new Vector<String>();
-            Vector<String> processingErrors = new Vector<String>();
-            Vector<String> processingSuccess = new Vector<String>();
+            Vector<String> validationErrors = new Vector<>();
+            Vector<String> processingErrors = new Vector<>();
+            Vector<String> processingSuccess = new Vector<>();
 
             MetacatVersion metacatVersion = null;
 
@@ -207,20 +214,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 PropertyService.persistProperties();
 
                 //auto generate the dataone.mn.baseURL property
-                try {
-                    String mnUrl =
-                        SystemUtil.getInternalContextURL() + "/"
-                            + PropertyService.getProperty("dataone.serviceName") + "/"
-                            + PropertyService.getProperty("dataone.nodeType");
-                    PropertyService.setProperty("dataone.mn.baseURL", mnUrl);
-                    // also set so the co-deployed indexer can access the API locally
-                    PropertyService.setProperty("index.d1node.baseURL", mnUrl);
-                } catch (Exception ue) {
-                    String errorString = "PropertiesAdmin.configureProperties - Could not set the property  dataone.mn.baseURL: " +
-                    ue.getMessage();
-                    logMetacat.error(errorString);
-                    validationErrors.add(errorString);
-                }
+                setMNBaseURL(validationErrors);
 
                 // Validate that the options provided are legitimate. Note that
                 // we've allowed them to persist their entries. As of this point
@@ -323,7 +317,8 @@ public class PropertiesAdmin extends MetacatAdmin {
                     Process pr = rt.exec(command);
                     int ret = pr.waitFor();
                     if (ret > 0) {
-                        logMetacat.error(IOUtils.toString(pr.getErrorStream()));
+                        logMetacat.error(IOUtils.toString(pr.getErrorStream(),
+                                                          StandardCharsets.UTF_8));
                     }
                 } catch (Exception ignorable) {
                     /// just a warning
@@ -343,7 +338,7 @@ public class PropertiesAdmin extends MetacatAdmin {
             }
 
             try {
-                if (validationErrors.size() > 0 || processingErrors.size() > 0) {
+                if (!validationErrors.isEmpty() || !processingErrors.isEmpty()) {
                     RequestUtil.clearRequestMessages(request);
                     RequestUtil.setRequestFormErrors(request, validationErrors);
                     RequestUtil.setRequestErrors(request, processingErrors);
@@ -466,7 +461,7 @@ public class PropertiesAdmin extends MetacatAdmin {
      *         validation.
      */
     protected Vector<String> validateOptions(HttpServletRequest request) {
-        Vector<String> errorVector = new Vector<String>();
+        Vector<String> errorVector = new Vector<>();
 
         // Test database connectivity
         try {
@@ -492,13 +487,120 @@ public class PropertiesAdmin extends MetacatAdmin {
      * @return true if the property is not set; otherwise false
      */
     private boolean isNotSet(String propertyKey) { 
-        String property = null; 
+        String property = null;
         try { 
             property = PropertyService.getProperty(propertyKey); 
         } catch (PropertyNotFoundException ee) { 
             property = null; 
         }
-        return (property == null || property.trim().equals("")); 
+        return (property == null || property.isBlank());
     }
 
+    /**
+     * Set the property of dataone.mn.baseURL automatically
+     *
+     * @param validationErrors the container for error message
+     */
+    protected void setMNBaseURL(Collection<String> validationErrors) {
+
+        String mnUrl = null;
+        try {
+            if (!isIndexerCodeployed()) {
+                // Since metacat-index doesn't exist with metacat in the same tomcat container,
+                // we assume the dataone-mn-baseURL in the metacat.properties will be not used
+                // by the dataone-indexer. So we don't care about its value.
+                return;
+            }
+            final String adminPage = "admin";
+            final String internalAdminPath = SystemUtil.getInternalContextURL() + "/" + adminPage;
+            final String externalAdminPath = SystemUtil.getContextURL() + "/" + adminPage;
+            final String mnUri = "/" + PropertyService.getProperty("dataone.serviceName") + "/"
+                + PropertyService.getProperty("dataone.nodeType");
+            final String internalMnUrl = SystemUtil.getInternalContextURL() + mnUri;
+            final String externalMnUrl = SystemUtil.getContextURL() + mnUri;
+            int status = HttpURLConnection.HTTP_INTERNAL_ERROR;
+
+            // At this point, the connection to base url may throw an exception
+            // since Metacat is not configured, so we will check the admin page.
+            try {
+                status = NetworkUtil.checkUrlStatus(internalAdminPath);
+            } catch (IOException e) {
+                logMetacat.warn(
+                    "Connection check failed for the INTERNAL admin url: " + internalAdminPath
+                        + "; error was: " + e.getMessage()
+                        + ". Indexer is co-deployed, but cannot connect to Metacat via localhost. "
+                        + "Trying external URL instead: " + externalAdminPath);
+            }
+            if (status == HttpURLConnection.HTTP_OK) {
+                mnUrl = internalMnUrl;
+            } else {
+                try {
+                    status = NetworkUtil.checkUrlStatus(externalAdminPath);
+                } catch (IOException e) {
+                    logMetacat.warn(
+                        "Connection check failed for the EXTERNAL admin url: " + internalAdminPath
+                            + "; error was: " + e.getMessage()
+                            + ". Indexer is co-deployed, but cannot connect to Metacat. ");
+                }
+                if (status == HttpURLConnection.HTTP_OK) {
+                    mnUrl = externalMnUrl;
+                }
+            }
+            if (status != HttpURLConnection.HTTP_OK) {
+                throw new AdminException("Indexer is co-deployed, but cannot connect to Metacat, "
+                                             + "either on the internal URL (" + internalMnUrl
+                                             + "), or the external URL (" + internalMnUrl + ")");
+            }
+            PropertyService.setProperty("dataone.mn.baseURL", mnUrl);
+            logMetacat.debug("dataone.mn.baseURL was set to: " + mnUrl);
+
+        } catch (Exception e) {
+            String errorString =
+                "Could not set the property dataone.mn.baseURL to: " + mnUrl + "; error was: "
+                    + e.getMessage();
+            logMetacat.error(errorString);
+            validationErrors.add(errorString);
+        }
+    }
+
+    /**
+     * Determine if the metacat-index context exists with metacat in the same Tomcat container.
+     * Now we use the file directory as the indicator. We maybe change it in the future.
+     * @return true if it exists; otherwise false.
+     * @throws AdminException
+     */
+    protected boolean isIndexerCodeployed() throws AdminException {
+
+        String indexContext;
+        final String noCoDeployMsg =
+            "The index.context doesn't exist, so we assume that metacat-index "
+                + "is not co-deployed with metacat in the same Tomcat container";
+
+        try {
+            indexContext = PropertyService.getProperty("index.context");
+        } catch (PropertyNotFoundException e) {
+            // metacat-index property not set, so assume indexer not co-deployed
+            logMetacat.debug(noCoDeployMsg);
+            return false;
+        }
+        if (indexContext == null || indexContext.isBlank()) {
+            // metacat-index property not set, so assume indexer not co-deployed
+            logMetacat.debug(noCoDeployMsg);
+            return false;
+        }
+        try {
+            String webDir = PropertyService.getProperty("application.deployDir");
+            File indexDir  = new File(webDir + "/" + indexContext);
+            logMetacat.debug("The metacat-index directory is " + indexDir.getAbsolutePath());
+            if (indexDir.exists() && indexDir.isDirectory()) {
+                logMetacat.debug("The index.context exists, so we assume that metacat-index "
+                                     + "is co-deployed with metacat in the same Tomcat container");
+                return true;
+            }
+        } catch (PropertyNotFoundException e) {
+            throw new AdminException(e.getMessage());
+        }
+        logMetacat.debug(noCoDeployMsg);
+        return false;
+    }
 }
