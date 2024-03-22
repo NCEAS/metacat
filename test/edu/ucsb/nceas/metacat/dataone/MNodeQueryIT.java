@@ -1162,7 +1162,7 @@ public class MNodeQueryIT {
             resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
         }
         assertNotNull(resultStr);
-        assertTrue(resultStr.contains("<date name=\"pubDate\">2017-07-26T10:15:22Z</date>"));
+        assertTrue(resultStr.contains("<str name=\"pubDate\">2017-07-26T10:15:22Z</str>"));
         assertTrue(resultStr.contains(
             "<str name=\"formatId\">http://www.isotc211.org/2005/gmd-pangaea</str>"));
     }
