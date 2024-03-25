@@ -46,8 +46,8 @@ public class NetworkUtilTest {
             fail("Test shouldn't get there since the url is blank");
         } catch (IOException e) {
             assertTrue(
-                "The error message should have no protocol.",
-                e.getMessage().contains("no protocol"));
+                "The error message should contain 'blank': " + e.getMessage(),
+                e.getMessage().contains("blank"));
             throw e;
         }
     }
