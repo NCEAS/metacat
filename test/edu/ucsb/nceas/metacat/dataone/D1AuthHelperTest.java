@@ -141,8 +141,7 @@ public class D1AuthHelperTest {
         sysmeta.addReplica(replicaA);
         sysmeta.addReplica(replicaR);
 
-
-        // build a matching Session
+        // Build a default session - this session is not authorized.
         defaultSession = new Session();
         defaultSession.setSubject(TypeFactory.buildSubject("principal_subject"));
         SubjectInfo subjectInfo = new SubjectInfo();
@@ -152,7 +151,6 @@ public class D1AuthHelperTest {
         p1.addEquivalentIdentity(TypeFactory.buildSubject("eq2"));
         subjectInfo.addPerson(p1);
         defaultSession.setSubjectInfo(subjectInfo);
-
 
         authMNSession = new Session();
         authMNSession.setSubject(TypeFactory.buildSubject("authMNSubject"));
@@ -235,6 +233,46 @@ public class D1AuthHelperTest {
         } catch (Exception e) {
             fail(e.getMessage());
         }
+    }
+
+    /**
+     * Confirm that 'doIsAuthorized' authorizes approved session with a different subject
+     * ("principal_subject") but has equivalent identities ("eq1", "eq2")
+     */
+    @Test
+    public void testDoIsAuthorized_approvedIdentity() throws Exception {
+        authDelMock.doIsAuthorized(defaultSession, sysmeta, Permission.CHANGE_PERMISSION);
+    }
+
+    /**
+     * Confirm that 'doIsAuthorized' authorizes approved session with equivalent identity ("eq2"
+     * which is equivalent to "eq1" and "principal_subject")
+     */
+    @Test
+    public void testDoIsAuthorized_approvedEquivalentIdentity() throws Exception {
+        Session localEquivalentIdentitySession = new Session();
+        localEquivalentIdentitySession.setSubject(TypeFactory.buildSubject("eq2"));
+
+        Mockito.doReturn(true).when(authDelMock)
+            .checkExpandedPermissions(localEquivalentIdentitySession, sysmeta,
+                Permission.CHANGE_PERMISSION
+            );
+
+        authDelMock.doIsAuthorized(
+            localEquivalentIdentitySession, sysmeta, Permission.CHANGE_PERMISSION);
+    }
+
+    /**
+     * Confirm that 'doIsAuthorized' throws exception with unapproved sysmeta subject
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoIsAuthorized_notApprovedIdentity() throws Exception {
+        Mockito.doReturn(false).when(authDelMock)
+            .checkExpandedPermissions(notAuthorizedSession, sysmeta,
+                Permission.CHANGE_PERMISSION
+            );
+
+        authDelMock.doIsAuthorized(notAuthorizedSession, sysmeta, Permission.CHANGE_PERMISSION);
     }
 
     /**

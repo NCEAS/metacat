@@ -118,7 +118,7 @@ public class D1AuthHelper {
     public void doIsAuthorized(Session session, SystemMetadata sysmeta, Permission permission) throws ServiceFailure, NotAuthorized
     {
         if(session != null && session.getSubject() != null) {
-            logMetacat.debug("D1AuthHepler.doIsAuthorzied - the session is "+session.getSubject().getValue());
+            logMetacat.debug("D1AuthHelper.doIsAuthorized - the session is "+session.getSubject().getValue());
         }
         List<ServiceFailure> exceptions = new ArrayList<>();
         // most efficient step first - uses materials passed in
@@ -153,6 +153,7 @@ public class D1AuthHelper {
 
         // this makes 1 or more calls to listSubjects, so is the most expensive
         try {
+            logMetacat.debug("D1AuthHelper.doIsAuthorized - Checking expanded permissions");
             if (this.checkExpandedPermissions(session, sysmeta, permission)) {
                 return;
             }
