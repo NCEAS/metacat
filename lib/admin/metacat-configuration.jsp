@@ -110,14 +110,14 @@
         %>
 
         <%
-        if ((dbConfigured != null && dbConfigured) ||
-                (metacatVersion != null && databaseVersion != null &&
-                        metacatVersion.compareTo(databaseVersion) == 0)) {
+            if ((dbConfigured != null && dbConfigured) || (metacatVersion != null
+                    && databaseVersion != null && metacatVersion.compareTo(databaseVersion) == 0)) {
         %>
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i> configured</td>
             <td class="property-title"> Database Installation/Upgrade</td>
-            <td class="configure-link inactive"> Version: <%=databaseVersion.getVersionString()%> </td>
+            <td class="configure-link inactive"> Version: <%=databaseVersion.getVersionString()%>
+            </td>
         </tr>
         <%
         } else {
@@ -146,7 +146,8 @@
         %>
 
         <%
-        if (solrserverConfigured != null && solrserverConfigured.equals(PropertyService.CONFIGURED)) {
+            if (solrserverConfigured != null && solrserverConfigured.equals(
+                    PropertyService.CONFIGURED)) {
         %>
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i> configured</td>
@@ -156,7 +157,8 @@
                     <i class="icon-cogs"></i> Reconfigure Now</a></td>
         </tr>
         <%
-        } else if (solrserverConfigured != null && solrserverConfigured.equals(PropertyService.BYPASSED)){
+        } else if (solrserverConfigured != null && solrserverConfigured.equals(
+                PropertyService.BYPASSED)) {
         %>
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i> bypassed</td>
@@ -184,9 +186,9 @@
             <td class="property-title"> Solr Server Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
-                 if ( (dbConfigured != null && dbConfigured) ||
-                        (metacatVersion != null && databaseVersion != null &&
-                        metacatVersion.compareTo(databaseVersion) == 0)) {
+                    if ((dbConfigured != null && dbConfigured) || (metacatVersion != null
+                            && databaseVersion != null
+                            && metacatVersion.compareTo(databaseVersion) == 0)) {
             %>
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=solrserver">
@@ -223,7 +225,8 @@
                     <i class="icon-cogs"></i>Reconfigure Now</a></td>
         </tr>
         <%
-        } else if (dataoneConfigured != null && dataoneConfigured.equals(PropertyService.BYPASSED)){
+        } else if (dataoneConfigured != null && dataoneConfigured.equals(
+                PropertyService.BYPASSED)) {
         %>
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i> bypassed</td>
@@ -403,7 +406,8 @@
         For Tomcat, this would mean calling "sudo /etc/init.d/tomcat6 restart" or
         an equivalent command appropriate to your operating system. After restarting,
         you can access your new Metacat server at the URL:
-          <a href="<%= contextURL %>"><%= contextURL  %></a>
+        <a href="<%= contextURL %>"><%= contextURL  %>
+        </a>
     </p>
     <%
     } else {
@@ -413,7 +417,8 @@
         Please restart Tomcat so that the webapps are initialized with these settings.
         Note that this may take some time while the system initializes with the
         new configuration values. If this is the first time installing the Solr
-                 server, please reindex all objects.</div>
+        server, please reindex all objects.
+    </div>
     <%
             }
         }

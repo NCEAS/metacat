@@ -43,8 +43,8 @@ public class LoginAdmin extends MetacatAdmin {
      * Utility method to determine if an incoming request action requires intervention by this class
      *
      * @param request The http request information
-     * @param action   The `action` contained in the `MetacatAdminServlet.ACTION_PARAM` parameter
-     *                 of the request
+     * @param action  The `action` contained in the `MetacatAdminServlet.ACTION_PARAM` parameter of
+     *                the request
      * @return boolean true if intervention is needed by this class; false otherwise
      */
     public boolean needsLoginAdminHandling(HttpServletRequest request, String action)
@@ -106,7 +106,8 @@ public class LoginAdmin extends MetacatAdmin {
             default -> {
                 logMetacat.debug("Action = " + action
                                      + " and User not logged in; sending to login flow start page");
-                addProcessingMessage(request, "You must log in as an administrative user, "
+                addProcessingMessage(
+                    request, "You must log in as an administrative user, "
                         + "before you can continue with Metacat configuration.");
 
                 startLoginFlow(request, response);
@@ -134,8 +135,8 @@ public class LoginAdmin extends MetacatAdmin {
     }
 
     /**
-     * Handle the case where the User has authenticated via ORCID and the orcid site has
-     * redirected the user here. User does not yet have the token.
+     * Handle the case where the User has authenticated via ORCID and the orcid site has redirected
+     * the user here. User does not yet have the token.
      *
      * @param request  The http request information
      * @param response The http response to be sent back to the client
@@ -157,8 +158,8 @@ public class LoginAdmin extends MetacatAdmin {
     /**
      * Use the ORCID auth token to log the admin user in
      *
-     * @param request  The http request information, including the jwt token in the
-     *                 'Authorization' header
+     * @param request  The http request information, including the jwt token in the 'Authorization'
+     *                 header
      * @param response The http response to be sent back to the client
      * @throws AdminException if unable to forward request
      */
@@ -197,8 +198,7 @@ public class LoginAdmin extends MetacatAdmin {
                 RequestUtil.clearRequestMessages(request);
                 RequestUtil.setRequestSuccess(request, processingSuccess);
                 RequestUtil.forwardRequest(request, response,
-                                           MetacatAdminServlet.PATH_ADMIN_HOMEPAGE,
-                                           null);
+                                           MetacatAdminServlet.PATH_ADMIN_HOMEPAGE, null);
             }
         } catch (MetacatUtilException mue) {
             AdminException adminException = new AdminException(
@@ -244,7 +244,8 @@ public class LoginAdmin extends MetacatAdmin {
     // Calls cleanRequest(), sets the optional provided `attribute` to `true` in the request, and
     // then forwards to `admin-login.jsp`
     private static void forwardToLoginStartPage(
-        HttpServletRequest request, HttpServletResponse response, String attribute, String processingMessage) throws MetacatUtilException {
+        HttpServletRequest request, HttpServletResponse response, String attribute,
+        String processingMessage) throws MetacatUtilException {
 
         // clean up all messages except processingErrors
         Vector<String> processingErrors = (Vector<String>) request.getAttribute("processingErrors");

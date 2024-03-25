@@ -14,6 +14,7 @@ html {
     width: 100%;
     height: 100%;
 }
+
 body {
     font-family: "Helvetica", "Source Sans Pro", sans-serif;
 }
@@ -144,9 +145,11 @@ em {
     background-color: #166194;
     margin: 0px;
 }
+
 .header > ul {
     float: left;
 }
+
 .header > ul > li > img {
     height: 50px;
     width: auto;
@@ -227,6 +230,7 @@ input[type="text"] {
     margin: 0.7em 0px 0px 10px;
     float: left;
 }
+
 .checkradio-description {
     font: 400 .8em/.8em Source Sans Pro;
     color: #666666;
@@ -237,6 +241,7 @@ input[type="text"] {
 .radiowrapper {
     padding-top: 10px;
 }
+
 .icon-question-sign {
     color: #166194;
     font-size: 1.2em;
@@ -318,6 +323,7 @@ input[type="text"] {
     margin: auto;
     max-width: 350px;
 }
+
 .heading-comment {
     margin-bottom: 0px;
 }
@@ -384,15 +390,13 @@ input[type="text"] {
     margin-top: 20px;
 }
 
-frame[name="bottom"] table
-{
+frame[name="bottom"] table {
     border-collapse: collapse;
     border: 1px solid #333;
     font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
 }
 
-frame[name="bottom"] table > tbody > td
-{
+frame[name="bottom"] table > tbody > td {
     padding: 5px;
 }
 
@@ -467,8 +471,12 @@ i {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .error-modal {
@@ -482,6 +490,7 @@ i {
     overflow: auto;
     background-color: rgba(0, 0, 0, 0.4);
 }
+
 .modal-content {
     background-color: #fefefe;
     margin: 15% auto;

@@ -17,6 +17,7 @@ import java.util.Vector;
  * mechanism as of 2024. We currently still support ldap and file-based auth for legacy deployments
  * (hence the continued need fo the plugin framework), but in order to select these, the operator
  * has to edit metacat-site.properties by hand.
+ *
  * @author brooke
  */
 public class AuthOrcid implements AuthInterface {
@@ -105,7 +106,8 @@ public class AuthOrcid implements AuthInterface {
 
     private void logUnsupported() {
 
-        Optional<StackFrame> caller = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
+        Optional<StackFrame> caller =
+            StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
                 .walk(stream -> stream.skip(2).findFirst());
 
         String message = "Calls to this method are not supported for ORCID-based auth";

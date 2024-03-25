@@ -1,27 +1,21 @@
 /**
- *  '$RCSfile$'
- *    Purpose: A Class that implements administrative methods 
- *  Copyright: 2008 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
+ * '$RCSfile$' Purpose: A Class that implements administrative methods Copyright: 2008 Regents of
+ * the University of California and the National Center for Ecological Analysis and Synthesis
  * Authors: Michael Daigle
  *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
+ * '$Author$' '$Date$' '$Revision$'
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * You should have received a copy of the GNU General Public License along with this program; if
+ * not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307  USA
  */
 
 package edu.ucsb.nceas.metacat.util;
@@ -81,7 +75,8 @@ public class RequestUtil {
      * private constructor - all methods are static so there is no
      * no need to instantiate.
      */
-	private RequestUtil() {}
+    private RequestUtil() {
+    }
 
     /**
      * Forward a request that was received by this servlet on to another JSP
@@ -95,8 +90,9 @@ public class RequestUtil {
      *            the context-relative URL to which the request is forwarded
      * @param params the request parameters.  these will be added to the request
      */
-	public static void forwardRequest(HttpServletRequest request, HttpServletResponse response, 
-			String destinationUrl, Hashtable<String, String[]> params) throws MetacatUtilException {
+    public static void forwardRequest(
+        HttpServletRequest request, HttpServletResponse response, String destinationUrl,
+        Hashtable<String, String[]> params) throws MetacatUtilException {
 
         String paramsString = paramsToQuery(params);
         if (paramsString != null && !paramsString.isBlank()) {
@@ -109,11 +105,13 @@ public class RequestUtil {
         try {
             servletContext.getRequestDispatcher(destinationUrl).forward(request, response);
         } catch (IOException ioe) {
-			throw new MetacatUtilException("RequestUtil.forwardRequest - I/O error when forwarding to " + 
-					destinationUrl + " : " + ioe.getMessage());			
+            throw new MetacatUtilException(
+                "RequestUtil.forwardRequest - I/O error when forwarding to " + destinationUrl
+                    + " : " + ioe.getMessage());
         } catch (ServletException se) {
-			throw new MetacatUtilException("RequestUtil.forwardRequest - Servlet error when forwarding to " + 
-					destinationUrl + " : " + se.getMessage());			
+            throw new MetacatUtilException(
+                "RequestUtil.forwardRequest - Servlet error when forwarding to " + destinationUrl
+                    + " : " + se.getMessage());
         }
     }
 
@@ -124,7 +122,8 @@ public class RequestUtil {
      * provided, the file will be retrieved from that skin.  Otherwise, the file
      * will be retrieved from the system default skin.
      *
-	 * For more specific file location, use: forwardRequest(request,response, destinationUrl, params)
+     * For more specific file location, use: forwardRequest(request,response, destinationUrl,
+     * params)
      *
      * @param request
      *            to be forwarded
@@ -133,12 +132,15 @@ public class RequestUtil {
      * @param params
      *            the request parameters.  these will be added to the request.
      */
-	public static void forwardRequest(HttpServletRequest request, HttpServletResponse response, 
+    public static void forwardRequest(
+        HttpServletRequest request, HttpServletResponse response,
         Hashtable<String, String[]> params) throws MetacatUtilException {
 
         String forwardTos[] = params.get("forwardto");
         if (forwardTos == null || forwardTos[0].equals("")) {
-			throw new MetacatUtilException("RequestUtil.forwardRequest - forwardto must be set in parameters when forwarding.");			
+            throw new MetacatUtilException(
+                "RequestUtil.forwardRequest - forwardto must be set in parameters when forwarding"
+                    + ".");
         }
 
         String forwardTo = forwardTos[0];
@@ -150,8 +152,8 @@ public class RequestUtil {
                 qformat = PropertyService.getProperty("application.default-style");
             } catch (PropertyNotFoundException pnfe) {
                 qformat = "default";
-				logMetacat.warn("RequestUtil.forwardRequest - could not get property " + 
-						"'application.default-style'. Using 'default'");
+                logMetacat.warn("RequestUtil.forwardRequest - could not get property "
+                                    + "'application.default-style'. Using 'default'");
             }
         } else {
             qformat = qformats[0];
@@ -161,19 +163,19 @@ public class RequestUtil {
         destinationUrl += "?" + paramsToQuery(params);
 
         logMetacat.debug("RequestUtil.forwardRequest - Forwarding request to " + destinationUrl);
-		ServletContext servletContext = request.getSession()
-				.getServletContext();
+        ServletContext servletContext = request.getSession().getServletContext();
         try {
             servletContext.getRequestDispatcher(destinationUrl).forward(request, response);
         } catch (IOException ioe) {
-			throw new MetacatUtilException("RequestUtil.forwardRequest - I/O error when forwarding to " + 
-					destinationUrl + " : " + ioe.getMessage());			
+            throw new MetacatUtilException(
+                "RequestUtil.forwardRequest - I/O error when forwarding to " + destinationUrl
+                    + " : " + ioe.getMessage());
         } catch (ServletException se) {
-			throw new MetacatUtilException("RequestUtil.forwardRequest - Servlet error when forwarding to " + 
-					destinationUrl + " : " + se.getMessage());			
+            throw new MetacatUtilException(
+                "RequestUtil.forwardRequest - Servlet error when forwarding to " + destinationUrl
+                    + " : " + se.getMessage());
         }
     }
-
 
 
     /**
@@ -188,15 +190,12 @@ public class RequestUtil {
      *            map of parameters to add to the post
      * @returns a string holding the response body
      */
-	public static String post(HttpClient httpclient, String url,
-			HashMap<String, String> paramMap) throws IOException, HttpException {
+    public static String post(HttpClient httpclient, String url, HashMap<String, String> paramMap)
+        throws IOException, HttpException {
 
-        httpclient.getParams().setParameter(
-        		CoreProtocolPNames.PROTOCOL_VERSION, 
-        	    HttpVersion.HTTP_1_1);
-    	httpclient.getParams().setParameter(
-    			CoreProtocolPNames.HTTP_CONTENT_CHARSET, 
-    			encoding );
+        httpclient.getParams()
+            .setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+        httpclient.getParams().setParameter(CoreProtocolPNames.HTTP_CONTENT_CHARSET, encoding);
         HttpPost post = new HttpPost(url);
         //set the params
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
@@ -219,7 +218,8 @@ public class RequestUtil {
         return null;
     }
 
-	public static String get(String urlString, Hashtable<String, String[]> params)  throws MetacatUtilException {	
+    public static String get(String urlString, Hashtable<String, String[]> params)
+        throws MetacatUtilException {
         try {
             URL url = new URL(urlString);
             URLConnection urlConn = url.openConnection();
@@ -233,8 +233,7 @@ public class RequestUtil {
             pw.close();
 
             // get the input from the request
-			BufferedReader in = 
-				new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
 
             StringBuffer sb = new StringBuffer();
             String line;
@@ -245,9 +244,11 @@ public class RequestUtil {
 
             return sb.toString();
         } catch (MalformedURLException mue) {
-			throw new MetacatUtilException("URL error when contacting: " + urlString + " : " + mue.getMessage());
+            throw new MetacatUtilException(
+                "URL error when contacting: " + urlString + " : " + mue.getMessage());
         } catch (IOException ioe) {
-			throw new MetacatUtilException("I/O error when contacting: " + urlString + " : " + ioe.getMessage());
+            throw new MetacatUtilException(
+                "I/O error when contacting: " + urlString + " : " + ioe.getMessage());
         }
     }
 
@@ -316,8 +317,7 @@ public class RequestUtil {
                 if (sessionCookie != null) {
                     // and there is a JSESSIONID cookie
                     sessionId = sessionCookie.getValue();
-					logMetacat.debug("session ID provided in request cookie: "
-							+ sessionId);
+                    logMetacat.debug("session ID provided in request cookie: " + sessionId);
                 }
             }
             if (sessionId == null) {
@@ -330,12 +330,12 @@ public class RequestUtil {
         // if the session id is registered in SessionService, get the
         // SessionData for it. Otherwise, use the public session.
         if (SessionService.getInstance().isSessionRegistered(sessionId)) {
-			logMetacat.debug("retrieving session data from session service "
-					+ "for session id " + sessionId);
+            logMetacat.debug(
+                "retrieving session data from session service " + "for session id " + sessionId);
             sessionData = SessionService.getInstance().getRegisteredSession(sessionId);
         } else {
-			logMetacat.debug("using public session.  Given session id is "
-					+ "registered: " + sessionId);
+            logMetacat.debug(
+                "using public session.  Given session id is " + "registered: " + sessionId);
             sessionData = SessionService.getInstance().getPublicSession();
         }
 
@@ -358,9 +358,11 @@ public class RequestUtil {
             String password = null;
             String[] groupNames = null;
             String name = null;
-			if (subjectInfo != null && subjectInfo.getPersonList() != null && subjectInfo.getPersonList().size() > 0) {
+            if (subjectInfo != null && subjectInfo.getPersonList() != null
+                && subjectInfo.getPersonList().size() > 0) {
                 name = subjectInfo.getPerson(0).getFamilyName();
-				if (subjectInfo.getPerson(0).getGivenNameList() != null && subjectInfo.getPerson(0).getGivenNameList().size() > 0) {
+                if (subjectInfo.getPerson(0).getGivenNameList() != null
+                    && subjectInfo.getPerson(0).getGivenNameList().size() > 0) {
                     name = subjectInfo.getPerson(0).getGivenName(0) + " " + name;
                 }
                 List<String> groups = new ArrayList<String>();
@@ -481,8 +483,7 @@ public class RequestUtil {
      * @param errorVector
      *            a list of error strings
      */
-	public static void setRequestErrors(HttpServletRequest request,
-			Vector<String> errorVector) {
+    public static void setRequestErrors(HttpServletRequest request, Vector<String> errorVector) {
         request.setAttribute("formErrors", "true");
         request.setAttribute("processingErrors", errorVector);
     }
@@ -496,8 +497,8 @@ public class RequestUtil {
      * @param errorVector
      *            a list of form error strings
      */
-	public static void setRequestFormErrors(HttpServletRequest request,
-			Vector<String> errorVector) {
+    public static void setRequestFormErrors(
+        HttpServletRequest request, Vector<String> errorVector) {
         request.setAttribute("formErrors", "true");
         request.setAttribute("formFieldErrors", errorVector);
     }
@@ -511,8 +512,7 @@ public class RequestUtil {
      * @param errorVector
      *            a list of success message strings
      */
-	public static void setRequestSuccess(HttpServletRequest request,
-			Vector<String> successVector) {
+    public static void setRequestSuccess(HttpServletRequest request, Vector<String> successVector) {
         request.setAttribute("formSuccess", "true");
         request.setAttribute("processingSuccess", successVector);
     }
@@ -526,8 +526,7 @@ public class RequestUtil {
      * @param errorVector
      *            a list of general message strings
      */
-	public static void setRequestMessage(HttpServletRequest request,
-			Vector<String> messageVector) {
+    public static void setRequestMessage(HttpServletRequest request, Vector<String> messageVector) {
         request.setAttribute("formMessage", "true");
         request.setAttribute("processingMessage", messageVector);
     }
@@ -579,6 +578,5 @@ public class RequestUtil {
 
         return query;
     }
-
 
 }
