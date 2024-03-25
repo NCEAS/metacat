@@ -185,6 +185,27 @@ public class D1AuthHelperTest {
     }
 
     /**
+     * Confirm that doUpdateAuth authorizes a Metacat admin
+     */
+    @Test
+    public void testDoUpdateAuth_metacatAdmin() throws Exception {
+        SystemMetadata sysmetaEdited = getGenericSysmetaObject();
+        sysmetaEdited.setAuthoritativeMemberNode(
+            TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
+
+        Session sessionMetacatAdmin = new Session();
+        sessionMetacatAdmin.setSubject(
+            TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
+
+        try {
+            authDelMock.doUpdateAuth(sessionMetacatAdmin, sysmetaEdited, Permission.CHANGE_PERMISSION,
+                TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    /**
      * Check that doUpdateAuth throws exception when 'authoritativeMemberNode' is not the same
      * as what is found in the sysmeta object.
      */
@@ -222,6 +243,18 @@ public class D1AuthHelperTest {
         sessionCnAdmin.setSubject(TypeFactory.buildSubject("notAFriend"));
 
         authDelMock.doCNOnlyAuthorization(sessionCnAdmin);
+    }
+
+    /**
+     * Confirm that 'doCNOnlyAuthorization' authorizes a metacat admin
+     */
+    @Test(expected = NotAuthorized.class)
+    public void testDoCNOnlyAuthorization_metacatAdmin() throws Exception {
+        Session sessionMetacatAdmin = new Session();
+        sessionMetacatAdmin.setSubject(
+            TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
+
+        authDelMock.doCNOnlyAuthorization(sessionMetacatAdmin);
     }
 
     /**
@@ -376,6 +409,23 @@ public class D1AuthHelperTest {
     public void testDoGetSysmetaAuthorization() {
         try {
             authDel.doGetSysmetaAuthorization(session, sysmeta, Permission.WRITE);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+
+    }
+
+    /**
+     * Confirm doGetSysmetaAuthorization authorizes a Metacat admin
+     */
+    @Test
+    public void testDoGetSysmetaAuthorization_metacatAdmin() {
+        try {
+            Session sessionMetacatAdmin = new Session();
+            sessionMetacatAdmin.setSubject(
+                TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
+
+            authDel.doGetSysmetaAuthorization(sessionMetacatAdmin, sysmeta, Permission.WRITE);
         } catch (Exception e) {
             fail(e.getMessage());
         }
