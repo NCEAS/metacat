@@ -367,19 +367,6 @@ public class D1AuthHelper {
             exceptions.add(e);
         }
 
-        // If subject is not a LocalNodeAdmin or CNAdmin, check to see if subject is a
-        // Metacat admin (auth.administrators) - who also has admin privileges like the above
-        try {
-            logMetacat.debug("D1AuthHelper.doAdminAuthorization: Checking " + sessionSubjectValue
-                + " for Metacat admin privileges.");
-            if (AuthUtil.isAdministrator(sessionSubjectValue, null)) {
-                return;
-            }
-        } catch (MetacatUtilException mue) {
-            ServiceFailure sf = new ServiceFailure("0000", mue.getMessage());
-            exceptions.add(sf);
-        }
-
         // This is a guard rail. An exception will be thrown if the JVM reaches this part of
         // the code and exceptions list is empty. Unless a session subject is explicitly authorized,
         // the session is not authorized.
@@ -726,36 +713,36 @@ public class D1AuthHelper {
 /////////////  /////////////  
 //implementations         //
 /////////////  /////////////  
-       
-       
+
+
     /**
      * Checks Metacat properties representing the local Node document for
-     * matching Node.subjects.  The NodeType parameter can be set to limit this 
+     * matching Node.subjects.  The NodeType parameter can be set to limit this
      * authorization check if needed.
      * @param session
-     * @param nodeType  
+     * @param nodeType
      * @return
      * @throws ServiceFailure
      */
     protected boolean isLocalNodeAdmin(Session session, NodeType nodeType) throws ServiceFailure {
 
         boolean allowed = false;
-        
+
         // must have a session in order to check admin 
         if (session == null) {
            logMetacat.debug("In isLocalNodeAdmin(), session is null ");
            return false;
         }
-        
+
         logMetacat.debug("In isLocalNodeAdmin(), MN authorization for the user " +
              session.getSubject().getValue());
-        
+
         Node node = MNodeService.getInstance(request).getCapabilities();
         NodeReference nodeReference = node.getIdentifier();
         logMetacat.debug("In isLocalNodeAdmin(), Node reference is: " + nodeReference.getValue());
-        
+
         Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
-        
+
         if (nodeType == null || node.getType() == nodeType) {
             List<Subject> nodeSubjects = node.getSubjectList();
             if (sessionSubjects != null) {
@@ -769,10 +756,24 @@ public class D1AuthHelper {
                             allowed = true; // subject of session == this node's subect
                             break outer;
                         }
-                    }            
+                    }
                 }
             }
         }
+
+        String sessionSubjectValue = session.getSubject().getValue();
+        // Check to see if subject is a Metacat admin (auth.admin) - who also has admin privileges
+        try {
+            logMetacat.debug("D1AuthHelper.isLocalNodeAdmin: Checking " + sessionSubjectValue
+                + " for Metacat admin privileges.");
+            if (AuthUtil.isAdministrator(sessionSubjectValue, null)) {
+                allowed = true;
+            }
+        } catch (MetacatUtilException mue) {
+            ServiceFailure sf = new ServiceFailure("0000", mue.getMessage());
+            throw sf;
+        }
+
         logMetacat.debug("In is isLocalNodeAdmin method. Is this a local node admin? "+allowed);
         return allowed;
     }
