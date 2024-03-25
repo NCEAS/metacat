@@ -11,8 +11,8 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * A JUnit test class for the AuthUil class.
- * @author tao
  *
+ * @author tao
  */
 public class AuthUtilTest {
     private static final String LDAP = "uid=test,o=NCEAS,dc=ecoinformatics,dc=org";
@@ -33,6 +33,7 @@ public class AuthUtilTest {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         LIST = LDAP + AuthUtil.DELIMITER + ORCID;
     }
+
     /**
      * Constructor
      */

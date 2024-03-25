@@ -2,7 +2,6 @@ package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.service.types.v1.Session;
@@ -69,8 +68,7 @@ public class LoginAdminTest {
 
         // not logged in
         assertTrue("needsLoginAdminHandling should return TRUE if action is 'logout'!",
-                   loginAdmin.needsLoginAdminHandling(request,
-                                                         MetacatAdminServlet.ACTION_LOGOUT));
+                   loginAdmin.needsLoginAdminHandling(request, MetacatAdminServlet.ACTION_LOGOUT));
         assertTrue("needsLoginAdminHandling should return TRUE if action is 'mcLogin'!",
                    loginAdmin.needsLoginAdminHandling(request,
                                                       MetacatAdminServlet.ACTION_LOGIN_MC));
@@ -82,14 +80,17 @@ public class LoginAdminTest {
             authUtilMock.when(() -> AuthUtil.isUserLoggedInAsAdmin(any(HttpServletRequest.class)))
                 .thenReturn(true);
 
-            assertFalse("needsLoginAdminHandling should return FALSE if user IS logged in!",
-                        loginAdmin.needsLoginAdminHandling(request, "configure"));
-            assertTrue("needsLoginAdminHandling should return TRUE for 'logout', even if user is "
-                    + "logged in!", loginAdmin.needsLoginAdminHandling(request,
-                                                                       MetacatAdminServlet.ACTION_LOGOUT));
-            assertTrue("needsLoginAdminHandling should return TRUE for 'mcLogin', even if user is "
-                    + "logged in!", loginAdmin.needsLoginAdminHandling(request,
-                                                                       MetacatAdminServlet.ACTION_LOGIN_MC));
+            assertFalse(
+                "needsLoginAdminHandling should return FALSE if user IS logged in!",
+                loginAdmin.needsLoginAdminHandling(request, "configure"));
+            assertTrue(
+                "needsLoginAdminHandling should return TRUE for 'logout', even if user is "
+                    + "logged in!",
+                loginAdmin.needsLoginAdminHandling(request, MetacatAdminServlet.ACTION_LOGOUT));
+            assertTrue(
+                "needsLoginAdminHandling should return TRUE for 'mcLogin', even if user is "
+                    + "logged in!",
+                loginAdmin.needsLoginAdminHandling(request, MetacatAdminServlet.ACTION_LOGIN_MC));
         }
     }
 
@@ -152,7 +153,6 @@ public class LoginAdminTest {
     }
 
 
-
     @Test
     public void startLoginFlow() throws Exception {
         expectForwardURIRegex(LOGIN_JSP);
@@ -183,7 +183,8 @@ public class LoginAdminTest {
 
         verify(requestDispatcher, times(0)).forward(request, response);
 
-        try (MockedStatic<PortalCertificateManager> mockPortalCM = mockStatic(PortalCertificateManager.class)) {
+        try (MockedStatic<PortalCertificateManager> mockPortalCM = mockStatic(
+            PortalCertificateManager.class)) {
             createMockPortalCertMgr(mockPortalCM, TEST_ORCID1);
             Properties withProperties = new Properties();
             withProperties.setProperty(
@@ -219,7 +220,8 @@ public class LoginAdminTest {
 
         verify(requestDispatcher, times(0)).forward(request, response);
 
-        try (MockedStatic<PortalCertificateManager> mockPortalCM = mockStatic(PortalCertificateManager.class)) {
+        try (MockedStatic<PortalCertificateManager> mockPortalCM = mockStatic(
+            PortalCertificateManager.class)) {
 
             createMockPortalCertMgr(mockPortalCM, null);
             loginAdmin.doMetacatLogin(request, response);
@@ -238,10 +240,10 @@ public class LoginAdminTest {
 
         try (MockedStatic<AuthUtil> mockAuthUtil = mockStatic(AuthUtil.class)) {
             String TEST_ORCID1 = "https://orcid.org/0000-0002-1472-913X";
-            mockAuthUtil.when(() -> AuthUtil.authenticateUserWithCN(any(HttpServletRequest.class))).thenReturn(TEST_ORCID1);
+            mockAuthUtil.when(() -> AuthUtil.authenticateUserWithCN(any(HttpServletRequest.class)))
+                .thenReturn(TEST_ORCID1);
             Properties withProperties = new Properties();
-            withProperties.setProperty(
-                "auth.administrators",
+            withProperties.setProperty("auth.administrators",
                                        "https://orcid.org/0000-0002-1234-5678;some-other-nonsense");
             try (MockedStatic<PropertyService> ignored =
                      LeanTestUtils.initializeMockPropertyService(withProperties)) {
