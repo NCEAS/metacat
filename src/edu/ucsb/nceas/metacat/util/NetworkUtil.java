@@ -32,7 +32,7 @@ public class NetworkUtil {
             return checkUrlStatus(urlStr, -1);
         } catch (URISyntaxException e) {
             throw new IOException("URISyntaxException (" + e.getMessage()
-                    + ") trying to parse a URI from: " + urlStr, e);
+                    + ") trying to parse a URI from: <" + urlStr + ">", e);
         }
     }
 
@@ -56,7 +56,7 @@ public class NetworkUtil {
         throws URISyntaxException, IOException {
 
         if (urlStr == null || urlStr.isBlank()) {
-            throw new URISyntaxException((urlStr == null) ? "null" : "blank", "urlStr is empty");
+            throw new URISyntaxException((urlStr == null) ? "null" : "blank", "Received urlStr");
         }
         HttpURLConnection connection = null;
         timeoutMs = (timeoutMs < 0) ? DEFAULT_TIMEOUT_MS : timeoutMs;
