@@ -344,15 +344,28 @@ public class D1AuthHelperTest {
     }
 
     /**
-     * Confirm that isLocalNodeAdmin returns true with valid NodeAdmin subject
+     * Confirm that isLocalNodeAdmin returns true with valid NodeAdmin subject (cn)
      */
     @Test
-    public void testIsLocalNodeAdmin() throws ServiceFailure {
-        Session sessionLocalNodeAdmin = new Session();
-        sessionLocalNodeAdmin.setSubject(
+    public void testIsLocalNodeAdmin_cnAdmin() throws ServiceFailure {
+        Session sessionLocalCNodeAdmin = new Session();
+        sessionLocalCNodeAdmin.setSubject(
             TypeFactory.buildSubject("CN=urn:node:METACAT1,DC=dataone,DC=org"));
 
-        boolean isLocalCnNodeAdmin = authDel.isLocalNodeAdmin(sessionLocalNodeAdmin, null);
+        boolean isLocalCnNodeAdmin = authDel.isLocalNodeAdmin(sessionLocalCNodeAdmin, null);
+        assertTrue(isLocalCnNodeAdmin);
+    }
+
+    /**
+     * Confirm that isLocalNodeAdmin returns true with a Metacat admin
+     */
+    @Test
+    public void testIsLocalNodeAdmin_metacatAdmin() throws ServiceFailure {
+        Session sessionMetacatAdmin = new Session();
+        sessionMetacatAdmin.setSubject(
+            TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
+
+        boolean isLocalCnNodeAdmin = authDel.isLocalNodeAdmin(sessionMetacatAdmin, null);
         assertTrue(isLocalCnNodeAdmin);
     }
 
