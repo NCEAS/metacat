@@ -167,6 +167,66 @@ public class D1AuthHelperTest {
     }
 
     /**
+     * Confirm that doIsAuthorized authorizes a Metacat admin
+     */
+    @Test
+    public void testDoIsAuthorized_metacatAdmin() throws Exception {
+        SystemMetadata sysmetaEdited = getGenericSysmetaObject();
+        sysmetaEdited.setAuthoritativeMemberNode(
+            TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
+
+        Session sessionMetacatAdmin = new Session();
+        sessionMetacatAdmin.setSubject(
+            TypeFactory.buildSubject("http://orcid.org/0000-0002-6076-8092"));
+
+        try {
+            authDelMock.doIsAuthorized(sessionMetacatAdmin, sysmetaEdited, Permission.CHANGE_PERMISSION);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    /**
+     * Confirm that doIsAuthorized authorizes a CN admin
+     */
+    @Test
+    public void testDoIsAuthorized_cnAdmin() throws Exception {
+        SystemMetadata sysmetaEdited = getGenericSysmetaObject();
+        sysmetaEdited.setAuthoritativeMemberNode(
+            TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
+
+        Session sessionCnAdmin = new Session();
+        sessionCnAdmin.setSubject(
+            TypeFactory.buildSubject("cn1Subject"));
+
+        try {
+            authDelMock.doIsAuthorized(sessionCnAdmin, sysmetaEdited, Permission.CHANGE_PERMISSION);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    /**
+     * Confirm that doIsAuthorized authorizes a local node admin
+     */
+    @Test
+    public void testDoIsAuthorized_localNodeAdmin() throws Exception {
+        SystemMetadata sysmetaEdited = getGenericSysmetaObject();
+        sysmetaEdited.setAuthoritativeMemberNode(
+            TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
+
+        Session sessionLocalNodeAdmin = new Session();
+        sessionLocalNodeAdmin.setSubject(
+            TypeFactory.buildSubject("CN=urn:node:METACAT1,DC=dataone,DC=org"));
+
+        try {
+            authDelMock.doIsAuthorized(sessionLocalNodeAdmin, sysmetaEdited, Permission.CHANGE_PERMISSION);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    /**
      * Confirm that doUpdateAuth does not throw exception with approved 'authoritativeMemberNode'
      * value on sysmeta object.
      */
