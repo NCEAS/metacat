@@ -744,12 +744,13 @@ public class D1AuthHelper {
 
         Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
 
+        // First, check for a local node subject
         if (nodeType == null || node.getType() == nodeType) {
             List<Subject> nodeSubjects = node.getSubjectList();
             if (sessionSubjects != null) {
                 outer:
                 for (Subject subject : sessionSubjects) {
-                    // check if the session subject is in the node subject list
+                    // Check if the session subject is in the node subject list
                     for (Subject nodeSubject : nodeSubjects) {
                         logMetacat.debug("D1AuthHelper.isLocalNodeAdmin(), comparing node subject: "
                             + nodeSubject.getValue() + " and the session user: "
@@ -759,19 +760,22 @@ public class D1AuthHelper {
                             break outer;
                         }
                     }
+                    // If not, check session subject for a metacat admin
+                    String subjectValue = subject.getValue();
+                    if (subjectValue != null || !subjectValue.trim().isBlank()) {
+                        logMetacat.debug("D1AuthHelper.isLocalNodeAdmin(), checking " + subjectValue
+                            + " for Metacat admin privileges.");
+                        try {
+                            if (AuthUtil.isAdministrator(subjectValue, null)) {
+                                allowed = true;
+                                break outer;
+                            }
+                        } catch (MetacatUtilException mue) {
+                            throw new ServiceFailure("0000", mue.getMessage());
+                        }
+                    }
                 }
             }
-        }
-
-        // Check to see if subject is a Metacat admin (auth.admin) - who also has admin privileges
-        try {
-            logMetacat.debug("D1AuthHelper.isLocalNodeAdmin: Checking " + sessionSubjectValue
-                + " for Metacat admin privileges.");
-            if (AuthUtil.isAdministrator(sessionSubjectValue, null)) {
-                allowed = true;
-            }
-        } catch (MetacatUtilException mue) {
-            throw new ServiceFailure("0000", mue.getMessage());
         }
 
         logMetacat.debug(
