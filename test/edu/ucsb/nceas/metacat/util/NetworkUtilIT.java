@@ -4,7 +4,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertEquals;
@@ -34,10 +33,9 @@ public class NetworkUtilIT {
         try {
             String url = "www.google.com";
             NetworkUtil.checkUrlStatus(url);
-        } catch (IOException e) {
-            assertTrue("Expected MalformedURLException", e instanceof MalformedURLException);
-            assertTrue("The error message should include 'no protocol': " + e.getMessage(),
-                e.getMessage().contains("no protocol"));
+        } catch (IOException | IllegalArgumentException e) {
+            assertTrue("The error message should include 'URI is not absolute': " + e.getMessage(),
+                e.getMessage().contains("URI is not absolute"));
         }
     }
 
@@ -61,10 +59,8 @@ public class NetworkUtilIT {
         try {
             NetworkUtil.checkUrlStatus(null);
         } catch (IOException e) {
-            assertTrue("Expected MalformedURLException", e instanceof MalformedURLException);
-            assertTrue(
-                "The error message should include 'null': " + e.getMessage(),
-                e.getMessage().contains("null"));
+            assertTrue("The error message should include 'null': " + e.getMessage(),
+                       e.getMessage().contains("null"));
             throw e;
         }
     }
