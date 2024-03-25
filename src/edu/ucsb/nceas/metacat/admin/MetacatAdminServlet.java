@@ -48,8 +48,10 @@ public class MetacatAdminServlet extends HttpServlet {
 
     private static final String PATH_LOGOUT = "/admin?" + ACTION_PARAM + "=logout";
     private static final String PATH_LOGIN_PRE_ORCID = "/admin";
-    private static final String PATH_LOGIN_ORCID_FLOW = "/admin?" + ACTION_PARAM + "=" + ACTION_ORCID_FLOW;
-    private static final String PATH_LOGIN_METACAT = "/admin?" + ACTION_PARAM + "=" + ACTION_LOGIN_MC;
+    private static final String PATH_LOGIN_ORCID_FLOW =
+        "/admin?" + ACTION_PARAM + "=" + ACTION_ORCID_FLOW;
+    private static final String PATH_LOGIN_METACAT =
+        "/admin?" + ACTION_PARAM + "=" + ACTION_LOGIN_MC;
     public static final String PATH_ADMIN_HOMEPAGE =
         "/admin?" + ACTION_PARAM + "=configure&processForm=false";
     public static final String PATH_D1_PORTAL_OAUTH = "/portal/oauth?action=start&amp;target=";
@@ -82,21 +84,26 @@ public class MetacatAdminServlet extends HttpServlet {
         getServletContext().setAttribute(ATTR_CN_BASE_URL, cnBaseUrl);
 
         String contextPath = getServletContext().getContextPath();
-        getServletContext().setAttribute(ATTR_LOGIN_PRE_ORCID_URI, contextPath + PATH_LOGIN_PRE_ORCID);
-        getServletContext().setAttribute(ATTR_LOGIN_ORCID_FLOW_URI, contextPath + PATH_LOGIN_ORCID_FLOW);
+        getServletContext().setAttribute(
+            ATTR_LOGIN_PRE_ORCID_URI, contextPath + PATH_LOGIN_PRE_ORCID);
+        getServletContext().setAttribute(
+            ATTR_LOGIN_ORCID_FLOW_URI, contextPath + PATH_LOGIN_ORCID_FLOW);
         getServletContext().setAttribute(ATTR_LOGIN_METACAT_URI, contextPath + PATH_LOGIN_METACAT);
         getServletContext().setAttribute(ATTR_LOGOUT_URI, contextPath + PATH_LOGOUT);
     }
 
-    /** Handle "GET" method requests from HTTP clients */
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws IOException {
+    /**
+     * Handle "GET" method requests from HTTP clients
+     */
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         // Process the data and send back the response
         handleGetOrPost(request, response);
     }
 
-    /** Handle "POST" method requests from HTTP clients */
+    /**
+     * Handle "POST" method requests from HTTP clients
+     */
     public void doPost(HttpServletRequest request, HttpServletResponse response)
         throws IOException {
 
@@ -107,10 +114,8 @@ public class MetacatAdminServlet extends HttpServlet {
     /**
      * Control servlet response depending on the action parameter specified
      *
-     * @param request
-     *                 the http request information
-     * @param response
-     *                 the http response to be sent back to the client
+     * @param request  the http request information
+     * @param response the http response to be sent back to the client
      */
     private void handleGetOrPost(HttpServletRequest request, HttpServletResponse response)
         throws IOException {
@@ -120,9 +125,8 @@ public class MetacatAdminServlet extends HttpServlet {
         Vector<String> processingMessage = new Vector<>();
         Vector<String> processingErrors = new Vector<>();
 
-        logMetacat.debug("\n****** USERID IN SESSION: "
-                             + request.getSession().getAttribute(RequestUtil.ATTR_USER_ID) +
-                             "**********************\n");
+        logMetacat.debug("\n****** USERID IN SESSION: " + request.getSession()
+            .getAttribute(RequestUtil.ATTR_USER_ID) + "**********************\n");
 
         logMetacat.debug("\n****** START REQUEST PARAMETERS **********************\n"
                              + RequestUtil.getParametersAsString(request)
@@ -136,8 +140,7 @@ public class MetacatAdminServlet extends HttpServlet {
                                           + " before you can continue with Metacat configuration.");
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "backup";
-                logMetacat.debug(
-                    "MetacatAdminServlet - Admin action changed to 'backup'");
+                logMetacat.debug("MetacatAdminServlet - Admin action changed to 'backup'");
             } else if (!AuthUtil.isAuthConfigured()) {
                 // if authentication isn't configured, change the action to auth.
                 // Authentication needs to be set up before we do anything else
@@ -145,8 +148,7 @@ public class MetacatAdminServlet extends HttpServlet {
                                           + "you can continue with MetaCat configuration.");
                 RequestUtil.setRequestMessage(request, processingMessage);
                 action = "auth";
-                logMetacat.debug(
-                    "MetacatAdminServlet - Admin action changed to 'auth'");
+                logMetacat.debug("MetacatAdminServlet - Admin action changed to 'auth'");
             } else if (LoginAdmin.getInstance().needsLoginAdminHandling(request, action)) {
                 logMetacat.debug("MetacatAdminServlet - Admin action is: " + action
                                      + "; intervention by LoginAdmin is required");
@@ -188,20 +190,17 @@ public class MetacatAdminServlet extends HttpServlet {
 
         } catch (GeneralPropertyException ge) {
             String errorMessage =
-                "MetacatAdminServlet - Property problem while handling request: "
-                    + ge.getMessage();
+                "MetacatAdminServlet - Property problem while handling request: " + ge.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
         } catch (AdminException ae) {
             String errorMessage =
-                "MetacatAdminServlet - Admin problem while handling request: "
-                    + ae.getMessage();
+                "MetacatAdminServlet - Admin problem while handling request: " + ae.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
         } catch (MetacatUtilException ue) {
             String errorMessage =
-                "MetacatAdminServlet - Utility problem while handling request: "
-                    + ue.getMessage();
+                "MetacatAdminServlet - Utility problem while handling request: " + ue.getMessage();
             logMetacat.error(errorMessage);
             processingErrors.add(errorMessage);
         }
@@ -216,9 +215,8 @@ public class MetacatAdminServlet extends HttpServlet {
             try {
                 initialConfigurationParameters(request);
                 RequestUtil.forwardRequest(request, response,
-                                           "/admin/metacat-configuration"
-                                               + ".jsp?" + ACTION_PARAM + "=configure",
-                                           null);
+                                           "/admin/metacat-configuration" + ".jsp?" + ACTION_PARAM
+                                               + "=configure", null);
             } catch (Exception e) {
                 //We can't display the error message on a web page. Only print them out.
                 logMetacat.error("MetacatAdminServlet - couldn't forward the error message to "
@@ -271,20 +269,17 @@ public class MetacatAdminServlet extends HttpServlet {
         throws GeneralPropertyException, AdminException, MetacatUtilException {
         if (request != null) {
             request.setAttribute("metaCatVersion", SystemUtil.getMetacatVersion());
-            request.setAttribute(
-                "propsConfigured", PropertyService.arePropertiesConfigured());
+            request.setAttribute("propsConfigured", PropertyService.arePropertiesConfigured());
             request.setAttribute("authConfigured", AuthUtil.isAuthConfigured());
-            request.setAttribute(
-                "metacatConfigured", ConfigurationUtil.isMetacatConfigured());
+            request.setAttribute("metacatConfigured", ConfigurationUtil.isMetacatConfigured());
             request.setAttribute(
                 "dataoneConfigured", PropertyService.getProperty("configutil.dataoneConfigured"));
             request.setAttribute(
                 "ezidConfigured", PropertyService.getProperty("configutil.ezidConfigured"));
             request.setAttribute(
                 "quotaConfigured", PropertyService.getProperty("configutil.quotaConfigured"));
-            request.setAttribute(
-                "solrserverConfigured",
-                PropertyService.getProperty("configutil.solrserverConfigured"));
+            request.setAttribute("solrserverConfigured",
+                                 PropertyService.getProperty("configutil.solrserverConfigured"));
             request.setAttribute(
                 "metacatServletInitialized", MetacatInitializer.isFullyInitialized());
             if (PropertyService.arePropertiesConfigured()) {
