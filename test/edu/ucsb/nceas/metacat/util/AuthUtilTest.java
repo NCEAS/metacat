@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
  * @author tao
  *
  */
-public class  AuthUtilTest {
+public class AuthUtilTest {
     private static final String LDAP = "uid=test,o=NCEAS,dc=ecoinformatics,dc=org";
     private static final String ORCID = "http\\://orcid.org/0023-0001-7868-2567";
     private static final String ADMIN_ORCID1 = "http://orcid.org/0023-0001-7868-2567";
@@ -24,7 +24,7 @@ public class  AuthUtilTest {
     private static final String EXPECTED_ORCID = "http://orcid.org/0023-0001-7868-2567";
     private static final String EXPECTED_ADMIN_ORCID1 = EXPECTED_ORCID;
     private static final String EXPECTED_ADMIN_ORCID2 = "http://orcid.org/0000-0001-7868-999X";
-    private static final String ADMIN ="auth.administrators";
+    private static final String ADMIN = "auth.administrators";
     private static final String ALLOW = "auth.allowedSubmitters";
     private static final String DENY = "auth.deniedSubmitters";
     private static final String MODERATOR = "auth.moderators";
@@ -70,7 +70,7 @@ public class  AuthUtilTest {
         Vector<String> results = AuthUtil.getAllowedSubmitters();
         assertEquals(LDAP, results.elementAt(0));
         assertEquals(EXPECTED_ORCID, results.elementAt(1));
-        LeanTestUtils.debug("=======the orcid id is "+results.elementAt(1));
+        LeanTestUtils.debug("=======the orcid id is " + results.elementAt(1));
 
         //set back the original value
         PropertyService.setProperty(ALLOW, originStr);

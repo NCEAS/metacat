@@ -42,10 +42,10 @@ public class LoginAdmin extends MetacatAdmin {
     /**
      * Utility method to determine if an incoming request action requires intervention by this class
      *
-     * @param request  The http request information
+     * @param request The http request information
      * @param action   The `action` contained in the `MetacatAdminServlet.ACTION_PARAM` parameter
      *                 of the request
-     * @return         boolean true if intervention is needed by this class; false otherwise
+     * @return boolean true if intervention is needed by this class; false otherwise
      */
     public boolean needsLoginAdminHandling(HttpServletRequest request, String action)
         throws MetacatUtilException {
@@ -92,14 +92,14 @@ public class LoginAdmin extends MetacatAdmin {
             case MetacatAdminServlet.ACTION_ORCID_FLOW -> {
                 String msg = "orcid.org login complete; now awaiting token...";
                 logMetacat.debug(msg + "; action was " + action);
-                addProcessingMessage(request,msg);
+                addProcessingMessage(request, msg);
 
                 handleOrcidRedirect(request, response);
             }
             case MetacatAdminServlet.ACTION_LOGIN_MC -> {
                 String msg = "orcid.org login complete; now verifying token with Metacat...";
                 logMetacat.debug(msg + "; action was " + action);
-                addProcessingMessage(request,msg);
+                addProcessingMessage(request, msg);
 
                 doMetacatLogin(request, response);
             }
@@ -107,7 +107,7 @@ public class LoginAdmin extends MetacatAdmin {
                 logMetacat.debug("Action = " + action
                                      + " and User not logged in; sending to login flow start page");
                 addProcessingMessage(request, "You must log in as an administrative user, "
-                    + "before you can continue with Metacat configuration.");
+                        + "before you can continue with Metacat configuration.");
 
                 startLoginFlow(request, response);
             }
@@ -188,7 +188,7 @@ public class LoginAdmin extends MetacatAdmin {
             if (!processingErrors.isEmpty()) {
                 RequestUtil.setRequestErrors(request, processingErrors);
                 logMetacat.debug("Processing errors found (" + processingErrors
-                        + ").  User is not logged in; going back to login start page");
+                                     + ").  User is not logged in; going back to login start page");
                 logOutAdminUser(request, response);
 
             } else {
@@ -247,7 +247,7 @@ public class LoginAdmin extends MetacatAdmin {
         HttpServletRequest request, HttpServletResponse response, String attribute, String processingMessage) throws MetacatUtilException {
 
         // clean up all messages except processingErrors
-        Vector<String> processingErrors = (Vector<String>)request.getAttribute("processingErrors");
+        Vector<String> processingErrors = (Vector<String>) request.getAttribute("processingErrors");
 //        cleanRequest(request);
         if (processingErrors != null) {
             RequestUtil.setRequestErrors(request, processingErrors);

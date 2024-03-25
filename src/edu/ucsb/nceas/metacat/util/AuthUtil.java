@@ -99,7 +99,7 @@ public class AuthUtil {
         } catch (PropertyNotFoundException pnfe) {
             throw new MetacatUtilException("Could not get metacat property: auth.administrators. "
                                            + "There will be no registered metacat administrators: "
-                                           + pnfe.getMessage());
+                                               + pnfe.getMessage());
         }
         administrators = StringUtil.toVector(administratorString, ';');
 
@@ -353,8 +353,8 @@ public class AuthUtil {
      * user or the user's group is on the list.
      *
      * @param accessList the list we want to check against
-     * @param username the name of the user we want to check
-     * @param groups a list of the user's groups
+     * @param username   the name of the user we want to check
+     * @param groups     a list of the user's groups
      */
     private static boolean onAccessList(
         Vector<String> accessList, String username, String[] groups) {
@@ -391,9 +391,9 @@ public class AuthUtil {
 
     /**
      * Convert a delimited string to a Vector by splitting on a particular character
-     * @param text  the text to be split into components
+     * @param text       the text to be split into components
      * @param delimiter  the string to specify the delimiter
-     * @param escapeChar  the string to escape a delimiter.
+     * @param escapeChar the string to escape a delimiter.
      * @return a vector holding the values. An empty vector will be returned if the text is null
      * or empty.
      */
@@ -418,8 +418,8 @@ public class AuthUtil {
 
     /**
      * Construct a session object base the given user and group name
-     * @param user  the user name for the session
-     * @param groups  the groups name for the session
+     * @param user   the user name for the session
+     * @param groups the groups name for the session
      * @return a session object
      */
     private static Session buildSession(String user, String[] groups) {

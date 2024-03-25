@@ -106,7 +106,7 @@ public class AuthOrcid implements AuthInterface {
     private void logUnsupported() {
 
         Optional<StackFrame> caller = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
-            .walk(stream -> stream.skip(2).findFirst());
+                .walk(stream -> stream.skip(2).findFirst());
 
         String message = "Calls to this method are not supported for ORCID-based auth";
 

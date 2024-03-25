@@ -85,11 +85,11 @@ public class LoginAdminTest {
             assertFalse("needsLoginAdminHandling should return FALSE if user IS logged in!",
                         loginAdmin.needsLoginAdminHandling(request, "configure"));
             assertTrue("needsLoginAdminHandling should return TRUE for 'logout', even if user is "
-                           + "logged in!", loginAdmin.needsLoginAdminHandling(request,
-                                                                              MetacatAdminServlet.ACTION_LOGOUT));
+                    + "logged in!", loginAdmin.needsLoginAdminHandling(request,
+                                                                       MetacatAdminServlet.ACTION_LOGOUT));
             assertTrue("needsLoginAdminHandling should return TRUE for 'mcLogin', even if user is "
-                           + "logged in!", loginAdmin.needsLoginAdminHandling(request,
-                                                                              MetacatAdminServlet.ACTION_LOGIN_MC));
+                    + "logged in!", loginAdmin.needsLoginAdminHandling(request,
+                                                                       MetacatAdminServlet.ACTION_LOGIN_MC));
         }
     }
 
@@ -242,7 +242,7 @@ public class LoginAdminTest {
             Properties withProperties = new Properties();
             withProperties.setProperty(
                 "auth.administrators",
-                "https://orcid.org/0000-0002-1234-5678;some-other-nonsense");
+                                       "https://orcid.org/0000-0002-1234-5678;some-other-nonsense");
             try (MockedStatic<PropertyService> ignored =
                      LeanTestUtils.initializeMockPropertyService(withProperties)) {
                 loginAdmin.doMetacatLogin(request, response);

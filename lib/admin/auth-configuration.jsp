@@ -54,8 +54,8 @@
                     String fieldType = metaDataProperty.getFieldType();
                     if (metaDataProperty.getIsRequired()) {
 
-                }
-                if (fieldType.equals("select")) {
+                    }
+                    if (fieldType.equals("select")) {
             %>
             <div class="form-row">
                 <div class="textinput-label"><label

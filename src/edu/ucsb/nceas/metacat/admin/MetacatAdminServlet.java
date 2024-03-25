@@ -284,7 +284,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 "quotaConfigured", PropertyService.getProperty("configutil.quotaConfigured"));
             request.setAttribute(
                 "solrserverConfigured",
-                PropertyService.getProperty("configutil.solrserverConfigured"));
+                                 PropertyService.getProperty("configutil.solrserverConfigured"));
             request.setAttribute(
                 "metacatServletInitialized", MetacatInitializer.isFullyInitialized());
             if (PropertyService.arePropertiesConfigured()) {
