@@ -1,7 +1,12 @@
 Harvester and Harvest List Editor
 =================================
 
-Metacat's Harvester is an optional feature that can be used to automatically 
+**2024/03/26 - The Metacat Harvester is obsolete.**
+
+While some features remain visible, the old Metacat API has been disabled.
+All features that depend on the old Metacat API are deprecated.
+
+Metacat's Harvester is an optional feature that can be used to automatically
 retrieve EML documents from one or more custom data management system (e.g., 
 SRB or PostgreSQL) and to insert (or update) those documents to the home 
 repository. The local sites control when they are harvested, and which documents 
