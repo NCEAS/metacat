@@ -6,6 +6,8 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.dataone.client.v2.CNode;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
@@ -29,6 +31,7 @@ import org.junit.Test;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import org.mockito.Mockito;
+import org.mockito.MockedStatic;
 
 public class D1AuthHelperTest {
 
@@ -192,11 +195,20 @@ public class D1AuthHelperTest {
         notAuthorizedSession.setSubject(TypeFactory.buildSubject("notAFriend"));
     }
 
-    // TODO: This test should be implemented when time permitting.
-    @Ignore("Not yet implemented...")
+    // TODO: This test needs to be reviewed
+    // @Ignore("Not yet implemented...")
+    /**
+     * Check expandRightsHolder returns true with approved subject
+     */
     @Test
-    public void testExpandRightsHolder() {
-        fail("Not yet implemented");
+    public void testExpandRightsHolder() throws Exception {
+        try (MockedStatic<D1AuthHelper> mockd1auth = Mockito.mockStatic(D1AuthHelper.class)) {
+            Mockito.when(D1AuthHelper.expandRightsHolder(sysmeta.getRightsHolder(),
+                                                         sysmeta.getSubmitter())).thenReturn(true);
+            boolean isRightsHolder = authDelMock.expandRightsHolder(sysmeta.getRightsHolder(),
+                                                  sysmeta.getSubmitter());
+            assertTrue(isRightsHolder);
+        }
     }
 
     /**
