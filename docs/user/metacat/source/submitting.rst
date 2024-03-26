@@ -18,4 +18,9 @@ Then click 'Sign in' in the upper right hand corner. To sign in, you will need a
 If you do not have one, you can sign up here:
   https://orcid.org/
 
-TODO...
+Once you've signed in, move your cursor to the upper right-hand corner and hover above your name,
+this will reveal a drop down menu. Click 'Submit Data', and add your data and metadata documents.
+
+Alternatively, you may use the DataONE REST API to submit and access data and metadata.
+To learn more, please visit:
+  https://knb.ecoinformatics.org/api](https://knb.ecoinformatics.org/api)
