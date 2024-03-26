@@ -15,16 +15,47 @@ This major release introduces breaking changes:
 - `Skin-based deployments` are no longer supported as the original Metacat API is deprecated.
   - If you wish to upgrade to Metacat 3.0.0, you can use `metacatui` which is shipped with Metacat, create your own
     frontend against the API, or use a metacatui that is not shipped with metacat.
-- Metacat admin authentication via LDAP and Password-based logins are no longer supported
+- Metacat admin authentication via LDAP and Password-based logins is no longer supported
   - Authorization to the Metacat admin interface will be granted after successfully signing in with ORCID using the configured metacat admin identity.
   - Please sign up for an ORCID if you do not already have one.
 
-### Upgrade Notes:
+### Upgrade Notes (2.19.0 to 3.0.0):
 
-- In order to upgrade to 3.0.0, **you must be at Metacat v2.19.0**
-- `metacat.properties` no longer contains custom settings. Any custom settings you have should be backed up and then
-  added to `metacat-site.properties`.
-- TODO: Discuss with Jing & Matthew
+- Starting Requirements:
+  - You must be at [Metacat v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0)
+    - If you are not, please upgrade to v2.19.0 first before proceeding.
+  - You must have Java 17 installed
+    - If it is not installed, please install it and set it as the default version
+      - ex. `sudo update-alternatives --config java` which will bring up a list of versions to select from
+      - If Tomcat uses the `default-java` directory, ensure that it points to Java 17
+          ```
+          cd /usr/lib/jvm
+          sudo rm -r default-java
+          sudo ln -s java-17-openjdk-amd64 default-java
+          ```
+  - If Metacat is currently running:
+    - Stop Tomcat - ex. `sudo systemctl stop tomcat9`
+    - Stop solr - ex. `sudo systemctl stop solr`
+- Download/upgrade your solr version to 9.5.0
+  - Solr upgrade is not supported for 3.0.0 with old cores, you must start with a new core (new solr-home)
+    - While changes to your solr schema is not expected, should you need to - proceed with caution.
+  - Ensure that `/etc/default/solr.in.sh` is group writable
+    - ex. `sudo chmod g+w /etc/default/solr.in.sh`
+  - In `solr.in.sh`, be sure to delete the old solr home add a new solr path:
+    - `SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/var/metacat"`
+  - Optionally, add/adjust memory settings to `SOLR_JAVA_MEM="-Xms2g -Xmx2g"`
+- Start/restart solr
+  - ex. `sudo systemctl restart solr`
+- Install RabbitMQ if you do not already have it running
+   ```
+   sudo apt install rabbitmq-server
+   sudo systemctl restart rabbitmq-server
+   ```
+- You are now ready to install Metacat 3.0.0
+  - Additional notes:
+    - `metacat.properties` no longer contains custom settings. Custom settings should be backed up and then added to `metacat-site.properties`.
+    - You may encounter an error RE: Java 17 not supporting `-XX:+UseConcMarkSweepGC`, and changing the default value to `XX:+UseG1GC` in `/etc/default/tomcat9` may resolve the issue.
+    - The database upgrade process may require some time to complete.
 
 ### New Features & Enhancements:
 
