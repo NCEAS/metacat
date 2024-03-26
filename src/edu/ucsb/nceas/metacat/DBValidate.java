@@ -103,7 +103,7 @@ public class DBValidate {
   public DBValidate(DBConnection conn) {
     this();
 
-    DBEntityResolver dbresolver = new DBEntityResolver(conn);
+    DBEntityResolver dbresolver = new DBEntityResolver();
     parser.setEntityResolver(dbresolver);
   }
 

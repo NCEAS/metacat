@@ -321,15 +321,11 @@ public class CNodeService extends D1NodeService
      * @throws NotAuthorized
      * @throws NotFound
      * @throws NotImplemented
-     * @throws InvalidRequest
      */
     @Override
     public Identifier delete(Session session, Identifier pid)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
-        String localId = null;      // The corresponding docid for this pid
-        //Lock lock = null;           // The lock to be used for this identifier
-        CNode cn = null;            // a reference to the CN to get the node list
         NodeType nodeType = null;   // the nodeType of the replica node being contacted
         List<Node> nodeList = null; // the list of nodes in this CN environment
 
@@ -367,43 +363,7 @@ public class CNodeService extends D1NodeService
             new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
         authDel.doCNOnlyAuthorization(session);
 
-        // Don't defer to superclass implementation without a locally registered identifier
-        // Check for the existing identifier
-        try {
-            localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-            super.delete(session.getSubject().getValue(), pid);
-
-        } catch (McdbDocNotFoundException e) {
-            // This object is not registered in the identifier table. Assume it is of formatType
-            // DATA,
-            // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
-
-            try {
-                //remove the systemmetadata object from the map and delete the records in the
-                // systemmetadata database table
-                //since this is cn, we don't need worry about the mn solr index.
-                SystemMetadataManager.getInstance().delete(pid);
-                String username = session.getSubject().getValue();//just for logging purpose
-                //since data objects were not registered in the identifier table, we use pid as
-                // the docid
-                EventLog.getInstance()
-                    .log(request.getRemoteAddr(), request.getHeader("User-Agent"), username,
-                         pid.getValue(), Event.DELETE.xmlValue());
-
-            } catch (RuntimeException re) {
-                throw new ServiceFailure(
-                    "4962", "Couldn't delete " + pid.getValue() + ". The error message was: "
-                    + re.getMessage());
-
-            }
-
-        } catch (SQLException e) {
-            throw new ServiceFailure(
-                "4962", "Couldn't delete " + pid.getValue()
-                + ". The local id of the object with the identifier can't be identified since "
-                + e.getMessage());
-        }
-
+        super.delete(session.getSubject().getValue(), pid);
         // get the node list
         try {
             nodeList = getCNNodeList().getNodeList();

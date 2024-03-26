@@ -267,9 +267,7 @@ public class MNodeServiceIT {
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             fail("It should fail since the checksum doesn't match.");
         } catch (InvalidSystemMetadata ee) {
-            //ee.printStackTrace();
             try {
-                Thread.sleep(5000);
                 MNodeService.getInstance(request).getSystemMetadata(session, guid);
                 fail("We shouldn't get here since the guid " + guid.getValue() + " was deleted.");
             } catch (NotFound e) {
@@ -320,10 +318,8 @@ public class MNodeServiceIT {
             Identifier pid =
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             fail("It should fail since the checksum doesn't match.");
-        } catch (ServiceFailure ee) {
-            //ee.printStackTrace();
+        } catch (InvalidSystemMetadata ee) {
             try {
-                Thread.sleep(5000);
                 MNodeService.getInstance(request).getSystemMetadata(session, guid);
                 fail("We shouldn't get here since the guid " + guid.getValue() + " was deleted.");
             } catch (NotFound e) {
@@ -792,22 +788,18 @@ public class MNodeServiceIT {
             try {
                 MNodeService.getInstance(request).update(session, guid, object, newPid, sysmeta2);
                 fail("we shouldn't get here since the checksum is wrong");
-            } catch (ServiceFailure ee) {
+            } catch (InvalidSystemMetadata ee) {
                 try {
                     MNodeService.getInstance(request).getSystemMetadata(session, newPid);
                     fail("we shouldn't get here since the newPid " + newPid.getValue()
                              + " shouldn't be created.");
                 } catch (NotFound eeee) {
-
+                    // Do nothing
                 }
-
             } catch (Exception eee) {
-                eee.printStackTrace();
                 fail("Unexpected error in the update: " + eee.getMessage());
             }
-
         } catch (Exception e) {
-            e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
 
         }
@@ -1213,8 +1205,8 @@ public class MNodeServiceIT {
                 .getLogRecords(session, fromDate, toDate, event.xmlValue(), null, start, count);
 
             assertNotNull(log);
-            assertTrue(log.getCount() == count);
-            assertTrue(log.getStart() == start);
+            assertEquals(count, log.getCount());
+            assertEquals(start, log.getStart());
             assertTrue(log.getTotal() >= 1);
 
         } catch (Exception e) {
@@ -3652,7 +3644,7 @@ public class MNodeServiceIT {
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             fail("testAllowList - the test session shouldn't be allowed to create an object");
         } catch (Exception e) {
-            assertTrue(e.getMessage().contains("does not have permission to WRITE to the Node"));
+            assertTrue("The exception should be NotAuthorized", e instanceof NotAuthorized);
         }
         //use a session with the subject of the MN to create an object
         Subject subject = new Subject();
@@ -3856,7 +3848,7 @@ public class MNodeServiceIT {
         object.close();
         result = getEventLogs(guid7);
         assertTrue(result.next());
-        assertEquals("insert", result.getString(1));
+        assertEquals("The event of log should be create", "create", result.getString(1));
         assertFalse(result.next());
         result.close();
 
@@ -4322,6 +4314,104 @@ public class MNodeServiceIT {
         MNodeService.getInstance(request).updateAllIdMetadata(adminSession);
         Thread.sleep(1000); //updateAllIdMetadata is called in another thread.
         Mockito.verify(doiUpdater, Mockito.times(1)).upgrade();
+    }
+
+    /**
+     * Test the scenario the identifier doesn't match the one in the system metadata
+     * in the create and update methods.
+     * @throws Exception
+     */
+    @Test
+    public void testIdNotMatchSysmetaInCreateAndUpdate() throws Exception {
+        Session session = d1NodeTest.getTestSession();
+        //a data file
+        Identifier guid = new Identifier();
+        guid.setValue("testIdNotMatchSysmetaInCreateAndUpdate." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        // Set to another pid into system metadata to make it invalid
+        Identifier another = new Identifier();
+        another.setValue("testIdNotMatchSysmetaInCreateAndUpdate2." + System.currentTimeMillis());
+        sysmeta.setIdentifier(another);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid and the create method should succeed
+        sysmeta.setIdentifier(guid);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue("The returned pid should be " + guid.getValue(),
+                    guid.getValue().equals(pid.getValue()));
+        // Update it by a wrong pid in the systemetadata
+        Identifier newId = new Identifier();
+        newId.setValue("testIdNotMatchSysmetaInCreateAndUpdate." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setIdentifier(another);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        try {
+            MNodeService.getInstance(request).update(session, pid, object, newId, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid
+        sysmeta.setIdentifier(newId);
+        pid = MNodeService.getInstance(request).update(session, pid, object, newId, sysmeta);
+        assertTrue("The returned pid should be " + newId.getValue(),
+                            newId.getValue().equals(pid.getValue()));
+
+        // An eml metadata object
+        guid = new Identifier();
+        guid.setValue("testIdNotMatchSysmetaInCreateAndUpdate." + System.currentTimeMillis());
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
+        // Make the system metadata not match the guid
+        sysmeta.setIdentifier(another);
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid and the create method should succeed
+        sysmeta.setIdentifier(guid);
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue("The returned pid should be " + guid.getValue(),
+                                guid.getValue().equals(pid.getValue()));
+        // Update it by a wrong pid in the systemetadata
+        newId = new Identifier();
+        newId.setValue("testIdNotMatchSysmetaInCreateAndUpdate2." + System.currentTimeMillis());
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatId);
+        sysmeta.setIdentifier(another);
+        try {
+            MNodeService.getInstance(request).update(session, pid, object, newId, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                        + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        // Set back to make it valid
+        sysmeta.setIdentifier(newId);
+        object = new FileInputStream(MockReplicationMNode.replicationSourceFile);
+        pid = MNodeService.getInstance(request).update(session, pid, object, newId, sysmeta);
+        assertTrue("The returned pid should be " + newId.getValue(),
+                                    newId.getValue().equals(pid.getValue()));
     }
 
     /**
