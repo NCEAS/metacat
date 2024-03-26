@@ -19,9 +19,9 @@ data are well and consistently described.
 
 ## Current Contributors
 
-- Jing Tao (tao@nceas.ucsb.edu)
-- Matthew Brooke (brooke@nceas.ucsb.edu)
-- Dou Mok (mok@nceas.ucsb.edu)
+- Jing Tao (tao@nceas.ucsb.edu) [ORCID: 0000-0002-1209-5268](https://orcid.org/0000-0002-1209-5268)
+- Matthew Brooke (brooke@nceas.ucsb.edu) [ORCID: 0000-0002-1472-913X](https://orcid.org/0000-0002-1472-913X)
+- Dou Mok (mok@nceas.ucsb.edu) [ORCID: 0000-0002-6076-8092](https://orcid.org/0000-0002-6076-8092)
 - Matthew B. Jones (jones@nceas.ucsb.edu): [ORCID: 0000-0003-0077-4738](https://orcid.org/0000-0003-0077-4738)
 
 ## Previous Contributors
@@ -109,3 +109,7 @@ Software and all enhancements, modifications, and updates to the Software.
 
 This software includes the JDBC driver for PostgreSQL.  See the
 postgresql-license.txt file for details.
+
+[![DataONE_footer](https://user-images.githubusercontent.com/6643222/162324180-b5cf0f5f-ae7a-4ca6-87c3-9733a2590634.png)](https://dataone.org)
+
+[![nceas_footer](https://www.nceas.ucsb.edu/sites/default/files/2020-03/NCEAS-full%20logo-4C.png)](https://www.nceas.ucsb.edu)
