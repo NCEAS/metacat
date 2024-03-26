@@ -99,7 +99,7 @@ public class AuthUtil {
         } catch (PropertyNotFoundException pnfe) {
             throw new MetacatUtilException("Could not get metacat property: auth.administrators. "
                                            + "There will be no registered metacat administrators: "
-                                           + pnfe.getMessage());
+                                               + pnfe.getMessage());
         }
         administrators = StringUtil.toVector(administratorString, ';');
 
@@ -116,8 +116,8 @@ public class AuthUtil {
     }
 
     /**
-     * Get the vector of allowed submitter credentials from metacat.properties and put into
-     * global allowedSubmitters list
+     * Get the vector of allowed submitter credentials from metacat.properties and put into global
+     * allowedSubmitters list
      */
     public static void populateAllowedSubmitters() throws MetacatUtilException {
         String allowedSubmitterString = null;
@@ -132,8 +132,8 @@ public class AuthUtil {
     }
 
     /**
-     * Get the vector of denied submitter credentials from metacat.properties and put into
-     * global deniedSubmitters list
+     * Get the vector of denied submitter credentials from metacat.properties and put into global
+     * deniedSubmitters list
      */
     private static void populateDeniedSubmitters() throws MetacatUtilException {
         String deniedSubmitterString = null;
@@ -163,15 +163,15 @@ public class AuthUtil {
     }
 
     /**
-     * Authenticate the user against the CN server and/or any locally-configured certificates ()
-     * If the login is successful, add the session information to
-     * the session list in SessionUtil.
+     * Authenticate the user against the CN server and/or any locally-configured certificates. If
+     * the login is successful, add the session information to the session list in SessionUtil.
      *
      * @param request the http request.
      * @return the userId if successful
      * @throws MetacatUtilException if there's a problem adding the userId to the session
      */
-    public static String authenticateUserWithCN(HttpServletRequest request) throws MetacatUtilException {
+    public static String authenticateUserWithCN(HttpServletRequest request)
+        throws MetacatUtilException {
 
         Session portalSession = PortalCertificateManager.getInstance().getSession(request);
 
@@ -214,8 +214,7 @@ public class AuthUtil {
     /**
      * Reports whether LDAP is fully configured.
      *
-     * @return a boolean that is true if all sections are configured and false
-     *         otherwise
+     * @return a boolean that is true if all sections are configured and false otherwise
      */
     public static boolean isAuthConfigured() throws MetacatUtilException {
         String authConfiguredString = PropertyService.UNCONFIGURED;
@@ -266,10 +265,8 @@ public class AuthUtil {
     /**
      * Check if the specified user is part of the moderators list
      *
-     * @param username
-     *            the user login credentials
-     * @param groups
-     *            a list of the user's groups
+     * @param username the user login credentials
+     * @param groups   a list of the user's groups
      */
     public static boolean isModerator(String username, String[] groups)
         throws MetacatUtilException {
@@ -279,10 +276,8 @@ public class AuthUtil {
     /**
      * Check if the specified user is part of the moderators list
      *
-     * @param username
-     *            the user login credentials
-     * @param groups
-     *            a list of the user's groups
+     * @param username the user login credentials
+     * @param groups   a list of the user's groups
      */
     public static boolean isAllowedSubmitter(String username, String[] groups)
         throws MetacatUtilException {
@@ -308,10 +303,8 @@ public class AuthUtil {
     /**
      * Check if the specified user is part of the moderators list
      *
-     * @param username
-     *            the user login credentials
-     * @param groups
-     *            a list of the user's groups
+     * @param username the user login credentials
+     * @param groups   a list of the user's groups
      */
     public static boolean isDeniedSubmitter(String username, String[] groups)
         throws MetacatUtilException {
@@ -321,10 +314,8 @@ public class AuthUtil {
     /**
      * Check if the specified user can insert the document
      *
-     * @param username
-     *            the user login credentials
-     * @param groups
-     *            a list of the user's groups
+     * @param username the user login credentials
+     * @param groups   a list of the user's groups
      */
     public static boolean canInsertOrUpdate(String username, String[] groups)
         throws MetacatUtilException {
@@ -349,12 +340,12 @@ public class AuthUtil {
     }
 
     /**
-     * Check if the user is on a given access list.  This is true if either the
-     * user or the user's group is on the list.
+     * Check if the user is on a given access list.  This is true if either the user or the user's
+     * group is on the list.
      *
      * @param accessList the list we want to check against
-     * @param username the name of the user we want to check
-     * @param groups a list of the user's groups
+     * @param username   the name of the user we want to check
+     * @param groups     a list of the user's groups
      */
     private static boolean onAccessList(
         Vector<String> accessList, String username, String[] groups) {
@@ -391,11 +382,12 @@ public class AuthUtil {
 
     /**
      * Convert a delimited string to a Vector by splitting on a particular character
-     * @param text  the text to be split into components
+     *
+     * @param text       the text to be split into components
      * @param delimiter  the string to specify the delimiter
-     * @param escapeChar  the string to escape a delimiter.
-     * @return a vector holding the values. An empty vector will be returned if the text is null
-     * or empty.
+     * @param escapeChar the string to escape a delimiter.
+     * @return a vector holding the values. An empty vector will be returned if the text is null or
+     *     empty.
      */
     public static Vector<String> split(String text, String delimiter, String escapeChar) {
         Vector<String> results = new Vector<>();
@@ -418,8 +410,9 @@ public class AuthUtil {
 
     /**
      * Construct a session object base the given user and group name
-     * @param user  the user name for the session
-     * @param groups  the groups name for the session
+     *
+     * @param user   the user name for the session
+     * @param groups the groups name for the session
      * @return a session object
      */
     private static Session buildSession(String user, String[] groups) {

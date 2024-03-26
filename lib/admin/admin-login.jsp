@@ -29,33 +29,33 @@
     <%@include file="./head-section.jsp" %>
 </head>
 <body id="bodyContent">
-    <%@include file="./header-section.jsp" %>
-    <div class="document">
-        <h2>Administrator Login</h2>
-        <%@include file="./page-message-section.jsp" %>
-        <div class="orcid-btn-wrapper">
-            <div class="orcid-flex">
-                <a href="<%= oAuthBaseUrl + orcidLoginTargetURL %>"
-                   class="signin orcid-btn update-orcid-sign-in-url orcid-flex"
-                   id="orcidLogin">
-                    <img src="<%= context %>/admin/images/orcid_64x64.png"
-                         id="orcidLogo"
-                         alt="orcid logo">
-                    <span>Sign in with ORCID</span>
-                </a>
-            </div>
-        </div>
-        <div id="errorModal" class="error-modal">
-            <div class="modal-content">
-                <p id="errorModalMessage">Error</p>
-                <button onclick="document.getElementById('errorModal').style.display='none'">Close
-                </button>
-            </div>
+<%@include file="./header-section.jsp" %>
+<div class="document">
+    <h2>Administrator Login</h2>
+    <%@include file="./page-message-section.jsp" %>
+    <div class="orcid-btn-wrapper">
+        <div class="orcid-flex">
+            <a href="<%= oAuthBaseUrl + orcidLoginTargetURL %>"
+               class="signin orcid-btn update-orcid-sign-in-url orcid-flex"
+               id="orcidLogin">
+                <img src="<%= context %>/admin/images/orcid_64x64.png"
+                     id="orcidLogo"
+                     alt="orcid logo">
+                <span>Sign in with ORCID</span>
+            </a>
         </div>
     </div>
+    <div id="errorModal" class="error-modal">
+        <div class="modal-content">
+            <p id="errorModalMessage">Error</p>
+            <button onclick="document.getElementById('errorModal').style.display='none'">Close
+            </button>
+        </div>
+    </div>
+</div>
 </body>
-    <script>
-        window.onload = loginOnloadHandler('<%= metacatLoginUri %>', '<%= cnTokenUrl %>',
-            '<%= cnLogoutUrl %>', '<%= orcidFlow %>', '<%= loggingOut %>');
-    </script>
+<script>
+    window.onload = loginOnloadHandler('<%= metacatLoginUri %>', '<%= cnTokenUrl %>',
+        '<%= cnLogoutUrl %>', '<%= orcidFlow %>', '<%= loggingOut %>');
+</script>
 </html>

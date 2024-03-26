@@ -182,9 +182,9 @@ public class AuthAdmin extends MetacatAdmin {
                     processingSuccess.add("Authentication successfully configured");
                     RequestUtil.clearRequestMessages(request);
                     RequestUtil.setRequestSuccess(request, processingSuccess);
-                    RequestUtil.forwardRequest(
-                        request, response, "/admin?configureType=configure&processForm=false",
-                        null);
+                    RequestUtil.forwardRequest(request, response,
+                                               "/admin?configureType=configure&processForm=false",
+                                               null);
                 }
             } catch (MetacatUtilException mue) {
                 throw new AdminException(
