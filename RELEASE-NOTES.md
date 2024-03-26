@@ -4,23 +4,26 @@
 
 Release date: 2024-04-XX
 
-### Overview of major changes
+### Overview of Major Changes
 
 This major release introduces breaking changes:
 - The original Metacat API is no longer supported.
   - `Morpho` and any other clients depending on this API will no longer work
   - Client access must be done via the DataONE API.
+  - LTER and OAI-PMH harvesters to harvest objects to Metacat have been removed.
+    - The provider service to display results is still functional, but may require some modifications.
 - `Skin-based deployments` are no longer supported as the original Metacat API is deprecated.
   - If you wish to upgrade to Metacat 3.0.0, you can use `metacatui` which is shipped with Metacat, create your own
     frontend against the API, or use a metacatui that is not shipped with metacat.
-- TODO: Discuss with Jing & Matthew
+- Metacat admin authentication via LDAP and Password-based logins are no longer supported
+  - Authorization to the Metacat admin interface will be granted after successfully signing in with ORCID using the configured metacat admin identity.
+  - Please sign up for an ORCID if you do not already have one.
 
 ### Upgrade Notes:
 
 - In order to upgrade to 3.0.0, **you must be at Metacat v2.19.0**
 - `metacat.properties` no longer contains custom settings. Any custom settings you have should be backed up and then
   added to `metacat-site.properties`.
-- Metacat admin identities now require ORCIDs. If you previously used LDAP or password-based methods to log into the Metacat admin pages, you will need to sign-up for an ORCID if you do not already have one.
 - TODO: Discuss with Jing & Matthew
 
 ### New Features & Enhancements:
