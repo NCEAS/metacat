@@ -1,19 +1,26 @@
 Metacat Authentication Mechanism
 ================================
-Metacat supports either an internal password file authentication or the use of LDAP 
-as an external authentication mechanism.  It does this by supplying two classes 
-(``AuthFile`` or ``AuthLDAP``) that implement authentication via a password file or 
-an external LDAP server. You may choose the authentication mechanism during initial configuration.
 
-If neither of these choices is suitable for your deployment, a custom authentication mechanism can be built.
-Metacat is written such that this Authentication provider is replaceable with 
-another class that implements the same interface (``AuthInterface``). As 
-an Administrator, you have the choice to provide an alternative implementation 
-of ``AuthInterface`` and then configuring **metacat-site.properties** to use that
-class for authentication instead of LDAP or the internal password file.
+Metacat only supports ORCID authentication as an authentication mechanism. File-based or LDAP
+authentication is no longer available. Registering for an ORCID is simple, please visit:
+  https://orcid.org/
 
-File-Based Authentication
-----------------------------------
+After signing up for an ORCID iD, you may use it as an admin identity when first configuring Metacat
+authentication settings. Note, your full ORCID iD includes `http://orcid.org/` not just the 16-digit
+ORCID iD:
+  ex. http://orcid.org/0000-0001-2345-6789
+
+This ORCID iD provides admin privileges and authorization to all Metacat features.
+
+If ORCID authentication is not suitable for your deployment, a custom authentication mechanism
+can be built. Metacat is written such that this Authentication provider is replaceable with
+another class that implements the same interface (``AuthInterface``). As an Administrator, you have
+the choice to provide an alternative implementation of ``AuthInterface`` and then configuring
+**metacat-site.properties** to use that class for authentication instead of LDAP or the internal
+password file.
+
+File-Based Authentication (Obsolete)
+------------------------------------
 This is the default authentication mechanism in Metacat. The password file
 path can be specified during initial configuration. The Tomcat user should have 
 write/read permission to access the file. The password file follows this form:
@@ -54,8 +61,8 @@ such as https://www.dailycred.com/blog/12/bcrypt-calculator (we don't have any g
 then use the "-h" to pass the hashed password to the file by the utility.
 
 
-Utility for Password File Based Authentication
-----------------------------------------------
+Utility for Password File Based Authentication (Obsolete)
+---------------------------------------------------------
 You can edit the password file manually or use Metacat's command line utility 
 for managing users and groups. The utility is located in the deployed Metacat webapp::
 
@@ -103,8 +110,8 @@ Usage of the utility:
   The "-d <description>" option in the "groupadd" command is optional; 
   "-g <groupname> -e <email-address> -s <surname> -f <given-name> -o <organizationName>" in the "useradd" command are optional as well.
 
-LDAP-Based Authentication
-----------------------------------
+LDAP-Based Authentication (Obsolete)
+------------------------------------
 Before the Metacat 2.4.0 release, LDAP was the default authentication mechanism and was configured to use 
 the NCEAS LDAP server. We are now restricting access to the server to only trusted partners who can 
 guarantee secure communication with their clients and the LDAP server. 
