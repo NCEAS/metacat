@@ -16,5 +16,4 @@ If ORCID authentication is not suitable for your deployment, a custom authentica
 can be built. Metacat is written such that this Authentication provider is replaceable with
 another class that implements the same interface (``AuthInterface``). As an Administrator, you have
 the choice to provide an alternative implementation of ``AuthInterface`` and then configuring
-**metacat-site.properties** to use that class for authentication instead of LDAP or the internal
-password file.
+**metacat-site.properties** to use that class for authentication instead of ORCID authentication.
