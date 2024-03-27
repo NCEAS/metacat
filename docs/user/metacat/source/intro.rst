@@ -25,12 +25,9 @@ Metacat's user-friendly Registry application allows data providers to enter
 data set documentation into Metacat using a Web form. When the form is
 submitted, Metacat compiles the provided documentation into the required format
 and saves it. Information providers need never work directly with the XML_
-format in which the metadata are stored or with the database records themselves. In
-addition, the Metacat application can easily be extended to provide a
-customized data-entry interface that suits the particular requirements of each
-project. Metacat users can also choose to enter metadata using the Morpho
-application, which provides data entry wizards that guide information providers
-through the process of documenting each data set.
+format in which the metadata are stored or with the database records themselves.
+In addition, the Metacat application can easily be modified to provide a
+customized theme/Web interface.
 
 The metadata stored in Metacat includes all of the information needed
 to understand what the described data are and how to use them: a
@@ -69,22 +66,16 @@ What's in this Guide
 --------------------
 This Administrator's guide includes information for installing, configuring,
 managing and extending Metacat for Ubuntu and other Linux variants. Metacat
-can run on MacOS but it needs users' customized installation. 
+can run on MacOS but it needs users' customized installation.
 Chapter Four contains instructions for downloading and installing Metacat and the
 applications required to run the software on Linux platform.
 Chapter Five covers how to configure Metacat, both for new and upgraded
-installations. Chapter Seven details the ways in which you can customize the
-Metacat interface so users can access and submit information easily: using
-Metacat's generic web-interface (the Registry), creating your own HTML forms,
-and creating your own desktop client (like Morpho). Chapter Eight discusses how
-to work with Metacat's embedded Geoserver. Chapter Nine describes how to set up the
-Metacat's replication service, which permits Metacat servers to share data with
-each other, effectively backing up metadata and data files. Chapter Ten looks
-at the Metacat Harvester, a program that automates the retrieval of EML
-documents from one or more sites and their subsequent upload (insert or update)
-to Metacat. Chapter Eight discusses logging, Chapter Twelve contains instructions
-for creating a site map, which makes individual metadata entries available via
-Web searches. Metacat's `Java API`_ is available for developers.
+installations. Chapter Seven details how you can access and submit information easily using
+Metacatui, the default web interface that is shipped with Metacat. Chapter Eight describes
+the Metacat indexer with solr. Chapter Nine looks at Metacatui themes, and Chapter Ten discusses
+how to set up authentication as a Metacat operator. Chapter Thirteen discusses logging, and
+Chapter Fourteen contains instructions for creating a site map, which makes individual metadata
+entries available via Web searches. Additionally, Metacat's `Java API`_ is available for developers.
 
 .. _Java API: ./api/index.html
 
@@ -98,14 +89,13 @@ that have been created by others. Specifically,
 * Metacat's Web interface facilitates the input and retrieval of data 
 * Metacat's optional mapping functionality enables you to query and visualize the geographic coverage of stored data sets
 * Metacat's replication feature ensures that all Metacat data and metadata is stored safely on multiple Metacat servers
-* The Metacat interface can be easily extended and customized via Web forms, themes, and/or user-developed client tools in Java and other languages
-* The Metacat harvester automates the process of retrieving and storing EML documents from one or more sites
+* Metacat's default web interface can be easily modified through metacatui, which is shipped with Metacat.
 * Metacat can be customized to use Life Sciences Identifiers (LSIDs), uniquely identifying every data record
 * Metacat has a built-in logging system for tracking events such as document insertions, updates, deletes, and reads
 * The appearance of Metacat's Web interface can be customized via themes. 
 * Metacat fully supports the DataONE Member Node interface, allowing Metacat deployments to easily participate in the DataONE federation
 
-.. figure:: images/screenshots/image007.png
+.. figure:: images/screenshots/image007_metacatuihome.png
 
    Metacat's default home page. Users can customize the appearance using themes.
 
