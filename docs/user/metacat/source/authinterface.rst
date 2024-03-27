@@ -6,7 +6,7 @@ authentication is no longer available. Registering for an ORCID is simple, pleas
   https://orcid.org/
 
 After signing up for an ORCID iD, you may use it as an admin identity when first configuring Metacat
-authentication settings. Note, your full ORCID iD includes `http://orcid.org/` not just the 16-digit
+authentication settings. Note, your full ORCID iD includes `https://orcid.org/` not just the 16-digit
 ORCID iD:
   ex. http://orcid.org/0000-0001-2345-6789
 
