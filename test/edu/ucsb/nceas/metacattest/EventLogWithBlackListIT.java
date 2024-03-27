@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
  * 
  * @author jones
  */
-public class EventLogWithBlackListTest {
+public class EventLogWithBlackListIT {
     private static final String USERAGENT = "useragent-useragent-useragent-useragent-useragent-"
                                      + "useragent-useragent-useragent-useragent-useragent-"
         + "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"
