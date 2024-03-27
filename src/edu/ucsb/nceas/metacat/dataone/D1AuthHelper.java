@@ -763,7 +763,7 @@ public class D1AuthHelper {
                     }
                     // If not, check session subject for a metacat admin
                     String subjectValue = subject.getValue();
-                    if (subjectValue != null && !subjectValue.trim().isBlank()) {
+                    if (subjectValue != null && !subjectValue.isBlank()) {
                         logMetacat.debug("D1AuthHelper.isLocalNodeAdmin(), checking " + subjectValue
                             + " for Metacat admin privileges.");
                         try {
