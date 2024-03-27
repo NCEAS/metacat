@@ -1,6 +1,10 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -11,6 +15,7 @@ import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
+import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v1.Permission;
@@ -26,7 +31,6 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.ucsb.nceas.LeanTestUtils;
@@ -202,12 +206,35 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testExpandRightsHolder() throws Exception {
-        try (MockedStatic<D1AuthHelper> mockd1auth = Mockito.mockStatic(D1AuthHelper.class)) {
-            Mockito.when(D1AuthHelper.expandRightsHolder(sysmeta.getRightsHolder(),
-                                                         sysmeta.getSubmitter())).thenReturn(true);
-            boolean isRightsHolder = authDelMock.expandRightsHolder(sysmeta.getRightsHolder(),
-                                                  sysmeta.getSubmitter());
-            assertTrue(isRightsHolder);
+
+        try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
+
+            Subject group1Subject = new Subject();
+            group1Subject.setValue("testGroupSubject");
+            Group group1 = new Group();
+            group1.setSubject(group1Subject);
+
+            List<Subject> hasMemberList = new ArrayList<>();
+            Subject testGroupMember = new Subject();
+            group1Subject.setValue("testGroupMember");
+            hasMemberList.add(testGroupMember);        // bogus value
+            hasMemberList.add(sysmeta.getSubmitter()); // the one that will match
+            group1.setHasMemberList(hasMemberList);
+
+            SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
+            List<Group> groups = new ArrayList<>();
+            groups.add(group1);
+            when(mockSInfo.getGroupList()).thenReturn(groups);
+
+            CNode mockCN = Mockito.mock(CNode.class);
+            when(mockCN.listSubjects(eq(null), any(), eq(null), anyInt(), anyInt()))
+                .thenReturn(mockSInfo);
+
+            mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
+
+            assertTrue("D1AuthHelper.expandRightsHolder should return true",
+                       D1AuthHelper.expandRightsHolder(group1Subject,
+                                                  sysmeta.getSubmitter()));
         }
     }
 
