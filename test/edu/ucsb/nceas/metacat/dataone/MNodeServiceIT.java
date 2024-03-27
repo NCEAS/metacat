@@ -1026,7 +1026,7 @@ public class MNodeServiceIT {
             // check the service restriction. Second, there are some service restrictions
             PropertyService.setPropertyNoPersist(
                 "auth.allowedSubmitters",
-                "http\\://orcid.org/0000-0002-1209-5268:cn=parc,o=PARC,dc=ecoinformatics,dc=org");
+                "http://orcid.org/0000-0002-1209-5268;cn=parc,o=PARC,dc=ecoinformatics,dc=org");
             AuthUtil.populateAllowedSubmitters();//make the allowedSubimtters effective
             node = MNodeService.getInstance(request).getCapabilities();
             services = node.getServices();

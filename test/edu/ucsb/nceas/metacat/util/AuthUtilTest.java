@@ -15,12 +15,13 @@ import static org.junit.Assert.assertEquals;
  * @author tao
  */
 public class AuthUtilTest {
-    private static final String LDAP = "uid=test,o=NCEAS,dc=ecoinformatics,dc=org";
-    private static final String ORCID = "http\\://orcid.org/0023-0001-7868-2567";
+    private static final String LDAP = "uid=test\\;o=NCEAS\\;dc=ecoinformatics,dc=org";
+    private static final String ORCID = "http://orcid.org/0023-0001-7868-2567";
     private static final String ADMIN_ORCID1 = "http://orcid.org/0023-0001-7868-2567";
     private static final String ADMIN_ORCID2 = "http://orcid.org/0000-0001-7868-999X";
     private static final String LIST;
     private static final String ADMINS_LIST = LDAP + ";" + ADMIN_ORCID1 + ";" + ADMIN_ORCID2;
+    private static final String EXPECTED_LDAP = "uid=test;o=NCEAS;dc=ecoinformatics,dc=org";
     private static final String EXPECTED_ORCID = "http://orcid.org/0023-0001-7868-2567";
     private static final String EXPECTED_ADMIN_ORCID1 = EXPECTED_ORCID;
     private static final String EXPECTED_ADMIN_ORCID2 = "http://orcid.org/0000-0001-7868-999X";
@@ -45,7 +46,6 @@ public class AuthUtilTest {
      */
     @Before
     public void setUp() throws Exception {
-//        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
     }
 
     /**
@@ -57,8 +57,12 @@ public class AuthUtilTest {
     @Test
     public void testSplit() {
         Vector<String> results = AuthUtil.split(LIST, AuthUtil.DELIMITER, AuthUtil.ESCAPECHAR);
-        assertEquals(LDAP, results.elementAt(0));
+        assertEquals(EXPECTED_LDAP, results.elementAt(0));
         assertEquals(EXPECTED_ORCID, results.elementAt(1));
+        String text = "http\\://orcid.org/0000-0002-6076-8092;http\\://orcid.org/0000-0003-0077-4738";
+        results = AuthUtil.split(text, AuthUtil.DELIMITER, AuthUtil.ESCAPECHAR);
+        assertEquals("http\\://orcid.org/0000-0002-6076-8092", results.elementAt(0));
+        assertEquals("http\\://orcid.org/0000-0003-0077-4738", results.elementAt(1));
     }
 
     /**
@@ -69,7 +73,7 @@ public class AuthUtilTest {
         String originStr = PropertyService.getProperty(ALLOW);
         PropertyService.setProperty(ALLOW, LIST);
         Vector<String> results = AuthUtil.getAllowedSubmitters();
-        assertEquals(LDAP, results.elementAt(0));
+        assertEquals(EXPECTED_LDAP, results.elementAt(0));
         assertEquals(EXPECTED_ORCID, results.elementAt(1));
         LeanTestUtils.debug("=======the orcid id is " + results.elementAt(1));
 
@@ -85,7 +89,7 @@ public class AuthUtilTest {
         String originStr = PropertyService.getProperty(DENY);
         PropertyService.setProperty(DENY, LIST);
         Vector<String> results = AuthUtil.getDeniedSubmitters();
-        assertEquals(LDAP, results.elementAt(0));
+        assertEquals(EXPECTED_LDAP, results.elementAt(0));
         assertEquals(EXPECTED_ORCID, results.elementAt(1));
 
         //set back the original value
@@ -100,7 +104,7 @@ public class AuthUtilTest {
         String originStr = PropertyService.getProperty(MODERATOR);
         PropertyService.setProperty(MODERATOR, LIST);
         Vector<String> results = AuthUtil.getModerators();
-        assertEquals(LDAP, results.elementAt(0));
+        assertEquals(EXPECTED_LDAP, results.elementAt(0));
         assertEquals(EXPECTED_ORCID, results.elementAt(1));
 
         //set back the original value
@@ -115,7 +119,7 @@ public class AuthUtilTest {
         String originStr = PropertyService.getProperty(ADMIN);
         PropertyService.setProperty(ADMIN, ADMINS_LIST);
         Vector<String> results = AuthUtil.getAdministrators();
-        assertEquals(LDAP, results.elementAt(0));
+        assertEquals(EXPECTED_LDAP, results.elementAt(0));
         // admin orcid list is now semicolon-delimited, and we don't; need to escape the colons
         assertEquals(EXPECTED_ADMIN_ORCID1, results.elementAt(1));
         assertEquals(EXPECTED_ADMIN_ORCID2, results.elementAt(2));

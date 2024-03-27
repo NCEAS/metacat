@@ -1,74 +1,62 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2004 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacattest;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import org.junit.Before;
+import org.junit.Test;
+
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.EventLog;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test the logging facility against the database connection.
  * 
  * @author jones
  */
-public class EventLogWithBlackListTest extends MCTestCase
-{
-    private static final String USERAGENT="useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
-                                    "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
-                                    "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
-                                    "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
-                                    "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
-                                    "useragent-12";
-    protected void setUp() throws Exception
-    {    	
-        super.setUp();
-        PropertyService.setPropertyNoPersist("event.log.blacklist.ipaddress", "192.168.1.115:192.168.1.116");
-        PropertyService.setPropertyNoPersist("event.log.blacklist.subject", "uid=user,o=NCEAS,dc=ecoinformatics,dc=org:http\\://orcid.org/0000-0002-1209-5268");
-        DBConnectionPool pool = DBConnectionPool.getInstance();
+public class EventLogWithBlackListTest {
+    private static final String USERAGENT = "useragent-useragent-useragent-useragent-useragent-"
+                                     + "useragent-useragent-useragent-useragent-useragent-"
+        + "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"
+        + "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"
+        + "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"
+        + "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"
+        + "useragent-12";
+
+    /**
+     * The setUp method
+     * @throws Exception
+     */
+    @Before
+    public void setUp() throws Exception {
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
+        PropertyService.setPropertyNoPersist("event.log.blacklist.ipaddress", "192.168.1.115;192.168.1.116");
+        PropertyService.setPropertyNoPersist("event.log.blacklist.subject",
+                    "uid=user,o=NCEAS,dc=ecoinformatics,dc=org;http://orcid.org/0000-0002-1209-5268");
     }
 
     /**
      * Test whether a valid instance of the EventLog can be retrieved.
      *
      */
-    public void testGetInstance()
-    {
+    @Test
+    public void testGetInstance() {
         EventLog logger = EventLog.getInstance();
-        assertTrue(logger != null);
+        assertNotNull(logger);
     }
 
     /**
      * Test whether the log method can properly insert a log record.
      */
-    public void testLog() throws Exception
-    {
-        
+    @Test
+    public void testLog() throws Exception {
+
         long time = System.nanoTime();
         String id = "test-1934-wemewen-3-2"+time+".1";
         EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, "read");
@@ -82,7 +70,6 @@ public class EventLogWithBlackListTest extends MCTestCase
         String[] eventList = {"read", "insert", "update"};
         String report = EventLog.getInstance().getReport(ipList, principals, docList, 
                 eventList, startDate, endDate, anonymous);
-        //System.out.println("the report is "+report);
         assertTrue(report.contains("<event>read</event>"));
         assertTrue(report.contains("<ipAddress>192.168.1.103</ipAddress>"));
         assertTrue(report.contains("<userAgent>Mozilla</userAgent>"));
@@ -98,21 +85,19 @@ public class EventLogWithBlackListTest extends MCTestCase
         String[] docs = {id};
         report = EventLog.getInstance().getReport(ipList, principals, docs, 
                 eventList, startDate, endDate, anonymous);
-        System.out.println("the report is "+report);
         assertTrue(report.contains("<event>read</event>"));
         assertTrue(report.contains("<ipAddress>192.168.1.103</ipAddress>"));
         assertTrue(report.contains("<userAgent>"+USERAGENT+"</userAgent>"));
         assertTrue(report.contains("<principal>public</principal>"));
         assertTrue(report.contains("<docid>"+id+"</docid>"));
     }
-    
+
     /**
      * Test whether the log method can properly insert a log record when the black ip and subject lists are set
      */
-    public void testLogWithBlackList() throws Exception
-    {
-        
-        
+    @Test
+    public void testLogWithBlackList() throws Exception {
+
         //test to filter out the ip address
         long time = System.nanoTime();
         String id = "test-1934-wemewen-35"+time+".1";
@@ -121,34 +106,34 @@ public class EventLogWithBlackListTest extends MCTestCase
         Timestamp startDate = null;
         Timestamp endDate = null;
         boolean anonymous = false;
-        String[] principals = {"public", "uid=user,o=NCEAS,dc=ecoinformatics,dc=org", "http://orcid.org/0000-0002-1209-5268"};
+        String[] principals = {"public", "uid=user,o=NCEAS,dc=ecoinformatics,dc=org",
+                                                "http://orcid.org/0000-0002-1209-5268"};
         String[] ipList = {"192.168.1.115", "192.168.1.100", "192.168.1.105"};
         String[] docList = {id};
         String[] eventList = {"read", "insert", "update"};
         String report = EventLog.getInstance().getReport(ipList, principals, docList, 
                 eventList, startDate, endDate, anonymous);
-        //System.out.println("===========the report is "+report);
-        assertTrue(!report.contains("<event>read</event>"));
-        assertTrue(!report.contains("<ipAddress>192.168.1.115</ipAddress>"));
-        assertTrue(!report.contains("<userAgent>unknown1</userAgent>"));
-        assertTrue(!report.contains("<principal>public</principal>"));
-        assertTrue(!report.contains("<docid>"+id+"</docid>"));
-        
+        assertFalse(report.contains("<event>read</event>"));
+        assertFalse(report.contains("<ipAddress>192.168.1.115</ipAddress>"));
+        assertFalse(report.contains("<userAgent>unknown1</userAgent>"));
+        assertFalse(report.contains("<principal>public</principal>"));
+        assertFalse(report.contains("<docid>"+id+"</docid>"));
+
         //test to filter out the subject
         time = System.nanoTime();
         id = "test-1934-wemewen-3-37"+time+".1";
-        EventLog.getInstance().log("192.168.1.105", "unknown", "http://orcid.org/0000-0002-1209-5268", id, "read");
+        EventLog.getInstance().log("192.168.1.105",
+                            "unknown", "http://orcid.org/0000-0002-1209-5268", id, "read");
         Thread.sleep(2000);
         String[] docs = {id};
         report = EventLog.getInstance().getReport(ipList, principals, docs, 
                 eventList, startDate, endDate, anonymous);
-        //System.out.println("=============the report is "+report);
-        assertTrue(!report.contains("<event>read</event>"));
-        assertTrue(!report.contains("<ipAddress>192.168.1.105</ipAddress>"));
-        assertTrue(!report.contains("<userAgent>unknown</userAgent>"));
-        assertTrue(!report.contains("<principal>http://orcid.org/0000-0002-1209-5268</principal>"));
-        assertTrue(!report.contains("<docid>"+id+"</docid>"));
-        
+        assertFalse(report.contains("<event>read</event>"));
+        assertFalse(report.contains("<ipAddress>192.168.1.105</ipAddress>"));
+        assertFalse(report.contains("<userAgent>unknown</userAgent>"));
+        assertFalse(report.contains("<principal>http://orcid.org/0000-0002-1209-5268</principal>"));
+        assertFalse(report.contains("<docid>"+id+"</docid>"));
+
         //test to log data
         time = System.nanoTime();
         id = "test-1934-wemewen-3-45"+time+".1";
@@ -157,21 +142,18 @@ public class EventLogWithBlackListTest extends MCTestCase
         String[] docs2 = {id};
         report = EventLog.getInstance().getReport(ipList, principals, docs2, 
                 eventList, startDate, endDate, anonymous);
-        //System.out.println("===============the report is "+report);
         assertTrue(report.contains("<event>read</event>"));
         assertTrue(report.contains("<ipAddress>192.168.1.100</ipAddress>"));
         assertTrue(report.contains("<userAgent>unknown2</userAgent>"));
         assertTrue(report.contains("<principal>public</principal>"));
         assertTrue(report.contains("<docid>"+id+"</docid>"));
     }
-    
-    
 
     /**
      * Test whether getReport returns correct reports.
      */
-    public void testGetReport()
-    {
+    @Test
+    public void testGetReport() {
         String[] principals = {"jones", "public", "someone"};
         String[] ipList = {"192.168.1.103", "192.168.1.104"};
         String[] docList = {"test.2.1", "test.2"};
@@ -187,25 +169,26 @@ public class EventLogWithBlackListTest extends MCTestCase
         }
         String report = EventLog.getInstance().getReport(ipList, principals, docList, 
                         eventList, null, null, false);
-        System.out.println(report);
+        assertTrue(report.contains("log"));
         report = EventLog.getInstance().getReport(null, null, null, 
                         null, startDate, endDate, false);
-        System.out.println(report);
+        assertTrue(report.contains("log"));
     }
-    
+
     /**
      * Test if the isDeleted method
      */
+    @Test
     public void testIsDeleted() throws Exception{
         long time = System.nanoTime();
         String id = "test-1934-weme123-3-1"+time+".1";
         EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, "read");
         Thread.sleep(2000);
         boolean deleted = EventLog.getInstance().isDeleted(id);
-        assertTrue(deleted == false);
+        assertFalse(deleted);
         Thread.sleep(2000);
         EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, EventLog.DELETE);
         deleted = EventLog.getInstance().isDeleted(id);
-        assertTrue(deleted == true);
+        assertTrue(deleted);
     }
 }
