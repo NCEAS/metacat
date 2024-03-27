@@ -43,8 +43,8 @@ public class EventLogFilterTest {
         String subject =
              "uid=user\\;o=NCEAS\\;dc=ecoinformatics\\;dc=org;http://orcid.org/0000-0002-1209-5268";
         //Tests without black lists.
-        PropertyService.setPropertyNoPersist("event.log.blacklist.ipaddress", "");
-        PropertyService.setPropertyNoPersist("event.log.blacklist.subject", "");
+        PropertyService.setPropertyNoPersist("event.log.deny.ipaddress", "");
+        PropertyService.setPropertyNoPersist("event.log.deny.subject", "");
         EventLogFilter filter = new EventLogFilter();
         EventLogData data = new EventLogData(ipList[0], userAgent, principals[0], docList[0], eventList[0]);
         assertFalse(filter.filter(data));
@@ -53,7 +53,7 @@ public class EventLogFilterTest {
         data = new EventLogData(ipList[2], userAgent, principals[2], docList[2], eventList[2]);
         assertFalse(filter.filter(data));
         //Tests with ip blacklist
-        PropertyService.setPropertyNoPersist("event.log.blacklist.ipaddress", "192.168.1.103;192.168.1.104");
+        PropertyService.setPropertyNoPersist("event.log.deny.ipaddress", "192.168.1.103;192.168.1.104");
         filter = new EventLogFilter();
         data = new EventLogData(ipList[0], userAgent, principals[0], docList[0], eventList[0]);
         assertTrue(filter.filter(data));
@@ -62,8 +62,8 @@ public class EventLogFilterTest {
         data = new EventLogData(ipList[2], userAgent, principals[2], docList[2], eventList[2]);
         assertFalse(filter.filter(data));
         //Tests with subject blacklist 
-        PropertyService.setPropertyNoPersist("event.log.blacklist.ipaddress", "");
-        PropertyService.setPropertyNoPersist("event.log.blacklist.subject", subject);
+        PropertyService.setPropertyNoPersist("event.log.deny.ipaddress", "");
+        PropertyService.setPropertyNoPersist("event.log.deny.subject", subject);
         filter = new EventLogFilter();
         data = new EventLogData(ipList[0], userAgent, principals[0], docList[0], eventList[0]);
         assertTrue(filter.filter(data));
@@ -72,8 +72,8 @@ public class EventLogFilterTest {
         data = new EventLogData(ipList[2], userAgent, principals[2], docList[2], eventList[2]);
         assertTrue(filter.filter(data));
         //Tests both blacklists 
-        PropertyService.setPropertyNoPersist("event.log.blacklist.ipaddress", "192.168.1.103;192.168.1.104");
-        PropertyService.setPropertyNoPersist("event.log.blacklist.subject", subject);
+        PropertyService.setPropertyNoPersist("event.log.deny.ipaddress", "192.168.1.103;192.168.1.104");
+        PropertyService.setPropertyNoPersist("event.log.deny.subject", subject);
         filter = new EventLogFilter();
         data = new EventLogData(ipList[0], userAgent, principals[0], docList[0], eventList[0]);
         assertTrue(filter.filter(data));

@@ -50,16 +50,16 @@ public class EventLogFilter {
         String blackIPString = null;
         String blackSubjectString = null;
         try {
-            blackIPString = PropertyService.getProperty("event.log.blacklist.ipaddress");
+            blackIPString = PropertyService.getProperty("event.log.deny.ipaddress");
         } catch (PropertyNotFoundException pnfe) {
-           logMetacat.warn("EventLogFilter.EventLogFilter - Could not get metacat property: event.log.blacklist.ipaddress. "
-                    + "Any ip address will be allowed to log: "
+           logMetacat.warn("EventLogFilter.EventLogFilter - Could not get metacat property: event.log.deny.ipaddress."
+                    + " Any ip address will be allowed to log: "
                     + pnfe.getMessage());
         }try {
-            blackSubjectString = PropertyService.getProperty("event.log.blacklist.subject");
+            blackSubjectString = PropertyService.getProperty("event.log.deny.subject");
         } catch (PropertyNotFoundException pnfe) {
-           logMetacat.warn("EventLogFilter.EventLogFilter - Could not get metacat property: event.log.blacklist.subject. "
-                    + "Any subject will be allowed to log: "
+           logMetacat.warn("EventLogFilter.EventLogFilter - Could not get metacat property: event.log.deny.subject."
+                    + " Any subject will be allowed to log: "
                     + pnfe.getMessage());
         }        
         blackIPList = AuthUtil.split(blackIPString, AuthUtil.DELIMITER, AuthUtil.ESCAPECHAR);

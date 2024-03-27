@@ -36,8 +36,8 @@ public class EventLogWithBlackListIT {
     @Before
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
-        PropertyService.setPropertyNoPersist("event.log.blacklist.ipaddress", "192.168.1.115;192.168.1.116");
-        PropertyService.setPropertyNoPersist("event.log.blacklist.subject",
+        PropertyService.setPropertyNoPersist("event.log.deny.ipaddress", "192.168.1.115;192.168.1.116");
+        PropertyService.setPropertyNoPersist("event.log.deny.subject",
                     "uid=user,o=NCEAS,dc=ecoinformatics,dc=org;http://orcid.org/0000-0002-1209-5268");
     }
 
