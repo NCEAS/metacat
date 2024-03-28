@@ -199,37 +199,41 @@ public class D1AuthHelperTest {
         notAuthorizedSession.setSubject(TypeFactory.buildSubject("notAFriend"));
     }
 
-    // TODO: This test needs to be reviewed
-    // @Ignore("Not yet implemented...")
     /**
-     * Check expandRightsHolder returns true with approved subject
+     * Check expandRightsHolder returns true with approved subject, ex. the Session subject is a
+     * member of the rights holder group.
      */
     @Test
     public void testExpandRightsHolder() throws Exception {
-
+        // expandRightsHolder() is a public static method
+        // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-
+            // Create a new rights holder group
+            Group rightsHolderGroup = new Group();
+            // Add a new group subject
             Subject group1Subject = new Subject();
-            group1Subject.setValue("testGroupSubject");
-            Group group1 = new Group();
-            group1.setSubject(group1Subject);
+            group1Subject.setValue("testRightsHolderSubject");
+            rightsHolderGroup.setSubject(group1Subject);
 
+            // Create a member list, to be added to the group
             List<Subject> hasMemberList = new ArrayList<>();
             Subject testGroupMember = new Subject();
-            group1Subject.setValue("testGroupMember");
-            hasMemberList.add(testGroupMember);        // bogus value
-            hasMemberList.add(sysmeta.getSubmitter()); // the one that will match
-            group1.setHasMemberList(hasMemberList);
+            testGroupMember.setValue("testGroupMember");
+            hasMemberList.add(testGroupMember);        // Bogus value
+            hasMemberList.add(sysmeta.getSubmitter()); // The matching member
+            rightsHolderGroup.setHasMemberList(hasMemberList);
 
             SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
             List<Group> groups = new ArrayList<>();
-            groups.add(group1);
+            groups.add(rightsHolderGroup);
             when(mockSInfo.getGroupList()).thenReturn(groups);
 
             CNode mockCN = Mockito.mock(CNode.class);
+            // .listSubjects(...) also makes a network call
             when(mockCN.listSubjects(eq(null), any(), eq(null), anyInt(), anyInt()))
                 .thenReturn(mockSInfo);
 
+            // .getCN() makes a network call
             mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
 
             assertTrue("D1AuthHelper.expandRightsHolder should return true",
