@@ -40,8 +40,8 @@ can also edit the metadata or delete it from the repository, again using
 Metacat's straightforward Web interface.
 
 Metacat is a `Java servlet`_ application that runs on Linux and  Mac OS
-platforms in conjunction with a database, such as 
-PostgreSQL_, a Web server, and a Solr server. 
+platforms in conjunction with a database, such as
+PostgreSQL_, a Web server, and a Solr server.
 The Metacat application stores data in an XML_ format using `Ecological
 Metadata Language`_ (EML) or other metadata standards such as `ISO 19139`_ or the
 `FGDC Biological Data Profile`_. For more
@@ -58,41 +58,36 @@ please see http://knb.ecoinformatics.org.
 
 .. _Ecological Metadata Language: http://knb.ecoinformatics.org/software/eml
 
-.. _ISO 19139: http://marinemetadata.org/references/iso19139 
+.. _ISO 19139: http://marinemetadata.org/references/iso19139
 
-.. _FGDC Biological Data Profile: http://www.fgdc.gov/standards/projects/FGDC-standards-projects/metadata/biometadata 
+.. _FGDC Biological Data Profile: http://www.fgdc.gov/standards/projects/FGDC-standards-projects/metadata/biometadata
 
 What's in this Guide
 --------------------
-This Administrator's guide includes information for installing, configuring,
-managing and extending Metacat for Ubuntu and other Linux variants. Metacat
-can run on MacOS but it needs users' customized installation.
-Chapter Four contains instructions for downloading and installing Metacat and the
-applications required to run the software on Linux platform.
-Chapter Five covers how to configure Metacat, both for new and upgraded
-installations. Chapter Seven details how you can access and submit information easily using
-Metacatui, the default web interface that is shipped with Metacat. Chapter Eight describes
-the Metacat indexer with solr. Chapter Nine looks at Metacatui themes, and Chapter Ten discusses
-how to set up authentication as a Metacat operator. Chapter Thirteen discusses logging, and
-Chapter Fourteen contains instructions for creating a site map, which makes individual metadata
-entries available via Web searches. Additionally, Metacat's `Java API`_ is available for developers.
+This Administrator's guide provides comprehensive steps for downloading, installing, and configuring
+Metacat for Ubuntu and other Linux variants, alongside instructions for using Metacatui, setting up
+themes, authentication, logging, and creating a site map for improved web search visibility.
+Metacat can run on MacOS but it requires users' customized installation.
+
+For detailed information, refer to the table of contents. Additionally, Metacat's `Java API`_ is
+available for developers.
 
 .. _Java API: ./api/index.html
 
 Metacat Features
 ----------------
-Metacat is a repository for data and metadata (documentation about data), that 
-helps scientists find, understand and effectively use the data sets they manage or 
+Metacat is a repository for data and metadata (documentation about data), that
+helps scientists find, understand and effectively use the data sets they manage or
 that have been created by others. Specifically,
 
 * Metacat is an open source web application, which can run on Linux and MacOS operating systems and is written in Java
-* Metacat's Web interface facilitates the input and retrieval of data 
+* Metacat's Web interface facilitates the input and retrieval of data
 * Metacat's optional mapping functionality enables you to query and visualize the geographic coverage of stored data sets
 * Metacat's replication feature ensures that all Metacat data and metadata is stored safely on multiple Metacat servers
 * Metacat's default web interface can be easily modified through metacatui, which is shipped with Metacat.
 * Metacat can be customized to use Life Sciences Identifiers (LSIDs), uniquely identifying every data record
 * Metacat has a built-in logging system for tracking events such as document insertions, updates, deletes, and reads
-* The appearance of Metacat's Web interface can be customized via themes. 
+* The appearance of Metacat's Web interface can be customized via themes.
 * Metacat fully supports the DataONE Member Node interface, allowing Metacat deployments to easily participate in the DataONE federation
 
 .. figure:: images/screenshots/image007_metacatuihome.png
