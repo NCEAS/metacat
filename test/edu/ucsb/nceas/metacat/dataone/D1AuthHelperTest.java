@@ -104,6 +104,8 @@ public class D1AuthHelperTest {
     Session localNodeSession;
     Session notAuthorizedSession;
     SystemMetadata sysmeta;
+    Group rightsHolderGroup;
+    Subject rhgSubject;
 
     /**
      * Get a minimal SystemMetadata object with default values
@@ -133,6 +135,13 @@ public class D1AuthHelperTest {
         // Create a D1AuthHelper mock for tests that make network calls (ex. getCNNodeList)
         authDelMock = Mockito.spy(authDel);
         Mockito.doReturn(nl).when(authDelMock).getCNNodeList();
+
+        // Create a rightsHolderGroup
+        rightsHolderGroup = new Group();
+        // Add a new group subject
+        rhgSubject = new Subject();
+        rhgSubject.setValue("d1AuthTestRightsHolderGroupSubject");
+        rightsHolderGroup.setSubject(rhgSubject);
 
         // Build/get a SystemMetadata object
         sysmeta = getGenericSysmetaObject();
@@ -210,13 +219,6 @@ public class D1AuthHelperTest {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Create a new rights holder group
-            Group rightsHolderGroup = new Group();
-            // Add a new group subject
-            Subject group1Subject = new Subject();
-            group1Subject.setValue("testRightsHolderSubject");
-            rightsHolderGroup.setSubject(group1Subject);
-
             // Create a member list, to be added to the group
             List<Subject> hasMemberList = new ArrayList<>();
             Subject testGroupMember = new Subject();
@@ -239,29 +241,25 @@ public class D1AuthHelperTest {
             mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
 
             assertTrue("D1AuthHelper.expandRightsHolder should return true",
-                       D1AuthHelper.expandRightsHolder(group1Subject,
+                       D1AuthHelper.expandRightsHolder(rhgSubject,
                                                   sysmeta.getSubmitter()));
         }
     }
 
+    /**
+     * Check that expandRightsHolder returns false with an unauthorized subject
+     */
     @Test
     public void testExpandRightsHolder_unauthorizedSubject() throws Exception {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Create a new rights holder group
-            Group rightsHolderGroup = new Group();
-            // Add a new group subject
-            Subject group1Subject = new Subject();
-            group1Subject.setValue("testRightsHolderSubject");
-            rightsHolderGroup.setSubject(group1Subject);
-
             // Create a member list, to be added to the group
             List<Subject> hasMemberList = new ArrayList<>();
             Subject testGroupMember = new Subject();
             testGroupMember.setValue("testGroupMember");
             hasMemberList.add(testGroupMember);        // Bogus value
-            hasMemberList.add(sysmeta.getSubmitter()); // The matching member - "submitterRightsHolder"
+            hasMemberList.add(sysmeta.getSubmitter()); // The matching member
             rightsHolderGroup.setHasMemberList(hasMemberList);
 
             SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
@@ -279,23 +277,20 @@ public class D1AuthHelperTest {
 
             assertFalse("D1AuthHelper.expandRightsHolder should return false, the subject is not "
                             + "part of the member list.",
-                        D1AuthHelper.expandRightsHolder(group1Subject,
+                        D1AuthHelper.expandRightsHolder(rhgSubject,
                                                         notAuthorizedSession.getSubject()));
         }
     }
 
+    /**
+     * Check that expandRightsHolder returns false when the rightsHolderGroup does not contain any
+     * members.
+     */
     @Test
     public void testExpandRightsHolder_emptyHasMemberList() throws Exception {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Create a new rights holder group
-            Group rightsHolderGroup = new Group();
-            // Add a new group subject
-            Subject group1Subject = new Subject();
-            group1Subject.setValue("testRightsHolderSubject");
-            rightsHolderGroup.setSubject(group1Subject);
-
             // Create a member list, to be added to the group
             List<Subject> hasMemberList = new ArrayList<>();
             rightsHolderGroup.setHasMemberList(hasMemberList);
@@ -315,7 +310,7 @@ public class D1AuthHelperTest {
 
             assertFalse(
                 "D1AuthHelper.expandRightsHolder should return false, there are no members",
-                D1AuthHelper.expandRightsHolder(group1Subject, sysmeta.getSubmitter()));
+                D1AuthHelper.expandRightsHolder(rhgSubject, sysmeta.getSubmitter()));
         }
     }
 
