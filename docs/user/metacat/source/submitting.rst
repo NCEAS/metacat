@@ -25,6 +25,10 @@ Once you've registered and/or signed in, you will be returned to ``metacatui``. 
 the upper right-hand corner and hover above your name, which will reveal a drop down menu. Click
 'Submit Data', and add your data and metadata documents & fill in the relevant and required fields.
 
+.. figure:: images/screenshots/image007_metacatuisubmitdata.png
+
+   Submit data by first signing in, then hovering over your name
+
 The DataONE REST API
 --------------------------------------------
 
