@@ -420,7 +420,7 @@ Authorization and Authentication Properties
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-allowedSubmitters:       |                                                                               |                                               |
 |                                   |                                                                               |                                               |
-| auth.allowedSubmitters            | A colon delimited list of users who should be allowed to submit documents     | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
+| auth.allowedSubmitters            | A semicolon delimited list of users who should be allowed to submit documents | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
 |                                   | to Metacat. If no value is specified, all users will be                       |                                               |
 |                                   | allowed to submit documents.                                                  |                                               |
 |                                   |                                                                               |                                               |
@@ -428,7 +428,7 @@ Authorization and Authentication Properties
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-deniedSubmitters:        |                                                                               |                                               |
 |                                   |                                                                               |                                               |
-| auth.deniedSubmitters             | A colon delimited list of users who should NOT be allowed to                  | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
+| auth.deniedSubmitters             | A semicolon delimited list of users who should NOT be allowed to              | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
 |                                   | submit documents. If no value is specified, all users will be allowed to      |                                               |
 |                                   | submit documents.                                                             |                                               |
 |                                   |                                                                               |                                               |

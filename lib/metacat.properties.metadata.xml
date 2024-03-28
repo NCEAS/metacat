@@ -260,7 +260,11 @@
         <label>Allowed Submitters</label>
         <group>4</group>
         <index>1</index>
-        <description>Allowed Submitters</description>
+        <description>&#91;A list of one or more user and group names,
+                     separated by &lt;em&gt;semicolons (;)&lt;/em&gt;,
+                     which are allowed to submit objects to this server.
+                     Before 3.0.0, the delimiter was colons(:).
+                     &#93; &lt;span class="new-badge"&gt;New&lt;/span&gt;</description>
         <helpFile>docs/metacat-properties.html#auth-allowedsubmitters</helpFile>
     </config>
 
@@ -269,7 +273,11 @@
         <label>Denied Submitters</label>
         <group>4</group>
         <index>2</index>
-        <description>Denied Submitters</description>
+        <description>&#91;A list of one or more user and group names,
+                     separated by &lt;em&gt;semicolons (;)&lt;/em&gt;,
+                     which are NOT allowed to submit objects to this server.
+                     Before 3.0.0, the delimiter was colons(:).
+                     &#93; &lt;span class="new-badge"&gt;New&lt;/span&gt;</description>
         <helpFile>docs/metacat-properties.html#auth-deniedsubmitters</helpFile>
     </config>
 
