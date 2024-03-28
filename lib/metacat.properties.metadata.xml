@@ -257,19 +257,25 @@
 
     <config>
         <key>auth.allowedSubmitters</key>
-        <label>Allowed Submitters</label>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Allowed Submitters</label>
         <group>4</group>
         <index>1</index>
-        <description>Allowed Submitters</description>
+        <description>A list of one or more user and group names,
+                     separated by &lt;em&gt;semicolons (;)&lt;/em&gt;,
+                     which are allowed to submit objects to this server.
+        </description>
         <helpFile>docs/metacat-properties.html#auth-allowedsubmitters</helpFile>
     </config>
 
     <config>
         <key>auth.deniedSubmitters</key>
-        <label>Denied Submitters</label>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Denied Submitters</label>
         <group>4</group>
         <index>2</index>
-        <description>Denied Submitters</description>
+        <description>A list of one or more user and group names,
+                     separated by &lt;em&gt;semicolons (;)&lt;/em&gt;,
+                     which are NOT allowed to submit objects to this server.
+        </description>
         <helpFile>docs/metacat-properties.html#auth-deniedsubmitters</helpFile>
     </config>
 
@@ -298,7 +304,7 @@
 
     <config>
         <key>application.sitePropertiesDir</key>
-        <label>Site Properties Directory</label>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Site Properties Directory</label>
         <group>4</group>
         <index>5</index>
         <description>
@@ -391,25 +397,25 @@
 
     <config>
         <key>cn.server.publiccert.filename</key>
-        <label>Token Verification Certificates</label>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Token Verification Certificates</label>
         <group>4</group>
         <index>13</index>
         <description>
-            &#91;Semicolon-separated list of paths to certificate files, containing public keys to be
-            used by d1_portal to verify incoming request jwt tokens (in addition to verifying
-            against the CN server).&#93; &lt;span class="new-badge"&gt;New&lt;/span&gt;
+            Semicolon-separated list of paths to certificate files, each containing a single public
+            key (not a certificate chain). These will be used to verify incoming request jwt
+            tokens, in addition to verifying against the CN server.
         </description>
         <helpFile>docs/metacat-properties.html#cn-server-publiccert-filename</helpFile>
     </config>
 
     <config>
         <key>dataone.nodeToken.file</key>
-        <label>Admin Token Path</label>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Admin Token Path</label>
         <group>4</group>
         <index>14</index>
         <description>
-            &#91;The path to the admin jwt token that will be used in dataone-indexer to access the
-            private objects' system metadata.&#93; &lt;span class="new-badge"&gt;New&lt;/span&gt;
+            The path to the admin jwt token that will be used in dataone-indexer to access the
+            private objects' system metadata.
         </description>
         <helpFile>docs/metacat-properties.html#dataone-nodetoken-file</helpFile>
     </config>

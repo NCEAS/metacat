@@ -24,7 +24,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public class AuthUtil {
 
     public static Log logMetacat = LogFactory.getLog(AuthUtil.class);
-    public static String DELIMITER = ":";
+    public static String DELIMITER = ";";
     public static String ESCAPECHAR = "\\";
 
     private static Vector<String> administrators = null;
@@ -101,7 +101,7 @@ public class AuthUtil {
                                            + "There will be no registered metacat administrators: "
                                                + pnfe.getMessage());
         }
-        administrators = StringUtil.toVector(administratorString, ';');
+        administrators = split(administratorString, DELIMITER, ESCAPECHAR);
 
         String d1NodeAdmin = null;
         try {
