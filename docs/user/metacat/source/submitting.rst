@@ -27,7 +27,7 @@ the upper right-hand corner and hover above your name, which will reveal a drop 
 
 .. figure:: images/screenshots/image007_metacatuisubmitdata.png
 
-   Submit data by first signing in, then hovering over your name
+   To submit data, first sign in, then hover over your name, and then click 'Submit data'
 
 The DataONE REST API
 --------------------------------------------
