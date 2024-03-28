@@ -1,3 +1,13 @@
+----
+
+.. deprecated:: 3.0.0
+    Harvesting metadata in Metacat through OAI-PMH standard is obsolete.
+
+    While some features remain visible, the old Metacat API has been disabled.
+    All features that depend on the old Metacat API are deprecated.
+
+----
+
 OAI Protocol for Metadata Harvesting
 ====================================
 
