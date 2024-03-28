@@ -247,10 +247,50 @@ public class D1AuthHelperTest {
     }
 
     /**
-     * Check that expandRightsHolder returns false with an unauthorized subject
+     * Confirm that expandRightsHolder should return false when the suppled rightsHolder
+     * is not in the rightsHolderGroup.
      */
     @Test
-    public void testExpandRightsHolder_unauthorizedSubject() throws Exception {
+    public void testExpandRightsHolder_unauthorizedRightsHolderSubject() throws Exception {
+        // expandRightsHolder() is a public static method
+        // D1Client contains methods that make network calls, which is to be mocked
+        try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
+            // Create a member list, to be added to the group
+            List<Subject> hasMemberList = new ArrayList<>();
+            Subject testGroupMember = new Subject();
+            testGroupMember.setValue("testGroupMember");
+            hasMemberList.add(testGroupMember);        // Bogus value
+            hasMemberList.add(sysmeta.getSubmitter()); // The matching member
+            rightsHolderGroup.setHasMemberList(hasMemberList);
+
+            SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
+            List<Group> groups = new ArrayList<>();
+            groups.add(rightsHolderGroup);
+            when(mockSInfo.getGroupList()).thenReturn(groups);
+
+            CNode mockCN = Mockito.mock(CNode.class);
+            // .listSubjects(...) makes a network call
+            when(mockCN.listSubjects(eq(null), any(), eq(null), anyInt(), anyInt()))
+                .thenReturn(mockSInfo);
+
+            // .getCN() makes a network call
+            mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
+
+            Subject nonGroupSubject = new Subject();
+            nonGroupSubject.setValue("notRightHolderGroupSubject");
+
+            assertFalse(
+                "D1AuthHelper.expandRightsHolder should return false, the supplied rights "
+                    + "holder is not the rightsHolderGroup subject.",
+                D1AuthHelper.expandRightsHolder(nonGroupSubject, sysmeta.getSubmitter()));
+        }
+    }
+
+    /**
+     * Check that expandRightsHolder returns false with an unauthorized session subject
+     */
+    @Test
+    public void testExpandRightsHolder_unauthorizedSessionSubject() throws Exception {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
