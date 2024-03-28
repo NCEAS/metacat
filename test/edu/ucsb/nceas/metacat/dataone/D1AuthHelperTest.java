@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -111,7 +112,8 @@ public class D1AuthHelperTest {
         SystemMetadata sysmeta =
             TypeFactory.buildMinimalSystemMetadata(TypeFactory.buildIdentifier("dip"),
                                                    new ByteArrayInputStream(
-                                                       ("tra la la la la").getBytes("UTF-8")),
+                                                       ("tra la la la la").getBytes(
+                                                           StandardCharsets.UTF_8)),
                                                    "MD5",
                                                    TypeFactory.buildFormatIdentifier("text/csv"),
                                                    TypeFactory.buildSubject(
@@ -239,6 +241,11 @@ public class D1AuthHelperTest {
             assertTrue("D1AuthHelper.expandRightsHolder should return true",
                        D1AuthHelper.expandRightsHolder(group1Subject,
                                                   sysmeta.getSubmitter()));
+
+
+            assertTrue("D1AuthHelper.expandRightsHolder should return false",
+                       D1AuthHelper.expandRightsHolder(group1Subject,
+                                                       sysmeta.getSubmitter()));
         }
     }
 
@@ -246,7 +253,7 @@ public class D1AuthHelperTest {
      * Confirm that doIsAuthorized authorizes a Metacat admin
      */
     @Test
-    public void testDoIsAuthorized_metacatAdmin() throws Exception {
+    public void testDoIsAuthorized_metacatAdmin() {
         try {
             authDelMock.doIsAuthorized(metacatAdminSession, sysmeta, Permission.CHANGE_PERMISSION);
         } catch (Exception e) {
@@ -258,7 +265,7 @@ public class D1AuthHelperTest {
      * Confirm that doIsAuthorized authorizes a CN admin
      */
     @Test
-    public void testDoIsAuthorized_cnAdmin() throws Exception {
+    public void testDoIsAuthorized_cnAdmin() {
         try {
             authDelMock.doIsAuthorized(cn1CNSession, sysmeta, Permission.CHANGE_PERMISSION);
         } catch (Exception e) {
@@ -270,7 +277,7 @@ public class D1AuthHelperTest {
      * Confirm that doIsAuthorized authorizes a local node admin
      */
     @Test
-    public void testDoIsAuthorized_localNodeAdmin() throws Exception {
+    public void testDoIsAuthorized_localNodeAdmin() {
         try {
             authDelMock.doIsAuthorized(localNodeSession, sysmeta, Permission.CHANGE_PERMISSION);
         } catch (Exception e) {
@@ -323,7 +330,7 @@ public class D1AuthHelperTest {
      * value on sysmeta object.
      */
     @Test
-    public void testDoUpdateAuth() throws Exception {
+    public void testDoUpdateAuth() {
         try {
             authDelMock.doUpdateAuth(defaultSession, sysmeta, Permission.CHANGE_PERMISSION,
                                      TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
@@ -336,7 +343,7 @@ public class D1AuthHelperTest {
      * Confirm that doUpdateAuth authorizes a Metacat admin
      */
     @Test
-    public void testDoUpdateAuth_metacatAdmin() throws Exception {
+    public void testDoUpdateAuth_metacatAdmin() {
         try {
             authDelMock.doUpdateAuth(metacatAdminSession, sysmeta, Permission.CHANGE_PERMISSION,
                 TypeFactory.buildNodeReference("urn:node:unitTestAuthMN"));
