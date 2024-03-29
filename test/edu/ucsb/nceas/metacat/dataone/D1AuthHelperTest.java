@@ -41,6 +41,23 @@ import org.mockito.MockedStatic;
 public class D1AuthHelperTest {
 
     static NodeList nl;
+    D1AuthHelper authDel;
+    D1AuthHelper authDelMock;
+    Session defaultSession;
+    Session authMNSession;
+    Session otherMNSession;
+    Session replMNSession;
+    Session cn1CNSession;
+    Session nullSession;
+    Session missingSubjectSession;
+    Session emptySubjectSession;
+    Session metacatAdminSession;
+    Session metacatAdminOtherSession;
+    Session localNodeSession;
+    Session notAuthorizedSession;
+    SystemMetadata sysmeta;
+    Group rightsHolderGroup;
+    Subject rhgSubject;
 
     @BeforeClass
     public static void setUpBeforeClass() {
@@ -89,37 +106,15 @@ public class D1AuthHelperTest {
         nl.addNode(otherMN);
     }
 
-    D1AuthHelper authDel;
-    D1AuthHelper authDelMock;
-    Session defaultSession;
-    Session authMNSession;
-    Session otherMNSession;
-    Session replMNSession;
-    Session cn1CNSession;
-    Session nullSession;
-    Session missingSubjectSession;
-    Session emptySubjectSession;
-    Session metacatAdminSession;
-    Session metacatAdminOtherSession;
-    Session localNodeSession;
-    Session notAuthorizedSession;
-    SystemMetadata sysmeta;
-    Group rightsHolderGroup;
-    Subject rhgSubject;
-
     /**
      * Get a minimal SystemMetadata object with default values
      */
     private SystemMetadata getGenericSysmetaObject() throws Exception {
-        SystemMetadata sysmeta =
-            TypeFactory.buildMinimalSystemMetadata(TypeFactory.buildIdentifier("dip"),
-                                                   new ByteArrayInputStream(
-                                                       ("tra la la la la").getBytes(
-                                                           StandardCharsets.UTF_8)),
-                                                   "MD5",
-                                                   TypeFactory.buildFormatIdentifier("text/csv"),
-                                                   TypeFactory.buildSubject(
-                                                       "submitterRightsHolder"));
+        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
+            TypeFactory.buildIdentifier("dip"), new ByteArrayInputStream(
+                ("Test Sysmeta Content InputStream").getBytes(StandardCharsets.UTF_8)), "MD5",
+            TypeFactory.buildFormatIdentifier("text/csv"),
+            TypeFactory.buildSubject("submitterRightsHolder"));
         AccessPolicy ap = new AccessPolicy();
         ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
         sysmeta.setAccessPolicy(ap);
@@ -247,7 +242,7 @@ public class D1AuthHelperTest {
     }
 
     /**
-     * Confirm that expandRightsHolder should return false when the suppled rightsHolder
+     * Confirm that expandRightsHolder should return false when the supplied rightsHolder
      * is not in the rightsHolderGroup.
      */
     @Test
