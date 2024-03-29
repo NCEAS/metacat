@@ -36,10 +36,9 @@ import org.dataone.service.types.v2.util.NodelistUtil;
 
 
 /**
- * This is delegate class for D1NodeService and subclasses.
- * It centralizes authorization implementations to make them
- * more consistent across the various API methods, and more testable.
- * 
+ * This is delegate class for D1NodeService and subclasses. It centralizes authorization
+ * implementations to make them more consistent across the various API methods, and more testable.
+ *
  * There are 6 basic authorization checks that can be done, and these
  * are implemented as protected methods in this class.  these checks are:
  * 1. session vs. systemMetadata subjects
@@ -48,21 +47,20 @@ import org.dataone.service.types.v2.util.NodelistUtil;
  * 4. session vs. CN nodelist subjects (checking for CN admin authorization)
  * 5. session vs. systemMetadata replica nodeReferences (via nodelist subjects)
  * 6. session vs. expanded rightsHolder equivalent subjects and groups. (uses API calls to the CN)
- * 
- * 
+ *
  * In practice, there are currently only a handful of combinations of authorization checks being used.
  * These are represented by the public methods in this class.
  * If more combinations are ever required, they should be added as a new public method,
  * and follow the general way the other methods are implemented.
- * 
+ *
  * The combinations in use are:
  * 1. CN admin only
  * 2. Local or AuthoritativeMN only
- * 3. Local MN or CN admin only 
+ * 3. Local MN or CN admin only
  * 4. "isAuthorized" - all checks except allowing replica nodes
  * 5. "getSystemMetadata" - all checks
  * 6. "update" authorization - success depends on the local node being the authMN
- * 
+ *
  * @author rnahf
  *
  */
@@ -76,16 +74,6 @@ public class D1AuthHelper {
     private String serviceFailureCode;
     private Identifier requestIdentifier;
     private static NodeList cnList = null;
-    
-    /**
-     * Each instance should correspond to a single request.
-     * @param request
-     * @param hzSystemMetadataMap
-     */
-//    public D1AuthorizationDelegate(HttpServletRequest request, Map<Identifier,SystemMetadata> hzSystemMetadataMap) {
-//        this.request = request;
-//        this.sysmetaMap = hzSystemMetadataMap;       
-//    }
 
     /**
      * Each instance should correspond to a single request.
@@ -354,7 +342,7 @@ public class D1AuthHelper {
         List<ServiceFailure> exceptions = new ArrayList<>();
 
         try {
-            // This will also check session for metacat admin privileges
+            // This will also check session for Metacat admin privileges
             if (this.isLocalNodeAdmin(session, null)) {
                 return;
             }
@@ -488,16 +476,16 @@ public class D1AuthHelper {
     protected void prepareAndThrowNotAuthorized(Session session, Identifier pid, Permission permission, String detailCode) throws NotAuthorized {
         
         Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
-        StringBuffer includedSubjects = new StringBuffer();
+        StringBuilder includedSubjects = new StringBuilder();
         for (Subject s: sessionSubjects) {
-            includedSubjects.append(s.getValue() + "; ");
+            includedSubjects.append(s.getValue()).append("; ");
         } 
         
         String msg = String.format(
                 "%s not allowed on %s for subject[s]: %s",
                     permission == null ? "Permission" : permission,
                     pid == null ? null : pid.getValue(),
-                    includedSubjects.toString()
+                    includedSubjects
                     );
         logMetacat.warn(msg);
         throw new NotAuthorized(detailCode, msg);   
@@ -719,7 +707,7 @@ public class D1AuthHelper {
      *
      * @param session  User session to check
      * @param nodeType Type of node desired to check (ex. NodeType.MN or NodeType.CN))
-     * @return True if session subject is a local node admin or metacat admin
+     * @return True if session subject is a local node admin or Metacat admin
      * @throws ServiceFailure When there is an issue checking for authorization
      */
     protected boolean isLocalNodeAdmin(Session session, NodeType nodeType) throws ServiceFailure {
@@ -757,7 +745,7 @@ public class D1AuthHelper {
                             break outer;
                         }
                     }
-                    // If not, check session subject for a metacat admin
+                    // If not, check session subject for a Metacat admin
                     String subjectValue = subject.getValue();
                     if (subjectValue != null && !subjectValue.isBlank()) {
                         logMetacat.debug("D1AuthHelper.isLocalNodeAdmin(), checking " + subjectValue
@@ -790,25 +778,23 @@ public class D1AuthHelper {
      * @param permission Permission level to check
      * @return True if authorized based on the sysmeta subject
      */
-    protected boolean isAuthorizedBySysMetaSubjects(Session session, SystemMetadata sysmeta, Permission permission) {
+    protected boolean isAuthorizedBySysMetaSubjects(
+        Session session, SystemMetadata sysmeta, Permission permission) {
 
         // get the subject[s] from the session
         // defer to the shared util for recursively compiling the subjects   
         Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
-        
-        if(logMetacat.isDebugEnabled()) {
-            if(sessionSubjects != null) {
-                for(Subject subject : sessionSubjects) {
-                    logMetacat.debug("=================== The equalvent subject is "+subject.getValue());
+
+        if (logMetacat.isDebugEnabled()) {
+            if (sessionSubjects != null) {
+                for (Subject subject : sessionSubjects) {
+                    logMetacat.debug(
+                        "=================== The equivalent subject is " + subject.getValue());
                 }
-            } 
+            }
         }
 
-        if (AuthUtils.isAuthorized(sessionSubjects, permission, sysmeta)) {
-            return true;
-        }
-
-        return false;
+        return AuthUtils.isAuthorized(sessionSubjects, permission, sysmeta);
     }
 
 
@@ -826,7 +812,7 @@ public class D1AuthHelper {
 
         Subject subject = session == null ? null : session.getSubject();
         List<Replica> replicaList = sysmeta.getReplicaList();
-        NodeReference replicaNodeRef = null;
+        NodeReference replicaNodeRef;
 
         if  ( replicaList != null && subject != null ) {
             // get the list of nodes with a matching node subject
