@@ -56,7 +56,7 @@ import org.dataone.service.types.v2.util.NodelistUtil;
  * and follow the general way the other methods are implemented.
  * 
  * The combinations in use are:
- * 1. CNadmin only
+ * 1. CN admin only
  * 2. Local or AuthoritativeMN only
  * 3. Local MN or CN admin only 
  * 4. "isAuthorized" - all checks except allowing replica nodes
@@ -86,29 +86,33 @@ public class D1AuthHelper {
 //        this.request = request;
 //        this.sysmetaMap = hzSystemMetadataMap;       
 //    }
-    
+
     /**
      * Each instance should correspond to a single request.
-     * @param request
-     * @param hzSystemMetadataMap
+     *
+     * @param request Request to check for authorization
+     * @param requestIdentifier Identifier of requester
+     * @param notAuthorizedCode  Desired not authorized code
+     * @param serviceFailureCode Desired service failure code
      */
-    public D1AuthHelper(HttpServletRequest request, Identifier requestIdentifier, String notAuthorizedCode, String serviceFailureCode) {
+    public D1AuthHelper(
+        HttpServletRequest request, Identifier requestIdentifier, String notAuthorizedCode,
+        String serviceFailureCode) {
         this.request = request;
         this.requestIdentifier = requestIdentifier;
         this.notAuthorizedCode = notAuthorizedCode;
         this.serviceFailureCode = serviceFailureCode;
     }
-        
+
     /**
-     * Performs all authorization steps used by isAuthorized.
-     * Checks for accessPolicy & rightsHolder authorization, 
-     * and authorizes local, authoritativeMN, and CN admins.
-     * @param session
-     * @param sysmeta
-     * @param permission
-     * @return
-     * @throws ServiceFailure
-     * @throws NotAuthorized
+     * Performs all authorization steps used by isAuthorized. Checks for accessPolicy & rightsHolder
+     * authorization, and authorizes local, authoritativeMN, and CN admins.
+     *
+     * @param session    User session
+     * @param sysmeta    Sysmeta document
+     * @param permission Permission level to check
+     * @throws ServiceFailure When unable to check for authorization
+     * @throws NotAuthorized  When session is not authorized
      */
     public void doIsAuthorized(Session session, SystemMetadata sysmeta, Permission permission) throws ServiceFailure, NotAuthorized
     {
@@ -169,15 +173,16 @@ public class D1AuthHelper {
 
     /**
      * Does local and AuthMN admin authorization
-     * @param session
-     * @param sysmeta
-     * @throws ServiceFailure
-     * @throws NotAuthorized
+     *
+     * @param session User session to check
+     * @param sysmeta Sysmeta document
+     * @throws ServiceFailure When unable to check for authorization
+     * @throws NotAuthorized  When session is not authorized
      */
     public void doAuthoritativeMNAuthorization(Session session, SystemMetadata sysmeta)  throws ServiceFailure, NotAuthorized
     {
         if(session != null && session.getSubject() != null) {
-            logMetacat.debug("D1AuthHepler.doAuthoritativeMNAuthorization - the session is "+session.getSubject().getValue());
+            logMetacat.debug("D1AuthHelper.doAuthoritativeMNAuthorization - the session is "+session.getSubject().getValue());
         }
         List<ServiceFailure> exceptions = new ArrayList<>();
         
@@ -212,7 +217,7 @@ public class D1AuthHelper {
      * The locus of updates is limited to the authoritativeMN.
      * Therefore, the authorization rules are somewhat specialized:
      * <ol><li> If the update is happening on the authoritative MN, either</li>
-     * <ul><li>  the session has the appropriate permission vs the systemmetadata or</li>
+     * <ul><li>  the session has the appropriate permission vs the system metadata or</li>
      *     <li>  the session represents the MN Admin Subject</li></ul>
      *  <li>If the session represents the D1 CN, it is allowed.</li></ol>
      */
@@ -220,9 +225,9 @@ public class D1AuthHelper {
             throws NotAuthorized, ServiceFailure 
     {
         if(session != null && session.getSubject() != null) {
-            logMetacat.debug("D1AuthHepler.doUpdateAuth - the session is "+session.getSubject().getValue());
+            logMetacat.debug("D1AuthHelper.doUpdateAuth - the session is "+session.getSubject().getValue());
         }
-        boolean isAuthoritiveMN = true;
+        boolean isAuthoritativeMN = true;
                
         List<ServiceFailure> exceptions = new ArrayList<>();
         
@@ -250,8 +255,8 @@ public class D1AuthHelper {
                 exceptions.add(e);
             }    
         } else {
-            //this is not the authoritiveMN. Generally, this update/updateSystem should fail. But cn can do that. So go to check the cns subject
-            isAuthoritiveMN = false;
+            //this is not the authoritativeMNMessageMN. Generally, this update/updateSystem should fail. But cn can do that. So go to check the cns subject
+            isAuthoritativeMN = false;
         }
         
         // (outside the above if statement on purpose)
@@ -265,16 +270,17 @@ public class D1AuthHelper {
             exceptions.add(e);
         }
 
-        String authoritiveMNMessage = "clients can only call the update/updateSystemMetadata request on an object when it locates on its authoritative memember node. "+
+        String authoritativeMNMessage = "clients can only call the update/updateSystemMetadata "
+            + "request on an object when it locates on its authoritative member node. "+
                "However, the authoritative member node of the object "+sysmeta.getIdentifier().getValue()+ " on your request is "+sysmeta.getAuthoritativeMemberNode().getValue()+
-               ", which is differen to the current node "+localNodeId.getValue();    
+               ", which is different to the current node "+localNodeId.getValue();
         
         if (exceptions.isEmpty()) { 
-            if(isAuthoritiveMN) {
+            if(isAuthoritativeMN) {
                 prepareAndThrowNotAuthorized(session,requestIdentifier, permission, notAuthorizedCode); 
             } else {
-                logMetacat.warn(authoritiveMNMessage);
-                throw new NotAuthorized(notAuthorizedCode, authoritiveMNMessage);
+                logMetacat.warn(authoritativeMNMessage);
+                throw new NotAuthorized(notAuthorizedCode, authoritativeMNMessage);
             }
             
         } else {    
@@ -291,14 +297,15 @@ public class D1AuthHelper {
 
     /**
      * Does only localNode(CN)/CN authorization
-     * @param session
-     * @throws ServiceFailure
-     * @throws NotAuthorized
+     *
+     * @param session User session to check
+     * @throws ServiceFailure When unable to check for authorization
+     * @throws NotAuthorized  When session is not authorized
      */
     public void doCNOnlyAuthorization(Session session) throws ServiceFailure, NotAuthorized
     {
         if(session != null && session.getSubject() != null) {
-            logMetacat.debug("D1AuthHepler.doCNOnlyAuthorization - the session is "+session.getSubject().getValue());
+            logMetacat.debug("D1AuthHelper.doCNOnlyAuthorization - the session is "+session.getSubject().getValue());
         }
         List<ServiceFailure> exceptions = new ArrayList<>();
         
@@ -407,20 +414,20 @@ public class D1AuthHelper {
     }
 
     /**
-     * used by getSystemMetadata, describe, and getPackage, the latter two by delegation to getSystemMetadata
-     * Very similar to doIsAuthorized, but also allows replica nodes administrative access.
-     * 
-     * @param session
-     * @param sysmeta
-     * @param permission
-     * @return
-     * @throws ServiceFailure
-     * @throws NotAuthorized
+     * used by getSystemMetadata, describe, and getPackage, the latter two by delegation to
+     * getSystemMetadata Very similar to doIsAuthorized, but also allows replica nodes
+     * administrative access.
+     *
+     * @param session    User session to check
+     * @param sysmeta    Sysmeta document
+     * @param permission Permission level to check
+     * @throws ServiceFailure When unable to check for authorization
+     * @throws NotAuthorized  When session is not authorized
      */
     public void doGetSysmetaAuthorization(Session session, SystemMetadata sysmeta, Permission permission) throws ServiceFailure, NotAuthorized
     {      
         if(session != null && session.getSubject() != null) {
-            logMetacat.debug("D1AuthHepler.doGetSysmetaAuthorization - the session is "+session.getSubject().getValue());
+            logMetacat.debug("D1AuthHelper.doGetSysmetaAuthorization - the session is "+session.getSubject().getValue());
         }
         List<ServiceFailure> exceptions = new ArrayList<>();
         // most efficient step first - uses materials passed in
@@ -495,61 +502,60 @@ public class D1AuthHelper {
         logMetacat.warn(msg);
         throw new NotAuthorized(detailCode, msg);   
     }
-    
-    
+
+
     /**
-     * Compare all the session subjects against the expanded subjects (from listSubjects)
-     * of the object rightsholder.
-     * @param sessionSubjects
-     * @param sysmeta
-     * @param permission
-     * @return true or false, depending...
-     * @throws ServiceFailure
+     * Compare all the session subjects against the expanded subjects (from listSubjects) of the
+     * object rightsHolder.
+     *
+     * @param session    User session to check
+     * @param sysmeta    Sysmeta document
+     * @param permission Permission type to check
+     * @return True if approved user session subject
+     * @throws ServiceFailure When there is an issue checking for authorization
      */
-    protected boolean checkExpandedPermissions(Session session, SystemMetadata sysmeta, Permission permission) throws ServiceFailure {
-            
-        // TODO:  Is getting the subjectInfo of the rightsHolder really necessary? or do we need to fix getSubjectInfo 
-        // so we don't have to go back to the CNIdentity service to resolve ownership?  (This was put in to solve 
-        // nested groups transitivity problems, to the best of my knowledge.)
+    protected boolean checkExpandedPermissions(
+        Session session, SystemMetadata sysmeta, Permission permission) throws ServiceFailure {
+
+        // TODO: Is getting the subjectInfo of the rightsHolder really necessary? or do we need
+        // to fix getSubjectInfo so we don't have to go back to the CNIdentity service to resolve
+        // ownership? (This was put in to solve nested groups transitivity problems, to the best
+        // of my knowledge.)
         boolean isAllowed = false;
         try {
             Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
             for (Subject s : sessionSubjects) {
-                if (s.getValue().equalsIgnoreCase("public"))  {
+                if (s.getValue().equalsIgnoreCase("public")) {
                     //assume the special subject 'public' isn't up for expansion
                     continue;
                 }
 
-                if (D1AuthHelper.expandRightsHolder(sysmeta.getRightsHolder(), s)) {  // expensive call to listSubjects
+                if (D1AuthHelper.expandRightsHolder(
+                    sysmeta.getRightsHolder(), s)) {  // expensive call to listSubjects
                     isAllowed = true;
                     break;
                 }
-            }          
-        } 
-        catch (NotImplemented | InvalidRequest | InvalidToken e) {
-            ServiceFailure sf = new ServiceFailure("1030", "Exception thrown from expandRightsHolder(): " 
-                    + e.getClass().getCanonicalName() + ":: " + e.getDescription());
+            }
+        } catch (NotImplemented | InvalidRequest | InvalidToken e) {
+            ServiceFailure sf = new ServiceFailure("1030",
+                                                   "Exception thrown from expandRightsHolder(): "
+                                                       + e.getClass().getCanonicalName() + ":: "
+                                                       + e.getDescription());
             sf.initCause(e);
-            throw sf; 
-        } 
-        catch (NotAuthorized e) {
+            throw sf;
+        } catch (NotAuthorized e) {
             isAllowed = false;
         }
         return isAllowed;
     }
-   
-    
-    
-    
-    
-    
+
+
     /**
-     * A centralized point for accessing the CN Nodelist,
-     * to make it easier to cache the nodelist in the future,
-     * if it's seen as helpful performance-wise
-     * @return
-     * @throws ServiceFailure
-     * @throws NotImplemented
+     * A centralized point for accessing the CN Nodelist, to make it easier to cache the nodelist in
+     * the future, if it's seen as helpful performance-wise
+     *
+     * @return NodeList
+     * @throws ServiceFailure When there is an issue checking for authorization
      */
     protected NodeList getCNNodeList() throws ServiceFailure {
         if (cnList != null && cnList.getNodeList() != null && cnList.getNodeList().size() >0) {
@@ -569,18 +575,19 @@ public class D1AuthHelper {
         }
        
     }
-    
+
     /**
-     * Check if the given userSession is the member of the right holder group (if the right holder is a group subject).
-     * If the right holder is not a group, it will be false of course.
-     * @param rightHolder the subject of the right holder.
+     * Check if the given userSession is the member of the right holder group (if the right holder
+     * is a group subject). If the right holder is not a group, it will be false of course.
+     *
+     * @param rightHolder    the subject of the right holder.
      * @param sessionSubject the subject will be compared
      * @return true if the user session is a member of the right holder group; false otherwise.
-     * @throws NotImplemented 
-     * @throws ServiceFailure 
-     * @throws NotAuthorized 
-     * @throws InvalidToken 
-     * @throws InvalidRequest 
+     * @throws NotImplemented When a method has not yet been implemented
+     * @throws ServiceFailure When there is an issue checking for authorization
+     * @throws NotAuthorized  When session is not authorized
+     * @throws InvalidToken   Issue with credentials provided
+     * @throws InvalidRequest Issue with the request
      */
     public static boolean expandRightsHolder(Subject rightHolder, Subject sessionSubject) 
         throws ServiceFailure, NotImplemented, InvalidRequest, NotAuthorized, InvalidToken 
@@ -623,7 +630,7 @@ public class D1AuthHelper {
                         logMetacat.debug("D1AuthorizationDelegate.expandRightHolder - search the subject "+query+" in the cn and the size of return result equals the count "+totalSize+" .And we didn't find the target in the this query. So we have to use the page query with the start number "+start);
                         subjects = cn.listSubjects(session, query, status, start, count);
                     } else if (totalSize < count){
-                        logMetacat.debug("D1AuthorizationDelegate.expandRightHolder - we are already at the end of the returned restult since the size of returned results "+totalSize+
+                        logMetacat.debug("D1AuthorizationDelegate.expandRightHolder - we are already at the end of the returned result since the size of returned results "+totalSize+
                             " is less than the count "+count+". So we have to break the loop and finish the try.");
                         break;
                     } else if (totalSize >count) {
@@ -646,7 +653,8 @@ public class D1AuthHelper {
     }
     
     /*
-     * If the given useSession is a member of a group which is in the given list of groups and has the name of righHolder.
+     * If the given useSession is a member of a group which is in the given list of groups and
+     * has the name of rightHolder.
      */
     private static boolean isInGroups(Subject userSession, Subject rightHolder, List<Group> groups) {
         boolean is = false;
@@ -655,7 +663,7 @@ public class D1AuthHelper {
             for(Group group : groups) {
                 //logMetacat.debug("D1NodeService.expandRightHolder - group has the subject "+group.getSubject().getValue());
                 if(group != null && group.getSubject() != null && group.getSubject().equals(rightHolder)) {
-                    logMetacat.debug("D1NodeService.isInGroups - there is a group in the list having the subjecct "+group.getSubject().getValue()+" which matches the right holder's subject "+rightHolder.getValue());
+                    logMetacat.debug("D1NodeService.isInGroups - there is a group in the list having the subject "+group.getSubject().getValue()+" which matches the right holder's subject "+rightHolder.getValue());
                     List<Subject> members = group.getHasMemberList();
                     if(members != null ){
                         logMetacat.debug("D1NodeService.isInGroups - the group "+group.getSubject().getValue()+" in the cn has members");
@@ -678,48 +686,41 @@ public class D1AuthHelper {
     }
 
     /**
-     * Test if the user identified by the provided token has administrative authorization 
-     * on this node because they are calling themselves
-     * (the implementation uses property Settings to build a Node instance)
-     * 
-     * @param session - the Session object containing the credentials for the Subject
-     * 
+     * Test if the user identified by the provided token has administrative authorization on this
+     * node because they are calling themselves (the implementation uses property Settings to build
+     * a Node instance)
+     *
+     * @param session The Session object containing the credentials for the Subject
      * @return true if the user is this node
-     * @throws ServiceFailure 
-     * @throws NotImplemented 
+     * @throws ServiceFailure When there is an issue checking for authorization
      */
-    
     public boolean isLocalMNAdmin(Session session) throws ServiceFailure {
         return isLocalNodeAdmin(session, NodeType.MN);
     }
-    
+
     /**
-     * Test if the user identified by the provided token has administrative authorization 
-     * on this node because they are calling themselves
-     * (the implementation uses property Settings to build a Node instance)
-     * 
+     * Test if the user identified by the provided token has administrative authorization on this
+     * node because they are calling themselves (the implementation uses property Settings to build
+     * a Node instance)
+     *
      * @param session - the Session object containing the credentials for the Subject
-     * 
      * @return true if the user is this node
-     * @throws ServiceFailure 
-     * @throws NotImplemented 
+     * @throws ServiceFailure When there is an issue checking for authorization
      */
     public boolean isLocalCNAdmin(Session session) throws ServiceFailure {
         return isLocalNodeAdmin(session, NodeType.CN);
     }
-/////////////  /////////////  
-//implementations         //
-/////////////  /////////////  
 
+    // Protected Methods & Implementations
 
     /**
      * Checks Metacat properties representing the local Node document for matching Node.subjects.
      * The NodeType parameter can be set to limit this authorization check if needed.
      *
-     * @param session
-     * @param nodeType
-     * @return
-     * @throws ServiceFailure
+     * @param session  User session to check
+     * @param nodeType Type of node desired to check (ex. NodeType.MN or NodeType.CN))
+     * @return True if session subject is a local node admin or metacat admin
+     * @throws ServiceFailure When there is an issue checking for authorization
      */
     protected boolean isLocalNodeAdmin(Session session, NodeType nodeType) throws ServiceFailure {
         boolean allowed = false;
@@ -778,18 +779,16 @@ public class D1AuthHelper {
             "D1AuthHelper.isLocalNodeAdmin method. Is this a local node admin? " + allowed);
         return allowed;
     }
-    
-    
 
-    
-    
+
     /**
-     * Returns the authorization status of the Session vs. the given SystemMetadata 
-     * based on the rightsHolder and AccessPolicy fields
-     * @param session
-     * @param sysmeta
-     * @param permission
-     * @return true|false
+     * Returns the authorization status of the Session vs. the given SystemMetadata based on the
+     * rightsHolder and AccessPolicy fields
+     *
+     * @param session    User session to check
+     * @param sysmeta    Sysmeta document
+     * @param permission Permission level to check
+     * @return True if authorized based on the sysmeta subject
      */
     protected boolean isAuthorizedBySysMetaSubjects(Session session, SystemMetadata sysmeta, Permission permission) {
 
@@ -812,15 +811,14 @@ public class D1AuthHelper {
         return false;
     }
 
-    
-    
-    
+
     /**
-     * determines if the session represents a replicaMN of the given systemMetadata.
-     * @param session - the session, uses only the session.subject field
-     * @param sysmeta
-     * @param nodelist
-     * @return true|false
+     * Determines if the session represents a replicaMN of the given systemMetadata.
+     *
+     * @param session User session to check
+     * @param sysmeta Sysmeta document
+     * @param nodelist List of relevant nodes to check
+     * @return True if it is a replica mn node admin
      */
     protected boolean isReplicaMNodeAdmin(Session session, SystemMetadata sysmeta, NodeList nodelist) {
 
@@ -853,17 +851,16 @@ public class D1AuthHelper {
         return isAuthorized;
     }
 
-    
+
     /**
      * Compare the session.subject to the authoritativeMN Node.nodeSubjects list of Subjects.
-     * According the the DataONE documentation, the authoritative member node has all the 
-     * rights of the *rightsHolder*.
-     * Any null parameter will result in return of false
-     * 
-     * @param session
-     * @param authoritativeMNode
-     * @param nodelist
-     * @return
+     * According to the DataONE documentation, the authoritative member node has all the rights of
+     * the *rightsHolder*. Any null parameter will result in return of false
+     *
+     * @param session User session to check
+     * @param authoritativeMNode The authoritativeMNode reference
+     * @param nodelist List of relevant nodes to check
+     * @return True if it is an authoritative MNode admin
      */
     protected boolean isAuthoritativeMNodeAdmin(Session session, NodeReference authoritativeMNode, NodeList nodelist) { 
         
@@ -906,12 +903,14 @@ public class D1AuthHelper {
             }              
         }
         return allowed;
-    }  
-    
-    /** 
-     * compares session.subject against CN.NodeList
-     * @param session
-     * @param nodelist
+    }
+
+    /**
+     * Compares session.subject against CN.NodeList
+     *
+     * @param session  User session to check
+     * @param nodelist List of relevant nodes to check
+     * @return True if session subject is a CN admin
      */
     protected boolean isCNAdmin(Session session, NodeList nodelist) {
 
