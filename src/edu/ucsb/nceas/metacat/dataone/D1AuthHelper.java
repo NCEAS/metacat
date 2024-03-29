@@ -711,13 +711,12 @@ public class D1AuthHelper {
      * @throws ServiceFailure When there is an issue checking for authorization
      */
     protected boolean isLocalNodeAdmin(Session session, NodeType nodeType) throws ServiceFailure {
-        boolean allowed = false;
         // Session must be valid in order to check for authorization
         String sessionSubjectValue;
         try {
             sessionSubjectValue = checkSessionAndGetSubjectValue(session);
         } catch (NotAuthorized na) {
-            return allowed;
+            return false;
         }
         logMetacat.debug("D1AuthHelper.isLocalNodeAdmin(), MN authorization for the user: "
             + sessionSubjectValue);
@@ -733,39 +732,40 @@ public class D1AuthHelper {
         if (nodeType == null || node.getType() == nodeType) {
             List<Subject> nodeSubjects = node.getSubjectList();
             if (sessionSubjects != null) {
-                outer:
                 for (Subject subject : sessionSubjects) {
+                    String subjectValue = subject.getValue();
                     // Check if the session subject is in the node subject list
                     for (Subject nodeSubject : nodeSubjects) {
                         logMetacat.debug("D1AuthHelper.isLocalNodeAdmin(), comparing node subject: "
                             + nodeSubject.getValue() + " and the session user: "
-                            + subject.getValue());
+                            + subjectValue);
                         if (nodeSubject.equals(subject)) {
-                            allowed = true; // subject of session == this node's subject
-                            break outer;
+                            logMetacat.debug("Found " + subjectValue
+                                                 + " in the node subject list. Returning true");
+                            return true;
                         }
                     }
                     // If not, check session subject for a Metacat admin
-                    String subjectValue = subject.getValue();
                     if (subjectValue != null && !subjectValue.isBlank()) {
                         logMetacat.debug("D1AuthHelper.isLocalNodeAdmin(), checking " + subjectValue
                             + " for Metacat admin privileges.");
                         try {
                             if (AuthUtil.isAdministrator(subjectValue, null)) {
-                                allowed = true;
-                                break outer;
+                                logMetacat.debug("Found " + subjectValue
+                                                     + " in the Metacat admins list. Returning "
+                                                     + "true");
+                                return true;
                             }
                         } catch (MetacatUtilException mue) {
-                            throw new ServiceFailure("0000", mue.getMessage());
+                            // Do nothing, continue checking for local node admins
                         }
                     }
                 }
             }
         }
 
-        logMetacat.debug(
-            "D1AuthHelper.isLocalNodeAdmin method. Is this a local node admin? " + allowed);
-        return allowed;
+        logMetacat.debug("Not a local node admin; returning false");
+        return false;
     }
 
 
