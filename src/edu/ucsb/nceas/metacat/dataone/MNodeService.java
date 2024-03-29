@@ -1964,10 +1964,10 @@ public class MNodeService extends D1NodeService
                         }
                     }
                 }
-                SystemMetadataManager.getInstance().store(newSysMeta);
-                logMetacat.info(
-                    "Updated local copy of system metadata for pid " + pid.getValue()
-                        + " after change notification from the CN.");
+                // Set changeModifyTime false
+                SystemMetadataManager.getInstance().store(newSysMeta, false);
+                logMetacat.info("Updated local copy of system metadata for pid " + pid.getValue()
+                                + " after change notification from the CN.");
 
             } catch (RuntimeException e) {
                 String msg =
