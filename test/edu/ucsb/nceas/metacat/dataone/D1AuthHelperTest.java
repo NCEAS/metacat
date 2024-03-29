@@ -121,6 +121,29 @@ public class D1AuthHelperTest {
         return sysmeta;
     }
 
+    /**
+     * Get a rightsHolderGroup, if null is supplied default values will be used.
+     */
+    private List<Group> getGenericRightsHolderGroup(List<Subject> subjectMemberList) {
+        // Create a member list, to be added to the group
+        List<Subject> hasMemberList;
+        if (subjectMemberList == null) {
+            hasMemberList = new ArrayList<>();
+            Subject testGroupMember = new Subject();
+            testGroupMember.setValue("testGroupMember");
+            hasMemberList.add(testGroupMember);        // Bogus value
+            hasMemberList.add(sysmeta.getSubmitter()); // The matching member
+        } else {
+            hasMemberList = subjectMemberList;
+        }
+        // Add member list to the rightsHolderGroup, which is set up before every test
+        rightsHolderGroup.setHasMemberList(hasMemberList);
+        List<Group> groupList = new ArrayList<>();
+        groupList.add(rightsHolderGroup);
+
+        return groupList;
+    }
+
     @Before
     public void setUp() throws Exception {
 
@@ -214,18 +237,11 @@ public class D1AuthHelperTest {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Create a member list, to be added to the group
-            List<Subject> hasMemberList = new ArrayList<>();
-            Subject testGroupMember = new Subject();
-            testGroupMember.setValue("testGroupMember");
-            hasMemberList.add(testGroupMember);        // Bogus value
-            hasMemberList.add(sysmeta.getSubmitter()); // The matching member
-            rightsHolderGroup.setHasMemberList(hasMemberList);
+            // Get a default rightsHolderGroup list
+            List<Group> testRightsHolderGroup = getGenericRightsHolderGroup(null);
 
             SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
-            List<Group> groups = new ArrayList<>();
-            groups.add(rightsHolderGroup);
-            when(mockSInfo.getGroupList()).thenReturn(groups);
+            when(mockSInfo.getGroupList()).thenReturn(testRightsHolderGroup);
 
             CNode mockCN = Mockito.mock(CNode.class);
             // .listSubjects(...) makes a network call
@@ -250,18 +266,11 @@ public class D1AuthHelperTest {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Create a member list, to be added to the group
-            List<Subject> hasMemberList = new ArrayList<>();
-            Subject testGroupMember = new Subject();
-            testGroupMember.setValue("testGroupMember");
-            hasMemberList.add(testGroupMember);        // Bogus value
-            hasMemberList.add(sysmeta.getSubmitter()); // The matching member
-            rightsHolderGroup.setHasMemberList(hasMemberList);
+            // Get a default rightsHolderGroup list
+            List<Group> testRightsHolderGroup = getGenericRightsHolderGroup(null);
 
             SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
-            List<Group> groups = new ArrayList<>();
-            groups.add(rightsHolderGroup);
-            when(mockSInfo.getGroupList()).thenReturn(groups);
+            when(mockSInfo.getGroupList()).thenReturn(testRightsHolderGroup);
 
             CNode mockCN = Mockito.mock(CNode.class);
             // .listSubjects(...) makes a network call
@@ -289,18 +298,11 @@ public class D1AuthHelperTest {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Create a member list, to be added to the group
-            List<Subject> hasMemberList = new ArrayList<>();
-            Subject testGroupMember = new Subject();
-            testGroupMember.setValue("testGroupMember");
-            hasMemberList.add(testGroupMember);        // Bogus value
-            hasMemberList.add(sysmeta.getSubmitter()); // The matching member
-            rightsHolderGroup.setHasMemberList(hasMemberList);
+            // Get a default rightsHolderGroup list
+            List<Group> testRightsHolderGroup = getGenericRightsHolderGroup(null);
 
             SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
-            List<Group> groups = new ArrayList<>();
-            groups.add(rightsHolderGroup);
-            when(mockSInfo.getGroupList()).thenReturn(groups);
+            when(mockSInfo.getGroupList()).thenReturn(testRightsHolderGroup);
 
             CNode mockCN = Mockito.mock(CNode.class);
             // .listSubjects(...) makes a network call
@@ -326,14 +328,12 @@ public class D1AuthHelperTest {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Create a member list, to be added to the group
+            // Create an empty member list, to be added to the group
             List<Subject> hasMemberList = new ArrayList<>();
-            rightsHolderGroup.setHasMemberList(hasMemberList);
+            List<Group> testRightsHolderGroup = getGenericRightsHolderGroup(hasMemberList);
 
             SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
-            List<Group> groups = new ArrayList<>();
-            groups.add(rightsHolderGroup);
-            when(mockSInfo.getGroupList()).thenReturn(groups);
+            when(mockSInfo.getGroupList()).thenReturn(testRightsHolderGroup);
 
             CNode mockCN = Mockito.mock(CNode.class);
             // .listSubjects(...) makes a network call
