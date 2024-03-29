@@ -121,8 +121,7 @@ public class D1AuthHelper {
         } catch(ServiceFailure e) {
             exceptions.add(e);
         }
-        
-        
+
         try {
             NodeList nodelist = this.getCNNodeList();
 
@@ -140,8 +139,9 @@ public class D1AuthHelper {
 
         // this makes 1 or more calls to listSubjects, so is the most expensive
         try {
-            logMetacat.debug("D1AuthHelper.doIsAuthorized - Checking expanded permissions");
             if (this.checkExpandedPermissions(session, sysmeta, permission)) {
+                logMetacat.debug("D1AuthHelper.doIsAuthorized - Expanded permissions checked and "
+                                     + "is true (authorized)");
                 return;
             }
         }
