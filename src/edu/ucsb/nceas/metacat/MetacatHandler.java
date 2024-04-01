@@ -315,7 +315,7 @@ public class MetacatHandler {
                 // Register the new object into the xml_documents and identifier table.
                 localId = registerToDB(pid, action, conn, user, docType, prePid);
                 // Save the system metadata for the new object
-                // Set changeModifyTime true
+                // Since this is a new object, we don't need to check system metadata version
                 SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate, conn,
                                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
                 if (action == Action.UPDATE) {
@@ -325,6 +325,7 @@ public class MetacatHandler {
                                 + "obsoleted object should not be blank.");
                     }
                     //It is update, we need to store the system metadata of the obsoleted pid as well
+                    // We need to check if the previous system has the latest version
                     // Set changeModifyTime true
                     SystemMetadataManager.getInstance().store(preSys, true, conn,
                                                       SystemMetadataManager.SysMetaVersion.CHECKED);

@@ -969,16 +969,19 @@ public abstract class D1NodeService {
     /**
      * Update system metadata. And the index task is submitted as well. This method only apply
      * to the cases involving the only change of the system metadata.
-     * @param sysMeta
-     * @param needUpdateModificationDate
+     * @param sysMeta  the new system metadata
+     * @param needUpdateModificationDate  if Metacat need to change the modification date
+     * @param sysMetaCheck - if Metacat needs to check the version of the coming system metadata
+     *                      matching the version of the existing one.
      * @throws ServiceFailure
      */
-    protected void updateSystemMetadata(SystemMetadata sysMeta, boolean needUpdateModificationDate)
-                                                                           throws ServiceFailure {
+    protected void updateSystemMetadata(SystemMetadata sysMeta, boolean needUpdateModificationDate,
+                          SystemMetadataManager.SysMetaVersion sysMetaCheck) throws ServiceFailure {
         logMetacat.debug("D1NodeService.updateSystemMetadataWithoutLock() called.");
         boolean isSysmetaChangeOnly = true;
         try {
-            SystemMetadataManager.getInstance().store(sysMeta, needUpdateModificationDate);
+            SystemMetadataManager.getInstance()
+                                        .store(sysMeta, needUpdateModificationDate, sysMetaCheck);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
         }
@@ -1157,7 +1160,7 @@ public abstract class D1NodeService {
         } else {
             logMetacat.debug("D1Node.update - regularly update the system metadata of the pid "
                                  + pid.getValue());
-            updateSystemMetadata(sysmeta, needUpdateModificationDate);
+            updateSystemMetadata(sysmeta, needUpdateModificationDate, sysMetaCheck);
         }
 
         try {
@@ -1648,7 +1651,7 @@ public abstract class D1NodeService {
      */
     protected void archiveCNObject(boolean log, Session session, Identifier pid,
                                    SystemMetadata sysMeta, boolean needModifyDate,
-                                   SystemMetadataManager.SysMetaVersion syMetaCheck)
+                                   SystemMetadataManager.SysMetaVersion sysMetaCheck)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
         String localId = null; // The corresponding docid for this pid
@@ -1656,7 +1659,7 @@ public abstract class D1NodeService {
         // Check for the existing identifier
         try {
             localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-            archiveObject(log, session, pid, sysMeta, needModifyDate, syMetaCheck);
+            archiveObject(log, session, pid, sysMeta, needModifyDate, sysMetaCheck);
 
         } catch (McdbDocNotFoundException e) {
             // This object is not registered in the identifier table. Assume it is of formatType
@@ -1667,7 +1670,8 @@ public abstract class D1NodeService {
                     sysMeta.setArchived(true);
 
                     try {
-                        SystemMetadataManager.getInstance().store(sysMeta, needModifyDate);
+                        SystemMetadataManager.getInstance()
+                                                      .store(sysMeta, needModifyDate, sysMetaCheck);
                     } catch (InvalidRequest ee) {
                         throw new InvalidToken(
                             "4972", "Couldn't archive the object " + pid.getValue()

@@ -92,25 +92,28 @@ public class SystemMetadataManager {
 
     /**
      * Store a system metadata record into the store
-     * The modification time will be changed during the process
+     * The modification time will be changed and system metadata version will be checked during
+     * the process
      * @param sysmeta  the new system metadata will be inserted
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
     public void store(SystemMetadata sysmeta) 
                                         throws InvalidRequest, ServiceFailure{
-        boolean changeModifyTime = true;
-        store(sysmeta, changeModifyTime);
+        // Set changeModifyTime true
+        store(sysmeta, true, SysMetaVersion.CHECKED);
     }
 
     /**
      * Store a system metadata record into the store
      * @param sysmeta  the new system metadata will be inserted
-     * @param changeModifyTIme  if we need to change the modify time
+     * @param changeModifyTime  if we need to change the modify time
+     * @param sysMetaCheck  if Metacat needs to check the version of the coming system metadata
+     *                      matching the version of the existing one.
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
-    public void store(SystemMetadata sysmeta, boolean changeModifyTime) 
+    public void store(SystemMetadata sysmeta, boolean changeModifyTime, SysMetaVersion sysMetaCheck)
                                                         throws InvalidRequest, ServiceFailure {
         if (sysmeta != null) {
             Identifier pid = sysmeta.getIdentifier();
@@ -124,7 +127,7 @@ public class SystemMetadataManager {
                     dbConn.setAutoCommit(false);
                     // store with the values
                     try {
-                        store(sysmeta, changeModifyTime, dbConn, SysMetaVersion.CHECKED);
+                        store(sysmeta, changeModifyTime, dbConn, sysMetaCheck);
                         // commit if we got here with no errors
                         dbConn.commit();
                     } catch (Exception e) {

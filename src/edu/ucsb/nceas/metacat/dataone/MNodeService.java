@@ -1963,7 +1963,8 @@ public class MNodeService extends D1NodeService
                     }
                 }
                 // Set changeModifyTime false
-                SystemMetadataManager.getInstance().store(newSysMeta, false);
+                SystemMetadataManager.getInstance().store(newSysMeta, false,
+                                                    SystemMetadataManager.SysMetaVersion.UNCHECKED);
                 logMetacat.info("Updated local copy of system metadata for pid " + pid.getValue()
                                 + " after change notification from the CN.");
 
@@ -2076,7 +2077,8 @@ public class MNodeService extends D1NodeService
             }
             if (needIndex) {
                 // Set needToUpdateModificationTime true
-                this.updateSystemMetadata(sysmeta, true);
+                this.updateSystemMetadata(sysmeta, true,
+                                          SystemMetadataManager.SysMetaVersion.CHECKED);
             }
         }
 
