@@ -9,15 +9,15 @@ Release date: 2024-04-XX
 This major release introduces breaking changes:
 - The original Metacat API is no longer supported.
   - `Morpho` and any other clients depending on this API will no longer work
-  - Client access must be done via the DataONE API.
-  - LTER and OAI-PMH harvesters to harvest objects to Metacat have been removed.
+  - Client access is availably only via the DataONE API.
+  - LTER and OAI-PMH harvesters have been removed.
     - The provider service to display results is still functional, but may require some modifications.
-- `Skin-based deployments` are no longer supported as the original Metacat API is deprecated.
+- `Skin-based deployments` are no longer supported, since the original Metacat API is deprecated.
   - If you wish to upgrade to Metacat 3.0.0, you can use `metacatui` which is shipped with Metacat, create your own
-    frontend against the API, or use a metacatui that is not shipped with metacat.
-- Metacat admin authentication via LDAP and Password-based logins is no longer supported
-  - Authorization to the Metacat admin interface will be granted after successfully signing in with ORCID using the configured metacat admin identity.
-  - Please sign up for an ORCID if you do not already have one.
+    frontend against the API, or use a standalone version of [metacatui](https://nceas.github.io/metacatui/).
+- Metacat admin authentication is no longer supported via LDAP or Password-based logins.
+  - An ORCID iD is now required in order to log in as a Metacat administrator.
+  - Please [sign up for an ORCID iD](https://orcid.org/register) if you do not already have one.
 
 ### Upgrade Notes (2.19.0 to 3.0.0):
 
@@ -111,8 +111,7 @@ This major release introduces breaking changes:
 - Metacat startup now aborts if it is misconfigured and/or critical resources are inaccessible [I-1631](https://github.com/NCEAS/metacat/issues/1631)
   - The related issues can be found in the metacat logs (ex. '/tomcat/logs/catalina.out') and host logs (ex. '/tomcat/logs/hostname(data).log') with messaging to assist with debugging.
 - Metacat Properties Overlay [I-1611](https://github.com/NCEAS/metacat/issues/1611)
-  - Properties can now be edited by hand to override the default properties via 'metacat-site.properties' located at '/var/metacat/config'
-  - Properties saved in the Metacat admin configuration pages are saved in 'metacat-site.properties'
+  - Properties saved in the Metacat admin configuration pages are now saved in 'metacat-site.properties'.
 - Removed obsolete Metacat replication (replaced by DataONE replication mechanism) [I-1620](https://github.com/NCEAS/metacat/issues/1620)
 - Added new property to control enabling or disabling of the postgres event log [I-1769](https://github.com/NCEAS/metacat/issues/1769)
 - Support recent versions of python3 and sphinx7 for admindoc builds [PR-1728](https://github.com/NCEAS/metacat/pull/1728)
