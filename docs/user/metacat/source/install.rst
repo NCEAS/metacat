@@ -20,7 +20,8 @@ running correctly:
 
   * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
-* `Java 8`_ (Note: Java 7 is deprecated)
+* `Java 17`_ (Note: Java 7/8 is deprecated)
+* `RabbitMQ`_
 * `Solr 8.8.2`_
 
 .. _PostgreSQL: http://www.postgresql.org/
@@ -33,7 +34,9 @@ running correctly:
 
 .. _Apache HTTPD Server: http://httpd.apache.org/
 
-.. _Java 8: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+.. _Java 17: https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
+
+.. _RabbitMQ: https://www.rabbitmq.com/
 
 .. _Solr 8.8.2: https://lucene.apache.org/solr/guide/8_8/getting-started.html
 
@@ -59,7 +62,7 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-1. Download and install prerequisites (`Java 8`_, `Apache Tomcat`_ 7, PostgreSQL_, `Apache HTTPD Server`_)
+1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_ 7, PostgreSQL_, `RabbitMQ`_, `Solr 8.8.2`_, `Apache HTTPD Server`_)
 2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
 3. Log in to PostgreSQL and create the 'metacat' user
 4. Download Metacat from the `Metacat Download Page`_ and extract the archive
@@ -168,16 +171,17 @@ installing from source), and Tomcat are installed and running correctly. We
 also highly recommend that you install Apache Web server, as it provides a more
 robust Web-serving environment and is required by some Metacat functionality. 
 
-* `Java 8`_
+* `Java 17`_
 * `Apache Tomcat`_ 
 * `Apache HTTPD Server`_ (Highly Recommended)
 * PostgreSQL_ Database 
 * `Apache Ant`_ (if building from Source)
+* `RabbitMQ`_
 * `Solr Server`_
 
-Java 8
+Java 17
 ......
-To run Metacat, you should use Java 8. Make sure that the JAVA_HOME
+To run Metacat, you should use Java 17. Make sure that the JAVA_HOME
 environment variable is properly set and that both ``java`` and ``javac`` 
 are on your PATH. 
 
@@ -467,8 +471,14 @@ The Metacat servlet automatically creates the required database schema. For
 more information about configuring the database, please see Database
 Configuration.
 
+RabbitMQ
+...........
+// TODO
+
 Solr Server
 ...........
+// TODO: Update this section regarding 3.0.0 & solr versions
+
 From version 2.13.0, Metacat uses the external Solr HTTP server as the 
 search engine. Unfortunately the Solr Debian packages that come with the Ubuntu operating 
 system are obsoleted and you have to install the binary packages by yourself. This section 
