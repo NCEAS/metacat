@@ -110,6 +110,6 @@ Software and all enhancements, modifications, and updates to the Software.
 This software includes the JDBC driver for PostgreSQL.  See the
 postgresql-license.txt file for details.
 
-[![DataONE_footer](https://user-images.githubusercontent.com/6643222/162324180-b5cf0f5f-ae7a-4ca6-87c3-9733a2590634.png)](https://dataone.org)
+[![DataONE_footer](docs/_images/DataONE_Logo_Banner.png)](https://dataone.org)
 
-[![nceas_footer](https://www.nceas.ucsb.edu/sites/default/files/2020-03/NCEAS-full%20logo-4C.png)](https://www.nceas.ucsb.edu)
+[![nceas_footer](docs/_images/NCEAS_Logo4C_WhiteBkg.jpg)](https://www.nceas.ucsb.edu)
