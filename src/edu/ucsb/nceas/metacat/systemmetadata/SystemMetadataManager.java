@@ -41,7 +41,9 @@ public class SystemMetadataManager {
     
     private static SystemMetadataManager manager = null;
     private final static int TIME_OUT_MILLISEC = 1000;
-    private final static ArrayList<String> lockedIds = new ArrayList<String>(100); 
+    private final static ArrayList<String> lockedIds = new ArrayList<String>(100);
+
+    public enum SysMetaVersion {CHECKED, UNCHECKED};
 
     /**
      * Private constructor
@@ -122,7 +124,7 @@ public class SystemMetadataManager {
                     dbConn.setAutoCommit(false);
                     // store with the values
                     try {
-                        store(sysmeta, changeModifyTime, dbConn);
+                        store(sysmeta, changeModifyTime, dbConn, SysMetaVersion.CHECKED);
                         // commit if we got here with no errors
                         dbConn.commit();
                     } catch (Exception e) {
@@ -173,11 +175,13 @@ public class SystemMetadataManager {
      * @param sysmeta  the new system metadata will be inserted
      * @param changeModifyTIme  if we need to change the modify time
      * @param dbConn  the db connection will be used during storing the system metadata into db
+     * @param sysMetaCheck  if Metacat needs to check the version of the coming system metadata
+     *                      matching the version of the existing one.
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
-    public void store(SystemMetadata sysmeta, boolean changeModifyTime, DBConnection dbConn)
-                                                        throws InvalidRequest, ServiceFailure {
+    public void store(SystemMetadata sysmeta, boolean changeModifyTime, DBConnection dbConn,
+                               SysMetaVersion sysMetaCheck) throws InvalidRequest, ServiceFailure {
         if (sysmeta != null) {
             Identifier pid = sysmeta.getIdentifier();
             if (pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
@@ -201,7 +205,9 @@ public class SystemMetadataManager {
                     }
                     //Check if the system metadata is based on the latest version
                     try {
-                        SystemMetadataValidator.hasLatestVersion(sysmeta);
+                        if (sysMetaCheck == SysMetaVersion.CHECKED) {
+                            SystemMetadataValidator.hasLatestVersion(sysmeta);
+                        }
                     } catch (edu.ucsb.nceas.metacat.systemmetadata.InvalidSystemMetadata e) {
                         String error = "SystemMetadataManager.store - "
                                         + "can't store the system metadata for pid "

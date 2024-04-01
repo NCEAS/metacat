@@ -998,6 +998,11 @@ public abstract class D1NodeService {
      * @param session - the identity of the client which calls the method
      * @param pid - the identifier of the object which will be updated
      * @param sysmeta - the new system metadata
+     * @param needUpdateModificationDate - if Metacat needs to change dateSysMetadataModified
+     * @param currentSysmeta - the current system metadata in Metcat
+     * @param fromCN - if the call from a CN method
+     * @param sysMetaCheck - if Metacat needs to check the version of the coming system metadata
+     *                      matching the version of the existing one.
      * @return
      * @throws NotImplemented
      * @throws NotAuthorized
@@ -1006,9 +1011,10 @@ public abstract class D1NodeService {
      * @throws InvalidSystemMetadata
      * @throws InvalidToken
      */
-    protected boolean updateSystemMetadata(
-        Session session, Identifier pid, SystemMetadata sysmeta, boolean needUpdateModificationDate,
-        SystemMetadata currentSysmeta, boolean fromCN)
+    protected boolean updateSystemMetadata(Session session, Identifier pid, SystemMetadata sysmeta,
+                                        boolean needUpdateModificationDate,
+                                        SystemMetadata currentSysmeta, boolean fromCN,
+                                        SystemMetadataManager.SysMetaVersion sysMetaCheck)
         throws NotImplemented, NotAuthorized, ServiceFailure, InvalidRequest, InvalidSystemMetadata,
         InvalidToken {
 
@@ -1123,7 +1129,8 @@ public abstract class D1NodeService {
                 logMetacat.debug(
                     "D1Node.update - this is to archive a cn object " + pid.getValue());
                 try {
-                    archiveCNObject(logArchive, session, pid, sysmeta, needUpdateModificationDate);
+                    archiveCNObject(logArchive, session, pid, sysmeta,
+                                    needUpdateModificationDate, sysMetaCheck);
                 } catch (NotFound e) {
                     throw new InvalidRequest(
                         "4869", "Can't find the pid " + pid.getValue() + " for archive.");
@@ -1136,7 +1143,8 @@ public abstract class D1NodeService {
                     QuotaServiceManager.getInstance()
                         .enforce(quotaSubject, session.getSubject(), sysmeta,
                                  QuotaServiceManager.ARCHIVEMETHOD);
-                    archiveObject(logArchive, session, pid, sysmeta, needUpdateModificationDate);
+                    archiveObject(logArchive, session, pid, sysmeta,
+                                    needUpdateModificationDate, sysMetaCheck);
                 } catch (NotFound e) {
                     throw new InvalidRequest(
                         "4869", "Can't find the pid " + pid.getValue() + " for archive.");
@@ -1553,7 +1561,8 @@ public abstract class D1NodeService {
      * @param sysMeta - the system metadata associated with the pid
      * @param changeDateModified - if we need to modify the dateModified field in the system metadata
      * @return pid - the identifier of the object used for the archiving
-     *
+     * @param sysMetaCheck  if Metacat needs to check the version of the coming system metadata
+     *                      matching the version of the existing one.
      * @throws InvalidToken
      * @throws ServiceFailure
      * @throws NotAuthorized
@@ -1561,7 +1570,8 @@ public abstract class D1NodeService {
      * @throws NotImplemented
      */
     protected Identifier archiveObject(boolean log, Session session, Identifier pid,
-                                        SystemMetadata sysMeta, boolean changeDateModified)
+                                        SystemMetadata sysMeta, boolean changeDateModified,
+                                        SystemMetadataManager.SysMetaVersion sysMetaCheck)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
         String localId = null;
@@ -1593,7 +1603,7 @@ public abstract class D1NodeService {
                 + " couldn't be identified since " + e.getMessage());
         }
         try {
-            DocumentImpl.archive(localId, pid, username, changeDateModified);
+            DocumentImpl.archive(localId, pid, username, changeDateModified, sysMetaCheck);
             if (log) {
                 try {
                     EventLog.getInstance()
@@ -1624,20 +1634,21 @@ public abstract class D1NodeService {
      * metadata map. The caller should lock it.
      * This method doesn't check the authorization; this method only accept a pid.
      * It wouldn't notify the replca that the system metadata has been changed.
-     * @param session
-     * @param pid
-     * @param sysMeta
-     * @param notifyReplica
-     * @return
+     * @param log  if we need to log the event into db
+     * @param session  the session who made the request
+     * @param pid  the pid of the object which needs to be archived
+     * @param sysMeta  the system metadata associated with the pid
+     * @param sysMetaCheck  if Metacat needs to check the version of the coming system metadata
+     *                      matching the version of the existing one.
      * @throws InvalidToken
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws NotFound
      * @throws NotImplemented
      */
-    protected void archiveCNObject(
-        boolean log, Session session, Identifier pid, SystemMetadata sysMeta,
-        boolean needModifyDate)
+    protected void archiveCNObject(boolean log, Session session, Identifier pid,
+                                   SystemMetadata sysMeta, boolean needModifyDate,
+                                   SystemMetadataManager.SysMetaVersion syMetaCheck)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
         String localId = null; // The corresponding docid for this pid
@@ -1645,7 +1656,7 @@ public abstract class D1NodeService {
         // Check for the existing identifier
         try {
             localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-            archiveObject(log, session, pid, sysMeta, needModifyDate);
+            archiveObject(log, session, pid, sysMeta, needModifyDate, syMetaCheck);
 
         } catch (McdbDocNotFoundException e) {
             // This object is not registered in the identifier table. Assume it is of formatType

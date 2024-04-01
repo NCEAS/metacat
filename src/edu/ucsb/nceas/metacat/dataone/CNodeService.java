@@ -507,7 +507,8 @@ public class CNodeService extends D1NodeService
         Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
         boolean logArchive = true;
-        archiveCNObject(logArchive, session, pid, sysMeta, needModifyDate);
+        archiveCNObject(logArchive, session, pid, sysMeta, needModifyDate,
+                        SystemMetadataManager.SysMetaVersion.CHECKED);
         // notify the replicas
         notifyReplicaNodes(sysMeta);
         return pid;
@@ -2113,7 +2114,7 @@ public class CNodeService extends D1NodeService
         boolean fromCN = true;
         success =
             updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta,
-                                 fromCN);
+                                 fromCN, SystemMetadataManager.SysMetaVersion.UNCHECKED);
 
         return success;
     }
