@@ -22,8 +22,8 @@ This major release introduces breaking changes:
 ### Upgrade Notes (2.19.0 to 3.0.0):
 
 - Starting Requirements:
-  - You must be at [Metacat v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0)
-    - If you are not, please upgrade to v2.19.0 first before proceeding.
+  - Your existing Metacat installation must already have been successfully upgraded to version [Metacat v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to version 3.0.0.
+    - If not, please upgrade to v2.19.0 first, before proceeding.
   - You must have Java 17 installed
     - If it is not installed, please install it and set it as the default version
       - ex. `sudo update-alternatives --config java` which will bring up a list of versions to select from
@@ -53,9 +53,11 @@ This major release introduces breaking changes:
    ```
 - You are now ready to install Metacat 3.0.0
   - Additional notes:
-    - `metacat.properties` no longer contains custom settings. Custom settings should be backed up and then added to `metacat-site.properties`.
+    - `metacat.properties` no longer contains custom settings, and should not be edited.
+      - Please first re-configure Metacat through the Metacat Admin UI after upgrading. 
+      - If you have custom properties that are not available for configuration in the Metacat Admin UI, these can be added to `metacat-site.properties`.
     - You may encounter an error RE: Java 17 not supporting `-XX:+UseConcMarkSweepGC`, and changing the default value to `XX:+UseG1GC` in `/etc/default/tomcat9` may resolve the issue.
-    - The database upgrade process may require some time to complete.
+    - The database upgrade process may require several minutes or longer to complete.
 
 ### New Features & Enhancements:
 
