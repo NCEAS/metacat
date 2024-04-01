@@ -6,9 +6,15 @@ open source project.  Main developers and additional patch contributors are
 listed here. We welcome participation in the project, and will work to
 incorporate code, documentation, and other useful contributions.
 
-Contributors
+Current Contributors
 ------------
-  - Matt Jones (jones@nceas.ucsb.edu)
+  - Jing Tao (tao@nceas.ucsb.edu) [ORCID: 0000-0002-1209-5268](http://orcid.org/0000-0002-1209-5268)
+  - Matthew Brooke (brooke@nceas.ucsb.edu) [ORCID: 0000-0002-1472-913X](http://orcid.org/0000-0002-1472-913X)
+  - Dou Mok (mok@nceas.ucsb.edu) [ORCID: 0000-0002-6076-8092](http://orcid.org/0000-0002-6076-8092)
+  - Matthew B. Jones (jones@nceas.ucsb.edu): [ORCID: 0000-0003-0077-4738](http://orcid.org/0000-0003-0077-4738)
+
+Previous Contributors
+------------
   - Chad Berkley (berkley@nceas.ucsb.edu)
   - Jing Tao (tao@nceas.ucsb.edu)
   - Jivka Bojilova (bojilova@nceas.ucsb.edu)
@@ -16,7 +22,7 @@ Contributors
   - Saurabh Garg (sgarg@nceas.ucsb.edu)
   - Duane Costa (dcosta@lternet.edu)
   - Veronique Connolly (connolly@nceas.ucsb.edu)
-  - Chris Jones (cjones@nceas.ucsb.edu)
+  - Chris Jones (cjones@msi.ucsb.edu)
   - John Harris (harris@nceas.ucsb.edu)
   - Callie Bowdish (bowdish@ecoinformatics.org)
   - Will Tyburczy (tyburczy@ecoinformatics.org)
@@ -26,9 +32,10 @@ Contributors
   - Chris Barteau (barteau@nceas.ucsb.edu)
   - Shaun Walbridge (walbridge@nceas.ucsb.edu)
   - Michael Daigle (daigle@nceas.ucsb.edu)
-  - Lauren Walker (walker@nceas.ucsb.edu) 
+  - Lauren Walker (walker@nceas.ucsb.edu)
   - Peter Slaughter (slaughter@nceas.ucsb.edu)
-  - Rob Nahf (rnahf@epscor.unm.edu) 
+  - Rob Nahf (rnahf@epscor.unm.edu)
+  - Matthew Brooke (brooke@nceas.ucsb.edu)
 
 Patch contributors
 ------------------
