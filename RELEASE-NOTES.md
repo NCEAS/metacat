@@ -72,7 +72,7 @@ This major release introduces breaking changes:
   - Increased indexing speeds by replacing hazelcast with dataone-indexer
   - Removed hazelcast dependency and added new SystemMetadataManager class to handle system metadata
   - Removed unnecessary monitor/status request endpoint [I-1609](https://github.com/NCEAS/metacat/issues/1609)
-  - Moved reindexing action from old MetacatAPI to new DataONE MN.admin API [PR-1716](https://github.com/NCEAS/metacat/pull/1738)
+  - Moved reindexing action from old MetacatAPI to new DataONE MN.admin API [PR-1738](https://github.com/NCEAS/metacat/pull/1738)
 - Upgrade from Java 8 to 17 [I-1481](https://github.com/NCEAS/metacat/issues/1481), [PR-1731](https://github.com/NCEAS/metacat/pull/1731), [PR-1735](https://github.com/NCEAS/metacat/pull/1735)
 - Disabled old MetacatAPI and significant code clean-up (removed obsolete legacy code) [PR-1713](https://github.com/NCEAS/metacat/pull/1713), [PR-1725](https://github.com/NCEAS/metacat/pull/1725), [PR-1726](https://github.com/NCEAS/metacat/pull/1726), [PR-1744](https://github.com/NCEAS/metacat/pull/1744)
   - Removed obsolete skin configurations [PR-1767](https://github.com/NCEAS/metacat/pull/1767) 
