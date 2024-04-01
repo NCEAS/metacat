@@ -106,44 +106,6 @@ public class D1AuthHelperTest {
         nl.addNode(otherMN);
     }
 
-    /**
-     * Get a minimal SystemMetadata object with default values
-     */
-    private SystemMetadata getGenericSysmetaObject() throws Exception {
-        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
-            TypeFactory.buildIdentifier("dip"), new ByteArrayInputStream(
-                ("Test Sysmeta Content InputStream").getBytes(StandardCharsets.UTF_8)), "MD5",
-            TypeFactory.buildFormatIdentifier("text/csv"),
-            TypeFactory.buildSubject("submitterRightsHolder"));
-        AccessPolicy ap = new AccessPolicy();
-        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
-        sysmeta.setAccessPolicy(ap);
-        return sysmeta;
-    }
-
-    /**
-     * Get a rightsHolderGroup, if null is supplied default values will be used.
-     */
-    private List<Group> getGenericRightsHolderGroup(List<Subject> subjectMemberList) {
-        // Create a member list, to be added to the group
-        List<Subject> hasMemberList;
-        if (subjectMemberList == null) {
-            hasMemberList = new ArrayList<>();
-            Subject testGroupMember = new Subject();
-            testGroupMember.setValue("testGroupMember");
-            hasMemberList.add(testGroupMember);        // Bogus value
-            hasMemberList.add(sysmeta.getSubmitter()); // The matching member
-        } else {
-            hasMemberList = subjectMemberList;
-        }
-        // Add member list to the rightsHolderGroup, which is set up before every test
-        rightsHolderGroup.setHasMemberList(hasMemberList);
-        List<Group> groupList = new ArrayList<>();
-        groupList.add(rightsHolderGroup);
-
-        return groupList;
-    }
-
     @Before
     public void setUp() throws Exception {
 
@@ -727,6 +689,44 @@ public class D1AuthHelperTest {
         Assert.assertFalse("null Session should not be authorized via sysmeta subjects",
                            authDel.isAuthorizedBySysMetaSubjects(null, sysmeta, Permission.READ));
 
+    }
+
+    /**
+     * Get a minimal SystemMetadata object with default values
+     */
+    private SystemMetadata getGenericSysmetaObject() throws Exception {
+        SystemMetadata sysmeta = TypeFactory.buildMinimalSystemMetadata(
+            TypeFactory.buildIdentifier("dip"), new ByteArrayInputStream(
+                ("Test Sysmeta Content InputStream").getBytes(StandardCharsets.UTF_8)), "MD5",
+            TypeFactory.buildFormatIdentifier("text/csv"),
+            TypeFactory.buildSubject("submitterRightsHolder"));
+        AccessPolicy ap = new AccessPolicy();
+        ap.addAllow(TypeFactory.buildAccessRule("eq1", Permission.CHANGE_PERMISSION));
+        sysmeta.setAccessPolicy(ap);
+        return sysmeta;
+    }
+
+    /**
+     * Get a rightsHolderGroup, if null is supplied default values will be used.
+     */
+    private List<Group> getGenericRightsHolderGroup(List<Subject> subjectMemberList) {
+        // Create a member list, to be added to the group
+        List<Subject> hasMemberList;
+        if (subjectMemberList == null) {
+            hasMemberList = new ArrayList<>();
+            Subject testGroupMember = new Subject();
+            testGroupMember.setValue("testGroupMember");
+            hasMemberList.add(testGroupMember);        // Bogus value
+            hasMemberList.add(sysmeta.getSubmitter()); // The matching member
+        } else {
+            hasMemberList = subjectMemberList;
+        }
+        // Add member list to the rightsHolderGroup, which is set up before every test
+        rightsHolderGroup.setHasMemberList(hasMemberList);
+        List<Group> groupList = new ArrayList<>();
+        groupList.add(rightsHolderGroup);
+
+        return groupList;
     }
 
 }
