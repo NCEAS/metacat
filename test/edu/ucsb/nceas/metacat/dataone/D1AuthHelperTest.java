@@ -199,16 +199,8 @@ public class D1AuthHelperTest {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Get a default rightsHolderGroup list
-            List<Group> testRightsHolderGroup = getGenericRightsHolderGroup(null);
-
-            SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
-            when(mockSInfo.getGroupList()).thenReturn(testRightsHolderGroup);
-
-            CNode mockCN = Mockito.mock(CNode.class);
-            // .listSubjects(...) makes a network call
-            when(mockCN.listSubjects(eq(null), any(), eq(null), anyInt(), anyInt()))
-                .thenReturn(mockSInfo);
+            // Get a mockCN with the default member list
+            CNode mockCN = getMockCN(null);
 
             // .getCN() makes a network call
             mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
@@ -228,16 +220,8 @@ public class D1AuthHelperTest {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Get a default rightsHolderGroup list
-            List<Group> testRightsHolderGroup = getGenericRightsHolderGroup(null);
-
-            SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
-            when(mockSInfo.getGroupList()).thenReturn(testRightsHolderGroup);
-
-            CNode mockCN = Mockito.mock(CNode.class);
-            // .listSubjects(...) makes a network call
-            when(mockCN.listSubjects(eq(null), any(), eq(null), anyInt(), anyInt()))
-                .thenReturn(mockSInfo);
+            // Get a mockCN with the default member list
+            CNode mockCN = getMockCN(null);
 
             // .getCN() makes a network call
             mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
@@ -260,16 +244,8 @@ public class D1AuthHelperTest {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Get a default rightsHolderGroup list
-            List<Group> testRightsHolderGroup = getGenericRightsHolderGroup(null);
-
-            SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
-            when(mockSInfo.getGroupList()).thenReturn(testRightsHolderGroup);
-
-            CNode mockCN = Mockito.mock(CNode.class);
-            // .listSubjects(...) makes a network call
-            when(mockCN.listSubjects(eq(null), any(), eq(null), anyInt(), anyInt()))
-                .thenReturn(mockSInfo);
+            // Get a mockCN with the default member list
+            CNode mockCN = getMockCN(null);
 
             // .getCN() makes a network call
             mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
@@ -290,17 +266,9 @@ public class D1AuthHelperTest {
         // expandRightsHolder() is a public static method
         // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Create an empty member list, to be added to the group
+            // Create an empty member list to add to the MockCN in the rightsHolder group
             List<Subject> hasMemberList = new ArrayList<>();
-            List<Group> testRightsHolderGroup = getGenericRightsHolderGroup(hasMemberList);
-
-            SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
-            when(mockSInfo.getGroupList()).thenReturn(testRightsHolderGroup);
-
-            CNode mockCN = Mockito.mock(CNode.class);
-            // .listSubjects(...) makes a network call
-            when(mockCN.listSubjects(eq(null), any(), eq(null), anyInt(), anyInt()))
-                .thenReturn(mockSInfo);
+            CNode mockCN = getMockCN(hasMemberList);
 
             // .getCN() makes a network call
             mockD1Client.when(D1Client::getCN).thenReturn(mockCN);
@@ -707,9 +675,9 @@ public class D1AuthHelperTest {
     }
 
     /**
-     * Get a rightsHolderGroup, if null is supplied default values will be used.
+     * Get a mockCN that contains the given member list as part of the rightsHolder group
      */
-    private List<Group> getGenericRightsHolderGroup(List<Subject> subjectMemberList) {
+    private CNode getMockCN(List<Subject> subjectMemberList) throws Exception {
         // Create a member list, to be added to the group
         List<Subject> hasMemberList;
         if (subjectMemberList == null) {
@@ -726,7 +694,15 @@ public class D1AuthHelperTest {
         List<Group> groupList = new ArrayList<>();
         groupList.add(rightsHolderGroup);
 
-        return groupList;
+        SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
+        when(mockSInfo.getGroupList()).thenReturn(groupList);
+
+        CNode mockCN = Mockito.mock(CNode.class);
+        // .listSubjects(...) makes a network call
+        when(mockCN.listSubjects(eq(null), any(), eq(null), anyInt(), anyInt()))
+            .thenReturn(mockSInfo);
+
+        return mockCN;
     }
 
 }
