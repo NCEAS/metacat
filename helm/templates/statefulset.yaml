@@ -88,8 +88,6 @@ spec:
               value: {{ ternary "true" "false" .Values.image.debug | quote }}
             - name: INCLUDE_METACATUI
               value: {{ ternary "true" "false" .Values.metacat.includeMetacatUi | quote }}
-            - name: METACAT_ADMINISTRATOR_USERNAME
-              value: {{ index .Values.metacat "administrator.username" }}
             - name: METACAT_EXTERNAL_HOSTNAME
               value: {{ index .Values.metacat "server.name" }}
             - name: METACAT_EXTERNAL_PORT

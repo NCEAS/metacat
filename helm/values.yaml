@@ -103,24 +103,11 @@ metacat:
   ## ingress.hosts
   includeMetacatUi: true
 
-  ## @param metacat.administrator.username The admin username that will be used to authenticate
-  ## with the new metacat instance and apply any necessary setup steps, database upgrades etc.
-  ## upon first run.
-  ## NOTES:
-  ## 1. The corresponding password must be set as a Secret (see ./admin/secrets.yaml), with the
-  ##    key METACAT_ADMINISTRATOR_PASSWORD
-  ## 2. This account will be created if it doesn't already exist in the `passwords.xml` file on
-  ##    metacat's mounted PersistentVolume (see .Values.persistence)
-  ## 3. This username MUST appear on the list of authorized administrators, otherwise
-  ##    container startup will fail (see @param auth.administrators)
+  ## @param metacat.auth.administrators A semicolon-separated list of admin ORCID iDs
+  ## denoting the users who may log into metacat with administrator privileges.
+  ## See https://orcid.org
   ##
-  administrator.username: admin@localhost
-
-  ## @param metacat.auth.administrators A colon-separated list of admin usernames or LDAP-style DN
-  ## (Distinguished Names) denoting the users who may log into metacat with administrator
-  ## privileges.
-  ##
-  auth.administrators: admin@localhost
+  auth.administrators: https://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
 
   ## @param metacat.database.connectionURI postgres database URI, or lave blank to use sub-chart
   ##
