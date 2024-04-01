@@ -196,8 +196,6 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testExpandRightsHolder() throws Exception {
-        // expandRightsHolder() is a public static method
-        // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             // Get a mockCN with the default member list
             initMockCN(null, mockD1Client);
@@ -214,8 +212,6 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testExpandRightsHolder_unauthorizedRightsHolderSubject() throws Exception {
-        // expandRightsHolder() is a public static method
-        // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             // Get a mockCN with the default member list
             initMockCN(null, mockD1Client);
@@ -235,8 +231,6 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testExpandRightsHolder_unauthorizedSessionSubject() throws Exception {
-        // expandRightsHolder() is a public static method
-        // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             // Get a mockCN with the default member list
             initMockCN(null, mockD1Client);
@@ -254,8 +248,6 @@ public class D1AuthHelperTest {
      */
     @Test
     public void testExpandRightsHolder_emptyHasMemberList() throws Exception {
-        // expandRightsHolder() is a public static method
-        // D1Client contains methods that make network calls, which is to be mocked
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             // Create an empty member list to add to the MockCN in the rightsHolder group
             List<Subject> hasMemberList = new ArrayList<>();
@@ -662,6 +654,13 @@ public class D1AuthHelperTest {
         return sysmeta;
     }
 
+    /**
+     * Init a Mock CN that contains the given member list as part of the rightsHolder group
+     *
+     * @param subjectMemberList List of Subjects (members)
+     * @param mockD1Client Mock D1Client, whose class contains methods that make network calls
+     * @throws Exception
+     */
     private void initMockCN(List<Subject> subjectMemberList,
                              MockedStatic<D1Client> mockD1Client) throws Exception {
         // Create a member list, to be added to the group
