@@ -27,8 +27,6 @@ TC_SETENV="${TC_HOME}"/bin/setenv.sh
 
 enableRemoteDebugging() {
     # Allow remote debugging via port 5005
-    # TODO: for JDK > 8, may need to change [...]address=5005 to [...]address=*:5005 --
-    #       see https://bugs.openjdk.org/browse/JDK-8175050
     {
         echo "# Allow remote debugging connections to the port listed as \"address=\" below:"
         echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} \
@@ -219,39 +217,6 @@ elif [[ $1 = "catalina.sh" ]]; then
     # remote debugging connections to tomcat
     if [[ $METACAT_DEBUG == "true" ]]; then
           enableRemoteDebugging
-    fi
-
-    # TODO: need a more-elegant way to handle this, without manipulating files
-    # If env has an admin/password set, but it does not exist in the passwords file, then add it
-    if [[ -z $METACAT_ADMINISTRATOR_USERNAME ]]; then
-        echo "ERROR: Admin user env variable (METACAT_ADMINISTRATOR_USERNAME) not set!"
-        exit 1
-    else
-       if [[ -z $METACAT_ADMINISTRATOR_PASSWORD ]]; then
-            echo "ERROR:  The admin user (METACAT_ADMINISTRATOR_USERNAME) environment variable was"
-            echo "        set, but no password value was set."
-            echo "        You must use the METACAT_ADMINISTRATOR_PASSWORD environment variable to"
-            echo "        set the administrator password"
-            exit 2
-        fi
-        USER_PWFILE="/var/metacat/users/password.xml"
-
-         # look for the user password file, as it is expected if the configuration is completed
-        if [[ ! -s $USER_PWFILE ]] ||
-            [[ $(grep -c "$METACAT_ADMINISTRATOR_USERNAME" $USER_PWFILE) -eq 0 ]]; then
-            # Note: the Java bcrypt library only supports '2a' format hashes, so override the
-            # default python behavior so that the hashes created start with '2a' rather than '2y'
-            cd "${METACAT_DIR}"/WEB-INF/scripts/bash
-            PASS=$(python3 -c "import bcrypt; print(bcrypt.hashpw(\
-                '$METACAT_ADMINISTRATOR_PASSWORD'.encode('utf-8'),\
-                bcrypt.gensalt(10,prefix=b'2a')).decode('utf-8'))")
-            bash ./authFileManager.sh useradd -h "$PASS" -dn "$METACAT_ADMINISTRATOR_USERNAME"
-            cd "$TC_HOME"
-            echo
-            echo '*************************************'
-            echo 'Added administrator to passwords file'
-            echo '*************************************'
-        fi
     fi
 
     echo
