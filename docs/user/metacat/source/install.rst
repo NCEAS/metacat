@@ -166,9 +166,8 @@ build-file has an "install" target that will build and deploy the WAR for you.
 Installing and Configuring Required Software
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Before you can install and run Metacat, you must ensure that a recent Java SDK,
-PostgreSQL, Ant (if
-installing from source), and Tomcat are installed and running correctly. We
-also highly recommend that you install Apache Web server, as it provides a more
+PostgreSQL, Ant (if installing from source), and Tomcat are installed and running correctly.
+We also highly recommend that you install Apache Web server, as it provides a more
 robust Web-serving environment and is required by some Metacat functionality. 
 
 * `Java 17`_
@@ -187,7 +186,7 @@ are on your PATH.
 
 To install Java if you are running Ubuntu_/Debian, you can install using apt-get:: 
 
-  sudo apt-get install openjdk-8-jdk
+  sudo apt-get install openjdk-17-jdk
 
 If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website and install using the RPM installer.
 
@@ -195,9 +194,8 @@ If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website a
 
 Apache Tomcat
 .............
-We recommend that you install Tomcat 6 or 7 or 8 into the directory of your choice. The newer versions are preferred.
-Included with the Metacat download is a Tomcat-friendly start-up script that
-should be installed as well.
+We recommend that you install Tomcat 6, 7 or 8 into the directory of your choice. The newer versions are preferred.
+Included with the Metacat download is a Tomcat-friendly start-up script that should be installed as well.
 
 Note: we will refer to the Tomcat installation directory as ``<tomcat_home>`` for
 the remainder of the documentation. 
