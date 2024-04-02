@@ -695,30 +695,28 @@ public class D1AuthHelper {
                 "D1AuthHelper.isInGroups -  the given groups' (the returned result including "
                     + "groups) size is " + groups.size());
             for (Group group : groups) {
-                Subject groupSubject = group.getSubject();
-                String groupSubjectValue = group.getSubject().getValue();
-                if (group != null && groupSubject != null && groupSubject.equals(rightHolder)) {
+                if (group != null && group.getSubject() != null && group.getSubject()
+                    .equals(rightHolder)) {
                     logMetacat.debug(
                         "D1AuthHelper.isInGroups - there is a group in the list having the "
-                            + "subject " + groupSubjectValue
+                            + "subject " + group.getSubject().getValue()
                             + " which matches the right holder's subject "
                             + rightHolder.getValue());
                     List<Subject> members = group.getHasMemberList();
                     if (members != null) {
-                        logMetacat.debug("D1AuthHelper.isInGroups - the group " + groupSubjectValue
-                                             + " in the cn has members");
+                        logMetacat.debug(
+                            "D1AuthHelper.isInGroups - the group " + group.getSubject().getValue()
+                                + " in the cn has members");
                         for (Subject member : members) {
-                            String memberValue = member.getValue();
-                            String userSessionValue = userSession.getValue();
                             logMetacat.debug(
-                                "D1AuthHelper.isInGroups - compare the member " + memberValue
-                                    + " with the user " + userSessionValue);
-                            if (memberValue != null && !memberValue.isBlank() && memberValue.equals(
-                                userSessionValue)) {
-                                logMetacat.debug(
-                                    "D1AuthHelper.isInGroups - Find it! The member " + memberValue
-                                        + " in the group " + groupSubjectValue
-                                        + " matches the user " + userSessionValue);
+                                "D1AuthHelper.isInGroups - compare the member " + member.getValue()
+                                    + " with the user " + userSession.getValue());
+                            if (member.getValue() != null && !member.getValue().isBlank() && member
+                                .getValue().equals(userSession.getValue())) {
+                                logMetacat.debug("D1AuthHelper.isInGroups - Found it! The member "
+                                                     + member.getValue() + " in the group " + group
+                                    .getSubject().getValue() + " matches the user "
+                                                     + userSession.getValue());
                                 is = true;
                                 return is;
                             }

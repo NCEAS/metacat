@@ -198,7 +198,7 @@ public class D1AuthHelperTest {
     public void testExpandRightsHolder() throws Exception {
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             // Get a mockCN with the default member list
-            initMockCN(null, mockD1Client);
+            initMockCN(null, "add", mockD1Client);
 
             assertTrue("D1AuthHelper.expandRightsHolder should return true",
                        D1AuthHelper.expandRightsHolder(rhgSubject,
@@ -214,7 +214,7 @@ public class D1AuthHelperTest {
     public void testExpandRightsHolder_unauthorizedRightsHolderSubject() throws Exception {
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             // Get a mockCN with the default member list
-            initMockCN(null, mockD1Client);
+            initMockCN(null, "add", mockD1Client);
 
             Subject nonGroupSubject = new Subject();
             nonGroupSubject.setValue("notRightHolderGroupSubject");
@@ -233,7 +233,7 @@ public class D1AuthHelperTest {
     public void testExpandRightsHolder_unauthorizedSessionSubject() throws Exception {
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             // Get a mockCN with the default member list
-            initMockCN(null, mockD1Client);
+            initMockCN(null, "add", mockD1Client);
 
             assertFalse("D1AuthHelper.expandRightsHolder should return false, the subject is not "
                             + "part of the member list.",
@@ -251,7 +251,45 @@ public class D1AuthHelperTest {
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
             // Create an empty member list to add to the MockCN in the rightsHolder group
             List<Subject> hasMemberList = new ArrayList<>();
-            initMockCN(hasMemberList, mockD1Client);
+            initMockCN(hasMemberList, "add", mockD1Client);
+
+            assertFalse(
+                "D1AuthHelper.expandRightsHolder should return false, there are no members",
+                D1AuthHelper.expandRightsHolder(rhgSubject, sysmeta.getSubmitter()));
+        }
+    }
+
+    /**
+     * Indirectly test 'isInGroups' private static method by checking that expandRightsHolder
+     * returns false when groups retrieved is null.
+     */
+    @Test
+    public void testExpandRightsHolder_isInGroups_nullGroup() throws Exception {
+        try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
+            // Create an empty member list to add to the MockCN in the rightsHolder group
+            List<Subject> hasMemberList = new ArrayList<>();
+            initMockCN(hasMemberList, "null", mockD1Client);
+
+            assertFalse(
+                "D1AuthHelper.expandRightsHolder should return false, there are no members",
+                D1AuthHelper.expandRightsHolder(rhgSubject, sysmeta.getSubmitter()));
+        }
+    }
+
+    /**
+     * Indirectly test 'isInGroups' private static method by checking that expandRightsHolder
+     * returns false when a group exists, and it contains a single null member
+     */
+    @Test
+    public void testExpandRightsHolder_isInGroups_nullGroupMember() throws Exception {
+        try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
+            // Create a member list that with a null subject member to add to the MockCN in the
+            // rightsHolder group
+            List<Subject> hasMemberList = new ArrayList<>();
+            Subject testGroupMember = new Subject();
+            testGroupMember.setValue(null);
+            hasMemberList.add(testGroupMember);
+            initMockCN(hasMemberList, "add", mockD1Client);
 
             assertFalse(
                 "D1AuthHelper.expandRightsHolder should return false, there are no members",
@@ -657,15 +695,20 @@ public class D1AuthHelperTest {
     /**
      * Init a Mock CN that contains the given member list as part of the rightsHolder group
      *
-     * @param subjectMemberList List of Subjects (members)
-     * @param mockD1Client Mock D1Client, whose class contains methods that make network calls
-     * @throws Exception
+     * @param subjectMemberList     List of Subjects (members)
+     * @param addMemberListToGroups Custom values to determine whether supplied member list should
+     *                              be added to the rightsHolder group or not.
+     *                              - "add" to add the given subjectMemberList to the group list
+     *                              - "null" to add a null group to the group list
+     * @param mockD1Client          Mock D1Client, whose class contains methods that make network
+     *                              calls
      */
-    private void initMockCN(List<Subject> subjectMemberList,
-                             MockedStatic<D1Client> mockD1Client) throws Exception {
+    private void initMockCN(List<Subject> subjectMemberList, String addMemberListToGroups,
+                            MockedStatic<D1Client> mockD1Client) throws Exception {
         // Create a member list, to be added to the group
         List<Subject> hasMemberList;
         if (subjectMemberList == null) {
+            // Add default values
             hasMemberList = new ArrayList<>();
             Subject testGroupMember = new Subject();
             testGroupMember.setValue("testGroupMember");
@@ -675,9 +718,14 @@ public class D1AuthHelperTest {
             hasMemberList = subjectMemberList;
         }
         // Add member list to the rightsHolderGroup, which is set up before every test
-        rightsHolderGroup.setHasMemberList(hasMemberList);
         List<Group> groupList = new ArrayList<>();
-        groupList.add(rightsHolderGroup);
+        if (addMemberListToGroups.equals("null")) {
+            groupList.add(null);
+        }
+        if (addMemberListToGroups.equals("add")) {
+            rightsHolderGroup.setHasMemberList(hasMemberList);
+            groupList.add(rightsHolderGroup);
+        }
 
         SubjectInfo mockSInfo = Mockito.mock(SubjectInfo.class);
         when(mockSInfo.getGroupList()).thenReturn(groupList);
