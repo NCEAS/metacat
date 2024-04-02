@@ -10,8 +10,7 @@ This major release introduces breaking changes:
 - The original Metacat API is no longer supported.
   - `Morpho` and any other clients depending on this API will no longer work
   - Client access is availably only via the DataONE API.
-  - LTER and OAI-PMH harvesters have been removed.
-    - The provider service to display results is still functional, but may require some modifications.
+  - LTER and OAI-PMH harvesters have been removed. Please see the Metacat administrator's guide for details.
 - `Skin-based deployments` are no longer supported, since the original Metacat API is deprecated.
   - If you wish to upgrade to Metacat 3.0.0, you can use `metacatui` which is shipped with Metacat, create your own
     frontend against the API, or use a standalone version of [metacatui](https://nceas.github.io/metacatui/).
@@ -38,7 +37,7 @@ This major release introduces breaking changes:
     - Stop solr - ex. `sudo systemctl stop solr`
 - Download/upgrade your solr version to 9.5.0
   - Solr upgrade is not supported for 3.0.0 with old cores, you must start with a new core (new solr-home)
-    - While changes to your solr schema is not expected, should you need to - proceed with caution.
+    - Please use a new Solr home and reindex all objects due to incompatibility between old data and the new Solr schema.
   - Ensure that `/etc/default/solr.in.sh` is group writable
     - ex. `sudo chmod g+w /etc/default/solr.in.sh`
   - In `solr.in.sh`, be sure to delete the old solr home add a new solr path:
@@ -56,7 +55,6 @@ This major release introduces breaking changes:
     - `metacat.properties` no longer contains custom settings, and should not be edited.
       - Please first re-configure Metacat through the Metacat Admin UI after upgrading. 
       - If you have custom properties that are not available for configuration in the Metacat Admin UI, these can be added to `metacat-site.properties`.
-    - You may encounter an error RE: Java 17 not supporting `-XX:+UseConcMarkSweepGC`, and changing the default value to `XX:+UseG1GC` in `/etc/default/tomcat9` may resolve the issue.
     - The database upgrade process may require several minutes or longer to complete.
 
 ### New Features & Enhancements:
