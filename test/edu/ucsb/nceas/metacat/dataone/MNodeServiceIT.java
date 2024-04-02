@@ -124,8 +124,6 @@ public class MNodeServiceIT {
     private static final String invalidEmlPath1 = "test/resources/eml-error-2.2.0.xml";
     private static final String invalidEmlPath2 = "test/resources/eml-error.xml";
 
-    
-
     /**
      * This class has those methods using the original MockCNode
      */
@@ -205,7 +203,7 @@ public class MNodeServiceIT {
                 SystemMetadata newsysmeta =
                     MNodeService.getInstance(request).getSystemMetadata(session, pid);
                 assertEquals(newsysmeta.getIdentifier().getValue(), sysmeta.getIdentifier().getValue());
-                assertEquals(newsysmeta.getSeriesId(), null);
+                assertNull(newsysmeta.getSeriesId());
 
             } catch (Exception e) {
                 fail("Unexpected error: " + e.getMessage());
@@ -230,10 +228,9 @@ public class MNodeServiceIT {
                     MNodeService.getInstance(request).create(session, guid, object, sysmeta);
                 assertEquals(guid.getValue(), pid.getValue());
 
-                Thread.sleep(1000);
                 try {
                     Identifier guid2 = new Identifier();
-                    guid2.setValue("testCreate." + System.currentTimeMillis());
+                    guid2.setValue("testCreate2." + System.currentTimeMillis());
                     SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object);
                     sysmeta2.setSeriesId(guid);
                     MNodeService.getInstance(request).create(session, guid2, object, sysmeta2);
@@ -242,10 +239,9 @@ public class MNodeServiceIT {
 
                 }
 
-                Thread.sleep(1000);
                 try {
                     Identifier guid3 = new Identifier();
-                    guid3.setValue("testCreate." + System.currentTimeMillis());
+                    guid3.setValue("testCreate3." + System.currentTimeMillis());
                     SystemMetadata sysmeta3 = D1NodeServiceTest.createSystemMetadata(guid3, session.getSubject(), object);
                     sysmeta3.setSeriesId(guid3);
                     MNodeService.getInstance(request).create(session, guid3, object, sysmeta3);
@@ -566,9 +562,8 @@ public class MNodeServiceIT {
                     updatedPid = MNodeService.getInstance(request)
                         .update(cnSession, newPid, object, newPid2, newSysMeta2);
                     fail("updating an object's authoritative node should get an exception");
-                    //assertEquals(updatedPid.getValue(), newPid2.getValue());
-                } catch (InvalidRequest ee) {
-                    //assertTrue(ee.getMessage().contains(newPid.getValue()));
+                } catch (Exception ee) {
+                    assertTrue(ee instanceof InvalidRequest);
                 }
 
                 //test update an object with new access rules
@@ -760,7 +755,7 @@ public class MNodeServiceIT {
                         + "xsi:schemaLocation=\"eml://ecoinformatics.org/eml-2.1.1 eml.xsd\">"
                         + "<access" + " authSystem=\"knb\" order=\"allowFirst\">"
                         + "<allow><principal>public"
-                        + "</principal><permission>read</permission></allow></access>" + "<dataset"
+                        + "</principal><permission>read</permission></allow></access><dataset"
                         + "><title>test</title><creator id=\"1445543475577\"><individualName><surName"
                         + ">test</surName></individualName></creator>" + "<contact id=\"1445543479900"
                         + "\"><individualName><surName>test</surName></individualName></contact"
@@ -782,7 +777,7 @@ public class MNodeServiceIT {
                         + "xsi:schemaLocation=\"eml://ecoinformatics.org/eml-2.1.1 eml.xsd\">"
                         + "<access" + " authSystem=\"knb\" order=\"allowFirst\">"
                         + "<allow><principal>public"
-                        + "</principal><permission>read</permission></allow></access>" + "<dataset"
+                        + "</principal><permission>read</permission></allow></access><dataset"
                         + "><title>test2</title><creator "
                         + "id=\"1445543475577\"><individualName><surName>test</surName"
                         + "></individualName></creator>" + "<contact id=\"1445543479900"
