@@ -106,8 +106,8 @@ package is copyright and owned by Jason Hunter. See the cos-license.html file
 for details of the license.  Licensor retains title to and ownership of the
 Software and all enhancements, modifications, and updates to the Software.
 
-This software includes the JDBC driver for PostgreSQL.  See the
-postgresql-license.txt file for details.
+This software includes the JDBC driver for PostgreSQL. See the [postgresql-license.txt](.lib/postgresql-license.txt)
+ file for details.
 
 [![DataONE_footer](docs/_images/DataONE_Logo_Banner.png)](https://dataone.org)
 
