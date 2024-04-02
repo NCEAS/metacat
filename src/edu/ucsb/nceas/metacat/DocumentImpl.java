@@ -1020,8 +1020,8 @@ public class DocumentImpl {
      * @param guid  the dataone identifier associated with the given accnum
      * @param user  the identity of operator
      * @param changeDateModified  if it needs to change the dateModified field in the system metadata
-     * @param sysMetaCheck  if Metacat needs to check the version of the coming system metadata
-     *                      matching the version of the existing one.
+     * @param sysMetaCheck  check whether the version of the provided '@param sysMeta'
+     *                       matches the version of the existing system metadata
      * @throws SQLException
      * @throws InvalidRequest
      * @throws ServiceFailure

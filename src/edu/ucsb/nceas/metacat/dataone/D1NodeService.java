@@ -971,8 +971,8 @@ public abstract class D1NodeService {
      * to the cases involving the only change of the system metadata.
      * @param sysMeta  the new system metadata
      * @param needUpdateModificationDate  if Metacat need to change the modification date
-     * @param sysMetaCheck - if Metacat needs to check the version of the coming system metadata
-     *                      matching the version of the existing one.
+     * @param sysMetaCheck - check whether the version of the provided '@param sysMeta'
+     *                       matches the version of the existing system metadata
      * @throws ServiceFailure
      */
     protected void updateSystemMetadata(SystemMetadata sysMeta, boolean needUpdateModificationDate,
@@ -1004,8 +1004,8 @@ public abstract class D1NodeService {
      * @param needUpdateModificationDate - if Metacat needs to change dateSysMetadataModified
      * @param currentSysmeta - the current system metadata in Metcat
      * @param fromCN - if the call from a CN method
-     * @param sysMetaCheck - if Metacat needs to check the version of the coming system metadata
-     *                      matching the version of the existing one.
+     * @param sysMetaCheck - sysMetaCheck - check whether the version of the provided '@param sysmeta'
+     *                       matches the version of the existing system metadata
      * @return
      * @throws NotImplemented
      * @throws NotAuthorized
@@ -1564,8 +1564,8 @@ public abstract class D1NodeService {
      * @param sysMeta - the system metadata associated with the pid
      * @param changeDateModified - if we need to modify the dateModified field in the system metadata
      * @return pid - the identifier of the object used for the archiving
-     * @param sysMetaCheck  if Metacat needs to check the version of the coming system metadata
-     *                      matching the version of the existing one.
+     * @param sysMetaCheck  sysMetaCheck - check whether the version of the provided '@param sysMeta'
+     *                       matches the version of the existing system metadata
      * @throws InvalidToken
      * @throws ServiceFailure
      * @throws NotAuthorized
@@ -1641,8 +1641,8 @@ public abstract class D1NodeService {
      * @param session  the session who made the request
      * @param pid  the pid of the object which needs to be archived
      * @param sysMeta  the system metadata associated with the pid
-     * @param sysMetaCheck  if Metacat needs to check the version of the coming system metadata
-     *                      matching the version of the existing one.
+     * @param sysMetaCheck  sysMetaCheck - check whether the version of the provided '@param sysMeta'
+     *                       matches the version of the existing system metadata
      * @throws InvalidToken
      * @throws ServiceFailure
      * @throws NotAuthorized

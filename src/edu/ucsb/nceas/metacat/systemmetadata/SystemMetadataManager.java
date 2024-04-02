@@ -108,8 +108,8 @@ public class SystemMetadataManager {
      * Store a system metadata record into the store
      * @param sysmeta  the new system metadata will be inserted
      * @param changeModifyTime  if we need to change the modify time
-     * @param sysMetaCheck  if Metacat needs to check the version of the coming system metadata
-     *                      matching the version of the existing one.
+     * @param sysMetaCheck  check whether the version of the provided '@param sysmeta'
+     *                       matches the version of the existing metadata
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
