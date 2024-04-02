@@ -85,7 +85,7 @@ This material is based upon work supported by the National Science Foundation un
 - NSF 1546024: Arctic Data Center (2015)
 - NSF 1443062: MetaDIG (2014)
 - NSF 1448821: Make Data Count (2014)
-- NSF 1421275: DataONE project (DataNet) (2014)
+- NSF 1430508: DataONE (Data Observation Network for Earth) (2014)
 - Mellon Foundation (2009)
 - NSF 0830944: DataONE project (DataNet) (2008)
 - Mellon Foundation (2006)
