@@ -283,7 +283,7 @@ public class D1AuthHelperTest {
     @Test
     public void testExpandRightsHolder_isInGroups_nullGroupMember() throws Exception {
         try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
-            // Create a member list that with a null subject member to add to the MockCN in the
+            // Create a member list with a null subject member to add to the MockCN in the
             // rightsHolder group
             List<Subject> hasMemberList = new ArrayList<>();
             Subject testGroupMember = new Subject();
