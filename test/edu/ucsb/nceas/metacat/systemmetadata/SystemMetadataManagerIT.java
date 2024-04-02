@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
@@ -26,9 +27,13 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import static org.junit.Assert.fail;
+
 
 public class SystemMetadataManagerIT {
 
@@ -180,5 +185,52 @@ public class SystemMetadataManagerIT {
 
     }
 
+    /**
+     * Test the different scenarios to save new system metadata with the different/same
+     * modification dates
+     * @throws Exception
+     */
+    @Test
+    public void testCheckVersions() throws Exception {
+        Identifier guid = new Identifier();
+        guid.setValue(d1NodeTester.generateDocumentId());
+        Session session = d1NodeTester.getTestSession();
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
+        long originUploadDate = sysmeta.getDateUploaded().getTime();
+        // false means not to change the modification date
+        SystemMetadataManager.getInstance().store(sysmeta, false,
+                                                      SystemMetadataManager.SysMetaVersion.CHECKED);
+        SystemMetadata storedSysmeta = SystemMetadataManager.getInstance().get(guid);
+        assertEquals("The DateSysMetadataModified field shouldn't change", originModificationDate,
+                                        storedSysmeta.getDateSysMetadataModified().getTime());
+        assertEquals("The DateUploaded field shouldn't change", originUploadDate,
+                                        storedSysmeta.getDateUploaded().getTime());
+        // Reset a new modification date
+        sysmeta.setDateSysMetadataModified(new Date());
+        originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
+        try {
+            // True means Metacat needs to change the modification date
+            SystemMetadataManager.getInstance().store(sysmeta, true,
+                    SystemMetadataManager.SysMetaVersion.CHECKED);
+            fail("Test can't get here since the modification date in the new system metadata "
+                  + " does not match the one in the system.");
+        } catch (Exception e) {
+            assertTrue( e instanceof InvalidRequest);
+        }
+        // Skip checking version will make the save method work
+        // True means Metacat needs to change the modification date
+        SystemMetadataManager.getInstance().store(sysmeta, true,
+                                            SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        System.out.println("new modification date ======== " + sysmeta.getDateSysMetadataModified().getTime());
+        storedSysmeta = SystemMetadataManager.getInstance().get(guid);
+        System.out.println("stored modification date ======== " + storedSysmeta.getDateSysMetadataModified().getTime());
+        assertNotEquals("The DateSysMetadataModified field should change.", originModificationDate,
+                                        storedSysmeta.getDateSysMetadataModified().getTime());
+        assertEquals("The DateUploaded field shouldn't change", originUploadDate,
+                                        storedSysmeta.getDateUploaded().getTime());
+    }
 
 }
