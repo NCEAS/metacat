@@ -155,8 +155,6 @@ public class MNodeServiceIT {
         @After
         public void tearDown() {
             d1NodeTest.tearDown();
-            Settings.getConfiguration().clearProperty("D1Client.CN_URL");
-            Settings.getConfiguration().clearProperty("D1Client.cnClassName");
         }
 
 
@@ -4506,6 +4504,7 @@ public class MNodeServiceIT {
             Settings.getConfiguration().clearProperty("D1Client.CN_URL");
             Settings.getConfiguration().clearProperty("D1Client.cnClassName");
             d1NodeTest = new D1NodeServiceTest("initialize");
+            D1AuthHelper.resetCNList();
             request = (MockHttpServletRequest)d1NodeTest.getServletRequest();
             mockCN = Mockito.mock(CNode.class);
             cnSubject = new Subject();
@@ -4513,8 +4512,9 @@ public class MNodeServiceIT {
             cnSession = new Session();
             cnSession.setSubject(cnSubject);
         }
+
         /**
-         * Use Mockito to test the method.
+         * Use Mockito to test the systemMetadataChanged method.
          * @throws Exception
          */
         @Test
@@ -4531,12 +4531,14 @@ public class MNodeServiceIT {
             pid.setValue("mockTestSystemMetadataUpdated." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             SystemMetadata sysmeta =
-                               D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+                          D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
             Identifier retPid =
-                                MNodeService.getInstance(request).create(session, pid, object, sysmeta);
+                            MNodeService.getInstance(request).create(session, pid, object, sysmeta);
             assertEquals(retPid.getValue(), pid.getValue());
             // In order to simulate replicas, we need to change the authoritive node
             SystemMetadata storedSysMeta = SystemMetadataManager.getInstance().get(retPid);
+            long originModificationDate = storedSysMeta.getDateSysMetadataModified().getTime();
+            long originUploadDate = storedSysMeta.getDateUploaded().getTime();
             SystemMetadata newSysMeta = SerializationUtils.clone(sysmeta);
             storedSysMeta.setAuthoritativeMemberNode(node);
             SystemMetadataManager.getInstance().store(storedSysMeta, false, SysMetaVersion.CHECKED);
@@ -4545,17 +4547,17 @@ public class MNodeServiceIT {
             cnList.addNode(cnNode);
             Mockito.when(mockCN.getNodeId()).thenReturn(node);
             Mockito.when(mockCN.listNodes()).thenReturn(cnList);
-            // Test no modification date change
+            // Test no modification date change when the systemMetadataChanged method is called
             try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
                 newSysMeta.setSerialVersion(sysmeta.getSerialVersion().add(BigInteger.ONE));
                 Mockito.when(mockCN.getSystemMetadata(null, retPid)).thenReturn(newSysMeta);
                 Mockito.when(D1Client.getCN()).thenReturn(mockCN);
                 MNodeService.getInstance(request)
-                     .systemMetadataChanged(cnSession, retPid, 5000L, Calendar.getInstance().getTime());
+                 .systemMetadataChanged(cnSession, retPid, 5000L, Calendar.getInstance().getTime());
                 SystemMetadata readSysmeta =
-                                   MNodeService.getInstance(request).getSystemMetadata(session, retPid);
-                assertEquals(newSysMeta.getDateSysMetadataModified().getTime(),
-                                                    readSysmeta.getDateSysMetadataModified().getTime());
+                               MNodeService.getInstance(request).getSystemMetadata(session, retPid);
+                assertEquals(originModificationDate,
+                                                readSysmeta.getDateSysMetadataModified().getTime());
             }
             // assign a new modified date for the sysmeta and the method should succeed
             // In order to simulate replicas, we need to change the authoritive node
@@ -4566,6 +4568,7 @@ public class MNodeServiceIT {
             SystemMetadataManager.getInstance().store(storedSysMeta, false, SysMetaVersion.CHECKED);
             try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
                 newSysMeta.setDateSysMetadataModified(new Date());
+                originModificationDate = newSysMeta.getDateSysMetadataModified().getTime();
                 newSysMeta.setSerialVersion(sysmeta.getSerialVersion().add(BigInteger.TWO));
                 Mockito.when(mockCN.getSystemMetadata(null, retPid)).thenReturn(newSysMeta);
                 Mockito.when(D1Client.getCN()).thenReturn(mockCN);
@@ -4573,8 +4576,29 @@ public class MNodeServiceIT {
                     .systemMetadataChanged(cnSession, retPid, 5000L, Calendar.getInstance().getTime());
                 SystemMetadata readSysmeta =
                             MNodeService.getInstance(request).getSystemMetadata(session, retPid);
-                assertEquals(newSysMeta.getDateSysMetadataModified().getTime(),
+                assertEquals(originModificationDate,
                                                readSysmeta.getDateSysMetadataModified().getTime());
+            }
+            // assign a new modified date for the sysmeta and archive it
+            storedSysMeta = SystemMetadataManager.getInstance().get(retPid);
+            NodeReference node3 = new NodeReference();
+            node3.setValue("urn:node:foo1");
+            storedSysMeta.setAuthoritativeMemberNode(node3);
+            SystemMetadataManager.getInstance().store(storedSysMeta, false, SysMetaVersion.CHECKED);
+            try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
+                newSysMeta.setDateSysMetadataModified(new Date());
+                originModificationDate = newSysMeta.getDateSysMetadataModified().getTime();
+                newSysMeta.setSerialVersion(sysmeta.getSerialVersion().add(BigInteger.TWO));
+                newSysMeta.setArchived(true);
+                Mockito.when(mockCN.getSystemMetadata(null, retPid)).thenReturn(newSysMeta);
+                Mockito.when(D1Client.getCN()).thenReturn(mockCN);
+                MNodeService.getInstance(request)
+                    .systemMetadataChanged(cnSession, retPid, 5000L, Calendar.getInstance().getTime());
+                SystemMetadata readSysmeta =
+                            MNodeService.getInstance(request).getSystemMetadata(session, retPid);
+                assertEquals(originModificationDate,
+                                               readSysmeta.getDateSysMetadataModified().getTime());
+                assertEquals(originUploadDate, readSysmeta.getDateUploaded().getTime());
             }
         }
     }

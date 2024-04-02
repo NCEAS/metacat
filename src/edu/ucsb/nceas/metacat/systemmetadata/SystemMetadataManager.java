@@ -140,7 +140,7 @@ public class SystemMetadataManager {
                                      + ". Also we can't roll back the database changes since "
                                      + ee.getMessage());
                         }
-                        if ( e instanceof InvalidRequest ie) {
+                        if (e instanceof InvalidRequest ie) {
                             throw ie;
                         }
                         throw new ServiceFailure ("0000", "SystemMetadataManager.store - "

@@ -966,4 +966,11 @@ public class D1AuthHelper {
         }
         return allowed;
     }
+
+    /**
+     * Reset the cn list to a empty list. Currently it is only for testing.
+     */
+    public static void resetCNList() {
+        cnList = new NodeList();
+    }
 }

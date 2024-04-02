@@ -224,9 +224,7 @@ public class SystemMetadataManagerIT {
         // True means Metacat needs to change the modification date
         SystemMetadataManager.getInstance().store(sysmeta, true,
                                             SystemMetadataManager.SysMetaVersion.UNCHECKED);
-        System.out.println("new modification date ======== " + sysmeta.getDateSysMetadataModified().getTime());
         storedSysmeta = SystemMetadataManager.getInstance().get(guid);
-        System.out.println("stored modification date ======== " + storedSysmeta.getDateSysMetadataModified().getTime());
         assertNotEquals("The DateSysMetadataModified field should change.", originModificationDate,
                                         storedSysmeta.getDateSysMetadataModified().getTime());
         assertEquals("The DateUploaded field shouldn't change", originUploadDate,
