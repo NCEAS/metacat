@@ -9,9 +9,9 @@ Release date: 2024-04-XX
 This major release introduces breaking changes:
 - The original Metacat API is no longer supported.
   - `Morpho` and any other clients depending on this API will no longer work
-  - Client access is availably only via the DataONE API.
+  - Client access is available only via the DataONE API.
   - LTER and OAI-PMH harvesters have been removed. Please see the Metacat administrator's guide for details.
-- `Skin-based deployments` are no longer supported, since the original Metacat API is deprecated.
+- `Skin-based deployments` are no longer supported.
   - If you wish to upgrade to Metacat 3.0.0, you can use `metacatui` which is shipped with Metacat, create your own
     frontend against the API, or use a standalone version of [metacatui](https://nceas.github.io/metacatui/).
 - Metacat admin authentication is no longer supported via LDAP or Password-based logins.
@@ -21,13 +21,13 @@ This major release introduces breaking changes:
 ### Upgrade Notes (2.19.0 to 3.0.0):
 
 - Starting Requirements:
-  - Your existing Metacat installation must already have been successfully upgraded to version [Metacat v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to version 3.0.0.
+  - Your existing Metacat installation must already have been successfully upgraded to [version v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to version 3.0.0.
     - If not, please upgrade to v2.19.0 first, before proceeding.
   - You must have Java 17 installed
     - If it is not installed, please install it and set it as the default version
       - ex. `sudo update-alternatives --config java` which will bring up a list of versions to select from
       - If Tomcat uses the `default-java` directory, ensure that it points to Java 17
-          ```
+          ```sh
           cd /usr/lib/jvm
           sudo rm -r default-java
           sudo ln -s java-17-openjdk-amd64 default-java
@@ -38,6 +38,13 @@ This major release introduces breaking changes:
 - Download/upgrade your solr version to 9.5.0
   - Solr upgrade is not supported for 3.0.0 with old cores, you must start with a new core (new solr-home)
     - Please use a new Solr home and reindex all objects due to incompatibility between old data and the new Solr schema.
+    - Example below to reindex all objects
+      ```sh
+      # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
+      # where $TOKEN is an environment variable containing your administrator jwt token
+      # example:
+      curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
+      ``` 
   - Ensure that `/etc/default/solr.in.sh` is group writable
     - ex. `sudo chmod g+w /etc/default/solr.in.sh`
   - In `solr.in.sh`, be sure to delete the old solr home add a new solr path:
@@ -46,7 +53,7 @@ This major release introduces breaking changes:
 - Start/restart solr
   - ex. `sudo systemctl restart solr`
 - Install RabbitMQ if you do not already have it running
-   ```
+   ```sh
    sudo apt install rabbitmq-server
    sudo systemctl restart rabbitmq-server
    ```
