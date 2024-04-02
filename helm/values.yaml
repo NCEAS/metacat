@@ -104,10 +104,11 @@ metacat:
   includeMetacatUi: true
 
   ## @param metacat.auth.administrators A semicolon-separated list of admin ORCID iDs
-  ## denoting the users who may log into metacat with administrator privileges.
-  ## See https://orcid.org
+  ## (https://orcid.org), denoting the users who may log into metacat with administrator privileges.
+  ## IMPORTANT NOTE: ORCID IDs *MUST* begin with http, *NOT* https! example:
+  ## auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
   ##
-  auth.administrators: https://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+  auth.administrators:
 
   ## @param metacat.database.connectionURI postgres database URI, or lave blank to use sub-chart
   ##
@@ -130,7 +131,7 @@ metacat:
   ##                         `-postgresql-hl` (the name of the k8s headless service for the
   ##                         postgresql statefulset)
   ##    `<database-name>` will be set to the value of `postgresql.auth.database`
-  ##    (Note: If you are using the postrgesql sub-chart but have changed the default name for the
+  ##    (Note: If you are using the postgresql sub-chart but have changed the default name for the
   ##    headless service, then specify the full database.connectionURI as outlined in (1), above)
   ##
   database.connectionURI: ""
@@ -178,7 +179,7 @@ metacat:
   ##    `<solr-hostname>` will be set to the current value of `.Release.Name`, prepended to
   ##                      `-solr-headless` (the name of the k8s headless solr service created
   ##                      by the dataone-indexer sub-chart)
-  ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart)
+  ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart
   ##
   solr.baseURL: ""
 
