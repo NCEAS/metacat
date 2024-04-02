@@ -817,7 +817,7 @@ public class D1AuthHelper {
                             }
                         } catch (MetacatUtilException mue) {
                             // Do nothing, continue checking for local node admins
-                            logMetacat.debug("Unexpected issue when checking for Metacat "
+                            logMetacat.warn("Unexpected issue when checking for Metacat "
                                                  + "Admin privileges: " + mue.getMessage());
                         }
                     }
