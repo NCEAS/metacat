@@ -17,6 +17,28 @@ scientific community with a broad range of science data that can be
 easily searched, compared, merged, or used in other ways because the
 data are well and consistently described.
 
+## Installation
+See the file "docs/install.html" for detailed instructions
+for your OS.
+
+## Documentation
+See the docs directory for detailed documentation and installation
+instructions.
+
+Details of the Metacat architecture can be found on the website for
+the Knowledge Network for Biocomplexity (KNB):
+
+  http://knb.ecoinformatics.org/software/metacat/
+
+Contributions to this work are welcome.  Please see the above web site
+for details on how to contribute.
+
+## Major Known Bugs or Feature Requests (see http://github.com/NCEAS/metacat/issues)
+If you discover a bug please report it, either by email (above) or by using
+our bug tracking system (http://github.com/NCEAS/metacat/issues). There is a
+list of currently unimplemented issues that we are working on
+for the next release.
+
 ## Current Contributors
 
 - Jing Tao (tao@nceas.ucsb.edu) [ORCID: 0000-0002-1209-5268](https://orcid.org/0000-0002-1209-5268)
@@ -52,28 +74,6 @@ data are well and consistently described.
 - Andrea Chadden (chadden@nceas.ucsb.edu)
 - Johnoel Ancheta (johnoel@hawaii.edu)
 - Owen Jones (owen.jones@imperial.ac.uk)
-
-## Installation
-See the file "docs/install.html" for detailed instructions
-for your OS.
-
-## Documentation
-See the docs directory for detailed documentation and installation
-instructions.
-
-Details of the Metacat architecture can be found on the website for
-the Knowledge Network for Biocomplexity (KNB):
-
-  http://knb.ecoinformatics.org/software/metacat/
-
-Contributions to this work are welcome.  Please see the above web site
-for details on how to contribute.
-
-## Major Known Bugs or Feature Requests (see http://github.com/NCEAS/metacat/issues)
-If you discover a bug please report it, either by email (above) or by using
-our bug tracking system (http://github.com/NCEAS/metacat/issues). There is a
-list of currently unimplemented issues that we are working on
-for the next release.
 
 ## Funding and Acknowledgements
 
