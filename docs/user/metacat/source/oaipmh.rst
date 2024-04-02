@@ -1,3 +1,10 @@
+----
+
+.. deprecated:: 3.0.0
+    Harvesting metadata in Metacat through OAI-PMH standard is obsolete.
+
+----
+
 OAI Protocol for Metadata Harvesting
 ====================================
 
@@ -125,6 +132,10 @@ Users of the Metacat OAI-PMH Data Provider should be aware of the following issu
 
 Metacat OAI-PMH Harvester
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.0.0
+    Harvesting metadata in Metacat through OAI-PMH standard is obsolete.
+
 The Metacat OAI-PMH Harvester service interface utilizes OAI-PMH methods to 
 request metadata or related information from an OAI-PMH-compliant data provider 
 using a standard HTTP URL in either an HTTP-GET or HTTP-POST request.

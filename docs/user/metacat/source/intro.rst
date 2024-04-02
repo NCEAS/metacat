@@ -25,12 +25,9 @@ Metacat's user-friendly Registry application allows data providers to enter
 data set documentation into Metacat using a Web form. When the form is
 submitted, Metacat compiles the provided documentation into the required format
 and saves it. Information providers need never work directly with the XML_
-format in which the metadata are stored or with the database records themselves. In
-addition, the Metacat application can easily be extended to provide a
-customized data-entry interface that suits the particular requirements of each
-project. Metacat users can also choose to enter metadata using the Morpho
-application, which provides data entry wizards that guide information providers
-through the process of documenting each data set.
+format in which the metadata are stored or with the database records themselves.
+In addition, the Metacat application can easily be modified to provide a
+customized theme/Web interface.
 
 The metadata stored in Metacat includes all of the information needed
 to understand what the described data are and how to use them: a
@@ -42,9 +39,9 @@ upload the data set itself with the data documentation. Information providers
 can also edit the metadata or delete it from the repository, again using
 Metacat's straightforward Web interface.
 
-Metacat is a `Java servlet`_ application that runs on Linux and  Mac OS
-platforms in conjunction with a database, such as 
-PostgreSQL_, a Web server, and a Solr server. 
+Metacat is a `Jakarta servlet`_ application that runs on Linux and  Mac OS
+platforms in conjunction with a database, such as
+PostgreSQL_, a Web server, RabbitMQ, and a Solr server.
 The Metacat application stores data in an XML_ format using `Ecological
 Metadata Language`_ (EML) or other metadata standards such as `ISO 19139`_ or the
 `FGDC Biological Data Profile`_. For more
@@ -53,59 +50,47 @@ please see http://knb.ecoinformatics.org.
 
 .. _XML: http://en.wikipedia.org/wiki/XML
 
-.. _Java servlet: http://en.wikipedia.org/wiki/Java_Servlet
+.. _Jakarta Servlet: https://en.wikipedia.org/wiki/Jakarta_Servlet
 
 .. _PostgreSQL: http://www.postgresql.org/
 
-.. _Oracle: http://www.oracle.com/
-
 .. _Ecological Metadata Language: http://knb.ecoinformatics.org/software/eml
 
-.. _ISO 19139: http://marinemetadata.org/references/iso19139 
+.. _ISO 19139: https://www.iso.org/obp/ui/#iso:std:iso:ts:19139:ed-1:v1:en
 
-.. _FGDC Biological Data Profile: http://www.fgdc.gov/standards/projects/FGDC-standards-projects/metadata/biometadata 
+.. _FGDC Biological Data Profile: http://www.fgdc.gov/standards/projects/FGDC-standards-projects/metadata/biometadata
 
 What's in this Guide
 --------------------
-This Administrator's guide includes information for installing, configuring,
-managing and extending Metacat for Ubuntu and other Linux variants. Metacat
-can run on MacOS but it needs users' customized installation. 
-Chapter Four contains instructions for downloading and installing Metacat and the
-applications required to run the software on Linux platform.
-Chapter Five covers how to configure Metacat, both for new and upgraded
-installations. Chapter Seven details the ways in which you can customize the
-Metacat interface so users can access and submit information easily: using
-Metacat's generic web-interface (the Registry), creating your own HTML forms,
-and creating your own desktop client (like Morpho). Chapter Eight discusses how
-to work with Metacat's embedded Geoserver. Chapter Nine describes how to set up the
-Metacat's replication service, which permits Metacat servers to share data with
-each other, effectively backing up metadata and data files. Chapter Ten looks
-at the Metacat Harvester, a program that automates the retrieval of EML
-documents from one or more sites and their subsequent upload (insert or update)
-to Metacat. Chapter Eight discusses logging, Chapter Twelve contains instructions
-for creating a site map, which makes individual metadata entries available via
-Web searches. Metacat's `Java API`_ is available for developers.
+This Administrator's guide provides comprehensive steps for downloading, installing, and configuring
+Metacat for Ubuntu and other Linux variants, alongside instructions for using Metacatui,
+authentication, logging, and creating a site map for improved web search visibility. Metacat can run
+on MacOS but it requires users' customized installation.
+
+For detailed information, refer to the table of contents. Additionally, Metacat's `Java API`_ is
+available for developers.
 
 .. _Java API: ./api/index.html
 
 Metacat Features
 ----------------
-Metacat is a repository for data and metadata (documentation about data), that 
-helps scientists find, understand and effectively use the data sets they manage or 
+Metacat is a repository for data and metadata (documentation about data), that
+helps scientists find, understand and effectively use the data sets they manage or
 that have been created by others. Specifically,
 
 * Metacat is an open source web application, which can run on Linux and MacOS operating systems and is written in Java
-* Metacat's Web interface facilitates the input and retrieval of data 
+* Metacat's Web interface facilitates the input and retrieval of data
 * Metacat's optional mapping functionality enables you to query and visualize the geographic coverage of stored data sets
 * Metacat's replication feature ensures that all Metacat data and metadata is stored safely on multiple Metacat servers
-* The Metacat interface can be easily extended and customized via Web forms, themes, and/or user-developed client tools in Java and other languages
-* The Metacat harvester automates the process of retrieving and storing EML documents from one or more sites
+* Metacat's default web interface `metacatui`_ can be easily modified.
 * Metacat can be customized to use Life Sciences Identifiers (LSIDs), uniquely identifying every data record
 * Metacat has a built-in logging system for tracking events such as document insertions, updates, deletes, and reads
-* The appearance of Metacat's Web interface can be customized via themes. 
+* The appearance of Metacat's Web interface can be customized via themes.
 * Metacat fully supports the DataONE Member Node interface, allowing Metacat deployments to easily participate in the DataONE federation
 
-.. figure:: images/screenshots/image007.png
+.. _metacatui: https://nceas.github.io/metacatui/
+
+.. figure:: images/screenshots/image007_metacatuihome.png
 
    Metacat's default home page. Users can customize the appearance using themes.
 
