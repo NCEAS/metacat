@@ -18,8 +18,7 @@ easily searched, compared, merged, or used in other ways because the
 data are well and consistently described.
 
 ## Installation
-See the file "docs/install.html" for detailed instructions
-for your OS.
+See [installation notes](./docs/user/metacat/source/install.rst) for detailed instructions for your OS.
 
 ## Documentation
 See the docs directory for detailed documentation and installation
