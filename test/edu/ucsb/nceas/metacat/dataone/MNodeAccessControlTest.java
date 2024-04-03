@@ -26,13 +26,20 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
+import java.util.Set;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import org.dataone.client.D1Node;
+import org.dataone.client.NodeLocator;
+import org.dataone.client.exception.ClientSideException;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -43,13 +50,16 @@ import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
+import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
+import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.OptionList;
@@ -143,16 +153,27 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testMethodsWithSession() throws Exception {
-
+        final String passwdMsg =
+            """
+            \n* * * * * * * * * * * * * * * * * * *
+            DOI PASSWORD IS NOT SET!
+            Add a value for 'guid.doi.password'
+            to your metacat-site.properties file!
+            * * * * * * * * * * * * * * * * * * *
+            """;
+        try {
+            assertFalse(passwdMsg, PropertyService.getProperty("guid.doi.password").isBlank());
+        } catch (PropertyNotFoundException e) {
+            fail(passwdMsg);
+        }
         Properties withProperties = new Properties();
         withProperties.setProperty("server.name", "UpdateDOITestMock.edu");
         withProperties.setProperty("guid.doi.enabled", "true");
-        withProperties.setProperty("guid.doi.password", "apitest");
         withProperties.setProperty("guid.doi.username", "apitest");
-        try (MockedStatic<PropertyService> ignored =
-                 LeanTestUtils.initializeMockPropertyService(withProperties)) {
-
+        try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
+            withProperties)) {
             KNBadmin = getOneKnbDataAdminsMemberSession();
+
             PISCOManager = getOnePISCODataManagersMemberSession();
             mNodeMember = getMemberOfMNodeSession();
             cNodeMember = getMemberOfCNodeSession();
