@@ -471,7 +471,16 @@ Configuration.
 
 RabbitMQ
 ...........
-// TODO
+Please install the latest release of RabbitMQ:
+
+::
+
+  sudo apt install rabbitmq-server
+  sudo systemctl restart rabbitmq-server
+
+For additional details and information about RabbitMQ, please see `RabbitMQ's documentation`_.
+
+.. _RabbitMQ's documentation: https://www.rabbitmq.com/docs
 
 Solr Server
 ...........
