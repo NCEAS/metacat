@@ -9,6 +9,7 @@ Release date: 2024-04-XX
 This major release introduces breaking changes:
 - A valid auth token is required for a Metacat installation to function correctly.
   - Please [contact DataONE](https://www.dataone.org/contact/) to obtain a long-term token (valid for 1 year) 
+  - This is only an interm requirement; a future release of Metacat will remove the need for this token.
 - The original Metacat API is no longer supported.
   - `Morpho` and any other clients depending on this API will no longer work
   - Client access is available only via the DataONE API.
@@ -23,10 +24,7 @@ This major release introduces breaking changes:
 ### Checking out Metacat for the first time?
 
 In order for Metacat 3.0.0 to function correctly (like uploading private datasets), you will need to install a valid auth token
-for the metacat-indexer to use. This is only an interim requirement; a future release of Metacat will remove
-the need for this token.
-
-In the meantime, you can obtain a temporary token to continue evaluating Metacat by logging into [the 
+for the metacat-indexer to use. You can obtain a temporary token to continue evaluating Metacat by logging into [the 
 KNB website](https://knb.ecoinformatics.org), and navigating to "My Profile" -> "Settings" -> "Authentication Token".
 Note - this token is only valid for 24 hours, but you can continue manually retrieving short-term tokens.
 
