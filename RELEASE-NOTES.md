@@ -26,7 +26,7 @@ the need for this token.
 
 In the meantime, you can obtain a temporary token to continue evaluating Metacat by logging into [the 
 KNB website](https://knb.ecoinformatics.org), and navigating to "My Profile" -> "Settings" -> "Authentication Token".
-Note - this token is only valid for 24 hours, but you can continue generating short-term tokens.
+Note - this token is only valid for 24 hours, but you can continue manually retrieving short-term tokens.
 
 Already decided that Metacat fits your needs? If you would like to move forward with a long-term token,
 please [contact DataONE](https://www.dataone.org/contact/) to obtain a token that will be valid for a year.
