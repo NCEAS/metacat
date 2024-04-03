@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat.doi.ezid;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.UUID;
 
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
@@ -13,6 +14,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.ezid.EZIDService;
@@ -23,16 +25,20 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * To test the scenario that Metacat supports multiple shoulders. 
+ * To test the scenario that Metacat supports multiple shoulders.
  * The first shoulder is the primary one. It uses for both minting and registering DOIs.
  * The second and beyond shoulders are only for registering DOIs.
- * Currently the testing only works on the ezid stage environment. 
+ * Currently the testing only works in the ezid stage environment.
+ * In order to make this test class work, you need change the doi username/password
+ * in the test/test.properties file.
  * @author tao
  *
  */
@@ -44,6 +50,7 @@ public class MultipleDOIShouldersIT {
 
     private D1NodeServiceTest d1NodeServiceTest;
     private MockHttpServletRequest request;
+    private MockedStatic<PropertyService> closeableMock;
 
     /**
      * Set up the test fixtures
@@ -51,11 +58,33 @@ public class MultipleDOIShouldersIT {
      */
     @Before
     public void setUp() throws Exception {
-        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
-        d1NodeServiceTest = new D1NodeServiceTest("RegisterDOITest");
-        request = (MockHttpServletRequest) d1NodeServiceTest.getServletRequest();
-        PropertyService.getInstance().setPropertyNoPersist(PROPERTY_SHOULDER_1, SHOULDER_1);
-        PropertyService.getInstance().setPropertyNoPersist(PROPERTY_SHOULDER_2, SHOULDER_2);
+        d1NodeServiceTest = new D1NodeServiceTest("initialize");
+        final String passwdMsg =
+                """
+                \n* * * * * * * * * * * * * * * * * * *
+                DOI CREDENTIALS NOT SET!
+                Test requires specific values for
+                'guid.doi.username' & 'guid.doi.password'
+                in your test/test.properties file!
+                * * * * * * * * * * * * * * * * * * *
+                """;
+        Properties testProperties = LeanTestUtils.getExpectedProperties();
+        String user = testProperties.getProperty("guid.doi.username");
+        String password = testProperties.getProperty("guid.doi.password");
+        assertNotNull(passwdMsg, user);
+        assertFalse(passwdMsg, user.isBlank());
+        assertNotEquals(passwdMsg, "apitest", user);
+        assertNotNull(passwdMsg, password);
+        assertFalse(passwdMsg, password.isBlank());
+        Properties withProperties = new Properties();
+        withProperties.setProperty("guid.doi.enabled", "true");
+        withProperties.setProperty("guid.doi.baseurl", "https://ezid-stg.cdlib.org/");
+        withProperties.setProperty(PROPERTY_SHOULDER_1, SHOULDER_1);
+        withProperties.setProperty(PROPERTY_SHOULDER_2 , SHOULDER_2);
+        withProperties.setProperty("guid.doi.username", user);
+        withProperties.setProperty("guid.doi.password", password);
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+        request = (MockHttpServletRequest)d1NodeServiceTest.getServletRequest();
     }
 
     /**
@@ -63,6 +92,9 @@ public class MultipleDOIShouldersIT {
      */
     @After
     public void tearDown() {
+        if (closeableMock != null) {
+            closeableMock.close();
+        }
     }
 
 
