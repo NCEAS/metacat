@@ -484,14 +484,26 @@ For additional details and information about RabbitMQ, please see `RabbitMQ's do
 
 Solr Server
 ...........
-// TODO: Update this section regarding 3.0.0 & solr versions
 
-From version 2.13.0, Metacat uses the external Solr HTTP server as the 
-search engine. Unfortunately the Solr Debian packages that come with the Ubuntu operating 
-system are obsoleted and you have to install the binary packages by yourself. This section 
-provides guidance on how to setup Solr to run in production on \*nix platforms, such as Ubuntu.
+Starting from v2.13.0, Metacat uses the external Solr HTTP server as the search engine. Unfortunately
+the Solr Debian packages that come with the Ubuntu operating system are obsoleted, so you will have
+to install the binary packages by yourself. This section provides guidance on how to setup Solr to run
+in production on \*nix platforms, such as Ubuntu.
 
-Metacat only supports ``Solr 8.*``, ``NOT 9.*``. You may download the binary releases from:
+Upgrade Note - In Metacat 3.0.0, the solr schema and configuration has changed. As such, a solr upgrade is
+not supported in 3.0.0 with an old core. You must start with a new core (solr-home). Additionally,
+data from existing or previous solr installations will also be incompatible with the new schema and
+configuration. Please select a new solr-home during the Metacat configuration process, and reindex
+all objects (see example below).
+
+::
+
+  # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
+  # where $TOKEN is an environment variable containing your administrator jwt token
+  # example:
+  curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
+
+Metacat supports ``Solr 8.8.2`` to ``Solr 9.5.0``. You may download the binary releases from:
 
 https://solr.apache.org/downloads.html#solr-8112
 
