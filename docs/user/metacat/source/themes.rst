@@ -1,10 +1,7 @@
 Modifying and Creating Themes
 =============================
-.. versionadded:: 2.2.0
 
 .. contents::
-
-|
 
 Metacat's theming system, `MetacatUI <https://github.com/NCEAS/metacatui>`_, is deployed
 separately from Metacat, allowing more independent user interface customization. Check the
@@ -15,7 +12,7 @@ MetacatUI is structured in a model-view-controller architecture using
 for advanced modification of MetacatUI, but is not necessary for editing the CSS styling and HTML
 ofthe included MetacatUI views.
 
-.. figure:: images/screenshots/image007.png
+.. figure:: images/screenshots/image007_metacatuihome.png
 
    MetacatUI's default home page. Users can customize the appearance using themes.
 
