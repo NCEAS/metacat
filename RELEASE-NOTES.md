@@ -7,6 +7,8 @@ Release date: 2024-04-XX
 ### Overview of Major Changes
 
 This major release introduces breaking changes:
+- A valid auth token is required for a Metacat installation to function correctly.
+  - Please [contact DataONE](https://www.dataone.org/contact/) to obtain a long-term token (valid for 1 year) 
 - The original Metacat API is no longer supported.
   - `Morpho` and any other clients depending on this API will no longer work
   - Client access is available only via the DataONE API.
@@ -20,7 +22,7 @@ This major release introduces breaking changes:
 
 ### Checking out Metacat for the first time?
 
-In order to test and upload private datasets in Metacat 3.0.0, you will need to install a valid auth token
+In order for Metacat 3.0.0 to function correctly (like uploading private datasets), you will need to install a valid auth token
 for the metacat-indexer to use. This is only an interim requirement; a future release of Metacat will remove
 the need for this token.
 
@@ -31,7 +33,7 @@ Note - this token is only valid for 24 hours, but you can continue manually retr
 Already decided that Metacat fits your needs? If you would like to move forward with a long-term token,
 please [contact DataONE](https://www.dataone.org/contact/) to obtain a token that will be valid for a year.
  - If you are already part of the DataONE network and have a member node, we will issue you a token linked to your DataONE Node identity.
- - If you're not a DataONE member node, we [encourage you to join](https://www.dataone.org/jointhenetwork/) (it's free!) so that your data can be widely accessible and discoverable.
+ - If you're not a DataONE member node, we [encourage you to join](https://www.dataone.org/jointhenetwork/) (it's free!) so that your data can partake in DataONE's goal of the preservation of scientific data for future use.
  - Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
 
 ### Upgrade Notes (2.19.0 to 3.0.0):
