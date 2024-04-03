@@ -20,8 +20,10 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.ResourceMap;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -31,8 +33,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -47,6 +53,8 @@ public class OstiDOIServiceIT {
     private final static int MAX_ATTEMPTS = 20;
     private D1NodeServiceTest d1NodeTest;
     private MockHttpServletRequest request;
+    private MockedStatic<PropertyService> closeableMock;
+    private Properties withProperties = new Properties();
 
     /**
      * Set up the test fixtures
@@ -55,23 +63,45 @@ public class OstiDOIServiceIT {
      */
     @Before
     public void setUp() throws Exception {
-        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
         d1NodeTest = new D1NodeServiceTest("initialize");
+        final String passwdMsg =
+                """
+                \n* * * * * * * * * * * * * * * * * * *
+                DOI CREDENTIALS NOT SET!
+                Test requires OSTI-specific values for
+                'guid.doi.username' & 'guid.doi.password'
+                in your test/test.properties file!
+                * * * * * * * * * * * * * * * * * * *
+                """;
+        Properties testProperties = LeanTestUtils.getExpectedProperties();
+        String ostiName = testProperties.getProperty("guid.doi.username");
+        String ostiPass = testProperties.getProperty("guid.doi.password");
+        assertNotNull(passwdMsg, ostiName);
+        assertFalse(passwdMsg, ostiName.isBlank());
+        assertNotEquals(passwdMsg, "apitest", ostiName);
+        assertNotNull(passwdMsg, ostiPass);
+        assertFalse(passwdMsg, ostiPass.isBlank());
+
+        withProperties.setProperty("guid.doi.enabled", "true");
+        withProperties.setProperty("guid.doiservice.plugin.class",
+                                                "edu.ucsb.nceas.metacat.doi.osti.OstiDOIService");
+        withProperties.setProperty("guid.doi.baseurl", "https://www.osti.gov/elinktest/2416api");
+        withProperties.setProperty("guid.doi.autoPublish", "false");
+        withProperties.setProperty("guid.doi.enforcePublicReadableEntirePackage", "false");
+        withProperties.setProperty("guid.doi.doishoulder.1", "doi:10.15485/");
+        withProperties.setProperty("guid.doi.doishoulder.2", "doi:10.5072/");
+        withProperties.setProperty("guid.doi.username", ostiName);
+        withProperties.setProperty("guid.doi.password", ostiPass);
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
         request = (MockHttpServletRequest)d1NodeTest.getServletRequest();
-        String pluginClass = PropertyService.getProperty("guid.doiservice.plugin.class");
-        //prevent from calling the OSTI service if it is not configured.
-        if (!pluginClass.equals("edu.ucsb.nceas.metacat.doi.osti.OstiDOIService")) {
-            fail("The Metacat instance is not configured for the OSTI service");
-        }
-        String ostiName = PropertyService.getProperty("guid.doi.username");
-        String ostiPass = PropertyService.getProperty("guid.doi.password");
-        if (ostiName == null || ostiName.trim().equals("")) {
-            fail("The osti name shouldn't be null or blank ");
-        }
-        if (ostiPass == null || ostiPass.trim().equals("")) {
-            fail("The osti password shouldn't be null or blank ");
-        }
         service = new OstiDOIService();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (closeableMock != null) {
+            closeableMock.close();
+        }
     }
 
     /**
@@ -237,7 +267,9 @@ public class OstiDOIServiceIT {
     public void testAutoPublishProcess() throws Exception {
         D1NodeServiceTest.printTestHeader("testAutoPublishProcess");
         //set guid.doi.autoPublish off
-        PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "true");
+        withProperties.setProperty("guid.doi.autoPublish", "true");
+        closeableMock.close();
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
         service.refreshStatus();
         //Get the doi
         String emlFile = "test/eml-ess-dive.xml";
@@ -300,7 +332,9 @@ public class OstiDOIServiceIT {
     @Test
     public void testAutoPublishProcessForSID() throws Exception {
         D1NodeServiceTest.printTestHeader("testAutoPublishProcessForSID");
-        PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "true");
+        withProperties.setProperty("guid.doi.autoPublish", "true");
+        closeableMock.close();
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
         service.refreshStatus();
 
         //create an object with a non-doi
@@ -432,10 +466,9 @@ public class OstiDOIServiceIT {
         Session publicSession = new Session();
         publicSession.setSubject(publicSub);
 
-        PropertyService.setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "true");
-        boolean enforcePublicEntirePackageInPublish = Boolean.parseBoolean(PropertyService.getProperty(
-            "guid.doi.enforcePublicReadableEntirePackage"));
-        MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
+        withProperties.setProperty("guid.doi.enforcePublicReadableEntirePackage", "true");
+        closeableMock.close();
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
 
         //insert data
         Session session = d1NodeTest.getTestSession();
@@ -618,8 +651,8 @@ public class OstiDOIServiceIT {
         Session publicSession = new Session();
         publicSession.setSubject(publicSub);
 
-        PropertyService.getInstance().setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "false");
-        boolean enforcePublicEntirePackageInPublish = new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+        boolean enforcePublicEntirePackageInPublish = Boolean.parseBoolean(PropertyService
+                                 .getProperty("guid.doi.enforcePublicReadableEntirePackage"));
         MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
 
         //insert data
