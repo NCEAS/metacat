@@ -231,7 +231,7 @@ Note: we will refer to the Tomcat installation directory as ``<tomcat_home>`` fo
 
     sudo apt-get install tomcat7
 
-    Otherwise, get Tomcat from the `Apache Tomcat`_ page.
+  Otherwise, get Tomcat from the `Apache Tomcat`_ page.
 
 
 * After installing Tomcat, you can switch back to the Sun JDK by typing the following command, and then selecting the correct Java installation.
