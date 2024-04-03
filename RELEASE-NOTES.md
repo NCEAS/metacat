@@ -18,6 +18,22 @@ This major release introduces breaking changes:
   - An ORCID iD is now required in order to log in as a Metacat administrator.
   - Please [sign up for an ORCID iD](https://orcid.org/register) if you do not already have one.
 
+### Checking out Metacat for the first time?
+
+In order to test and upload private datasets in Metacat 3.0.0, you will need to install a valid auth token
+for the metacat-indexer to use. This is only an interim requirement; a future release of Metacat will remove
+the need for this token.
+
+In the meantime, you can obtain a temporary token to continue evaluating Metacat by logging into [the 
+KNB website](https://knb.ecoinformatics.org), and navigating to "My Profile" -> "Settings" -> "Authentication Token".
+Note - this token is only valid for 24 hours, but you can continue generating short-term tokens.
+
+Already decided that Metacat fits your needs? If you would like to move forward with a long-term token,
+please [contact DataONE](https://www.dataone.org/contact/) to obtain a token that will be valid for a year.
+ - If you are already part of the DataONE network and have a member node, we will issue you a token linked to your DataONE Node identity.
+ - If you're not a DataONE member node, we [encourage you to join](https://www.dataone.org/jointhenetwork/) (it's free!) so that your data can be widely accessible and discoverable.
+ - Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
+
 ### Upgrade Notes (2.19.0 to 3.0.0):
 
 - Starting Requirements:
