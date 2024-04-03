@@ -9,19 +9,25 @@ Instructions for the Linux system is included in this section.
 
 System Requirements
 -------------------
+
 In addition to meeting the recommended system requirements, the server on which
 you wish to install Metacat must have the following software installed and running correctly:
 
-* PostgreSQL_ 
-* `Apache Ant`_ (if building from source)
-* `Apache Tomcat`_ 
-* `Apache HTTPD Server`_ (recommended)
+  * PostgreSQL_
 
-  * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
+  * `Apache Ant`_ (if building from source)
 
-* `Java 17`_ (Note: Java 7/8 is deprecated)
-* `RabbitMQ`_
-* `Solr 8.8.2`_
+  * `Apache Tomcat`_
+
+  * `Apache HTTPD Server`_ (recommended)
+
+    * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
+
+  * `Java 17`_ (Note: Java 7/8 is deprecated)
+
+  * `RabbitMQ`_
+
+  * `Solr 8.8.2`_
 
 .. _PostgreSQL: http://www.postgresql.org/
 
@@ -42,8 +48,9 @@ you wish to install Metacat must have the following software installed and runni
 
 System requirements for running Metacat:
 
-* at least 512MB RAM
-* 200 MB disk space (Note: The amount of disk space required depends on the size of your RDBMS tablespace and the the size and number of documents stored. Metacat itself requires only about 140 MB of free space after installation).
+  * at least 512MB RAM
+
+  * 200 MB disk space (Note: The amount of disk space required depends on the size of your RDBMS tablespace and the the size and number of documents stored. Metacat itself requires only about 140 MB of free space after installation).
 
 
 Installing on Linux
@@ -60,16 +67,25 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_ 7, PostgreSQL_, `RabbitMQ`_, `Solr 8.8.2`_, `Apache HTTPD Server`_)
-2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
-3. Log in to PostgreSQL and create the 'metacat' user
-4. Download Metacat from the `Metacat Download Page`_ and extract the archive
-5. ``sudo mkdir /var/metacat; sudo chown -R <tomcat_user> /var/metacat``
-6. ``sudo cp <metacat_package_dir>/metacat.war <tomcat_app_dir>``
-7. ``sudo cp <metacat_package_dir>/metacat-index.war <tomcat_app_dir>``
-8. ``sudo cp <metacat_package_dir>/metacatui.war <tomcat_app_dir>``
-9. ``sudo /etc/init.d/tomcat7 restart``
-10. Configure Metacat through the Web interface
+  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_ 7, PostgreSQL_, `RabbitMQ`_, `Solr 8.8.2`_, `Apache HTTPD Server`_)
+
+  2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
+
+  3. Log in to PostgreSQL and create the 'metacat' user
+
+  4. Download Metacat from the `Metacat Download Page`_ and extract the archive
+
+  5. ``sudo mkdir /var/metacat; sudo chown -R <tomcat_user> /var/metacat``
+
+  6. ``sudo cp <metacat_package_dir>/metacat.war <tomcat_app_dir>``
+
+  7. ``sudo cp <metacat_package_dir>/metacat-index.war <tomcat_app_dir>``
+
+  8. ``sudo cp <metacat_package_dir>/metacatui.war <tomcat_app_dir>``
+
+  9. ``sudo /etc/init.d/tomcat7 restart``
+
+  10. Configure Metacat through the Web interface
 
 .. _Metacat Download Page: http://knb.ecoinformatics.org/software/metacat/
 
@@ -79,9 +95,11 @@ Before installing Metacat, please ensure that all required software is
 installed and running correctly. To obtain a Metacat WAR file, which is needed
 for installation, download one of the following: 
 
-* the Metacat installer, which has a pre-built WAR file,
-* the Metacat source distribution, which must be built in order to create a WAR file, 
-* the Metacat source code from GitHub. You must build the source code in order to create a WAR file.
+  * the Metacat installer, which has a pre-built WAR file,
+
+  * the Metacat source distribution, which must be built in order to create a WAR file,
+
+  * the Metacat source code from GitHub. You must build the source code in order to create a WAR file.
 
 Instructions for all three options are discussed below. Note that downloading
 the installer (described in the next section) is the simplest way to get
@@ -92,13 +110,15 @@ Download the Metacat Installer (Highly Recommended)
 Downloading the Metacat Installer is the simplest way to get started with the
 application. To download the installer: 
 
-1.  Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the "GZIP file" (the link should look like: metacat-bin-X.X.X.tar.gz, where X.X.X is the latest version of Metacat e.g., |release|) 
-2.  Save the file locally. 
-3.  Extract the Metacat package files by typing:
+  1.  Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the "GZIP file" (the link should look like: metacat-bin-X.X.X.tar.gz, where X.X.X is the latest version of Metacat e.g., |release|)
 
-::
+  2.  Save the file locally.
 
-  tar -xvzf metacat-bin-X.X.X.tar.gz
+  3.  Extract the Metacat package files by typing:
+
+  ::
+
+    tar -xvzf metacat-bin-X.X.X.tar.gz
 
 You should see a WAR file and several sample supporting files (Table 2.1). The
 extraction location will be referred to as the ``<metacat_package_dir>`` for the
@@ -107,11 +127,11 @@ remainder of this documentation.
 =====================   ==================================================================================================================================
 File                    Description
 =====================   ==================================================================================================================================
-metacat.war             The Metacat Web archive file (WAR) 
-metacat-site.conf       Sample Web definition file used by Apache on Ubuntu/Debian Linux systems. 
+metacat.war             The Metacat Web archive file (WAR)
+metacat-site.conf       Sample Web definition file used by Apache on Ubuntu/Debian Linux systems.
 metacat-site-ssl.conf   Sample SSL definition file used by Apache on Ubuntu/Debian Linux systems.
-jk.conf                 Sample JkMount configuration file used by Apache on Ubuntu/Debian Linux systems. 
-workers.properties      Sample workers definition file used by Apache on Ubuntu/Debian Linux systems. 
+jk.conf                 Sample JkMount configuration file used by Apache on Ubuntu/Debian Linux systems.
+workers.properties      Sample workers definition file used by Apache on Ubuntu/Debian Linux systems.
 metacat-index.war       The Metacat Index WAR for supporting SOLR query features Optional unless Metacat UI is being used.
 metacatui.war           The Metacat UI - can be deployed as a webapp or directly in webserverMetacat UI requires metacat-index be deployed and configured.
 authority.war           The optional LSID Server application WAR
@@ -122,15 +142,17 @@ Download Metacat Source Code
 ............................
 To get the Metacat source distribution:
 
-1. Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the Metacat Source code (it will look something like this: metacat-src-X.X.X.tar.gz, where X.X.X is the latest version of Metacat, e.g., |release|).
-2. Save the file locally. 
-3. Extract the Metacat package files by typing (replace X.X.X with the current version number): 
+  1. Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the Metacat Source code (it will look something like this: metacat-src-X.X.X.tar.gz, where X.X.X is the latest version of Metacat, e.g., |release|).
 
-::
+  2. Save the file locally.
 
-  tar -xvzf metacat-src-X.X.X.tar.gz
+  3. Extract the Metacat package files by typing (replace X.X.X with the current version number):
 
-4. Rename the metacat-X.X.X directory to metacat. 
+  ::
+
+    tar -xvzf metacat-src-X.X.X.tar.gz
+
+  4. Rename the metacat-X.X.X directory to metacat.
 
 Note that you do not need to create the WAR file directly because the Ant
 build-file has an "install" target that will build and deploy the WAR for you. 
@@ -168,13 +190,19 @@ PostgreSQL, Ant (if installing from source), and Tomcat are installed and runnin
 We also highly recommend that you install Apache Web server, as it provides a more
 robust Web-serving environment and is required by some Metacat functionality. 
 
-* `Java 17`_
-* `Apache Tomcat`_ 
-* `Apache HTTPD Server`_ (Highly Recommended)
-* PostgreSQL_ Database 
-* `Apache Ant`_ (if building from Source)
-* `RabbitMQ`_
-* `Solr Server`_
+  * `Java 17`_
+
+  * `Apache Tomcat`_
+
+  * `Apache HTTPD Server`_ (Highly Recommended)
+
+  * PostgreSQL_ Database
+
+  * `Apache Ant`_ (if building from Source)
+
+  * `RabbitMQ`_
+
+  * `Solr Server`_
 
 Java 17
 ......
@@ -195,43 +223,51 @@ Apache Tomcat
 We recommend that you install Tomcat 6, 7 or 8 into the directory of your choice. The newer versions are preferred.
 Included with the Metacat download is a Tomcat-friendly start-up script that should be installed as well.
 
-Note: we will refer to the Tomcat installation directory as ``<tomcat_home>`` for
-the remainder of the documentation. 
+Note: we will refer to the Tomcat installation directory as ``<tomcat_home>`` for the remainder of the documentation.
 
-If you are running Ubuntu_/Debian, get Tomcat by typing::
+* If you are running Ubuntu_/Debian, get Tomcat by typing
 
-  sudo apt-get install tomcat7
+  ::
 
-Otherwise, get Tomcat from the `Apache Tomcat`_ page.
+    sudo apt-get install tomcat7
 
-After installing Tomcat, you can switch back to the Sun JDK by typing::
+    Otherwise, get Tomcat from the `Apache Tomcat`_ page.
 
-  sudo update-alternatives --config java
 
-and selecting the correct Java installation.
+* After installing Tomcat, you can switch back to the Sun JDK by typing the following command, and then selecting the correct Java installation.
 
-If using Tomcat with Apache/mod_jk, enable the AJP connector on port 8009 by uncommenting that section in::
+  ::
 
-  <tomcat_home>/conf/server.xml
+    sudo update-alternatives --config java
 
-For DataONE deployments edit::  
+* If using Tomcat with Apache/mod_jk, enable the AJP connector on port 8009 by uncommenting that section in
+
+  ::
+
+    <tomcat_home>/conf/server.xml
+
+
+* For DataONE deployments edit the following properties file:
+
+  ::
 
     /etc/tomcat7/catalina.properties
 
-to include::
+  to include
+
+  ::
 
     org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
     org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true
-
 
 Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
 the directories it can write to and prevents Metacat from operating correctly.
 Ensure the following lines exist in the service file for Tomcat (paths may vary depending on your configuration):
 
-::
+  ::
 
-  ReadWritePaths=/var/metacat
-  ReadWritePaths=/etc/default/solr.in.sh
+    ReadWritePaths=/var/metacat
+    ReadWritePaths=/etc/default/solr.in.sh
 
 Apache HTTPD Server (Highly Recommended)
 ........................................
@@ -248,128 +284,138 @@ Apache running on other Linux systems are included in
 
 1. Install the Apache and Mod JK packages (Mod JK is the module Apache uses to talk to Tomcat applications) by typing:
 
-::
+  ::
 
-  sudo apt-get install apache2 libapache2-mod-jk
+    sudo apt-get install apache2 libapache2-mod-jk
 
 If you are installing the Apache server on an Ubuntu/Debian system, and you
 installed Apache using apt-get as described above, the Metacat code will have
 helper files that can be dropped into directories to configure Apache.
 Depending on whether you are installing from binary distribution or source,
-these helper files will be in one of two locations: 
+these helper files will be in one of two locations:
 
-* the directory in which you extracted the distribution (for binary distribution)
-* ``<metacat_code_dir>/src/scripts`` (for both the source distribution and source code checked out from GitHub).  We will refer to the directory with the helper scripts as ``<metacat_helper_dir>`` and the directory where Apache is installed (e.g., ``/etc/apache2/``) as ``<apache_install_dir>``.
+  * the directory in which you extracted the distribution (for binary distribution)
+
+  * ``<metacat_code_dir>/src/scripts`` (for both the source distribution and source code checked out from GitHub).  We will refer to the directory with the helper scripts as ``<metacat_helper_dir>`` and the directory where Apache is installed (e.g., ``/etc/apache2/``) as ``<apache_install_dir>``.
 
 2. Set up Mod JK apache configuration by typing:
 
-::
+  ::
 
-  sudo cp <metacat_helper_dir>/debian/jk.conf <apache_install_dir>/mods-available
-  sudo cp <metacat_helper_dir>/debian/workers.properties <apache_install_dir>
+    sudo cp <metacat_helper_dir>/debian/jk.conf <apache_install_dir>/mods-available
+    sudo cp <metacat_helper_dir>/debian/workers.properties <apache_install_dir>
 
 3. Disable and re-enable the Apache Mod JK module to pick up the new changes:
 
-::
+  ::
 
-  sudo a2dismod jk
-  sudo a2enmod jk
+    sudo a2dismod jk
+    sudo a2enmod jk
 
 4. Apache needs to know about the Metacat site. The helper file named "metacat-site.conf" has rules that tell Apache which traffic to route to Metacat. Set up Metacat site by dropping the metacat-site file into the sites-available directory and running a2ensite to enable the site:
 
-::
+  ::
 
-  sudo cp <metacat_helper_dir>/metacat-site.conf <apache_install_dir>/sites-available
-  sudo a2ensite metacat-site.conf
+    sudo cp <metacat_helper_dir>/metacat-site.conf <apache_install_dir>/sites-available
+    sudo a2ensite metacat-site.conf
   
 5. Disable the default Apache site configuration:
 
-::
+  ::
 
-  sudo a2dissite 000-default  
+    sudo a2dissite 000-default
 
 6. Restart Apache to bring in changes by typing:
 
-::
+  ::
 
-  sudo /etc/init.d/apache2 restart
+    sudo /etc/init.d/apache2 restart
 
 Configuring Apache on an OS other than Ubuntu/Debian
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+....................................................
 
-    If you are running on an O/S other than Ubuntu/Debian (e.g., Fedora Core or
-    RedHat Linux) or if you installed the Apache source or binary, you must
-    manually edit the Apache configuration file, where <apache_install_dir> is the
-    directory in which Apache is installed::
+If you are running on an O/S other than Ubuntu/Debian (e.g., Fedora Core or
+RedHat Linux) or if you installed the Apache source or binary, you must
+manually edit the Apache configuration file, where <apache_install_dir> is the
+directory in which Apache is installed: ``<apache_install_dir>/conf/httpd.conf``
 
-      <apache_install_dir>/conf/httpd.conf
+1. Configure the log location and level for Mod JK. If your configuration file does not already
+   have the following section, add it and set the log location to any place you'd like
 
-    1. Configure the log location and level for Mod JK. If your configuration file does not already have the following section, add it and set the log location to any place you'd like::
+  ::
 
-        <IfModule mod_jk.c>
-          JkLogFile "/var/log/tomcat/mod_jk.log"
-          JkLogLevel info
-        </IfModule>
+    <IfModule mod_jk.c>
+      JkLogFile "/var/log/tomcat/mod_jk.log"
+      JkLogLevel info
+    </IfModule>
 
-    2. Configure apache to route traffic to the Metacat application. ServerName should be set to the DNS name of the Metacat server. ScriptAlias and the following Directory section should both point to the cgi-bin directory inside your Metacat installation::
+2. Configure apache to route traffic to the Metacat application. ServerName should be set to the DNS name of the Metacat server. ScriptAlias and the following Directory section should both point to the cgi-bin directory inside your Metacat installation
 
-          <VirtualHost XXX.XXX.XXX.XXX:80>
-            DocumentRoot /var/www
-            ServerName dev.nceas.ucsb.edu
-            ## Allow CORS requests from all origins to use cookies
-            SetEnvIf Origin "^(.*)$" ORIGIN_DOMAIN=$1
-            Header set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
-            Header set Access-Control-Allow-Headers "Authorization, Content-Type, Origin, Cache-Control"
-            Header set Access-Control-Allow-Methods "GET, POST, PUT, OPTIONS"
-            Header set Access-Control-Allow-Credentials "true"
-            ErrorLog /var/log/httpd/error_log
-            CustomLog /var/log/httpd/access_log common
-            ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
-            <Directory /var/www/cgi-bin/>
-              AllowOverride None
-              Options ExecCGI
-              Require all granted
-            </Directory>
-            ScriptAlias /metacat/cgi-bin/ "/var/www/webapps/metacat/cgi-bin/"
-            <Directory "/var/www/webapps/metacat/cgi-bin/">
-              AllowOverride None
-              Options ExecCGI
-              Require all granted
-            </Directory>
-            <Directory "/var/www/metacatui">
-               AllowOverride All
-               FallbackResource /metacatui/index.html
-               Require all granted
-            </Directory>
-            JkMount /metacat ajp13
-            JkMount /metacat/* ajp13
-            JkMount /metacat/metacat ajp13
-            JkUnMount /metacat/cgi-bin/* ajp13
-            JkMount /metacatui ajp13
-            JkMount /metacatui/* ajp13
-            JkMount /*.jsp ajp13
-          </VirtualHost>
+  ::
 
-    3. Copy the "workers.properties" file provided by Metacat into your Apache configuration
-       directory (<apache_install_dir>/conf/).  Depending on whether you are installing from binary
-       distribution or source, the workers.properties file will be in one of two locations:
+    <VirtualHost XXX.XXX.XXX.XXX:80>
+      DocumentRoot /var/www
+      ServerName dev.nceas.ucsb.edu
+      ## Allow CORS requests from all origins to use cookies
+      SetEnvIf Origin "^(.*)$" ORIGIN_DOMAIN=$1
+      Header set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
+      Header set Access-Control-Allow-Headers "Authorization, Content-Type, Origin, Cache-Control"
+      Header set Access-Control-Allow-Methods "GET, POST, PUT, OPTIONS"
+      Header set Access-Control-Allow-Credentials "true"
+      ErrorLog /var/log/httpd/error_log
+      CustomLog /var/log/httpd/access_log common
+      ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+      <Directory /var/www/cgi-bin/>
+        AllowOverride None
+        Options ExecCGI
+        Require all granted
+      </Directory>
+      ScriptAlias /metacat/cgi-bin/ "/var/www/webapps/metacat/cgi-bin/"
+      <Directory "/var/www/webapps/metacat/cgi-bin/">
+        AllowOverride None
+        Options ExecCGI
+        Require all granted
+      </Directory>
+      <Directory "/var/www/metacatui">
+        AllowOverride All
+        FallbackResource /metacatui/index.html
+        Require all granted
+      </Directory>
+      JkMount /metacat ajp13
+      JkMount /metacat/* ajp13
+      JkMount /metacat/metacat ajp13
+      JkUnMount /metacat/cgi-bin/* ajp13
+      JkMount /metacatui ajp13
+      JkMount /metacatui/* ajp13
+      JkMount /*.jsp ajp13
+    </VirtualHost>
 
-      * the directory in which you extracted the Metacat distribution (for binary distribution)
-      * <metacat_code_dir>/src/scripts/workers.properties (for both the source distribution and source code checked out from GitHub)
+3. Copy the "workers.properties" file provided by Metacat into your Apache configuration
+   directory (<apache_install_dir>/conf/).  Depending on whether you are installing from binary
+   distribution or source, the workers.properties file will be in one of two locations:
 
+  * the directory in which you extracted the Metacat distribution (for binary distribution)
 
-    4. Edit the workers.properties file and make sure the following properties are set correctly::
+  * <metacat_code_dir>/src/scripts/workers.properties (for both the source distribution and source code checked out from GitHub)
 
-          workers.tomcat_home -  set to the Tomcat install directory.
-          workers.java_home - set to the Java install directory.
+4. Edit the workers.properties file and make sure the following properties are set correctly
 
-    5. Enable the Apache Mod HEADERS::
+  ::
 
-          sudo a2enmod headers
+    workers.tomcat_home -  set to the Tomcat install directory.
+    workers.java_home - set to the Java install directory.
 
-    6. Restart Apache to bring in changes by typing::
+5. Enable the Apache Mod HEADERS
 
-          sudo /etc/init.d/apache2 restart
+  ::
+
+    sudo a2enmod headers
+
+6. Restart Apache to bring in changes by typing
+
+  ::
+
+    sudo /etc/init.d/apache2 restart
 
 PostgreSQL Database
 ...................
@@ -390,35 +436,35 @@ we recommend selecting a newer release. To install and configure PostgreSQL_:
 
     sudo /etc/init.d/postgresql-8.4 start
 
-3. Change to postgres user: 
+3. Change to postgres user:
 
   ::
 
     sudo su - postgres
 
 
-4. Set up an empty Metacat database instance by editing the postgreSQL configuration file: 
+4. Set up an empty Metacat database instance by editing the postgreSQL configuration file:
 
   ::
 
     gedit /etc/postgresql/8.4/main/pg_hba.conf
 
 
-  Add the following line to the configuration file: 
+  Add the following line to the configuration file:
 
   ::
 
     host metacat metacat 127.0.0.1 255.255.255.255 password
 
 
-  Save the file and then create the Metacat instance: 
+  Save the file and then create the Metacat instance:
 
   ::
 
     createdb metacat
 
 
-5. Log in to postgreSQL by typing: 
+5. Log in to postgreSQL by typing:
 
   ::
 
@@ -431,33 +477,33 @@ we recommend selecting a newer release. To install and configure PostgreSQL_:
 
     CREATE USER metacat WITH PASSWORD 'your_password';
 
-  where 'your_password' is whatever password you would like for the Metacat user. 
+  where 'your_password' is whatever password you would like for the Metacat user.
 
-7. Exit PostgreSQL by typing 
+7. Exit PostgreSQL by typing
 
   ::
 
     \q
 
-8. Restart the PostgreSQL database to bring in changes: 
+8. Restart the PostgreSQL database to bring in changes:
 
   ::
 
     /etc/init.d/postgresql-8.4 restart
 
-9. Log out of the postgres user account by typing: 
+9. Log out of the postgres user account by typing:
 
   ::
 
     logout
 
-10. Test the installation and Metacat account by typing: 
+10. Test the installation and Metacat account by typing:
 
   ::
 
     psql -U metacat -W -h localhost metacat
 
-11. Log out of postgreSQL: 
+11. Log out of postgreSQL:
 
   ::
 
@@ -495,12 +541,12 @@ data from existing or previous solr installations will also be incompatible with
 configuration. Please select a new solr-home during the Metacat configuration process, and reindex
 all objects (see example below).
 
-::
+  ::
 
-  # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
-  # where $TOKEN is an environment variable containing your administrator jwt token
-  # example:
-  curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
+    # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
+    # where $TOKEN is an environment variable containing your administrator jwt token
+    # example:
+    curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
 
 Metacat supports ``Solr 8.8.2`` to ``Solr 9.5.0``. You may download the binary releases from:
 
@@ -509,47 +555,47 @@ https://solr.apache.org/downloads.html#solr-8112
 1. Go to the directory which contains the Solr release file and extract the installation script
    file by typing (assuming the downloaded file is solr-8.11.2.tgz):
 
-::
+  ::
 
-  tar xzf solr-8.11.2.tgz solr-8.11.2/bin/install_solr_service.sh --strip-components=2
+    tar xzf solr-8.11.2.tgz solr-8.11.2/bin/install_solr_service.sh --strip-components=2
 
 2. Install Solr as the root user:
 
-::
+  ::
 
-  sudo bash ./install_solr_service.sh solr-8.11.2.tgz
+    sudo bash ./install_solr_service.sh solr-8.11.2.tgz
   
 If you upgrade Solr from an old 8.* version to 8.11.2, you may run this command instead:
   
-::
+  ::
 
-  sudo bash ./install_solr_service.sh solr-8.11.2.tgz -f
+    sudo bash ./install_solr_service.sh solr-8.11.2.tgz -f
 
 3. Ensure the Solr defaults file is group writable:
 
-::
+  ::
 
-  sudo chmod g+w /etc/default/solr.in.sh
+    sudo chmod g+w /etc/default/solr.in.sh
 
 4. Check if the Solr service is running:
 
-::
+  ::
 
-  sudo service solr status
+    sudo service solr status
 
 5. Make sure the firewall is running and the default port 8983 isn't exposed externally (assume you are using ufw):
 
-::
+  ::
 
-  sudo ufw status
+    sudo ufw status
 
 6. Add New Allowed Solr Paths
 
 Add a new line for the ``SOLR_OPTS`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) such as:
 
-::
+  ::
 
-  SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=*"
+    SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=*"
 
 7. Increase Memory
 
@@ -558,9 +604,9 @@ Note: If you are upgrading the Solr server and you might already run this comman
 By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values between 10 and 20 gigabytes are not uncommon for production servers. When you need to change the memory settings for your Solr server, use the ``SOLR_JAVA_MEM`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) such as:
 
 
-::
+  ::
 
-  SOLR_JAVA_MEM="-Xms2g -Xmx2g"
+    SOLR_JAVA_MEM="-Xms2g -Xmx2g"
 
 8. Tomcat and Solr User Management
 
@@ -569,33 +615,33 @@ Note: If you are upgrading the Solr server and you have already run this command
 The interaction of the Tomcat and Solr services can cause the file permission issues. 
 Add the ``tomcat7`` user to the ``solr`` group and the ``solr`` user to ``tomcat7`` group to fix the problem:
 
-::
+  ::
 
-  sudo usermod -a -G solr tomcat7
-  sudo usermod -a -G tomcat7 solr
+    sudo usermod -a -G solr tomcat7
+    sudo usermod -a -G tomcat7 solr
 
 9. Restart the Solr server to make the new group setting effective (:note2:`Important`) 
 
-::
+  ::
 
-  sudo service solr stop
-  sudo service solr start
+    sudo service solr stop
+    sudo service solr start
 
 10. Check that the ``tomcat7`` user and ``solr`` user are members of the appropriate groups with:
 
-::
+  ::
 
-  sudo groups tomcat7
-  sudo groups solr
+    sudo groups tomcat7
+    sudo groups solr
 
 Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
 the directories it can write to and prevents Metacat from operating correctly.
 Ensure the following lines exist in the service file for Tomcat (paths may vary depending on your configuration):
 
-::
+  ::
 
-  ReadWritePaths=/var/metacat
-  ReadWritePaths=/etc/default/solr.in.sh
+    ReadWritePaths=/var/metacat
+    ReadWritePaths=/etc/default/solr.in.sh
 
 Apache Ant (if building from Source)
 ....................................
@@ -939,17 +985,17 @@ To install the LSID server using the binary installation:
 2. Set up the LSID server by dropping the authority file into Apache's
    sites-available directory and running a2ensite to enable the site:
 
-   ::
+  ::
 
-     sudo cp <metacat_helper_dir>/authority /etc/apache2/sites-available
-     sudo a2ensite authority
+    sudo cp <metacat_helper_dir>/authority /etc/apache2/sites-available
+    sudo a2ensite authority
 
 3. Restart Tomcat. Log in as the user that runs your Tomcat server (often
    "tomcat") and type:
 
-   ::
+  ::
 
-     /etc/init.d/tomcat5.5 restart
+    /etc/init.d/tomcat5.5 restart
 
 4. Restart Apache to bring in changes by typing:
 
