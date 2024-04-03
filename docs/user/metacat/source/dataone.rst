@@ -153,7 +153,7 @@ and ``<context>`` is the name of the web context in which Metacat was installed.
 Once at the administrative utility, click on the DataONE configuration link, which
 should show the following screen:
 
-.. figure:: images/screenshots/image068.png
+.. figure:: images/screenshots/image068_updatedmnconfig.png
    :align: center
    
    The configuration screen for configuring Metacat as a DataONE node.
