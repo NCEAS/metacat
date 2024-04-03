@@ -673,6 +673,7 @@ configuring Metacat, please see the Configuration Section.
 
 Upgrade Metacat
 ...............
+
 To upgrade an existing binary Metacat installation follow the steps in this
 section. The steps for upgrading Metacat from source are the same as the
 instructions for installing from source:
@@ -731,6 +732,98 @@ something else). If everything is working correctly, you should be presented
 with Metacat's Authorization Configuration screen. Note that if you do not have
 Tomcat integrated with Apache you will probably have to type
 http://yourserver.yourdomain.com:8080/yourcontext/
+
+Upgrading to Metacat 3.0.0
+..........................
+
+Starting Requirements:
+
+  * Your existing Metacat installation must already have been successfully upgraded to [version v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to version 3.0.0.
+
+    * If not, please upgrade to v2.19.0 first, before proceeding.
+
+  * You must have Java 17 installed
+
+    * If it is not installed, please install it and set it as the default version
+
+    ::
+
+      ex. `sudo update-alternatives --config java` which will bring up a list of versions to select from
+
+  * If Tomcat uses the `default-java` directory, ensure that it points to Java 17
+
+    ::
+
+      cd /usr/lib/jvm
+      sudo rm -r default-java
+      sudo ln -s java-17-openjdk-amd64 default-java
+
+  * If Metacat is currently running:
+
+    * Stop Tomcat
+
+    ::
+
+      ex. `sudo systemctl stop tomcat9`
+
+    * Stop solr
+
+    ::
+
+      ex. `sudo systemctl stop solr`
+
+1. Download/upgrade your solr version to 9.5.0
+
+  * Solr upgrade is not supported for 3.0.0 with old cores, you must start with a new core (new solr-home)
+
+  * Please use a new Solr home and reindex all objects due to incompatibility between old data and the new Solr schema.
+
+  * Example below to reindex all objects
+
+    ::
+
+      # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
+      # where $TOKEN is an environment variable containing your administrator jwt token
+      # example:
+      curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
+
+  * Ensure that `/etc/default/solr.in.sh` is group writable
+
+    ::
+
+      ex. `sudo chmod g+w /etc/default/solr.in.sh`
+
+  * In `solr.in.sh`, be sure to delete the old solr home add a new solr path:
+
+    ::
+
+      `SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/var/metacat"`
+
+  * Optionally, add/adjust memory settings to `SOLR_JAVA_MEM="-Xms2g -Xmx2g"`
+
+2. Start/restart solr
+
+  ::
+
+    ex. `sudo systemctl restart solr`
+
+3. Install RabbitMQ if you do not already have it running
+
+  ::
+
+    sudo apt install rabbitmq-server
+    sudo systemctl restart rabbitmq-server
+
+4. You are now ready to install Metacat 3.0.0
+
+  * Additional notes:
+
+    * `metacat.properties` no longer contains custom settings, and should not be edited.
+
+      * Please first re-configure Metacat through the Metacat Admin UI after upgrading.
+      * If you have custom properties that are not available for configuration in the Metacat Admin UI, these can be added to `metacat-site.properties`.
+
+    * The database upgrade process may require several minutes or longer to complete.
 
 Source Install and Upgrade
 ..........................
