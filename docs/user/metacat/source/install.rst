@@ -711,7 +711,7 @@ when you type http://yourserver.com/yourcontext/ (e.g.,
 http://knb.ecoinformatics.org/knb) into a browser. For more information about
 configuring Metacat, please see the Configuration Section.
 
-.. figure:: images/screenshots/image009.png
+.. figure:: images/screenshots/image009_updatedconfighome.png
    :align: center
 
    The Authentication Configuration screen appears the first time you open a 
