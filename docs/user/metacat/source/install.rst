@@ -10,8 +10,7 @@ Instructions for the Linux system is included in this section.
 System Requirements
 -------------------
 In addition to meeting the recommended system requirements, the server on which
-you wish to install Metacat must have the following software installed and
-running correctly:
+you wish to install Metacat must have the following software installed and running correctly:
 
 * PostgreSQL_ 
 * `Apache Ant`_ (if building from source)
@@ -375,7 +374,8 @@ Configuring Apache on an OS other than Ubuntu/Debian
 
 PostgreSQL Database
 ...................
-Currently Metacat only supports PostgreSQL_. You can choose the release versions of PostgreSQL 8, 9, 10 or 11. The newer versions are preferred. To install and configure PostgreSQL_:
+Currently Metacat only supports PostgreSQL_. Please choose from PostgreSQL 8, 9, 10 or 11 -
+we recommend selecting a newer release. To install and configure PostgreSQL_:
 
 1. If you are running Ubuntu_/Debian, get PostgreSQL by typing:
 
