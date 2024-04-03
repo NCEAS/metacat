@@ -33,6 +33,7 @@ import java.util.Properties;
 import java.util.Vector;
 
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.service.types.v1.Identifier;
@@ -49,11 +50,12 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.junit.After;
 import org.junit.Before;
+import org.mockito.MockedStatic;
 
 
 public class UpdateDOITest extends D1NodeServiceTest {
     private static final String UPDATETIMEKEY = "_updated";
-    AutoCloseable closeableMock;
+    MockedStatic<PropertyService> closeableMock;
     /**
      * Constructor
      * @param name
@@ -64,24 +66,30 @@ public class UpdateDOITest extends D1NodeServiceTest {
     
     public static Test suite() {
         TestSuite suite = new TestSuite();
-        suite.addTest(new UpdateDOITest("initialize"));
         suite.addTest(new UpdateDOITest("testUpdate"));
         return suite;
-    }
-    
-    /**
-     * Initial blank test
-     */
-    public void initialize() {
-        assertTrue(1 == 1);
-
     }
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        final String passwdMsg =
+            """
+            \n* * * * * * * * * * * * * * * * * * *
+            DOI PASSWORD IS NOT SET!
+            Add a value for 'guid.doi.password'
+            to your metacat-site.properties file!
+            * * * * * * * * * * * * * * * * * * *
+            """;
+        try {
+            assertFalse(passwdMsg, PropertyService.getProperty("guid.doi.password").isBlank());
+        } catch (PropertyNotFoundException e) {
+            fail(passwdMsg);
+        }
         Properties withProperties = new Properties();
         withProperties.setProperty("server.name", "UpdateDOITestMock.edu");
+        withProperties.setProperty("guid.doi.enabled", "true");
+        withProperties.setProperty("guid.doi.username", "apitest");
         closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
     }
 
