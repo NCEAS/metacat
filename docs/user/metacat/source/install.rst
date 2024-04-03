@@ -1,5 +1,3 @@
-.. role:: note2
-
 Downloading and Installing Metacat
 ==================================
 
