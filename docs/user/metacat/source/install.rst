@@ -42,7 +42,6 @@ you wish to install Metacat must have the following software installed and runni
 
 System requirements for running Metacat:
 
-* a server running PostgreSQL_ database
 * at least 512MB RAM
 * 200 MB disk space (Note: The amount of disk space required depends on the size of your RDBMS tablespace and the the size and number of documents stored. Metacat itself requires only about 140 MB of free space after installation).
 
@@ -568,12 +567,12 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 Note: If you are upgrading the Solr server and you have already run this command during the previous installation, you may skip this step.
 
 The interaction of the Tomcat and Solr services can cause the file permission issues. 
-Add the ``tomcat8`` user to the ``solr`` group and the ``solr`` user to ``tomcat8`` group to fix the problem:
+Add the ``tomcat7`` user to the ``solr`` group and the ``solr`` user to ``tomcat7`` group to fix the problem:
 
 ::
 
-  sudo usermod -a -G solr tomcat8
-  sudo usermod -a -G tomcat8 solr
+  sudo usermod -a -G solr tomcat7
+  sudo usermod -a -G tomcat7 solr
 
 9. Restart the Solr server to make the new group setting effective (:note2:`Important`) 
 
@@ -582,11 +581,11 @@ Add the ``tomcat8`` user to the ``solr`` group and the ``solr`` user to ``tomcat
   sudo service solr stop
   sudo service solr start
 
-10. Check that the ``tomcat8`` user and ``solr`` user are members of the appropriate groups with:
+10. Check that the ``tomcat7`` user and ``solr`` user are members of the appropriate groups with:
 
 ::
 
-  sudo groups tomcat8
+  sudo groups tomcat7
   sudo groups solr
 
 Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
