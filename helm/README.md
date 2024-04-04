@@ -19,13 +19,13 @@ $ vim helm/admin/secrets.yaml    ## follow the instructions in this file
 $ ./helm-install.sh  myreleasename  mynamespace  ./helm
 ```
 [comment]: # (TODO - review)
-You should then be able to access the application via http://localhost/metacat! **Note** you 
-should
-not need to edit anything in [values.yaml](./values.yaml), if your dev setup is fairly standard.
+You should then be able to access the application via http://localhost/metacat! **Note** you
+should not need to edit anything in [values.yaml](./values.yaml), if your dev setup is fairly standard.
 You can also look at the contents of values overlay files
 [./values-dev-local.yaml](./values-dev-local.yaml) and
 [./values-dev-cluster.yaml](./values-dev-cluster.yaml), to see which settings typically need to be
 changed.
+
 [comment]: # (TODO - end)
 
 ## Introduction
@@ -39,6 +39,7 @@ using the [Helm](https://helm.sh) package manager.
 - Kubernetes 1.19+
 - Helm 3.2.0+
 - PV provisioner support in the underlying infrastructure
+
 [comment]: # (TODO - end)
 
 ## Installing the Chart
@@ -74,16 +75,16 @@ helm delete my-release
 The `helm delete` command removes all the Kubernetes components associated with the chart (with the
 exception of Secrets, PVCs and PVs) and deletes the release.
 
-There are two PVCs associated with `my-release`; one for Metacat data files, and the other for
-the PostgreSQL database (if the postgres sub-chart is enabled). To delete:
+There are multiple PVCs associated with `my-release`, for Metacat data files, the PostgreSQL
+database, and for components of the indexer sub-chart. To delete:
 
 ```shell
-kubectl delete pvc <myMetacatPVCName> (or <myPostgresPVCName>)   ## deletes named PVC
+kubectl delete pvc <myPVCName>   ## deletes specific named PVC
 or:
-kubectl delete pvc -l release=my-release                         ## deletes both
+kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associated with the release
 ```
 
-> **NOTE**: DELETING THE PVC's WILL DELETE ALL YOUR DATA AS WELL! Please be cautious!
+> **NOTE**: DELETING THE PVCs MAY DELETE ALL YOUR DATA AS WELL! Please be cautious!
 
 
 ## Parameters
@@ -254,7 +255,7 @@ for example:
 helm install my-release ./helm  --set metacat.solr.baseURL=http://mysolrhost:8983/solr
 ```
 
-Alternatively, a YAML file that specifies the values for the parameters can be provided
+Alternatively, a YAML file that specifies the override values for the parameters can be provided
 while installing the chart. For example:
 
 ```shell
@@ -275,7 +276,7 @@ of the [Metacat Administrators' Guide](https://knb.ecoinformatics.org/knb/docs/)
 
 ### Secrets
 
-Secret parameters (such as login credentials, certificates etc.) should be installed as
+Secret parameters (such as login credentials, auth tokens, private keys etc.) should be installed as
 kubernetes Secrets in the cluster. The file [admin/secrets.yaml](./admin/secrets.yaml) provides a
 template that you can complete and apply using `kubectl` - see file comments for details. Please
 remember to NEVER ADD SECRETS TO GITHUB!
@@ -293,10 +294,13 @@ Persistent Volume Claims are used to keep the data across deployments. See the
 [Parameters](#parameters) section to configure the PVCs or to disable persistence for either
 application.
 
+[comment]: # (TODO review)
 With the default setup in [values.yaml](./values.yaml), two persistent volumes will be provisioned
 automatically (one for Metacat, and one for PostgreSQL) with a PVC bound to each. If you want to
 have the application use a specific directory on the host machine, for example, see the
 documentation in the [admin/pv-hostpath.yaml](./admin/pv-hostpath.yaml) file.
+
+[comment]: # (TODO end)
 
 The Metacat image stores the Metacat data and configurations on a PVC mounted at the `/var/metacat`
 path in the metacat container.
@@ -328,63 +332,73 @@ $  helm upgrade --install ingress-nginx ingress-nginx \
 ### Setting up a Token and Optional CA certificate for Indexer Access
 
 **IMPORTANT:** In order for Metacat 3.0.0 to function correctly, the
-[dataone_indexer](#dataone_indexer-sub-chart)) needs a valid authentication token, in order to index
-private datasets, via calls to metacat's DataONE API.
+[dataone_indexer](#dataone_indexer-sub-chart) needs a valid authentication token, to enable
+indexing for private datasets, via calls to metacat's DataONE API.
 
 > Note that this is only an interim requirement; a future release of Metacat will remove the need
-for this token.
+> for this auth token.
+>
+> If you are only evaluating metacat, you can do so without using a token, but
+> note that only public datasets can be uploaded and searched; private datasets will not be
+> supported without the token setup.
 
-You can [contact DataONE administrators](https://www.dataone.org/contact/) for a token that will be
-valid for one year.
+#### Prerequisites
 
-- if your Metacat site is already a DataONE member node, we will issue a token linked to your DataONE
-  Node identity.
+1. [Contact DataONE administrators](https://www.dataone.org/contact/) for an authentication token, issued against the DataONE
+   Certificate Authority (CA), that will be valid for one year.
 
-- if your site is not a DataONE member node, we [encourage you to
-  join](https://www.dataone.org/jointhenetwork/). Otherwise, we can issue a token linked to your
-  administrator's ORCID iD.
+   - if your Metacat site is already a DataONE member node, we will issue a token linked to your
+     DataONE Node identity.
 
-> **Tip:**  if you only need a temporary token in order to evaluate Metacat, you can get a
-> short-term token (valid for only 24 hours!), by logging into [the KNB
-> website](https://knb.ecoinformatics.org), and navigating to "My Profile" -> "Settings" ->
-> "Authentication Token".
+   - if your site is not a DataONE member node, we [encourage you to
+     join](https://www.dataone.org/jointhenetwork/). Otherwise, we can issue a token linked to your administrator's ORCID iD.
 
-Once you have your token, you also need to get a copy of the DataONE Intermediate CA certificate,
+        > **Tip:**  if you want a temporary auth token in order to evaluate Metacat's private
+          dataset functionality, you can get a short-term auth token (valid for only 24 hours!),
+          by logging into [the KNB
+          website](https://knb.ecoinformatics.org), and navigating to "My Profile" -> "Settings" ->
+          "Authentication Token".
+
+1. Download a copy of the DataONE Intermediate CA certificate,
 either for the Production or the Test environment, depending upon your needs:
 
-- [DataONE Production Intermediate CA
-  Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
-- [DataONE Test Intermediate CA
-  Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
+   - [DataONE Production Intermediate CA
+     Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
+   - [DataONE Test Intermediate CA
+     Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
 
-Then install them both, as follows:
+       > **Note:** the DataONE Intermediate CA certificate is a single certificate, NOT a
+         certificate chain!
 
-#### Installing the Token
+#### Install the Token
 
-Install the token in a Kubernetes Secret named `<yourReleaseName>-indexer-token`,
-identified by the key" `DataONEauthToken`. For example, assuming the token is in a file
-`urn_node_TestNAME.jwt`:
+- Install the token in a Kubernetes Secret named `<yourReleaseName>-indexer-token`,
+  identified by the key: `DataONEauthToken`.
+- For example, assuming the token is in a file `urn_node_TestNAME.jwt`:
 
-  ```shell
-  kubectl create secret generic <yourReleaseName>-indexer-token \
-                                --from-file=DataONEauthToken=urn_node_TestNAME.jwt
-  ```
+      ```shell
+      kubectl create secret generic <yourReleaseName>-indexer-token \
+                                    --from-file=DataONEauthToken=urn_node_TestNAME.jwt
+      ```
 
-#### Installing the CA Intermediate Certificate
+#### Install the CA Intermediate Certificate
 
-Install the cert in a Kubernetes ConfigMap named `<yourReleaseName>-d1-certs-public`,
-identified by the key: `DataONEProdIntCA.pem`. For example, assuming the token is in a file
-`DataONEProdIntCA.pem`:
+- Install the cert in a Kubernetes ConfigMap named `<yourReleaseName>-d1-certs-public`,
+  identified by the key: `DataONEProdIntCA.pem`.
+- For example, assuming the token is in a file `DataONEProdIntCA.pem`:
 
-  ```shell
-  kubectl create configmap generic <yourReleaseName>-d1-certs-public \
-                                --from-file=DataONEProdIntCA.pem=DataONEProdIntCA.pem
-  ```
-> **Tip:**
-> If you change the ConfigMap key from `DataONEProdIntCA.pem` to a different value, make sure that 
-> `metacat.cn.server.publiccert.filename` in values.yaml has a filename that matches the new key!
-> Also note that you may include more than one cert, if you need to authenticate requests from 
-> tokens issued by different CAs. See the documentation in values.yaml
+      ```shell
+      kubectl create configmap generic <yourReleaseName>-d1-certs-public \
+                                    --from-file=DataONEProdIntCA.pem=DataONEProdIntCA.pem
+      ```
+    > **Tip:**
+      If you change the ConfigMap key from `DataONEProdIntCA.pem` to a different value, make
+      sure that
+      `metacat.cn.server.publiccert.filename` in values.yaml has a filename that matches the new
+       key!
+    >
+    >  Also note that you may include more than one cert, if you need to authenticate requests from
+       tokens issued by different CAs. See the documentation in values.yaml
 
 ### Setting up a TLS Certificate(s) for HTTPS Traffic
 
@@ -436,13 +450,17 @@ configure certificates and settings for both these roles.
 1. Ensure [HTTPS access is set up](#setting-up-a-tls-certificates-for-https-traffic) and
    working correctly. This allows other nodes, acting as "clients" to verify your server's identity
    during mutual authentication.
-1. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain:
-
-   1. a copy of the **DataONE Certificate Authority (CA) certificate chain**. This enables your node
-      (when acting as server) to validate other nodes' client certificates signed by that authority.
-   1. a **Client Certificate**, that uniquely identifies your Metacat instance. This allows another
-      node (acting as server) to verify your node's identity (acting as "client") during mutual
-      authentication.
+1. Download a copy of the **DataONE Certificate Authority (CA) certificate chain**. This enables
+   your node (when acting as server) to verify that other nodes' client certificates were signed
+   by the DataONE Certificate Authority.
+   1. DataONE **Production** CA Chain:
+      [DataONEProdCAChain.crt](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONEProdCAChain.crt)
+   1. DataONE **Test** CA Chain:
+      [DataONETestCAChain.crt](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestCAChain.crt)
+1. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain a **Client Certificate**,
+   that uniquely identifies your Metacat instance. This allows another node (acting as server)
+   to verify your node's identity (acting as "client") during mutual authentication. The client
+   certificate contains sensitive information, and should be kept private.
 
 #### Install the CA Chain
 
@@ -490,7 +508,7 @@ configure certificates and settings for both these roles.
 
 1. Finally, re-install or upgrade to apply the changes
 
-See [Appendix 3](#appendix-3-troubleshooting) for help with troubleshooting
+See [Appendix 3](#appendix-3-troubleshooting-mutual-authentication) for help with troubleshooting
 
 ---
 
@@ -562,7 +580,7 @@ create your own self-signed Mutual Auth Client certificate and CA certificate as
             -set_serial 02 -out client.crt
     ```
 
-## Appendix 3: Troubleshooting
+## Appendix 3: Troubleshooting Mutual Authentication
 
 If you're having trouble getting Mutual Authentication working, you can run metacat in debug mode:
 
