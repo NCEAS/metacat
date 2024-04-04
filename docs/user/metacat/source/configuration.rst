@@ -1,6 +1,3 @@
-.. _Solr installation page: ./install.html#solr-server
-
-
 Configuring Metacat
 ===================
 
@@ -8,7 +5,7 @@ Configuring Metacat
   
 When Metacat (Tomcat) is started, the Metacat servlet checks to see if it is 
 configured. If not, Metacat will automatically send you to the configuration 
-pages. 
+pages. You will first be asked to set up the ORCID authentication.
 
 If the installation is new, or the previous version is before 1.9.0, pay close 
 attention to the configuration values. If you have upgraded Metacat, and the 
@@ -28,96 +25,57 @@ You can always open the configuration screen from within Metacat by typing::
 
   http://<your_context_url>/admin
 
-Initial Configuration
----------------------
-Before you can log in to the Metacat and configure it, you are required to 
-confirm Metacat's back-up location and authentication configuration (if not 
-already configured). Metacat will automatically attempt to locate an existing 
-back-up directory, but you may need to correct the value or specify a directory 
-(if the installation is new, or if Metacat was unable to determine the location 
-of an existing back-up directory). The authentication configuration is required 
-for logging in to the Metacat and for defining administrative accounts. 
-Instructions for `Changing Authentication Configuration without Authentication`_ 
-are included at the end of this section.
+Initial Configuration & Backup Properties
+-----------------------------------------
+Before you can log in to the Metacat Admin interface and configure it, you are required to
+set up the authentication configuration (if it is not already configured). This is required
+for logging in to the Metacat and for defining administrative accounts.
 
-Back-up Configuration
-~~~~~~~~~~~~~~~~~~~~~
-To preserve its configuration settings, Metacat backs up crucial configuration details to 
-a directory outside the application directories. Because a new installation/upgrade 
-does not know where this external directory is, Metacat uses a discovery 
-algorithm to locate it. If Metacat cannot identify a backup directory, you will 
-see the Backup Directory Configuration screen.
-
-.. figure:: images/screenshots/image011.png
-   :align: center
-
-   Configuring the Backup Directory.
+Starting from Metacat version 3.0.0 or later, **metacat.properties** no longer contains any custom
+settings that need to be backed up before a Metacat upgrade. Instead, custom settings are now saved
+to a file named ``metacat-site.properties`` that is located outside of the tomcat webapps directory,
+and so is not overwritten by deploying a new Metacat war file.
 
 .. Note::
 
-   For Metacat version 3.0.0 or later, **metacat.properties** no longer contains any custom settings
-   that need to be backed up before a Metacat upgrade. Instead, custom settings are now saved to a
-   file named ``metacat-site.properties`` that is located outside of the tomcat webapps directory,
-   and so is not overwritten by deploying a new Metacat war file.
+  If you are unable to access your Metacat admin ORCID iD and need to swap it out, instructions
+  for `Changing Authentication Configuration without Authentication`_ are included at the end of
+  this section.
 
 Authentication Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 Whether you are installing or upgrading the Metacat servlet, you will 
 automatically be sent to the Authentication Configuration page. You can also 
-reach the Authentication Configuration page from a running Metacat by typing::
+reach the Authentication Configuration page from a running Metacat by typing
+
+::
   
   http://<your_context_url>/admin
 
-Metacat uses either an internal password file or LDAP as its authentication mechanism.
-You can choose the authentication mechanism by selecting either AuthFile or AuthLdap class.
-We will only allow trusted partners to access the NCEAS LDAP server to ensure the security of our user base.
-If you are not in the trusted partner list, you may choose the internal password file authentication 
-or set up your own LDAP server. You also can define your own authentication mechanism by creating a Java 
-class that implements ``AuthInterface``.
+Starting from Metacat 3.0.0, only `ORCID authentication`_ is supported. In Metacat v2.19.0 and
+previous releases, an internal password file or LDAP was used as the authentication mechanism.
+Password-based and LDAP authentication has been deprecated.
 
-Required configuration values for the password file authentication are:
+.. _ORCID authentication: ./authinterface.html
 
-  ::
-   
-    Authentication Class
-    Metacat Administrators
-    Users Management URL
-    Password File Path.
+If you don't already have an account, registering for an ORCID is simple, please visit:
+  http://orcid.org/
 
-Required configuration values for LDAP authentication are:
+After signing up for an ORCID iD, you can then use it as an admin identity when configuring
+authentication. **Note, your full ORCID iD includes `https://orcid.org/` not just the 16-digit
+ORCID iD**:
+  ex. http://orcid.org/0000-0001-2345-6789
 
-  ::
-   
-    Authentication Class
-    Metacat Administrators
-    Users Management URL
-    Authentication URL
-    Authentication Secure URL. 
+Make sure that your full ORCID iD is entered into the Metacat Administrators field
+(e.g., http://orcid.org/0000-0001-2345-6789). You will not be allowed to continue with configuration
+if this is missing. In Metacat v2.19.0 and previous releases, multiple accounts can be entered,
+separated by the colon (:) character. Starting from Metacat 3.0.0, please use the
+semi-colon (;) character.
 
-
-Make sure that your user account information is entered into the Metacat 
-Administrators field (e.g., uid=daigle,o=nceas,dc=ecoinformatics,dc=org). You 
-will not be allowed to continue with configuration if this is missing. Multiple 
-accounts can be entered, separated by the colon (:) character.
-
-.. Note:: 
-  
-  To create an account on the password file, please see the section called :doc:`authinterface`.
-  To create an LDAP account on the KNB LDAP server (specified as the default LDAP server), 
-  go to https://identity.nceas.ucsb.edu and select the "create a new user account" link.
-
-If you make changes to the authentication settings, you must restart Tomcat to 
-put them into effect.
-
-.. figure:: images/screenshots/image071.png
+.. figure:: images/screenshots/image071_authconfig.png
    :align: center
 
-   Configuring Password File Authentication Values.
-
-.. figure:: images/screenshots/image009.png
-   :align: center
-
-   Configuring LDAP Authentication Values.
+   Configuring ORCID Authentication
 
 Changing Authentication Configuration without Authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -263,6 +221,8 @@ Site Properties Directory  Directory in which to store the metacat-site.properti
   The Environment Overwrites File should be writable/readable by the user tomcat8.
   
   The section of Tomcat And Solr User Management on the `Solr installation page`_ will resolve this issue.
+
+.. _Solr installation page: ./install.html#solr-server
 
 Authentication Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
