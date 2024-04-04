@@ -21,11 +21,11 @@ you wish to install Metacat must have the following software installed and runni
 
     * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
-  * `Java 17`_ (Note: Java 7/8 is deprecated)
+  * `Java 17`_ (Note: Java 8 is deprecated since 3.0.0)
 
   * `RabbitMQ`_
 
-  * `Solr 8.8.2`_
+  * `Solr Server`_
 
 .. _PostgreSQL: http://www.postgresql.org/
 
@@ -40,8 +40,6 @@ you wish to install Metacat must have the following software installed and runni
 .. _Java 17: https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
 
 .. _RabbitMQ: https://www.rabbitmq.com/
-
-.. _Solr 8.8.2: https://lucene.apache.org/solr/guide/8_8/getting-started.html
 
 
 System requirements for running Metacat:
@@ -194,7 +192,7 @@ robust Web-serving environment and is required by some Metacat functionality.
 
   * `Apache HTTPD Server`_ (Highly Recommended)
 
-  * PostgreSQL_ Database
+  * `PostgreSQL`_ Database
 
   * `Apache Ant`_ (if building from Source)
 
@@ -208,9 +206,19 @@ To run Metacat, you should use Java 17. Make sure that the JAVA_HOME
 environment variable is properly set and that both ``java`` and ``javac`` 
 are on your PATH. 
 
-To install Java if you are running Ubuntu_/Debian, you can install using apt-get:: 
+To install Java if you are running Ubuntu_/Debian, you can install using apt-get
 
-  sudo apt-get install openjdk-17-jdk
+  ::
+
+    sudo apt-get install openjdk-17-jdk
+
+Then set Java 17 as the default
+
+  ::
+
+    cd /usr/lib/jvm
+    sudo rm -r default-java
+    sudo ln -s java-17-openjdk-amd64 default-java
 
 If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website and install using the RPM installer.
 
@@ -533,41 +541,35 @@ the Solr Debian packages that come with the Ubuntu operating system are obsolete
 to install the binary packages by yourself. This section provides guidance on how to setup Solr to run
 in production on \*nix platforms, such as Ubuntu.
 
-Upgrade Note - In Metacat 3.0.0, the solr schema and configuration has changed. As such, a solr upgrade is
-not supported in 3.0.0 with an old core. You must start with a new core (solr-home). Additionally,
-data from existing or previous solr installations will also be incompatible with the new schema and
-configuration. Please select a new solr-home during the Metacat configuration process, and reindex
-all objects (see example below).
+Metacat supports ``Solr 8.8.2`` to ``Solr 9.5.0``. We recommend installing ``Solr 9.5.0``.
+You can download the binary releases at from `solr's download page`_ or use ``wget``:
+
+.. _solr's download page:  https://solr.apache.org/downloads.html#solr-8112
 
   ::
 
-    # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
-    # where $TOKEN is an environment variable containing your administrator jwt token
-    # example:
-    curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
-
-Metacat supports ``Solr 8.8.2`` to ``Solr 9.5.0``. We recommend installing ``Solr 9.5.0``. You may download the binary releases from:
-
-https://solr.apache.org/downloads.html#solr-8112
+    wget https://archive.apache.org/dist/solr/solr/9.5.0/solr-9.5.0.tgz
 
 1. Go to the directory which contains the Solr release file and extract the installation script
-   file by typing (assuming the downloaded file is solr-8.11.2.tgz):
+   file by typing (assuming the downloaded file is solr-9.5.0.tgz):
 
   ::
 
-    tar xzf solr-8.11.2.tgz solr-8.11.2/bin/install_solr_service.sh --strip-components=2
+    tar xzf solr-9.5.0.tgz solr-9.5.0/bin/install_solr_service.sh --strip-components=2
 
 2. Install Solr as the root user:
 
   ::
 
-    sudo bash ./install_solr_service.sh solr-8.11.2.tgz
+    sudo bash ./install_solr_service.sh solr-9.5.0.tgz
   
-If you upgrade Solr from an old 8.* version to 8.11.2, you may run this command instead:
+If you upgrade Solr from an old 8.* version to 9.5.0, you may run this command instead:
   
   ::
 
-    sudo bash ./install_solr_service.sh solr-8.11.2.tgz -f
+    sudo bash ./install_solr_service.sh solr-9.5.0.tgz -f
+
+    **Note: If you are upgrading Metacat fro
 
 3. Ensure the Solr defaults file is group writable:
 
@@ -594,6 +596,17 @@ Add a new line for the ``SOLR_OPTS`` variable in the environment specific includ
   ::
 
     SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=*"
+
+    **Note: If you are installing solr 9.5.0, you must explicitly set "-Dsolr.allowPaths=" to the absolute path to Metacat
+    instead of using a wildcard * value.**
+
+    ex. SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/private/var/metacat"
+
+And then set your solr_home
+
+  ::
+
+    ex. SOLR_HOME="/private/var/metacat/solr-home3"
 
 7. Increase Memory
 
@@ -722,6 +735,11 @@ To upgrade an existing binary Metacat installation follow the steps in this
 section. The steps for upgrading Metacat from source are the same as the
 instructions for installing from source:
 
+**Note: Upgrading to Metacat 2.19.0?**
+
+  ``solr`` must be run under Java 1.8 during the upgrade as the 2.19.0's configuration file is incompatible
+  with Java 17. After the upgrade is complete, please switch back to Java 17 to proceed with updating to 3.0.0.
+
 1. Download and extract the new version of Metacat. For more information about downloading and extracting Metacat, please see Downloading Metacat.
 
 2. Stop running Metacat. To stop Metacat, log in as the user that runs your Tomcat server (often "tomcat") and type:
@@ -762,7 +780,6 @@ instructions for installing from source:
 
     /etc/init.d/tomcat9 restart
 
-
 7. Run your new Metacat servlet. Go to a Web browser and visit your installed
 Metacat application, using a URL of the form: 
 
@@ -777,8 +794,8 @@ with Metacat's Authorization Configuration screen. Note that if you do not have
 Tomcat integrated with Apache you will probably have to type
 http://yourserver.yourdomain.com:8080/yourcontext/
 
-Upgrading to Metacat 3.0.0
-..........................
+Upgrade to Metacat 3.0.0
+........................
 
 Starting Requirements:
 
@@ -818,9 +835,11 @@ Starting Requirements:
 
 1. Download/upgrade your solr version to 9.5.0
 
-  * Solr upgrade is not supported for 3.0.0 with old cores, you must start with a new core (new solr-home)
-
-  * Please use a new Solr home and reindex all objects due to incompatibility between old data and the new Solr schema.
+  * In Metacat 3.0.0, the solr schema and configuration has changed. As such, a solr upgrade is
+    not supported in 3.0.0 with an old core. You must start with a new core (solr-home). Additionally,
+    data from existing or previous solr installations will also be incompatible with the new schema and
+    configuration. Please select a new solr-home during the Metacat configuration process, and reindex
+    all objects (see example below).
 
   * Example below to reindex all objects
 
