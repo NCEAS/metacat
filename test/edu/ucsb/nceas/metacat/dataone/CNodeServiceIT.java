@@ -1690,6 +1690,16 @@ public class CNodeServiceIT {
         assertTrue(result2.getReplica(1).getReplicationStatus().equals(ReplicationStatus.FAILED));
         assertTrue(result2.getReplica(1).getReplicaVerified().getTime() == date.getTime());
         assertTrue(result2.getArchived() == true);
+
+        // Test not checking the dateSystemMetadataModified field
+        // Set a new modification date
+        result2.setDateSysMetadataModified(new Date());
+        long originModifiedDate = result2.getDateSysMetadataModified().getTime();
+        CNodeService.getInstance(d1NodeServiceTest.request)
+                                                    .updateSystemMetadata(session, id, result2);
+        SystemMetadata result3 = CNodeService.getInstance(d1NodeServiceTest.request)
+                                                                .getSystemMetadata(session, id);
+        assertEquals(originModifiedDate, result3.getDateSysMetadataModified().getTime());
     }
 
     @Test

@@ -5,7 +5,6 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
-import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
@@ -26,8 +25,6 @@ import edu.ucsb.nceas.metacat.download.PackageDownloaderV2;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
-import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
-import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
@@ -1949,7 +1946,8 @@ public class MNodeService extends D1NodeService
                             boolean needUpdateModificationDate = false;
                             try {
                                 archiveObject(logArchive, session, pid, newSysMeta,
-                                    needUpdateModificationDate);
+                                              needUpdateModificationDate,
+                                              SystemMetadataManager.SysMetaVersion.UNCHECKED);
                             } catch (NotFound e) {
                                 throw new InvalidRequest("1334",
                                     "Can't find the pid " + pid.getValue() + " for archive.");
@@ -1964,10 +1962,11 @@ public class MNodeService extends D1NodeService
                         }
                     }
                 }
-                SystemMetadataManager.getInstance().store(newSysMeta);
-                logMetacat.info(
-                    "Updated local copy of system metadata for pid " + pid.getValue()
-                        + " after change notification from the CN.");
+                // Set changeModifyTime false
+                SystemMetadataManager.getInstance().store(newSysMeta, false,
+                                                    SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                logMetacat.info("Updated local copy of system metadata for pid " + pid.getValue()
+                                + " after change notification from the CN.");
 
             } catch (RuntimeException e) {
                 String msg =
@@ -2078,7 +2077,8 @@ public class MNodeService extends D1NodeService
             }
             if (needIndex) {
                 // Set needToUpdateModificationTime true
-                this.updateSystemMetadata(sysmeta, true);
+                this.updateSystemMetadata(sysmeta, true,
+                                          SystemMetadataManager.SysMetaVersion.CHECKED);
             }
         }
 
@@ -3087,7 +3087,8 @@ public class MNodeService extends D1NodeService
                         QuotaServiceManager.ARCHIVEMETHOD);
                 boolean needModifyDate = true;
                 boolean logArchive = true;
-                super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate);
+                super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate,
+                                    SystemMetadataManager.SysMetaVersion.CHECKED);
             } catch (InsufficientResources e) {
                 throw new ServiceFailure("2912",
                     "The user doesn't have enough quota to perform this request " + e.getMessage());
@@ -3218,7 +3219,7 @@ public class MNodeService extends D1NodeService
         boolean needUpdateModificationDate = true;
         boolean fromCN = false;
         success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate,
-            currentSysmeta, fromCN);
+            currentSysmeta, fromCN, SystemMetadataManager.SysMetaVersion.CHECKED);
 
         if (success) {
             // attempt to re-register the identifier (it checks if it is a doi)
