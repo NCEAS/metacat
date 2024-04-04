@@ -138,6 +138,10 @@ h1{
     display: inline-block; /* So that headers display at full width */
 }
 
+.toctree li:first-child a {
+    margin-bottom: 10px;
+}
+
 /* Permalink icons */
 .document .headerlink{
     display: none;
@@ -386,7 +390,7 @@ h4 a{
  }
 
  .topic-title{
-     font-size: 1.7em;
+     font-size: 1.5em;
     margin-top: 0;
  }
 

@@ -10,7 +10,7 @@ separately from Metacat, allowing more independent user interface customization.
 MetacatUI is structured in a model-view-controller architecture using
 `Backbone.js <http://www.backbonejs.org>`_. Some background knowledge on Backbone.js may be helpful
 for advanced modification of MetacatUI, but is not necessary for editing the CSS styling and HTML
-ofthe included MetacatUI views.
+of the included MetacatUI views.
 
 .. figure:: images/screenshots/image007_metacatuihome.png
 
