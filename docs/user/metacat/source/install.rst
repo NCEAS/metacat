@@ -63,7 +63,7 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_ 7, PostgreSQL_, `RabbitMQ`_, `Solr 8.8.2`_, `Apache HTTPD Server`_)
+  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_ 7, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTPD Server`_)
 
   2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
 
@@ -425,8 +425,8 @@ directory in which Apache is installed: ``<apache_install_dir>/conf/httpd.conf``
 
 PostgreSQL Database
 ...................
-Currently Metacat only supports PostgreSQL_. We recommend installing PostgresQL 14.
-we recommend selecting a newer release. To install and configure PostgreSQL_:
+Currently Metacat only supports PostgreSQL_. We recommend installing PostgresQL 14 or the latest release.
+To install and configure PostgreSQL_:
 
 1. If you are running Ubuntu_/Debian, get PostgreSQL by typing:
 
@@ -440,7 +440,7 @@ we recommend selecting a newer release. To install and configure PostgreSQL_:
 
   ::
 
-    sudo /etc/init.d/postgresql-14 start
+    sudo systemctl start postgresql
 
 3. Change to postgres user:
 
@@ -495,7 +495,7 @@ we recommend selecting a newer release. To install and configure PostgreSQL_:
 
   ::
 
-    /etc/init.d/postgresql-14 restart
+    sudo systemctl restart postgresql
 
 9. Log out of the postgres user account by typing:
 
@@ -527,7 +527,12 @@ Please install the latest release of RabbitMQ:
 ::
 
   sudo apt install rabbitmq-server
-  sudo systemctl restart rabbitmq-server
+
+If it's not already running, start it:
+
+::
+
+  sudo systemctl start rabbitmq-server
 
 For additional details and information about RabbitMQ, please see `RabbitMQ's documentation`_.
 
@@ -987,109 +992,6 @@ been replaced with colons. The authority (ecoinformatics.org) must be properly
 configured by the Metacat administrator. Note: In order to configure the
 authority, you must have access to the DNS server for the Metacat domain.
 Further instructions are provided below.
-
-Install and configure the LSID Server shipped with Metacat
-..........................................................
-
-To install the LSID server using the binary installation:
-
-1. Copy the authority.war file to Tomcat:
-
-  ::
-
-    sudo cp <metacat_package_directory>/authority.war /usr/share/tomcat9/webapps
- 
-2. Set up the LSID server by dropping the authority file into Apache's
-   sites-available directory and running a2ensite to enable the site:
-
-  ::
-
-    sudo cp <metacat_helper_dir>/authority /etc/apache2/sites-available
-    sudo a2ensite authority
-
-3. Restart Tomcat. Log in as the user that runs your Tomcat server (often
-   "tomcat") and type:
-
-  ::
-
-    /etc/init.d/tomcat5.5 restart
-
-4. Restart Apache to bring in changes by typing:
-
-  ::
-
-    sudo /etc/init.d/apache2 restart
-
-5. See notes beneath LSID server source installation for instructions for
-   modifying the SRV record(s)
-
-To install the LSID server from a source
-........................................
-
-1. In the build.properties file found in the directory into which you
-   extracted the Metacat source code, set the authority and config.lsidauthority
-   properties. For example:
-  
-  ::
-   
-   authority.context=authority
-   config.lsidauthority=ecoinformatics.org
-
-2. In the <metacat-src-directory> create the authority.war by running:
-
-  ::
-
-    sudo ant war-lsid
-
-3. Copy the LSID WAR file into the Tomcat application directory.
-
-  ::
-
-    sudo cp <metacat_package_dir>/dist/authority.war <tomcat_app_dir>
-
-4. Restart Tomcat. Log in as the user that runs your Tomcat server (often
-   "tomcat") and type:   
-
-  ::
-
-    /etc/init.d/tomcat9 restart
-
-5. If you are running Tomcat behind the Apache server (the recommended
-   configuration), set up and enable the authority service site configurations by
-   typing:
-
-  ::
-
-    sudo cp <metacat_helper_dir>/authority <apache_install_dir>/sites-available
-    sudo a2ensite authority
-
-  Where <metacat_helper_dir> can be found in <metacat_code_dir>/src/scripts
-
-6.  Restart Apache to bring in changes by typing: 
-
-  ::
-
-    sudo /etc/init.d/apache2 restart
-
-  Once the authority.war is installed, you must also modify the SRV record(s)
-  on the DNS server for the domain hosting the Metacat. The record should be
-  added to the master zone file for the metacat's DNS server:
-
-    ::
-
-      _lsid._tcp      IN      SRV     1       0       8080    <metacat.edu>.
-
-  Where <metacat.edu> is the name of the machine that will serve as the
-  physical location of the AuthorityService.
-
-  For example, the value of <metacat.edu> for the below example URL would be
-  example.com:
-  
-    ::
-    
-      http://example.com:9999/authority/data?lsid=urn:lsid:ecoinformatics.org:tao:12039:1
-
-  For more information, please see http://www.ibm.com/developerworks/opensource/library/os-lsid/
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
