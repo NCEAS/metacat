@@ -318,20 +318,6 @@ or can be set using the `CNReplication.setReplicationPolicy`_ service.
 .. _CNReplication.setReplicationPolicy: http://releases.dataone.org/online/d1-architecture-1.0.0/apis/CN_APIs.html#CNReplication.setReplicationPolicy
 
 
-Generating DataONE System Metadata
-----------------------------------
-When a Metacat instance becomes a Member Node, System Metadata must be generated for the existing content.
-This can be invoked in the Replication configuration screen of the Metacat administration interface. Initially, 
-Metacat instances will only need to generate System Metadata for their local content (the ``localhost`` entry). 
-In cases where Metacat has participated in replication with other Metacat servers, it may be useful to generate System Metadata 
-for those replica records as well. Please consult both the replication partner's administrator and the DataONE administrators before 
-generating System Metadata for replica content.
-
-.. figure:: images/screenshots/image069.png
-   :align: center
-   
-   The replication configuration screen for generating System Metadata.
-
 Apache configuration details
 ----------------------------
 
