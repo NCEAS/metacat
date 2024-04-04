@@ -7,9 +7,16 @@ Release date: 2024-04-XX
 ### Overview of Major Changes
 
 This major release introduces breaking changes:
-- A valid auth token is required for a Metacat installation to function correctly.
+- A valid auth token is required for a Metacat 3.0.0 installation to function correctly (i.e. to handle private datasets).
   - Please [contact DataONE](https://www.dataone.org/contact/) to obtain a long-term token (valid for 1 year) 
-  - This is only an interm requirement; a future release of Metacat will remove the need for this token.
+    - If you are already part of the DataONE network and have a member node, we will issue you a token linked to your DataONE Node identity.
+    - If you're not a DataONE member node, we [encourage you to join](https://www.dataone.org/jointhenetwork/) (it's free!) so that your data can partake in DataONE's goal of the preservation of scientific data for future use.
+    - Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
+  - This is only an interim requirement; a future release of Metacat will remove the need for this token.
+  - If you are checking out Metacat for the first time, you can obtain a temporary token to continue evaluating Metacat
+    by logging into [the KNB website](https://knb.ecoinformatics.org), and navigating to
+    "My Profile" -> "Settings" -> "Authentication Token".
+    - Note - this token is only valid for 24 hours, but you can continue manually retrieving short-term tokens
 - The original Metacat API is no longer supported.
   - `Morpho` and any other clients depending on this API will no longer work
   - Client access is available only via the DataONE API.
@@ -20,19 +27,6 @@ This major release introduces breaking changes:
 - Metacat admin authentication is no longer supported via LDAP or Password-based logins.
   - An ORCID iD is now required in order to log in as a Metacat administrator.
   - Please [sign up for an ORCID iD](https://orcid.org/register) if you do not already have one.
-
-### Checking out Metacat for the first time?
-
-In order for Metacat 3.0.0 to function correctly (like uploading private datasets), you will need to install a valid auth token
-for the metacat-indexer to use. You can obtain a temporary token to continue evaluating Metacat by logging into [the 
-KNB website](https://knb.ecoinformatics.org), and navigating to "My Profile" -> "Settings" -> "Authentication Token".
-Note - this token is only valid for 24 hours, but you can continue manually retrieving short-term tokens.
-
-Already decided that Metacat fits your needs? If you would like to move forward with a long-term token,
-please [contact DataONE](https://www.dataone.org/contact/) to obtain a token that will be valid for a year.
- - If you are already part of the DataONE network and have a member node, we will issue you a token linked to your DataONE Node identity.
- - If you're not a DataONE member node, we [encourage you to join](https://www.dataone.org/jointhenetwork/) (it's free!) so that your data can partake in DataONE's goal of the preservation of scientific data for future use.
- - Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
 
 ### Upgrade Notes (2.19.0 to 3.0.0):
 
@@ -57,7 +51,7 @@ please [contact DataONE](https://www.dataone.org/contact/) to obtain a token tha
     - Example below to reindex all objects
       ```sh
       # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
-      # where $TOKEN is an environment variable containing your administrator jwt token
+      # where $TOKEN is an environment variable containing your indexer token (see overview of major changes above).
       # example:
       curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
       ``` 
