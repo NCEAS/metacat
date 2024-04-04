@@ -208,6 +208,14 @@ metacat:
   ## @section OPTIONAL DataONE Member Node (MN) Parameters
   ##
 
+  ## @param metacat.cn.server.publiccert.filename optional cert(s) used to validate jwt auth tokens,
+  ## in addition to attempting validation against the cert chain from the cn (see D1Client.CN_URL).
+  ## It may contain a single cert path, or multiple paths, separated by semicolons.
+  ## IMPORTANT NOTE: each file must contain only one public key. Certificate chains containing
+  ## multiple public keys will not work!
+  ##
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONEIntCA
+
   ## @param metacat.dataone.certificate.fromHttpHeader.enabled Enable mutual auth with client certs
   ## Setting `true` REQUIRED for all DataONE MN functionality -- mutual authentication with x509
   ## client-side certs. Also see `ingress.d1CaCertSecretName`
@@ -583,7 +591,7 @@ ingress:
   ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate
   ## For DataONE Replication -- mutual authentication with x509 client-side certs.
   ## Also see `metacat.dataone.certificate.fromHttpHeader.enabled`
-  d1CaCertSecretName: ca-secret
+  d1CaCertSecretName: d1-ca-chain
 
 ## Optional service in addition to the Headless ClusterIP that is required for StatefulSet
 service:
@@ -702,7 +710,7 @@ postgresql:
   ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
   ##
   primary:
-    ## override the default pf_hba.conf with our own, to allow password auth, since this is the
+    ## override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
     pgHbaConfiguration: |
       host        metacat       metacat       0.0.0.0/0       password

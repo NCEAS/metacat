@@ -81,6 +81,9 @@ spec:
             - name: {{ .Release.Name }}-d1-cert-volume
               mountPath: /var/metacat/certs/
               readOnly: true
+            - name: {{ .Release.Name }}-d1-pub-cert-volume
+              mountPath: /var/metacat/pubcerts/
+              readOnly: true
           env:
             - name: METACAT_IN_K8S
               value: "true"
@@ -124,9 +127,13 @@ spec:
         configMap:
           name: {{ .Release.Name }}-metacat-configfiles
           defaultMode: 0644
+      - name: {{ .Release.Name }}-d1-pub-cert-volume
+        configMap:
+          name: {{ .Release.Name }}-d1-certs-public
+          optional: true
       - name: {{ .Release.Name }}-d1-cert-volume
         secret:
-          secretName: {{ .Release.Name }}-d1-client-secret
+          secretName: {{ .Release.Name }}-d1-client-cert
           optional: true
 {{- if not (.Values.persistence.enabled) }}
       - name: {{ .Release.Name }}-volume
