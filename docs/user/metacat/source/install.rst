@@ -81,7 +81,7 @@ instructions for each step are in the next section.
 
   8. ``sudo cp <metacat_package_dir>/metacatui.war <tomcat_app_dir>``
 
-  9. ``sudo /etc/init.d/tomcat7 restart``
+  9. ``sudo /etc/init.d/tomcat9 restart``
 
   10. Configure Metacat through the Web interface
 
@@ -218,7 +218,7 @@ If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website a
 
 Apache Tomcat
 .............
-We recommend that you install Tomcat 6, 7 or 8 into the directory of your choice. The newer versions are preferred.
+We recommend that you install Tomcat 9 into the directory of your choice. While Tomcat 6, 7 and 8 are supported, newer versions are preferred.
 Included with the Metacat download is a Tomcat-friendly start-up script that should be installed as well.
 
 Note: we will refer to the Tomcat installation directory as ``<tomcat_home>`` for the remainder of the documentation.
@@ -227,7 +227,7 @@ Note: we will refer to the Tomcat installation directory as ``<tomcat_home>`` fo
 
   ::
 
-    sudo apt-get install tomcat7
+    sudo apt-get install tomcat9
 
   Otherwise, get Tomcat from the `Apache Tomcat`_ page.
 
@@ -249,7 +249,7 @@ Note: we will refer to the Tomcat installation directory as ``<tomcat_home>`` fo
 
   ::
 
-    /etc/tomcat7/catalina.properties
+    /etc/tomcat9/catalina.properties
 
   to include
 
@@ -417,7 +417,7 @@ directory in which Apache is installed: ``<apache_install_dir>/conf/httpd.conf``
 
 PostgreSQL Database
 ...................
-Currently Metacat only supports PostgreSQL_. Please choose from PostgreSQL 8, 9, 10 or 11 -
+Currently Metacat only supports PostgreSQL_. We recommend installing PostgresQL 14.
 we recommend selecting a newer release. To install and configure PostgreSQL_:
 
 1. If you are running Ubuntu_/Debian, get PostgreSQL by typing:
@@ -432,7 +432,7 @@ we recommend selecting a newer release. To install and configure PostgreSQL_:
 
   ::
 
-    sudo /etc/init.d/postgresql-8.4 start
+    sudo /etc/init.d/postgresql-14 start
 
 3. Change to postgres user:
 
@@ -445,7 +445,7 @@ we recommend selecting a newer release. To install and configure PostgreSQL_:
 
   ::
 
-    gedit /etc/postgresql/8.4/main/pg_hba.conf
+    gedit /etc/postgresql/14/main/pg_hba.conf
 
 
   Add the following line to the configuration file:
@@ -487,7 +487,7 @@ we recommend selecting a newer release. To install and configure PostgreSQL_:
 
   ::
 
-    /etc/init.d/postgresql-8.4 restart
+    /etc/init.d/postgresql-14 restart
 
 9. Log out of the postgres user account by typing:
 
@@ -546,7 +546,7 @@ all objects (see example below).
     # example:
     curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
 
-Metacat supports ``Solr 8.8.2`` to ``Solr 9.5.0``. You may download the binary releases from:
+Metacat supports ``Solr 8.8.2`` to ``Solr 9.5.0``. We recommend installing ``Solr 9.5.0``. You may download the binary releases from:
 
 https://solr.apache.org/downloads.html#solr-8112
 
@@ -611,12 +611,12 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 Note: If you are upgrading the Solr server and you have already run this command during the previous installation, you may skip this step.
 
 The interaction of the Tomcat and Solr services can cause the file permission issues. 
-Add the ``tomcat7`` user to the ``solr`` group and the ``solr`` user to ``tomcat7`` group to fix the problem:
+Add the ``tomcat9`` user to the ``solr`` group and the ``solr`` user to ``tomcat9`` group to fix the problem:
 
   ::
 
-    sudo usermod -a -G solr tomcat7
-    sudo usermod -a -G tomcat7 solr
+    sudo usermod -a -G solr tomcat9
+    sudo usermod -a -G tomcat9 solr
 
 9. Restart the Solr server to make the new group setting effective (:note2:`Important`) 
 
@@ -625,11 +625,11 @@ Add the ``tomcat7`` user to the ``solr`` group and the ``solr`` user to ``tomcat
     sudo service solr stop
     sudo service solr start
 
-10. Check that the ``tomcat7`` user and ``solr`` user are members of the appropriate groups with:
+10. Check that the ``tomcat9`` user and ``solr`` user are members of the appropriate groups with:
 
   ::
 
-    sudo groups tomcat7
+    sudo groups tomcat9
     sudo groups solr
 
 Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
@@ -688,7 +688,7 @@ To install a new Metacat servlet:
     sudo chown -R <tomcat_user> /var/metacat
 
 
-3.  Install the Metacat, Metacat-index and MetacatUI WAR in the Tomcat web-application directory. For instructions on downloading the Metacat WAR, please see Downloading Metacat.  Typically, Tomcat will look for its application files (WAR files) in the <tomcat_home>/webapps directory (e.g., /usr/share/tomcat7/webapps). Your instance of Tomcat may be configured to look in a different directory. We will refer to the Tomcat application directory as <tomcat_app_dir>.  NOTE: The name of the WAR file (e.g., metacat.war) provides the application context, which appears in the URL of the Metacat (e.g., http://yourserver.com/metacat/). To change the context, simply change the name of the WAR file to the desired name before copying it.  To install the Metacat WAR:
+3.  Install the Metacat, Metacat-index and MetacatUI WAR in the Tomcat web-application directory. For instructions on downloading the Metacat WAR, please see Downloading Metacat.  Typically, Tomcat will look for its application files (WAR files) in the <tomcat_home>/webapps directory (e.g., /usr/share/tomcat9/webapps). Your instance of Tomcat may be configured to look in a different directory. We will refer to the Tomcat application directory as <tomcat_app_dir>.  NOTE: The name of the WAR file (e.g., metacat.war) provides the application context, which appears in the URL of the Metacat (e.g., http://yourserver.com/metacat/). To change the context, simply change the name of the WAR file to the desired name before copying it.  To install the Metacat WAR:
 
   ::
 
@@ -701,7 +701,7 @@ To install a new Metacat servlet:
 
   ::
 
-    sudo /etc/init.d/tomcat7 restart
+    sudo /etc/init.d/tomcat9 restart
 
 Congratulations! You have now installed Metacat. If everything is installed
 correctly, you should see the Authentication Configuration screen (Figure 2.1)
@@ -728,7 +728,7 @@ instructions for installing from source:
 
   ::
 
-    /etc/init.d/tomcat7 stop
+    /etc/init.d/tomcat9 stop
 
 3. Back up the existing Metacat installation. Although not required, we highly recommend that you back up your existing Metacat to a backup directory (<backup_dir>) before installing a new one. You can do so by typing:
 
@@ -760,7 +760,7 @@ instructions for installing from source:
 
   ::
 
-    /etc/init.d/tomcat7 restart
+    /etc/init.d/tomcat9 restart
 
 
 7. Run your new Metacat servlet. Go to a Web browser and visit your installed
@@ -978,7 +978,7 @@ To install the LSID server using the binary installation:
 
   ::
 
-    sudo cp <metacat_package_directory>/authority.war /usr/share/tomcat7/webapps
+    sudo cp <metacat_package_directory>/authority.war /usr/share/tomcat9/webapps
  
 2. Set up the LSID server by dropping the authority file into Apache's
    sites-available directory and running a2ensite to enable the site:
@@ -1033,7 +1033,7 @@ To install the LSID server from a source
 
   ::
 
-    /etc/init.d/tomcat7 restart
+    /etc/init.d/tomcat9 restart
 
 5. If you are running Tomcat behind the Apache server (the recommended
    configuration), set up and enable the authority service site configurations by
