@@ -36,10 +36,6 @@ using the [Helm](https://helm.sh) package manager.
 - Kubernetes 1.19+
 - Helm 3.2.0+
 - PV provisioner support in the underlying infrastructure
-- An existing instance of [solr](https://solr.apache.org/downloads.html#solr-8112), suitably
-[configured](https://knb.ecoinformatics.org/knb/docs/install.html#solr-server) to be accessed by
-metacat, and with its index
-[regenerated.](https://knb.ecoinformatics.org/knb/docs/query-index.html#regenerating-the-index)
 
 ## Installing the Chart
 
@@ -173,13 +169,13 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Networking & Monitoring
 
 | Name                                 | Description                                                   | Value            |
-| ------------------------------------ | ------------------------------------------------------------- | ---------------- |
+|--------------------------------------|---------------------------------------------------------------| ---------------- |
 | `ingress.enabled`                    | Enable or disable the ingress                                 | `true`           |
 | `ingress.className`                  | ClassName of the ingress provider in your cluster             | `traefik`        |
 | `ingress.hosts`                      | A collection of rules mapping different hosts to the backend. | `[]`             |
 | `ingress.annotations`                | Annotations for the ingress                                   | `{}`             |
 | `ingress.tls`                        | The TLS configuration                                         | `[]`             |
-| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate              | `ca-secret`      |
+| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain        | `d1-ca-chain`    |
 | `service.enabled`                    | Enable another optional service in addition to headless svc   | `false`          |
 | `service.type`                       | Kubernetes Service type. Defaults to ClusterIP if not set     | `LoadBalancer`   |
 | `service.clusterIP`                  | IP address of the service. Auto-generated if not set          | `""`             |
@@ -302,7 +298,7 @@ path in the metacat container.
 
 The PostgreSQL image stores the database data at the `/bitbami/pgdata` path in its own container.
 
-## Networking and x.509 Certificates
+## Networking, Certificates, and Auth Tokens
 
 By default, the chart will install an
 [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) (see the `ingress.*`
@@ -324,6 +320,61 @@ $  helm upgrade --install ingress-nginx ingress-nginx \
 
 ...and don't forget to set the `ingress.className` to `nginx` in your `values.yaml`.
 
+### Setting up a Token and Optional CA certificate for Indexer Access
+
+**IMPORTANT:** In order for Metacat 3.0.0 to function correctly, the
+[dataone_indexer](#dataone_indexer-sub-chart)) needs a valid authentication token, in order to index
+private datasets, via calls to metacat's DataONE API.
+
+> Note that this is only an interim requirement; a future release of Metacat will remove the need
+for this token.
+
+You can [contact DataONE administrators](https://www.dataone.org/contact/) for a token that will be
+valid for one year.
+
+- if your Metacat site is already a DataONE member node, we will issue a token linked to your DataONE
+  Node identity.
+
+- if your site is not a DataONE member node, we [encourage you to
+  join](https://www.dataone.org/jointhenetwork/). Otherwise, we can issue a token linked to your
+  administrator's ORCID iD.
+
+> **Tip:**  if you only need a temporary token in order to evaluate Metacat, you can get a
+> short-term token (valid for only 24 hours!), by logging into [the KNB
+> website](https://knb.ecoinformatics.org), and navigating to "My Profile" -> "Settings" ->
+> "Authentication Token".
+
+Once you have your token, you also need to get a copy of the DataONE Intermediate CA certificate,
+either for the Production or the Test environment, depending upon your needs:
+
+- [DataONE Production Intermediate CA
+  Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
+- [DataONE Test Intermediate CA
+  Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
+
+Then install them both, as follows:
+
+#### Installing the Token
+
+Install the token in a Kubernetes Secret named `<yourReleaseName>-indexer-token`,
+identified by the key" `DataONEauthToken`. For example, assuming the token is in a file
+`urn_node_TestNAME.jwt`:
+
+  ```shell
+  kubectl create secret generic <yourReleaseName>-indexer-token \
+                                --from-file=DataONEauthToken=urn_node_TestNAME.jwt
+  ```
+
+#### Installing the CA Intermediate Certificate
+
+Install the cert in a Kubernetes ConfigMap named `<yourReleaseName>-d1-certs-public`,
+identified by the key: `DataONEIntCA`. For example, assuming the token is in a file
+`DataONEProdIntCA.pem`:
+
+  ```shell
+  kubectl create configmap generic <yourReleaseName>-d1-certs-public \
+                                --from-file=DataONEIntCA=DataONEProdIntCA.pem
+  ```
 
 ### Setting up a TLS Certificate(s) for HTTPS Traffic
 
@@ -371,7 +422,7 @@ configure certificates and settings for both these roles.
 
 #### Prerequisites
 1. First make sure you have the Kubernetes version of the
-   [nginx ingress installed](#networking-and-x509-certificates)
+   [nginx ingress installed](#networking-certificates-and-auth-tokens)
 1. Ensure [HTTPS access is set up](#setting-up-a-tls-certificates-for-https-traffic) and
    working correctly. This allows other nodes, acting as "clients" to verify your server's identity
    during mutual authentication.
@@ -385,11 +436,11 @@ configure certificates and settings for both these roles.
 
 #### Install the CA Chain
 
-1. Create the Kubernetes Secret (named `ca-secret`) to hold the ca chain (e.g. assuming it's in
-    a file named `DataONECAChain.crt`):
+1. Create the Kubernetes Secret (named `d1-ca-chain`) to hold the ca chain
+   (e.g. assuming it's in a file named `DataONECAChain.crt`):
 
     ```shell
-    kubectl create secret generic ca-secret --from-file=ca.crt=DataONECAChain.crt
+    kubectl create secret generic d1-ca-chain --from-file=ca.crt=DataONECAChain.crt
     # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
     ```
 
@@ -400,11 +451,12 @@ configure certificates and settings for both these roles.
 
 #### Install the Client Certificate
 
-   1. Create the Kubernetes Secret (named `<yourReleaseName>-d1-client-secret`) to hold the Client
-      Certificate (e.g. assuming it's in a file named `urn_node_TestNAME.pem`):
+   1. Create the Kubernetes Secret (named `<yourReleaseName>-d1-client-cert`) to hold the Client
+      Certificate, identified by the key" `d1client.crt` (e.g. assuming the cert is in a file
+      named `urn_node_TestNAME.pem`):
 
       ```shell
-      kubectl create secret generic <yourReleaseName>-d1-client-secret \
+      kubectl create secret generic <yourReleaseName>-d1-client-cert \
                                     --from-file=d1client.crt=urn_node_TestNAME.pem
       # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
       ```
@@ -423,7 +475,7 @@ configure certificates and settings for both these roles.
     ```yaml
     ingress:
       className: "nginx"
-      d1CaCertSecretName: ca-secret
+      d1CaCertSecretName: d1-ca-chain
     ```
 
 1. Finally, re-install or upgrade to apply the changes
@@ -539,7 +591,7 @@ You can check the configuration as follows:
         annotations:
           # more lines above
           nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
-          nginx.ingress.kubernetes.io/auth-tls-secret: default/ca-secret
+          nginx.ingress.kubernetes.io/auth-tls-secret: default/d1-ca-chain
           ## above may differ for you. Format is: <namespace>/<ingress.d1CaCertSecretName>
           nginx.ingress.kubernetes.io/auth-tls-verify-client: optional_no_ca
           nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
