@@ -605,6 +605,8 @@ Add a new line for the ``SOLR_OPTS`` variable in the environment specific includ
     **Note: If you are installing solr 9.5.0, you must explicitly set "-Dsolr.allowPaths=" to the absolute path to Metacat
     instead of using a wildcard * value.**
 
+    **Note2: This CANNOT be a symlink, it must be a real path.**
+
     ex. SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/private/var/metacat"
 
 And then set your solr_home
@@ -715,7 +717,7 @@ To install a new Metacat servlet:
     sudo cp <metacat_package_dir>/metacatui.war <tomcat_app_dir>
 
 
-4. Restart Tomcat. Log in as the user that runs your Tomcat server (often "tomcat") and type:  
+4. Restart Tomcat. Log in as the user that runs your Tomcat server (often "tomcat") and type:
 
   ::
 
