@@ -771,6 +771,15 @@ dataone-indexer:
       existingPasswordSecret: *passwordSecretName
 
   solr:
+    ## @param dataone-indexer.solr.customCollection name of the solr collection to use
+    ## (optional override of indexer-assigned name). Do not leave blank
+    customCollection: metacat-index
+
+    ## @param dataone-indexer.solr.coreNames Solr core names to be created
+    ## (optional override of indexer-assigned names)
+    coreNames:
+      - metacat-core
+
     extraVolumes:
       ## @param dataone-indexer.solr.extraVolumes[0].name DO NOT EDIT - referenced by sub-chart
       - name: solr-config
