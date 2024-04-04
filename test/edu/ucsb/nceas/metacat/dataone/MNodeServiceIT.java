@@ -17,6 +17,7 @@ import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager.SysMetaVersion;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -130,6 +131,8 @@ public class MNodeServiceIT {
     public static class MNodeServiceITOriginMockCN {
         private D1NodeServiceTest d1NodeTest = null;
         private MockHttpServletRequest request = null;
+        private MockedStatic<PropertyService> closeableMock;
+        private Properties withProperties;
         /**
          * Set up the test fixtures
          *
@@ -145,6 +148,22 @@ public class MNodeServiceIT {
             Settings.getConfiguration().addProperty("D1Client.CN_URL", CN_BASE_URL);
             // set up the configuration for d1client
             Settings.getConfiguration().setProperty("D1Client.cnClassName", MockCNode.class.getName());
+            final String passwdMsg =
+                    """
+                    \n* * * * * * * * * * * * * * * * * * *
+                    DOI PASSWORD IS NOT SET!
+                    Add a value for 'guid.doi.password'
+                    to your metacat-site.properties file!
+                    * * * * * * * * * * * * * * * * * * *
+                    """;
+                try {
+                    assertFalse(passwdMsg, PropertyService.getProperty("guid.doi.password").isBlank());
+                } catch (PropertyNotFoundException e) {
+                    fail(passwdMsg);
+                }
+                withProperties = new Properties();
+                withProperties.setProperty("guid.doi.enabled", "true");
+                closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
         }
 
         /**
@@ -152,6 +171,9 @@ public class MNodeServiceIT {
          */
         @After
         public void tearDown() {
+            if (closeableMock != null) {
+                closeableMock.close();
+            }
             d1NodeTest.tearDown();
         }
 
@@ -1037,9 +1059,12 @@ public class MNodeServiceIT {
                 assertTrue(hasV1MNStorage);
                 assertTrue(hasV2MNStorage);
                 // check the service restriction. Second, there are some service restrictions
-                PropertyService.setPropertyNoPersist(
+                // Mock the auth.allowedSubmitters
+                withProperties.setProperty(
                     "auth.allowedSubmitters",
                     "http://orcid.org/0000-0002-1209-5268;cn=parc,o=PARC,dc=ecoinformatics,dc=org");
+                closeableMock.close();
+                closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
                 AuthUtil.populateAllowedSubmitters();//make the allowedSubimtters effective
                 node = MNodeService.getInstance(request).getCapabilities();
                 services = node.getServices();
@@ -1098,7 +1123,9 @@ public class MNodeServiceIT {
             } catch (Exception e) {
                 fail("The node instance couldn't be parsed correctly:" + e.getMessage());
             } finally {
-                PropertyService.setPropertyNoPersist("auth.allowedSubmitters", originAllowedSubmitters);
+                withProperties.setProperty("auth.allowedSubmitters", originAllowedSubmitters);
+                closeableMock.close();
+                closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
                 AuthUtil.populateAllowedSubmitters();//make the allowedSubimtters effective
             }
 
@@ -3642,35 +3669,40 @@ public class MNodeServiceIT {
             //Get original value of allow list
             String originalAllowedSubmitterString =
                 PropertyService.getProperty("auth.allowedSubmitters");
-            String group = "CN=knb-data-admins,DC=dataone,DC=org";
-            PropertyService.setPropertyNoPersist("auth.allowedSubmitters", group);
-            String newAllowedSubmitterString = PropertyService.getProperty("auth.allowedSubmitters");
-            AuthUtil.populateAllowedSubmitters();
-            //Using test session should fail
-            Session session = d1NodeTest.getTestSession();
-            Identifier guid = new Identifier();
-            guid.setValue("testAllowList." + System.currentTimeMillis());
-            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             try {
-                Identifier pid =
-                    MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-                fail("testAllowList - the test session shouldn't be allowed to create an object");
-            } catch (Exception e) {
-                assertTrue("The exception should be NotAuthorized", e instanceof NotAuthorized);
+                String group = "CN=knb-data-admins,DC=dataone,DC=org";
+                withProperties.setProperty("auth.allowedSubmitters", group);
+                closeableMock.close();
+                closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+                AuthUtil.populateAllowedSubmitters();
+                //Using test session should fail
+                Session session = d1NodeTest.getTestSession();
+                Identifier guid = new Identifier();
+                guid.setValue("testAllowList." + System.currentTimeMillis());
+                InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+                try {
+                    Identifier pid =
+                        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+                    fail("testAllowList - the test session shouldn't be allowed to create an object");
+                } catch (Exception e) {
+                    assertTrue("The exception should be NotAuthorized", e instanceof NotAuthorized);
+                }
+                //use a session with the subject of the MN to create an object
+                Subject subject = new Subject();
+                subject.setValue(TEST_MN_SUBJECT);
+                session.setSubject(subject);
+                object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+                assertEquals(pid.getValue(), guid.getValue());
+            } finally {
+                //restore the original setting
+                withProperties.setProperty("auth.allowedSubmitters",
+                                            originalAllowedSubmitterString);
+                closeableMock.close();
+                closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+                AuthUtil.populateAllowedSubmitters();
             }
-            //use a session with the subject of the MN to create an object
-            Subject subject = new Subject();
-            subject.setValue(TEST_MN_SUBJECT);
-            session.setSubject(subject);
-            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-            assertEquals(pid.getValue(), guid.getValue());
-
-            //restore the original setting
-            PropertyService.setPropertyNoPersist("auth.allowedSubmitters",
-                                                 originalAllowedSubmitterString);
-            AuthUtil.populateAllowedSubmitters();
         }
 
         /**
@@ -3914,10 +3946,11 @@ public class MNodeServiceIT {
         public void testCreateAndUpdateWithDoiDisabled() throws Exception {
             D1NodeServiceTest.printTestHeader("testCreateAndUpdateWithDoiDisabled");
             String originDOIstatusStr = PropertyService.getProperty("guid.doi.enabled");
-            System.out.println("the dois status is ++++++++++++++ " + originDOIstatusStr);
             try {
                 Session session = d1NodeTest.getTestSession();
-                PropertyService.setPropertyNoPersist("guid.doi.enabled", "false");//disable doi
+                withProperties.setProperty("guid.doi.enabled", "false");//disable doi
+                closeableMock.close();
+                closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
                 DOIServiceFactory.getDOIService().refreshStatus();
                 try {
                     //make sure the service of doi is disabled
@@ -3963,7 +3996,9 @@ public class MNodeServiceIT {
                     assertTrue(e.getMessage().contains("DOI scheme is not enabled at this node"));
                 }
             } finally {
-                PropertyService.setPropertyNoPersist("guid.doi.enabled", originDOIstatusStr);
+                withProperties.setProperty("guid.doi.enabled", originDOIstatusStr);
+                closeableMock.close();
+                closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
                 DOIServiceFactory.getDOIService().refreshStatus();
             }
         }
@@ -4131,10 +4166,12 @@ public class MNodeServiceIT {
         @Test
         public void testFailedDoiUpdateInCreate() throws Exception {
             Session session = d1NodeTest.getTestSession();
-            Properties withProperties = new Properties();
-            withProperties.setProperty("guid.doi.password", "foo");
-            try (MockedStatic<PropertyService> ignored =
-                    LeanTestUtils.initializeMockPropertyService(withProperties)) {
+            String originPassword = PropertyService.getProperty("guid.doi.password");
+            try {
+                withProperties.setProperty("guid.doi.password", "foo");
+                closeableMock.close();
+                closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+                DOIServiceFactory.getDOIService().refreshStatus();
                 Identifier guid = new Identifier();
                 guid.setValue("doi:10.5072/FK2meta.1." + System.currentTimeMillis());
                 InputStream object =
@@ -4151,6 +4188,11 @@ public class MNodeServiceIT {
                         fail("The failure of updating doi shouldn't disrupt the create method.");
                     }
                     object.close();
+            } finally {
+                withProperties.setProperty("guid.doi.password", originPassword);
+                closeableMock.close();
+                closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+                DOIServiceFactory.getDOIService().refreshStatus();
             }
         }
 
