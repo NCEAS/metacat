@@ -54,16 +54,17 @@ reach the Authentication Configuration page from a running Metacat by typing
 
 Starting from Metacat 3.0.0, only `ORCID authentication`_ is supported. In Metacat v2.19.0 and
 previous releases, an internal password file or LDAP was used as the authentication mechanism.
-Password-based and LDAP authentication has been deprecated.
+Password-based and LDAP authentication has been deprecated. If you don't already have an account,
+registering for an ORCID is simple, please visit:
+
+  http://orcid.org/
 
 .. _ORCID authentication: ./authinterface.html
 
-If you don't already have an account, registering for an ORCID is simple, please visit:
-  http://orcid.org/
-
 After signing up for an ORCID iD, you can then use it as an admin identity when configuring
-authentication. **Note, your full ORCID iD includes `https://orcid.org/` not just the 16-digit
+authentication. **Note, your full ORCID iD includes "https://orcid.org/" not just the 16-digit
 ORCID iD**:
+
   ex. http://orcid.org/0000-0001-2345-6789
 
 Make sure that your full ORCID iD is entered into the Metacat Administrators field
@@ -78,7 +79,7 @@ semi-colon (;) character.
    Configuring ORCID Authentication
 
 Changing Authentication Configuration without Authentication
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------------------
 If you need to change or add authentication information and cannot authenticate 
 using the existing authentication settings (e.g., the existing Metacat 
 administrator is no longer available or you forgot the administrator password), 
@@ -92,19 +93,23 @@ To edit the authentication configuration file:
    default location for this file is in /var/metacat/config/, but this path is configurable,
    so it may be elsewhere.
 
-      .. Tip::
-         If you cannot find the **metacat-site.properties** file, its location is stored in a
-         property named ``application.sitePropertiesDir`` inside the **metacat.properties** file,
-         which can be found in:
-         ``<tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties``
-         (where the <context_dir> is the application context, usually named "metacat".)
-         See :ref:`configuration-properties-overview` for details
-
-2. Once you have located **metacat-site.properties**, change the following properties appropriately
-   (or add them if they do not already exist)
+  Tip: If you cannot find the **metacat-site.properties** file, its location is stored in a
+  property named ``application.sitePropertiesDir`` inside the **metacat.properties** file,
+  which can be found in:
 
   ::
-  
+
+    <tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties
+
+    (where the <context_dir> is the application context, usually named "metacat".)
+
+  See :ref:`configuration-properties-overview` for details
+
+2. Once you have located **metacat-site.properties**, change the following properties appropriately
+(or add them if they do not already exist)
+
+  ::
+
     auth.administrators  - a semicolon-separated list of administrators' ORCID IDs
     auth.url             - the authentication server URL
     auth.surl            - the authentication secure server URL
