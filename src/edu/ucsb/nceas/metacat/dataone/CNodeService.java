@@ -42,7 +42,6 @@ import org.dataone.service.exceptions.VersionMismatch;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.ChecksumAlgorithmList;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
@@ -295,7 +294,8 @@ public class CNodeService extends D1NodeService
                     systemMetadata.getSerialVersion().add(BigInteger.ONE));
                 //we don't need to update the modification date.
                 boolean changeModificationDate = false;
-                SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate);
+                SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate,
+                                                    SystemMetadataManager.SysMetaVersion.CHECKED);
             } catch (RuntimeException e) {
                 throw new ServiceFailure("4882", e.getMessage());
             } catch (InvalidRequest e) {
@@ -507,7 +507,8 @@ public class CNodeService extends D1NodeService
         Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate)
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
         boolean logArchive = true;
-        archiveCNObject(logArchive, session, pid, sysMeta, needModifyDate);
+        archiveCNObject(logArchive, session, pid, sysMeta, needModifyDate,
+                        SystemMetadataManager.SysMetaVersion.CHECKED);
         // notify the replicas
         notifyReplicaNodes(sysMeta);
         return pid;
@@ -837,7 +838,8 @@ public class CNodeService extends D1NodeService
                 // Based on CN behavior discussion 9/16/15, we no longer want to
                 // update the modified date for changes to the replica list
                 boolean changeModificationDate = false;
-                SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate);
+                SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate,
+                                                    SystemMetadataManager.SysMetaVersion.CHECKED);
                 if (!status.equals(ReplicationStatus.QUEUED) && !status.equals(
                     ReplicationStatus.REQUESTED)) {
 
@@ -1263,7 +1265,8 @@ public class CNodeService extends D1NodeService
                 if (version != null && version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
                     changeModificationDate = true;
                 }
-                SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate);
+                SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate,
+                                                    SystemMetadataManager.SysMetaVersion.UNCHECKED);
             } catch (RuntimeException e) {
                 logMetacat.error("Problem registering system metadata: " + pid.getValue(), e);
                 throw new ServiceFailure(
@@ -1930,7 +1933,8 @@ public class CNodeService extends D1NodeService
                 // Based on CN behavior discussion 9/16/15, we no longer want to
                 // update the modified date for changes to the replica list
                 boolean changeModificationDate = false;
-                SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate);
+                SystemMetadataManager.getInstance().store(systemMetadata, changeModificationDate,
+                                                    SystemMetadataManager.SysMetaVersion.CHECKED);
                 // inform replica nodes of the change if the status is complete
                 if (replicaStatus.equals(ReplicationStatus.COMPLETED)) {
                     notifyReplicaNodes(systemMetadata);
@@ -2113,7 +2117,7 @@ public class CNodeService extends D1NodeService
         boolean fromCN = true;
         success =
             updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta,
-                                 fromCN);
+                                 fromCN, SystemMetadataManager.SysMetaVersion.UNCHECKED);
 
         return success;
     }

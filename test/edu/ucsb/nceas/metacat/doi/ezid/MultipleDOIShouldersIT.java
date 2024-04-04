@@ -1,82 +1,90 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2020 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *  Purpose: To test the Access Controls in metacat by JUnit
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.doi.ezid;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.UUID;
 
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.v2.formats.ObjectFormatCache;
-import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
+import org.mockito.MockedStatic;
 
+import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
-import edu.ucsb.nceas.metacat.dataone.MockCNode;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
- * To test the scenario that Metacat supports multiple shoulders. 
+ * To test the scenario that Metacat supports multiple shoulders.
  * The first shoulder is the primary one. It uses for both minting and registering DOIs.
  * The second and beyond shoulders are only for registering DOIs.
- * Currently the testing only works on the ezid stage environment. 
+ * Currently the testing only works in the ezid stage environment.
+ * In order to make this test class work, you need change the doi username/password
+ * in the test/test.properties file.
  * @author tao
  *
  */
-public class MultipleDOIShouldersIT extends D1NodeServiceTest {
+public class MultipleDOIShouldersIT {
     private static final String PROPERTY_SHOULDER_1 = "guid.doi.doishoulder.1";
     private static final String PROPERTY_SHOULDER_2 = "guid.doi.doishoulder.2";
     private static final String SHOULDER_1 = "doi:10.18739/A2";
     private static final String SHOULDER_2 = "doi:10.5063/";
-    
-    /**
-     * Constructor
-     * @param name
-     */
-    public MultipleDOIShouldersIT(String name) {
-        super(name);
-    }
-    
+
+    private D1NodeServiceTest d1NodeServiceTest;
+    private MockHttpServletRequest request;
+    private MockedStatic<PropertyService> closeableMock;
+
     /**
      * Set up the test fixtures
      * @throws Exception
      */
     @Before
     public void setUp() throws Exception {
-        super.setUp();
-        // set up the configuration for d1client
-        Settings.getConfiguration().setProperty("D1Client.cnClassName",
-                MockCNode.class.getName());
-        PropertyService.getInstance().setPropertyNoPersist(PROPERTY_SHOULDER_1, SHOULDER_1);
-        PropertyService.getInstance().setPropertyNoPersist(PROPERTY_SHOULDER_2, SHOULDER_2);
+        d1NodeServiceTest = new D1NodeServiceTest("initialize");
+        final String passwdMsg =
+                """
+                \n* * * * * * * * * * * * * * * * * * *
+                DOI CREDENTIALS NOT SET!
+                Test requires specific values for
+                'guid.doi.username' & 'guid.doi.password'
+                in your test/test.properties file!
+                * * * * * * * * * * * * * * * * * * *
+                """;
+        Properties testProperties = LeanTestUtils.getExpectedProperties();
+        String user = testProperties.getProperty("guid.doi.username");
+        String password = testProperties.getProperty("guid.doi.password");
+        assertNotNull(passwdMsg, user);
+        assertFalse(passwdMsg, user.isBlank());
+        assertNotEquals(passwdMsg, "apitest", user);
+        assertNotNull(passwdMsg, password);
+        assertFalse(passwdMsg, password.isBlank());
+        Properties withProperties = new Properties();
+        withProperties.setProperty("guid.doi.enabled", "true");
+        withProperties.setProperty("guid.doi.baseurl", "https://ezid-stg.cdlib.org/");
+        withProperties.setProperty(PROPERTY_SHOULDER_1, SHOULDER_1);
+        withProperties.setProperty(PROPERTY_SHOULDER_2 , SHOULDER_2);
+        withProperties.setProperty("guid.doi.username", user);
+        withProperties.setProperty("guid.doi.password", password);
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+        request = (MockHttpServletRequest)d1NodeServiceTest.getServletRequest();
     }
 
     /**
@@ -84,32 +92,25 @@ public class MultipleDOIShouldersIT extends D1NodeServiceTest {
      */
     @After
     public void tearDown() {
+        if (closeableMock != null) {
+            closeableMock.close();
+        }
     }
 
-    /**
-     * Build the test suite
-     * @return
-     */
-    public static Test suite() {
-        TestSuite suite = new TestSuite();
-        suite.addTest(new MultipleDOIShouldersIT("testPrimaryShoulder"));
-        suite.addTest(new MultipleDOIShouldersIT("testSecondaryShoulder"));
-        suite.addTest(new MultipleDOIShouldersIT("testNonExistedShoulder"));
-        return suite;
-    }
-    
+
     /**
      * Test to mint and register an DOI by the primary (first) shoulder.
      * @throws Exception
      */
+    @Test
     public void testPrimaryShoulder() throws Exception {
-        printTestHeader("testPrimaryShoulder");
+        D1NodeServiceTest.printTestHeader("testPrimaryShoulder");
         try {
             String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
             EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
           
             // Mint a DOI
-            Session session = getTestSession();
+            Session session = d1NodeServiceTest.getTestSession();
             Identifier guid = MNodeService.getInstance(request).generateIdentifier(session, "DOI", null);
             assertTrue(guid.getValue().startsWith(SHOULDER_1));
             
@@ -129,7 +130,7 @@ public class MultipleDOIShouldersIT extends D1NodeServiceTest {
             // add the actual object for the newly-minted DOI
             SystemMetadata sysmeta = null;
             InputStream object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
-            sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             object.close();
             object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
             sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
@@ -155,10 +156,6 @@ public class MultipleDOIShouldersIT extends D1NodeServiceTest {
                 count++;
             } while (metadata == null && count < RegisterDOITest.MAX_TIMES);
             assertNotNull(metadata);
-            /*Set<String> keys = metadata.keySet();
-            for (String key : keys) {
-                System.out.println("=====the key " + key + " has the value of " + metadata.get(key));
-            }*/
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
             
             // check that the target URI was updated
@@ -169,24 +166,25 @@ public class MultipleDOIShouldersIT extends D1NodeServiceTest {
             fail("Unexpected error: " + e.getMessage());
         }
     }
-    
+
     /**
      * Test to register an DOI with the secondary shoulder.
      * The DOI will be generated by ourself.
      * @throws Exception
      */
+    @Test
     public void testSecondaryShoulder() throws Exception {
-        printTestHeader("testSecondShoulder");
+        D1NodeServiceTest.printTestHeader("testSecondShoulder");
         UUID uuid = UUID.randomUUID();
         String uuidStr = uuid.toString();
         Identifier guid = new Identifier();
         guid.setValue(SHOULDER_2 + uuidStr);
         System.out.println("the guid is " + guid.getValue());
         
-        Session session = getTestSession();
+        Session session = d1NodeServiceTest.getTestSession();
         SystemMetadata sysmeta = null;
         InputStream object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
-        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         object.close();
         object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
@@ -214,10 +212,6 @@ public class MultipleDOIShouldersIT extends D1NodeServiceTest {
             count++;
         } while (metadata == null && count < RegisterDOITest.MAX_TIMES);
         assertNotNull(metadata);
-        /*Set<String> keys = metadata.keySet();
-        for (String key : keys) {
-            System.out.println("=====the key " + key + " has the value of " + metadata.get(key));
-        }*/
         assertTrue(metadata.containsKey("datacite"));
         String datacite = metadata.get("datacite");
         assertTrue(datacite.contains("Test EML package - public-readable from morpho"));
@@ -225,14 +219,15 @@ public class MultipleDOIShouldersIT extends D1NodeServiceTest {
         String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
         assertTrue(registeredTarget.contains(pid.getValue()));
     }
-    
+
     /**
      * Test to register an DOI with a shoulder which is not in the configuration file.
      * The DOI will be generated by ourself.
      * @throws Exception
      */
+    @Test
     public void testNonExistedShoulder() throws Exception {
-        printTestHeader("testNonExistedShoulder");
+        D1NodeServiceTest.printTestHeader("testNonExistedShoulder");
         UUID shoulderUuid = UUID.randomUUID();
         String shoulder = "doi:99.000/" + shoulderUuid.toString() + "/";
         
@@ -242,10 +237,10 @@ public class MultipleDOIShouldersIT extends D1NodeServiceTest {
         guid.setValue(shoulder + uuidStr);
         System.out.println("the guid is " + guid.getValue());
         
-        Session session = getTestSession();
+        Session session = d1NodeServiceTest.getTestSession();
         SystemMetadata sysmeta = null;
         InputStream object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
-        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         object.close();
         object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());

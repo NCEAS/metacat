@@ -1020,12 +1020,15 @@ public class DocumentImpl {
      * @param guid  the dataone identifier associated with the given accnum
      * @param user  the identity of operator
      * @param changeDateModified  if it needs to change the dateModified field in the system metadata
+     * @param sysMetaCheck  check whether the version of the provided '@param sysMeta'
+     *                       matches the version of the existing system metadata
      * @throws SQLException
      * @throws InvalidRequest
      * @throws ServiceFailure
      */
     public static void archive(String accnum, Identifier guid, String user,
-                boolean changeDateModified) throws SQLException, InvalidRequest, ServiceFailure {
+                boolean changeDateModified, SystemMetadataManager.SysMetaVersion sysMetaCheck)
+                                            throws SQLException, InvalidRequest, ServiceFailure {
         if (accnum == null || accnum.isBlank()) {
             throw new InvalidRequest("0000",
                                         "DcoumentImple.delete - the docid can't be null or blank");
@@ -1055,7 +1058,8 @@ public class DocumentImpl {
                 SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
                 if (sysMeta != null) {
                     sysMeta.setArchived(true);
-                    SystemMetadataManager.getInstance().store(sysMeta, changeDateModified, conn);
+                    SystemMetadataManager.getInstance().store(sysMeta, changeDateModified,
+                                                                conn, sysMetaCheck);
                 }
                 // only commit if all of this was successful
                 conn.commit();
