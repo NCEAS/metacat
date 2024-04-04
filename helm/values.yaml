@@ -33,6 +33,10 @@ global:
   ##  &passwordSecretName. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
   ## NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this file for 'passwordSecretName')
   ##
+  ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
+  ## example, if the release name is 'myrelease', the value of name: would be
+  ## 'myrelease-metacat-secrets'.
+  ##
   passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
 
   ## @param global.metacatAppContext The application context to use
@@ -214,7 +218,7 @@ metacat:
   ## IMPORTANT NOTE: each file must contain only one public key. Certificate chains containing
   ## multiple public keys will not work!
   ##
-  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONEIntCA
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONEProdIntCA.pem
 
   ## @param metacat.dataone.certificate.fromHttpHeader.enabled Enable mutual auth with client certs
   ## Setting `true` REQUIRED for all DataONE MN functionality -- mutual authentication with x509

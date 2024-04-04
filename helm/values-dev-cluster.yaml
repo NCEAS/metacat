@@ -13,6 +13,7 @@ global:
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
 
   ## DataONE Member Node (MN) Parameters
   dataone.certificate.fromHttpHeader.enabled: true

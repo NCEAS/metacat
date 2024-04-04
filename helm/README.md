@@ -18,13 +18,15 @@ $ vim helm/admin/secrets.yaml    ## follow the instructions in this file
 #    * * * from the metacat repo root directory: * * *
 $ ./helm-install.sh  myreleasename  mynamespace  ./helm
 ```
-
-You should then be able to access the application via http://localhost/metacat! **Note** you should
+[comment]: # (TODO - review)
+You should then be able to access the application via http://localhost/metacat! **Note** you 
+should
 not need to edit anything in [values.yaml](./values.yaml), if your dev setup is fairly standard.
 You can also look at the contents of values overlay files
 [./values-dev-local.yaml](./values-dev-local.yaml) and
 [./values-dev-cluster.yaml](./values-dev-cluster.yaml), to see which settings typically need to be
 changed.
+[comment]: # (TODO - end)
 
 ## Introduction
 
@@ -33,9 +35,11 @@ using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
+[comment]: # (TODO - review)
 - Kubernetes 1.19+
 - Helm 3.2.0+
 - PV provisioner support in the underlying infrastructure
+[comment]: # (TODO - end)
 
 ## Installing the Chart
 
@@ -49,8 +53,9 @@ This command deploys Metacat on the Kubernetes cluster in the default configurat
 [Parameters](#parameters) section lists the parameters that can be configured during
 installation.
 
-> **Tip**: Some settings in [values.yaml](./values.yaml) depend upon the release name. See the
-> [Parameters](#parameters) section for Descriptions that include "RELEASE PREFIX"
+> **Note**: Some settings need to be edited to include release name that you choose. See the
+> [values.yaml](./values.yaml) file for settings that include `${RELEASE_NAME}`. The instructions
+> at the beginning of [values.yaml](./values.yaml) suggest simple ways to achieve this.
 
 Parameters may be provided on the command line to override those in values.yaml; e.g.
 
@@ -368,13 +373,18 @@ identified by the key" `DataONEauthToken`. For example, assuming the token is in
 #### Installing the CA Intermediate Certificate
 
 Install the cert in a Kubernetes ConfigMap named `<yourReleaseName>-d1-certs-public`,
-identified by the key: `DataONEIntCA`. For example, assuming the token is in a file
+identified by the key: `DataONEProdIntCA.pem`. For example, assuming the token is in a file
 `DataONEProdIntCA.pem`:
 
   ```shell
   kubectl create configmap generic <yourReleaseName>-d1-certs-public \
-                                --from-file=DataONEIntCA=DataONEProdIntCA.pem
+                                --from-file=DataONEProdIntCA.pem=DataONEProdIntCA.pem
   ```
+> **Tip:**
+> If you change the ConfigMap key from `DataONEProdIntCA.pem` to a different value, make sure that 
+> `metacat.cn.server.publiccert.filename` in values.yaml has a filename that matches the new key!
+> Also note that you may include more than one cert, if you need to authenticate requests from 
+> tokens issued by different CAs. See the documentation in values.yaml
 
 ### Setting up a TLS Certificate(s) for HTTPS Traffic
 
