@@ -2,7 +2,7 @@
 ## This template populates a custom header ("X-Proxy-Key") with a shared secret. The nginx ingress
 ## then includes this header with any incoming requests that include x509 client certs. Upon
 ## receiving this secret, metacat can then trust that incoming client-cert-authorized requests
-## requests have really been authorized by the ingress, and are not being spoofed.
+## have really been authorized by the ingress, and are not being spoofed.
 ##
 ## NOTE: this setup works with "ingress-nginx", the Kubernetes open source community version of the
 ## nginx ingress (see https://github.com/kubernetes/ingress-nginx ). It has not been tested with
