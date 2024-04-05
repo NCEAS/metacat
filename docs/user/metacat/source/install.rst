@@ -934,67 +934,6 @@ Your context will be "metacat" unless you changed the name of the metacat.war fi
 something else. The servlet may require a few seconds to start up, but once it
 is running, you will be presented with the Authorization Configuration screen.
 
-Optional Installation Options (LSID Server)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. Note::
-
-  The support for LSID identifiers is deprecated, and is being replaced with
-  support for DOI_ identifiers in a future release. We are maintaining support
-  for LSIDs on one particular site, but this support will be removed in a
-  future version of Metacat.
-
-.. _DOI: http://www.doi.org/
-
-Metacat's optional LSID server allows Metacat to use a standardized syntax for
-identifying data sets, in addition to Metacat's internal, custom scheme for
-identifiers. LSIDs were designed to identify complex biological entities with
-short identifiers (much like DOIs in publishing) that are both computer and
-human readable. LSID identifiers are URIs and are therefore usable in many
-Internet applications, but they also cleanly separate the identity of a data
-set (i.e., its permanent identifier) from its current location (e.g., the list
-of URLs from which it might be retrieved).  LSIDs accomplish this by using a
-level of indirection; the identifier represents simply a name without location,
-but an associated resolver service can be used to locate the current location
-of the data and metadata for the data set.  This is accomplished by establishing
-a well-known location for the resolution service for each authority using an
-infrequently used feature of the domain name system called SRV records.  At its
-most basic, resolution of an identifier is performed when a client looks up the
-SRV record for an LSID by querying DNS, which returns the current host and port
-of the authority web service, which is in turn used to locate the data and
-metadata.
-
-Using LSIDs to identify data records is being debated among members of the
-Taxonomic Databases Working Group (TDWG).  There are several alternate
-technologies that are under consideration (e.g., DOI_, plain http URIs), and so
-at this time the support for LSIDs in Metacat has been created on an
-experimental basis only.  If the LSID approach is ratified by the broader
-community, we will expand support for LSIDs in Metacat, but until then it is an
-optional and experimental feature.
-
-The format of an LSID is:: 
-
-  urn:lsid:<Authority>:<Namespace>:<ObjectID>[:<Version>]
-  e.g., urn:lsid:ecoinformatics.org:tao:12039:1
-
-When you enable the Metacat LSID support, you can use LSID clients (such as
-LSID Launchpad) and LSID notation to query Metacat for data and metadata. LSID
-notation can be used directly in Metacat HTTP queries as well. For example, a
-data package with an ID tao.12039.1 that is stored in a Metacat available at:
-http://example.com:9999 can be accessed by the following HTTP Metacat queries::
-
-  http://example.com:9999/authority/data?lsid=urn:lsid:ecoinformatics.org:tao:12039:1
-  (To return the data)
-
-  http://example.com:9999/authority/metadata?lsid=urn:lsid:ecoinformatics.org:tao:12039:1
-  (To return the metadata)
-
-Notice that in the HTTP query strings, the periods in the data package ID have
-been replaced with colons. The authority (ecoinformatics.org) must be properly
-configured by the Metacat administrator. Note: In order to configure the
-authority, you must have access to the DNS server for the Metacat domain.
-Further instructions are provided below.
-
 Troubleshooting
 ~~~~~~~~~~~~~~~
 We keep and update a list of common problems and their solutions on the KNB
