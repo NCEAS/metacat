@@ -183,14 +183,14 @@ for the changes to take effect.
 
    The Metacat settings as they appear after having been configured.
    
-Global Properties (server, ports, etc)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Global Properties (server, solr, db, etc)
+-----------------------------------------
 The Metacat configurations included under Global Properties represent the bulk 
 of the settings required to run Metacat. Click a blue question-mark 
 icon beside any setting for detailed instructions. More information about each 
 property is also included in the :doc:`metacat-properties`.
 
-.. figure:: images/screenshots/image021.png
+.. figure:: images/screenshots/image021_globalprops.png
    :align: center
 
    The Metacat Global Properties editing screen.
