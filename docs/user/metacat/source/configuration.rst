@@ -110,7 +110,7 @@ To edit the authentication configuration file:
 
   ::
 
-    auth.administrators  - a semicolon-separated list of administrators' ORCID IDs
+    auth.administrators  - a semicolon-separated list of administrators' ORCID iDs
     auth.url             - the authentication server URL
     auth.surl            - the authentication secure server URL
     auth.file.path       - the authentication password file path
@@ -120,18 +120,23 @@ To edit the authentication configuration file:
 
 Logging in to Metacat
 ---------------------
-In order to configure Metacat, you must log in with an administrative account 
-that has been configured in the Authentication Configuration settings. If you 
-did not set up the correct administrative user there, you must change the 
-authentication configuration by hand before you can log in.
+In order to configure Metacat, you must log in with an administrative account (ex. ORCID iD)
+that has been configured in the Authentication Configuration settings. If you did not set up the
+correct administrative user there, you must change the authentication configuration by hand
+before you can log in.
 
-In the log-in screen enter your user name and password and click 
-the "Login" button.
+In the log-in screen, click "Sign in with ORCID". You will be redirected to ORCID's login screen and
+back to Metacat after successfully signing in with the correct administrative account.
 
-.. figure:: images/screenshots/image015.png
+.. figure:: images/screenshots/image015_orcidlogin.png
    :align: center
 
    Logging into Metacat.
+
+.. figure:: images/screenshots/image016_signintoorcid.png
+   :align: center
+
+   Sign into ORCID with the adminstrative account set during the auth configuration process.
    
 Required Configuration
 ----------------------
