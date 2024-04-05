@@ -217,16 +217,35 @@ Deploy Location            The directory where the application is deployed.
 Site Properties Directory  Directory in which to store the metacat-site.properties file.
 =========================  =============================================================
 
+  **Reminder:**
 
-.. Note:: 
-
-  The Solr Home directory you choose should be writable/readable by the user solr.
+    * The Solr Home directory you choose should be writable/readable by the user **solr**.
   
-  The Environment Overwrites File should be writable/readable by the user tomcat8.
+    * The Environment Overwrites File should be writable/readable by the user **tomcat9**.
   
   The section of Tomcat And Solr User Management on the `Solr installation page`_ will resolve this issue.
 
 .. _Solr installation page: ./install.html#solr-server
+
+Lastly, a valid auth token is required for a Metacat 3.0.0 installation to function correctly
+(i.e. to handle private datasets). Please `contact DataONE`_ to obtain a long-term token (valid for 1 year)
+
+  If you are already part of the DataONE network and have a member node, we will issue you a token
+  linked to your DataONE Node identity.
+
+  If you're not a DataONE member node, we `encourage you to join`_ (it's free!) so that your data
+  can partake in DataONE's goal of the preservation of scientific data for future use.
+
+  Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
+
+**This is only an interim requirement**; a future release of Metacat will remove the need for this token.
+If you are checking out Metacat for the first time, you can obtain a temporary token to continue
+evaluating Metacat by logging into the KNB website, and navigating to "My Profile" -> "Settings" -> "Authentication Token".
+Note - this token is only valid for 24 hours, but you can continue manually retrieving short-term tokens
+
+.. _contact DataONE: https://www.dataone.org/contact/
+
+.. _encourage you to join: https://www.dataone.org/jointhenetwork/
 
 Authentication Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
