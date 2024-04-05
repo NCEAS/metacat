@@ -144,16 +144,13 @@ All required Metacat settings can be accessed from the Metacat Configuration
 utility, which becomes available after the initial configurations 
 have been specified and an authorized administrator logs in. 
 
-.. figure:: images/screenshots/image017.png
+.. figure:: images/screenshots/image017_configupdated.png
    :align: center
 
    Metacat configuration menu, showing each configuration section.  Once all
    sections are marked as green ``configured``, metacat can be accessed.
 
-The configuration settings are grouped into five sections (Metacat Global 
-Properties, Authentication Configuration, Skins Specific Properties, Database 
-Installation/Upgrade, Geoserver, DataONE, and Replication Configuration), 
-each of which is listed with its current status (see table).
+Each configuration section has three statuses:
 
 ==============  =============================================================
 Status          Description
@@ -168,23 +165,20 @@ To the right of each configuration section is one of the following options:
 Configure Now, Reconfigure Now, Configure Global Properties First, or 
 Version:X.X.X. If the option is linked (e.g., Configure Now or Reconfigure Now), 
 you can select the link to open the associated configuration settings and edit them. 
-If the option is not linked (e.g., Configure Global 
-Properties First), the settings cannot be specified until the global properties 
-are set. Once the global properties are configured, the option to configure this 
-section becomes available. The Version:X.X.X option is used only for the 
-Database Installation/Upgrade section. If the database schema version detected 
-by Metacat matches the application version (eg, 1.9.0), then no further database 
-configuration is required.
+If the option is not linked (e.g., Configure Global Properties First), the settings
+cannot be specified until the global properties are set. Once the global properties
+are configured, the option to configure this section becomes available.
+The Version:X.X.X option is used only for the Database Installation/Upgrade section.
+If the database schema version detected by Metacat matches the application version (e.g., 3.0.0),
+then no further database configuration is required.
 
 All settings must be in a configured or bypassed state in order to run Metacat. 
-For new installations or upgrades, click the "go to metacat" link that appears 
-after configuration is complete to go directly to Metacat. Note that Metacat 
-indexes at start-up time, so the initial start-up may take some time depending 
+Note that Metacat indexes at start-up time, so the initial start-up may take some time depending
 on the amount of data in your database and whether or not you have opted to regenerate the spatial
 cache. If you are reconfiguring a running version of Metacat, you must restart the Tomcat server
 for the changes to take effect.
    
-.. figure:: images/screenshots/image019.png
+.. figure:: images/screenshots/image019_configured.png
    :align: center
 
    The Metacat settings as they appear after having been configured.
