@@ -773,10 +773,18 @@ dataone-indexer:
   solr:
     ## @param dataone-indexer.solr.customCollection name of the solr collection to use
     ## (optional override of indexer-assigned name). Do not leave blank
+    ## NOTE: if you change this value after having run metacat for the first time, you may need
+    ## to delete and re-create the PVCs and PVs used by solr, in order for the new settings to
+    ## become effective
+    ##
     customCollection: metacat-index
 
     ## @param dataone-indexer.solr.coreNames Solr core names to be created
     ## (optional override of indexer-assigned names)
+    ## NOTE: if you change this value after having run metacat for the first time, you may need
+    ## to delete and re-create the PVCs and PVs used by solr, in order for the new settings to
+    ## become effective
+    ##
     coreNames:
       - metacat-core
 
