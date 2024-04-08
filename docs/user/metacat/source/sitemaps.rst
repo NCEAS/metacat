@@ -8,10 +8,10 @@ Metacat so that individual metadata entries are available via Web searches
 is with a sitemap. Metacat automatically creates sitemaps for all public
 documents in the repository that meet these criteria:
 
-- Is publicly readable
-- Is metadata
-- Is the newest version in a version chain
-- Is not archived
+ - Is publicly readable
+ - Is metadata
+ - Is the newest version in a version chain
+ - Is not archived
 
 However, you must register the sitemaps with the search engine before it will
 take effect.
@@ -23,19 +23,22 @@ Metacat's sitemaps functionality is controlled by four properties in Metacat's
 configuration settings. (For more details on changing Metacat's configuration, see
 :ref:`configuration-properties-overview`):
 
-- ``sitemap.enabled``: Controls whether sitemaps are automatically generated
-  while Metacat is running. Defaults to true.
-- ``sitemap.interval``: Controls the interval, in milliseconds, between
-  rebuilding the sitemap index and sitemap files.
-- ``sitemap.location.base``: Controls the URL pattern used in the
-  ``sitemap_index.xml`` file. You can use either a full URL
-  (e.g., ``https://example.com/some_path``) or a URL relative to your server
-  (e.g., ``/some_path``). This is different than the ``sitemap.entry.base``
-  property (see directly below).
-- ``sitemap.entry.base``: Controls the URL pattern used for the entires in the
-  individual sitemap files (e.g., ``sitemap1.xml``). You can use either a full
-  URL (e.g., ``https://example.com/some_path``) or a URL relative to your
-  server (e.g., ``/some_path``).
+ - ``sitemap.enabled``: Controls whether sitemaps are automatically generated
+   while Metacat is running. Defaults to true.
+
+ - ``sitemap.interval``: Controls the interval, in milliseconds, between
+   rebuilding the sitemap index and sitemap files.
+
+ - ``sitemap.location.base``: Controls the URL pattern used in the
+   ``sitemap_index.xml`` file. You can use either a full URL
+   (e.g., ``https://example.com/some_path``) or a URL relative to your server
+   (e.g., ``/some_path``). This is different than the ``sitemap.entry.base``
+   property (see directly below).
+
+ - ``sitemap.entry.base``: Controls the URL pattern used for the entires in the
+   individual sitemap files (e.g., ``sitemap1.xml``). You can use either a full
+   URL (e.g., ``https://example.com/some_path``) or a URL relative to your
+   server (e.g., ``/some_path``).
 
 Creating a Sitemap
 ------------------
@@ -78,9 +81,9 @@ As an example, a sample configuration is presented for the Apache 2 web server
 that uses `mod_rewrite` to redirect clients accessing your sitemaps from the top
 level of your website to their location under the Metacat deployment context:
 
-(Note: Ensure `mod_rewrite` is enabled)
+ **Note:** Ensure `mod_rewrite` is enabled
 
-.. code-block:: text
+  ::
 
     RewriteRule ^/(sitemap.+) /metacat/sitemaps/$1 [R=303]
 
@@ -89,7 +92,7 @@ of the ``sitemap_index.xml``. e.g., for example.org:
 
 ``robots.txt``:
 
-.. code-block:: text
+  ::
 
     User-agent: *
     Allow: /
@@ -102,16 +105,17 @@ Before Google will begin indexing the public files in your Metacat, you must
 register the sitemaps. To register your sitemaps and ensure that they are up
 to date:
 
-1. Register for a Google Webmaster Tools account, and add your Metacat
-   site to the Dashboard.
-2. From your Google Webmaster Tools site account, register your sitemaps.
-   See the Google help site for more information about how to register sitemaps.
-   Note: Register the full URL path to your sitemap files, including
-   the http:// (or https://) headers.
+ 1. Register for a Google Webmaster Tools account, and add your Metacat
+    site to the Dashboard.
+
+ 2. From your Google Webmaster Tools site account, register your sitemaps.
+    See the Google help site for more information about how to register sitemaps.
+    Note: Register the full URL path to your sitemap files, including
+    the http:// (or https://) headers.
 
 Once the sitemaps are registered, Google will begin to index the public
 documents in your Metacat repository.
 
-NOTE: As you add more publicly accessible data to Metacat, you will need to
-periodically revisit the Google Webmaster Tools utility to refresh your
-sitemap registration.
+ **Reminder:** As you add more publicly accessible data to Metacat, you will need to
+ periodically revisit the Google Webmaster Tools utility to refresh your
+ sitemap registration.
