@@ -326,22 +326,22 @@ and continue to configure Metacat. The instructions for adding users to groups c
 Tomcat And Solr User Management part of the `Solr installation page`_.
 
 DataONE Configuration
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 Metacat can be configured to operate as a Member Node within the DataONE
 federation of data repositories.  See :doc:`dataone` for background and details
 on DataONE and details about configuring Metacat to act as a DataONE Member Node.
 
-EZID Configuration
-~~~~~~~~~~~~~~~~~~
+DOI Service Configuration
+-------------------------
 Metacat can be configured to assign Digital Object Identifiers (DOIs) to metadata/data objects
 through a EZID service. Click a blue question-mark icon beside any setting for detailed instructions.
 More information about each property is also included in the :doc:`metacat-properties`.
 
-.. figure:: images/screenshots/image072.png
+.. figure:: images/screenshots/image072_doiupdated.png
    :align: center
    :width: 900px
 
-   Configuring EZID service.
+   Configuring DOI Service Configuration with EZID service.
 
 Additional Configuration
 ------------------------
