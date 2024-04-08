@@ -130,7 +130,6 @@ jk.conf                 Sample JkMount configuration file used by Apache on Ubun
 workers.properties      Sample workers definition file used by Apache on Ubuntu/Debian Linux systems.
 metacat-index.war       The Metacat Index WAR for supporting SOLR query features Optional unless Metacat UI is being used.
 metacatui.war           The Metacat UI - can be deployed as a webapp or directly in webserverMetacat UI requires metacat-index be deployed and configured.
-authority.war           The optional LSID Server application WAR
 =====================   ==================================================================================================================================
 
 
@@ -774,21 +773,15 @@ instructions for installing from source:
 
   Note: Typically, Tomcat will look for its application files (WAR files) in the
   ``<tomcat_home>/webapps`` directory. Your instance of Tomcat may be configured to
-  look in a different directory. 
+  look in a different directory.
 
-5. If you have been (or would like to start) running an LSID server, copy the new authority.war file to the Tomcat applications directory. For more information about the LSID server, please see Optional Installation Options. 
-
-  ::
-   
-    sudo cp <metacat_package_dir>/authority.war <tomcat_app_dir>
-
-6. Restart Tomcat (and Apache if you have Tomcat integrated with it). Log in as the user that runs your Tomcat server (often "tomcat"), and type:  
+5. Restart Tomcat (and Apache if you have Tomcat integrated with it). Log in as the user that runs your Tomcat server (often "tomcat"), and type:
 
   ::
 
     /etc/init.d/tomcat9 restart
 
-7. Run your new Metacat servlet. Go to a Web browser and visit your installed
+6. Run your new Metacat servlet. Go to a Web browser and visit your installed
 Metacat application, using a URL of the form: 
 
   ::
