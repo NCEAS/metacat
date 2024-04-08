@@ -252,10 +252,12 @@ Because the Database Configuration is dependent on values specified in the
 Global Properties section, the link to these settings does not become active 
 until after the global settings have been saved. Once the global settings have 
 been saved, Metacat automatically detects the database schema version and 
-upgrades it if necessary (and with your permission). 
+upgrades it if necessary (and with your permission). There are two expected
+database configuration statuses:
 
-* New Installation
-* Upgrade
+ * New Installation
+
+ * Upgrade
 
 New Installation
 ................
@@ -298,14 +300,12 @@ until after the global settings have been saved. Once the global settings have
 been saved, Metacat automatically detects the status of the Solr Core and creates 
 or upgrades it if necessary (and with your permission). 
 
-
-.. figure:: images/screenshots/image073.png
+.. figure:: images/screenshots/image073_solrupdate.png
    :align: center
-   :width: 1200px
 
-.. Note:: 
+**Note: Your Solr server should be running when you configure Metacat.**
 
-  Solr server should be running when you configure Metacat.
+  If it is not, please see the `Solr installation page`_.
    
 Troubleshooting
 ...............
