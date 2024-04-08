@@ -10,19 +10,19 @@
       <h3>{{ _('Navigation') }}</h3>
       <ul>
 
-        {%- if pagename != "search" %}
-        <li class="right">
-        <span id="searchbox" style="display: none;">
-            <form class="search" action="{{ pathto('search') }}" method="get">
-              <input type="text" name="q" size="18" />
-              <input type="submit" value="{{ _('Go') }}" class="icon-search"/>
-              <input type="hidden" name="check_keywords" value="yes" />
-              <input type="hidden" name="area" value="default" />
-            </form>
-        </span>
-        </li>
-        <script type="text/javascript">$('#searchbox').show(0);</script>
-        {%- endif %}
+<!--        {%- if pagename != "search" %}-->
+<!--        <li class="right">-->
+<!--        <span id="searchbox" style="display: none;">-->
+<!--            <form class="search" action="{{ pathto('search') }}" method="get">-->
+<!--              <input type="text" name="q" size="18" />-->
+<!--              <input type="submit" value="{{ _('Go') }}" class="icon-search"/>-->
+<!--              <input type="hidden" name="check_keywords" value="yes" />-->
+<!--              <input type="hidden" name="area" value="default" />-->
+<!--            </form>-->
+<!--        </span>-->
+<!--        </li>-->
+<!--        <script type="text/javascript">$('#searchbox').show(0);</script>-->
+<!--        {%- endif %}-->
 
         {%- for rellink in rellinks %}
         <li class="right">
@@ -90,23 +90,23 @@
           {%- if customsidebar %}
           {% include customsidebar %}
           {%- endif %}
-          {%- block sidebarsearch %}
-          {%- if pagename != "search" %}
-          <div id="searchbox" style="display: none">
-            <h3>{{ _('Quick search') }}</h3>
-              <form class="search" action="{{ pathto('search') }}" method="get">
-                <input type="text" name="q" size="18" />
-                <input type="submit" value="{{ _('Go') }}" />
-                <input type="hidden" name="check_keywords" value="yes" />
-                <input type="hidden" name="area" value="default" />
-              </form>
-              <p class="searchtip" style="font-size: 90%">
-              {{ _('Enter search terms or a module, class or function name.') }}
-              </p>
-          </div>
-          <script type="text/javascript">$('#searchbox').show(0);</script>
-          {%- endif %}
-          {%- endblock %}
+<!--          {%- block sidebarsearch %}-->
+<!--          {%- if pagename != "search" %}-->
+<!--          <div id="searchbox" style="display: none">-->
+<!--            <h3>{{ _('Quick search') }}</h3>-->
+<!--              <form class="search" action="{{ pathto('search') }}" method="get">-->
+<!--                <input type="text" name="q" size="18" />-->
+<!--                <input type="submit" value="{{ _('Go') }}" />-->
+<!--                <input type="hidden" name="check_keywords" value="yes" />-->
+<!--                <input type="hidden" name="area" value="default" />-->
+<!--              </form>-->
+<!--              <p class="searchtip" style="font-size: 90%">-->
+<!--              {{ _('Enter search terms or a module, class or function name.') }}-->
+<!--              </p>-->
+<!--          </div>-->
+<!--          <script type="text/javascript">$('#searchbox').show(0);</script>-->
+<!--          {%- endif %}-->
+<!--          {%- endblock %}-->
         </div>
       </div>
       {%- endif %}{% endif %}
@@ -127,15 +127,15 @@
     <link rel="stylesheet" href="{{ pathto('_static/pygments.css', 1) }}" type="text/css" />
     <link rel="stylesheet" href="{{ pathto('_static/' + styles[0], 1) }}" type="text/css" />
     {%- if not embedded %}
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '{{ pathto("", 1) }}',
-        VERSION:     '{{ release|e }}',
-        COLLAPSE_MODINDEX: false,
-        FILE_SUFFIX: '{{ file_suffix }}',
-        HAS_SOURCE:  {{ has_source|lower }}
-      };
-    </script>
+<!--    <script type="text/javascript">-->
+<!--      var DOCUMENTATION_OPTIONS = {-->
+<!--        URL_ROOT:    '{{ pathto("", 1) }}',-->
+<!--        VERSION:     '{{ release|e }}',-->
+<!--        COLLAPSE_MODINDEX: false,-->
+<!--        FILE_SUFFIX: '{{ file_suffix }}',-->
+<!--        HAS_SOURCE:  {{ has_source|lower }}-->
+<!--      };-->
+<!--    </script>-->
     {%- for scriptfile in script_files %}
     <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
     {%- endfor %}
