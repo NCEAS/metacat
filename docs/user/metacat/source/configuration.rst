@@ -230,7 +230,6 @@ Site Properties Directory  Directory in which to store the metacat-site.properti
 
 Auth Token (Interim Requirement)
 ................................
-
 Lastly, a valid auth token is required for a Metacat v3.0.0 installation to function correctly
 (i.e. to handle private datasets). Please `contact DataONE`_ to obtain a long-term token (valid for 1 year).
 **This is only an interim requirement**; a future release of Metacat will remove the need for this token.
@@ -251,6 +250,21 @@ evaluating Metacat by logging into the KNB website, and navigating to "My Profil
 .. _contact DataONE: https://www.dataone.org/contact/
 
 .. _encourage you to join: https://www.dataone.org/jointhenetwork/
+
+Token Configuration: Storing the Auth Token
+...........................................
+After obtaining an auth token, save it to the default path (below). If you wish to save it elsewhere,
+be sure to update the global properties' ``dataone.nodeToken.file`` value with your custom path.
+
+ **Default Value**:
+
+ ::
+
+   /var/metacat/certs/token
+
+Token Configuration: Token Verification Certificate
+...................................................
+TODO: Determine whether this section is needed.
 
 Database Configuration
 ----------------------
