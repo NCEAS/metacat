@@ -246,59 +246,6 @@ Note - this token is only valid for 24 hours, but you can continue manually retr
 
 .. _encourage you to join: https://www.dataone.org/jointhenetwork/
 
-MetacatUI Themes
-................
-Themes are applied in the Skins Configuration section. If you have installed 
-the optional Registry, which provides a web interface for creating, editing, 
-and submitting content to Metacat, you can also choose which form fields 
-appear in that interface and which are required. Note that if you do not have 
-a custom theme AND you are not using the Registry, you can simply save the 
-``metacatui`` default configuration.
-
-To use the new MetacatUI theming system, select ``metacatui`` and click the 
-``Make metacatui default`` radio button. Metacat will open a list of options 
-that apply to the Registry interface. For more information about creating 
-custom themes, see the section called :doc:`themes`.
-
-.. figure:: images/screenshots/image070.png
-   :align: center
-   :width: 1100px
-
-   Configuring Metacat themes.
-
-Skins
-.....
-
-.. deprecated:: 2.2.0
-   Use ``themes`` instead; see :doc:`themes`
-
-   To use MetacatUI themes, select ``metacatui`` as the default skin during skin configuration
-   in the administration interface.
-
-If your Metacat has a customized skin, it will appear as a choice in the
-Skins Configuration settings (see below screenshot). Select the checkbox next
-to your customized skin or and click the ``Make <skin_name> default`` radio button.
-If you do not have a custom skin, select the ``default`` skin.
-
-Once you have selected a skin, Metacat will open a list of options that apply to the Registry
-interface. For more information about creating skins, see the Creating a Custom Skin
-section in :doc:`themes`.
-
-.. figure:: images/screenshots/image023.png
-   :align: center
-   :width: 1100px
-
-   Configuring Metacat skins.
-
-Select the checkbox next to your customized skin or and click the
-``Make <skin_name> default`` radio button. If you do not have a custom skin,
-select the ``default`` skin. Once you have selected a skin, Metacat will open
-a list of options that apply to the Registry interface.
-
-Select the lists and modules that you would like to appear in the Registry
-form-interface by checking the box beside each. When you save the configuration,
-the customized interface will appear to site visitors.
-
 Database Configuration
 ~~~~~~~~~~~~~~~~~~~~~~
 Because the Database Configuration is dependent on values specified in the 
@@ -439,23 +386,10 @@ environment variables.
 Full details on how to set these values and how they are used by Metacat can be found in the
 Appendix, under: :ref:`secret-properties`.
 
-<SKIN_NAME>.properties
-~~~~~~~~~~~~~~~~~~~~~~
-.. deprecated:: 2.2.0
-   Use ``themes`` instead; see :doc:`themes`
-
-The ``<SKIN_NAME>.properties`` file contains skin-specific properties
-(e.g., template information). For each skin, the skin-specific properties are 
-found here::
-
-  <CONTEXT_DIR>/style/skins/<SKIN_NAME>/<SKIN_NAME>.properties
-
-Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application code 
-lives (described above) and ``<SKIN_NAME>`` is the name of the skin 
 (e.g., ``default`` or ``nceas``).
 
-Additional configuration for Tomcat 7
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Additional Configuration for Tomcat 7
+-------------------------------------
 When running Metacat on Tomcat 7, you may get the following 
 error logging in via the Morpho application: "Fatal error sending data to Metacat: Bad Set_Cookie header:JSESSIONID=...".
 In order to fix the issue, modify <Catalina_HOME>/conf/context.xml 
@@ -466,3 +400,10 @@ In order to fix the issue, modify <Catalina_HOME>/conf/context.xml
 Then restart Tomcat 7.
 
 .. include:: ./readonly.rst
+
+MetacatUI Themes
+----------------
+Metacat's default web interface `metacatui`_ can be easily modified. Please visit the `metacatui`_
+docs to learn more and get started.
+
+.. _metacatui: https://nceas.github.io/metacatui/
