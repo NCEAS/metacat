@@ -251,12 +251,12 @@ evaluating Metacat by logging into the KNB website, and navigating to "My Profil
 
 .. _encourage you to join: https://www.dataone.org/jointhenetwork/
 
-Token Configuration: Storing the Auth Token
+Token Configuration: Saving the Auth Token
 ...........................................
 After obtaining an auth token, save it to the default path (below). If you wish to save it elsewhere,
 be sure to update the global properties' ``dataone.nodeToken.file`` value with your custom path.
 
- **Default Value**:
+ **Auth Token Path Default Value**:
 
  ::
 
@@ -264,7 +264,20 @@ be sure to update the global properties' ``dataone.nodeToken.file`` value with y
 
 Token Configuration: Token Verification Certificate
 ...................................................
-TODO: Determine whether this section is needed.
+Next, you will need to obtain a DataONE Intermediate Certificate.
+Depending on your needs, there are two available:
+
+ 1. `DataONE Production Intermediate CA Intermediate`_
+
+ 2. `DataONE Test Intermediate CA Certificate`_
+
+ **Note:** the DataONE Intermediate CA certificate is a single certificate, NOT a certificate chain!
+
+.. _DataONE Production Intermediate CA Intermediate: https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem
+.. _DataONE Test Intermediate CA Certificate: https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem
+
+After obtaining the certificate and saving it to your determined location, please set the value in
+the following global property ``cn.server.publiccert.filename`` with the path to the certificate.
 
 Database Configuration
 ----------------------
