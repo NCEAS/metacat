@@ -331,23 +331,6 @@ Metacat can be configured to operate as a Member Node within the DataONE
 federation of data repositories.  See :doc:`dataone` for background and details
 on DataONE and details about configuring Metacat to act as a DataONE Member Node.
 
-Replication Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Metacat can be configured to replicate its metadata and/or data content to another
-Metacat instance for backup and redundancy purposes, as well as to share data across
-sites.  This feature has been used to create the Knowledge Network for Biocomplexity
-(KNB), as well as other networks.  See :doc:`replication` for details on
-the replication system and how to configure Metacat to replicate with another node.
-
-.. Note:: 
-  
-  Note that much of the functionality provided by the replication subsystem in Metacat
-  has now been generalized and standardized by DataONE, so consider utilizing the
-  DataONE services for replication as it is a more general and standardized approach
-  than this Metacat-specific replication system.  The Metacat replication system
-  will be supported for a while longer, but will likely be deprecated in a future
-  release in favor of using the DataONE replication approach. 
-
 EZID Configuration
 ~~~~~~~~~~~~~~~~~~
 Metacat can be configured to assign Digital Object Identifiers (DOIs) to metadata/data objects
