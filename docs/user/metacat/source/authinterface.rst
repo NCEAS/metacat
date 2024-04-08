@@ -19,3 +19,5 @@ can be built. Metacat is written such that this Authentication provider is repla
 another class that implements the same interface (``AuthInterface``). As an Administrator, you have
 the choice to provide an alternative implementation of ``AuthInterface`` and then configuring
 **metacat-site.properties** to use that class for authentication instead of ORCID authentication.
+
+.. include:: ./properties-overview.rst
