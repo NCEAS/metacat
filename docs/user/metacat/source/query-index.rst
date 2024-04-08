@@ -1,41 +1,37 @@
-.. raw:: latex
-
-  \newpage
-
-
 Metacat Indexing
 ===========================
 Metacat v2.1 introduces support for building a SOLR index of Metacat content.
 While we continue to support the "pathquery" search mechanism, this will be phased out 
-in favor of the more efficient SOLR query interface.
+in favor of the more efficient SOLR query interface. Metacat deployments that opt to use
+the Metacat SOLR index will be able to take advantage of:
 
+  * Fast search performance
 
-Metacat deployments that opt to use the Metacat SOLR index will be able to take advantage 
-of:
+  * Built-in paging features
 
-* fast search performance
-* built-in paging features
-* customizable return formats (for advanced admins)
+  * Customizable return formats (for advanced admins)
 
 Indexed documents and fields
 -----------------------------
 Metacat integrates the existing DataONE index library which includes many common metadata formats
 out-of-the-box:
 
-1. EML
-2. FGDC
-3. Dryad*
+  * EML
+
+  * FGDC
+
+  * Dryad*
 
 
 Default indexed fields
 -----------------------
 For a complete listing of the indexed fields, please see the DataONE documentation.
 
-http://mule1.dataone.org/ArchitectureDocs-current/design/SearchMetadata.html
+ http://mule1.dataone.org/ArchitectureDocs-current/design/SearchMetadata.html
 
 Metacat also reports on the currently-indexed fields, simply navigate to:
 
-http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html#MNQuery.getQueryEngineDescription
+ http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html#MNQuery.getQueryEngineDescription
 
 with "solr" as the engine.
 
@@ -45,17 +41,18 @@ Metacat-index is deployed as a separate web application (metacat-index.war) and 
 as a sibling of the Metacat webapp (metacat.war). Deploying metacat-index.war is only required when SOLR support
 is desired (e.g., for MetacatUI) and can safely be omitted if it will not be utilized for any given Metacat deployment.
 
-
 During the initial installation/upgrade, an empty index will be initialized in the configured "solr-home" location.
 Metacat-index will index all the existing Metacat content when the webapp next initializes.
-Note: the configured solr-home directory should not exist before configuring Metacat with indexing for the first time, 
-otherwise the blank index will not be created for metacat-index to utilize.
+
+ **Note:** the configured solr-home directory should not exist before configuring Metacat with indexing for the first time,
+ otherwise the blank index will not be created for metacat-index to utilize.
 
 Additional advanced configuration options may be set. The existing default values for these
 settings (shared between Metacat and Metacat-index) can be viewed in the (non-editable)
 **metacat.properties** file. If you wish to override any of these defaults, the new values may be
-added to the **metacat-site.properties** file. (For more details on locating these files
-and changing Metacat's configurable properties, see :ref:`configuration-properties-overview`).
+added to the **metacat-site.properties** file.
+
+ For more details on locating these files and changing Metacat's configurable properties, see :ref:`configuration-properties-overview`).
 
 
 Adding additional document types and fields
@@ -68,11 +65,11 @@ Querying the index
 The SOLR index can be queried using standard SOLR syntax and return options. 
 The DataONE query interface exposes the SOLR query engine.
 
-http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html#MNQuery.query
+ http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html#MNQuery.query
 
 Please see the SOLR documentation for examples and exhaustive syntax information.
 
-http://lucene.apache.org/solr/
+ http://lucene.apache.org/solr/
 
 
 Access Policy enforcement
@@ -89,8 +86,9 @@ Regenerating the index
 When the SOLR index has been drastically modified, a complete regeneration of the 
 index may be necessary. In order to accomplish this:
 
-1. Login as the Metacat administrator
-2. Navigate to: <host>/<metacat_context>/metacat?action=reindexall
+ 1. Login as the Metacat administrator
+
+ 2. Navigate to: <host>/<metacat_context>/metacat?action=reindexall
 
 
 
