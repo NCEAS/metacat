@@ -176,14 +176,14 @@ All settings must be in a configured or bypassed state in order to run Metacat.
  on the amount of data in your database and whether or not you have opted to regenerate the spatial
  cache. If you are reconfiguring a running version of Metacat, you must restart the Tomcat server
  for the changes to take effect.
-   
+
 .. figure:: images/screenshots/image019_configured.png
    :align: center
 
    The Metacat settings as they appear after having been configured.
    
-Global Properties (server, solr, db, etc)
------------------------------------------
+Global Properties
+-----------------
 The Metacat configurations included under Global Properties represent the bulk 
 of the settings required to run Metacat. Click a blue question-mark 
 icon beside any setting for detailed instructions. More information about each 
@@ -194,8 +194,8 @@ property is also included in the :doc:`metacat-properties`.
 
    The Metacat Global Properties editing screen.
 
-Metacat Initial Property Values
-...............................
+Metacat Initial Global Property Values
+......................................
 When you save global properties, Metacat also saves a back-up file that is 
 located in ``/var/metacat/.metacat`` (on Linux). When you update Metacat, 
 the system automatically locates the back-up file so you do not have to re-enter 
@@ -203,7 +203,7 @@ the configuration settings.
 
 The first time you install Metacat, the system attempts to automatically detect 
 the values for a number of settings (see table). It is important to ensure that 
-these values are correct.
+the following values are the properties below are correct.
 
 =========================  =============================================================
 Property                   Description
@@ -218,43 +218,45 @@ Deploy Location            The directory where the application is deployed.
 Site Properties Directory  Directory in which to store the metacat-site.properties file.
 =========================  =============================================================
 
-  **Reminder:**
+Solr Global Property Values
+...........................
+Please set the solr home directory property ``Solr Home Directory`` and ensure that the solr home
+directory is writable/readable by the user **solr**.
 
-    * The Solr Home directory you choose should be writable/readable by the user **solr**.
-  
-    * The Environment Overwrites File should be writable/readable by the user **tomcat9**.
-  
-  The section of Tomcat And Solr User Management on the `Solr installation page`_ will resolve this issue.
+Please ensure that the ``Environment Override File`` is writable/readable by the Tomcat user (ex. tomcat9).
+
+For additional details, the section of Tomcat And Solr User Management on the `Solr installation page`_
+will resolve this issue.
 
 .. _Solr installation page: ./install.html#solr-server
 
-Auth Token (Interim Requirement)
-................................
-Lastly, a valid auth token is required for a Metacat v3.0.0 installation to function correctly
-(i.e. to handle private datasets). Please `contact DataONE`_ to obtain a long-term token (valid for 1 year).
+Token Configuration (Auth Token & Certificate)
+..............................................
+A valid auth token is required for a Metacat v3.0.0 installation to function correctly
+(i.e. to handle private datasets). Please `contact DataONE`_ to obtain a long-term auth token (valid for 1 year).
 **This is only an interim requirement**; a future release of Metacat will remove the need for this token.
 
-  * If you are already part of the DataONE network and have a member node, we will issue you a token
+  * If you are already part of the DataONE network and have a member node, we will issue you an auth token
   linked to your DataONE Node identity.
 
   * If you're not a DataONE member node, we `encourage you to join`_ (it's free!) so that your data
   can partake in DataONE's goal of the preservation of scientific data for future use.
 
-  * Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
+  * Otherwise, we can issue an auth token linked to your Metacat administrator's ORCID iD.
 
-If you are checking out Metacat for the first time, you can obtain a temporary token to continue
+If you are checking out Metacat for the first time, you can obtain a temporary auth token to continue
 evaluating Metacat by logging into the KNB website, and navigating to "My Profile" -> "Settings" -> "Authentication Token".
 
- **Note:** This token is only valid for 24 hours, but you can continue manually retrieving short-term tokens
+ **Note:** This temporary auth token is only valid for 24 hours, but you can continue manually retrieving short-term tokens
 
 .. _contact DataONE: https://www.dataone.org/contact/
 
 .. _encourage you to join: https://www.dataone.org/jointhenetwork/
 
 Token Configuration: Saving the Auth Token
-...........................................
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 After obtaining an auth token, save it to the default path (below). If you wish to save it elsewhere,
-be sure to update the global properties' ``dataone.nodeToken.file`` value with your custom path.
+be sure to update the global properties' ``Admin Token Path`` value with your custom path.
 
  **Auth Token Path Default Value**:
 
@@ -263,7 +265,7 @@ be sure to update the global properties' ``dataone.nodeToken.file`` value with y
    /var/metacat/certs/token
 
 Token Configuration: Token Verification Certificate
-...................................................
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Next, you will need to obtain a DataONE Intermediate Certificate.
 Depending on your needs, there are two available:
 
@@ -277,7 +279,7 @@ Depending on your needs, there are two available:
 .. _DataONE Test Intermediate CA Certificate: https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem
 
 After obtaining the certificate and saving it to your determined location, please set the value in
-the following global property ``cn.server.publiccert.filename`` with the path to the certificate.
+the following global property ``Token Verification Certificates`` with the path to the certificate.
 
 Database Configuration
 ----------------------
