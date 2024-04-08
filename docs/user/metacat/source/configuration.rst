@@ -36,11 +36,9 @@ settings that need to be backed up before a Metacat upgrade. Instead, custom set
 to a file named ``metacat-site.properties`` that is located outside of the tomcat webapps directory,
 and so is not overwritten by deploying a new Metacat war file.
 
-.. Note::
-
-  If you are unable to access your Metacat admin ORCID iD and need to swap it out, instructions
-  for `Changing Authentication Configuration without Authentication`_ are included at the end of
-  this section.
+ **Note:** If you are unable to access your Metacat admin ORCID iD and need to swap it out, instructions
+ for `Changing Authentication Configuration without Authentication`_ are included at the end of this
+ section.
 
 Authentication Configuration
 ----------------------------
@@ -62,10 +60,11 @@ registering for an ORCID is simple, please visit:
 .. _ORCID authentication: ./authinterface.html
 
 After signing up for an ORCID iD, you can then use it as an admin identity when configuring
-authentication. **Note, your full ORCID iD includes "https://orcid.org/" not just the 16-digit
-ORCID iD**:
+authentication.
 
-  ex. http://orcid.org/0000-0001-2345-6789
+ **Reminder:** Your full ORCID iD includes "https://orcid.org/" not just the 16-digit ORCID iD:
+
+ ex. http://orcid.org/0000-0001-2345-6789
 
 Make sure that your full ORCID iD is entered into the Metacat Administrators field
 (e.g., http://orcid.org/0000-0001-2345-6789). You will not be allowed to continue with configuration
@@ -172,10 +171,11 @@ If the database schema version detected by Metacat matches the application versi
 then no further database configuration is required.
 
 All settings must be in a configured or bypassed state in order to run Metacat. 
-Note that Metacat indexes at start-up time, so the initial start-up may take some time depending
-on the amount of data in your database and whether or not you have opted to regenerate the spatial
-cache. If you are reconfiguring a running version of Metacat, you must restart the Tomcat server
-for the changes to take effect.
+
+ **Reminder:** Metacat indexes at start-up time, so the initial start-up may take some time depending
+ on the amount of data in your database and whether or not you have opted to regenerate the spatial
+ cache. If you are reconfiguring a running version of Metacat, you must restart the Tomcat server
+ for the changes to take effect.
    
 .. figure:: images/screenshots/image019_configured.png
    :align: center
@@ -230,17 +230,18 @@ Lastly, a valid auth token is required for a Metacat v3.0.0 installation to func
 (i.e. to handle private datasets). Please `contact DataONE`_ to obtain a long-term token (valid for 1 year).
 **This is only an interim requirement**; a future release of Metacat will remove the need for this token.
 
-  If you are already part of the DataONE network and have a member node, we will issue you a token
+  * If you are already part of the DataONE network and have a member node, we will issue you a token
   linked to your DataONE Node identity.
 
-  If you're not a DataONE member node, we `encourage you to join`_ (it's free!) so that your data
+  * If you're not a DataONE member node, we `encourage you to join`_ (it's free!) so that your data
   can partake in DataONE's goal of the preservation of scientific data for future use.
 
-  Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
+  * Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
 
 If you are checking out Metacat for the first time, you can obtain a temporary token to continue
 evaluating Metacat by logging into the KNB website, and navigating to "My Profile" -> "Settings" -> "Authentication Token".
-Note - this token is only valid for 24 hours, but you can continue manually retrieving short-term tokens
+
+ **Note:** This token is only valid for 24 hours, but you can continue manually retrieving short-term tokens
 
 .. _contact DataONE: https://www.dataone.org/contact/
 
@@ -298,14 +299,12 @@ Because the Solr Server Configuration is dependent on values specified in the
 Global Properties section, the link to these settings does not become active 
 until after the global settings have been saved. Once the global settings have 
 been saved, Metacat automatically detects the status of the Solr Core and creates 
-or upgrades it if necessary (and with your permission). 
+or upgrades it if necessary (and with your permission).
+
+ **Note:** Your Solr server should be running when you configure Metacat. If it is not, please see the `Solr installation page`_.
 
 .. figure:: images/screenshots/image073_solrupdate.png
    :align: center
-
-**Note: Your Solr server should be running when you configure Metacat.**
-
-  If it is not, please see the `Solr installation page`_.
    
 Troubleshooting
 ...............

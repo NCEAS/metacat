@@ -19,17 +19,17 @@ To cancel the read-only mode, set the property back to "false", then restart Tom
 When Metacat is in **read-only mode**, the following DataONE API methods are
 **disabled**:
 
-**Metacat API**::
+**DataONE Member Node API**
 
-**DataONE Member Node API**::
+::
 
-- MN.create
-- MN.update
-- MN.archive
-- MN.delete
-- MN.replicate
-- MN.systemMetadataChanged
-- MN.updateSystemMetadata
+  - MN.create
+  - MN.update
+  - MN.archive
+  - MN.delete
+  - MN.replicate
+  - MN.systemMetadataChanged
+  - MN.updateSystemMetadata
 
 Methods on the DataONE Coordinating Node API are not disabled because the Coordinating Nodes
 currently have a different read-only mechanism.
