@@ -11,7 +11,7 @@ the Metacat SOLR index will be able to take advantage of:
 
   * Customizable return formats (for advanced admins)
 
-Indexed documents and fields
+Indexed Documents and Fields
 -----------------------------
 Metacat integrates the existing DataONE index library which includes many common metadata formats
 out-of-the-box:
@@ -23,7 +23,7 @@ out-of-the-box:
   * Dryad*
 
 
-Default indexed fields
+Default Indexed Fields
 -----------------------
 For a complete listing of the indexed fields, please see the DataONE documentation.
 
@@ -35,8 +35,8 @@ Metacat also reports on the currently-indexed fields, simply navigate to:
 
 with "solr" as the engine.
 
-Index configuration
-----------------------------
+Index Configuration
+-------------------
 Metacat-index is deployed as a separate web application (metacat-index.war) and should be deployed 
 as a sibling of the Metacat webapp (metacat.war). Deploying metacat-index.war is only required when SOLR support
 is desired (e.g., for MetacatUI) and can safely be omitted if it will not be utilized for any given Metacat deployment.
@@ -55,13 +55,13 @@ added to the **metacat-site.properties** file.
  For more details on locating these files and changing Metacat's configurable properties, see :ref:`configuration-properties-overview`).
 
 
-Adding additional document types and fields
+Adding Additional Document Types and Fields
 --------------------------------------------
 TBD: Step-by-step guide for adding new documents and indexed fields.
 
 
-Querying the index
---------------------
+Querying the Index
+------------------
 The SOLR index can be queried using standard SOLR syntax and return options. 
 The DataONE query interface exposes the SOLR query engine.
 
@@ -72,7 +72,7 @@ Please see the SOLR documentation for examples and exhaustive syntax information
  http://lucene.apache.org/solr/
 
 
-Access Policy enforcement
+Access Policy Enforcement
 -------------------------
 Access control is enforced by the index such that only records that are readable by the 
 user performing the query are returned to the user. Any SOLR query submitted will be 
@@ -81,18 +81,23 @@ authenticated. Both certificate-based (DataONE API) and JSESSIONID-based (Metaca
 authentication are simultaneously supported.
 
 
-Regenerating the index
+Regenerating The Index
 ----------------------
 When the SOLR index has been drastically modified, a complete regeneration of the 
-index may be necessary. In order to accomplish this:
+index may be necessary. Please see the example below to re-index all objects:
 
- 1. Login as the Metacat administrator
+ # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
 
- 2. Navigate to: <host>/<metacat_context>/metacat?action=reindexall
+ # where $TOKEN is an environment variable containing your indexer token (see overview of major changes above).
+
+ **Example:**
+
+ ::
+
+   curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
 
 
-
-Class design overview
+Class Design Overview
 ----------------------
 
 .. figure:: images/indexing-class-diagram.png
