@@ -247,7 +247,7 @@ Note - this token is only valid for 24 hours, but you can continue manually retr
 .. _encourage you to join: https://www.dataone.org/jointhenetwork/
 
 Database Configuration
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 Because the Database Configuration is dependent on values specified in the 
 Global Properties section, the link to these settings does not become active 
 until after the global settings have been saved. Once the global settings have 
@@ -263,7 +263,7 @@ If Metacat determines that your database is new, the Database Install/Upgrade
 utility lists the SQL scripts that will run in order to create a database 
 schema for the new version of Metacat.
 
-.. figure:: images/screenshots/image027.png
+.. figure:: images/screenshots/image027_newdbinstall.png
    :align: center
 
    Database installation creates tables needed for Metacat.
@@ -282,14 +282,9 @@ order to update the schema for the new version of Metacat.
 
 If the detected schema version is incorrect, or if you have any questions about 
 whether it is correct or not, click the Cancel button and contact support at 
-knb-help@nceas.ucsb.edu.When you choose to continue, Metacat runs the listed 
+knb-help@nceas.ucsb.edu. When you choose to continue, Metacat runs the listed
 scripts and updates the database schema.
 
-.. figure:: images/screenshots/image029.png
-   :align: center
-
-   Upgrading an existing database.
-   
 Additional upgrade tasks may also run after the database upgrade is complete.
 For systems hosting large amounts of data, these upgrade routines can take time to complete.
 It is important to let the process complete before using Metacat otherwise your deployment may become unstable.
