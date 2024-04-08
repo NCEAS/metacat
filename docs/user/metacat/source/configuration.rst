@@ -193,7 +193,9 @@ property is also included in the :doc:`metacat-properties`.
    :align: center
 
    The Metacat Global Properties editing screen.
-   
+
+Metacat Initial Property Values
+...............................
 When you save global properties, Metacat also saves a back-up file that is 
 located in ``/var/metacat/.metacat`` (on Linux). When you update Metacat, 
 the system automatically locates the back-up file so you do not have to re-enter 
@@ -225,6 +227,9 @@ Site Properties Directory  Directory in which to store the metacat-site.properti
   The section of Tomcat And Solr User Management on the `Solr installation page`_ will resolve this issue.
 
 .. _Solr installation page: ./install.html#solr-server
+
+Auth Token (Interim Requirement)
+................................
 
 Lastly, a valid auth token is required for a Metacat v3.0.0 installation to function correctly
 (i.e. to handle private datasets). Please `contact DataONE`_ to obtain a long-term token (valid for 1 year).
@@ -294,7 +299,7 @@ It is important to let the process complete before using Metacat otherwise your 
 
 
 Solr Server Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 Because the Solr Server Configuration is dependent on values specified in the 
 Global Properties section, the link to these settings does not become active 
 until after the global settings have been saved. Once the global settings have 
@@ -306,8 +311,8 @@ or upgrades it if necessary (and with your permission).
 .. figure:: images/screenshots/image073_solrupdate.png
    :align: center
    
-Troubleshooting
-...............
+Solr Troubleshooting
+....................
 If you click the Solr Configuration button and get the error message like 
 ``Server refused connection at: http://localhost:8983/solr``, this means the 
 Solr server is not running and you need to start it.
