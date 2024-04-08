@@ -52,7 +52,7 @@ reach the Authentication Configuration page from a running Metacat by typing
   
   http://<your_context_url>/admin
 
-Starting from Metacat 3.0.0, only `ORCID authentication`_ is supported. In Metacat v2.19.0 and
+Starting from Metacat v3.0.0, only `ORCID authentication`_ is supported. In Metacat v2.19.0 and
 previous releases, an internal password file or LDAP was used as the authentication mechanism.
 Password-based and LDAP authentication has been deprecated. If you don't already have an account,
 registering for an ORCID is simple, please visit:
@@ -69,9 +69,8 @@ ORCID iD**:
 
 Make sure that your full ORCID iD is entered into the Metacat Administrators field
 (e.g., http://orcid.org/0000-0001-2345-6789). You will not be allowed to continue with configuration
-if this is missing. In Metacat v2.19.0 and previous releases, multiple accounts can be entered,
-separated by the colon (:) character. Starting from Metacat 3.0.0, please use the
-semi-colon (;) character.
+if this is missing. If you require more than one Metacat administrator, multiple accounts can be
+entered by separating the admin identities with a semi-colon (;) character.
 
 .. figure:: images/screenshots/image071_authconfig.png
    :align: center
@@ -227,8 +226,9 @@ Site Properties Directory  Directory in which to store the metacat-site.properti
 
 .. _Solr installation page: ./install.html#solr-server
 
-Lastly, a valid auth token is required for a Metacat 3.0.0 installation to function correctly
-(i.e. to handle private datasets). Please `contact DataONE`_ to obtain a long-term token (valid for 1 year)
+Lastly, a valid auth token is required for a Metacat v3.0.0 installation to function correctly
+(i.e. to handle private datasets). Please `contact DataONE`_ to obtain a long-term token (valid for 1 year).
+**This is only an interim requirement**; a future release of Metacat will remove the need for this token.
 
   If you are already part of the DataONE network and have a member node, we will issue you a token
   linked to your DataONE Node identity.
@@ -238,7 +238,6 @@ Lastly, a valid auth token is required for a Metacat 3.0.0 installation to funct
 
   Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
 
-**This is only an interim requirement**; a future release of Metacat will remove the need for this token.
 If you are checking out Metacat for the first time, you can obtain a temporary token to continue
 evaluating Metacat by logging into the KNB website, and navigating to "My Profile" -> "Settings" -> "Authentication Token".
 Note - this token is only valid for 24 hours, but you can continue manually retrieving short-term tokens
@@ -246,21 +245,6 @@ Note - this token is only valid for 24 hours, but you can continue manually retr
 .. _contact DataONE: https://www.dataone.org/contact/
 
 .. _encourage you to join: https://www.dataone.org/jointhenetwork/
-
-Authentication Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Because you must specify the Authentication settings before you can access the 
-main configuration page, the settings will always be configured when you view 
-them in the admin interface. If you wish to change the authentication settings, 
-you must restart Metacat to put the changes into effect. For more information 
-about the Authentication configurations, please see Initial Configurations.
-
-Skins Configuration 
-~~~~~~~~~~~~~~~~~~~   
-Customizing the look and feel of Metacat's web interface is done via skins or
-MetacatUI themes, however as of Version 2.2.0, skins have been deprecated. 
-Use MetacatUI themes instead - see :doc:`themes`. Themes can be deployed separately from the
-Metacat server allowing easier independent user interface customization.
 
 MetacatUI Themes
 ................
@@ -294,9 +278,9 @@ Skins
 If your Metacat has a customized skin, it will appear as a choice in the
 Skins Configuration settings (see below screenshot). Select the checkbox next
 to your customized skin or and click the ``Make <skin_name> default`` radio button.
-If you do not have a custom skin, select the ``default`` skin. 
+If you do not have a custom skin, select the ``default`` skin.
 
-Once you have selected a skin, Metacat will open a list of options that apply to the Registry 
+Once you have selected a skin, Metacat will open a list of options that apply to the Registry
 interface. For more information about creating skins, see the Creating a Custom Skin
 section in :doc:`themes`.
 
@@ -305,14 +289,14 @@ section in :doc:`themes`.
    :width: 1100px
 
    Configuring Metacat skins.
-   
-Select the checkbox next to your customized skin or and click the 
-``Make <skin_name> default`` radio button. If you do not have a custom skin, 
-select the ``default`` skin. Once you have selected a skin, Metacat will open 
+
+Select the checkbox next to your customized skin or and click the
+``Make <skin_name> default`` radio button. If you do not have a custom skin,
+select the ``default`` skin. Once you have selected a skin, Metacat will open
 a list of options that apply to the Registry interface.
 
-Select the lists and modules that you would like to appear in the Registry 
-form-interface by checking the box beside each. When you save the configuration, 
+Select the lists and modules that you would like to appear in the Registry
+form-interface by checking the box beside each. When you save the configuration,
 the customized interface will appear to site visitors.
 
 Database Configuration
