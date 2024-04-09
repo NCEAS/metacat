@@ -14,7 +14,7 @@
 #
 # Optional:
 # DEVTOOLS      ("true" to run infinite loop and NOT start tomcat automatically)
-# METACAT_DEBUG ("true" to set log4j level to DEBUG. Will output sensitive info while initializing!)
+# METACAT_DEBUG ("true" to enable remote Java debugging on port 5005)
 #
 
 set -e
@@ -213,8 +213,7 @@ elif [[ $1 = "catalina.sh" ]]; then
 
     setTomcatEnv
 
-    # if METACAT_DEBUG, set the root log level to "DEBUG" and enable
-    # remote debugging connections to tomcat
+    # if METACAT_DEBUG, enable remote debugging connections to tomcat on port 5005
     if [[ $METACAT_DEBUG == "true" ]]; then
           enableRemoteDebugging
     fi

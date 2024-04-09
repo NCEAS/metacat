@@ -10,10 +10,9 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 ## TL;DR
 Starting in the root directory of the `metacat` repo:
 
-1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the 
+1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the
    contents of the values overlay files (like [./values-dev-cluster.yaml](./values-dev-cluster.yaml)
    , for example), to see which settings typically need to be changed.
-
 
 2. Add your credentials to helm/admin/secrets.yaml, and add to cluster
 
@@ -27,7 +26,7 @@ Starting in the root directory of the `metacat` repo:
     $ ./helm-install.sh  myreleasename  mynamespace  ./helm
     ```
 
-You should then be able to access the application via http://your-host-name/metacat! 
+You should then be able to access the application via http://your-host-name/metacat!
 
 ## Introduction
 
@@ -70,7 +69,7 @@ To uninstall/delete the `my-release` deployment:
 helm delete my-release
 ```
 
-The `helm delete` command removes all the Kubernetes components associated with the chart 
+The `helm delete` command removes all the Kubernetes components associated with the chart
 (except for Secrets, PVCs and PVs) and deletes the release.
 
 There are multiple PVCs associated with `my-release`, for Metacat data files, the PostgreSQL
@@ -158,7 +157,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `podSecurityContext.fsGroup`   | numerical Group ID for the pod                                               | `1000`                  |
 | `securityContext.runAsNonRoot` | ensure containers run as a non-root user.                                    | `true`                  |
 | `resources`                    | Resource limits for the deployment                                           | `{}`                    |
-| `tolerations`                  | Tolerations for pod assigment                                                | `[]`                    |
+| `tolerations`                  | Tolerations for pod assignment                                               | `[]`                    |
 
 ### Metacat Persistence
 
@@ -301,7 +300,7 @@ path in the metacat container.
 The PostgreSQL image stores the database data at the `/bitbami/pgdata` path in its own container.
 
 Details of the sub-chart PV/PVC requirements can be found in the [dataone-indexer
-repository](https://github.com/DataONEorg/dataone-indexer) 
+repository](https://github.com/DataONEorg/dataone-indexer)
 
 ## Networking, Certificates, and Auth Tokens
 
@@ -578,23 +577,8 @@ create your own self-signed Mutual Auth Client certificate and CA certificate as
 
 ## Appendix 3: Troubleshooting Mutual Authentication
 
-If you're having trouble getting Mutual Authentication working, you can run metacat in debug mode:
-
-```yaml
-# in values.yaml
-image:
-  debug: true
-```
-
-or via `--set image.debug=true` command-line flag.
-
-Then view the
-metacat logs using:
-
-```shell
-  kubectl logs -f -l app.kubernetes.io/name=metacat
-  # don't forget to include your namespace if necessary, using `-n myNameSpace`
-```
+If you're having trouble getting Mutual Authentication working, you can run metacat in debug mode
+and view the logs (see [Appendix 4](#appendix-4-debugging-and-logging) for details).
 
 If you see the message: `X-Proxy-Key is null or blank`, it means the nginx ingress has not been set
 up correctly (see [Setting up Certificates for DataONE Replication
@@ -682,3 +666,78 @@ You can check the configuration as follows:
     ```
 
     ...and look for entries like: `Error reading ConfigMap`
+
+## Appendix 4: Debugging and Logging
+
+### To run Metacat in debug mode
+
+Set the debug flag in values.yaml:
+
+```yaml
+image:
+  debug: true
+
+# (or you can do the same thing temporarily, via the `--set image.debug=true` command-line flag)
+```
+This has the following effects:
+1. sets the logging level to DEBUG
+   > **Tip:** you can also temporarily logging settings without needing to upgrade or
+   > re-install the application, by editing the log4J configuration ConfigMap:
+   >
+   >   $ `kc edit configmaps <releaseName>-metacat-configfiles`
+   >
+   > (look for the key `log4j2.k8s.properties`). The config is automatically reloaded every
+   > `monitorInterval` seconds.
+   >
+   > **Note** that these edits will be overwritten next time you do a `helm install` or
+   > `helm upgrade`!
+
+2. enables remote Java debugging via port 5005. You will need to forward this port, in order to
+   access it on localhost:
+
+    ```shell
+    $ kubectl  port-forward  --namespace myNamespace  pod/mypod-0  5005:5005
+    ```
+   **Tip:**
+   > For the **indexer**, you can also set the debug flag in `values.yaml` (Note that this
+     only sets the logging level to DEBUG; it does **not** enable remote debugging for the indexer):
+
+    ```yaml
+    dataone-indexer:
+      image:
+        debug: true
+    ```
+
+### To view the logs
+
+#### General syntax:
+
+Application logs for all containers running this application:
+
+```shell
+  $ kubectl logs -f -l app.kubernetes.io/name=<my-application-name>
+
+  # example: logs from all running index worker containers
+  $ kubectl logs -f -l app.kubernetes.io/name=dataone-indexer
+```
+
+Application logs from one specific pod:
+
+```shell
+  $ kubectl logs -f <specific-pod-name>
+
+  # example: Metacat logs
+  $ kubectl logs -f metacatknb-0
+
+  # example: previous Metacat logs from (now exited) pod
+  $ kubectl logs -p -f metacatknb-0
+```
+
+Logs from an `initContainer`:
+
+```shell
+  $ kubectl logs -f <specific-pod-name> -c <init-container-name>
+
+  # example: Metacat's `init-solr-metacat-dep` initContainer logs
+  $ kubectl logs -f metacatknb-0 -c init-solr-metacat-dep
+```

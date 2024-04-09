@@ -453,7 +453,7 @@ securityContext:
 ## resources, such as Minikube.
 resources: {}
 
-## @param tolerations Tolerations for pod assigment
+## @param tolerations Tolerations for pod assignment
 tolerations: []
 
 ## @section Metacat Persistence
@@ -741,7 +741,7 @@ postgresql:
 ## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
 ## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
 ## setting memory limits using Kubernetes will have no effect on a Java application, unless you
-## specifically set a maximimum heap size (using Java’s -Xmx setting).
+## specifically set a maximum heap size (using Java’s -Xmx setting).
 ##
 ## IMPORTANT NOTE
 ## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
