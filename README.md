@@ -2,6 +2,7 @@
 
 Version: 3.0.0 Release
 - See [Release Notes](RELEASE-NOTES.md)
+- *DOI:* [PLACEHOLDER]
 
 Send feedback and bugs to: 
 
