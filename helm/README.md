@@ -388,7 +388,7 @@ either for the Production or the Test environment, depending upon your needs:
 - For example, assuming the token is in a file `DataONEProdIntCA.pem`:
 
       ```shell
-      kubectl create configmap generic <yourReleaseName>-d1-certs-public \
+      kubectl create configmap  <yourReleaseName>-d1-certs-public \
                                     --from-file=DataONEProdIntCA.pem=DataONEProdIntCA.pem
       ```
     > **Tip:**
