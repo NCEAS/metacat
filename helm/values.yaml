@@ -500,11 +500,11 @@ persistence:
   volumeName: ""
 
   ## @param persistence.accessModes PVC Access Mode for metacat volume
-  ## Metacat always requires read&write access, and dataone_indexer requires read access to the
+  ## Metacat always requires read&write access, and dataone-indexer requires read access to the
   ## same PVC, so the ideal setup is:
   ##    accessModes:
   ##    - ReadWriteOnce   # allow only one node (i.e. metacat) to mount in read/write mode
-  ##    - ReadOnlyMany    # allow many nodes (e.g. dataone_indexer, metadig) to mount read-only
+  ##    - ReadOnlyMany    # allow many nodes (e.g. dataone-indexer, metadig) to mount read-only
   ##
   ## However, note that the underlying PersistentVolume (or pv auto-provisioner) must be able to
   ## provide these modes, in order for the PVC to bind successfully. Since neither NCEAS dev
@@ -753,7 +753,7 @@ tomcat:
     min: ""
     max: ""
 
-## @section dataone_indexer Sub-Chart
+## @section dataone-indexer Sub-Chart
 dataone-indexer:
   ## @param dataone-indexer.enabled enable the dataone-indexer sub-chart
   ## set to false if you want to connect to your own existing dataone-indexer deployment
