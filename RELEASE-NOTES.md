@@ -7,7 +7,7 @@ Release date: 2024-04-XX
 ### Overview of Major Changes
 
 This major release introduces breaking changes:
-- A valid auth token is required for a Metacat 3.0.0 installation to function correctly (i.e. to handle private datasets).
+- A valid admin (auth) token is required for a Metacat 3.0.0 installation to function correctly (i.e. to handle private datasets).
   - Please [contact DataONE](https://www.dataone.org/contact/) to obtain a long-term token (valid for 1 year) 
     - If you are already part of the DataONE network and have a member node, we will issue you a token linked to your DataONE Node identity.
     - If you're not a DataONE member node, we [encourage you to join](https://www.dataone.org/jointhenetwork/) (it's free!) so that your data can partake in DataONE's goal of the preservation of scientific data for future use.
