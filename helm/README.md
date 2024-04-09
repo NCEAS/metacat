@@ -10,23 +10,24 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 ## TL;DR
 Starting in the root directory of the `metacat` repo:
 
-```shell
-# 1. FIRST TIME ONLY: add your credentials to helm/admin/secrets.yaml, and add to cluster
-$ vim helm/admin/secrets.yaml    ## follow the instructions in this file
+1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the 
+   contents of the values overlay files (like [./values-dev-cluster.yaml](./values-dev-cluster.yaml)
+   , for example), to see which settings typically need to be changed.
 
-# 2. deploy and enjoy!
-#    * * * from the metacat repo root directory: * * *
-$ ./helm-install.sh  myreleasename  mynamespace  ./helm
-```
-[comment]: # (TODO - review)
-You should then be able to access the application via http://localhost/metacat! **Note** you
-should not need to edit anything in [values.yaml](./values.yaml), if your dev setup is fairly standard.
-You can also look at the contents of values overlay files
-[./values-dev-local.yaml](./values-dev-local.yaml) and
-[./values-dev-cluster.yaml](./values-dev-cluster.yaml), to see which settings typically need to be
-changed.
 
-[comment]: # (TODO - end)
+2. Add your credentials to helm/admin/secrets.yaml, and add to cluster
+
+    ```shell
+    $ vim helm/admin/secrets.yaml    ## follow the instructions in this file
+    ```
+
+3. Deploy and enjoy!
+
+    ```shell
+    $ ./helm-install.sh  myreleasename  mynamespace  ./helm
+    ```
+
+You should then be able to access the application via http://your-host-name/metacat! 
 
 ## Introduction
 
@@ -35,12 +36,9 @@ using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
-[comment]: # (TODO - review)
-- Kubernetes 1.19+
-- Helm 3.2.0+
+- Kubernetes 1.22+
+- Helm 3.14.0+
 - PV provisioner support in the underlying infrastructure
-
-[comment]: # (TODO - end)
 
 ## Installing the Chart
 
@@ -297,17 +295,13 @@ Persistent Volume Claims are used to keep the data across deployments. See the
 [Parameters](#parameters) section to configure the PVCs or to disable persistence for either
 application.
 
-[comment]: # (TODO review)
-With the default setup in [values.yaml](./values.yaml), persistent volumes will be provisioned
-automatically (one for Metacat, and one for PostgreSQL, and several more for the dataone-indexer
-sub-chart) with a PVC bound to each.
-
-[comment]: # (TODO end)
-
 The Metacat image stores the Metacat data and configurations on a PVC mounted at the `/var/metacat`
 path in the metacat container.
 
 The PostgreSQL image stores the database data at the `/bitbami/pgdata` path in its own container.
+
+Details of the sub-chart PV/PVC requirements can be found in the [dataone-indexer
+repository](https://github.com/DataONEorg/dataone-indexer) 
 
 ## Networking, Certificates, and Auth Tokens
 
