@@ -146,7 +146,7 @@ have been specified and an authorized administrator logs in.
    :align: center
 
    Metacat configuration menu, showing each configuration section.  Once all
-   sections are marked as green ``configured``, metacat can be accessed.
+   sections are marked as green ``configured`` (or ``bypassed`` where relevant), Metacat can be accessed.
 
 Each configuration section has three statuses:
 
@@ -170,7 +170,7 @@ The Version:X.X.X option is used only for the Database Installation/Upgrade sect
 If the database schema version detected by Metacat matches the application version (e.g., 3.0.0),
 then no further database configuration is required.
 
-All settings must be in a configured or bypassed state in order to run Metacat. 
+All settings must be in a ``configured`` or ``bypassed state`` in order to run Metacat.
 
  **Reminder:** Metacat indexes at start-up time, so the initial start-up may take some time depending
  on the amount of data in your database and whether or not you have opted to regenerate the spatial
@@ -192,18 +192,18 @@ property is also included in the :doc:`metacat-properties`.
 .. figure:: images/screenshots/image021_globalprops.png
    :align: center
 
-   The Metacat Global Properties editing screen.
+   The Metacat Global Properties editing screen. Scrolling down will reveal additional global properties.
 
 Metacat Initial Global Property Values
 ......................................
-When you save global properties, Metacat also saves a back-up file that is 
-located in ``/var/metacat/.metacat`` (on Linux). When you update Metacat, 
-the system automatically locates the back-up file so you do not have to re-enter 
-the configuration settings.
-
-The first time you install Metacat, the system attempts to automatically detect 
+The first time you install Metacat, the system attempts to automatically detect
 the values for a number of settings (see table). It is important to ensure that 
 the following values are the properties below are correct.
+
+ **Note:** When you save global properties, Metacat also saves a back-up file that is
+ located in ``/var/metacat/.metacat`` (on Linux). When you update Metacat,
+ the system automatically locates the back-up file so you do not have to re-enter
+ the configuration settings.
 
 =========================  =============================================================
 Property                   Description
@@ -225,8 +225,17 @@ directory is writable/readable by the user **solr**.
 
 Please ensure that the ``Environment Override File`` is writable/readable by the Tomcat user (ex. tomcat9).
 
-For additional details, the section of Tomcat And Solr User Management on the `Solr installation page`_
-will resolve this issue.
+=========================  =============================================================
+Property                   Description
+=========================  =============================================================
+Solr Home Directory        The path to your solr-home (solr core).
+                           If you are upgrading Metacat from version 2.12.2 or earlier, please
+                           choose a different directory rather than the old one.
+Environment Override File  The path of the script file to overwrite the default Solr
+                           environment variables.
+=========================  =============================================================
+
+ For additional details, please see the section of Tomcat And Solr User Management on the `Solr installation page`_.
 
 .. _Solr installation page: ./install.html#solr-server
 
@@ -343,7 +352,7 @@ or upgrades it if necessary (and with your permission).
 Solr Troubleshooting
 ....................
 If you click the Solr Configuration button and get the error message like 
-``Server refused connection at: http://localhost:8983/solr``, this means the 
+``Server refused connection at: http://localhost:8983/solr``, this means the
 Solr server is not running and you need to start it.
 
 If you click the Create button to create the Solr core and get an error message 
