@@ -280,7 +280,7 @@ The Admin Token
 After obtaining an admin (auth) token, save it to the default path (below). If you wish to save it
 elsewhere, be sure to update the global properties' ``Admin Token Path`` value with your custom path.
 
- Default Value for the Admin (auth) token:
+ Default Value for the admin (auth) token:
 
  ::
 
@@ -421,17 +421,8 @@ Appendix, under: :ref:`secret-properties`.
 
 (e.g., ``default`` or ``nceas``).
 
-Additional Configuration for Tomcat 7
+Read-only Mode
 -------------------------------------
-When running Metacat on Tomcat 7, you may get the following 
-error logging in via the Morpho application: "Fatal error sending data to Metacat: Bad Set_Cookie header:JSESSIONID=...".
-In order to fix the issue, modify <Catalina_HOME>/conf/context.xml 
-(e.g., /var/lib/tomcat7/conf/context.xml) by adding a new attribute - "useHttpOnly" - and set it to false for the "Context" element::
-
-  <Context useHttpOnly="false">
-
-Then restart Tomcat 7.
-
 .. include:: ./readonly.rst
 
 MetacatUI Themes
