@@ -229,8 +229,8 @@ Please ensure that the ``Environment Override File`` is writable/readable by the
 Property                   Description
 =========================  =============================================================
 Solr Home Directory        The path to your solr-home (solr core).
-                           If you are upgrading Metacat from version 2.12.2 or earlier, please
-                           choose a different directory rather than the old one.
+                           If you are upgrading Metacat from version 2.12.2 or earlier,
+                           please choose a different directory rather than the old one.
 Environment Override File  The path of the script file to overwrite the default Solr
                            environment variables.
 =========================  =============================================================
@@ -239,11 +239,12 @@ Environment Override File  The path of the script file to overwrite the default 
 
 .. _Solr installation page: ./install.html#solr-server
 
-Token Configuration (Auth Token & Certificate)
+Token Configuration
 ..............................................
-A valid auth token is required for a Metacat v3.0.0 installation to function correctly
-(i.e. to handle private datasets). Please `contact DataONE`_ to obtain a long-term auth token (valid for 1 year).
-**This is only an interim requirement**; a future release of Metacat will remove the need for this token.
+A valid admin (auth) token and DataONE CA certificate is required for a Metacat v3.0.0 installation
+to function correctly (i.e. to handle private datasets). Please `contact DataONE`_ to obtain a
+long-term auth token (valid for 1 year). **This is only an interim requirement**; a future release
+of Metacat will remove the need for this token.
 
   * If you are already part of the DataONE network and have a member node, we will issue you an auth token
   linked to your DataONE Node identity.
@@ -262,19 +263,31 @@ evaluating Metacat by logging into the KNB website, and navigating to "My Profil
 
 .. _encourage you to join: https://www.dataone.org/jointhenetwork/
 
-Token Configuration: Saving the Auth Token
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-After obtaining an auth token, save it to the default path (below). If you wish to save it elsewhere,
-be sure to update the global properties' ``Admin Token Path`` value with your custom path.
 
- **Auth Token Path Default Value**:
+===============================  =============================================================
+Property                         Description
+===============================  =============================================================
+Token Verification Certificates  Semicolon-separated list of paths to certificate files, each
+                                 containing a single public key (not a certificate chain).
+                                 These will be used to verify incoming request jwt tokens,
+                                 in addition to verifying against the CN server.
+Admin Token Path                 The path to the admin jwt token that will be used in
+                                 dataone-indexer to access the private objects' system metadata.
+===============================  =============================================================
+
+The Admin Token
+~~~~~~~~~~~~~~~
+After obtaining an admin (auth) token, save it to the default path (below). If you wish to save it
+elsewhere, be sure to update the global properties' ``Admin Token Path`` value with your custom path.
+
+ Default Value for the Admin (auth) token:
 
  ::
 
    /var/metacat/certs/token
 
-Token Configuration: Token Verification Certificate
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Token Verification Certificate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Next, you will need to obtain a DataONE Intermediate Certificate.
 Depending on your needs, there are two available:
 
