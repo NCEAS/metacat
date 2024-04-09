@@ -112,7 +112,7 @@ metacat:
   ## IMPORTANT NOTE: ORCID IDs *MUST* begin with http, *NOT* https! example:
   ## auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
   ##
-  auth.administrators:
+  auth.administrators: ""
 
   ## @param metacat.database.connectionURI postgres database URI, or lave blank to use sub-chart
   ##
@@ -592,7 +592,7 @@ ingress:
   ##      secretName: tls-secret
   tls: []
 
-  ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate
+  ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate chain
   ## For DataONE Replication -- mutual authentication with x509 client-side certs.
   ## Also see `metacat.dataone.certificate.fromHttpHeader.enabled`
   d1CaCertSecretName: d1-ca-chain
