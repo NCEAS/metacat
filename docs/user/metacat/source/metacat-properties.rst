@@ -578,3 +578,25 @@ Additional configuration properties are described below, though there are many m
 |                       |                                                                  |                                                   |
 |                       | Default Value: blank                                             |                                                   |
 +-----------------------+------------------------------------------------------------------+---------------------------------------------------+
+
+
+Manually Edited Properties
+--------------------------
+Properties listed below are edited by hand.
+
++-----------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------+
+| Property                          | Description                                                                   | Example                                           |
++===================================+===============================================================================+===================================================+
+| .. _event.log.deny.ipaddress:     |                                                                               |                                                   |
+|                                   |                                                                               |                                                   |
+| event.log.deny.ipaddress          | A list of IP addresses whose actions will not be logged when Metacat records  | 192.168.0.1;255.255.255.255                       |
+|                                   |                                                                               |                                                   |
+|                                   | Previously property name: event.log.blacklist.ipaddress                       |                                                   |
++-----------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------+
+| .. _event.log.deny.subject:       |                                                                               |                                                   |
+|                                   |                                                                               |                                                   |
+| event.log.deny.subject            | A list of subjects (strings) whose actions will not be logged when Metacat    | bbelcher;http://orcid.org/0000-0012-3456-789X     |
+|                                   | records events/logs in the db.                                                |                                                   |
+|                                   |                                                                               |                                                   |
+|                                   | Previous property name: event.log.blacklist.subject                           |                                                   |
++-----------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------+
