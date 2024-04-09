@@ -33,6 +33,10 @@ global:
   ##  &passwordSecretName. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
   ## NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this file for 'passwordSecretName')
   ##
+  ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
+  ## example, if the release name is 'myrelease', the value of name: would be
+  ## 'myrelease-metacat-secrets'.
+  ##
   passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
 
   ## @param global.metacatAppContext The application context to use
@@ -103,24 +107,12 @@ metacat:
   ## ingress.hosts
   includeMetacatUi: true
 
-  ## @param metacat.administrator.username The admin username that will be used to authenticate
-  ## with the new metacat instance and apply any necessary setup steps, database upgrades etc.
-  ## upon first run.
-  ## NOTES:
-  ## 1. The corresponding password must be set as a Secret (see ./admin/secrets.yaml), with the
-  ##    key METACAT_ADMINISTRATOR_PASSWORD
-  ## 2. This account will be created if it doesn't already exist in the `passwords.xml` file on
-  ##    metacat's mounted PersistentVolume (see .Values.persistence)
-  ## 3. This username MUST appear on the list of authorized administrators, otherwise
-  ##    container startup will fail (see @param auth.administrators)
+  ## @param metacat.auth.administrators A semicolon-separated list of admin ORCID iDs
+  ## (https://orcid.org), denoting the users who may log into metacat with administrator privileges.
+  ## IMPORTANT NOTE: ORCID IDs *MUST* begin with http, *NOT* https! example:
+  ## auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
   ##
-  administrator.username: admin@localhost
-
-  ## @param metacat.auth.administrators A colon-separated list of admin usernames or LDAP-style DN
-  ## (Distinguished Names) denoting the users who may log into metacat with administrator
-  ## privileges.
-  ##
-  auth.administrators: admin@localhost
+  auth.administrators: ""
 
   ## @param metacat.database.connectionURI postgres database URI, or lave blank to use sub-chart
   ##
@@ -143,7 +135,7 @@ metacat:
   ##                         `-postgresql-hl` (the name of the k8s headless service for the
   ##                         postgresql statefulset)
   ##    `<database-name>` will be set to the value of `postgresql.auth.database`
-  ##    (Note: If you are using the postrgesql sub-chart but have changed the default name for the
+  ##    (Note: If you are using the postgresql sub-chart but have changed the default name for the
   ##    headless service, then specify the full database.connectionURI as outlined in (1), above)
   ##
   database.connectionURI: ""
@@ -191,7 +183,7 @@ metacat:
   ##    `<solr-hostname>` will be set to the current value of `.Release.Name`, prepended to
   ##                      `-solr-headless` (the name of the k8s headless solr service created
   ##                      by the dataone-indexer sub-chart)
-  ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart)
+  ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart
   ##
   solr.baseURL: ""
 
@@ -219,6 +211,14 @@ metacat:
 
   ## @section OPTIONAL DataONE Member Node (MN) Parameters
   ##
+
+  ## @param metacat.cn.server.publiccert.filename optional cert(s) used to validate jwt auth tokens,
+  ## in addition to attempting validation against the cert chain from the cn (see D1Client.CN_URL).
+  ## It may contain a single cert path, or multiple paths, separated by semicolons.
+  ## IMPORTANT NOTE: each file must contain only one public key. Certificate chains containing
+  ## multiple public keys will not work!
+  ##
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONEProdIntCA.pem
 
   ## @param metacat.dataone.certificate.fromHttpHeader.enabled Enable mutual auth with client certs
   ## Setting `true` REQUIRED for all DataONE MN functionality -- mutual authentication with x509
@@ -500,11 +500,11 @@ persistence:
   volumeName: ""
 
   ## @param persistence.accessModes PVC Access Mode for metacat volume
-  ## Metacat always requires read&write access, and dataone_indexer requires read access to the
+  ## Metacat always requires read&write access, and dataone-indexer requires read access to the
   ## same PVC, so the ideal setup is:
   ##    accessModes:
   ##    - ReadWriteOnce   # allow only one node (i.e. metacat) to mount in read/write mode
-  ##    - ReadOnlyMany    # allow many nodes (e.g. dataone_indexer, metadig) to mount read-only
+  ##    - ReadOnlyMany    # allow many nodes (e.g. dataone-indexer, metadig) to mount read-only
   ##
   ## However, note that the underlying PersistentVolume (or pv auto-provisioner) must be able to
   ## provide these modes, in order for the PVC to bind successfully. Since neither NCEAS dev
@@ -592,10 +592,10 @@ ingress:
   ##      secretName: tls-secret
   tls: []
 
-  ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate
+  ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate chain
   ## For DataONE Replication -- mutual authentication with x509 client-side certs.
   ## Also see `metacat.dataone.certificate.fromHttpHeader.enabled`
-  d1CaCertSecretName: ca-secret
+  d1CaCertSecretName: d1-ca-chain
 
 ## Optional service in addition to the Headless ClusterIP that is required for StatefulSet
 service:
@@ -714,7 +714,7 @@ postgresql:
   ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
   ##
   primary:
-    ## override the default pf_hba.conf with our own, to allow password auth, since this is the
+    ## override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
     pgHbaConfiguration: |
       host        metacat       metacat       0.0.0.0/0       password
@@ -753,7 +753,7 @@ tomcat:
     min: ""
     max: ""
 
-## @section dataone_indexer Sub-Chart
+## @section dataone-indexer Sub-Chart
 dataone-indexer:
   ## @param dataone-indexer.enabled enable the dataone-indexer sub-chart
   ## set to false if you want to connect to your own existing dataone-indexer deployment
@@ -771,6 +771,23 @@ dataone-indexer:
       existingPasswordSecret: *passwordSecretName
 
   solr:
+    ## @param dataone-indexer.solr.customCollection name of the solr collection to use
+    ## (optional override of indexer-assigned name). Do not leave blank
+    ## NOTE: if you change this value after having run metacat for the first time, you may need
+    ## to delete and re-create the PVCs and PVs used by solr, in order for the new settings to
+    ## become effective
+    ##
+    customCollection: metacat-index
+
+    ## @param dataone-indexer.solr.coreNames Solr core names to be created
+    ## (optional override of indexer-assigned names)
+    ## NOTE: if you change this value after having run metacat for the first time, you may need
+    ## to delete and re-create the PVCs and PVs used by solr, in order for the new settings to
+    ## become effective
+    ##
+    coreNames:
+      - metacat-core
+
     extraVolumes:
       ## @param dataone-indexer.solr.extraVolumes[0].name DO NOT EDIT - referenced by sub-chart
       - name: solr-config
