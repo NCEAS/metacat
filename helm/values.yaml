@@ -760,6 +760,12 @@ dataone-indexer:
   ##
   enabled: true
 
+  ## @param dataone-indexer.nameOverride String to partially override rabbitmq.fullname template
+  ## Will maintain the release name, so the resulting resource name for the pods etc. will begin:
+  ## myrelease-nameOverride-...
+  ##
+  nameOverride: d1index
+
   rabbitmq:
     auth:
       ## @param dataone-indexer.rabbitmq.auth.username set the username that rabbitmq will use
