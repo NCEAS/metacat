@@ -1,39 +1,3 @@
-/**
- *  '$RCSfile$'
- *    Purpose: This class is in order to fix a problem. It doesn't 
- *             has functionality for Metacat.
- *             In Currently, some document in xml_document table 
- *             doesn't have entries in xml_access table. This is 
- *             okay during the old access policy.
- *             But we changed the access policy and if there is no 
- *             entry in xml_access table, except owner, other person 
- *             can not access it. So we need to associate with access 
- *             policy in xml_access table for these doc ids.
- *             The same access policy of these doc' dataset will associate
- *             to them. 
- *  Copyright: 2000 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Jing Tao
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat;
 
 

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package edu.ucsb.nceas.metacat;
 
 import java.io.*;
