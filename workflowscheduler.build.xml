@@ -1,34 +1,12 @@
 <?xml version="1.0"?>
 <!--
-	*   '$RCSfile$'
-	*     Authors: Michael Daigle
-	*   Copyright: 2009 Regents of the University of California and the
-	*              National Center for Ecological Analysis and Synthesis
-	* For Details: http://www.nceas.ucsb.edu/
+	* Authors: Michael Daigle
 	*
-	*    '$Author: daigle $'
-	*    '$Date: 2009-07-30 10:31:08 -0700 (Thu, 30 Jul 2009) $'
-	*    '$Revision: 5009 $'
-	*
-	* Build file for the Ant cross-platform build system for the 
+	* Build file for the Ant cross-platform build system for the
 	* Workflow Scheduler Application
 	* See http://jakarta.apache.org for details on Ant
 	*
 	* usage: ant [compile|jar|install|jdoc]
-	*
-	* This program is free software; you can redistribute it and/or modify
-	* it under the terms of the GNU General Public License as published by
-	* the Free Software Foundation; either version 2 of the License, or
-	* (at your option) any later version.
-	*
-	* This program is distributed in the hope that it will be useful,
-	* but WITHOUT ANY WARRANTY; without even the implied warranty of
-	* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	* GNU General Public License for more details.
-	*
-	* You should have received a copy of the GNU General Public License
-	* along with this program; if not, write to the Free Software
-	* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -->
 <project name="workflowscheduler" default="jar" basedir=".">
 	<property environment="env" />
