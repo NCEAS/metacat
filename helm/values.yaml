@@ -760,7 +760,8 @@ dataone-indexer:
   ##
   enabled: true
 
-  ## @param dataone-indexer.nameOverride String to partially override rabbitmq.fullname template
+  ## @param dataone-indexer.nameOverride partial override for resource name
+  ## used by k8s for the pods etc.
   ## Will maintain the release name, so the resulting resource name for the pods etc. will begin:
   ## myrelease-nameOverride-...
   ##
