@@ -3,6 +3,7 @@ Metacat Authentication Mechanism
 
 Metacat only supports ORCID authentication for administrative users. File-based or LDAP
 authentication is no longer available. Registering for an ORCID is simple, please visit:
+
   http://orcid.org/
 
 After signing up for an ORCID iD, you may use it as an admin identity when first configuring Metacat
