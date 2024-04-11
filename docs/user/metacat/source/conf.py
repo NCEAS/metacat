@@ -106,7 +106,7 @@ pygments_style = 'sphinx'
 html_theme = 'metacatui'
 
 # When linking .CSS stylesheets with custom themes in sphinx versions < 7.0.0
-# the 'style' jinja variable is used (and marked for deprecation)
+# the 'style' variable is used (and marked for deprecation)
 #
 # Starting sphinx version > 7.0.0, 'styles' is used, which is not backwards
 # compatible - so we need to add python code here to determine the sphinx
