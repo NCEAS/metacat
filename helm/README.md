@@ -35,7 +35,7 @@ using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
-- Kubernetes 1.22+
+- Kubernetes 1.23.4+
 - Helm 3.14.0+
 - PV provisioner support in the underlying infrastructure
 
