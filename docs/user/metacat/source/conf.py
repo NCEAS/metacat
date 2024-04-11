@@ -116,7 +116,7 @@ sphinx_version = list(map(int, sphinx.__version__.split('.')[:2]))
 use_deprecated_style_script = sphinx_version < [7, 0]
 
 html_context = {
-    'use_style_script': use_deprecated_style_script
+    'use_deprecated_style_script': use_deprecated_style_script
 }
 
 # Theme options are theme-specific and customize the look and feel of a theme
