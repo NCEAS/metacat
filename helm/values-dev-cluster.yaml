@@ -58,6 +58,21 @@ ingress:
           pathType: Prefix
 
 dataone-indexer:
+  # increase minReplicas from default 3
+  autoscaling:
+    minReplicas: 10
+
+  # prefer more-performant nodes for indexer workers
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: nceas/nodegroup
+                operator: In
+                values:
+                  - fast
+
   image:
     pullPolicy: Always
     debug: true
