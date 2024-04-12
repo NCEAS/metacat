@@ -14,14 +14,14 @@ that you have access to:
 
        PUT /index[/]?[all=true] | [&pid={pid}]``
 
-    ::
+   ::
 
-      # Examples
+     # Examples
 
-      PUT /index?all=true // Re-index everything
-      PUT /index?all=true&pid={pid1}  // Pid1 will be ignored. Re-index everything
-      PUT /index/?pid={pid1}&pid={pid2} // Re-index pid1 and pid2
-      PUT /index/?all=false&pid={pid1}&pid={pid2} // Re-index pid1 and pid2
+     PUT /index?all=true // Re-index everything
+     PUT /index?all=true&pid={pid1}  // Pid1 will be ignored. Re-index everything
+     PUT /index/?pid={pid1}&pid={pid2} // Re-index pid1 and pid2
+     PUT /index/?all=false&pid={pid1}&pid={pid2} // Re-index pid1 and pid2
 
 2. ``PUT /identifiers``
 
