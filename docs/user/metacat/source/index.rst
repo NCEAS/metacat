@@ -97,6 +97,8 @@ Contents
    license
    install
    configuration
+   kubernetes
+   admin-api
    dataone
    submitting
    query-index
