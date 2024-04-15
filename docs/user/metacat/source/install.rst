@@ -8,8 +8,8 @@ Instructions for the Linux system is included in this section.
 System Requirements
 -------------------
 
-In addition to meeting the recommended system requirements, the server on which
-you wish to install Metacat must have the following software installed and running correctly:
+In addition to meeting the recommended system requirements, the server on which you wish to install
+the latest version of Metacat must have the following software installed and running correctly:
 
   * PostgreSQL_
 
@@ -17,7 +17,7 @@ you wish to install Metacat must have the following software installed and runni
 
   * `Apache Tomcat`_
 
-  * `Apache HTTPD Server`_ (recommended)
+  * `Apache HTTP Server`_ (recommended)
 
     * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
@@ -35,7 +35,7 @@ you wish to install Metacat must have the following software installed and runni
 
 .. _Apache Tomcat: http://tomcat.apache.org/
 
-.. _Apache HTTPD Server: http://httpd.apache.org/
+.. _Apache HTTP Server: http://httpd.apache.org/
 
 .. _Java 17: https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
 
@@ -46,7 +46,7 @@ System requirements for running Metacat:
 
   * at least 512MB RAM
 
-  * 200 MB disk space (Note: The amount of disk space required depends on the size of your RDBMS tablespace and the the size and number of documents stored. Metacat itself requires only about 140 MB of free space after installation).
+  * 200 MB disk space (Note: The amount of disk space required depends on the size of your RDBMS tablespace and the the size and number of documents stored.).
 
 
 Installing on Linux
@@ -63,7 +63,7 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_ 7, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTPD Server`_)
+  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTPD Server`_)
 
   2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
 
@@ -836,7 +836,7 @@ Starting Requirements:
 
 1. Download/upgrade your solr version to 9.5.0
 
-  * In Metacat v3.0.0, the solr schema and configuration has changed. As such, a solr upgrade is
+  * In Metacat v3.0.0, the solr schema and configuration has changed. Consequently, a solr upgrade is
     not supported in v3.0.0 with an old core. You must start with a new core (solr-home). Additionally,
     data from existing or previous solr installations will also be incompatible with the new schema and
     configuration. Please select a new solr-home during the Metacat configuration process, and reindex
@@ -886,6 +886,7 @@ Starting Requirements:
 
       * Please first re-configure Metacat through the Metacat Admin UI after upgrading.
       * If you have custom properties that are not available for configuration in the Metacat Admin UI, these can be added to `metacat-site.properties`.
+      * The default location for metacat-site.properties is in /var/metacat/config, but this is configurable in the Metacat Admin UI (under "Metacat Global Properties" -> "Site Properties Directory").
 
     * The database upgrade process may require several minutes or longer to complete.
 
@@ -901,9 +902,6 @@ To install Metacat from source:
    downloaded Metacat. Note: Throughout the instructions, we will refer to this
    directory as ``<metacat_src_dir>``. 
 
-  * Set the build.tomcat.dir property to your Tomcat installation directory.
-    Metacat will use some of the native Tomcat libraries during the build. For
-    instance: build.tomcat.dir=/usr/local/tomcat
   * Set the app.deploy.dir property to your application deployment directory.
     For instance: app.deploy.dir=/usr/local/tomcat/webapps
 
@@ -919,7 +917,7 @@ To install Metacat from source:
   You should see a new file named metacat.war in your application deployment
   directory.
 
-To run your new Metacat servlet, open a Web browser and type::
+To access your new Metacat servlet, open a Web browser and type::
 
   http://yourserver.yourdomain.com/yourcontext/ 
   (e.g.  http://knb.ecoinformatics.org/metacat/)
