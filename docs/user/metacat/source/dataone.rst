@@ -294,12 +294,9 @@ from other nodes.  Shortly thereafter, the Coordinating Nodes may notify Metacat
 replicate objects from throughout the system, which it will start to do.  There objects
 will begin to be listed in the Metacat catalog.
 
-.. Note:: 
-  
-  Future versions of Metacat will allow finer specification of the Node
-  Replication Policy, which determines the set of objects
-  that it is willing to replicate, using constraints on object size, total objects, 
-  source nodes, and object format types.
+ **Note:** Future versions of Metacat will allow finer specification of the Node Replication Policy,
+ which determines the set of objects that it is willing to replicate, using constraints on object size,
+ total objects, source nodes, and object format types.
 
 Object Replication Policies
 ---------------------------
@@ -317,6 +314,26 @@ or can be set using the `CNReplication.setReplicationPolicy`_ service.
 
 .. _CNReplication.setReplicationPolicy: http://releases.dataone.org/online/d1-architecture-1.0.0/apis/CN_APIs.html#CNReplication.setReplicationPolicy
 
+Generating DataONE System Metadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ **Note:** The following feature is not available in Metacat 3.0.0. If you are upgrading your Metacat
+ from Metacat version 1.*, we recommend that you first upgrade to 2.19.0 before proceeding with generating DataONE System Metadata.
+
+When a Metacat instance becomes a Member Node, System Metadata must be generated for the existing
+content. This can be invoked in the Replication configuration screen of the Metacat administration
+interface. Initially, Metacat instances will only need to generate System Metadata for their local
+content (the ``localhost`` entry).
+
+In cases where Metacat has participated in replication with other Metacat servers, it may be useful
+to generate System Metadata for those replica records as well. Please consult both the replication
+partner's administrator and the DataONE administrators before generating System Metadata for replica
+content.
+
+.. figure:: images/screenshots/image069.png
+   :align: center
+
+   The replication configuration screen for generating System Metadata.
 
 Apache configuration details
 ----------------------------
