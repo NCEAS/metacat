@@ -60,18 +60,27 @@ ingress:
 dataone-indexer:
   # increase minReplicas from default 3
   autoscaling:
-    minReplicas: 10
+    minReplicas: 3
+    targetCPUUtilizationPercentage: 40
+
+#  topologySpreadConstraints:
+#    - maxSkew: 10
+#      topologyKey: kubernetes.io/hostname
+#      whenUnsatisfiable: ScheduleAnyway
+#      labelSelector:
+#        matchLabels:
+#          app: dataone-indexer
 
   # prefer more-performant nodes for indexer workers
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: nceas/nodegroup
-                operator: In
-                values:
-                  - fast
+#  affinity:
+#    nodeAffinity:
+#      requiredDuringSchedulingIgnoredDuringExecution:
+#        nodeSelectorTerms:
+#          - matchExpressions:
+#              - key: nceas/nodegroup
+#                operator: In
+#                values:
+#                  - fast
 
   image:
     pullPolicy: Always
