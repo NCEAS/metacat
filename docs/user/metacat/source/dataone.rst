@@ -92,6 +92,8 @@ Nodes are:
 
   * Resolution service to map unique identifiers to the Member Nodes that hold data
 
+  * Authentication against a shared set of accounts based on `ORCID iD`_
+
   * Replication management services to reliably replicate data according to policies set by the Member Nodes
 
   * Fixity checking to ensure that preserved objects remain valid
@@ -111,6 +113,9 @@ without interruption.  The DataONE services expose their services at::
 And the DataONE search portal is available at:
 
   https://search.dataone.org/
+
+.. _ORCID iD: http://www.cilogon.org
+
 
 Investigator Toolkit
 --------------------
