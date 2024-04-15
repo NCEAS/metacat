@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
@@ -607,7 +608,8 @@ public class DocumentImplIT {
             //archive
             String user = "test";
             // Set changeDateModified false
-            DocumentImpl.archive(accnum, guid, user, false);
+            DocumentImpl.archive(accnum, guid, user, false,
+                                SystemMetadataManager.SysMetaVersion.UNCHECKED);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                 " guid like ?", guid.getValue()));
@@ -647,6 +649,48 @@ public class DocumentImplIT {
         }
     }
 
+    /**
+     * Test the archive method with the parameters of SysMetaVersion.CHECKED/UNCHECKED
+     * @throws Exception
+     */
+    @Test
+    public void testArchiveWithCheckSysMetaVersion() throws Exception {
+        Session session = d1NodeTest.getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("DocumentImpl_archiveData." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest
+                                        .createSystemMetadata(guid, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
+        try (MockedStatic<SystemMetadataManager> mock =
+                             Mockito.mockStatic(SystemMetadataManager.class, CALLS_REAL_METHODS)) {
+            SystemMetadataManager mockManager = Mockito.mock(SystemMetadataManager.class,
+                                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            // Set the new modification date so we can mock the checking or without checking
+            Date original = new Date();
+            SystemMetadata newSysmeta = SerializationUtils.clone(sysmeta);
+            newSysmeta.setDateSysMetadataModified(original);
+            // The first and second call return different results
+            Mockito.when(mockManager.get(guid)).thenReturn(sysmeta).thenReturn(newSysmeta);
+            Mockito.when(SystemMetadataManager.getInstance()).thenReturn(mockManager);
+            // Archive with checking should fail
+            try {
+                // False means not to change the dateModified field
+                DocumentImpl.archive(accnum, guid, "test", false,
+                                    SystemMetadataManager.SysMetaVersion.CHECKED);
+                fail("Test cannot get there since the dataOfModified was change during archive");
+            } catch (Exception e) {
+                assertTrue( e instanceof ServiceFailure);
+            }
+            // Using UNCHECKED, archive should succeed.
+            // False means not to change the dateModified field
+            DocumentImpl.archive(accnum, guid, "test", false,
+                                SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        }
+
+    }
 
     /**
      * Test the archive method
@@ -779,7 +823,8 @@ public class DocumentImplIT {
             //Archive
             String user = "test";
             // Set changeDateModified true
-            DocumentImpl.archive(accnum, guid, user, true);
+            DocumentImpl.archive(accnum, guid, user, true,
+                                SystemMetadataManager.SysMetaVersion.UNCHECKED);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                  " guid like ?", guid.getValue()));
@@ -824,7 +869,8 @@ public class DocumentImplIT {
             assertFalse("System metadata should have archived false", sys.getArchived());
 
             // Set changeDateModified true
-            DocumentImpl.archive(accnum2, newPid, user, true);
+            DocumentImpl.archive(accnum2, newPid, user, true,
+                                SystemMetadataManager.SysMetaVersion.CHECKED);
             //check record
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -946,12 +992,14 @@ public class DocumentImplIT {
                 SystemMetadataManager mockManager = Mockito.mock(SystemMetadataManager.class,
                                  withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
                 Mockito.doThrow(ServiceFailure.class).when(mockManager)
-                           .store(any(SystemMetadata.class), anyBoolean(), any(DBConnection.class));
+                           .store(any(SystemMetadata.class), anyBoolean(), any(DBConnection.class),
+                                   any(SystemMetadataManager.SysMetaVersion.class));
                 Mockito.when(SystemMetadataManager.getInstance()).thenReturn(mockManager);
                 try {
                     String user = "test";
                     // Set changeDateModified true
-                    DocumentImpl.archive(accnum, guid, user, true);
+                    DocumentImpl.archive(accnum, guid, user, true,
+                                        SystemMetadataManager.SysMetaVersion.CHECKED);
                     fail("The test can't be here since archive should throw an exception");
                 } catch (Exception e) {
                     assertTrue("The exception class should be ServiceFailure",

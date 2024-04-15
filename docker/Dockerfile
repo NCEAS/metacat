@@ -36,13 +36,6 @@ ENV USRBINDIR=/usr/local/bin
 ENV PATH=${USRBINDIR}:$PATH
 ENV DEVTOOLS=${DEVTOOLS}
 
-# ADDITIONAL USER-SPECIFIC ENV VAR CREDENTIALS NEEDED AT RUNTIME BY docker-entrypoint.sh:
-#
-# $METACAT_ADMINISTRATOR_USERNAME is a single admin username or LDAP-style Distinguished Name,
-#                                 used to log into the metacat admin pages
-# METACAT_ADMINISTRATOR_PASSWORD is the corresponding admin login password
-
-
 # Add a user with name 'metacat'
 RUN groupadd -g 1000 metacat
 RUN useradd -u 1000 -g 1000 metacat
