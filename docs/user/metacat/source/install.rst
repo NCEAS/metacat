@@ -573,8 +573,8 @@ If you upgrade Solr from an old 8.* version to 9.5.0, you may run this command i
 
     sudo bash ./install_solr_service.sh solr-9.5.0.tgz -f
 
-    **Note: If you are installing Metacat v2.19.0, ``solr`` must be run under Java 1.8 during the
-    upgrade as the v2.19.0's configuration file is incompatible with Java 17.
+  **Note:** If you are installing Metacat v2.19.0, ``solr`` must be run under Java 1.8 during the
+  upgrade as the v2.19.0's configuration file is incompatible with Java 17.
 
 3. Ensure the Solr defaults file is group writable:
 
@@ -602,7 +602,7 @@ Add a new line for the ``SOLR_OPTS`` variable in the environment specific includ
 
     SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/var/metacat"
 
-    **Note:** The path to Metacat must be a real path, it CANNOT be a symlink.
+  **Note:** The path to Metacat must be a real path, it CANNOT be a symlink.
 
 And then set your solr_home
 
