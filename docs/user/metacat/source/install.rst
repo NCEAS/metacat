@@ -594,7 +594,7 @@ If you upgrade Solr from an old 8.* version to 9.5.0, you may run this command i
 
     sudo ufw status
 
-6. Add New Allowed Solr Path
+6. Add New Allowed Solr Path and Solr Home
 
 Add a new line for the ``SOLR_OPTS`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) with the path to Metacat:
 
@@ -604,7 +604,7 @@ Add a new line for the ``SOLR_OPTS`` variable in the environment specific includ
 
   **Note:** The path to Metacat must be a real path, it CANNOT be a symlink.
 
-And then set your solr_home
+And a new line for ``SOLR_HOME``, then set it with the path to your ``SOLR_HOME`` directory
 
   ::
 
