@@ -158,12 +158,11 @@
         <group>2</group>
         <index>4</index>
         <description>
-            The directory to hold the Solr core. &lt;em&gt; If you are upgrading Metacat from
-            version 2.12.2 or earlier, please select a new directory. If you're upgrading from
-            2.12.0 or later, please back up your current solr-home directory and then delete all its contents.
-            You will need to re-index all your data after upgrading to Metacat 3.0.0.
+            The directory to hold the Solr core. Your solr-home directory must exist and be empty.
+            This path cannot be a symlink, it must be a real path. If you're upgrading from 2.19.0,
+            please back up your current solr-home directory and then delete all its contents.
             Please see the &lt;a href="docs/install.html#upgrading-metacat"&gt;Metacat Admin docs&lt;/a&gt; for more information.
-            Reminder: Ensure that the Solr user has the write/read permission on this directory &lt;/em&gt;
+            &lt;em&gt;Reminder: Ensure that the Solr user has the write/read permission on this directory &lt;/em&gt;
         </description>
         <helpFile>docs/metacat-properties.html#solr-homedir</helpFile>
     </config>
