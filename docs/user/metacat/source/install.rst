@@ -46,8 +46,6 @@ System requirements for running Metacat:
 
   * at least 512MB RAM
 
-  * 200 MB disk space (Note: The amount of disk space required depends on the size of your RDBMS tablespace and the the size and number of documents stored.).
-
 
 Installing on Linux
 -------------------
