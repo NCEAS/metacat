@@ -4,7 +4,7 @@ Modifying and Creating Themes
 .. contents::
 
 Metacat's user interface, `MetacatUI <https://github.com/NCEAS/metacatui>`_, is deployed
-separately from Metacat, allowing more independent user interface customization. Check the
+separately from Metacat, allowing more independent visual customization. Check the
 `MetacatUI GitHub <https://github.com/NCEAS/metacatui>`_ for the most up to date version.
 
 MetacatUI is structured in a model-view-controller architecture using
