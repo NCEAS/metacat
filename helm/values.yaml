@@ -81,6 +81,14 @@ global:
   ##
   ephemeralVolumeStorageClass: ""
 
+  ## @param global.sharedVolumeSubPath The subdirectory of the metacat data volume to mount
+  ## Useful where one PV is used for multiple services, so each has its own subtree.
+  ##
+  ## (Note the actual key sharedVolumeSubPath is not used anywhere; only the yaml anchor/alias
+  ##  &sharedVolumeSubPath. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
+  ## NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this file for 'sharedVolumeSubPath')
+  ##
+  sharedVolumeSubPath: &sharedVolumeSubPath ""
 
 ## @section Metacat Application-Specific Properties
 ##
@@ -260,9 +268,8 @@ metacat:
 #  dataone.autoRegisterMemberNode: 2023-02-28
 
   ## @param metacat.D1Client.CN_URL the url of the CN
-  ## (Default value shown - no need to uncomment unless changing from this)
   ##
-#  D1Client.CN_URL: https://cn.dataone.org/cn
+  D1Client.CN_URL: https://cn.dataone.org/cn
 
   ## @param metacat.dataone.nodeId The unique ID of your DataONE MN - must match client cert subject
   ## The Node Identifier field is a unique identifier assigned by DataONE to identify this node even
@@ -435,6 +442,8 @@ podAnnotations: {}
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ## @param podSecurityContext.enabled Enable security context
 ## @param podSecurityContext.fsGroup numerical Group ID for the pod
+## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
+## the group that owns the existing data on that filesystem!
 ##
 podSecurityContext:
   enabled: true
@@ -498,6 +507,11 @@ persistence:
   ## Leaving it blank will cause a pvc to be created dynamically using volumeClaimTemplates.
   ##
   volumeName: ""
+
+  ## @param persistence.subPath The subdirectory of the volume (see persistence.volumeName) to mount
+  ## Useful where one PV is used for multiple services, so each has its own subtree.
+  ##
+  subPath: *sharedVolumeSubPath
 
   ## @param persistence.accessModes PVC Access Mode for metacat volume
   ## Metacat always requires read&write access, and dataone-indexer requires read access to the
@@ -760,12 +774,11 @@ dataone-indexer:
   ##
   enabled: true
 
-  ## @param dataone-indexer.nameOverride partial override for resource name
-  ## used by k8s for the pods etc.
-  ## Will maintain the release name, so the resulting resource name for the pods etc. will begin:
-  ## myrelease-nameOverride-...
+  ## @param persistence.subPath The subdirectory of the volume (see persistence.volumeName) to mount
+  ## Useful where one PV is used for multiple services, so each has its own subtree.
   ##
-  nameOverride: d1index
+  persistence:
+    subPath: *sharedVolumeSubPath
 
   rabbitmq:
     auth:
