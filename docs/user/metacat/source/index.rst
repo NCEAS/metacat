@@ -10,7 +10,7 @@ Metacat Administrator's Guide
     Feedback and bugs - please create a GitHub Issue:
         * https://github.com/NCEAS/metacat/issues/new
 
-    License: Apache 2.0
+    License: GNU GPL
     
     Release Date: |today|
 
