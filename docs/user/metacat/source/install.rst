@@ -594,20 +594,15 @@ If you upgrade Solr from an old 8.* version to 9.5.0, you may run this command i
 
     sudo ufw status
 
-6. Add New Allowed Solr Paths
+6. Add New Allowed Solr Path
 
-Add a new line for the ``SOLR_OPTS`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) such as:
+Add a new line for the ``SOLR_OPTS`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) with the path to Metacat:
 
   ::
 
-    SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=*"
+    SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/var/metacat"
 
-    **Note: If you are installing solr 9.5.0, you must explicitly set "-Dsolr.allowPaths=" to the absolute path to Metacat
-    instead of using a wildcard * value.**
-
-    **Note2: This CANNOT be a symlink, it must be a real path.**
-
-    ex. SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/private/var/metacat"
+    **Note:** The path to Metacat must be a real path, it CANNOT be a symlink.
 
 And then set your solr_home
 
@@ -735,8 +730,8 @@ configuring Metacat, please see the Configuration Section.
    The Authentication Configuration screen appears the first time you open a 
    new installation of Metacat. 
 
-Upgrade Metacat
-...............
+Upgrading Metacat
+.................
 
 To upgrade an existing binary Metacat installation follow the steps in this
 section. The steps for upgrading Metacat from source are the same as the
@@ -795,8 +790,8 @@ with Metacat's Authorization Configuration screen. Note that if you do not have
 Tomcat integrated with Apache you will probably have to type
 http://yourserver.yourdomain.com:8080/yourcontext/
 
-Upgrade to Metacat v3.0.0
-................................
+Upgrading to Metacat v3.0.0
+...........................
 
 Starting Requirements:
 
@@ -837,19 +832,8 @@ Starting Requirements:
 1. Download/upgrade your solr version to 9.5.0
 
   * In Metacat v3.0.0, the solr schema and configuration has changed. Consequently, a solr upgrade is
-    not supported in v3.0.0 with an old core. You must start with a new core (solr-home). Additionally,
-    data from existing or previous solr installations will also be incompatible with the new schema and
-    configuration. Please select a new solr-home during the Metacat configuration process, and reindex
-    all objects (see example below).
-
-  * Example below to reindex all objects
-
-    ::
-
-      # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
-      # where $TOKEN is an environment variable containing your administrator jwt token
-      # example:
-      curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
+    not supported in v3.0.0 with an old core. You must either start with a new core (solr-home), or
+    back up your current solr-home (directory) and then remove all of its contents.
 
   * Ensure that `/etc/default/solr.in.sh` is group writable
 
@@ -857,13 +841,20 @@ Starting Requirements:
 
       ex. `sudo chmod g+w /etc/default/solr.in.sh`
 
-  * In `solr.in.sh`, be sure to delete the old solr home add a new solr path:
+  * In `solr.in.sh`, be sure to update the old solr home with the real path to Metacat:
 
     ::
 
       `SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/var/metacat"`
 
-  * Optionally, add/adjust memory settings to `SOLR_JAVA_MEM="-Xms2g -Xmx2g"`
+    **Note:** As of solr v9.*, a security requirement was introduced and the usage of a wildcard ``*``
+    in the allowPaths property has been deprecated.
+
+  * Optionally, add/adjust memory settings to:
+
+    ::
+
+      SOLR_JAVA_MEM="-Xms2g -Xmx2g"
 
 2. Start/restart solr
 
@@ -889,6 +880,21 @@ Starting Requirements:
       * The default location for metacat-site.properties is in /var/metacat/config, but this is configurable in the Metacat Admin UI (under "Metacat Global Properties" -> "Site Properties Directory").
 
     * The database upgrade process may require several minutes or longer to complete.
+
+  * **Reminder**:
+
+    * Data from existing or previous solr installations are incompatible with the new 3.0.0 schema and configuration.
+    * During the Metacat configuration process, confirm the path to your solr-home directory and ensure that the directory is empty.
+    * After configuring Metacat, re-index all objects (an example is below for your quick reference or see the `Metacat Admin Api`_).
+
+      ::
+
+        # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
+        # where $TOKEN is an environment variable containing your administrator jwt token
+
+        curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
+
+.. _Metacat Admin Api: ./admin-api.html
 
 Source Install and Upgrade
 ..........................
