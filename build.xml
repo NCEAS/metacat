@@ -27,7 +27,6 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
-    <property name="metacatui-tag" value="${metacatui.tag}"/>
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2"/>
 
     <property environment="env"/>
@@ -36,6 +35,7 @@
     <property name="java.target.version" value="${java.target}"/>
     <!-- the source code version for java compilation-->
     <property name="java.source.version" value="${java.target}"/>
+    <property name="metacatui-tag" value="${metacatui.tag}"/>
 
     <!-- Configure the maven2 ant tasks -->
     <path id="maven-ant-tasks.classpath" path="lib/maven-ant-tasks-2.1.0.jar"/>
