@@ -114,7 +114,7 @@ And the DataONE search portal is available at:
 
   https://search.dataone.org/
 
-.. _ORCID iD: http://www.cilogon.org
+.. _ORCID iD: https://orcid.org/
 
 
 Investigator Toolkit
