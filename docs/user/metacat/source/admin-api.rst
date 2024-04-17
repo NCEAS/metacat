@@ -1,10 +1,13 @@
 Admin API
 =========
 As a Metacat administrator/operator, you have full privileges to access and contribute data to your
-Metacat instance via the `DataONE REST API`_. Additionally, there exists two admin specific endpoints
+Metacat instance via the `DataONE REST API`_. Additionally, there exist two admin specific endpoints
 that you have access to:
 
 .. _DataONE REST API: https://knb.ecoinformatics.org/api
+
+Metacat Administrator REST API
+..............................
 
 1. ``PUT /index``
 
