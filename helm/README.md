@@ -100,7 +100,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | Name                              | Description                                                     | Value               |
 |-----------------------------------|-----------------------------------------------------------------|---------------------|
 | `metacat.application.context`     | see global.metacatAppContext                                    | `metacat`           |
-| `metacat.includeMetacatUi`        | Include MetacatUI in the same container as metacat              | `true`              |
+| `metacat.metacatUiTheme`          | set visual theme, or omit metacatui from installation           | `true`              |
 | `metacat.auth.administrators`     | A semicolon-separated list of admin ORCID iDs                   | `""`                |
 | `metacat.database.connectionURI`  | postgres database URI, or lave blank to use sub-chart           | `""`                |
 | `metacat.guid.doi.enabled`        | Allow users to publish Digital Object Identifiers at doi.org?   | `true`              |
@@ -299,6 +299,10 @@ The Metacat image stores the Metacat data and configurations on a PVC mounted at
 path in the metacat container.
 
 The PostgreSQL image stores the database data at the `/bitbami/pgdata` path in its own container.
+
+> **Tip:** if you are mounting a volume that already contains data at a specific path in the
+> underlying filesystem (e.g. 'repos/knb/metacat'), you can select that path location by using the 
+> 'subPath' parameter
 
 Details of the sub-chart PV/PVC requirements can be found in the [dataone-indexer
 repository](https://github.com/DataONEorg/dataone-indexer)

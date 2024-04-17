@@ -6,7 +6,7 @@
 # METACAT_EXTERNAL_PORT     (see .Values.metacat.server.httpPort)
 # TOMCAT_MEM_MIN            (see .Values.tomcat.heapMemory.min)
 # TOMCAT_MEM_MAX            (see .Values.tomcat.heapMemory.max)
-# INCLUDE_METACATUI         (see .Values.metacat.includeMetacatUi)
+# METACATUI_THEME           (see .Values.metacat.metacatUiTheme)
 #
 # Defined in Dockerfile:
 # TC_HOME       (tomcat home directory in container; typically /usr/local/tomcat)
@@ -81,6 +81,9 @@ configMetacatUi() {
     fi
 
     # show default skin if nothing else configured.
+    if [  ]; then
+
+    fi [ ]
     # 1. Overwrite config.js
     if [ "$METACAT_EXTERNAL_PORT" == "443" ] || [ "$METACAT_EXTERNAL_PORT" == "8443" ]; then
       PROTOCOL="https"
@@ -90,15 +93,17 @@ configMetacatUi() {
     {
         echo "MetacatUI.AppConfig = {"
         echo "  theme: \"default\","
-        echo "  root: \"/metacatui\","
+        echo "  root: \"/\","
         echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
         echo "  baseUrl: \"${PROTOCOL}://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\","
-        echo "  d1CNBaseUrl: \"${METACAT_DATAONE_CN_URL%"cn"}\""
+        echo "  d1CNBaseUrl: \"${METACAT_DATAONE_CN_URL%"cn"}\"",
+        echo "  nodeId: \"${METACAT_NODE_ID:-urn:node:METACAT1}\""
         echo '}'
     } > "${UI_HOME}"/config/config.js
 
     # 2. edit index.html to point to it
     sed -i 's|"/config/config.js"|"/metacatui/config/config.js"|g' "${UI_HOME}"/index.html
+# knb uses: /js/themes/knb/config.js
 
     # 3. add a custom error handler to make one-page app work, without apache
     #    (see https://nceas.github.io/metacatui/install/apache)
@@ -153,22 +158,16 @@ if [[ $DEVTOOLS == "true" ]]; then
 
 elif [[ $1 = "catalina.sh" ]]; then
 
-    # If $INCLUDE_METACATUI is not set, default to installing
-    if [ -z "$INCLUDE_METACATUI" ]; then
-        echo "INCLUDE_METACATUI env var not found; defaulting to INCLUDE MetacatUI..."
-        INCLUDE_METACATUI="true"
-    fi
+    UI_HOME="${TC_HOME}"/webapps/ROOT
 
-    UI_HOME="${TC_HOME}"/webapps/metacatui
-
-    if [ "$INCLUDE_METACATUI" == "true" ]; then
-        echo "Including MetacatUI, since INCLUDE_METACATUI=$INCLUDE_METACATUI"
+    if [ -n "$METACATUI_THEME" ]; then
+        echo "Including MetacatUI without theme $METACATUI_THEME"
         configMetacatUi
     else
-        echo "NOT including MetacatUI, since INCLUDE_METACATUI ($INCLUDE_METACATUI) != \"true\""
-        if [ -e "${UI_HOME}.war" ]; then
-            echo "deleting ${UI_HOME}.war"
-            rm -f "${UI_HOME}.war"
+        echo "NOT including MetacatUI, since METACATUI_THEME not set"
+        if [ -e "${TC_HOME}"/webapps/metacatui.war ]; then
+            echo "deleting ${TC_HOME}/webapps/metacatui.war"
+            rm -f "${TC_HOME}"/webapps/metacatui.war
         fi
     fi
 

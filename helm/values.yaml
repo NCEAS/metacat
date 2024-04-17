@@ -109,11 +109,11 @@ metacat:
   ##
   application.context: *metacatAppContext
 
-  ## @param metacat.includeMetacatUi Include MetacatUI in the same container as metacat
-  ## A default-skin deployment of MetacatUI will be included in the metacat pod, unless this value
-  ## is set to 'false'. If not including MetacatUI, don't forget to remove the path mapping from
-  ## ingress.hosts
-  includeMetacatUi: true
+  ## @param metacat.metacatUiTheme set visual theme, or omit metacatui from installation
+  ## A deployment of MetacatUI will be included in the metacat pod, using the named theme (which
+  ## must already exist in metacatui repo)
+  ## If this value is set to "", MetacatUI will NOT be included in the installation
+  metacatUiTheme: "default"
 
   ## @param metacat.auth.administrators A semicolon-separated list of admin ORCID iDs
   ## (https://orcid.org), denoting the users who may log into metacat with administrator privileges.
@@ -578,11 +578,6 @@ ingress:
     - host: *external-hostname
       paths:
         - path: "/metacat"
-          pathType: Prefix
-        # Remove the following if you do NOT want metacatui to be exposed & accessed via /metacatui
-        # (A default-skin deployment of MetacatUI will still be included in the metacat pod,
-        #  unless the value of 'metacat.includeMetacatUi' is set to 'false'.)
-        - path: "/metacatui"
           pathType: Prefix
 
   ## @param ingress.annotations Annotations for the ingress
