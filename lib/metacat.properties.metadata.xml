@@ -161,7 +161,7 @@
             The directory to hold the Solr core. Your solr-home path must exist, be empty, and
             cannot be a symlink (it must be a real path). If you're upgrading from 2.19.0,
             please back up your current solr-home directory and then delete all its contents.
-            Please see the &lt;a href="docs/install.html#upgrading-metacat"&gt;Metacat Admin docs&lt;/a&gt; for more information.
+            Please see the &lt;a href="docs/install.html#upgrading-to-metacat-v3-0-0"&gt;Metacat Admin docs&lt;/a&gt; for more information.
             &lt;em&gt;Reminder: Ensure the Solr user has the write/read permission on this directory &lt;/em&gt;
         </description>
         <helpFile>docs/metacat-properties.html#solr-homedir</helpFile>
