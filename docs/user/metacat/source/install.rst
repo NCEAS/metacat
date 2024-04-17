@@ -352,7 +352,7 @@ directory in which Apache is installed: ``<apache_install_dir>/conf/httpd.conf``
       JkLogLevel info
     </IfModule>
 
-2. Configure apache to route traffic to the Metacat application. ServerName should be set to the DNS name of the Metacat server. ScriptAlias and the following Directory section should both point to the cgi-bin directory inside your Metacat installation
+2. Configure apache to route traffic to the Metacat application. ServerName should be set to the DNS name of the Metacat server.
 
   ::
 
@@ -367,18 +367,6 @@ directory in which Apache is installed: ``<apache_install_dir>/conf/httpd.conf``
       Header set Access-Control-Allow-Credentials "true"
       ErrorLog /var/log/httpd/error_log
       CustomLog /var/log/httpd/access_log common
-      ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
-      <Directory /var/www/cgi-bin/>
-        AllowOverride None
-        Options ExecCGI
-        Require all granted
-      </Directory>
-      ScriptAlias /metacat/cgi-bin/ "/var/www/webapps/metacat/cgi-bin/"
-      <Directory "/var/www/webapps/metacat/cgi-bin/">
-        AllowOverride None
-        Options ExecCGI
-        Require all granted
-      </Directory>
       <Directory "/var/www/metacatui">
         AllowOverride All
         FallbackResource /metacatui/index.html
