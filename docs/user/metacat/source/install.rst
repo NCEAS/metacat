@@ -47,8 +47,8 @@ System requirements for running Metacat:
   * at least 512MB RAM
 
 
-Installing on Linux
--------------------
+Installing on Linux (Ubuntu is Highly Recommended)
+--------------------------------------------------
 This section contains instructions for downloading and installing Metacat on 
 Linux systems. As Mac OS X is based on BSD Unix, these Linux instructions can
 be adapted to also work on Mac OS X (although the exact commands for
