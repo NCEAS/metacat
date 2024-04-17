@@ -12,6 +12,8 @@ global:
 
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
+  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
 
   ## DataONE Member Node (MN) Parameters
   dataone.certificate.fromHttpHeader.enabled: true
@@ -54,9 +56,32 @@ ingress:
           pathType: Prefix
         - path: "/metacatui"
           pathType: Prefix
-  d1CaCertSecretName: metacat-ca-secret
 
 dataone-indexer:
+  # increase minReplicas from default 3
+  autoscaling:
+    minReplicas: 3
+    targetCPUUtilizationPercentage: 40
+
+#  topologySpreadConstraints:
+#    - maxSkew: 10
+#      topologyKey: kubernetes.io/hostname
+#      whenUnsatisfiable: ScheduleAnyway
+#      labelSelector:
+#        matchLabels:
+#          app: dataone-indexer
+
+  # prefer more-performant nodes for indexer workers
+#  affinity:
+#    nodeAffinity:
+#      requiredDuringSchedulingIgnoredDuringExecution:
+#        nodeSelectorTerms:
+#          - matchExpressions:
+#              - key: nceas/nodegroup
+#                operator: In
+#                values:
+#                  - fast
+
   image:
     pullPolicy: Always
     debug: true

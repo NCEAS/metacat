@@ -104,8 +104,6 @@ Contents
    query-index
    themes
    authinterface
-   replication
-   harvester
    oaipmh
    event-logging
    sitemaps

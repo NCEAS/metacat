@@ -158,9 +158,11 @@
         <group>2</group>
         <index>4</index>
         <description>
-            The directory to hold the Solr core. &lt;em&gt; If you are upgrading Metacat from
-            version 2.12.2 or earlier, please choose a different directory rather than the old one.
-            Make sure the Solr user has the write/read permission on this directory &lt;/em&gt;
+            The directory to hold the Solr core. Your solr-home path must exist, be empty, and
+            cannot be a symlink (it must be a real path). If you're upgrading from 2.19.0,
+            please back up your current solr-home directory and then delete all its contents.
+            Please see the &lt;a href="docs/install.html#upgrading-to-metacat-v3-0-0"&gt;Metacat Admin docs&lt;/a&gt; for more information.
+            &lt;em&gt;Reminder: Ensure the Solr user has the write/read permission on this directory &lt;/em&gt;
         </description>
         <helpFile>docs/metacat-properties.html#solr-homedir</helpFile>
     </config>
@@ -183,7 +185,7 @@
         <index>6</index>
         <description>
             The path of the script file to overwrite the default Solr environment variables.
-            &lt;em&gt; Make sure the Tomcat user has the write/read permission on this file.
+            &lt;em&gt;Reminder: Ensure the Tomcat user has the write/read permission on this file.
             &lt;/em&gt;
         </description>
         <helpFile>docs/metacat-properties.html#solr-env-script-path</helpFile>

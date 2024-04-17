@@ -74,12 +74,18 @@ spec:
             # {podname}-{instance} (e.g. metacatknb-metacat-metacatknb-0)
             - name: {{ .Release.Name }}-metacat
               mountPath: /var/metacat
+              {{- if .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath }}
+              {{- end }}
               readOnly: false
             - name: {{ .Release.Name }}-config-volume
               mountPath: /usr/local/etc/metacat-configMap
               readOnly: true
             - name: {{ .Release.Name }}-d1-cert-volume
               mountPath: /var/metacat/certs/
+              readOnly: true
+            - name: {{ .Release.Name }}-d1-pub-cert-volume
+              mountPath: /var/metacat/pubcerts/
               readOnly: true
           env:
             - name: METACAT_IN_K8S
@@ -88,8 +94,6 @@ spec:
               value: {{ ternary "true" "false" .Values.image.debug | quote }}
             - name: INCLUDE_METACATUI
               value: {{ ternary "true" "false" .Values.metacat.includeMetacatUi | quote }}
-            - name: METACAT_ADMINISTRATOR_USERNAME
-              value: {{ index .Values.metacat "administrator.username" }}
             - name: METACAT_EXTERNAL_HOSTNAME
               value: {{ index .Values.metacat "server.name" }}
             - name: METACAT_EXTERNAL_PORT
@@ -126,9 +130,13 @@ spec:
         configMap:
           name: {{ .Release.Name }}-metacat-configfiles
           defaultMode: 0644
+      - name: {{ .Release.Name }}-d1-pub-cert-volume
+        configMap:
+          name: {{ .Release.Name }}-d1-certs-public
+          optional: true
       - name: {{ .Release.Name }}-d1-cert-volume
         secret:
-          secretName: {{ .Release.Name }}-d1-client-secret
+          secretName: {{ .Release.Name }}-d1-client-cert
           optional: true
 {{- if not (.Values.persistence.enabled) }}
       - name: {{ .Release.Name }}-volume

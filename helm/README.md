@@ -4,27 +4,29 @@ Metacat is repository software for preserving data and metadata (documentation a
 helps scientists find, understand and effectively use data sets they manage or that have been
 created by others. For more details, see https://github.com/NCEAS/metacat
 
-> **Warning**: this deployment does not currently work on Apple Silicon machines (e.g in Rancher
+> **Warning**: this deployment does not currently work on Apple Silicon machines (e.g. in Rancher
 > Desktop), because at least one of the dependencies (RabbitMQ) doesn't work in that environment.
 
 ## TL;DR
 Starting in the root directory of the `metacat` repo:
 
-```shell
-# 1. FIRST TIME ONLY: add your credentials to helm/admin/secrets.yaml, and add to cluster
-$ vim helm/admin/secrets.yaml    ## follow the instructions in this file
+1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the
+   contents of the values overlay files (like [./values-dev-cluster.yaml](./values-dev-cluster.yaml)
+   , for example), to see which settings typically need to be changed.
 
-# 2. deploy and enjoy!
-#    * * * from the metacat repo root directory: * * *
-$ ./helm-install.sh  myreleasename  mynamespace  ./helm
-```
+2. Add your credentials to helm/admin/secrets.yaml, and add to cluster
 
-You should then be able to access the application via http://localhost/metacat! **Note** you should
-not need to edit anything in [values.yaml](./values.yaml), if your dev setup is fairly standard.
-You can also look at the contents of values overlay files
-[./values-dev-local.yaml](./values-dev-local.yaml) and
-[./values-dev-cluster.yaml](./values-dev-cluster.yaml), to see which settings typically need to be
-changed.
+    ```shell
+    $ vim helm/admin/secrets.yaml    ## follow the instructions in this file
+    ```
+
+3. Deploy and enjoy!
+
+    ```shell
+    $ ./helm-install.sh  myreleasename  mynamespace  ./helm
+    ```
+
+You should then be able to access the application via http://your-host-name/metacat!
 
 ## Introduction
 
@@ -33,13 +35,9 @@ using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
-- Kubernetes 1.19+
-- Helm 3.2.0+
+- Kubernetes 1.23.4+
+- Helm 3.14.0+
 - PV provisioner support in the underlying infrastructure
-- An existing instance of [solr](https://solr.apache.org/downloads.html#solr-8112), suitably
-[configured](https://knb.ecoinformatics.org/knb/docs/install.html#solr-server) to be accessed by
-metacat, and with its index
-[regenerated.](https://knb.ecoinformatics.org/knb/docs/query-index.html#regenerating-the-index)
 
 ## Installing the Chart
 
@@ -53,8 +51,9 @@ This command deploys Metacat on the Kubernetes cluster in the default configurat
 [Parameters](#parameters) section lists the parameters that can be configured during
 installation.
 
-> **Tip**: Some settings in [values.yaml](./values.yaml) depend upon the release name. See the
-> [Parameters](#parameters) section for Descriptions that include "RELEASE PREFIX"
+> **Note**: Some settings need to be edited to include release name that you choose. See the
+> [values.yaml](./values.yaml) file for settings that include `${RELEASE_NAME}`. The instructions
+> at the beginning of [values.yaml](./values.yaml) suggest simple ways to achieve this.
 
 Parameters may be provided on the command line to override those in values.yaml; e.g.
 
@@ -70,19 +69,19 @@ To uninstall/delete the `my-release` deployment:
 helm delete my-release
 ```
 
-The `helm delete` command removes all the Kubernetes components associated with the chart (with the
-exception of Secrets, PVCs and PVs) and deletes the release.
+The `helm delete` command removes all the Kubernetes components associated with the chart
+(except for Secrets, PVCs and PVs) and deletes the release.
 
-There are two PVCs associated with `my-release`; one for Metacat data files, and the other for
-the PostgreSQL database (if the postgres sub-chart is enabled). To delete:
+There are multiple PVCs associated with `my-release`, for Metacat data files, the PostgreSQL
+database, and for components of the indexer sub-chart. To delete:
 
 ```shell
-kubectl delete pvc <myMetacatPVCName> (or <myPostgresPVCName>)   ## deletes named PVC
+kubectl delete pvc <myPVCName>   ## deletes specific named PVC
 or:
-kubectl delete pvc -l release=my-release                         ## deletes both
+kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associated with the release
 ```
 
-> **NOTE**: DELETING THE PVC's WILL DELETE ALL YOUR DATA AS WELL! Please be cautious!
+> **NOTE**: DELETING THE PVCs MAY DELETE ALL YOUR DATA AS WELL! Please be cautious!
 
 
 ## Parameters
@@ -90,7 +89,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Global Properties Shared Across Sub-Charts Within This Deployment
 
 | Name                                 | Description                                             | Value                             |
-| ------------------------------------ | ------------------------------------------------------- | --------------------------------- |
+|--------------------------------------|---------------------------------------------------------|-----------------------------------|
 | `global.passwordsSecret`             | The name of the Secret containing application passwords | `${RELEASE_NAME}-metacat-secrets` |
 | `global.metacatAppContext`           | The application context to use                          | `metacat`                         |
 | `global.storageClass`                | default name of the storageClass to use for PVs         | `local-path`                      |
@@ -99,10 +98,10 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Metacat Application-Specific Properties
 
 | Name                              | Description                                                     | Value               |
-| --------------------------------- | --------------------------------------------------------------- | ------------------- |
+|-----------------------------------|-----------------------------------------------------------------|---------------------|
 | `metacat.application.context`     | see global.metacatAppContext                                    | `metacat`           |
-| `metacat.administrator.username`  | The admin username that will be used to authenticate            | `admin@localhost`   |
-| `metacat.auth.administrators`     | A colon-separated list of admin usernames or LDAP-style DN      | `admin@localhost`   |
+| `metacat.includeMetacatUi`        | Include MetacatUI in the same container as metacat              | `true`              |
+| `metacat.auth.administrators`     | A semicolon-separated list of admin ORCID iDs                   | `""`                |
 | `metacat.database.connectionURI`  | postgres database URI, or lave blank to use sub-chart           | `""`                |
 | `metacat.guid.doi.enabled`        | Allow users to publish Digital Object Identifiers at doi.org?   | `true`              |
 | `metacat.server.port`             | The http port exposed externally, if NOT using the ingress      | `""`                |
@@ -116,7 +115,8 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### OPTIONAL DataONE Member Node (MN) Parameters
 
 | Name                                                          | Description                                                       | Value                                                    |
-| ------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
+|---------------------------------------------------------------|-------------------------------------------------------------------|----------------------------------------------------------|
+| `metacat.cn.server.publiccert.filename`                       | optional cert(s) used to validate jwt auth tokens,                | `/var/metacat/pubcerts/DataONEProdIntCA.pem`             |
 | `metacat.dataone.certificate.fromHttpHeader.enabled`          | Enable mutual auth with client certs                              | `false`                                                  |
 | `metacat.dataone.autoRegisterMemberNode`                      | Automatically push MN updates to CN? (yyyy-MM-dd)                 | `2023-02-28`                                             |
 | `metacat.D1Client.CN_URL`                                     | the url of the CN                                                 | `https://cn.dataone.org/cn`                              |
@@ -141,7 +141,7 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Metacat Image, Container & Pod Parameters
 
 | Name                           | Description                                                                  | Value                   |
-| ------------------------------ | ---------------------------------------------------------------------------- | ----------------------- |
+|--------------------------------|------------------------------------------------------------------------------|-------------------------|
 | `image.repository`             | Metacat image repository                                                     | `ghcr.io/nceas/metacat` |
 | `image.tag`                    | Metacat image tag (immutable tags are recommended)                           | `DEVELOP`               |
 | `image.pullPolicy`             | Metacat image pull policy                                                    | `IfNotPresent`          |
@@ -157,12 +157,12 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 | `podSecurityContext.fsGroup`   | numerical Group ID for the pod                                               | `1000`                  |
 | `securityContext.runAsNonRoot` | ensure containers run as a non-root user.                                    | `true`                  |
 | `resources`                    | Resource limits for the deployment                                           | `{}`                    |
-| `tolerations`                  | Tolerations for pod assigment                                                | `[]`                    |
+| `tolerations`                  | Tolerations for pod assignment                                               | `[]`                    |
 
 ### Metacat Persistence
 
 | Name                        | Description                                                    | Value               |
-| --------------------------- | -------------------------------------------------------------- | ------------------- |
+|-----------------------------|----------------------------------------------------------------|---------------------|
 | `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims | `true`              |
 | `persistence.storageClass`  | Storage class of backing PV                                    | `local-path`        |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use          | `""`                |
@@ -173,13 +173,13 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 ### Networking & Monitoring
 
 | Name                                 | Description                                                   | Value            |
-| ------------------------------------ | ------------------------------------------------------------- | ---------------- |
+|--------------------------------------|---------------------------------------------------------------|------------------|
 | `ingress.enabled`                    | Enable or disable the ingress                                 | `true`           |
 | `ingress.className`                  | ClassName of the ingress provider in your cluster             | `traefik`        |
 | `ingress.hosts`                      | A collection of rules mapping different hosts to the backend. | `[]`             |
 | `ingress.annotations`                | Annotations for the ingress                                   | `{}`             |
 | `ingress.tls`                        | The TLS configuration                                         | `[]`             |
-| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate              | `ca-secret`      |
+| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain        | `d1-ca-chain`    |
 | `service.enabled`                    | Enable another optional service in addition to headless svc   | `false`          |
 | `service.type`                       | Kubernetes Service type. Defaults to ClusterIP if not set     | `LoadBalancer`   |
 | `service.clusterIP`                  | IP address of the service. Auto-generated if not set          | `""`             |
@@ -199,37 +199,40 @@ kubectl delete pvc -l release=my-release                         ## deletes both
 
 ### Postgresql Sub-Chart
 
-| Name                                           | Description                                         | Value                                |
-| ---------------------------------------------- | --------------------------------------------------- | ------------------------------------ |
-| `postgresql.enabled`                           | enable the postgresql sub-chart                     | `true`                               |
-| `postgresql.auth.username`                     | Username for accessing the database used by metacat | `metacat`                            |
-| `postgresql.auth.database`                     | The name of the database used by metacat.           | `metacat`                            |
-| `postgresql.auth.existingSecret`               | Secrets location for postgres password              | `${RELEASE_NAME}-metacat-secrets`    |
-| `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password            | `POSTGRES_PASSWORD`                  |
-| `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD`                  |
-| `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication            | (See [values.yaml](./values.yaml))   |
-| `postgresql.primary.persistence.enabled`       | Enable data persistence using PVC                   | `true`                               |
-| `postgresql.primary.persistence.existingClaim` | Existing PVC to re-use                              | `""`                                 |
-| `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                         | `""`                                 |
-| `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume             | `1Gi`                                |
+| Name                                           | Description                                         | Value                              |
+|------------------------------------------------|-----------------------------------------------------|------------------------------------|
+| `postgresql.enabled`                           | enable the postgresql sub-chart                     | `true`                             |
+| `postgresql.auth.username`                     | Username for accessing the database used by metacat | `metacat`                          |
+| `postgresql.auth.database`                     | The name of the database used by metacat.           | `metacat`                          |
+| `postgresql.auth.existingSecret`               | Secrets location for postgres password              | `${RELEASE_NAME}-metacat-secrets`  |
+| `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password            | `POSTGRES_PASSWORD`                |
+| `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD`                |
+| `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication            | (See [values.yaml](./values.yaml)) |
+| `postgresql.primary.persistence.enabled`       | Enable data persistence using PVC                   | `true`                             |
+| `postgresql.primary.persistence.existingClaim` | Existing PVC to re-use                              | `""`                               |
+| `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                         | `""`                               |
+| `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume             | `1Gi`                              |
 
 ### Tomcat Configuration
 
 | Name                    | Description                                              | Value |
-| ----------------------- | -------------------------------------------------------- | ----- |
+|-------------------------|----------------------------------------------------------|-------|
 | `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
 | `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
 
-### dataone_indexer Sub-Chart
+### dataone-indexer Sub-Chart
 
-| Name                                                         | Description                               | Value                                 |
-| ------------------------------------------------------------ | ----------------------------------------- | ------------------------------------- |
-| `dataone-indexer.enabled`                                    | enable the dataone-indexer sub-chart      | `true`                                |
-| `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use   | `metacat-rmq-guest`                   |
-| `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password             | `${RELEASE_NAME}-metacat-secrets`     |
-| `dataone-indexer.solr.extraVolumes[0].name`                  | DO NOT EDIT - referenced by sub-chart     | `solr-config`                         |
-| `dataone-indexer.solr.extraVolumes[0].configMap.name`        | See notes in [values.yaml](./values.yaml) | `${RELEASE_NAME}-indexer-configfiles` |
-| `dataone-indexer.solr.extraVolumes[0].configMap.defaultMode` | DO NOT EDIT                               | `777`                                 |
+| Name                                                         | Description                             | Value                                 |
+|--------------------------------------------------------------|-----------------------------------------|---------------------------------------|
+| `dataone-indexer.enabled`                                    | enable the dataone-indexer sub-chart    | `true`                                |
+| `dataone-indexer.nameOverride`                               | partial override for resource name      | `"d1index"`                           |
+| `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use | `metacat-rmq-guest`                   |
+| `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password           | `${RELEASE_NAME}-metacat-secrets`     |
+| `dataone-indexer.solr.customCollection`                      | name of the solr collection to use      | `metacat-index`                       |
+| `dataone-indexer.solr.coreNames`                             | Solr core names to be created           | `["metacat-core"]`                    |
+| `dataone-indexer.solr.extraVolumes[0].name`                  | DO NOT EDIT - referenced by sub-chart   | `solr-config`                         |
+| `dataone-indexer.solr.extraVolumes[0].configMap.name`        | see notes in values.yaml                | `${RELEASE_NAME}-indexer-configfiles` |
+| `dataone-indexer.solr.extraVolumes[0].configMap.defaultMode` | DO NOT EDIT                             | `777`                                 |
 
 Specify non-secret parameters in the default [values.yaml](./values.yaml), which will be used
 automatically each time you deploy.
@@ -241,7 +244,7 @@ automatically each time you deploy.
 > application (Metacat or PostgreSQL) and re-deploy.
 >
 > **Warning**: Setting a password will be ignored on new installations in cases when a previous
-> PosgreSQL release was deleted through the helm command. In that case, the old PVC will have an
+> PostgreSQL release was deleted through the helm command. In that case, the old PVC will have an
 > old password, and setting it through helm won't take effect. Deleting persistent volumes (PVs)
 > will solve the issue. Refer to [issue 2061](https://github.com/bitnami/charts/issues/2061) for
 > more details
@@ -253,7 +256,7 @@ for example:
 helm install my-release ./helm  --set metacat.solr.baseURL=http://mysolrhost:8983/solr
 ```
 
-Alternatively, a YAML file that specifies the values for the parameters can be provided
+Alternatively, a YAML file that specifies the override values for the parameters can be provided
 while installing the chart. For example:
 
 ```shell
@@ -274,7 +277,7 @@ of the [Metacat Administrators' Guide](https://knb.ecoinformatics.org/knb/docs/)
 
 ### Secrets
 
-Secret parameters (such as login credentials, certificates etc.) should be installed as
+Secret parameters (such as login credentials, auth tokens, private keys etc.) should be installed as
 kubernetes Secrets in the cluster. The file [admin/secrets.yaml](./admin/secrets.yaml) provides a
 template that you can complete and apply using `kubectl` - see file comments for details. Please
 remember to NEVER ADD SECRETS TO GITHUB!
@@ -292,17 +295,15 @@ Persistent Volume Claims are used to keep the data across deployments. See the
 [Parameters](#parameters) section to configure the PVCs or to disable persistence for either
 application.
 
-With the default setup in [values.yaml](./values.yaml), two persistent volumes will be provisioned
-automatically (one for Metacat, and one for PostgreSQL) with a PVC bound to each. If you want to
-have the application use a specific directory on the host machine, for example, see the
-documentation in the [admin/pv-hostpath.yaml](./admin/pv-hostpath.yaml) file.
-
 The Metacat image stores the Metacat data and configurations on a PVC mounted at the `/var/metacat`
 path in the metacat container.
 
 The PostgreSQL image stores the database data at the `/bitbami/pgdata` path in its own container.
 
-## Networking and x.509 Certificates
+Details of the sub-chart PV/PVC requirements can be found in the [dataone-indexer
+repository](https://github.com/DataONEorg/dataone-indexer)
+
+## Networking, Certificates, and Auth Tokens
 
 By default, the chart will install an
 [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) (see the `ingress.*`
@@ -324,6 +325,76 @@ $  helm upgrade --install ingress-nginx ingress-nginx \
 
 ...and don't forget to set the `ingress.className` to `nginx` in your `values.yaml`.
 
+### Setting up a Token and Optional CA certificate for Indexer Access
+
+**IMPORTANT:** In order for Metacat 3.0.0 to function correctly, the
+[dataone-indexer](#dataone-indexer-sub-chart) needs a valid authentication token, to enable
+indexing for private datasets, via calls to metacat's DataONE API.
+
+> Note that this is only an interim requirement; a future release of Metacat will remove the need
+> for this auth token.
+>
+> If you are only evaluating metacat, you can do so without using a token, but
+> note that only public datasets can be uploaded and searched; private datasets will not be
+> supported without the token setup.
+
+#### Prerequisites
+
+1. [Contact DataONE administrators](https://www.dataone.org/contact/) for an authentication token, issued against the DataONE
+   Certificate Authority (CA), that will be valid for one year.
+
+   - if your Metacat site is already a DataONE member node, we will issue a token linked to your
+     DataONE Node identity.
+
+   - if your site is not a DataONE member node, we [encourage you to
+     join](https://www.dataone.org/jointhenetwork/). Otherwise, we can issue a token linked to your administrator's ORCID iD.
+
+        > **Tip:**  if you want a temporary auth token in order to evaluate Metacat's private
+          dataset functionality, you can get a short-term auth token (valid for only 24 hours!),
+          by logging into [the KNB
+          website](https://knb.ecoinformatics.org), and navigating to "My Profile" -> "Settings" ->
+          "Authentication Token".
+
+2. Download a copy of the DataONE Intermediate CA certificate,
+either for the Production or the Test environment, depending upon your needs:
+
+   - [DataONE Production Intermediate CA
+     Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
+   - [DataONE Test Intermediate CA
+     Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
+
+       > **Note:** the DataONE Intermediate CA certificate is a single certificate, NOT a
+         certificate chain!
+
+#### Install the Token
+
+- Install the token in a Kubernetes Secret named `<yourReleaseName>-indexer-token`,
+  identified by the key: `DataONEauthToken`.
+- For example, assuming the token is in a file `urn_node_TestNAME.jwt`:
+
+      ```shell
+      kubectl create secret generic <yourReleaseName>-indexer-token \
+                                    --from-file=DataONEauthToken=urn_node_TestNAME.jwt
+      ```
+
+#### Install the CA Intermediate Certificate
+
+- Install the cert in a Kubernetes ConfigMap named `<yourReleaseName>-d1-certs-public`,
+  identified by the key: `DataONEProdIntCA.pem`.
+- For example, assuming the token is in a file `DataONEProdIntCA.pem`:
+
+      ```shell
+      kubectl create configmap  <yourReleaseName>-d1-certs-public \
+                                    --from-file=DataONEProdIntCA.pem=DataONEProdIntCA.pem
+      ```
+    > **Tip:**
+      If you change the ConfigMap key from `DataONEProdIntCA.pem` to a different value, make
+      sure that
+      `metacat.cn.server.publiccert.filename` in values.yaml has a filename that matches the new
+       key!
+    >
+    >  Also note that you may include more than one cert, if you need to authenticate requests from
+       tokens issued by different CAs. See the documentation in values.yaml
 
 ### Setting up a TLS Certificate(s) for HTTPS Traffic
 
@@ -371,40 +442,45 @@ configure certificates and settings for both these roles.
 
 #### Prerequisites
 1. First make sure you have the Kubernetes version of the
-   [nginx ingress installed](#networking-and-x509-certificates)
-1. Ensure [HTTPS access is set up](#setting-up-a-tls-certificates-for-https-traffic) and
+   [nginx ingress installed](#networking-certificates-and-auth-tokens)
+2. Ensure [HTTPS access is set up](#setting-up-a-tls-certificates-for-https-traffic) and
    working correctly. This allows other nodes, acting as "clients" to verify your server's identity
    during mutual authentication.
-1. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain:
-
-   1. a copy of the **DataONE Certificate Authority (CA) certificate chain**. This enables your node
-      (when acting as server) to validate other nodes' client certificates signed by that authority.
-   1. a **Client Certificate**, that uniquely identifies your Metacat instance. This allows another
-      node (acting as server) to verify your node's identity (acting as "client") during mutual
-      authentication.
+3. Download a copy of the **DataONE Certificate Authority (CA) certificate chain**. This enables
+   your node (when acting as server) to verify that other nodes' client certificates were signed
+   by the DataONE Certificate Authority.
+   1. DataONE **Production** CA Chain:
+      [DataONEProdCAChain.crt](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONEProdCAChain.crt)
+   2. DataONE **Test** CA Chain:
+      [DataONETestCAChain.crt](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestCAChain.crt)
+4. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain a **Client Certificate**,
+   that uniquely identifies your Metacat instance. This allows another node (acting as server)
+   to verify your node's identity (acting as "client") during mutual authentication. The client
+   certificate contains sensitive information, and should be kept private.
 
 #### Install the CA Chain
 
-1. Create the Kubernetes Secret (named `ca-secret`) to hold the ca chain (e.g. assuming it's in
-    a file named `DataONECAChain.crt`):
+1. Create the Kubernetes Secret (named `d1-ca-chain`) to hold the ca chain
+   (e.g. assuming it's in a file named `DataONECAChain.crt`):
 
     ```shell
-    kubectl create secret generic ca-secret --from-file=ca.crt=DataONECAChain.crt
+    kubectl create secret generic d1-ca-chain --from-file=ca.crt=DataONECAChain.crt
     # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
     ```
 
-1. Run the [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh).
+2. Run the [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh).
   This will configure your nginx ingress controller to add a shared secret header that Metacat
   requires for added security. Ensure you have already defined a value for this shared secret,
   named `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY`, [in metacat Secrets](#secrets).
 
 #### Install the Client Certificate
 
-   1. Create the Kubernetes Secret (named `<yourReleaseName>-d1-client-secret`) to hold the Client
-      Certificate (e.g. assuming it's in a file named `urn_node_TestNAME.pem`):
+   1. Create the Kubernetes Secret (named `<yourReleaseName>-d1-client-cert`) to hold the Client
+      Certificate, identified by the key `d1client.crt` (e.g. assuming the cert is in a file
+      named `urn_node_TestNAME.pem`):
 
       ```shell
-      kubectl create secret generic <yourReleaseName>-d1-client-secret \
+      kubectl create secret generic <yourReleaseName>-d1-client-cert \
                                     --from-file=d1client.crt=urn_node_TestNAME.pem
       # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
       ```
@@ -418,17 +494,17 @@ configure certificates and settings for both these roles.
       dataone.certificate.fromHttpHeader.enabled: true
     ```
 
-1. set the CA secret name
+2. set the CA secret name
 
     ```yaml
     ingress:
       className: "nginx"
-      d1CaCertSecretName: ca-secret
+      d1CaCertSecretName: d1-ca-chain
     ```
 
-1. Finally, re-install or upgrade to apply the changes
+3. Finally, re-install or upgrade to apply the changes
 
-See [Appendix 3](#appendix-3-troubleshooting) for help with troubleshooting
+See [Appendix 3](#appendix-3-troubleshooting-mutual-authentication) for help with troubleshooting
 
 ---
 
@@ -486,39 +562,24 @@ create your own self-signed Mutual Auth Client certificate and CA certificate as
             -subj '/CN=My Cert Authority'
     ```
 
-1. Generate the Client Key and Certificate Signing Request:
+2. Generate the Client Key and Certificate Signing Request:
 
     ```shell
     openssl req -new -newkey rsa:4096 -keyout client.key -out client.csr -nodes \
             -subj '/CN=My Client'
     ```
 
-1. Sign with the CA Key:
+3. Sign with the CA Key:
 
     ```shell
     openssl x509 -req -sha256 -days 365 -in client.csr -CA ca.crt -CAkey ca.key \
             -set_serial 02 -out client.crt
     ```
 
-## Appendix 3: Troubleshooting
+## Appendix 3: Troubleshooting Mutual Authentication
 
-If you're having trouble getting Mutual Authentication working, you can run metacat in debug mode:
-
-```yaml
-# in values.yaml
-image:
-  debug: true
-```
-
-or via `--set image.debug=true` command-line flag.
-
-Then view the
-metacat logs using:
-
-```shell
-  kubectl logs -f -l app.kubernetes.io/name=metacat
-  # don't forget to include your namespace if necessary, using `-n myNameSpace`
-```
+If you're having trouble getting Mutual Authentication working, you can run metacat in debug mode
+and view the logs (see [Appendix 4](#appendix-4-debugging-and-logging) for details).
 
 If you see the message: `X-Proxy-Key is null or blank`, it means the nginx ingress has not been set
 up correctly (see [Setting up Certificates for DataONE Replication
@@ -539,7 +600,7 @@ You can check the configuration as follows:
         annotations:
           # more lines above
           nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
-          nginx.ingress.kubernetes.io/auth-tls-secret: default/ca-secret
+          nginx.ingress.kubernetes.io/auth-tls-secret: default/d1-ca-chain
           ## above may differ for you. Format is: <namespace>/<ingress.d1CaCertSecretName>
           nginx.ingress.kubernetes.io/auth-tls-verify-client: optional_no_ca
           nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
@@ -559,7 +620,7 @@ You can check the configuration as follows:
     - *[[ref 1]](#setting-up-a-tls-certificates-for-https-traffic)*
     - *[[ref 2]](#install-the-ca-chain)*
 
-1. then check the configmaps for the ingress controller:
+2. then check the configmaps for the ingress controller:
 
     ```shell
     kc get -n ingress-nginx configmap ingress-nginx-controller -o yaml
@@ -580,7 +641,7 @@ You can check the configuration as follows:
     successfully, and you have provided it with the correct namespaces. (Run it with no additional
     parameters to see usage notes)
 
-1. verifying the `ingress-nginx-custom-headers`:
+3. verifying the `ingress-nginx-custom-headers`:
 
     ```shell
     kc get configmaps ingress-nginx-custom-headers -n myNameSpace -o yaml
@@ -598,7 +659,7 @@ You can check the configuration as follows:
     `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` - make sure you defined this in your Secrets
     and applied them using [admin/secrets.yaml](./admin/secrets.yaml)
 
-1. You can also view the nginx ingress logs using:
+4. You can also view the nginx ingress logs using:
 
     ```shell
       NS=ingress-nginx    # this is the ingress controller's namespace. Typically ingress-nginx
@@ -606,3 +667,78 @@ You can check the configuration as follows:
     ```
 
     ...and look for entries like: `Error reading ConfigMap`
+
+## Appendix 4: Debugging and Logging
+
+### To run Metacat in debug mode
+
+Set the debug flag in values.yaml:
+
+```yaml
+image:
+  debug: true
+
+# (or you can do the same thing temporarily, via the `--set image.debug=true` command-line flag)
+```
+This has the following effects:
+1. sets the logging level to DEBUG
+   > **Tip:** you can also temporarily logging settings without needing to upgrade or
+   > re-install the application, by editing the log4J configuration ConfigMap:
+   >
+   >   $ `kc edit configmaps <releaseName>-metacat-configfiles`
+   >
+   > (look for the key `log4j2.k8s.properties`). The config is automatically reloaded every
+   > `monitorInterval` seconds.
+   >
+   > **Note** that these edits will be overwritten next time you do a `helm install` or
+   > `helm upgrade`!
+
+2. enables remote Java debugging via port 5005. You will need to forward this port, in order to
+   access it on localhost:
+
+    ```shell
+    $ kubectl  port-forward  --namespace myNamespace  pod/mypod-0  5005:5005
+    ```
+   **Tip:**
+   > For the **indexer**, you can also set the debug flag in `values.yaml` (Note that this
+     only sets the logging level to DEBUG; it does **not** enable remote debugging for the indexer):
+
+    ```yaml
+    dataone-indexer:
+      image:
+        debug: true
+    ```
+
+### To view the logs
+
+#### General syntax:
+
+Application logs for all containers running this application:
+
+```shell
+  $ kubectl logs -f -l app.kubernetes.io/name=<my-application-name>
+
+  # example: logs from all running index worker containers
+  $ kubectl logs -f -l app.kubernetes.io/name=dataone-indexer
+```
+
+Application logs from one specific pod:
+
+```shell
+  $ kubectl logs -f <specific-pod-name>
+
+  # example: Metacat logs
+  $ kubectl logs -f metacatknb-0
+
+  # example: previous Metacat logs from (now exited) pod
+  $ kubectl logs -p -f metacatknb-0
+```
+
+Logs from an `initContainer`:
+
+```shell
+  $ kubectl logs -f <specific-pod-name> -c <init-container-name>
+
+  # example: Metacat's `init-solr-metacat-dep` initContainer logs
+  $ kubectl logs -f metacatknb-0 -c init-solr-metacat-dep
+```

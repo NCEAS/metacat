@@ -18,8 +18,12 @@
     </properties>
     <repositories>
         <repository>
+            <id>Jibx Maven Repository</id>
+            <url>https://jibx.sourceforge.net/maven/</url>
+        </repository>
+        <repository>
             <id>dataone.org</id>
-            <url>http://maven.dataone.org</url>
+            <url>https://maven.dataone.org</url>
             <releases><enabled>true</enabled></releases>
             <snapshots><enabled>true</enabled></snapshots>
         </repository>
