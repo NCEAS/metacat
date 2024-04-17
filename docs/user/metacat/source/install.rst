@@ -61,7 +61,7 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTPD Server`_)
+  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTP Server`_)
 
   2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
 
@@ -187,7 +187,7 @@ robust Web-serving environment and is required by some Metacat functionality.
 
   * `Apache Tomcat`_
 
-  * `Apache HTTPD Server`_ (Highly Recommended)
+  * `Apache HTTP Server`_ (Highly Recommended)
 
   * `PostgreSQL`_ Database
 
@@ -272,8 +272,8 @@ Ensure the following lines exist in the service file for Tomcat (paths may vary 
     ReadWritePaths=/var/metacat
     ReadWritePaths=/etc/default/solr.in.sh
 
-Apache HTTPD Server (Highly Recommended)
-........................................
+Apache HTTP Server (Highly Recommended)
+.......................................
 Although you have the option of running Metacat with only the Tomcat server, we
 highly recommend that you run it behind the Apache Web server for several
 reasons; running Tomcat with the Apache server provides a more robust Web
