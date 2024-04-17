@@ -150,6 +150,12 @@ This major release introduces breaking changes:
 - Resolved EZID related tests breaking due to a new AWS-WAF Rule that denies requests if the body contains a url that includes 'localhost' or '127.0.0.1' by adding mock properties [I-1625](https://github.com/NCEAS/metacat/issues/1625)
 - Fixed sampling citations not showing up in the view service [I-31](https://github.com/NCEAS/metacat/issues/31)
 
+## Release Notes for 2.19.1
+
+New features, and bugs fixed in this release:
+* Handle additional OSTI DOIs
+* Upgrade Libraries
+
 ## Release Notes for 2.19.0
 
 New features and bugs fixed in this release:
