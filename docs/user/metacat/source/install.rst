@@ -624,12 +624,12 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 Note: If you are upgrading the Solr server and you have already run this command during the previous installation, you may skip this step.
 
 The interaction of the Tomcat and Solr services can cause the file permission issues. 
-Add the ``tomcat9`` user to the ``solr`` group and the ``solr`` user to ``tomcat9`` group to fix the problem:
+Add the ``tomcat`` user to the ``solr`` group and the ``solr`` user to ``tomcat`` group to fix the problem:
 
   ::
 
-    sudo usermod -a -G solr tomcat9
-    sudo usermod -a -G tomcat9 solr
+    sudo usermod -a -G solr tomcat
+    sudo usermod -a -G tomcat solr
 
 9. Restart the Solr server to make the new group setting effective (:note2:`Important`) 
 
@@ -638,11 +638,11 @@ Add the ``tomcat9`` user to the ``solr`` group and the ``solr`` user to ``tomcat
     sudo service solr stop
     sudo service solr start
 
-10. Check that the ``tomcat9`` user and ``solr`` user are members of the appropriate groups with:
+10. Check that the ``tomcat`` user and ``solr`` user are members of the appropriate groups with:
 
   ::
 
-    sudo groups tomcat9
+    sudo groups tomcat
     sudo groups solr
 
 Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
