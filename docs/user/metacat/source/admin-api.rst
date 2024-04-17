@@ -15,16 +15,14 @@ Metacat Administrator REST API
 
        PUT /index/{pid1}``
 
-       PUT /index[/]?[all=true] | [&pid={pid}]``
+       PUT /index?[all=true] | [&pid={pid}]``
 
    ::
 
      # Examples
 
      PUT /index?all=true // Re-index everything
-     PUT /index?all=true&pid={pid1}  // Pid1 will be ignored. Re-index everything
-     PUT /index/?pid={pid1}&pid={pid2} // Re-index pid1 and pid2
-     PUT /index/?all=false&pid={pid1}&pid={pid2} // Re-index pid1 and pid2
+     PUT /index?pid={pid1}&pid={pid2} // Re-index pid1 and pid2
 
 2. ``PUT /identifiers``
 
@@ -38,11 +36,9 @@ Metacat Administrator REST API
 
      # Examples
 
-     PUT /identifiers/{pid1}     // Update pid1
-     PUT /identifiers/?all=true  // Update everything
-     PUT /identifiers/?pid={pid1}&pid={pid2}  // Update pid1 and pid2
-     PUT /identifiers/?formatId={formatId1}&formatId={formatId2} // Update dois with formatId1 or formatId2
+     PUT /identifiers?{pid1}     // Update pid1
+     PUT /identifiers?all=true  // Update everything
+     PUT /identifiers?pid={pid1}&pid={pid2}  // Update pid1 and pid2
+     PUT /identifiers?formatId={formatId1}&formatId={formatId2} // Update dois with formatId1 or formatId2
 
      PUT /identifiers?formatId={formatId1}&pid={pid2} // Process all elements in a mixed list
-     PUT /identifiers?all=true&formatId={formatId}&pid={pid2} // formatIds and pids ignored, since `all=true` updates everything anyway
-     PUT /identifiers?all=false&pid={pid2} // Update pid2
