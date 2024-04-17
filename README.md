@@ -1,6 +1,10 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.19.0 Release
+Version: 2.19.1 Release
+
+Note: This might be the last release of the Metacat 2 series.
+      The next Metacat release (3.0.0) will not be backwards
+      compatible, since legacy Metacat APIs will be removed.
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -67,6 +71,11 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.19.1
+New features, and bugs fixed in this release:
+* Handle additional OSTI DOIs
+* Upgrade Libraries
 
 ### Release Notes for 2.19.0
 New features and bugs fixed in this release:

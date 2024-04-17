@@ -4,13 +4,13 @@
 	<groupId>edu.ucsb.nceas.metacat.index</groupId>
 	<artifactId>metacat-index</artifactId>
 	<packaging>war</packaging>
-	<version>2.19.0</version>
+	<version>2.19.1</version>
 	<name>metacat-index</name>
 	<url>http://maven.apache.org</url>
 	
 	<properties>
         <d1_cn_index_processor_version>2.3.14</d1_cn_index_processor_version>
-        <metacat_common_version>2.19.0</metacat_common_version>
+        <metacat_common_version>2.19.1</metacat_common_version>
     </properties>
 	
 	<repositories>
@@ -82,6 +82,46 @@
                      <groupId>log4j</groupId>
                       <artifactId>log4j</artifactId>
                  </exclusion>
+                 <exclusion>
+                     <groupId>org.springframework</groupId>
+                     <artifactId>spring-core</artifactId>
+                 </exclusion>
+                 <exclusion>
+                     <groupId>org.springframework</groupId>
+                     <artifactId>spring-context</artifactId>
+                 </exclusion>
+                 <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-aop</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-beans</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-context-support</artifactId>
+                </exclusion>
+            <exclusion>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-orm</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-tx</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+            </exclusion>
         </exclusions>
         </dependency>
         <dependency>
@@ -104,6 +144,56 @@
                       <artifactId>slf4j-api</artifactId>
                   </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>5.3.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>5.3.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <version>5.3.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <version>5.3.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+            <version>5.3.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>5.3.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+            <version>5.3.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>5.3.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>5.3.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>5.3.33</version>
         </dependency>
 	</dependencies>
 
