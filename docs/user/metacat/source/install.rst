@@ -559,9 +559,6 @@ If you upgrade Solr from an old 8.* version to 9.5.0, you may run this command i
 
     sudo bash ./install_solr_service.sh solr-9.5.0.tgz -f
 
-  **Note:** If you are installing Metacat v2.19.0, ``solr`` must be run under Java 1.8 during the
-  upgrade as the v2.19.0's configuration file is incompatible with Java 17.
-
 3. Ensure the Solr defaults file is group writable:
 
   ::
@@ -589,12 +586,6 @@ Add a new line for the ``SOLR_OPTS`` variable in the environment specific includ
     SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/var/metacat"
 
   **Note:** The path to Metacat must be a real path, it CANNOT be a symlink.
-
-And a new line for ``SOLR_HOME``, then set it with the path to your ``SOLR_HOME`` directory
-
-  ::
-
-    ex. SOLR_HOME="/private/var/metacat/solr-home3"
 
 7. Increase Memory
 
@@ -723,10 +714,7 @@ To upgrade an existing binary Metacat installation follow the steps in this
 section. The steps for upgrading Metacat from source are the same as the
 instructions for installing from source:
 
-**Note: Upgrading to Metacat v2.19.0?**
-
-  ``solr`` must be run under Java 1.8 during the upgrade as the v2.19.0's configuration file is incompatible
-  with Java 17. After the upgrade is complete, please switch back to Java 17 to proceed with updating to v3.0.0.
+ **Note: Please first upgrade to Metacat v2.19.0 before proceeding to Metacat v3.0.0**
 
 1. Download and extract the new version of Metacat. For more information about downloading and extracting Metacat, please see Downloading Metacat.
 
@@ -781,9 +769,11 @@ Upgrading to Metacat v3.0.0
 
 Starting Requirements:
 
-  * Your existing Metacat installation must already have been successfully upgraded to [v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to v3.0.0.
+  * Your existing Metacat installation must already have been successfully upgraded to `Metacat v2.19.0`_ before you can begin upgrading to v3.0.0.
 
-    * If not, please upgrade to v2.19.0 first, before proceeding.
+    * If not, please upgrade to `Metacat v2.19.0`_ first, before proceeding.
+
+.. _Metacat v2.19.0: https://github.com/NCEAS/metacat/releases/tag/2.19.0
 
   * You must have Java 17 installed
 
@@ -817,9 +807,11 @@ Starting Requirements:
 
 1. Download/upgrade your solr version to 9.5.0
 
-  * In Metacat v3.0.0, the solr schema and configuration has changed. Consequently, a solr upgrade is
-    not supported in v3.0.0 with an old core. You must either start with a new core (solr-home), or
-    back up your current solr-home (directory) and then remove all of its contents.
+  * In Metacat v3.0.0, the solr schema and configuration has changed.
+
+    * Please back up your current solr-home (directory) and then remove all of its contents.
+
+    * Reminder: **Please ensure that your solr-home (directory) must exist and be empty before proceeding.**
 
   * Ensure that `/etc/default/solr.in.sh` is group writable
 
