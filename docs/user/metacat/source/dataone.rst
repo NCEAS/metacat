@@ -4,7 +4,7 @@ DataONE_ is a federation of data repositories that aims to improve
 interoperability among data repository software systems and advance the
 preservation of scientific data for future use.
 Metacat deployments can be configured to participate in DataONE_. This 
-chapter describes the DataONE_ data federation,  its architecture, and the 
+chapter describes the DataONE_ data federation, its architecture, and the
 way in which Metacat can be used to participate as a node in the DataONE system.
 
 .. _DataONE: http://dataone.org/
@@ -22,10 +22,13 @@ data and metadata content standards. DataONE defines a common web-service servic
 programming interface that allows the main software components of the DataONE system
 to seamlessly communicate. The components of the DataONE system include:
 
-* DataONE Service Interface
-* Member Nodes
-* Coordinating Nodes
-* Investigator Toolkit
+  * DataONE Service Interface
+
+  * Member Nodes
+
+  * Coordinating Nodes
+
+  * Investigator Toolkit
 
 Metacat implements the services needed to operate as a DataONE Member Node, 
 as described below.  The service interface then allows many different scientific 
@@ -36,7 +39,7 @@ process of writing scientific software both for servers and client tools.
 
 The DataONE Service Interface
 -----------------------------
-DataONE acheives interoperability by defining a lightweight but powerful set of 
+DataONE achieves interoperability by defining a lightweight but powerful set of
 REST_ web services that can be implemented by various data management software 
 systems to allow those systems to effectively communicate with one another, 
 exchange data, metadata, and other scientific objects.  This `DataONE Service Interface`_
@@ -48,10 +51,13 @@ relevant to their repository; for example, a data aggregator might only implemen
 the Tier 1 interfaces that provide anonymous access to public data sets, while
 a complete data management system like Metacat implements all four tiers:
 
-1. **Tier 1:** Read-only, anonymous data access
-2. **Tier 2:** Read-only, with authentication and access control
-3. **Tier 3:** Full Write access
-4. **Tier 4:** Replication target services
+  1. **Tier 1:** Read-only, anonymous data access
+
+  2. **Tier 2:** Read-only, with authentication and access control
+
+  3. **Tier 3:** Full Write access
+
+  4. **Tier 4:** Replication target services
 
 .. _REST: http://en.wikipedia.org/wiki/Representational_state_transfer
 
@@ -82,14 +88,19 @@ allow Member Nodes to easily interact with one another and to provide a unified
 view of the whole DataONE Federation.  The main services provided by Coordinating
 Nodes are:
 
-* Global search index for all metadata and web portal for data discovery
-* Resolution service to map unique identifiers to the Member Nodes that hold data
-* Authentication against a shared set of accounts based on CILogon_ and InCommon_
-* Replication management services to reliably replicate data according to 
-  policies set by the Member Nodes
-* Fixity checking to ensure that preserved objects remain valid
-* Member Node registration and management
-* Aggregated logging for data access across the whole federation
+  * Global search index for all metadata and web portal for data discovery
+
+  * Resolution service to map unique identifiers to the Member Nodes that hold data
+
+  * Authentication against a shared set of accounts based on `ORCID iD`_
+
+  * Replication management services to reliably replicate data according to policies set by the Member Nodes
+
+  * Fixity checking to ensure that preserved objects remain valid
+
+  * Member Node registration and management
+
+  * Aggregated logging for data access across the whole federation
 
 Three geographically distributed Coordinating Nodes replicate these coordinating 
 services at UC Santa Barbara, the University of New Mexico, and the Oak Ridge Campus.
@@ -103,9 +114,8 @@ And the DataONE search portal is available at:
 
   https://search.dataone.org/
 
-.. _CILogon: http://www.cilogon.org
+.. _ORCID iD: https://orcid.org/
 
-.. _InCommon: http://incommon.org
 
 Investigator Toolkit
 --------------------
@@ -142,7 +152,7 @@ and ``<context>`` is the name of the web context in which Metacat was installed.
 Once at the administrative utility, click on the DataONE configuration link, which
 should show the following screen:
 
-.. figure:: images/screenshots/image068.png
+.. figure:: images/screenshots/image068_updatedmnconfig.png
    :align: center
    
    The configuration screen for configuring Metacat as a DataONE node.
@@ -283,12 +293,9 @@ from other nodes.  Shortly thereafter, the Coordinating Nodes may notify Metacat
 replicate objects from throughout the system, which it will start to do.  There objects
 will begin to be listed in the Metacat catalog.
 
-.. Note:: 
-  
-  Future versions of Metacat will allow finer specification of the Node
-  Replication Policy, which determines the set of objects
-  that it is willing to replicate, using constraints on object size, total objects, 
-  source nodes, and object format types.
+ **Note:** Future versions of Metacat will allow finer specification of the Node Replication Policy,
+ which determines the set of objects that it is willing to replicate, using constraints on object size,
+ total objects, source nodes, and object format types.
 
 Object Replication Policies
 ---------------------------
@@ -306,19 +313,25 @@ or can be set using the `CNReplication.setReplicationPolicy`_ service.
 
 .. _CNReplication.setReplicationPolicy: http://releases.dataone.org/online/d1-architecture-1.0.0/apis/CN_APIs.html#CNReplication.setReplicationPolicy
 
-
 Generating DataONE System Metadata
-----------------------------------
-When a Metacat instance becomes a Member Node, System Metadata must be generated for the existing content.
-This can be invoked in the Replication configuration screen of the Metacat administration interface. Initially, 
-Metacat instances will only need to generate System Metadata for their local content (the ``localhost`` entry). 
-In cases where Metacat has participated in replication with other Metacat servers, it may be useful to generate System Metadata 
-for those replica records as well. Please consult both the replication partner's administrator and the DataONE administrators before 
-generating System Metadata for replica content.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ **Note:** The following feature is not available in Metacat 3.0.0. If you are upgrading your Metacat
+ from Metacat version 1.*, we recommend that you first upgrade to 2.19.0 before proceeding with generating DataONE System Metadata.
+
+When a Metacat instance becomes a Member Node, System Metadata must be generated for the existing
+content. This can be invoked in the Replication configuration screen of the Metacat administration
+interface. Initially, Metacat instances will only need to generate System Metadata for their local
+content (the ``localhost`` entry).
+
+In cases where Metacat has participated in replication with other Metacat servers, it may be useful
+to generate System Metadata for those replica records as well. Please consult both the replication
+partner's administrator and the DataONE administrators before generating System Metadata for replica
+content.
 
 .. figure:: images/screenshots/image069.png
    :align: center
-   
+
    The replication configuration screen for generating System Metadata.
 
 Apache configuration details
@@ -354,6 +367,7 @@ Ensure your configuration has directives similar to the following at the Virtual
 Note: Setting `SSLVerifyClient none` and the `Location` block above is a workaround for two separate issues:
 
   1. Safari 11 attempts to send a client certificate when `SSLVerifyClient` is set to `optional` even though other browsers do not. Without the above `Location` directive, Safari 11 users will be prompted to select a client certificate to authenticate with even when attempting to browse as a public (unauthenticated) user.
+
   2. libcurl deprecated sending the HTTP `Expect` header with POST requests and programmatic uploads from clients such as the R dataone package will fail unless this `Location` directive is in place and `SSLVerifyClient` is set to `none`.
 
   If you are running a version of Apache older than 2.4.29, the above set of directives should work fully.
@@ -362,10 +376,10 @@ Note: Setting `SSLVerifyClient none` and the `Location` block above is a workaro
 
   If you are running a version of Apache newer than or equal to 2.4.39, the above set of directives should work fully.
 
-The DataONE Certiciate Authority certificate - available from the DataONE administrators -  
+The DataONE Certificate Authority certificate - available from the DataONE administrators -
 will also need to be added to the directory specified by ``SSLCACertificatePath`` 
 in order to validate client certificates signed by that authority. DataONE has also provided a CA chain file that may be used in lieu of directory-based CA 
-confinguration. The `SSLCACertificateFile` directive should be used when configuring your member node with the DataONE CA chain.
+configuration. The `SSLCACertificateFile` directive should be used when configuring your member node with the DataONE CA chain.
 
 When these changes have been applied, Apache should be restarted:
 
