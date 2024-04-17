@@ -811,7 +811,7 @@ Starting Requirements:
 
     * Please back up your current solr-home (directory) and then remove all of its contents.
 
-    * Reminder: **Please ensure that your solr-home (directory) must exist and be empty before proceeding.**
+    * Reminder: **Your solr-home (directory) must exist and be empty before proceeding.**
 
   * Ensure that `/etc/default/solr.in.sh` is group writable
 
