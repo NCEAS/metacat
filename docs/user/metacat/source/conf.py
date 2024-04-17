@@ -12,6 +12,7 @@
 # serve to show the default.
 
 import sys, os, configparser, io
+import sphinx
 from itertools import chain
 
 #Read the release version from the metacat.properties file
@@ -103,6 +104,20 @@ pygments_style = 'sphinx'
 # Sphinx are currently 'default' and 'sphinxdoc'.
 #html_theme = 'default'
 html_theme = 'metacatui'
+
+# When linking .CSS stylesheets with custom themes in sphinx versions < 7.0.0
+# the 'style' variable is used (and marked for deprecation)
+#
+# Starting sphinx version > 7.0.0, 'styles' is used, which is not backwards
+# compatible - so we need to add python code here to determine the sphinx
+# version, and then use the correct syntax to load the static .CSS stylesheets
+# (ex. metacatui.css)
+sphinx_version = list(map(int, sphinx.__version__.split('.')[:2]))
+use_deprecated_style_script = sphinx_version < [7, 0]
+
+html_context = {
+    'use_deprecated_style_script': use_deprecated_style_script
+}
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

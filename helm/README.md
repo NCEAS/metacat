@@ -35,7 +35,7 @@ using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
-- Kubernetes 1.22+
+- Kubernetes 1.23.4+
 - Helm 3.14.0+
 - PV provisioner support in the underlying infrastructure
 
@@ -225,6 +225,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | Name                                                         | Description                             | Value                                 |
 |--------------------------------------------------------------|-----------------------------------------|---------------------------------------|
 | `dataone-indexer.enabled`                                    | enable the dataone-indexer sub-chart    | `true`                                |
+| `dataone-indexer.nameOverride`                               | partial override for resource name      | `"d1index"`                           |
 | `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use | `metacat-rmq-guest`                   |
 | `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password           | `${RELEASE_NAME}-metacat-secrets`     |
 | `dataone-indexer.solr.customCollection`                      | name of the solr collection to use      | `metacat-index`                       |

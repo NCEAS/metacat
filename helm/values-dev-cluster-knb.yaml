@@ -1,0 +1,160 @@
+## override values.yaml with values to use for running knb metacat instance on the NCEAS dev cluster
+##
+## example:
+##    helm install my-release ./helm -f ./helm/values-dev-cluster-knb.yaml
+##
+## see values.yaml for full documentation on the following parameters
+##
+
+# set once here, for both metacat and indexer:
+debug: &debug false
+
+global:
+  storageClass: &storageClassName csi-cephfs-sc
+  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
+  sharedVolumeSubPath: &sharedVolumeSubPath repos/knb/metacat
+
+metacat:
+  server.name: &extHostname knb-dev.test.dataone.org
+  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
+
+  ## DataONE Member Node (MN) Parameters
+#  dataone.certificate.fromHttpHeader.enabled: true
+#  dataone.autoRegisterMemberNode: 2024-01-25
+#  D1Client.CN_URL: https://cn-sandbox.test.dataone.org/cn
+#  dataone.nodeId: "urn:node:TestKNB"
+#  dataone.subject: "CN=urn:node:TestKNB,DC=dataone,DC=org"
+#  dataone.nodeName: Test KNB Metacat Node
+#  dataone.nodeDescription: Dev cluster Test KNB Metacat Node
+#  dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
+#  dataone.nodeSynchronize: true
+#  dataone.nodeReplicate: true
+#  dataone.replicationpolicy.default.numreplicas: "1"
+
+## PodSecurityContext - define common securityContext settings at the pod level for all containers
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param podSecurityContext.fsGroup numerical Group ID for the pod.
+## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
+## the group that owns the existing data on that filesystem!
+##
+podSecurityContext:
+  fsGroup: 997
+
+persistence:
+  storageClass: *storageClassName
+  size: 10Ti
+  accessModes:
+    - ReadWriteMany
+  volumeName: cephfs-metacatknb-metacat-data
+  subPath: *sharedVolumeSubPath
+image:
+  pullPolicy: Always
+  debug: *debug
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  className: "nginx"
+  tls:
+    - hosts:
+        - *extHostname
+      secretName: ingress-nginx-tls-cert
+  hosts:
+    - host: *extHostname
+      paths:
+        - path: "/metacat"
+          pathType: Prefix
+        - path: "/metacatui"
+          pathType: Prefix
+
+postgresql:
+  primary:
+    ## PodSecurityContext - define common securityContext settings at the pod level for all containers
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    ## @param podSecurityContext.fsGroup numerical Group ID for the pod.
+    ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
+    ## the group that owns the existing data on that filesystem!
+    ##
+    podSecurityContext:
+      fsGroup: 114
+
+    persistence:
+      storageClass: *storageClassName
+
+      ## @param primary.persistence.size PVC Storage Request for PostgreSQL volume
+      ##
+      size: 100Gi
+
+      ## @param primary.persistence.subPath The subdirectory of the volume to mount to
+      ## Useful in dev environments and one PV for multiple services
+      ##
+      subPath: repos/knb/postgresql
+
+      ## @param primary.persistence.selector Selector to match an existing Persistent Volume
+      ## (this value is evaluated as a template)
+      ##
+      selector:
+        matchLabels:
+          metacatVolumeName: cephfs-metacatknb-metacat-postgres
+
+
+dataone-indexer:
+
+  # increase minReplicas from default 3
+  autoscaling:
+    minReplicas: 20
+
+  podSecurityContext:
+    fsGroup: 997 # must match metacat group for shared volume at /var/metacat
+
+  persistence:
+    subPath: *sharedVolumeSubPath
+
+  # prefer more-performant nodes for indexer workers
+  #  affinity:
+  #    nodeAffinity:
+  #      requiredDuringSchedulingIgnoredDuringExecution:
+  #        nodeSelectorTerms:
+  #          - matchExpressions:
+  #              - key: nceas/nodegroup
+  #                operator: In
+  #                values:
+  #                  - fast
+
+  #  topologySpreadConstraints:
+  #    - maxSkew: 10
+  #      topologyKey: kubernetes.io/hostname
+  #      whenUnsatisfiable: ScheduleAnyway
+  #      labelSelector:
+  #        matchLabels:
+  #          app: dataone-indexer
+
+  image:
+    pullPolicy: Always
+    debug: *debug
+
+####################################################################################################
+## FOR DEBUGGING ONLY
+####################################################################################################
+##
+## probes will kill remote debugger
+
+#livenessProbe:
+#  enabled: false
+#readinessProbe:
+#  enabled: false
+#
+#service:
+#  enabled: true
+#  type: LoadBalancer
+#  clusterIP: ""
+#  ports:
+#    - name: debug-port
+#      port: 5005
+#      targetPort: tc-remote-debug
+#
+#container:
+#  ports:
+#    - containerPort: 5005
+#      name: tc-remote-debug

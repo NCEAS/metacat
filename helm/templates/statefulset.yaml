@@ -74,6 +74,9 @@ spec:
             # {podname}-{instance} (e.g. metacatknb-metacat-metacatknb-0)
             - name: {{ .Release.Name }}-metacat
               mountPath: /var/metacat
+              {{- if .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath }}
+              {{- end }}
               readOnly: false
             - name: {{ .Release.Name }}-config-volume
               mountPath: /usr/local/etc/metacat-configMap
