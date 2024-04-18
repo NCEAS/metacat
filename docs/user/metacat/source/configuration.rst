@@ -55,21 +55,23 @@ previous releases, an internal password file or LDAP was used as the authenticat
 Password-based and LDAP authentication has been deprecated. If you don't already have an account,
 registering for an ORCID is simple, please visit:
 
-  http://orcid.org/
+  https://orcid.org/
 
 .. _ORCID authentication: ./authinterface.html
 
 After signing up for an ORCID iD, you can then use it as an admin identity when configuring
 authentication.
 
- **Reminder:** Your full ORCID iD includes "https://orcid.org/" not just the 16-digit ORCID iD:
+ **Important:** Even though your ORCID iD should typically be expressed as a full https URI
+ (e.g. https://orcid.org/0000-0001-2345-6789), it is necessary to use http-only orcid URIs when
+ entering them in the Metacat Administrator Interface.
 
- ex. http://orcid.org/0000-0001-2345-6789
+ ex. **http**://orcid.org/0000-0001-2345-6789
 
-Make sure that your full ORCID iD is entered into the Metacat Administrators field
-(e.g., http://orcid.org/0000-0001-2345-6789). You will not be allowed to continue with configuration
-if this is missing. If you require more than one Metacat administrator, multiple accounts can be
-entered by separating the admin identities with a semi-colon (;) character.
+
+You will not be allowed to continue with configuration if this is missing. If you require more
+than one Metacat administrator, multiple accounts can be entered by separating the admin identities
+with a semi-colon (;) character.
 
 .. figure:: images/screenshots/image071_authconfig.png
    :align: center
@@ -109,9 +111,6 @@ To edit the authentication configuration file:
   ::
 
     auth.administrators  - a semicolon-separated list of administrators' ORCID iDs
-    auth.url             - the authentication server URL
-    auth.surl            - the authentication secure server URL
-    auth.file.path       - the authentication password file path
 
 3. Save the **metacat-site.properties** file and start Tomcat.
 
@@ -241,7 +240,7 @@ Environment Override File  The path of the script file to overwrite the default 
 
 Token Configuration
 ..............................................
-A valid admin (auth) token and DataONE CA certificate is required for a Metacat v3.0.0 installation
+A valid admin (auth) token and DataONE CA certificate are required for a Metacat v3.0.0 installation
 to function correctly (i.e. to handle private datasets). Please `contact DataONE`_ to obtain a
 long-term auth token (valid for 1 year). **This is only an interim requirement**; a future release
 of Metacat will remove the need for this token.
@@ -297,7 +296,7 @@ Depending on your needs, there are two available:
 
  **Note:** the DataONE Intermediate CA certificate is a single certificate, NOT a certificate chain!
 
-.. _DataONE Production Intermediate CA Intermediate: https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem
+.. _DataONE Production Intermediate CA Intermediate: https://raw.githubusercontent.com/DataONEorg/ca/main/DataONEProdIntCA/certs/DataONEProdIntCA.pem
 .. _DataONE Test Intermediate CA Certificate: https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem
 
 After obtaining the certificate and saving it to your determined location, please set the value in
