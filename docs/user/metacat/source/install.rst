@@ -807,7 +807,7 @@ Starting Requirements:
 
 1. Download/upgrade your solr version to 9.5.0
 
-  * In Metacat v3.0.0, the solr schema and configuration has changed.
+  * In Metacat v3.0.0, the solr schema and configuration have changed.
 
     * Please back up your current solr-home (directory) and then remove all of its contents.
 
@@ -863,7 +863,7 @@ Starting Requirements:
 
     * Data from existing or previous solr installations are incompatible with the new 3.0.0 schema and configuration.
     * During the Metacat configuration process, confirm the path to your solr-home directory and ensure that the directory is empty.
-    * **After configuring Metacat, re-index all objects (an example is below for your quick reference or see the `Metacat Admin Api`_).**
+    * **After configuring Metacat, re-index all objects (an example is below for your quick reference, or see the `Metacat Admin Api`_).**
 
       ::
 
