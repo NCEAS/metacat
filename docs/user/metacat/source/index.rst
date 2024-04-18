@@ -26,7 +26,7 @@ in other ways.
 
 :note2:`Note:` 
 
-An external Solr HTTP server is required as of Metacat version 2.13.0. You should add the ``tomcat8`` user to the ``solr`` group and the ``solr``  user to the ``tomcat8`` group in order to avoid the file permission issues. The details can be found on the `Solr Server`_ part of the installation page.
+An external Solr HTTP server is required as of Metacat version 2.13.0. You should add the ``tomcat`` user to the ``solr`` group and the ``solr``  user to the ``tomcat`` group in order to avoid the file permission issues. The details can be found on the `Solr Server`_ part of the installation page.
 
 If this is the first time you have installed an external Solr server, you need to re-index all existing objects in the Metacat instance. The instruction can be found on the `Regenerating The Index`_ part of the Metacat indexing page.
 
@@ -97,6 +97,8 @@ Contents
    license
    install
    configuration
+   kubernetes
+   admin-api
    dataone
    submitting
    query-index

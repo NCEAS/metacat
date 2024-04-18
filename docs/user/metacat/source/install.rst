@@ -47,8 +47,8 @@ System requirements for running Metacat:
   * at least 512MB RAM
 
 
-Installing on Linux
--------------------
+Installing on Linux (Ubuntu is Highly Recommended)
+--------------------------------------------------
 This section contains instructions for downloading and installing Metacat on 
 Linux systems. As Mac OS X is based on BSD Unix, these Linux instructions can
 be adapted to also work on Mac OS X (although the exact commands for
@@ -61,7 +61,7 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTPD Server`_)
+  1. Download and install prerequisites (`Java 17`_, `Apache Tomcat`_, PostgreSQL_, `RabbitMQ`_, `Solr Server`_, `Apache HTTP Server`_)
 
   2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
 
@@ -187,7 +187,7 @@ robust Web-serving environment and is required by some Metacat functionality.
 
   * `Apache Tomcat`_
 
-  * `Apache HTTPD Server`_ (Highly Recommended)
+  * `Apache HTTP Server`_ (Highly Recommended)
 
   * `PostgreSQL`_ Database
 
@@ -272,8 +272,8 @@ Ensure the following lines exist in the service file for Tomcat (paths may vary 
     ReadWritePaths=/var/metacat
     ReadWritePaths=/etc/default/solr.in.sh
 
-Apache HTTPD Server (Highly Recommended)
-........................................
+Apache HTTP Server (Highly Recommended)
+.......................................
 Although you have the option of running Metacat with only the Tomcat server, we
 highly recommend that you run it behind the Apache Web server for several
 reasons; running Tomcat with the Apache server provides a more robust Web
@@ -352,7 +352,7 @@ directory in which Apache is installed: ``<apache_install_dir>/conf/httpd.conf``
       JkLogLevel info
     </IfModule>
 
-2. Configure apache to route traffic to the Metacat application. ServerName should be set to the DNS name of the Metacat server. ScriptAlias and the following Directory section should both point to the cgi-bin directory inside your Metacat installation
+2. Configure apache to route traffic to the Metacat application. ServerName should be set to the DNS name of the Metacat server.
 
   ::
 
@@ -367,18 +367,6 @@ directory in which Apache is installed: ``<apache_install_dir>/conf/httpd.conf``
       Header set Access-Control-Allow-Credentials "true"
       ErrorLog /var/log/httpd/error_log
       CustomLog /var/log/httpd/access_log common
-      ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
-      <Directory /var/www/cgi-bin/>
-        AllowOverride None
-        Options ExecCGI
-        Require all granted
-      </Directory>
-      ScriptAlias /metacat/cgi-bin/ "/var/www/webapps/metacat/cgi-bin/"
-      <Directory "/var/www/webapps/metacat/cgi-bin/">
-        AllowOverride None
-        Options ExecCGI
-        Require all granted
-      </Directory>
       <Directory "/var/www/metacatui">
         AllowOverride All
         FallbackResource /metacatui/index.html
@@ -571,9 +559,6 @@ If you upgrade Solr from an old 8.* version to 9.5.0, you may run this command i
 
     sudo bash ./install_solr_service.sh solr-9.5.0.tgz -f
 
-  **Note:** If you are installing Metacat v2.19.0, ``solr`` must be run under Java 1.8 during the
-  upgrade as the v2.19.0's configuration file is incompatible with Java 17.
-
 3. Ensure the Solr defaults file is group writable:
 
   ::
@@ -601,12 +586,6 @@ Add a new line for the ``SOLR_OPTS`` variable in the environment specific includ
     SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=/var/metacat"
 
   **Note:** The path to Metacat must be a real path, it CANNOT be a symlink.
-
-And a new line for ``SOLR_HOME``, then set it with the path to your ``SOLR_HOME`` directory
-
-  ::
-
-    ex. SOLR_HOME="/private/var/metacat/solr-home3"
 
 7. Increase Memory
 
@@ -735,10 +714,7 @@ To upgrade an existing binary Metacat installation follow the steps in this
 section. The steps for upgrading Metacat from source are the same as the
 instructions for installing from source:
 
-**Note: Upgrading to Metacat v2.19.0?**
-
-  ``solr`` must be run under Java 1.8 during the upgrade as the v2.19.0's configuration file is incompatible
-  with Java 17. After the upgrade is complete, please switch back to Java 17 to proceed with updating to v3.0.0.
+ **Note: Please first upgrade to Metacat v2.19.0 before proceeding to Metacat v3.0.0**
 
 1. Download and extract the new version of Metacat. For more information about downloading and extracting Metacat, please see Downloading Metacat.
 
@@ -793,9 +769,11 @@ Upgrading to Metacat v3.0.0
 
 Starting Requirements:
 
-  * Your existing Metacat installation must already have been successfully upgraded to [v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to v3.0.0.
+  * Your existing Metacat installation must already have been successfully upgraded to `Metacat v2.19.0`_ before you can begin upgrading to v3.0.0.
 
-    * If not, please upgrade to v2.19.0 first, before proceeding.
+    * If not, please upgrade to `Metacat v2.19.0`_ first, before proceeding.
+
+.. _Metacat v2.19.0: https://github.com/NCEAS/metacat/releases/tag/2.19.0
 
   * You must have Java 17 installed
 
@@ -829,9 +807,11 @@ Starting Requirements:
 
 1. Download/upgrade your solr version to 9.5.0
 
-  * In Metacat v3.0.0, the solr schema and configuration has changed. Consequently, a solr upgrade is
-    not supported in v3.0.0 with an old core. You must either start with a new core (solr-home), or
-    back up your current solr-home (directory) and then remove all of its contents.
+  * In Metacat v3.0.0, the solr schema and configuration have changed.
+
+    * Please back up your current solr-home (directory) and then remove all of its contents.
+
+    * Reminder: **Your solr-home (directory) must exist and be empty before proceeding.**
 
   * Ensure that `/etc/default/solr.in.sh` is group writable
 
@@ -883,7 +863,7 @@ Starting Requirements:
 
     * Data from existing or previous solr installations are incompatible with the new 3.0.0 schema and configuration.
     * During the Metacat configuration process, confirm the path to your solr-home directory and ensure that the directory is empty.
-    * After configuring Metacat, re-index all objects (an example is below for your quick reference or see the `Metacat Admin Api`_).
+    * **After configuring Metacat, re-index all objects (an example is below for your quick reference, or see the `Metacat Admin Api`_).**
 
       ::
 
