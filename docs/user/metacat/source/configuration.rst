@@ -30,7 +30,7 @@ Initial Configuration & Backup Properties
 Before you can log in to the Metacat Admin interface and configure it, you are required to
 confirm Metacat's back-up location for the configuration settings. You will also need to set up
 the authentication configuration (if it is not already configured). This is required for logging in
-to the Metacat and for defining administrative accounts.
+to Metacat and for defining administrative accounts.
 
  **More on configuration backup settings:**
 
