@@ -105,13 +105,19 @@ Before Google will begin indexing the public files in your Metacat, you must
 register the sitemaps. To register your sitemaps and ensure that they are up
 to date:
 
- 1. Register for a Google Webmaster Tools account, and add your Metacat
-    site to the Dashboard.
+ 1. `Create a Google account`_.
 
- 2. From your Google Webmaster Tools site account, register your sitemaps.
-    See the Google help site for more information about how to register sitemaps.
-    Note: Register the full URL path to your sitemap files, including
-    the http:// (or https://) headers.
+.. _Create a Google account: https://support.google.com/accounts/answer/27441?hl=en
+
+ 2. Submit your Metacat site to the `Sitemaps report`_.
+    You can also submit it programmatically with the `Google Search Console API`_.
+    For more information, please see the Google help site for `how to register sitemaps`_.
+
+.. _Sitemaps report: https://search.google.com/search-console/sitemaps
+.. _Google Search Console API: https://developers.google.com/webmaster-tools/v1/sitemaps/submit
+.. _how to register sitemaps: https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
+
+ Note: Register the full URL path to your sitemap files, including the http:// (or https://) headers.
 
 Once the sitemaps are registered, Google will begin to index the public
 documents in your Metacat repository.
