@@ -27,11 +27,11 @@ Default Indexed Fields
 -----------------------
 For a complete listing of the indexed fields, please see the DataONE documentation.
 
- http://mule1.dataone.org/ArchitectureDocs-current/design/SearchMetadata.html
+ https://dataoneorg.github.io/api-documentation/
 
 Metacat also reports on the currently-indexed fields, simply navigate to:
 
- http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html#MNQuery.getQueryEngineDescription
+ https://dataoneorg.github.io/api-documentation/apis/MN_APIs.html#query-api
 
 with "solr" as the engine.
 
@@ -65,7 +65,7 @@ Querying the Index
 The SOLR index can be queried using standard SOLR syntax and return options. 
 The DataONE query interface exposes the SOLR query engine.
 
- http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html#MNQuery.query
+ https://dataoneorg.github.io/api-documentation/apis/MN_APIs.html#query-api
 
 Please see the SOLR documentation for examples and exhaustive syntax information.
 
@@ -84,11 +84,11 @@ authentication are simultaneously supported.
 Regenerating The Index
 ----------------------
 When the SOLR index has been drastically modified, a complete regeneration of the 
-index may be necessary. Please see the example below to re-index all objects:
+index may be necessary. Please see the example below to re-index all objects or the `Metacat Admin API`_ docs:
 
  # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
 
- # where $TOKEN is an environment variable containing your indexer token (see overview of major changes above).
+ # where $TOKEN is an environment variable containing your indexer token
 
  **Example:**
 
@@ -96,6 +96,7 @@ index may be necessary. Please see the example below to re-index all objects:
 
    curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
 
+.. _Metacat Admin API: ./admin-api.html
 
 Class Design Overview
 ----------------------
