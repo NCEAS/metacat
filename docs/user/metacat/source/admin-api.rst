@@ -11,18 +11,18 @@ Indexing Objects
 
 ``PUT /index``
 
-   - **Re-index all objects or index a single pid:**
+- **Re-index all objects or index a single pid:**
 
-       PUT /index/{pid1}``
+ PUT /index/{pid1}``
 
-       PUT /index?[all=true] | [&pid={pid}]``
+ PUT /index?[all=true] | [&pid={pid}]``
 
-   ::
+ ::
 
-     # Examples
+   # Examples
 
-     PUT /index?all=true // Re-index everything
-     PUT /index?pid={pid1}&pid={pid2} // Re-index pid1 and pid2
+   PUT /index?all=true // Re-index everything
+   PUT /index?pid={pid1}&pid={pid2} // Re-index pid1 and pid2
 
 
 Updating Metadata
@@ -30,19 +30,19 @@ Updating Metadata
 
 ``PUT /identifiers``
 
-   - **Update the metadata for objects identified by their identifiers:**
+- **Update the metadata for objects identified by their identifiers:**
 
-       PUT /identifiers/{pid1}``
+ PUT /identifiers/{pid1}``
 
-       PUT /identifiers[/]?[all=true] | [&pid={pid1}] | [&formatId={formatId1}]``
+ PUT /identifiers[/]?[all=true] | [&pid={pid1}] | [&formatId={formatId1}]``
 
-   ::
+ ::
 
-     # Examples
+   # Examples
 
-     PUT /identifiers/{pid1}     // Update pid1
-     PUT /identifiers?all=true  // Update everything
-     PUT /identifiers?pid={pid1}&pid={pid2}  // Update pid1 and pid2
-     PUT /identifiers?formatId={formatId1}&formatId={formatId2} // Update dois with formatId1 or formatId2
+   PUT /identifiers/{pid1}     // Update pid1
+   PUT /identifiers?all=true  // Update everything
+   PUT /identifiers?pid={pid1}&pid={pid2}  // Update pid1 and pid2
 
-     PUT /identifiers?formatId={formatId1}&pid={pid2} // Process all elements in a mixed list
+   PUT /identifiers?formatId={formatId1}&formatId={formatId2} // Update dois with formatId1 or formatId2
+   PUT /identifiers?formatId={formatId1}&pid={pid2} // Process all elements in a mixed list
