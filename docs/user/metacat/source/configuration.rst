@@ -28,10 +28,20 @@ You can always open the configuration screen from within Metacat by typing::
 Initial Configuration & Backup Properties
 -----------------------------------------
 Before you can log in to the Metacat Admin interface and configure it, you are required to
-set up the authentication configuration (if it is not already configured). This is required
-for logging in to the Metacat and for defining administrative accounts.
+confirm Metacat's back-up location for the configuration settings. You will also need to set up
+the authentication configuration (if it is not already configured). This is required for logging in
+to the Metacat and for defining administrative accounts.
 
-Starting from Metacat version 3.0.0 or later, **metacat.properties** no longer contains any custom
+ **More on configuration backup settings:**
+
+ - To preserve its configuration settings, Metacat backs up crucial configuration details to
+   a directory outside the application directories.
+
+ - Metacat will automatically attempt to locate an existing back-up directory, but you may need to
+   correct the value or specify a directory (if the installation is new, or if Metacat was unable to
+   determine the location of an existing back-up directory).
+
+Starting from Metacat version 3.0.0, **metacat.properties** no longer contains any custom
 settings that need to be backed up before a Metacat upgrade. Instead, custom settings are now saved
 to a file named ``metacat-site.properties`` that is located outside of the tomcat webapps directory,
 and so is not overwritten by deploying a new Metacat war file.
@@ -39,6 +49,11 @@ and so is not overwritten by deploying a new Metacat war file.
  **Note:** If you are unable to access your Metacat admin ORCID iD and need to swap it out, instructions
  for `Changing Authentication Configuration without Authentication`_ are included at the end of this
  section.
+
+.. figure:: images/screenshots/image011_backupconfig.png
+   :align: center
+
+   Configuring the Backup Directory.
 
 Authentication Configuration
 ----------------------------
@@ -66,7 +81,7 @@ authentication.
  (e.g. https://orcid.org/0000-0001-2345-6789), it is necessary to use http-only orcid URIs when
  entering them in the Metacat Administrator Interface.
 
- ex. **http**://orcid.org/0000-0001-2345-6789
+ - ex. **http**://orcid.org/0000-0001-2345-6789
 
 
 You will not be allowed to continue with configuration if this is missing. If you require more
