@@ -13,9 +13,9 @@ Indexing Objects
 
 - **Re-index all objects or index a single pid:**
 
- PUT /index/{pid1}``
+ PUT /index/{pid1}
 
- PUT /index?[all=true] | [&pid={pid}]``
+ PUT /index?[all=true] | [&pid={pid}]
 
  ::
 
@@ -32,9 +32,9 @@ Updating Metadata
 
 - **Update the metadata for objects identified by their identifiers:**
 
- PUT /identifiers/{pid1}``
+ PUT /identifiers/{pid1}
 
- PUT /identifiers[/]?[all=true] | [&pid={pid1}] | [&formatId={formatId1}]``
+ PUT /identifiers[/]?[all=true] | [&pid={pid1}] | [&formatId={formatId1}]
 
  ::
 
