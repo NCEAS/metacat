@@ -316,8 +316,13 @@ or can be set using the `CNReplication.setReplicationPolicy`_ service.
 Generating DataONE System Metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- **Note:** The following feature is not available in Metacat 3.0.0. If you are upgrading your Metacat
- from Metacat version 1.*, we recommend that you first upgrade to 2.19.0 before proceeding with generating DataONE System Metadata.
+ **Note:**
+
+ - The following feature is not available in Metacat 3.0.0. If you've installed Metacat v3.0.0, or
+   have upgraded to Metacat v3.0.0, please ignore this section.
+
+ - Reminder, if your current Metacat version is v1.*, please first upgrade to v2.19.0 before
+   proceeding with generating DataONE System Metadata.
 
 When a Metacat instance becomes a Member Node, System Metadata must be generated for the existing
 content. This can be invoked in the Replication configuration screen of the Metacat administration
