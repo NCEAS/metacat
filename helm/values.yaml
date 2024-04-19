@@ -726,10 +726,10 @@ postgresql:
 
   ## @param postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
   ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
-  ##
   primary:
     ## override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
+    ## TYPE       DATABASE      USER          ADDRESS         METHOD
     pgHbaConfiguration: |
       host        metacat       metacat       0.0.0.0/0       password
       host        metacat       metacat       ::0/0           password
