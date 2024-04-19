@@ -111,8 +111,7 @@ if [[ "$action" == "$reindex_command" ]]; then
 
     echo "calling $base_url/d1/mn/v2/index?all=true"
     # Start reindex-all
-    # curl -X PUT -H "Authorization: Bearer $TOKEN" "$base_url/d1/mn/v2/index?all=true"
-    echo 'NOT DOING curl -X PUT -H "Authorization: Bearer $TOKEN" "$base_url/d1/mn/v2/index?all=true"'
+    curl -X PUT -H "Authorization: Bearer $TOKEN" "$base_url/d1/mn/v2/index?all=true"
 
     # delay for reindex to begin populating queue, otherwise we exit too early
     sleep 10
