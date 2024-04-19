@@ -43,7 +43,7 @@ global:
   ## - for example, if your application is hosted at https://mydomain.org, and you define the
   ## context to be "metacat", then the application may be accessed at: https://mydomain.org/metacat/
   ## IMPORTANT NOTE: if changing this value, ensure the following paths are also updated to match:
-  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path; ingress.hosts.paths
+  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path
   ##
   ## (Note the actual key metacatAppContext is used by the indexer sub-chart, and the anchor
   ##  &passwordSecretName is used elsewhere in this file. IF YOU OVERRIDE THIS VALUE IN ANOTHER
@@ -111,8 +111,7 @@ metacat:
 
   ## @param metacat.includeMetacatUi Include MetacatUI in the same container as metacat
   ## A default-skin deployment of MetacatUI will be included in the metacat pod, unless this value
-  ## is set to 'false'. If not including MetacatUI, don't forget to remove the path mapping from
-  ## ingress.hosts
+  ## is set to 'false'.
   includeMetacatUi: true
 
   ## @param metacat.auth.administrators A semicolon-separated list of admin ORCID iDs
@@ -577,12 +576,7 @@ ingress:
   hosts:
     - host: *external-hostname
       paths:
-        - path: "/metacat"
-          pathType: Prefix
-        # Remove the following if you do NOT want metacatui to be exposed & accessed via /metacatui
-        # (A default-skin deployment of MetacatUI will still be included in the metacat pod,
-        #  unless the value of 'metacat.includeMetacatUi' is set to 'false'.)
-        - path: "/metacatui"
+        - path: "/"
           pathType: Prefix
 
   ## @param ingress.annotations Annotations for the ingress
