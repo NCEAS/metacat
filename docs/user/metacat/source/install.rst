@@ -730,8 +730,10 @@ instructions for installing from source:
 
     cp <web_app_dir>/metacat <backup_dir>/metacat.<yyyymmdd>
     cp <web_app_dir>/metacat.war <backup_dir>/metacat.war.<yyyymmdd>
+    cp <web_app_dir>/metacat-index.war <backup_dir>/metacat-index.war.<yyyymmdd>
+    cp <web_app_dir>/metacatui.war <backup_dir>/metacatui.war.<yyyymmdd>
 
-  Warning: Do not backup the files to the ``<web_app_dir>`` directory.  Tomcat will
+  **Warning**: Do not backup the files to the ``<web_app_dir>`` directory. Tomcat will
   try to run the backup copy as a service.
 
 4. Copy the new Metacat WAR file in to the Tomcat applications directory: 
