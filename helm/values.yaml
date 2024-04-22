@@ -729,6 +729,13 @@ postgresql:
       host        metacat       metacat       ::0/0           password
       local       all           all                           trust
 
+    ## @param postgresql.primary.extendedConfiguration Extended configuration, appended to defaults
+    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#allow-settings-to-be-loaded-from-files-other-than-the-default-postgresqlconf
+    ## Must equal or exceed metacat.database.maximumConnections
+    ##
+    extendedConfiguration: |
+      max_connections = 200
+
     ## Postgresql persistence
     ## For explanatory notes, see top-level `persistence` section for metacat, and the bitnami
     ## postgresql README at https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md
@@ -785,6 +792,10 @@ dataone-indexer:
       existingPasswordSecret: *passwordSecretName
 
   solr:
+    ## @param javaMem Java memory options to pass to the Solr container
+    ##
+    javaMem: "-Xms2g -Xmx2g"
+
     ## @param dataone-indexer.solr.customCollection name of the solr collection to use
     ## (optional override of indexer-assigned name). Do not leave blank
     ## NOTE: if you change this value after having run metacat for the first time, you may need
