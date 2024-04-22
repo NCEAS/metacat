@@ -104,6 +104,12 @@ postgresql:
 
 dataone-indexer:
 
+
+  resources:
+    requests:
+      cpu: 2
+      memory: 2Gi
+
   # increase minReplicas from default 3
   autoscaling:
     minReplicas: 50
