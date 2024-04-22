@@ -43,7 +43,7 @@ global:
   ## - for example, if your application is hosted at https://mydomain.org, and you define the
   ## context to be "metacat", then the application may be accessed at: https://mydomain.org/metacat/
   ## IMPORTANT NOTE: if changing this value, ensure the following paths are also updated to match:
-  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path; ingress.hosts.paths
+  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path
   ##
   ## (Note the actual key metacatAppContext is used by the indexer sub-chart, and the anchor
   ##  &passwordSecretName is used elsewhere in this file. IF YOU OVERRIDE THIS VALUE IN ANOTHER
@@ -111,8 +111,7 @@ metacat:
 
   ## @param metacat.includeMetacatUi Include MetacatUI in the same container as metacat
   ## A default-skin deployment of MetacatUI will be included in the metacat pod, unless this value
-  ## is set to 'false'. If not including MetacatUI, don't forget to remove the path mapping from
-  ## ingress.hosts
+  ## is set to 'false'.
   includeMetacatUi: true
 
   ## @param metacat.auth.administrators A semicolon-separated list of admin ORCID iDs
@@ -577,12 +576,7 @@ ingress:
   hosts:
     - host: *external-hostname
       paths:
-        - path: "/metacat"
-          pathType: Prefix
-        # Remove the following if you do NOT want metacatui to be exposed & accessed via /metacatui
-        # (A default-skin deployment of MetacatUI will still be included in the metacat pod,
-        #  unless the value of 'metacat.includeMetacatUi' is set to 'false'.)
-        - path: "/metacatui"
+        - path: "/"
           pathType: Prefix
 
   ## @param ingress.annotations Annotations for the ingress
@@ -726,14 +720,21 @@ postgresql:
 
   ## @param postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
   ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
-  ##
   primary:
     ## override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
+    ## TYPE       DATABASE      USER          ADDRESS         METHOD
     pgHbaConfiguration: |
       host        metacat       metacat       0.0.0.0/0       password
       host        metacat       metacat       ::0/0           password
       local       all           all                           trust
+
+    ## @param postgresql.primary.extendedConfiguration Extended configuration, appended to defaults
+    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#allow-settings-to-be-loaded-from-files-other-than-the-default-postgresqlconf
+    ## Must equal or exceed metacat.database.maximumConnections
+    ##
+    extendedConfiguration: |
+      max_connections = 200
 
     ## Postgresql persistence
     ## For explanatory notes, see top-level `persistence` section for metacat, and the bitnami
@@ -791,6 +792,10 @@ dataone-indexer:
       existingPasswordSecret: *passwordSecretName
 
   solr:
+    ## @param javaMem Java memory options to pass to the Solr container
+    ##
+    javaMem: "-Xms2g -Xmx2g"
+
     ## @param dataone-indexer.solr.customCollection name of the solr collection to use
     ## (optional override of indexer-assigned name). Do not leave blank
     ## NOTE: if you change this value after having run metacat for the first time, you may need
