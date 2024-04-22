@@ -12,19 +12,21 @@ debug: &debug false
 global:
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
-  sharedVolumeSubPath: &sharedVolumeSubPath repos/knb/metacat
+  metacatAppContext: &metacatAppContext knb
 
 metacat:
   server.name: &extHostname knb-dev.test.dataone.org
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
   cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
+  application.context: *metacatAppContext
+
 
   ## DataONE Member Node (MN) Parameters
 #  dataone.certificate.fromHttpHeader.enabled: true
 #  dataone.autoRegisterMemberNode: 2024-01-25
 #  D1Client.CN_URL: https://cn-sandbox.test.dataone.org/cn
-#  dataone.nodeId: "urn:node:TestKNB"
-#  dataone.subject: "CN=urn:node:TestKNB,DC=dataone,DC=org"
+  dataone.nodeId: "urn:node:KNB_dev"
+  dataone.subject: "CN=urn:node:KNB_dev,DC=dataone,DC=org"
 #  dataone.nodeName: Test KNB Metacat Node
 #  dataone.nodeDescription: Dev cluster Test KNB Metacat Node
 #  dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
@@ -46,11 +48,16 @@ persistence:
   size: 10Ti
   accessModes:
     - ReadWriteMany
-  volumeName: cephfs-metacatknb-metacat-data
-  subPath: *sharedVolumeSubPath
+  volumeName: cephfs-metacatknb-metacat-varmetacat
+
 image:
   pullPolicy: Always
   debug: *debug
+
+resources:
+  requests:
+    cpu: 12
+    memory: 32Gi
 
 ingress:
   annotations:
@@ -63,37 +70,33 @@ ingress:
   hosts:
     - host: *extHostname
       paths:
-        - path: "/metacat"
-          pathType: Prefix
-        - path: "/metacatui"
+        - path: "/"
           pathType: Prefix
 
 postgresql:
+  auth:
+    ## NOTE: config in postgresql.primary.pgHbaConfiguration must allow the username defined here!
+    username: metacat
+    database: knb
+
+  ## @param postgresqlDataDir PostgreSQL data dir folder
+  ##
+  postgresqlDataDir: /bitnami/postgresql/14/main
+
   primary:
-    ## PodSecurityContext - define common securityContext settings at the pod level for all containers
-    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-    ## @param podSecurityContext.fsGroup numerical Group ID for the pod.
-    ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
-    ## the group that owns the existing data on that filesystem!
-    ##
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 106 # from original filesystem
     podSecurityContext:
-      fsGroup: 114
-
+      fsGroup: 114 # from original filesystem
+    ## override the default pg_hba.conf with our own, to allow password auth
+    ## TYPE       DATABASE      USER          ADDRESS         METHOD
+    pgHbaConfiguration: |
+      host        knb           metacat       0.0.0.0/0       password
+      host        knb           metacat       ::0/0           password
+      local       all           all                           trust
     persistence:
-      storageClass: *storageClassName
-
-      ## @param primary.persistence.size PVC Storage Request for PostgreSQL volume
-      ##
-      size: 100Gi
-
-      ## @param primary.persistence.subPath The subdirectory of the volume to mount to
-      ## Useful in dev environments and one PV for multiple services
-      ##
-      subPath: repos/knb/postgresql
-
-      ## @param primary.persistence.selector Selector to match an existing Persistent Volume
-      ## (this value is evaluated as a template)
-      ##
+      size: 500Gi
       selector:
         matchLabels:
           metacatVolumeName: cephfs-metacatknb-metacat-postgres
@@ -103,36 +106,46 @@ dataone-indexer:
 
   # increase minReplicas from default 3
   autoscaling:
-    minReplicas: 20
+    minReplicas: 50
 
   podSecurityContext:
     fsGroup: 997 # must match metacat group for shared volume at /var/metacat
 
-  persistence:
-    subPath: *sharedVolumeSubPath
-
-  # prefer more-performant nodes for indexer workers
-  #  affinity:
-  #    nodeAffinity:
-  #      requiredDuringSchedulingIgnoredDuringExecution:
-  #        nodeSelectorTerms:
-  #          - matchExpressions:
-  #              - key: nceas/nodegroup
-  #                operator: In
-  #                values:
-  #                  - fast
-
-  #  topologySpreadConstraints:
-  #    - maxSkew: 10
-  #      topologyKey: kubernetes.io/hostname
-  #      whenUnsatisfiable: ScheduleAnyway
-  #      labelSelector:
-  #        matchLabels:
-  #          app: dataone-indexer
-
   image:
     pullPolicy: Always
     debug: *debug
+
+    ## solr Persistence parameters
+    ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    ## @param solr.persistence.size Persistent Volume size
+    ##
+    solr:
+      persistence:
+        size: 100Gi
+
+      ## ZooKeeper Persistence parameters
+      ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+      ## @param zookeeper.persistence.size Persistent Volume size
+      ##
+      zookeeper:
+        persistence:
+          size: 100Gi
+
+tomcat:
+  heapMemory:
+    min: 8G
+    max: 16G
+
+livenessProbe:
+  httpGet:
+    path: /knb/
+    port: metacat-web
+
+readinessProbe:
+  httpGet:
+    path: /knb/admin
+    port: metacat-web
+
 
 ####################################################################################################
 ## FOR DEBUGGING ONLY
@@ -144,7 +157,7 @@ dataone-indexer:
 #  enabled: false
 #readinessProbe:
 #  enabled: false
-#
+
 #service:
 #  enabled: true
 #  type: LoadBalancer
