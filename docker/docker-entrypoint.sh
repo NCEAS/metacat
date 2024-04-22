@@ -46,7 +46,7 @@ setTomcatEnv() {
         echo "tomcat max or min memory size not found; skipping memory settings"
     else
         MEMORY=" -Xms${TOMCAT_MEM_MIN} -Xmx${TOMCAT_MEM_MAX}"
-        MEMORY="${MEMORY} -XX:PermSize=128m -XX:MaxPermSize=512m "
+        MEMORY="${MEMORY} -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m "
     fi
 
     ################################
