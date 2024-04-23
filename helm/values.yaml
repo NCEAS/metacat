@@ -734,7 +734,7 @@ postgresql:
     ## Must equal or exceed metacat.database.maximumConnections
     ##
     extendedConfiguration: |
-      max_connections = 200
+      max_connections = 250
 
     ## Postgresql persistence
     ## For explanatory notes, see top-level `persistence` section for metacat, and the bitnami
