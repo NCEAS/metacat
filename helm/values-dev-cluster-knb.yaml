@@ -20,7 +20,6 @@ metacat:
   cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
   application.context: *metacatAppContext
 
-
   ## DataONE Member Node (MN) Parameters
 #  dataone.certificate.fromHttpHeader.enabled: true
 #  dataone.autoRegisterMemberNode: 2024-01-25
@@ -111,6 +110,7 @@ dataone-indexer:
   # increase minReplicas from default 3
   autoscaling:
     minReplicas: 50
+    targetCPUUtilizationPercentage: 80
 
   podSecurityContext:
     fsGroup: 997 # must match metacat group for shared volume at /var/metacat
