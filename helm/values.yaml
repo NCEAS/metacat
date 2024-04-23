@@ -418,7 +418,7 @@ metacat:
 
   ## @param metacat.sitemap.interval Interval (in milliseconds) between rebuilding the sitemap
   ##
-  sitemap.interval: 86400000
+  sitemap.interval: "86400000"
 
   ## @param metacat.sitemap.location.base The first part of the URLs listed in sitemap_index.xml
   ## Either full URL or absolute path. Trailing slash optional.
@@ -437,7 +437,7 @@ metacat:
   ## (e.g. https://knb.ecoinformatics.org/knb/sitemaps/sitemap1.xml), irrespective of the
   ## value you set for sitemap.location.base.
   ##
-  sitemap.location.base: "/metacatui"
+  sitemap.location.base: /
 
   ## @param metacat.sitemap.entry.base base URI of the dataset landing page, listed in the sitemap
   ## file(s) themselves.
@@ -454,7 +454,7 @@ metacat:
   ##     <lastmod>2024-03-29</lastmod>
   ##   </url>
   ##
-  sitemap.entry.base: "/metacatui/view"
+  sitemap.entry.base: /metacatui/view
 
 
 ## @section Metacat Image, Container & Pod Parameters

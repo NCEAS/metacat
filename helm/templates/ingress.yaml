@@ -21,9 +21,10 @@ metadata:
     {{- if $mutualAuth -}}
       {{- include "dataone.mutual.auth.annotations" . | nindent 4 }}
     {{- end }}
-    {{- if $siteMapEnabled -}}
+    {{- if $siteMapEnabled }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
-    rewrite ^/(sitemap.+) /{{- index .Values.metacat "application.context" -}}/sitemaps/$1 redirect;
+      rewrite ^/(sitemap.+) /{{- index .Values.metacat "application.context" -}}
+      /sitemaps/$1 redirect;
     {{- end }}
   {{- end }}
 spec:
