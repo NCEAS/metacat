@@ -82,10 +82,9 @@ that have been created by others. Specifically,
 * Metacat's Web interface facilitates the input and retrieval of data
 * Metacat's optional mapping functionality enables you to query and visualize the geographic coverage of stored data sets
 * Metacat's replication feature ensures that all Metacat data and metadata is stored safely on multiple Metacat servers
-* Metacat's default web interface `metacatui`_ can be easily modified.
+* Metacat's default web interface `metacatui`_ can be easily modified and customized.
 * Metacat can be customized to use Life Sciences Identifiers (LSIDs), uniquely identifying every data record
 * Metacat has a built-in logging system for tracking events such as document insertions, updates, deletes, and reads
-* The appearance of Metacat's Web interface can be customized via themes.
 * Metacat fully supports the DataONE Member Node interface, allowing Metacat deployments to easily participate in the DataONE federation
 
 .. _metacatui: https://nceas.github.io/metacatui/

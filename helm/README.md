@@ -363,7 +363,7 @@ indexing for private datasets, via calls to metacat's DataONE API.
 either for the Production or the Test environment, depending upon your needs:
 
    - [DataONE Production Intermediate CA
-     Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
+     Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONEProdIntCA/certs/DataONEProdIntCA.pem)
    - [DataONE Test Intermediate CA
      Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
 

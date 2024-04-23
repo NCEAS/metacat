@@ -6,6 +6,9 @@
 ## see values.yaml for full documentation on the following parameters
 ##
 
+# set once here, for both metacat and indexer:
+debug: &debug true
+
 global:
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
@@ -38,7 +41,7 @@ persistence:
 
 image:
   # tag: TEST
-  debug: true
+  debug: *debug
   pullPolicy: Always
 
 ingress:
@@ -60,8 +63,12 @@ ingress:
 dataone-indexer:
   # increase minReplicas from default 3
   autoscaling:
-    minReplicas: 3
+    minReplicas: 5
     targetCPUUtilizationPercentage: 40
+
+  image:
+    pullPolicy: Always
+    debug: *debug
 
 #  topologySpreadConstraints:
 #    - maxSkew: 10
@@ -82,9 +89,6 @@ dataone-indexer:
 #                values:
 #                  - fast
 
-  image:
-    pullPolicy: Always
-    debug: true
 
 ####################################################################################################
 ## FOR DEBUGGING ONLY

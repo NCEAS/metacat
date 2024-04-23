@@ -43,7 +43,7 @@ global:
   ## - for example, if your application is hosted at https://mydomain.org, and you define the
   ## context to be "metacat", then the application may be accessed at: https://mydomain.org/metacat/
   ## IMPORTANT NOTE: if changing this value, ensure the following paths are also updated to match:
-  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path; ingress.hosts.paths
+  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path
   ##
   ## (Note the actual key metacatAppContext is used by the indexer sub-chart, and the anchor
   ##  &passwordSecretName is used elsewhere in this file. IF YOU OVERRIDE THIS VALUE IN ANOTHER
@@ -577,7 +577,7 @@ ingress:
   hosts:
     - host: *external-hostname
       paths:
-        - path: "/metacat"
+        - path: "/"
           pathType: Prefix
 
   ## @param ingress.annotations Annotations for the ingress

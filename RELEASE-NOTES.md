@@ -4,6 +4,8 @@
 
 Release date: 2024-04-XX
 
+### Note: Your Metacat instance MUST be either 2.19.0 or 2.19.1 before you can upgrade it to 3.0.0.
+
 ### Overview of Major Changes
 
 This major release introduces breaking changes:
@@ -149,6 +151,12 @@ This major release introduces breaking changes:
 - Resolved 'sphinx' auto build docs from breaking due to conflicting indentation [PR-1661](https://github.com/NCEAS/metacat/pull/1661)
 - Resolved EZID related tests breaking due to a new AWS-WAF Rule that denies requests if the body contains a url that includes 'localhost' or '127.0.0.1' by adding mock properties [I-1625](https://github.com/NCEAS/metacat/issues/1625)
 - Fixed sampling citations not showing up in the view service [I-31](https://github.com/NCEAS/metacat/issues/31)
+
+## Release Notes for 2.19.1
+
+New features, and bugs fixed in this release:
+* Handle additional OSTI DOIs
+* Upgrade Libraries
 
 ## Release Notes for 2.19.0
 
