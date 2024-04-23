@@ -1,12 +1,8 @@
-----
+OAI Protocol for Metadata Harvesting
+====================================
 
 .. deprecated:: 3.0.0
     Harvesting metadata in Metacat through OAI-PMH standard is obsolete.
-
-----
-
-OAI Protocol for Metadata Harvesting
-====================================
 
 The Open Archives Initiative Protocol for Metadata Harvesting (`OAI-PMH`_) was first 
 developed in the late 1990's as a standard for harvesting metadata from 

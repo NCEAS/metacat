@@ -1,21 +1,18 @@
 Modifying and Creating Themes
 =============================
-.. versionadded:: 2.2.0
 
 .. contents::
 
-|
-
-Metacat's theming system, `MetacatUI <https://github.com/NCEAS/metacatui>`_, is deployed
-separately from Metacat, allowing more independent user interface customization. Check the
+Metacat's user interface, `MetacatUI <https://github.com/NCEAS/metacatui>`_, is deployed
+separately from Metacat, allowing more independent visual customization. Check the
 `MetacatUI GitHub <https://github.com/NCEAS/metacatui>`_ for the most up to date version.
 
 MetacatUI is structured in a model-view-controller architecture using
 `Backbone.js <http://www.backbonejs.org>`_. Some background knowledge on Backbone.js may be helpful
 for advanced modification of MetacatUI, but is not necessary for editing the CSS styling and HTML
-ofthe included MetacatUI views.
+of the included MetacatUI views.
 
-.. figure:: images/screenshots/image007.png
+.. figure:: images/screenshots/image007_metacatuihome.png
 
    MetacatUI's default home page. Users can customize the appearance using themes.
 
@@ -232,59 +229,3 @@ But querying a Metacat Member Node would be configured as::
         d1Service:   '/d1/mn/v2',
         d1CNBaseUrl: "https://cn.dataone.org/",
         d1CNService: "cn/v2",
-
-
-
-Creating a Custom Skin
-----------------------
-.. deprecated:: 2.2.0
-   Use MetacatUI themes for any new UI development. Metacat's original skinning
-   mechanism is still included and used for aspects of rendering metadata, but is
-   not the preferred method for building web clients for Metacat.
-
-   To use MetacatUI themes, select ``metacatui`` as the default skin during skin configuration
-   in the administration interface.
-
-Skins are used in Metacat to customize the appearance of the search and display
-web interface that is presented by Metacat.  Skins can be used to make a Metacat
-instance exactly integrate into an existing web site, and are fully customizable.
-
-To create and customize your own Metacat skin, you must first create a skin
-directory. This is most easily accomplished by copying one of the existing skin
-directories. Step-by-step directions for creating and installing a custom skin
-are included below:
-
-1. Copy an existing skin directory. We recommend using the "default" directory::
-
-    sudo cp -r <CONTEXT_DIR>/style/skins/default/ <CONTEXT_DIR>/style/skins/[yourSkin]/
-
-  Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application
-  code lives  and ``[yourSkin]`` is the name you wish to apply to your skin.
-
-2. In ``[yourSkin]`` directory, change all files named ``default.xxx`` to
-   ``yourSkin.xxx``. The following files should be changed::
-
-    default.css
-    default.js
-    default.properties
-    default.properties.metadata.xml
-    default.xml
-
-3. Copy the entire default ``skin.names=`` property from the **metacat.properties** file, into the
-   **metacat-site.properties** file (see :ref:`configuration-properties-overview` for file locations
-   and details). Then append ``[yourSkin]`` to the end of this comma-separated list of
-   ``skin.names`` you have added to **metacat-site.properties**. (Do **not** edit
-   metacat.properties!).
-
-4. Restart Tomcat. Log in as the user that runs your Tomcat server (often "tomcat") and type::
-
-    /etc/init.d/tomcat7 restart
-
-Navigate to Metacat's Configuration utility  and select the Configure Skins
-option. Your custom skin should appear as a choice in the skins list. Change
-the layout and style by modifying the header, footer, css, and other files in
-your new skin directory.
-
-It is important to note that all customized skins will be overwritten when
-Metacat is reinstalled or upgraded. Please remember to back up your skins before
-reinstalling or upgrading Metacat.
