@@ -466,17 +466,19 @@ metacat:
 ## @section robots.txt file (search engine indexing)
 ## Also see .Values.metacat.sitemap.*
 robots:
-  ## @param robots.userAgent User-agent defined in robots.txt file. Defaults to "*" if not set
+  ## @param robots.userAgent "User-agent:" defined in robots.txt file. Defaults to "*" if not set
+  ## NOTE: this value is ignored, unless 'metacat.sitemap.enabled: true'
+  ##
   userAgent: ""
 
-  ## @param robots.disallow Disallow value defined in robots.txt file.
+  ## @param robots.disallow the "Disallow:" value defined in robots.txt file.
+  ## NOTE: this value is ignored, unless 'metacat.sitemap.enabled: true'
   ##
-  ## If left unset (i.e. disallow: ""), then the following default values will be used:
-  ## * if 'metacat.sitemap.enabled: true'...
-  ##     robots.disallow: /<metacat.application.context>/d1/mn/v2/packages/
-  ##
-  ## * if 'metacat.sitemap.enabled: false'...
+  ## If 'metacat.sitemap.enabled: false', then 'disallow' will always default to:
   ##     robots.disallow: /
+  ##
+  ## If left unset (i.e. disallow: "") and 'metacat.sitemap.enabled: true', then will default to:
+  ##     robots.disallow: /<metacat.application.context>/d1/mn/v2/packages/
   ##
   disallow: ""
 
