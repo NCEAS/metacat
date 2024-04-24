@@ -827,7 +827,8 @@ postgresql:
 
     ## @param postgresql.primary.extendedConfiguration Extended configuration, appended to defaults
     ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#allow-settings-to-be-loaded-from-files-other-than-the-default-postgresqlconf
-    ## Must equal or exceed metacat.database.maximumConnections
+    ## Must exceed metacat.database.maximumConnections, since some connections will be reserved for
+    ## superuser
     ##
     extendedConfiguration: |
       max_connections = 250
