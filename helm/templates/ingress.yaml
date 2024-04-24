@@ -12,8 +12,7 @@ metadata:
   labels:
     {{- include "metacat.labels" . | nindent 4 }}
   {{- $mutualAuth := index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" -}}
-  {{- $siteMapEnabled := index .Values.metacat "sitemap.enabled" -}}
-  {{- if (or .Values.ingress.annotations $mutualAuth $siteMapEnabled) }}
+  {{- $siteMapEnabled := index .Values.metacat "sitemap.enabled" }}
   annotations:
     {{- with .Values.ingress.annotations }}
       {{- toYaml . | nindent 4 }}
@@ -21,12 +20,13 @@ metadata:
     {{- if $mutualAuth -}}
       {{- include "dataone.mutual.auth.annotations" . | nindent 4 }}
     {{- end }}
-    {{- if $siteMapEnabled }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
+      {{- if $siteMapEnabled }}
       rewrite ^/(sitemap.+) /{{- index .Values.metacat "application.context" -}}
       /sitemaps/$1 redirect;
-    {{- end }}
-  {{- end }}
+      {{- end }}
+      rewrite ^/robots.txt /{{- index .Values.metacat "application.context" -}}
+        /robots.txt redirect;
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls }}

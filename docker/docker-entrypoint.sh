@@ -198,6 +198,8 @@ elif [[ $1 = "catalina.sh" ]]; then
         unzip -qq "$METACAT_WAR" -d "$METACAT_DIR"
     fi
 
+    cp  /usr/local/etc/metacat-configMap/robots.txt  METACAT_DIR/robots.txt
+
     # change the context in the web.xml file
     apply_context.py "$METACAT_DIR"/WEB-INF/web.xml metacat "${METACAT_APP_CONTEXT}"
 
