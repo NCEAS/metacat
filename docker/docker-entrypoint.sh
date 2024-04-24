@@ -198,6 +198,20 @@ elif [[ $1 = "catalina.sh" ]]; then
         unzip -qq "$METACAT_WAR" -d "$METACAT_DIR"
     fi
 
+    robots_txt_source="$CONFIGMAP_DIR/robots.txt"
+    robots_txt_target="$METACAT_DIR/robots.txt"
+    if [ -e "$robots_txt_source" ]; then
+        cp  "$robots_txt_source"  "$robots_txt_target"
+    else
+      {
+          echo "User-agent: *"
+          echo "Disallow: /"
+      } > "$robots_txt_target"
+      echo "* * * WARNING: NO ROBOTS.TXT FOUND AT $robots_txt_source * * *"
+      echo "added default to Disallow all:"
+      cat $robots_txt_target
+    fi
+
     # change the context in the web.xml file
     apply_context.py "$METACAT_DIR"/WEB-INF/web.xml metacat "${METACAT_APP_CONTEXT}"
 

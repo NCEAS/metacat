@@ -37,8 +37,7 @@ dependencies:
     # @param version  --  the bitnami postgresql CHART version, NOT the database version
     # get full list using:  $  helm search repo bitnami/postgresql --versions
     #
-#    version: 13.2.15    # postgres version 16.1.0 is deployed by chart version 13.2.15
-    version: 11.9.13    # postgres version 14.5.0 is deployed by chart version 11.9.13
+    version: 13.2.15    # postgres version 16.1.0 is deployed by chart version 13.2.15
     condition: postgresql.enabled
 
   - name: dataone-indexer

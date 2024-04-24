@@ -20,7 +20,6 @@ metacat:
   cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
   application.context: *metacatAppContext
 
-
   ## DataONE Member Node (MN) Parameters
 #  dataone.certificate.fromHttpHeader.enabled: true
 #  dataone.autoRegisterMemberNode: 2024-01-25
@@ -101,7 +100,6 @@ postgresql:
         matchLabels:
           metacatVolumeName: cephfs-metacatknb-metacat-postgres
 
-
 dataone-indexer:
 #  resources:
 #    requests:
@@ -110,7 +108,10 @@ dataone-indexer:
 
   # increase minReplicas from default 3
   autoscaling:
-    minReplicas: 50
+    # This is a work in progress; too many indexers (e.g. 50) can lead to DDoS on Metacat's DataONE
+    # API, since metacat exhausts the PostgreSQL database connection pool...
+    minReplicas: 20
+    targetCPUUtilizationPercentage: 80
 
   podSecurityContext:
     fsGroup: 997 # must match metacat group for shared volume at /var/metacat
@@ -119,21 +120,33 @@ dataone-indexer:
     pullPolicy: Always
     debug: *debug
 
-    ## solr Persistence parameters
+  topologySpreadConstraints:
+    - maxSkew: 10
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: d1index
+
+  idxworker:
+    # this actually puts container in debug loop mode - no indexer running
+    debug: false
+
+  ## solr Persistence parameters
+  ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+  ## @param solr.persistence.size Persistent Volume size
+  ##
+  solr:
+    persistence:
+      size: 100Gi
+
+    ## ZooKeeper Persistence parameters
     ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
-    ## @param solr.persistence.size Persistent Volume size
+    ## @param zookeeper.persistence.size Persistent Volume size
     ##
-    solr:
+    zookeeper:
       persistence:
         size: 100Gi
-
-      ## ZooKeeper Persistence parameters
-      ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
-      ## @param zookeeper.persistence.size Persistent Volume size
-      ##
-      zookeeper:
-        persistence:
-          size: 100Gi
 
 tomcat:
   heapMemory:

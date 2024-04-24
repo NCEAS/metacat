@@ -1,0 +1,10 @@
+{{- if index .Values.metacat "sitemap.enabled" -}}
+{{- $context := index .Values.metacat "application.context" -}}
+{{- $disallow := (printf "/%s/d1/mn/v2/packages/" $context) }}
+User-agent: {{ default "*" .Values.robots.userAgent }}
+Disallow: {{ default $disallow .Values.robots.disallow }}
+Sitemap: /sitemap_index.xml
+{{- else }}
+User-agent: *
+Disallow: /
+{{- end }}

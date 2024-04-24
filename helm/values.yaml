@@ -383,6 +383,103 @@ metacat:
 #  dataone.replicationpolicy.default.preferredNodeList:
 #  dataone.replicationpolicy.default.blockedNodeList:
 
+  ## @section OPTIONAL (but Recommended) Site Map Parameters
+  ##
+
+  ## @param metacat.sitemap.enabled Enable sitemaps to tell search engines which URLs are available
+  ## for crawling (recommended - see https://knb.ecoinformatics.org/knb/docs/sitemaps.html)
+  ##
+  ## NOTE: If you are creating a non-production deployment, leave 'sitemap.enabled: false', and
+  ## the chart will automatically create a robotx.txt file that prevents any search engine indexing
+  ##
+  ## When 'sitemap.enabled: true', Metacat automatically generates a sitemap index file, at:
+  ##
+  ##   https://<server.name>/<application.context>/sitemaps/sitemap_index.xml
+  ##
+  ## ...and creates a robotx.txt file that points to it (see .Values.robots).
+  ##
+  ## The index file contains a list of sitemap.xml files. Each listing is of the form:
+  ##
+  ##   <sitemap>
+  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <lastmod>2024-04-22</lastmod>
+  ##   </sitemap>
+  ##
+  ## ...for 1 or more sitemap files, named sitemap1.xml, sitemap2.xml, etc. These sitemap files
+  ## are also located at:
+  ##
+  ##   https://<server.name>/<application.context>/sitemaps/sitemap1.xml ...etc.
+  ##
+  ## Each sitemap file contains up to 50,000 entries, each pointing to a dataset that is publicly
+  ## readable metadata, is the newest version in a version chain, and has not been archived.
+  ##
+  ## URL entries are of the form:
+  ##
+  ##   <url>
+  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <lastmod>2024-03-29</lastmod>
+  ##   </url>
+  ##
+  sitemap.enabled: false
+
+  ## @param metacat.sitemap.interval Interval (in milliseconds) between rebuilding the sitemap
+  ## default (sitemap.interval: "86400000") is 24 hours.
+  ##
+  sitemap.interval: "86400000"
+
+  ## @param metacat.sitemap.location.base The first part of the URLs listed in sitemap_index.xml
+  ## Either full URL or absolute path. Trailing slash optional.
+  ##
+  ## sitemap_index.xml contains listings pointing to the sitemap(n).xml files. If we set:
+  ##   sitemap.location.base: "/metacatui"
+  ##   (or sitemap.location.base: "https://metacat.dataone.org/metacatui")
+  ##
+  ## ...then each listing will be of the form:
+  ##   <sitemap>
+  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <lastmod>2024-04-22</lastmod>
+  ##   </sitemap>
+  ##
+  ## NOTE: the actual files will always be stored in the <application.context>/sitemaps directory
+  ## (e.g. https://knb.ecoinformatics.org/knb/sitemaps/sitemap1.xml), irrespective of the
+  ## value you set for sitemap.location.base.
+  ##
+  sitemap.location.base: /
+
+  ## @param metacat.sitemap.entry.base base URI of the dataset landing page, listed in the sitemap
+  ## file(s) themselves.
+  ## Either full URI or absolute path. Trailing slash optional.
+  ##
+  ## Each sitemap(n).xml file contains listings pointing to the individual datasets to be crawled.
+  ## If we set:
+  ## sitemap.entry.base: /metacatui/view
+  ##   (or sitemap.entry.base: "https://metacat.dataone.org/metacatui/view")
+  ##
+  ## ...then each listing will be of the form:
+  ##   <url>
+  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <lastmod>2024-03-29</lastmod>
+  ##   </url>
+  ##
+  sitemap.entry.base: /metacatui/view
+
+## @section robots.txt file (search engine indexing)
+## Also see .Values.metacat.sitemap.*
+robots:
+  ## @param robots.userAgent User-agent defined in robots.txt file. Defaults to "*" if not set
+  userAgent: ""
+
+  ## @param robots.disallow Disallow value defined in robots.txt file.
+  ##
+  ## If left unset (i.e. disallow: ""), then the following default values will be used:
+  ## * if 'metacat.sitemap.enabled: true'...
+  ##     robots.disallow: /<metacat.application.context>/d1/mn/v2/packages/
+  ##
+  ## * if 'metacat.sitemap.enabled: false'...
+  ##     robots.disallow: /
+  ##
+  disallow: ""
+
 
 ## @section Metacat Image, Container & Pod Parameters
 ##
@@ -731,10 +828,11 @@ postgresql:
 
     ## @param postgresql.primary.extendedConfiguration Extended configuration, appended to defaults
     ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#allow-settings-to-be-loaded-from-files-other-than-the-default-postgresqlconf
-    ## Must equal or exceed metacat.database.maximumConnections
+    ## Must exceed metacat.database.maximumConnections, since some connections will be reserved for
+    ## superuser
     ##
     extendedConfiguration: |
-      max_connections = 200
+      max_connections = 250
 
     ## Postgresql persistence
     ## For explanatory notes, see top-level `persistence` section for metacat, and the bitnami

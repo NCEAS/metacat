@@ -31,7 +31,6 @@ metacat:
   dataone.nodeReplicate: true
   dataone.replicationpolicy.default.numreplicas: "1"
 
-
 persistence:
   storageClass: *storageClassName
   size: 100Gi
@@ -41,8 +40,8 @@ persistence:
 
 image:
   # tag: TEST
-  debug: *debug
   pullPolicy: Always
+  debug: *debug
 
 ingress:
   annotations:
@@ -55,39 +54,30 @@ ingress:
   hosts:
     - host: *extHostname
       paths:
-        - path: "/metacat"
-          pathType: Prefix
-        - path: "/metacatui"
+        - path: "/"
           pathType: Prefix
 
 dataone-indexer:
   # increase minReplicas from default 3
   autoscaling:
-    minReplicas: 5
-    targetCPUUtilizationPercentage: 40
+    minReplicas: 3
+    targetCPUUtilizationPercentage: 80
 
   image:
     pullPolicy: Always
     debug: *debug
 
-#  topologySpreadConstraints:
-#    - maxSkew: 10
-#      topologyKey: kubernetes.io/hostname
-#      whenUnsatisfiable: ScheduleAnyway
-#      labelSelector:
-#        matchLabels:
-#          app: dataone-indexer
+  topologySpreadConstraints:
+    - maxSkew: 2
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: d1index
 
-  # prefer more-performant nodes for indexer workers
-#  affinity:
-#    nodeAffinity:
-#      requiredDuringSchedulingIgnoredDuringExecution:
-#        nodeSelectorTerms:
-#          - matchExpressions:
-#              - key: nceas/nodegroup
-#                operator: In
-#                values:
-#                  - fast
+  idxworker:
+    # this actually puts container in debug loop mode - no indexer running
+    debug: false
 
 
 ####################################################################################################
@@ -100,7 +90,7 @@ dataone-indexer:
 #  enabled: false
 #readinessProbe:
 #  enabled: false
-#
+
 #service:
 #  enabled: true
 #  type: LoadBalancer
