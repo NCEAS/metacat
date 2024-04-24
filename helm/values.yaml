@@ -423,6 +423,7 @@ metacat:
   sitemap.enabled: false
 
   ## @param metacat.sitemap.interval Interval (in milliseconds) between rebuilding the sitemap
+  ## default (sitemap.interval: "86400000") is 24 hours.
   ##
   sitemap.interval: "86400000"
 

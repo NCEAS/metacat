@@ -100,7 +100,6 @@ postgresql:
         matchLabels:
           metacatVolumeName: cephfs-metacatknb-metacat-postgres
 
-
 dataone-indexer:
 #  resources:
 #    requests:
@@ -109,7 +108,9 @@ dataone-indexer:
 
   # increase minReplicas from default 3
   autoscaling:
-    minReplicas: 50
+    # This is a work in progress; too many indexers (e.g. 50) can lead to DDoS on Metacat's DataONE
+    # API, since metacat exhausts the PostgreSQL database connection pool...
+    minReplicas: 20
     targetCPUUtilizationPercentage: 80
 
   podSecurityContext:
