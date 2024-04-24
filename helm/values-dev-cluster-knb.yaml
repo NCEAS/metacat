@@ -98,7 +98,7 @@ postgresql:
       size: 500Gi
       selector:
         matchLabels:
-          metacatVolumeName: cephfs-metacatknb-metacat-postgres
+          metacatVolumeName: cephfs-metacatknb-metacat-postgresdata
 
 dataone-indexer:
 #  resources:
