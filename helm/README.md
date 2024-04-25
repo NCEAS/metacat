@@ -94,16 +94,17 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### Global Properties Shared Across Sub-Charts Within This Deployment
 
 | Name                                 | Description                                             | Value                             |
-|--------------------------------------|---------------------------------------------------------|-----------------------------------|
+| ------------------------------------ | ------------------------------------------------------- | --------------------------------- |
 | `global.passwordsSecret`             | The name of the Secret containing application passwords | `${RELEASE_NAME}-metacat-secrets` |
 | `global.metacatAppContext`           | The application context to use                          | `metacat`                         |
 | `global.storageClass`                | default name of the storageClass to use for PVs         | `local-path`                      |
 | `global.ephemeralVolumeStorageClass` | Optional global storageClass override                   | `""`                              |
+| `global.sharedVolumeSubPath`         | The subdirectory of the metacat data volume to mount    | `""`                              |
 
 ### Metacat Application-Specific Properties
 
 | Name                              | Description                                                     | Value               |
-|-----------------------------------|-----------------------------------------------------------------|---------------------|
+| --------------------------------- | --------------------------------------------------------------- | ------------------- |
 | `metacat.application.context`     | see global.metacatAppContext                                    | `metacat`           |
 | `metacat.includeMetacatUi`        | Include MetacatUI in the same container as metacat              | `true`              |
 | `metacat.auth.administrators`     | A semicolon-separated list of admin ORCID iDs                   | `""`                |
@@ -120,7 +121,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### OPTIONAL DataONE Member Node (MN) Parameters
 
 | Name                                                          | Description                                                       | Value                                                    |
-|---------------------------------------------------------------|-------------------------------------------------------------------|----------------------------------------------------------|
+| ------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
 | `metacat.cn.server.publiccert.filename`                       | optional cert(s) used to validate jwt auth tokens,                | `/var/metacat/pubcerts/DataONEProdIntCA.pem`             |
 | `metacat.dataone.certificate.fromHttpHeader.enabled`          | Enable mutual auth with client certs                              | `false`                                                  |
 | `metacat.dataone.autoRegisterMemberNode`                      | Automatically push MN updates to CN? (yyyy-MM-dd)                 | `2023-02-28`                                             |
@@ -143,10 +144,26 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `metacat.dataone.replicationpolicy.default.preferredNodeList` | Preferred replication nodes                                       | `nil`                                                    |
 | `metacat.dataone.replicationpolicy.default.blockedNodeList`   | Nodes blocked from replication                                    | `nil`                                                    |
 
+### OPTIONAL (but Recommended) Site Map Parameters
+
+| Name                            | Description                                                     | Value             |
+| ------------------------------- | --------------------------------------------------------------- | ----------------- |
+| `metacat.sitemap.enabled`       | Enable sitemaps to tell search engines which URLs are available | `false`           |
+| `metacat.sitemap.interval`      | Interval (in milliseconds) between rebuilding the sitemap       | `86400000`        |
+| `metacat.sitemap.location.base` | The first part of the URLs listed in sitemap_index.xml          | `/`               |
+| `metacat.sitemap.entry.base`    | base URI of the dataset landing page, listed in the sitemap     | `/metacatui/view` |
+
+### robots.txt file (search engine indexing)
+
+| Name               | Description                                                          | Value |
+| ------------------ | -------------------------------------------------------------------- | ----- |
+| `robots.userAgent` | "User-agent:" defined in robots.txt file. Defaults to "*" if not set | `""`  |
+| `robots.disallow`  | the "Disallow:" value defined in robots.txt file.                    | `""`  |
+
 ### Metacat Image, Container & Pod Parameters
 
 | Name                           | Description                                                                  | Value                   |
-|--------------------------------|------------------------------------------------------------------------------|-------------------------|
+| ------------------------------ | ---------------------------------------------------------------------------- | ----------------------- |
 | `image.repository`             | Metacat image repository                                                     | `ghcr.io/nceas/metacat` |
 | `image.tag`                    | Metacat image tag (immutable tags are recommended)                           | `DEVELOP`               |
 | `image.pullPolicy`             | Metacat image pull policy                                                    | `IfNotPresent`          |
@@ -166,19 +183,20 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Metacat Persistence
 
-| Name                        | Description                                                    | Value               |
-|-----------------------------|----------------------------------------------------------------|---------------------|
-| `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims | `true`              |
-| `persistence.storageClass`  | Storage class of backing PV                                    | `local-path`        |
-| `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use          | `""`                |
-| `persistence.volumeName`    | Name of an existing Volume to use for volumeClaimTemplate      | `""`                |
-| `persistence.accessModes`   | PVC Access Mode for metacat volume                             | `["ReadWriteMany"]` |
-| `persistence.size`          | PVC Storage Request for metacat volume                         | `1Gi`               |
+| Name                        | Description                                                          | Value               |
+| --------------------------- | -------------------------------------------------------------------- | ------------------- |
+| `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims       | `true`              |
+| `persistence.storageClass`  | Storage class of backing PV                                          | `local-path`        |
+| `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use                | `""`                |
+| `persistence.volumeName`    | Name of an existing Volume to use for volumeClaimTemplate            | `""`                |
+| `persistence.subPath`       | The subdirectory of the volume (see persistence.volumeName) to mount | `""`                |
+| `persistence.accessModes`   | PVC Access Mode for metacat volume                                   | `["ReadWriteMany"]` |
+| `persistence.size`          | PVC Storage Request for metacat volume                               | `1Gi`               |
 
 ### Networking & Monitoring
 
 | Name                                 | Description                                                   | Value            |
-|--------------------------------------|---------------------------------------------------------------|------------------|
+| ------------------------------------ | ------------------------------------------------------------- | ---------------- |
 | `ingress.enabled`                    | Enable or disable the ingress                                 | `true`           |
 | `ingress.className`                  | ClassName of the ingress provider in your cluster             | `traefik`        |
 | `ingress.hosts`                      | A collection of rules mapping different hosts to the backend. | `[]`             |
@@ -204,40 +222,42 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Postgresql Sub-Chart
 
-| Name                                           | Description                                         | Value                              |
-|------------------------------------------------|-----------------------------------------------------|------------------------------------|
-| `postgresql.enabled`                           | enable the postgresql sub-chart                     | `true`                             |
-| `postgresql.auth.username`                     | Username for accessing the database used by metacat | `metacat`                          |
-| `postgresql.auth.database`                     | The name of the database used by metacat.           | `metacat`                          |
-| `postgresql.auth.existingSecret`               | Secrets location for postgres password              | `${RELEASE_NAME}-metacat-secrets`  |
-| `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password            | `POSTGRES_PASSWORD`                |
-| `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD`                |
-| `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication            | (See [values.yaml](./values.yaml)) |
-| `postgresql.primary.persistence.enabled`       | Enable data persistence using PVC                   | `true`                             |
-| `postgresql.primary.persistence.existingClaim` | Existing PVC to re-use                              | `""`                               |
-| `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                         | `""`                               |
-| `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume             | `1Gi`                              |
+| Name                                           | Description                                         | Value                                |
+| ---------------------------------------------- | --------------------------------------------------- | ------------------------------------ |
+| `postgresql.enabled`                           | enable the postgresql sub-chart                     | `true`                               |
+| `postgresql.auth.username`                     | Username for accessing the database used by metacat | `metacat`                            |
+| `postgresql.auth.database`                     | The name of the database used by metacat.           | `metacat`                            |
+| `postgresql.auth.existingSecret`               | Secrets location for postgres password              | `${RELEASE_NAME}-metacat-secrets`    |
+| `postgresql.auth.secretKeys.userPasswordKey`   | Identifies metacat db's account password            | `POSTGRES_PASSWORD`                  |
+| `postgresql.auth.secretKeys.adminPasswordKey`  | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD`                  |
+| `postgresql.primary.pgHbaConfiguration`        | PostgreSQL Primary client authentication            | `(See [values.yaml](./values.yaml))` |
+| `postgresql.primary.extendedConfiguration`     | Extended configuration, appended to defaults        | `max_connections = 250`              |
+| `postgresql.primary.persistence.enabled`       | Enable data persistence using PVC                   | `true`                               |
+| `postgresql.primary.persistence.existingClaim` | Existing PVC to re-use                              | `""`                                 |
+| `postgresql.primary.persistence.storageClass`  | Storage class of backing PV                         | `""`                                 |
+| `postgresql.primary.persistence.size`          | PVC Storage Request for postgres volume             | `1Gi`                                |
 
 ### Tomcat Configuration
 
 | Name                    | Description                                              | Value |
-|-------------------------|----------------------------------------------------------|-------|
+| ----------------------- | -------------------------------------------------------- | ----- |
 | `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
 | `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
 
 ### dataone-indexer Sub-Chart
 
-| Name                                                         | Description                             | Value                                 |
-|--------------------------------------------------------------|-----------------------------------------|---------------------------------------|
-| `dataone-indexer.enabled`                                    | enable the dataone-indexer sub-chart    | `true`                                |
-| `dataone-indexer.nameOverride`                               | partial override for resource name      | `"d1index"`                           |
-| `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use | `metacat-rmq-guest`                   |
-| `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password           | `${RELEASE_NAME}-metacat-secrets`     |
-| `dataone-indexer.solr.customCollection`                      | name of the solr collection to use      | `metacat-index`                       |
-| `dataone-indexer.solr.coreNames`                             | Solr core names to be created           | `["metacat-core"]`                    |
-| `dataone-indexer.solr.extraVolumes[0].name`                  | DO NOT EDIT - referenced by sub-chart   | `solr-config`                         |
-| `dataone-indexer.solr.extraVolumes[0].configMap.name`        | see notes in values.yaml                | `${RELEASE_NAME}-indexer-configfiles` |
-| `dataone-indexer.solr.extraVolumes[0].configMap.defaultMode` | DO NOT EDIT                             | `777`                                 |
+| Name                                                         | Description                                       | Value                                 |
+| ------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------- |
+| `dataone-indexer.enabled`                                    | enable the dataone-indexer sub-chart              | `true`                                |
+| `dataone-indexer.persistence.subPath`                        | The subdirectory of the volume to mount           | `""`                                  |
+| `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use           | `metacat-rmq-guest`                   |
+| `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password                     | `${RELEASE_NAME}-metacat-secrets`     |
+| `dataone-indexer.solr.javaMem`                               | Java memory options to pass to the Solr container | `-Xms2g -Xmx2g`                       |
+| `dataone-indexer.solr.customCollection`                      | name of the solr collection to use                | `metacat-index`                       |
+| `dataone-indexer.solr.coreNames`                             | Solr core names to be created                     | `["metacat-core"]`                    |
+| `dataone-indexer.solr.extraVolumes[0].name`                  | DO NOT EDIT - referenced by sub-chart             | `solr-config`                         |
+| `dataone-indexer.solr.extraVolumes[0].configMap.name`        | see notes in values.yaml                          | `${RELEASE_NAME}-indexer-configfiles` |
+| `dataone-indexer.solr.extraVolumes[0].configMap.defaultMode` | DO NOT EDIT                                       | `777`                                 |
 
 Specify non-secret parameters in the default [values.yaml](./values.yaml), which will be used
 automatically each time you deploy.
