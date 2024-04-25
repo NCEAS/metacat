@@ -875,10 +875,11 @@ dataone-indexer:
   ##
   enabled: true
 
-  ## @param persistence.subPath The subdirectory of the volume (see persistence.volumeName) to mount
-  ## Useful where one PV is used for multiple services, so each has its own subtree.
-  ##
   persistence:
+    ## @param dataone-indexer.persistence.subPath The subdirectory of the volume to mount
+    ## (see persistence.volumeName)
+    ## Useful where one PV is used for multiple services, so each has its own subtree.
+    ##
     subPath: *sharedVolumeSubPath
 
   rabbitmq:
@@ -892,7 +893,7 @@ dataone-indexer:
       existingPasswordSecret: *passwordSecretName
 
   solr:
-    ## @param javaMem Java memory options to pass to the Solr container
+    ## @param dataone-indexer.solr.javaMem Java memory options to pass to the Solr container
     ##
     javaMem: "-Xms2g -Xmx2g"
 
