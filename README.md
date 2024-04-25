@@ -39,6 +39,12 @@ our bug tracking system (http://github.com/NCEAS/metacat/issues). There is a
 list of currently unimplemented issues that we are working on
 for the next release.
 
+## Citation
+
+Cite this software as:
+
+> Jing Tao, Matthew Brooke, Dou Mok, Matthew B. Jones. 2024. Metacat: DataONE data repository software (version 3.0.0). Arctic Data Center. [doi:10.18739/A2D21R***](https://doi.org/10.18739/A***)
+
 ## Current Contributors
 
 - Jing Tao (tao@nceas.ucsb.edu) [ORCID: 0000-0002-1209-5268](https://orcid.org/0000-0002-1209-5268)
