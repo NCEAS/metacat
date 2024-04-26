@@ -486,16 +486,18 @@ robots:
 ## @section Metacat Image, Container & Pod Parameters
 ##
 
-## @param image.repository Metacat image repository
-## @param image.tag Metacat image tag (immutable tags are recommended)
-## @param image.pullPolicy Metacat image pull policy
 image:
+  ## @param image.repository Metacat image repository
+  ##
   repository: ghcr.io/nceas/metacat
+
+  ## @param image.pullPolicy Metacat image pull policy
+  ##
   pullPolicy: IfNotPresent
 
   ## @param image.tag Overrides the image tag. Will default to the chart appVersion if set to ""
   ##
-  tag: "DEVELOP"
+  tag: ""
 
   ## @param image.debug Specify if container debugging should be enabled (sets log level to "DEBUG")
   ## Set to true if you would like to see extra information in metacat/tomcat logs.
