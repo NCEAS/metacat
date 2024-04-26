@@ -165,9 +165,8 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | Name                           | Description                                                                  | Value                   |
 | ------------------------------ | ---------------------------------------------------------------------------- | ----------------------- |
 | `image.repository`             | Metacat image repository                                                     | `ghcr.io/nceas/metacat` |
-| `image.tag`                    | Metacat image tag (immutable tags are recommended)                           | `DEVELOP`               |
 | `image.pullPolicy`             | Metacat image pull policy                                                    | `IfNotPresent`          |
-| `image.tag`                    | Overrides the image tag. Will default to the chart appVersion if set to ""   | `DEVELOP`               |
+| `image.tag`                    | Overrides the image tag. Will default to the chart appVersion if set to ""   | `""`                    |
 | `image.debug`                  | Specify if container debugging should be enabled (sets log level to "DEBUG") | `false`                 |
 | `imagePullSecrets`             | Optional list of references to secrets in the same namespace                 | `[]`                    |
 | `container.ports`              | Optional list of additional container ports to expose within the cluster     | `[]`                    |
