@@ -458,7 +458,7 @@
         <dependency>
             <groupId>com.rabbitmq</groupId>
             <artifactId>amqp-client</artifactId>
-            <version>5.14.2</version>
+            <version>5.18.0</version>
         </dependency>
         <!-- API, java.xml.bind module -->
         <dependency>
