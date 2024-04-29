@@ -1,0 +1,49 @@
+## override values.yaml with values to use for running on local machine (eg within Rancher Desktop)
+##
+## example:
+##    helm install my-release ./helm -f ./helm/values-dev-local.yaml
+##
+
+metacat:
+  dataone.certificate.fromHttpHeader.enabled: true
+  server.name: &extHostname metacat.com
+
+image:
+  debug: true
+
+# probes will kill remote debugger
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
+ingress:
+  className: "nginx"
+  tls:
+    - hosts:
+        - *extHostname
+      secretName: tls-secret
+  hosts:
+    - host: *extHostname
+      paths:
+        - path: "/metacat"
+          pathType: Prefix
+        - path: "/metacatui"
+          pathType: Prefix
+
+service:
+  enabled: true
+  type: LoadBalancer
+  clusterIP: ""
+  ports:
+    - name: http-port
+      port: 8080
+      targetPort: metacat-web
+    - name: debug-port
+      port: 5005
+      targetPort: tc-remote-debug
+
+container:
+  ports:
+    - containerPort: 5005
+      name: tc-remote-debug

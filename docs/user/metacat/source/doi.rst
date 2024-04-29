@@ -34,7 +34,7 @@ There will be no attempt to "reserve" the DOI with the CN because Metacat
 will be configured with a unique shoulder and a specific EZID account that 
 allows minting under that shoulder.
 
-DOIs will only be minted if the following metacat.properties are set.
+DOIs will only be minted if the following are set in **metacat-site.properties**:
 
 =========================== =============================================================
 Metadata Field     			Source or value of metadata

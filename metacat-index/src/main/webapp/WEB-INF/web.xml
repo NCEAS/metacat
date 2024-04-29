@@ -19,8 +19,6 @@
       <description>The metacat.properties file for sibling metacat deployment. Note that the context can change</description>
     </context-param>
 
-  
-
     <!--
     <servlet>
       <servlet-name>HarvesterServlet</servlet-name>

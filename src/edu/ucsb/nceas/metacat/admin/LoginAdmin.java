@@ -1,31 +1,6 @@
-/**
- *  '$RCSfile$'
- *    Purpose: A Class that implements login methods
- *  Copyright: 2008 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    ors: Michael Daigle
- *
- *   '$or: daigle $'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.admin;
 
+import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
@@ -39,120 +14,299 @@ import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 
 /**
- * Control the display of the login page 
+ * Control the display of the login page
  */
 public class LoginAdmin extends MetacatAdmin {
 
-	private static LoginAdmin Admin = null;
-	private static Log logMetacat = LogFactory.getLog(LoginAdmin.class);
+    private static LoginAdmin Admin = null;
+    private static Log logMetacat = LogFactory.getLog(LoginAdmin.class);
 
-	/**
-	 * private constructor since this is a singleton
-	 */
-	private LoginAdmin() {}
+    /**
+     * private constructor since this is a singleton
+     */
+    private LoginAdmin() {
+    }
 
-	/**
-	 * Get the single instance of LoginAdmin.
-	 * 
-	 * @return the single instance of LoginAdmin
-	 */
-	public static LoginAdmin getInstance() {
-		if (Admin == null) {
-			Admin = new LoginAdmin();
-		}
-		return Admin;
-	}
-	
-	/**
-	 * Handle configuration of the Authentication properties
-	 * 
-	 * @param request
-	 *            the http request information
-	 * @param response
-	 *            the http response to be sent back to the client
-	 */
-	public void authenticateUser(HttpServletRequest request,
-			HttpServletResponse response) throws AdminException {
+    /**
+     * Get the single instance of LoginAdmin.
+     *
+     * @return the single instance of LoginAdmin
+     */
+    public static LoginAdmin getInstance() {
+        if (Admin == null) {
+            Admin = new LoginAdmin();
+        }
+        return Admin;
+    }
 
-		String processForm = request.getParameter("processForm");
-		String formErrors = (String) request.getAttribute("formErrors");
+    /**
+     * Utility method to determine if an incoming request action requires intervention by this class
+     *
+     * @param request The http request information
+     * @param action  The `action` contained in the `MetacatAdminServlet.ACTION_PARAM` parameter of
+     *                the request
+     * @return boolean true if intervention is needed by this class; false otherwise
+     */
+    public boolean needsLoginAdminHandling(HttpServletRequest request, String action)
+        throws MetacatUtilException {
 
-		if (processForm == null || !processForm.equals("true") || formErrors != null) {
-			// The servlet configuration parameters have not been set, or there
-			// were form errors on the last attempt to configure, so redirect to
-			// the web form for configuring metacat
-			
-			try {
-				request.setAttribute("adminList", AuthUtil.getAdministrators());
-				// Forward the request to the JSP page
-				RequestUtil.forwardRequest(request, response,
-						"/admin/admin-login.jsp", null);
-			} catch (MetacatUtilException mue) {
-				throw new AdminException("LoginAdmin.authenticateUser - Utility problem while " + 
-						"processing login page: " + mue.getMessage());
-			} 
-		} else {
-			// The configuration form is being submitted and needs to be
-			// processed.
-			Vector<String> processingSuccess = new Vector<String>();
-			Vector<String> processingErrors = new Vector<String>();
-			Vector<String> validationErrors = new Vector<String>();
-			
-			String userName = "";
+        if (MetacatAdminServlet.ACTION_LOGOUT.equals(action)
+            || MetacatAdminServlet.ACTION_LOGIN_MC.equals(action)) {
+            logMetacat.debug(
+                "Admin action is: " + action + "; intervention by LoginAdmin is required");
+            return true;
 
-				userName = request.getParameter("username");
-				String password = request.getParameter("password");
-				
-				// Validate that the options provided are legitimate. Note that
-				// we've allowed them to persist their entries. As of this point
-				// there is no other easy way to go back to the configure form
-				// and preserve their entries.
-				validationErrors.addAll(validateOptions(request));
-				
-				if (validationErrors.size() == 0) {
-					try {
-						AuthUtil.logUserIn(request, userName, password);
-					} catch (MetacatUtilException ue) {
-						String errorMessage = "LoginAdmin.authenticateUser - Could not log in as: " + userName
-						+ " : " + ue.getMessage() + ". Please try again";
-						processingErrors.add(errorMessage);
-						logMetacat.error(errorMessage);
-					} 
-				}
-			
-			try {
-				if (validationErrors.size() > 0 || processingErrors.size() > 0) {
-					RequestUtil.clearRequestMessages(request);
-					RequestUtil.setRequestFormErrors(request, validationErrors);
-					RequestUtil.setRequestErrors(request, processingErrors);
-					RequestUtil.forwardRequest(request, response, "/admin", null);
-				} else {
-					// Reload the main metacat configuration page
-					processingSuccess.add("User logged in as: " + userName);
-					RequestUtil.clearRequestMessages(request);
-					RequestUtil.setUserId(request, userName);
-					RequestUtil.setRequestSuccess(request, processingSuccess);
-					RequestUtil.forwardRequest(request, response,
-							"/admin?configureType=configure&processForm=false", null);
-				}
-			} catch (MetacatUtilException mue) {
-				throw new AdminException("LoginAdmin.authenticateUser - IO problem while processing login page: " 
-						+ mue.getMessage());
-			} 
-		}
-	}
-	
-	/**
-	 * Validate the most important configuration options submitted by the user.
-	 * 
-	 * @return a vector holding error message for any fields that fail
-	 *         validation.
-	 */
-	protected Vector<String> validateOptions(HttpServletRequest request) {
-		Vector<String> errorVector = new Vector<String>();
+        } else if (!AuthUtil.isUserLoggedInAsAdmin(request)) {
+            logMetacat.debug("User is NOT logged in; intervention by LoginAdmin is required");
+            return true;
+        }
+        return false;
+    }
 
-		//TODO MCD validate options.
+    /**
+     * Handle all login-related cases:
+     * 1. the user is not yet logged in, and has not started the orcid flow
+     * 2. the user is not yet logged in, but is part-way through the orcid flow
+     * 3. the user wishes to log out
+     *
+     * @param request  The http request information
+     * @param response The http response to be sent back to the client
+     */
+    protected void handle(HttpServletRequest request, HttpServletResponse response)
+        throws MetacatUtilException, AdminException {
 
-		return errorVector;
-	}
+        String action = request.getParameter(MetacatAdminServlet.ACTION_PARAM);
+        logMetacat.debug("handling admin-login-related action: " + action);
+        action = (action == null) ? "" : action;
+
+        // login flow. 'configureType':
+        // ACTION_LOGOUT:       Log user out
+        // No action:           (& no auth token in request). Initial page, ready to start flow
+        // ACTION_ORCID_FLOW:   user has logged in at orcid.org and has been redirected back to the
+        //                      'target' url that was provided to orcid.org. That page then makes an
+        //                      async call to the CN to retrieve an auth token
+        // ACTION_LOGIN_MC:     (& has auth token in request). Final stage - either authenticates
+        //                      and authorizes as an admin, or sends back to login page
+        switch (action) {
+            case MetacatAdminServlet.ACTION_LOGOUT -> logOutAdminUser(request, response);
+            case MetacatAdminServlet.ACTION_ORCID_FLOW -> {
+                String msg = "orcid.org login complete; now awaiting token...";
+                logMetacat.debug(msg + "; action was " + action);
+                addProcessingMessage(request, msg);
+
+                handleOrcidRedirect(request, response);
+            }
+            case MetacatAdminServlet.ACTION_LOGIN_MC -> {
+                String msg = "orcid.org login complete; now verifying token with Metacat...";
+                logMetacat.debug(msg + "; action was " + action);
+                addProcessingMessage(request, msg);
+
+                doMetacatLogin(request, response);
+            }
+            default -> {
+                logMetacat.debug("Action = " + action
+                                     + " and User not logged in; sending to login flow start page");
+                addProcessingMessage(
+                    request, "You must log in as an administrative user, "
+                        + "before you can continue with Metacat configuration.");
+
+                startLoginFlow(request, response);
+            }
+        }
+    }
+
+    /**
+     * Begin the login flow
+     *
+     * @param request  The http request information
+     * @param response The http response to be sent back to the client
+     * @throws AdminException if unable to forward request
+     */
+    protected void startLoginFlow(
+        HttpServletRequest request, HttpServletResponse response) throws AdminException {
+        try {
+            forwardToLoginStartPage(request, response, null, null);
+        } catch (MetacatUtilException mue) {
+            AdminException adminException = new AdminException(
+                "Problem processing login; ca't forward to start page: " + mue.getMessage());
+            adminException.fillInStackTrace();
+            throw adminException;
+        }
+    }
+
+    /**
+     * Handle the case where the User has authenticated via ORCID and the orcid site has redirected
+     * the user here. User does not yet have the token.
+     *
+     * @param request  The http request information
+     * @param response The http response to be sent back to the client
+     * @throws AdminException if unable to forward request
+     */
+    protected void handleOrcidRedirect(
+        HttpServletRequest request, HttpServletResponse response) throws AdminException {
+
+        try {
+            forwardToLoginStartPage(request, response, MetacatAdminServlet.ACTION_ORCID_FLOW, null);
+        } catch (MetacatUtilException mue) {
+            AdminException adminException = new AdminException(
+                "Problem processing login; forwarding during orcid flow: " + mue.getMessage());
+            adminException.fillInStackTrace();
+            throw adminException;
+        }
+    }
+
+    /**
+     * Use the ORCID auth token to log the admin user in
+     *
+     * @param request  The http request information, including the jwt token in the 'Authorization'
+     *                 header
+     * @param response The http response to be sent back to the client
+     * @throws AdminException if unable to forward request
+     */
+    protected void doMetacatLogin(
+        HttpServletRequest request, HttpServletResponse response) throws AdminException {
+
+        Vector<String> processingSuccess = new Vector<>();
+        Vector<String> processingErrors = new Vector<>();
+
+        String userId = "NOT_SET";
+        try {
+            userId = AuthUtil.authenticateUserWithCN(request);
+
+            if (AuthUtil.isAdministrator(userId, null)) {
+                RequestUtil.setUserId(request, userId);
+            } else {
+                processingErrors.add(userId + " is not on the Administrators list. Please contact"
+                                         + " a metacat administrator if you need access.");
+            }
+        } catch (MetacatUtilException ue) {
+            String errorMessage = "Could not log in (" + ue.getMessage() + "). Please try again";
+            processingErrors.add(errorMessage);
+            logMetacat.error(errorMessage);
+        }
+
+        try {
+            if (!processingErrors.isEmpty()) {
+                RequestUtil.setRequestErrors(request, processingErrors);
+                logMetacat.debug("Processing errors found (" + processingErrors
+                                     + ").  User is not logged in; going back to login start page");
+                logOutAdminUser(request, response);
+
+            } else {
+                logMetacat.debug("Admin user logged in - authenticated and authorized");
+                processingSuccess.add(userId + " logged in as Administrator");
+                RequestUtil.clearRequestMessages(request);
+                RequestUtil.setRequestSuccess(request, processingSuccess);
+                RequestUtil.forwardRequest(request, response,
+                                           MetacatAdminServlet.PATH_ADMIN_HOMEPAGE, null);
+            }
+        } catch (MetacatUtilException mue) {
+            AdminException adminException = new AdminException(
+                "Problem while processing login; unable to forward request: " + mue.getMessage());
+            adminException.fillInStackTrace();
+            throw adminException;
+        }
+    }
+
+    /**
+     * Put user in a logged-out state by removing userId from session, and invalidating session.
+     * Then return to login page
+     *
+     * @param request  The http request information
+     * @param response The http response to be sent back to the client
+     * @throws AdminException if unable to forward request
+     */
+    protected void logOutAdminUser(
+        HttpServletRequest request, HttpServletResponse response) throws AdminException {
+
+        logMetacat.debug(
+            "logOutAdminUser - logging out... " + request.getSession().getAttribute("userId"));
+
+        request.getSession().removeAttribute("userId");
+
+        request.getSession().invalidate();
+
+        String processingMessage = "You have logged out successfully. If you need to log in as a "
+            + "different user, you may first need to clear your cookies.";
+
+        try {
+            forwardToLoginStartPage(
+                request, response, MetacatAdminServlet.ACTION_LOGOUT, processingMessage);
+        } catch (MetacatUtilException mue) {
+
+            AdminException adminException = new AdminException(
+                "Problem processing logout; can't forward to start page: " + mue.getMessage());
+            adminException.fillInStackTrace();
+            throw adminException;
+        }
+    }
+
+    // Calls cleanRequest(), sets the optional provided `attribute` to `true` in the request, and
+    // then forwards to `admin-login.jsp`
+    private static void forwardToLoginStartPage(
+        HttpServletRequest request, HttpServletResponse response, String attribute,
+        String processingMessage) throws MetacatUtilException {
+
+        // clean up all messages except processingErrors
+        Vector<String> processingErrors = (Vector<String>) request.getAttribute("processingErrors");
+//        cleanRequest(request);
+        if (processingErrors != null) {
+            RequestUtil.setRequestErrors(request, processingErrors);
+        }
+
+        if (attribute != null) {
+            request.removeAttribute(attribute);
+            request.setAttribute(attribute, true);
+        }
+
+        if (processingMessage != null) {
+            addProcessingMessage(request, processingMessage);
+        }
+
+        logMetacat.debug(
+            "forwarding to login start page with PARAMETERS:\n"
+                + RequestUtil.getParametersAsString(request)
+                + "\nand ATTRIBUTES:\n"
+                + RequestUtil.getAttributesAsString(request) + "\n");
+
+        RequestUtil.forwardRequest(request, response, "/admin/admin-login.jsp", null);
+    }
+
+    private static void addProcessingMessage(HttpServletRequest request, String processingMessage) {
+
+        Vector<String> messageVector = new Vector<>(1);
+        messageVector.add(processingMessage);
+        RequestUtil.setRequestMessage(request, messageVector);
+    }
+
+    // clear messages and remove all attributes from request except for "processingErrors"
+    private static void cleanRequest(HttpServletRequest request) {
+
+        RequestUtil.clearRequestMessages(request);
+
+        Enumeration<String> attribList = request.getAttributeNames();
+        if (attribList != null) {
+            String next;
+            while (attribList.hasMoreElements()) {
+                next = attribList.nextElement();
+                if (!"processingErrors".equals(next)) {
+                    request.removeAttribute(next);
+                }
+            }
+        }
+    }
+
+    /**
+     * Required override from superclass.
+     *
+     * Validate the relevant configuration options submitted by the user. There are no options to
+     * validate at this time as the user is not submitting a form. Only ORCID authentication is
+     * available.
+     *
+     * @return A vector holding error messages for any fields that fail validation.
+     */
+    @Override
+    protected Vector<String> validateOptions(HttpServletRequest request) {
+        return new Vector<>();
+    }
 }

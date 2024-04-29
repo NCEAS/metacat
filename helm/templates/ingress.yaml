@@ -1,0 +1,57 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "metacat.fullname" . -}}
+{{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
+  {{- end }}
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "metacat.labels" . | nindent 4 }}
+  {{- $mutualAuth := index .Values.metacat "dataone.certificate.fromHttpHeader.enabled" -}}
+  {{- $siteMapEnabled := index .Values.metacat "sitemap.enabled" }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+      {{- toYaml . | nindent 4 }}
+    {{- end -}}
+    {{- if $mutualAuth -}}
+      {{- include "dataone.mutual.auth.annotations" . | nindent 4 }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      {{- if $siteMapEnabled }}
+      rewrite ^/(sitemap.+) /{{- index .Values.metacat "application.context" -}}
+      /sitemaps/$1 redirect;
+      {{- end }}
+      rewrite ^/robots.txt /{{- index .Values.metacat "application.context" -}}
+        /robots.txt redirect;
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $fullName }}-hl
+                port:
+                  number: 8080
+          {{- end }}
+    {{- end }}
+{{- end }}

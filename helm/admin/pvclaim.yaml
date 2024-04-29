@@ -1,0 +1,23 @@
+# 
+# * * *   NOT REQUIRED FOR A REGULAR StatefulSet DEPLOYMENT OF METACAT!   * * * *
+# 
+# Creates a persistent volume claim named "metacat-pvc". 
+#
+# This should be done only one time, separately from the helm install/upgrade cycle,
+#
+# NOTE: ensure that a PersistentVolume has already been created before creating
+#       the PersistentVolumeClaim!  (See pv-hostpath.yaml for details)
+#
+# Create by running the command:        kubectl apply -n <mynamespace> -f pvclaim.yaml
+#
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: metacat-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ""

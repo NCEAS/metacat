@@ -36,10 +36,9 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.PropertyConfigurator;
+
 
 import edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml2oai_dc;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -544,31 +543,15 @@ public class OAIHandler extends HttpServlet {
         // Initialize the directory path to the crosswalk XSLT files
         String xsltDirPath = servletContext.getRealPath(XSLT_DIR);
         Eml2oai_dc.setDirPath(xsltDirPath);
-        InputStream in = null;
 
         try {
             HashMap attributes = null;
-            Properties properties = null;
-            
-            try {
-                log.debug("configPath=" + configPath);
-                in = new FileInputStream(configPath);
-            } catch (FileNotFoundException e) {
-                log.debug("configPath not found. Try the classpath: " + configPath);
-                Thread thread = Thread.currentThread();
-                ClassLoader classLoader = thread.getContextClassLoader();
-                in = classLoader.getResourceAsStream(configPath);
+            Properties properties = new Properties();
+            for (String key : PropertyService.getInstance().getPropertyNames()) {
+                properties.setProperty(key, PropertyService.getInstance().getProperty(key));
             }
-
-            if (in != null) {
-                log.debug("configPath '" + configPath + "' found. Loading properties");
-                properties = new Properties();
-                properties.load(in);
-                attributes = getAttributes(properties);
-            }
-
+            attributes = getAttributes(properties);
             attributesMap.put("global", attributes);
-            in.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             throw new ServletException(e.getMessage());
@@ -584,8 +567,6 @@ public class OAIHandler extends HttpServlet {
         } catch (Throwable e) {
             e.printStackTrace();
             throw new ServletException(e.getMessage());
-        } finally {
-            IOUtils.closeQuietly(in);
         }
     }
 

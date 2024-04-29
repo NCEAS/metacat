@@ -7,9 +7,8 @@ Metacat Administrator's Guide
     .. image:: themes/metacatui/static/metacat-logo-darkgray.png
        :height: 130pt
 
-    Send feedback and bugs to: 
-        * metacat-dev@ecoinformatics.org
-        * http://bugzilla.ecoinformatics.org
+    Feedback and bugs - please create a GitHub Issue:
+        * https://github.com/NCEAS/metacat/issues/new
 
     License: GPL
     
@@ -27,7 +26,9 @@ in other ways.
 
 :note2:`Note:` 
 
-An external Solr HTTP server is required as of Metacat version 2.13.0. You should add the ``tomcat8`` user to the ``solr`` group and the ``solr``  user to the ``tomcat8`` group in order to avoid the file permission issues. The details can be found on the `Solr Server`_ part of the installation page.
+``Your Metacat instance MUST be either 2.19.0 or 2.19.1 before you can upgrade it to 3.0.0.``
+
+An external Solr HTTP server is required as of Metacat version 2.13.0. You should add the ``tomcat`` user to the ``solr`` group and the ``solr``  user to the ``tomcat`` group in order to avoid the file permission issues. The details can be found on the `Solr Server`_ part of the installation page.
 
 If this is the first time you have installed an external Solr server, you need to re-index all existing objects in the Metacat instance. The instruction can be found on the `Regenerating The Index`_ part of the Metacat indexing page.
 
@@ -91,21 +92,20 @@ Contents
 ========
 .. toctree::
    :numbered:
-   :maxdepth: 2
+   :maxdepth: 3
 
    intro
    contributors
    license
    install
    configuration
+   kubernetes
+   admin-api
    dataone
    submitting
    query-index
    themes
    authinterface
-   geoserver
-   replication
-   harvester
    oaipmh
    event-logging
    sitemaps
@@ -118,4 +118,3 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`search`
-

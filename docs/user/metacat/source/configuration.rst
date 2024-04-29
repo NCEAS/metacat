@@ -1,6 +1,3 @@
-.. _Solr installation page: ./install.html#solr-server
-
-
 Configuring Metacat
 ===================
 
@@ -8,7 +5,7 @@ Configuring Metacat
   
 When Metacat (Tomcat) is started, the Metacat servlet checks to see if it is 
 configured. If not, Metacat will automatically send you to the configuration 
-pages. 
+pages. You will first be asked to set up the ORCID authentication.
 
 If the installation is new, or the previous version is before 1.9.0, pay close 
 attention to the configuration values. If you have upgraded Metacat, and the 
@@ -28,98 +25,76 @@ You can always open the configuration screen from within Metacat by typing::
 
   http://<your_context_url>/admin
 
-Initial Configuration
----------------------
-Before you can log in to the Metacat and configure it, you are required to 
-confirm Metacat's back-up location and authentication configuration (if not 
-already configured). Metacat will automatically attempt to locate an existing 
-back-up directory, but you may need to correct the value or specify a directory 
-(if the installation is new, or if Metacat was unable to determine the location 
-of an existing back-up directory). The authentication configuration is required 
-for logging in to the Metacat and for defining administrative accounts. 
-Instructions for `Changing Authentication Configuration without Authentication`_ 
-are included at the end of this section.
+Initial Configuration & Backup Properties
+-----------------------------------------
+Before you can log in to the Metacat Admin interface and configure it, you are required to
+confirm Metacat's back-up location for the configuration settings. You will also need to set up
+the authentication configuration (if it is not already configured). This is required for logging in
+to Metacat and for defining administrative accounts.
 
-Back-up Configuration
-~~~~~~~~~~~~~~~~~~~~~
-To preserve its configuration settings, Metacat backs up crucial configuration details to 
-a directory outside the application directories. Because a new installation/upgrade 
-does not know where this external directory is, Metacat uses a discovery 
-algorithm to locate it. If Metacat cannot identify a backup directory, you will 
-see the Backup Directory Configuration screen.
+ **More on configuration backup settings:**
 
-.. Note:: 
-  
-  If the metacat.properties file has many custom settings, it should be manually 
-  backed up before any Metacat upgrade as deploying a new Metacat war file will overwrite
-  the existing file.
+ - To preserve its configuration settings, Metacat backs up crucial configuration details to
+   a directory outside the application directories.
 
-.. figure:: images/screenshots/image011.png
+ - Metacat will automatically attempt to locate an existing back-up directory, but you may need to
+   correct the value or specify a directory (if the installation is new, or if Metacat was unable to
+   determine the location of an existing back-up directory).
+
+Starting from Metacat version 3.0.0, **metacat.properties** no longer contains any custom
+settings that need to be backed up before a Metacat upgrade. Instead, custom settings are now saved
+to a file named ``metacat-site.properties`` that is located outside of the tomcat webapps directory,
+and so is not overwritten by deploying a new Metacat war file.
+
+ **Note:** If you are unable to access your Metacat admin ORCID iD and need to swap it out, instructions
+ for `Changing Authentication Configuration without Authentication`_ are included at the end of this
+ section.
+
+.. figure:: images/screenshots/image011_backupconfig.png
    :align: center
 
    Configuring the Backup Directory.
-   
+
 Authentication Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 Whether you are installing or upgrading the Metacat servlet, you will 
 automatically be sent to the Authentication Configuration page. You can also 
-reach the Authentication Configuration page from a running Metacat by typing::
+reach the Authentication Configuration page from a running Metacat by typing
+
+::
   
   http://<your_context_url>/admin
 
-Metacat uses either an internal password file or LDAP as its authentication mechanism.
-You can choose the authentication mechanism by selecting either AuthFile or AuthLdap class.
-We will only allow trusted partners to access the NCEAS LDAP server to ensure the security of our user base.
-If you are not in the trusted partner list, you may choose the internal password file authentication 
-or set up your own LDAP server. You also can define your own authentication mechanism by creating a Java 
-class that implements ``AuthInterface``.
+Starting from Metacat v3.0.0, only `ORCID authentication`_ is supported. In Metacat v2.19.0 and
+previous releases, an internal password file or LDAP was used as the authentication mechanism.
+Password-based and LDAP authentication has been deprecated. If you don't already have an account,
+registering for an ORCID is simple, please visit:
 
-Required configuration values for the password file authentication are:
+  https://orcid.org/
 
-  ::
-   
-    Authentication Class
-    Metacat Administrators
-    Users Management URL
-    Password File Path.
+.. _ORCID authentication: ./authinterface.html
 
-Required configuration values for LDAP authentication are:
+After signing up for an ORCID iD, you can then use it as an admin identity when configuring
+authentication.
 
-  ::
-   
-    Authentication Class
-    Metacat Administrators
-    Users Management URL
-    Authentication URL
-    Authentication Secure URL. 
+ **Important:** Even though your ORCID iD should typically be expressed as a full https URI
+ (e.g. https://orcid.org/0000-0001-2345-6789), it is necessary to use http-only orcid URIs when
+ entering them in the Metacat Administrator Interface.
+
+ - ex. **http**://orcid.org/0000-0001-2345-6789
 
 
-Make sure that your user account information is entered into the Metacat 
-Administrators field (e.g., uid=daigle,o=nceas,dc=ecoinformatics,dc=org). You 
-will not be allowed to continue with configuration if this is missing. Multiple 
-accounts can be entered, separated by the colon (:) character.
+You will not be allowed to continue with configuration if this is missing. If you require more
+than one Metacat administrator, multiple accounts can be entered by separating the admin identities
+with a semi-colon (;) character.
 
-.. Note:: 
-  
-  To create an account on the password file, please see the section called :doc:`authinterface`.
-  To create an LDAP account on the KNB LDAP server (specified as the default LDAP server), 
-  go to https://identity.nceas.ucsb.edu and select the "create a new user account" link.
-
-If you make changes to the authentication settings, you must restart Tomcat to 
-put them into effect.
-
-.. figure:: images/screenshots/image071.png
+.. figure:: images/screenshots/image071_authconfig.png
    :align: center
 
-   Configuring Password File Authentication Values.
-
-.. figure:: images/screenshots/image009.png
-   :align: center
-
-   Configuring LDAP Authentication Values.
+   Configuring ORCID Authentication
 
 Changing Authentication Configuration without Authentication
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------------------
 If you need to change or add authentication information and cannot authenticate 
 using the existing authentication settings (e.g., the existing Metacat 
 administrator is no longer available or you forgot the administrator password), 
@@ -129,40 +104,51 @@ server will be able to change the administrator accounts.
 
 To edit the authentication configuration file:
 
-1. Stop Tomcat and edit the Metacat properties (``metacat.properties``) file in the
-   Metacat context directory inside the Tomcat application directory. The 
-   Metacat context directory is the name of the application (usually metacat):
+1. Stop Tomcat and edit the Metacat site properties (*metacat-site.properties*) file. The
+   default location for this file is in /var/metacat/config/, but this path is configurable,
+   so it may be elsewhere.
+
+  Tip: If you cannot find the **metacat-site.properties** file, its location is stored in a
+  property named ``application.sitePropertiesDir`` inside the **metacat.properties** file,
+  which can be found in:
 
   ::
-  
+
     <tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties
 
-2. Change the following properties appropriately:
+    (where the <context_dir> is the application context, usually named "metacat".)
+
+  See :ref:`configuration-properties-overview` for details
+
+2. Once you have located **metacat-site.properties**, change the following properties appropriately
+(or add them if they do not already exist)
 
   ::
-  
-    auth.administrators - a colon separated list of administrators 
-    auth.url - the authentication server URL 
-    auth.surl - the authentication secure server URL
-    auth.file.path  - the authentication password file path
 
-3. Save the ``metacat.properties`` file and start Tomcat.
+    auth.administrators  - a semicolon-separated list of administrators' ORCID iDs
+
+3. Save the **metacat-site.properties** file and start Tomcat.
 
 
 Logging in to Metacat
 ---------------------
-In order to configure Metacat, you must log in with an administrative account 
-that has been configured in the Authentication Configuration settings. If you 
-did not set up the correct administrative user there, you must change the 
-authentication configuration by hand before you can log in.
+In order to configure Metacat, you must log in with an administrative account (ex. ORCID iD)
+that has been configured in the Authentication Configuration settings. If you did not set up the
+correct administrative user there, you must change the authentication configuration by hand
+before you can log in.
 
-In the log-in screen enter your user name and password and click 
-the "Login" button.
+In the log-in screen, click "Sign in with ORCID". You will be redirected to ORCID's login screen and
+back to Metacat after successfully signing in with the correct administrative account.
 
-.. figure:: images/screenshots/image015.png
+.. figure:: images/screenshots/image015_orcidlogin.png
    :align: center
 
    Logging into Metacat.
+
+.. figure:: images/screenshots/image016_signintoorcid.png
+   :align: center
+
+   Sign into ORCID with the adminstrative account set during the auth configuration process.
    
 Required Configuration
 ----------------------
@@ -170,16 +156,13 @@ All required Metacat settings can be accessed from the Metacat Configuration
 utility, which becomes available after the initial configurations 
 have been specified and an authorized administrator logs in. 
 
-.. figure:: images/screenshots/image017.png
+.. figure:: images/screenshots/image017_configupdated.png
    :align: center
 
    Metacat configuration menu, showing each configuration section.  Once all
-   sections are marked as green ``configured``, metacat can be accessed.
+   sections are marked as green ``configured`` (or ``bypassed`` where relevant), Metacat can be accessed.
 
-The configuration settings are grouped into five sections (Metacat Global 
-Properties, Authentication Configuration, Skins Specific Properties, Database 
-Installation/Upgrade, Geoserver, DataONE, and Replication Configuration), 
-each of which is listed with its current status (see table).
+Each configuration section has three statuses:
 
 ==============  =============================================================
 Status          Description
@@ -194,141 +177,158 @@ To the right of each configuration section is one of the following options:
 Configure Now, Reconfigure Now, Configure Global Properties First, or 
 Version:X.X.X. If the option is linked (e.g., Configure Now or Reconfigure Now), 
 you can select the link to open the associated configuration settings and edit them. 
-If the option is not linked (e.g., Configure Global 
-Properties First), the settings cannot be specified until the global properties 
-are set. Once the global properties are configured, the option to configure this 
-section becomes available. The Version:X.X.X option is used only for the 
-Database Installation/Upgrade section. If the database schema version detected 
-by Metacat matches the application version (eg, 1.9.0), then no further database 
-configuration is required.
+If the option is not linked (e.g., Configure Global Properties First), the settings
+cannot be specified until the global properties are set. Once the global properties
+are configured, the option to configure this section becomes available.
+The Version:X.X.X option is used only for the Database Installation/Upgrade section.
+If the database schema version detected by Metacat matches the application version (e.g., 3.0.0),
+then no further database configuration is required.
 
-All settings must be in a configured or bypassed state in order to run Metacat. 
-For new installations or upgrades, click the "go to metacat" link that appears 
-after configuration is complete to go directly to Metacat. Note that Metacat 
-indexes at start-up time, so the initial start-up may take some time depending 
-on the amount of data in your database and wheter or not you have opted to regenerate the spatial cache. 
-If you are reconfiguring a running 
-version of Metacat, you must restart the Tomcat server for the changes to 
-take effect.
-   
-.. figure:: images/screenshots/image019.png
+All settings must be in a ``configured`` or ``bypassed state`` in order to run Metacat.
+
+ **Reminder:** Metacat indexes at start-up time, so the initial start-up may take some time depending
+ on the amount of data in your database and whether or not you have opted to regenerate the spatial
+ cache. If you are reconfiguring a running version of Metacat, you must restart the Tomcat server
+ for the changes to take effect.
+
+.. figure:: images/screenshots/image019_configured.png
    :align: center
 
    The Metacat settings as they appear after having been configured.
    
-Global Properties (server, ports, etc)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Global Properties
+-----------------
 The Metacat configurations included under Global Properties represent the bulk 
 of the settings required to run Metacat. Click a blue question-mark 
 icon beside any setting for detailed instructions. More information about each 
 property is also included in the :doc:`metacat-properties`.
 
-.. figure:: images/screenshots/image021.png
+.. figure:: images/screenshots/image021_globalprops.png
    :align: center
 
-   The Metacat Global Properties editing screen.
-   
-When you save global properties, Metacat also saves a back-up file that is 
-located in ``/var/metacat/.metacat`` (on Linux). When you update Metacat, 
-the system automatically locates the back-up file so you do not have to re-enter 
-the configuration settings.
+   The Metacat Global Properties editing screen. Scrolling down will reveal additional global properties.
 
-The first time you install Metacat, the system attempts to automatically detect 
+Metacat Initial Global Property Values
+......................................
+The first time you install Metacat, the system attempts to automatically detect
 the values for a number of settings (see table). It is important to ensure that 
-these values are correct.
+the following values are the properties below are correct.
 
-================  ============================================================
-Property          Description
-================  ============================================================
-Metacat Context   The name of the deployed Metacat WAR file (minus the .war 
-                  extension). E.g., "metacat"
-Server Name       The DNS name of the server hosting Metacat, not including 
-                  port numbers or the protocol ("http://"). 
-HTTP Port         The non-secure port where Metacat will be available.
-HTTP SSL Port     The secure port where Metacat will be available. 
-Deploy Location   The directory where the application is deployed. 
-================  ============================================================
+ **Note:** When you save global properties, Metacat also saves a back-up file that is
+ located in ``/var/metacat/.metacat`` (on Linux). When you update Metacat,
+ the system automatically locates the back-up file so you do not have to re-enter
+ the configuration settings.
 
-.. Note:: 
+=========================  =============================================================
+Property                   Description
+=========================  =============================================================
+Metacat Context            The name of the deployed Metacat WAR file (minus the .war
+                           extension). E.g., "metacat"
+Server Name                The DNS name of the server hosting Metacat, not including
+                           port numbers or the protocol ("http://").
+HTTP Port                  The non-secure port where Metacat will be available.
+HTTP SSL Port              The secure port where Metacat will be available.
+Deploy Location            The directory where the application is deployed.
+Site Properties Directory  Directory in which to store the metacat-site.properties file.
+=========================  =============================================================
 
-  The Solr Home directory you choose should be writable/readable by the user solr.
-  
-  The Environment Overwrites File should be writable/readable by the user tomcat8.
-  
-  The section of Tomcat And Solr User Management on the `Solr installation page`_ will resolve this issue.
+Solr Global Property Values
+...........................
+Please set the solr home directory property ``Solr Home Directory`` and ensure that the solr home
+directory is writable/readable by the user **solr**.
 
-Authentication Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Because you must specify the Authentication settings before you can access the 
-main configuration page, the settings will always be configured when you view 
-them in the admin interface. If you wish to change the authentication settings, 
-you must restart Metacat to put the changes into effect. For more information 
-about the Authentication configurations, please see Initial Configurations.
+Please ensure that the ``Environment Override File`` is writable/readable by the Tomcat user (ex. tomcat9).
 
-Skins Configuration 
-~~~~~~~~~~~~~~~~~~~   
-Customizing the look and feel of Metacat's web interface is done via skins or
-MetacatUI themes, however as of Version 2.2.0, skins have been deprecated. 
-Use MetacatUI themes instead. Themes can be deployed separately from the 
-Metacat server allowing easier independent user interface customization.
+=========================  =============================================================
+Property                   Description
+=========================  =============================================================
+Solr Home Directory        The path to your solr-home (solr core).
+                           If you are upgrading Metacat from version 2.12.2 or earlier,
+                           please choose a different directory rather than the old one.
+Environment Override File  The path of the script file to overwrite the default Solr
+                           environment variables.
+=========================  =============================================================
 
-MetacatUI Themes
-................
-Themes are applied in the Skins Configuration section. If you have installed 
-the optional Registry, which provides a web interface for creating, editing, 
-and submitting content to Metacat, you can also choose which form fields 
-appear in that interface and which are required. Note that if you do not have 
-a custom theme AND you are not using the Registry, you can simply save the 
-``metacatui`` default configuration.
+ For additional details, please see the section of Tomcat And Solr User Management on the `Solr installation page`_.
 
-To use the new MetacatUI theming system, select ``metacatui`` and click the 
-``Make metacatui default`` radio button. Metacat will open a list of options 
-that apply to the Registry interface. For more information about creating 
-custom themes, see the section called :doc:`themes`.
+.. _Solr installation page: ./install.html#solr-server
 
-.. figure:: images/screenshots/image070.png
-   :align: center
+Token Configuration
+..............................................
+A valid admin (auth) token and DataONE CA certificate are required for a Metacat v3.0.0 installation
+to function correctly (i.e. to handle private datasets). Please `contact DataONE`_ to obtain a
+long-term auth token (valid for 1 year). **This is only an interim requirement**; a future release
+of Metacat will remove the need for this token.
 
-   Configuring Metacat themes.
+  * If you are already part of the DataONE network and have a member node, we will issue you an auth token
+  linked to your DataONE Node identity.
 
-Skins
-................
-.. deprecated:2.2.0
-   Use themes instead
-   
-If your Metacat has a customized skin, it will appear as a choice in the 
-Skins Configuration settings (see below screenshot). Select the checkbox next 
-to your customized skin or and click the ``Make <skin_name> default`` radio button. 
-If you do not have a custom skin, select the ``default`` skin. 
+  * If you're not a DataONE member node, we `encourage you to join`_ (it's free!) so that your data
+  can partake in DataONE's goal of the preservation of scientific data for future use.
 
-Once you have selected a skin, Metacat will open a list of options that apply to the Registry 
-interface. For more information about creating skins, see the Creating a Custom Skin
-section in :doc:`themes`.
+  * Otherwise, we can issue an auth token linked to your Metacat administrator's ORCID iD.
 
-.. figure:: images/screenshots/image023.png
-   :align: center
+If you are checking out Metacat for the first time, you can obtain a temporary auth token to continue
+evaluating Metacat by logging into the KNB website, and navigating to "My Profile" -> "Settings" -> "Authentication Token".
 
-   Configuring Metacat skins.
-   
-Select the checkbox next to your customized skin or and click the 
-``Make <skin_name> default`` radio button. If you do not have a custom skin, 
-select the ``default`` skin. Once you have selected a skin, Metacat will open 
-a list of options that apply to the Registry interface.
+ **Note:** This temporary auth token is only valid for 24 hours, but you can continue manually retrieving short-term tokens
 
-Select the lists and modules that you would like to appear in the Registry 
-form-interface by checking the box beside each. When you save the configuration, 
-the customized interface will appear to site visitors.
+.. _contact DataONE: https://www.dataone.org/contact/
+
+.. _encourage you to join: https://www.dataone.org/jointhenetwork/
+
+
+===============================  =============================================================
+Property                         Description
+===============================  =============================================================
+Token Verification Certificates  Semicolon-separated list of paths to certificate files, each
+                                 containing a single public key (not a certificate chain).
+                                 These will be used to verify incoming request jwt tokens,
+                                 in addition to verifying against the CN server.
+Admin Token Path                 The path to the admin jwt token that will be used in
+                                 dataone-indexer to access the private objects' system metadata.
+===============================  =============================================================
+
+The Admin Token
+~~~~~~~~~~~~~~~
+After obtaining an admin (auth) token, save it to the default path (below). If you wish to save it
+elsewhere, be sure to update the global properties' ``Admin Token Path`` value with your custom path.
+
+ Default Value for the admin (auth) token:
+
+ ::
+
+   /var/metacat/certs/token
+
+Token Verification Certificate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Next, you will need to obtain a DataONE Intermediate Certificate.
+Depending on your needs, there are two available:
+
+ 1. `DataONE Production Intermediate CA Intermediate`_
+
+ 2. `DataONE Test Intermediate CA Certificate`_
+
+ **Note:** the DataONE Intermediate CA certificate is a single certificate, NOT a certificate chain!
+
+.. _DataONE Production Intermediate CA Intermediate: https://raw.githubusercontent.com/DataONEorg/ca/main/DataONEProdIntCA/certs/DataONEProdIntCA.pem
+.. _DataONE Test Intermediate CA Certificate: https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem
+
+After obtaining the certificate and saving it to your determined location, please set the value in
+the following global property ``Token Verification Certificates`` with the path to the certificate.
 
 Database Configuration
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 Because the Database Configuration is dependent on values specified in the 
 Global Properties section, the link to these settings does not become active 
 until after the global settings have been saved. Once the global settings have 
 been saved, Metacat automatically detects the database schema version and 
-upgrades it if necessary (and with your permission). 
+upgrades it if necessary (and with your permission). There are two expected
+database configuration statuses:
 
-* New Installation
-* Upgrade
+ * New Installation
+
+ * Upgrade
 
 New Installation
 ................
@@ -336,7 +336,7 @@ If Metacat determines that your database is new, the Database Install/Upgrade
 utility lists the SQL scripts that will run in order to create a database 
 schema for the new version of Metacat.
 
-.. figure:: images/screenshots/image027.png
+.. figure:: images/screenshots/image027_newdbinstall.png
    :align: center
 
    Database installation creates tables needed for Metacat.
@@ -355,39 +355,31 @@ order to update the schema for the new version of Metacat.
 
 If the detected schema version is incorrect, or if you have any questions about 
 whether it is correct or not, click the Cancel button and contact support at 
-knb-help@nceas.ucsb.edu.When you choose to continue, Metacat runs the listed 
+knb-help@nceas.ucsb.edu. When you choose to continue, Metacat runs the listed
 scripts and updates the database schema.
 
-.. figure:: images/screenshots/image029.png
-   :align: center
-
-   Upgrading an existing database.
-   
 Additional upgrade tasks may also run after the database upgrade is complete.
 For systems hosting large amounts of data, these upgrade routines can take time to complete.
 It is important to let the process complete before using Metacat otherwise your deployment may become unstable.
 
 
 Solr Server Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 Because the Solr Server Configuration is dependent on values specified in the 
 Global Properties section, the link to these settings does not become active 
 until after the global settings have been saved. Once the global settings have 
 been saved, Metacat automatically detects the status of the Solr Core and creates 
-or upgrades it if necessary (and with your permission). 
+or upgrades it if necessary (and with your permission).
 
+ **Note:** Your Solr server should be running when you configure Metacat. If it is not, please see the `Solr installation page`_.
 
-.. figure:: images/screenshots/image073.png
+.. figure:: images/screenshots/image073_solrupdate.png
    :align: center
-
-.. Note:: 
-
-  Solr server should be running when you configure Metacat.
    
-Troubleshooting
-...............
+Solr Troubleshooting
+....................
 If you click the Solr Configuration button and get the error message like 
-``Server refused connection at: http://localhost:8983/solr``, this means the 
+``Server refused connection at: http://localhost:8983/solr``, this means the
 Solr server is not running and you need to start it.
 
 If you click the Create button to create the Solr core and get an error message 
@@ -397,129 +389,59 @@ to add the solr user to the tomcat group, restart Solr server and Tomcat, log in
 and continue to configure Metacat. The instructions for adding users to groups can be found in the
 Tomcat And Solr User Management part of the `Solr installation page`_.
 
-Geoserver Configuration
-~~~~~~~~~~~~~~~~~~~~~~~
-.. sidebar:: Manual Geoserver Update
-
-  Alternatively, you can change the Geoserver username and password manually by 
-  directly logging in to the Geoserver. To configure the credentials manually: 
-
-  1. Go to the Geoserver admin page: http://<your_context_url>/geoserver/ 
-  2. Log in using the default username and password ( admin / geoserver ) 
-  3. Navigate to the Password Change Page.  Enter a new user and password and click Submit. 
-  4. Click Apply then Save to save your new password. 
-  
-Metacat comes bundled with a Web Mapping Service called Geoserver, which 
-converts spatial data into Web-deliverable map images. Geoserver installs with 
-a default administrative username and password. *We highly recommend that you 
-change the default credentials so that only local administrators can make 
-changes to your Geoserver.* For more information about Geoserver, 
-see :doc:`geoserver`.
-
-When you choose the Geoserver Configuration link from the main configuration 
-screen, Metacat will prompt you for a few important details about your Geoserver 
-installation. The data directory and context settings allow Geoserver and 
-Metacat to share the same spatial data store and render maps within Metacat skins. 
-The security configuration prompts for a new admin password. After you enter 
-the new settings, Metacat writes the information to the Geoserver deployment.
-
-The default settings are typically appropriate for most Metacat deployments, 
-but if you wish to skip the Geoserver configuration, click the Bypass button. 
-Geoserver (if deployed) will remain with a default configuration and the main 
-Metacat configuration screen will display the "bypassed" status beside the 
-Geoserver settings. You will be able to run Metacat, but maps will not be 
-rendered.
-
-.. figure:: images/screenshots/image031.png
-   :align: center
-
-   Configuring Geoserver.
-
 DataONE Configuration
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 Metacat can be configured to operate as a Member Node within the DataONE
 federation of data repositories.  See :doc:`dataone` for background and details
 on DataONE and details about configuring Metacat to act as a DataONE Member Node.
 
-Replication Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~
-Metacat can be configured to replicate its metadata and/or data content to another
-Metacat instance for backup and redundancy purposes, as well as to share data across
-sites.  This feature has been used to create the Knowledge Network for Biocomplexity
-(KNB), as well as other networks.  See :doc:`replication` for details on
-the replication system and how to configure Metacat to replicate with another node.
-
-.. Note:: 
-  
-  Note that much of the functionality provided by the replication subsystem in Metacat
-  has now been generalized and standardized by DataONE, so consider utilizing the
-  DataONE services for replication as it is a more general and standardized approach
-  than this Metacat-specific replication system.  The Metacat replication system
-  will be supported for a while longer, but will likely be deprecated in a future
-  release in favor of using the DataONE replication approach. 
-
-EZID Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~
+DOI Service Configuration
+-------------------------
 Metacat can be configured to assign Digital Object Identifiers (DOIs) to metadata/data objects
 through a EZID service. Click a blue question-mark icon beside any setting for detailed instructions.
 More information about each property is also included in the :doc:`metacat-properties`.
 
-.. figure:: images/screenshots/image072.png
+.. figure:: images/screenshots/image072_doiupdated.png
    :align: center
+   :width: 900px
 
-   Configuring EZID service.
+   Configuring DOI Service Configuration with EZID service.
 
 Additional Configuration
 ------------------------
-The most dynamic Metacat properties are managed and modified with the 
-form-based Metacat Configuration utility. These configuration properties can 
-also be accessed directly (along with additional static properties) via 
-Metacat's property files: ``metacat.properties`` (which contains global 
-properties, e.g., authorization and database values) and 
-``<SKIN_NAME>.properties`` (which contains skin-specific properties). Each of 
-these property files is discussed in more depth in this section.
+Metacat's properties are managed and modified either through use of the form-based
+Metacat Configuration utility, or by being set directly via Metacat's editable properties file
+(**metacat-site.properties**). More-detailed information is given in the following section.
 
-The ``metacat.properties`` file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Metacat's ``metacat.properties`` file contains all of Metacat's global 
-properties, both the dynamic properties, which are managed with the 
-Configuration utility, as well as the more static properties, which can only 
-be modified manually in this file. The ``metacat.properties`` file also contains 
-optional properties that are only relevant when optional Metacat features 
-(such as the harvester or replication) are enabled. The `
-`metacat.properties file`` is found here::
+Metacat Properties Overview
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Properties Files
+................
+.. include:: ./properties-overview.rst
 
-  <CONTEXT_DIR>/WEB_INF/metacat.properties
+For information about each property, and default or example settings, please see the
+:doc:`metacat-properties`. Properties that can only be edited manually in the
+**metacat-site.properties** file are highlighted in the appendix.
 
-Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application code 
-lives (e.g., ``/var/lib/tomcat7/webapps/metacat``). The path is a combination 
-of the Web application directory (e.g., ``/var/lib/tomcat7/webapps/``) and 
-the Metacat context directory (e.g., ``metacat``). Both values depend upon how your 
-system was set up during installation.
+Secret Properties
+.................
+Some properties hold sensitive information such as secret passwords. When these are entered via the
+Metacat Configuration Utility, they are saved as plain text in the **metacat-site.properties** file.
+If this causes security concerns, note that secrets may instead be passed to Metacat via
+environment variables.
 
-For information about each property and default or example settings, please 
-see the :doc:`metacat-properties`. Properties that can only be edited manually 
-in the metacat.properties file are highlighted in the appendix.
+Full details on how to set these values and how they are used by Metacat can be found in the
+Appendix, under: :ref:`secret-properties`.
 
-<SKIN_NAME>.properties
-~~~~~~~~~~~~~~~~~~~~~~
-The ``<SKIN_NAME>.properties`` file contains skin-specific properties 
-(e.g., template information). For each skin, the skin-specific properties are 
-found here::
-
-  <CONTEXT_DIR>/style/skins/<SKIN_NAME>/<SKIN_NAME>.properties
-
-Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application code 
-lives (described above) and ``<SKIN_NAME>`` is the name of the skin 
 (e.g., ``default`` or ``nceas``).
 
-Additional configuration for Tomcat 7
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-When running Metacat on Tomcat 7, you may get the following 
-error logging in via the Morpho application: "Fatal error sending data to Metacat: Bad Set_Cookie header:JSESSIONID=...".
-In order to fix the issue, modify <Catalina_HOME>/conf/context.xml 
-(e.g., /var/lib/tomcat7/conf/context.xml) by adding a new attribute - "useHttpOnly" - and set it to false for the "Context" element::
+Read-only Mode
+-------------------------------------
+.. include:: ./readonly.rst
 
-  <Context useHttpOnly="false">
+MetacatUI Themes
+----------------
+Metacat's default web interface `metacatui`_ can be easily modified. Please visit the `metacatui`_
+docs to learn more and get started.
 
-Then restart Tomcat 7.
+.. _metacatui: https://nceas.github.io/metacatui/

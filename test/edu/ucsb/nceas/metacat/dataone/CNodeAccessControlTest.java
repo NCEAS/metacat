@@ -980,6 +980,8 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
          if(expectedResult) {
              Identifier id = CNodeService.getInstance(request).archive(session, pid);
              assertTrue(id.equals(pid));
+             SystemMetadata sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, pid);
+             assertTrue(sysmeta.getArchived());
          } else {
              if (session == null) {
                  try {

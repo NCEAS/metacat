@@ -1,0 +1,28 @@
+{{- if (index .Values.metacat "dataone.certificate.fromHttpHeader.enabled") }}
+## This template populates a custom header ("X-Proxy-Key") with a shared secret. The nginx ingress
+## then includes this header with any incoming requests that include x509 client certs. Upon
+## receiving this secret, metacat can then trust that incoming client-cert-authorized requests
+## have really been authorized by the ingress, and are not being spoofed.
+##
+## NOTE: this setup works with "ingress-nginx", the Kubernetes open source community version of the
+## nginx ingress (see https://github.com/kubernetes/ingress-nginx ). It has not been tested with
+## the ingress maintained by NGINX, Inc.
+## See:
+## 1. ingress docs: https://kubernetes.github.io/ingress-nginx/examples/customization/custom-headers
+## 2. nginx ingress configuration in: ../admin/nginx-config-mutual-auth.yaml and
+##                                    ../admin/configure-nginx-mutual-auth.sh
+##
+{{- $xProxyKey := "METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY" -}}
+{{- $secrets := (printf "%s-metacat-secrets" .Release.Name) -}}
+{{- $apiVer := "v1" }}
+apiVersion: {{ $apiVer }}
+data:
+  X-Proxy-Key:
+  {{- (get (lookup $apiVer "Secret" .Release.Namespace $secrets).data $xProxyKey) | b64dec
+      | default (printf "\"SECRETS: '%s'; KEY NOT FOUND: '%s'\"" $secrets $xProxyKey) | indent 1 }}
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-custom-headers
+  labels:
+    {{- include "metacat.labels" . | nindent 4 }}
+{{ end }}

@@ -15,9 +15,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   properties-development
    identifiers
    doi
    statistics-service
    ore-model-expansion
-   
-
+   storage-subsystem
+   storage-subsystem-cid-file-layout

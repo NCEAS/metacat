@@ -28,8 +28,7 @@ import org.dataone.configuration.Settings;
  *
  */
 public class EnabledQueryEngines {
-    
-    public static final String PATHQUERYENGINE = "pathquery";
+
     public static final String SOLRENGINE = "solr";
     private static final String ENABLED_ENGINES_PATH = "dbquery.enabledEngines";
     private static EnabledQueryEngines enabledEnginesObj = null;

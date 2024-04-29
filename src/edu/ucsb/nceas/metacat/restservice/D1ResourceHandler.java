@@ -1,25 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2011 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- *   '$Author: Serhan AKIN $'
- *     '$Date: 2009-06-13 15:28:13 +0300  $'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.restservice;
 
 import java.io.File;
@@ -29,6 +7,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -53,6 +32,8 @@ import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidToken;
+import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Group;
@@ -585,15 +566,16 @@ public class D1ResourceHandler {
         // TODO: Use content negotiation to determine which return format to use
         response.setContentType("text/xml");
         response.setStatus(e.getCode());
-        if( e instanceof NotFound) {
-            logMetacat.info("D1ResourceHandler: Serializing exception with code " + e.getCode() + ": " + e.getMessage());
+        if (e instanceof NotFound || e instanceof NotAuthorized || e instanceof InvalidRequest
+                                                                  || e instanceof InvalidToken) {
+            logMetacat.info("D1ResourceHandler: Serializing exception with code "
+                            + e.getCode() + ": " + e.getMessage());
         } else {
-            logMetacat.error("D1ResourceHandler: Serializing exception with code " + e.getCode() + ": " + e.getMessage(), e);
+            logMetacat.error("D1ResourceHandler: Serializing exception with code "
+                            + e.getCode() + ": " + e.getMessage(), e);
         }
-        //e.printStackTrace();
-        
         try {
-            IOUtils.write(e.serialize(BaseException.FMT_XML), out);
+            IOUtils.write(e.serialize(BaseException.FMT_XML), out, StandardCharsets.UTF_8);
         } catch (IOException e1) {
             logMetacat.error("Error writing exception to stream. " 
                     + e1.getMessage());

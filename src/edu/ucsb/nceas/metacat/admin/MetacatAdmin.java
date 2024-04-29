@@ -89,7 +89,7 @@ public abstract class MetacatAdmin {
             //this sub upgrade process failed or is in progress, so the whole process will have the same status as well
             PropertyService.setPropertyNoPersist("configutil.upgrade.status", status);
         } 
-	    if(persist) {
+	    if(persist && !Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"))) {
 	     // persist them all
 	        PropertyService.persistProperties();
 	        PropertyService.syncToSettings();

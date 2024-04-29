@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--    this file goes in $TOMCAT_HOME/conf/Catalina/localhost/ 
+        and allows tomcat to follow symlinks in the webapps/metacatui context -->
+<Context>
+    <Resources allowLinking="true" />
+</Context>

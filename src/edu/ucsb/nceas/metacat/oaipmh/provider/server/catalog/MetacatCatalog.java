@@ -12,8 +12,7 @@ package edu.ucsb.nceas.metacat.oaipmh.provider.server.catalog;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -31,18 +30,26 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
+import org.dataone.service.exceptions.InsufficientResources;
+import org.dataone.service.exceptions.InvalidToken;
+import org.dataone.service.exceptions.NotAuthorized;
+import org.dataone.service.exceptions.NotFound;
+import org.dataone.service.exceptions.NotImplemented;
+import org.dataone.service.exceptions.ServiceFailure;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
 
-import edu.ucsb.nceas.metacat.client.DocumentNotFoundException;
-import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
-import edu.ucsb.nceas.metacat.client.Metacat;
-import edu.ucsb.nceas.metacat.client.MetacatException;
-import edu.ucsb.nceas.metacat.client.MetacatFactory;
-import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
+import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.dataone.v1.MNodeService;
 import edu.ucsb.nceas.metacat.oaipmh.provider.server.OAIHandler;
+import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
-import edu.ucsb.nceas.utilities.IOUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 import ORG.oclc.oai.server.catalog.AbstractCatalog;
@@ -75,6 +82,14 @@ public class MetacatCatalog extends AbstractCatalog {
   private static String metacatDBUser;
   private static String metacatDBPassword;
   private static String metacatURL;
+  
+  private static Subject publicSubject = new Subject();
+  private static Session publicSession = new Session();
+  static {
+      publicSubject.setValue("public");
+      publicSession.setSubject(publicSubject);
+  }
+  
   
 
   /* Instance fields */
@@ -359,29 +374,28 @@ public class MetacatCatalog extends AbstractCatalog {
     } 
     else {
       try {
-        /* Perform a Metacat read operation on this docid */
-        Metacat metacat = MetacatFactory.createMetacatConnection(metacatURL);
-        Reader reader = new InputStreamReader(metacat.read(docid));
-        StringBuffer stringBuffer = IOUtil.getAsStringBuffer(reader, true);
-        String emlString = stringBuffer.toString();
-        recordMap.put("recordBytes", emlString);
-      }
-      catch (MetacatInaccessibleException e) {
-        logger.error("MetacatInaccessibleException:\n" + e.getMessage());
-      }
-      catch (MetacatException e) {
-        logger.error("MetacatException:\n" + e.getMessage());
-      }
-      catch (DocumentNotFoundException e) {
-        logger.error("DocumentNotFoundException:\n" + e.getMessage());
-      }
-      catch (InsufficientKarmaException e) {
-        logger.error("InsufficientKarmaException:\n" + e.getMessage());
-      }
-      catch (IOException e) {
-        logger.error("Error reading EML document from metacat:\n" + 
-                     e.getMessage()
-                    );
+          /* Perform a Metacat read operation on this docid */
+          /* Metacat only reads public readable objects*/
+          logger.debug("MetacatCatalog.getMetacatDocument - the original docid is " + docid);
+          String localId = DocumentUtil.getSmartDocId(docid);
+          int rev = DocumentUtil.getVersionFromString(docid);
+          if (rev < 0) {
+              //docid doesn't include the revision, so we need to look at the database
+              rev = IdentifierManager.getInstance().getLatestRevForLocalId(localId);
+          }
+          logger.debug("MetacatCatlog.getMetacatDocument - the docid is " + localId 
+                  + " and the revision is " + rev);
+          String pid = IdentifierManager.getInstance().getGUID(localId, rev);
+          logger.debug("MetacatCatlog.getMetacatDocument - the pid is " + pid);
+          Identifier identifier = new Identifier();
+          identifier.setValue(pid);
+          MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
+          InputStream object = MNodeService.getInstance(request).get(publicSession, identifier);
+          String emlString = IOUtils.toString(object);
+          recordMap.put("recordBytes", emlString);
+      } catch (IOException | McdbDocNotFoundException | InvalidToken | NotAuthorized 
+                  | NotImplemented | ServiceFailure | NotFound | InsufficientResources e) {
+              logger.error("Error reading EML document from metacat:\n" + e.getMessage());
       }
     }
     

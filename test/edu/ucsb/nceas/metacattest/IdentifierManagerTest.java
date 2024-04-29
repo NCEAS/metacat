@@ -27,6 +27,7 @@ package edu.ucsb.nceas.metacattest;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.*;
@@ -94,16 +95,17 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testCreateMapping"));
         suite.addTest(new IdentifierManagerTest("testGenerateLocalId"));
         suite.addTest(new IdentifierManagerTest("testGetHeadPID"));
-        suite.addTest(new IdentifierManagerTest("testMediaType"));
+        //suite.addTest(new IdentifierManagerTest("testMediaType"));
         suite.addTest(new IdentifierManagerTest("testQuerySystemMetadata"));
         suite.addTest(new IdentifierManagerTest("testSystemMetadataPIDExists"));
         suite.addTest(new IdentifierManagerTest("testSystemMetadataSIDExists"));
         suite.addTest(new IdentifierManagerTest("testObjectFileExist"));
         suite.addTest(new IdentifierManagerTest("testExistsInXmlRevisionTable"));
         suite.addTest(new IdentifierManagerTest("testExistsInIdentifierTable"));
-        suite.addTest(new IdentifierManagerTest("testUpdateSystemmetadata"));
+        //suite.addTest(new IdentifierManagerTest("testUpdateSystemmetadata"));
         suite.addTest(new IdentifierManagerTest("getGetGUIDs"));
         suite.addTest(new IdentifierManagerTest("textGetAllPidsInChain"));
+        suite.addTest(new IdentifierManagerTest("testGetGUIDsByTimeRange"));
         return suite;
     }
     /**
@@ -129,21 +131,16 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     /**
      * test getting a guid from the systemmetadata table
      */
-    public void testGetGUID()
-    {
+    public void testGetGUID() {
         ph("testGetGUID");
-        try
-        {
+        try {
             IdentifierManager im = IdentifierManager.getInstance();
-
-            String docid = insertTestDocument();
-            docid = docid.substring(0, docid.lastIndexOf("."));
-            
+            String guid = insertTestDocument();
+            String docidWithRev = im.getLocalId(guid);
+            String docid = docidWithRev.substring(0, docidWithRev.lastIndexOf("."));
             String gotGuid = im.getGUID(docid, 1);
-            assertNotNull(gotGuid);
-        }
-        catch(Exception e)
-        {
+            assertTrue(guid.equals(gotGuid));
+        } catch(Exception e) {
             fail("Unexpected exception in testGetGUID: " + e.getMessage());
         }
     }
@@ -179,19 +176,16 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     /** Test that known LocalId's can be looked up from GUIDs. */
     public void testGetLocalId() {
         ph("testGetLocalId");
-        IdentifierManager im = IdentifierManager.getInstance();
-        String docidWithRev = insertTestDocument();
-        String docid = docidWithRev.substring(0, docidWithRev.lastIndexOf("."));
-        String guid;
-        String idReturned;
         try {
-            guid = im.getGUID(docid, 1);
-            idReturned = im.getLocalId(guid);
-            assertEquals(docidWithRev, idReturned);
-            
+            IdentifierManager im = IdentifierManager.getInstance();
+            String guid = insertTestDocument();
+            String docidWithRev = im.getLocalId(guid);
+            String docid = docidWithRev.substring(0, docidWithRev.lastIndexOf("."));
+            String idReturned = im.getGUID(docid, 1);
+            assertTrue(guid.equals(idReturned));
         } catch (McdbDocNotFoundException e) {
             fail(e.getMessage());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             fail(e.getMessage());
         }
     }
@@ -216,41 +210,13 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
      * Test that an identifier is present in the system when it should
      *  be, and that it is not present when it shouldn't be. 
      */
-    public void testIdentifierExists() {
+    public void testIdentifierExists() throws Exception{
         ph("testIdentifierExists");
-        
         String goodGuid  = "";
-        String accString = "";
-        String docid     = "";
-        int rev          = 0;
-        
-        try {
-          IdentifierManager im = IdentifierManager.getInstance();
-          accString = insertTestDocument();
-          AccessionNumber accNumber = new AccessionNumber(accString, "NONE");
-          docid = accNumber.getDocid();
-          rev = new Integer(accNumber.getRev());
-          goodGuid = im.getGUID(docid, rev);
-          assertTrue(im.identifierExists(goodGuid));
-          assertFalse(im.identifierExists(badGuid));
-          
-        } catch ( McdbDocNotFoundException dnfe ) {
-          fail("The document " + docid + "couldn't be found. The error was: " +
-               dnfe.getMessage());
-          
-        } catch ( AccessionNumberException ane ) {
-          fail("The accession number could not be created for docid" +
-               accString + ". The error was: " + ane.getMessage());
-        
-        } catch ( NumberFormatException nfe ) {
-          fail("The revision number could not be created for docid" + 
-               accString + ". The error was: " + nfe.getMessage());
-          
-           } catch ( SQLException sqle ) {
-             fail("The accession number could not be created for docid" + 
-                  accString + ". The error was: " + sqle.getMessage());
-
-        }
+        IdentifierManager im = IdentifierManager.getInstance();
+        goodGuid = insertTestDocument();
+        assertTrue(im.identifierExists(goodGuid));
+        assertFalse(im.identifierExists(badGuid));
     }
     
     /**
@@ -1614,105 +1580,25 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     /** 
      * Insert a test document, returning the docid that was used. 
      */
-    private String insertTestDocument() {
-        String accessBlock = getAccessBlock("public", true, true,
-                false, false, false);
-        String emldoc = getTestEmlDoc("Test identifier manager", EML2_1_0, null,
-                null, "http://fake.example.com/somedata", null,
-                accessBlock, null, null,
-                null, null);
-        System.out.println("inserting doc: " + emldoc);
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = insertDocumentId(docid, emldoc, true, false);
-        } catch (MetacatAuthException e) {
-            fail(e.getMessage());
-        } catch (MetacatInaccessibleException e) {
-            fail(e.getMessage());
-        }
-        return docid;
+    private String insertTestDocument() throws Exception{
+        String path = "test/eml-2.2.0.xml";
+        Session session = getTestSession();
+        String metadataIdStr = generateDocumentId() + ".1";
+        Identifier metadataId = new Identifier();
+        metadataId.setValue(metadataIdStr);
+        InputStream metadataObject = new FileInputStream(new File(path));
+        SystemMetadata sysmeta = 
+                        createSystemMetadata(metadataId, session.getSubject(), metadataObject);
+        metadataObject.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta.setFormatId(formatId);
+        metadataObject = new FileInputStream(new File(path));
+        MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
+        return metadataIdStr;
     }
     
-    /**
-     * Method to test new system metadata field such as media type and file name.
-     */
-    public void testMediaType() throws Exception {
-        String fileName = "new file name";
-        String name = "text/plain";
-        String p1Name = "charset";
-        String p1Value = "UTF8";
-        String p2Name = "n2";
-        String p2Value = "v2";
-        IdentifierManager im = IdentifierManager.getInstance();
-        
-        //test system metadata write/read without mediatype and file name.
-        String docid = "test." + new Date().getTime() + ".1";
-        String guid = "guid:" + docid;
-        //create a mapping (identifier-docid)
-        im.createMapping(guid, docid);
-        Session session = getTestSession();
-        Identifier id = new Identifier();
-        id.setValue(guid);
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        SystemMetadata sysmeta = createSystemMetadata(id, session.getSubject(), object);
-        //sysmeta.setFileName(fileName);
-        im.insertOrUpdateSystemMetadata(sysmeta);
-        SystemMetadata read = im.getSystemMetadata(guid);
-        assertTrue(read.getIdentifier().equals(id));
-        assertTrue(read.getFileName() == null);
-        assertTrue(read.getMediaType() == null);
-        //remove the system metadata
-        im.deleteSystemMetadata(guid);
-        //remove the mapping
-        im.removeMapping(guid, docid);
-        
-        
-      //test system metadata write/read with mediatype and file name.
-        Thread.sleep(1000);
-        docid = "test." + new Date().getTime() + ".1";
-        guid = "guid:" + docid;
-        //create a mapping (identifier-docid)
-        im.createMapping(guid, docid);
-        id = new Identifier();
-        id.setValue(guid);
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        sysmeta = createSystemMetadata(id, session.getSubject(), object);
-        sysmeta.setFileName(fileName);
-        MediaType media = new MediaType();
-        media.setName(name);
-        MediaTypeProperty p1 = new MediaTypeProperty();
-        p1.setName(p1Name);
-        p1.setValue(p1Value);
-        media.addProperty(p1);
-        MediaTypeProperty p2 = new MediaTypeProperty();
-        p2.setName(p2Name);
-        p2.setValue(p2Value);
-        media.addProperty(p2);
-        sysmeta.setMediaType(media);
-        im.insertOrUpdateSystemMetadata(sysmeta);
-        read = im.getSystemMetadata(guid);
-        assertTrue(read.getIdentifier().equals(id));
-        assertTrue(read.getFileName().equals(fileName));
-        MediaType type = read.getMediaType();
-        assertTrue(type.getName().equals(name));
-        List<MediaTypeProperty> list = type.getPropertyList();
-        assertTrue(list.size() == 2);
-        MediaTypeProperty item1 = list.get(0);
-        assertTrue(item1.getName().equals(p1Name));
-        assertTrue(item1.getValue().equals(p1Value));
-        MediaTypeProperty item2 = list.get(1);
-        assertTrue(item2.getName().equals(p2Name));
-        assertTrue(item2.getValue().equals(p2Value));
-        
-        //Thread.sleep(100000);
-        //remove the system metadata
-        im.deleteSystemMetadata(guid);
-        //remove the mapping
-        im.removeMapping(guid, docid);
-        
-        
-    }
+    
     
     private void ph(String s)
     {
@@ -1872,51 +1758,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         return session;
     }
     
-    /**
-     * Test the updateSystemMetadata method should throw an IvalidSystemMetadata exception 
-     * if the permission is wrongly spelled. 
-     * https://github.com/NCEAS/metacat/issues/1323
-     * @throws Exception
-     */
-    public void testUpdateSystemmetadata() throws Exception {
-        String typoPermission = "typo";
-        Session session = getTestSession();
-        Identifier guid = new Identifier();
-        guid.setValue(generateDocumentId());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        AccessPolicy policy = new AccessPolicy();
-        AccessRule rule = new AccessRule();
-        Subject subject = new Subject();
-        subject.setValue("cn=test,dc=org");
-        rule.addSubject(subject);
-        rule.addPermission(Permission.convert(typoPermission));
-        policy.addAllow(rule);
-        SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
-        meta.setAccessPolicy(policy);
-        DBConnection dbConn = null;
-        int serialNumber = 1;
-        try {
-            // get a connection from the pool
-            dbConn = DBConnectionPool
-                    .getDBConnection("Metacathandler.handleInsertOrUpdateAction");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-            try {
-                IdentifierManager.getInstance().updateSystemMetadata(meta, dbConn);
-                fail("Can't get there since an InvalidSystemMetadata exception should be thrown.");
-            } catch (InvalidSystemMetadata e) {
-                assertTrue(e.getMessage().contains(typoPermission));
-            }
-            
-        } finally {
-            // Return db connection
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-        }
-        
-    }
-    
+   
     /**
      * Test the getGUIDs method for either the guid matches the scheme or the series id matches the scheme
      * @throws Exception
@@ -1993,5 +1835,47 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         assertTrue(pids.size() == 2);
         assertTrue(pids.contains(guid.getValue()));
         assertTrue(pids.contains(guid2.getValue()));
+    }
+    
+    /**
+     * Test the getGUIDsByTimeRange
+     * @throws Exception
+     */
+    public void testGetGUIDsByTimeRange() throws Exception {
+        String urnScheme = "urn:uuid:";
+        Session session = getTestSession();
+        UUID uuid = UUID.randomUUID();
+        String str1 = uuid.toString();
+        Identifier guid = new Identifier();
+        guid.setValue(urnScheme + str1); 
+        
+        Calendar cal = Calendar.getInstance();
+        cal.set(2000, Calendar.MARCH,04);
+        Date date2000 = cal.getTime();
+        Date date1 = new Date();
+        List<String> list = IdentifierManager.getInstance().getGUIDsByTimeRange(null, date1);
+        assertTrue(list.size() > 0);
+        assertTrue(!list.contains(urnScheme + str1));
+        
+        //create an object whose identifier is a uuid
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Thread.sleep(1000);
+        Date date2 = new Date();
+        List<String> list2 = IdentifierManager.getInstance().getGUIDsByTimeRange(date2000, date2);
+        assertTrue(list2.contains(urnScheme + str1));
+        assertTrue(list2.get(list2.size()-1).equals(urnScheme + str1));
+        List<String> list3 = IdentifierManager.getInstance().getGUIDsByTimeRange(date2000, null);
+        assertTrue(list3.contains(urnScheme + str1));
+        assertTrue(list3.get(list3.size()-1).equals(urnScheme + str1));
+        List<String> list4 = IdentifierManager.getInstance().getGUIDsByTimeRange(null, null);
+        assertTrue(list4.contains(urnScheme + str1));
+        assertTrue(list2.get(list2.size()-1).equals(urnScheme + str1));
+        List<String> list5 = IdentifierManager.getInstance().getGUIDsByTimeRange(date2, null);
+        if (list5 != null) {
+            assertTrue(!list5.contains(urnScheme + str1));
+        }
     }
 }

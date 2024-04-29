@@ -195,8 +195,6 @@ resource to the derived resource. This way, a SparQL query can be run within a d
 	</rdf:RDF>
 
 
-::
-
 Indexing
 --------
 The Metacat Index will index some of these relationships mainly to inform MetacatUI.
@@ -227,8 +225,6 @@ hadDerivation, for easier querying.	The SparQL query used to determine the deriv
 		?derived_data		ore:isDocumentedBy	?derived_metadata .
 		?derived_metadata	dcterms:identifier 	?derived_metadata_pid .
 	}
-	
-::
 
 More information about inverses in PROV-O and in particular, ``hadDerivation``, see `section B of the PROV documentation <http://www.w3.org/TR/prov-o/#inverse-names>`_.
 	
@@ -285,8 +281,3 @@ would be returned from this query:
 * ``couture_script.1.1``
 * ``couture_data.1.1``
 * ``couture_img.1.1``
-
-
-	
-  
-

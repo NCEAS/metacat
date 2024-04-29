@@ -1,0 +1,24 @@
+## Allows access to traefik via Rancher-Desktop dashboard (since this access is turned off by
+## default, for security reasons)
+## see: https://docs.rancherdesktop.io/1.9/faq/ ("Q: How can I enable the dashboard for the
+##                                               Traefik ingress controller?")
+##
+## Run the command:    $  kubectl apply -f expose-traefik.yaml
+#
+## then Visit http://127.0.0.1:9000/dashboard/ in your browser to view the Traefik dashboard.
+##
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    dashboard:
+      enabled: true
+    ports:
+      traefik:
+        expose: true # Avoid this in production deployments
+    logs:
+      access:
+        enabled: true

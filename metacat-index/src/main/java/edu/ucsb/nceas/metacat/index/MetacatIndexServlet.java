@@ -21,8 +21,8 @@ package edu.ucsb.nceas.metacat.index;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -32,7 +32,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.client.v2.formats.ObjectFormatCache;
+
+import org.dataone.cn.indexer.IndexWorker;
+import org.dataone.configuration.Settings;
 
 
 /**
@@ -41,98 +43,46 @@ import org.dataone.client.v2.formats.ObjectFormatCache;
  *
  */
 public class MetacatIndexServlet extends HttpServlet {
-    
-    // Use the file prefix to indicate this is a absolute path.
-    // see http://www.docjar.com/docs/api/org/springframework/context/support/FileSystemXmlApplicationContext.html
-    //private static final String FILEPREFIX = "file:";
-    
-	private static Log log = LogFactory.getLog(MetacatIndexServlet.class);
+    private static Log log = LogFactory.getLog(MetacatIndexServlet.class);
 
     /**
-     * Initialize the servlet 
+     * Initialize the servlet
      */
     public void init(ServletConfig config) throws ServletException {
-        //System.out.println("++++++++++++++++++++++++------------------- start the servlet");
-    	//initializeSharedConfiguration(config);
-    	// initialize the application using the configured application-context
-        //URL url = getClass().getResource("/index-processor-context.xml");
-        //find the sibling metacat.properties file
-        String metacatPropertiesFilePath = config.getServletContext().getInitParameter("metacat.properties.path");
-        File contextDeploymentDir = new File(config.getServletContext().getRealPath("/"));
-        String fullMetacatPropertiesFilePath = contextDeploymentDir.getParent()  + metacatPropertiesFilePath;
-        //System.out.println("the url is "+url);
-        //System.out.println("the path is "+url.getPath());
-        //System.out.println("the file is "+url.getPath());
-        //ApplicationController controller = null;
         try {
-            ObjectFormatCache.getInstance();
-             //ApplicationController controller = new ApplicationController(FILEPREFIX + url.getFile(), fullMetacatPropertiesFilePath);
-            ApplicationController controller = new ApplicationController("/index-processor-context.xml", fullMetacatPropertiesFilePath);
-             //Start the controller in other thread - SystemmetadataEventListener and to generate indexes for those haven't been indexed in another thread
-             Thread controllerThread = new Thread(controller);
-             controllerThread.start();
+            //add the metacat.properties file as the dataone indexer property file
+            String metacatPropertiesFilePath = config.getServletContext()
+                                        .getInitParameter("metacat.properties.path");
+            File contextDeploymentDir = new File(config.getServletContext().getRealPath("/"));
+            String fullMetacatPropertiesFilePath = contextDeploymentDir.getParent() 
+                                                                    + metacatPropertiesFilePath;
+            log.debug("MetacatIndexServlet.init - The fullMetacatPropertiesFilePath is " 
+                                                                + fullMetacatPropertiesFilePath);
+            IndexWorker.loadExternalPropertiesFile(fullMetacatPropertiesFilePath);
+            //load the site property file
+            // metacatSitePropertiesFile is outside the tomcat webapps dir, so it should be available
+            Path metacatSitePropertiesFilePath = Paths.get(
+                Settings.getConfiguration().getString("application.sitePropertiesDir"),
+                "metacat-site.properties");
+            if (!metacatSitePropertiesFilePath.toFile().exists()) {
+                String errorMsg =
+                    "Could not find Metacat site properties at: " + metacatSitePropertiesFilePath;
+                log.error(errorMsg);
+                throw new IOException(errorMsg);
+            }
+            IndexWorker.loadAdditionalPropertyFile(metacatSitePropertiesFilePath.toString());
+            IndexWorker worker = new IndexWorker();
+            worker.start();
         } catch (Exception e) {
             throw new ServletException(e.getMessage());
         }
-        //controller.startIndex();//Start to generate indexes for those haven't been indexed in another thread
-        //List<SolrIndex> list = controller.getSolrIndexes();
-        //System.out.println("++++++++++++++++++++++++------------------- the size is  "+list.size());
     }
-    
-    /**
-     * Loads the metacat.prioerties into D1 Settings utility
-     * this gives us access to all metacat properties as well as 
-     * overriding any properties as needed.
-     * 
-     * Makes sure shared Hazelcast configuration file location is set
-     * 
-     * @param config the servlet config
-     */
-    /*private void initializeSharedConfiguration(ServletConfig config) {
-    	
-		try {
-			// find the sibling metacat.properties file
-			String metacatPropertiesFilePath = config.getServletContext().getInitParameter("metacat.properties.path");
-			File contextDeploymentDir = new File(config.getServletContext().getRealPath("/"));
-			String fullMetacatPropertiesFilePath = contextDeploymentDir.getParent()  + metacatPropertiesFilePath;
-			Settings.augmentConfiguration(fullMetacatPropertiesFilePath);
-		} catch (ConfigurationException e) {
-			log.error("Could not initialize shared Metacat properties. " + e.getMessage(), e);
-		}
-		
-		// make sure hazelcast configuration is defined so that
-		String hzConfigFileName = Settings.getConfiguration().getString("dataone.hazelcast.configFilePath");
-		if (hzConfigFileName == null) {
-			// use default metacat hazelcast.xml file in metacat deployment
-			hzConfigFileName = 
-    				Settings.getConfiguration().getString("application.deployDir") +
-    				"/" +
-    				Settings.getConfiguration().getString("application.context") + 
-    				"/WEB-INF/hazelcast.xml";
-			// set it for other parts of the code
-			Settings.getConfiguration().setProperty("dataone.hazelcast.configFilePath", hzConfigFileName);
-			//set data.hazelcast.location.clientconfig. This property will be used in d1_cn_index_processor module.
-			//if we don't set this property, d1_cn_index_processor will use the default location /etc/dataone/storage.
-			Settings.getConfiguration().setProperty("dataone.hazelcast.location.clientconfig", hzConfigFileName);
-		}
-    }*/
     
     /**
      *Actions needed to be done before close the servlet
      */
     public void destroy() {
-        //Stop the index executor service
-        ExecutorService executor = SystemMetadataEventListener.getExecutor();
-        if (executor != null) {
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }                   
-            } catch (InterruptedException e) {              
-                executor.shutdownNow();
-            }
-        }
+       //don nothing
     }
     
     /** Handle "GET" method requests from HTTP clients */

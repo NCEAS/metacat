@@ -1,0 +1,31 @@
+## This template sets up the nginx ingress to add a custom header defined in the yaml file
+## `../templates/`ingress-nginx-custom-headers`. Nginx then includes this header with any incoming
+## requests that include x509 client certs. Upon receiving this secret, metacat can then trust that
+## incoming client-cert-authorized requests have really been authorized by the ingress, and are not
+## being spoofed.
+##
+## IMPORTANT:
+## This file contains placeholders that must be replaced by real values before use. The recommended
+## approach is to use the accompanying `configure-nginx-mutual-auth.sh` script.
+## Alternatively, you can edit this file and replace:
+##   ${METACAT_NAMESPACE} with the namespace where you're deploying Metacat, and
+##   ${NGINX_NAMESPACE}   with the namespace where nginx ingress is deployed
+##
+## ALSO NOTE:
+## This setup works with "ingress-nginx", the Kubernetes open source community version of the
+## nginx ingress (see https://github.com/kubernetes/ingress-nginx ). It has not been tested with
+## the ingress maintained by NGINX, Inc.
+## See:
+## 1. ingress docs: https://kubernetes.github.io/ingress-nginx/examples/customization/custom-headers
+## 2. custom header configuration in: ../templates/ingress-nginx-custom-headers.yaml
+##
+apiVersion: v1
+data:
+  proxy-set-headers: "${METACAT_NAMESPACE}/ingress-nginx-custom-headers"
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-controller
+  namespace: &nginx-namespace "${NGINX_NAMESPACE}"
+  labels:
+    app.kubernetes.io/name: *nginx-namespace
+    app.kubernetes.io/part-of: *nginx-namespace

@@ -20,7 +20,8 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -33,23 +34,18 @@ import java.util.concurrent.Executors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.ClientProtocolException;
-import org.dataone.bookkeeper.api.Quota;
-import org.dataone.bookkeeper.api.Usage;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
-import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 
-import com.lmax.disruptor.InsufficientCapacityException;
 
-import edu.ucsb.nceas.metacat.IdentifierManager;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
-import edu.ucsb.nceas.metacat.replication.ReplicationHandler;
+import edu.ucsb.nceas.metacat.shared.HandlerException;
+
 
 /**
  * A class manages the quota service for users
@@ -127,22 +123,30 @@ public class QuotaServiceManager {
     public boolean isEnabled() {
         return enabled;
     }
-    
+
     /**
      * Start a timer to check failed usage reporting and report them again in daily base.
-     * Metacat only needs one timer, but this method will be called on four different servlet init methods. 
-     * So the method has a indicator of already starting a timer and is synchronized to make sure only one timer will be started.
+     * Metacat only needs one timer, but this method will be called on four different servlet init
+     * methods. So the method has a indicator of already starting a timer and is synchronized to
+     * make sure only one timer will be started.
      */
     public synchronized void startDailyCheck() {
         if (enabled && !timerStarted) {
-            String startTimeStr = Settings.getConfiguration().getString("dataone.quotas.dailyReportingUsagesTime");
-            logMetacat.debug("QuotaServiceManager.startDailCheck - the property value of dataone.quotas.dailyReportingUsagesTime is " + startTimeStr);
+            String startTimeStr = Settings.getConfiguration()
+                                        .getString("dataone.quotas.dailyReportingUsagesTime");
+            logMetacat.debug("QuotaServiceManager.startDailCheck - the property value of "
+                                        + " dataone.quotas.dailyReportingUsagesTime is "
+                                        + startTimeStr);
             Date startTime = null;
             try {
-                startTime = ReplicationHandler.combinateCurrentDateAndGivenTime(startTimeStr);
+                startTime = combineDateAndGivenTime(new Date(), startTimeStr);
             } catch (Exception e) {
-                logMetacat.error("QuotaServiceManager.startDailyCheck - Metacat can't figure out the time setting as the value of the property dataone.quotas.dailyReportingUsagesTime in the metacat.propertis since " +
-                                  e.getMessage() + " So Metacat will use the default time 11.00 PM for reporting usages to the book keeper server every day.");
+                logMetacat.error("QuotaServiceManager.startDailyCheck - Metacat can't figure out "
+                         + " the time setting as the value of the property "
+                         + "dataone.quotas.dailyReportingUsagesTime in the metacat.propertis since "
+                         + e.getMessage()
+                         + " So Metacat will use the default time 11.00 PM for reporting usages to "
+                         + "the book keeper server every day.");
                 Calendar date = new GregorianCalendar();
                 // reset hour, minutes, seconds and millis
                 date.set(Calendar.HOUR_OF_DAY, 23);
@@ -153,10 +157,14 @@ public class QuotaServiceManager {
             }
             SimpleDateFormat format = new SimpleDateFormat(); 
             String date = format.format(startTime); 
-            logMetacat.info("QuotaServiceManager.startDailyCheck------------------------the timer will start to check and report un-reported usages at " + date + " at daily base. This message should only be shown once.");
+            logMetacat.info("QuotaServiceManager.startDailyCheck - the timer will start to check "
+                            + " and report un-reported usages at "
+                            + date + " at daily base. This message should only be shown once.");
             Timer timer = new Timer();
-            timer.scheduleAtFixedRate(new FailedReportingAttemptChecker(executor, client), startTime, 24*3600*1000);//daily job
-            timerStarted = true;//indicate that Metacat already started the timer and shouldn't start another one again.
+            timer.scheduleAtFixedRate(new FailedReportingAttemptChecker(executor, client),
+                                        startTime, 24*3600*1000);//daily job
+            //indicate that Metacat already started the timer and shouldn't start another one again.
+            timerStarted = true;
         }
     }
     
@@ -172,7 +180,9 @@ public class QuotaServiceManager {
      * @throws NotFound 
      * @throws NotImplemented 
      */
-    public void enforce(String quotaSubject, Subject requestor, SystemMetadata sysmeta, String method) throws InsufficientResources, InvalidRequest, ServiceFailure, NotImplemented, NotFound {
+    public void enforce(String quotaSubject, Subject requestor, SystemMetadata sysmeta,
+                                            String method) throws InsufficientResources,
+                                        InvalidRequest, ServiceFailure, NotImplemented, NotFound {
         long start = System.currentTimeMillis();
         if (enabled) {
            try {
@@ -221,16 +231,20 @@ public class QuotaServiceManager {
      * @throws NotImplemented
      * @throws UnsupportedEncodingException 
      */
-    private void enforcePortalQuota(String quotaSubject, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws InvalidRequest, 
-                                                                             ServiceFailure, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException {
+    private void enforcePortalQuota(String quotaSubject, Subject requestor,
+                                        String instanceId, SystemMetadata sysmeta, String method)
+                                        throws InvalidRequest, ServiceFailure,
+                                        InsufficientResources, NotImplemented, NotFound,
+                                        UnsupportedEncodingException {
         if (portalEnabled) {
-            PortalQuotaService.getInstance(executor, client).enforce(quotaSubject, requestor, instanceId, sysmeta, method);
+            PortalQuotaService.getInstance(executor, client).enforce(quotaSubject, requestor,
+                                                                instanceId, sysmeta, method);
         } else {
-            logMetacat.info("QuotaServiceManager.enforcePrtaolQuota - the portal quota service is disabled");
+            logMetacat.info("QuotaServiceManager.enforcePrtaolQuota - the portal quota "
+                            + "service is disabled");
         }
     }
-    
-   
+
     /**
      * Enforce the storage quota checking
      * @param quotaSubject  the subject of the quota
@@ -239,12 +253,116 @@ public class QuotaServiceManager {
      * @param method  the dataone qpi method calls the checking
      * @throws NotImplemented
      */
-    private void enforceStorageQuota(String quotaSubject, Subject requestor, SystemMetadata sysmeta, String method) throws NotImplemented {
+    private void enforceStorageQuota(String quotaSubject, Subject requestor,
+                                    SystemMetadata sysmeta, String method) throws NotImplemented {
         if (storageEnabled) {
             throw new NotImplemented("0000", "The storage quota service hasn't been implemented yet.");
         } else {
-            logMetacat.info("QuotaServiceManager.enforceStorageQuota - the storage quota service is disabled");
+            logMetacat.info("QuotaServiceManager.enforceStorageQuota - the storage quota "
+                            + "service is disabled");
         }
     }
-    
+
+    /**
+     * This method will combine a given date and given time string (in short format) to
+     * a new date. If the given time (e.g 10:00 AM) is before the given date (e.g 2:00
+     * PM Aug 21, 2005), then the time will set to the following day, 10:00 AM Aug 22,
+     * 2005. If the given time (e.g 10:00 AM) is after the given date
+     * (e.g 8:00 AM Aug 21, 2005), the time will set to be 10:00 AM Aug 21, 2005.
+     *
+     * @param now  the date will be combine
+     * @param givenTime
+     *            the format should be "10:00 AM " or "2:00 PM"
+     * @return the Date object
+     * @throws HandlerException
+     */
+    protected static Date combineDateAndGivenTime(Date now, String givenTime)
+                                                                        throws HandlerException {
+        try {
+            Date givenDate = parseTime(givenTime);
+            Date newDate = null;
+            String currentTimeString = getTimeString(now);
+            Date currentTime = parseTime(currentTimeString);
+            if (currentTime.getTime() >= givenDate.getTime()) {
+                logMetacat.info(
+                    "QuotaServiceManager.combineDateAndGivenTime - Today already pass the"
+                        + " given time, we should set it as tomorrow");
+                String dateAndTime = getDateString(now) + ", " + givenTime;
+                Date combinationDate = parseDateTime(dateAndTime);
+                // new date should plus 24 hours to make is the second day
+                newDate = new Date(combinationDate.getTime() + 24 * 3600 * 1000);
+            } else {
+                logMetacat.info(
+                    "QuotaServiceManager.combineDateAndGivenTime - Today haven't pass the"
+                        + " given time, we should it as today");
+                String dateAndTime = getDateString(now) + ", " + givenTime;
+                newDate = parseDateTime(dateAndTime);
+            }
+            logMetacat.info(
+                "QuotaServiceManager.combineDateAndGivenTime - final setting time is "
+                    + newDate.toString());
+            return newDate;
+        } catch (ParseException pe) {
+            throw new HandlerException(
+                "QuotaServiceManager.combineDateAndGivenTime - " + "parsing error: "
+                    + pe.getMessage());
+        }
+    }
+
+    /**
+     * Parse a given string to a Date object in short format. For example, given time is
+     * 10:00 AM, the date will be return as Jan 1 1970, 10:00 AM
+     * @param timeString  the time string which will be parsed
+     * @return the Date object of the time string
+     * @throws ParseException
+     */
+    private static Date parseTime(String timeString) throws ParseException {
+        DateFormat format = DateFormat.getTimeInstance(DateFormat.SHORT);
+        Date time = format.parse(timeString);
+        logMetacat.debug(
+            "QuotaServiceManager.parseTime - Date string is after parse a time string "
+                + time.toString());
+        return time;
+    }
+
+    /**
+     * Parse a given string to date and time. The date format is long and time format is short.
+     * @param timeString  the string of time
+     * @return the Date object of the time string
+     * @throws ParseException
+     */
+    private static Date parseDateTime(String timeString) throws ParseException {
+        DateFormat format = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT);
+        Date time = format.parse(timeString);
+        logMetacat.debug(
+            "QuotaServiceManager.parseDateTime - Date string is after parse a time string "
+                + time.toString());
+        return time;
+    }
+
+    /**
+     * Get a date string from a Date object. The date format will be long
+     * @param now  the Date object which will be parsed
+     * @return the string presentation (long) of the Date object
+     */
+    private static String getDateString(Date now) {
+        DateFormat df = DateFormat.getDateInstance(DateFormat.LONG);
+        String s = df.format(now);
+        logMetacat.debug("QuotaServiceManager.getDateString - Today is " + s);
+        return s;
+    }
+
+    /**
+     * Get a time string from a Date object. The time format will be short
+     * @param now  the Date object which will be parsed
+     * @return the string presentation (short) of the Date object
+     */
+    private static String getTimeString(Date now) {
+        DateFormat df = DateFormat.getTimeInstance(DateFormat.SHORT);
+        String s = df.format(now);
+        logMetacat.debug("QuotaServiceManager.getTimeString - Time is " + s);
+        return s;
+    }
+
+
 }

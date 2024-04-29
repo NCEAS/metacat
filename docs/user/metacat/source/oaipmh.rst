@@ -1,6 +1,9 @@
 OAI Protocol for Metadata Harvesting
 ====================================
 
+.. deprecated:: 3.0.0
+    Harvesting metadata in Metacat through OAI-PMH standard is obsolete.
+
 The Open Archives Initiative Protocol for Metadata Harvesting (`OAI-PMH`_) was first 
 developed in the late 1990's as a standard for harvesting metadata from 
 distributed metadata/data repositories. The current version of the OAI-PMH 
@@ -42,46 +45,48 @@ The following table summarizes the element mappings of the EML to Dublin Core
 crosswalk performed by Metacat OAI-PMH, including notes specific to each 
 element mapping.
 
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| EML Element                           | DC Element  | Notes                                                                                                                                           |
-+=======================================+=============+=================================================================================================================================================+
-| Title                                 | title       |                                                                                                                                                 |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Creator                               | creator     | Use only the creator's name (givenName and surName elements); could be an organization name                                                     |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| keyword                               | subject     | One subject element per keyword element                                                                                                         |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| abstract                              | description | Must extract text formatting tags                                                                                                               |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| publisher                             | publisher   | Use only the publisher's name (givenName and surName elements); could be an organization name                                                   |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| associatedParty                       | contributor | Use only the party's name (givenName and surName); could be an organization name                                                                |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| pubDate                               | date        | One-to-one mapping                                                                                                                              |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| dataset, citation, protocol, software | type        | Type value is determined by the type of EML document rather than by a specific field value                                                      |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| physical                              | format      | Use a mime type as the Format value? For example, if EML has <textFormat> element within <physical>, then use 'text/plain' as the Format value? |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| (1) packageId;                        | identifier  | packageId can be used as the value of one identifier element;                                                                                   |
-| (2) URL to the EML document           |             | a second identifier element can hold a URL to the EML document                                                                                  |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| dataSource                            | source      | Use the document URL of the referenced data source?                                                                                             |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Citation                              | relation    | Use the document URL of the referenced citation?                                                                                                |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| geographicCoverage                    | coverage    | Add separate coverage elements for geographic description and geographic bounding coordinates.                                                  |
-|                                       |             | For bounding coordinates, use minimal labeling, for example:                                                                                    |
-|                                       |             | 81.505000 W, 81.495000 W,                                                                                                                       |
-|                                       |             | 31.170000 N, 31.163000 N                                                                                                                        |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| taxonomicCoverage                     | coverage    | Use only genus/species binomials; place each binomial in a separate coverage element                                                            |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| temporalCoverage                      | coverage    | Include begin date and end date when available. For example:                                                                                    |
-|                                       |             | 1915-01-01 to 2004-12-31                                                                                                                        |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| intellectualRights                    | rights      | Must extract text formatting tags                                                                                                               |
-+---------------------------------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| EML Element                           | DC Element  | Notes                                                                                            |
++=======================================+=============+==================================================================================================+
+| Title                                 | title       |                                                                                                  |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| Creator                               | creator     | Use only the creator's name (givenName and surName elements);                                    |
+|                                       |             | could be an organization name                                                                    |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| keyword                               | subject     | One subject element per keyword element                                                          |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| abstract                              | description | Must extract text formatting tags                                                                |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| publisher                             | publisher   | Use only the publisher's name (givenName and surName elements); could be an organization name    |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| associatedParty                       | contributor | Use only the party's name (givenName and surName); could be an organization name                 |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| pubDate                               | date        | One-to-one mapping                                                                               |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| dataset, citation, protocol, software | type        | Type value is determined by the type of EML document rather than by a specific field value       |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| physical                              | format      | Use a mime type as the Format value? For example, if EML has ``<textFormat>`` element within     |
+|                                       |             | ``<physical>``, then use ``'text/plain'`` as the Format value                                    |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+|| (1) packageId;                       || identifier || packageId can be used as the value of one identifier element;                                   |
+|| (2) URL to the EML document          ||            || a second identifier element can hold a URL to the EML document                                  |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| dataSource                            | source      | Use the document URL of the referenced data source?                                              |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| Citation                              | relation    | Use the document URL of the referenced citation?                                                 |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+|| geographicCoverage                   || coverage   || Add separate coverage elements for geographic description and geographic bounding coordinates.  |
+||                                      ||            || For bounding coordinates, use minimal labeling, for example:                                    |
+||                                      ||            || 81.505000 W, 81.495000 W,                                                                       |
+||                                      ||            || 31.170000 N, 31.163000 N                                                                        |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| taxonomicCoverage                     | coverage    | Use only genus/species binomials; place each binomial in a separate coverage element             |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+|| temporalCoverage                     || coverage   || Include begin date and end date when available. For example:                                    |
+||                                      ||            || 1915-01-01 to 2004-12-31                                                                        |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
+| intellectualRights                    | rights      | Must extract text formatting tags                                                                |
++---------------------------------------+-------------+--------------------------------------------------------------------------------------------------+
 
 Metacat OAI-PMH includes a set of XSLT stylesheets used for converting specific 
 versions of EML to their Dublin Core equivalents.
@@ -123,6 +128,10 @@ Users of the Metacat OAI-PMH Data Provider should be aware of the following issu
 
 Metacat OAI-PMH Harvester
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 3.0.0
+    Harvesting metadata in Metacat through OAI-PMH standard is obsolete.
+
 The Metacat OAI-PMH Harvester service interface utilizes OAI-PMH methods to 
 request metadata or related information from an OAI-PMH-compliant data provider 
 using a standard HTTP URL in either an HTTP-GET or HTTP-POST request.
@@ -163,26 +172,29 @@ Metacat OAI-PMH Data Provider Servlet
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To configure and enable the Data Provider servlet:
 
-1. Stop Tomcat and edit the Metacat properties (``metacat.properties``) file in 
-   the Metacat context directory inside the Tomcat application directory. 
-   The Metacat context directory is the name of the application (usually ``knb``):
+The default values for the Data Provider servlet configuration information can be viewed in the
+(non-editable) **metacat.properties** file (search for a section with the header:
+``# OAI-PMH section``). If you wish to override any of these defaults, the new values may be
+added to the **metacat-site.properties** file (**not**  metacat.properties!. For more details on
+changing Metacat's configurable properties, see :ref:`configuration-properties-overview`).
 
-   ::
-   
-     <tomcat_app_dir>/<context_dir>/WEB-INF/metacat.properties
+1. Stop Tomcat and edit the Metacat properties (``metacat-site.properties``) file (see
+:ref:`configuration-properties-overview`)
 
-2. Change the following properties appropriately:
+2. Add (if not already present) or change the following properties appropriately:
 
    ::
    
      ``oaipmh.repositoryIdentifier`` - A string that identifies this repository
      ``Identify.adminEmail`` - The email address of the repository administrator
 
-3. Edit the deployment descriptor (``web.xml``) file, also in the WEB-INF 
-   directory. Uncomment the servlet-name and servlet-mapping entries for the 
-   DataProvider servlet by removing the surroundin "<!--" and "-->" strings:
+3. Edit the deployment descriptor (``web.xml``) file, found in the WEB-INF
+   directory::
 
-   ::
+     <tomcat_app_dir>/<context_dir>/WEB-INF/
+
+   Uncomment the servlet-name and servlet-mapping entries for the
+   DataProvider servlet by removing the surrounding `<!--` and `-->` strings::
    
      <servlet>
        <servlet-name>DataProvider</servlet-name>
@@ -195,43 +207,47 @@ To configure and enable the Data Provider servlet:
        <url-pattern>/dataProvider</url-pattern>
      </servlet-mapping>
 
-4. Save the ``metacat.properties`` and ``web.xml`` files and start Tomcat.
+4. Save the ``metacat-site.properties`` and ``web.xml`` files and start Tomcat.
 
-The following table describes the complete set of ``metacat.properties`` 
-settings that are used by the DataProvider servlet.
+The following table describes the complete set of configuration properties that are used by the
+DataProvider servlet:
 
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Property Name                          | Sample Value                                                               | Description                                                                                                                                     |
-+========================================+============================================================================+=================================================================================================================================================+
-| oaipmh.maxListSize                     | 5                                                                          | Maximum number of records returned by each call to the ListIdentifiers and ListRecords verbs.                                                   |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| oaipmh.repositoryIdentifier            | metacat.lternet.edu                                                        | An identifier string for the respository.                                                                                                       |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| AbstractCatalog.oaiCatalogClassName    | edu.ucsb.nceas.metacat.oaipmh.provider.server.catalog.MetacatCatalog       | The Java class that implements the AbstractCatalog interface. This class determines which records exist in the repository and their datestamps. |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| AbstractCatalog.recordFactoryClassName | edu.ucsb.nceas.metacat.oaipmh.provider.server.catalog.MetacatRecordFactory | The Java class that extends the RecordFactory class. This class creates OAI-PMH metadata records.                                               |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| AbstractCatalog.secondsToLive          | 3600                                                                       | The lifetime, in seconds, of the resumptionToken.                                                                                               |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| AbstractCatalog.granularity            | YYYY-MM-DD or                                                              | Granularity of datestamps. Either "days granularity" or "seconds granularity" values can be used.                                               |
-|                                        | YYYY-MM-DDThh:mm:ssZ                                                       |                                                                                                                                                 |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Identify.repositoryName                | Metacat OAI-PMH Data Provider                                              | A name for the repository.                                                                                                                      |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Identify.earliestDatestamp             | 2000-01-01T00:00:00Z                                                       | Earliest datestamp supported by this repository                                                                                                 |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Identify.deletedRecord                 | yes or no                                                                  | Use "yes" if the repository indicates the status of deleted records; use "no" if it doesn't.                                                    |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Identify.adminEmail                    | mailto:tech_support@someplace.org                                          | Email address of the repository administrator.                                                                                                  |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Crosswalks.oai_dc                      | edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml2oai_dc         | Java class that controls the EML 2.x.y to oai_dc (Dublin Core) crosswalk.                                                                       |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Crosswalks.eml2.0.0                    | edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml200             | Java class that furnishes EML 2.0.0 metadata.                                                                                                   |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Crosswalks.eml2.0.1                    | edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml201             | Java class that furnishes EML 2.0.1 metadata.                                                                                                   |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Crosswalks.eml2.1.0                    | edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml210             | Java class that furnishes EML 2.1.0 metadata.                                                                                                   |
-+----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| Property Name                           | Sample Value                                                                | Description                                                               |
++=========================================+=============================================================================+===========================================================================+
+|  oaipmh.maxListSize                     |  5                                                                          |  Maximum number of records returned by each call to the ListIdentifiers   |
+|                                         |                                                                             |  and ListRecords verbs.                                                   |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| oaipmh.repositoryIdentifier             | metacat.lternet.edu                                                         | An identifier string for the respository.                                 |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+|  AbstractCatalog.oaiCatalogClassName    |  edu.ucsb.nceas.metacat.oaipmh.provider.server.catalog.MetacatCatalog       |  The Java class that implements the AbstractCatalog interface. This class |
+|                                         |                                                                             |  determines which records exist in the repository and their datestamps.   |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+|  AbstractCatalog.recordFactoryClassName |  edu.ucsb.nceas.metacat.oaipmh.provider.server.catalog.MetacatRecordFactory |  The Java class that extends the RecordFactory class. This class creates  |
+|                                         |                                                                             |  OAI-PMH metadata records.                                                |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| AbstractCatalog.secondsToLive           | 3600                                                                        | The lifetime, in seconds, of the resumptionToken.                         |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+|  AbstractCatalog.granularity            |  YYYY-MM-DD or                                                              |  Granularity of datestamps. Either "days granularity" or                  |
+|                                         |  YYYY-MM-DDThh:mm:ssZ                                                       |  "seconds granularity" values can be used.                                |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| Identify.repositoryName                 | Metacat OAI-PMH Data Provider                                               | A name for the repository.                                                |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| Identify.earliestDatestamp              | 2000-01-01T00:00:00Z                                                        | Earliest datestamp supported by this repository                           |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+|  Identify.deletedRecord                 |  yes or no                                                                  |  Use "yes" if the repository indicates the status of deleted records;     |
+|                                         |                                                                             |  use "no" if it doesn't.                                                  |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| Identify.adminEmail                     | mailto:tech_support@someplace.org                                           | Email address of the repository administrator.                            |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| Crosswalks.oai_dc                       | edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml2oai_dc          | Java class that controls the EML 2.x.y to oai_dc (Dublin Core) crosswalk. |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| Crosswalks.eml2.0.0                     | edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml200              | Java class that furnishes EML 2.0.0 metadata.                             |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| Crosswalks.eml2.0.1                     | edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml201              | Java class that furnishes EML 2.0.1 metadata.                             |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
+| Crosswalks.eml2.1.0                     | edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml210              | Java class that furnishes EML 2.1.0 metadata.                             |
++-----------------------------------------+-----------------------------------------------------------------------------+---------------------------------------------------------------------------+
 
 
 Sample URLs
@@ -303,23 +319,26 @@ The following example illustrates how the Metacat OAI-PMH Harvester is run from 
                         
 Command line options and parameters are described in the following table:
 
-+-----------------------------+--------------------------------------------------------+-----------------------------------------------------------------------------------------------------+
-| Command Option or Parameter | Example                                                | Description                                                                                         |
-+=============================+========================================================+=====================================================================================================+
-| -dn                         | ``-dn uid=dryad,o=LTER,dc=ecoinformatics,dc=org``      | Full distinguished name of the LDAP account used when harvesting documents into Metacat. (Required) |
-+-----------------------------+--------------------------------------------------------+-----------------------------------------------------------------------------------------------------+
-| -password                   | ``-password some_password``                            | Password of the LDAP account used when harvesting documents into Metacat. (Required)                |
-+-----------------------------+--------------------------------------------------------+-----------------------------------------------------------------------------------------------------+
-| -metadataPrefix             | ``-metadataPrefix oai_dc``                             | The type of documents being harvested from the remote repository. (Required)                        |
-+-----------------------------+--------------------------------------------------------+-----------------------------------------------------------------------------------------------------+
-| -from                       | ``-from 2000-01-01``                                   | The lower limit of the datestamp for harvested documents. (Optional)                                |
-+-----------------------------+--------------------------------------------------------+-----------------------------------------------------------------------------------------------------+
-| -until                      | ``-until 2010-12-31``                                  | The upper limit of the datestamp for harvested documents. (Optional)                                |
-+-----------------------------+--------------------------------------------------------+-----------------------------------------------------------------------------------------------------+
-| -setSpec                    | ``-setSpec someSet``                                   | Harvest documents belonging to this set. (Optional)                                                 |
-+-----------------------------+--------------------------------------------------------+-----------------------------------------------------------------------------------------------------+
-| base_url                    | ``http://baseurl.repository.org/metacat/dataProvider`` | Base URL of the remote repository                                                                   |
-+-----------------------------+--------------------------------------------------------+-----------------------------------------------------------------------------------------------------+
++-----------------------------+--------------------------------------------------------+----------------------------------------------------------------------+
+| Command Option or Parameter | Example                                                | Description                                                          |
++=============================+========================================================+======================================================================+
+|  -dn                        |  ``-dn uid=dryad,o=LTER,dc=ecoinformatics,dc=org``     |  Full distinguished name of the LDAP account used when harvesting    |
+|                             |                                                        |  documents into Metacat. (Required)                                  |
++-----------------------------+--------------------------------------------------------+----------------------------------------------------------------------+
+|  -password                  |  ``-password some_password``                           |  Password of the LDAP account used when harvesting documents into    |
+|                             |                                                        |  Metacat. (Required)                                                 |
++-----------------------------+--------------------------------------------------------+----------------------------------------------------------------------+
+| -metadataPrefix             | ``-metadataPrefix oai_dc``                             | The type of documents being harvested from the remote repository.    |
+|                             |                                                        | (Required)                                                           |
++-----------------------------+--------------------------------------------------------+----------------------------------------------------------------------+
+| -from                       | ``-from 2000-01-01``                                   | The lower limit of the datestamp for harvested documents. (Optional) |
++-----------------------------+--------------------------------------------------------+----------------------------------------------------------------------+
+| -until                      | ``-until 2010-12-31``                                  | The upper limit of the datestamp for harvested documents. (Optional) |
++-----------------------------+--------------------------------------------------------+----------------------------------------------------------------------+
+| -setSpec                    | ``-setSpec someSet``                                   | Harvest documents belonging to this set. (Optional)                  |
++-----------------------------+--------------------------------------------------------+----------------------------------------------------------------------+
+| base_url                    | ``http://baseurl.repository.org/metacat/dataProvider`` | Base URL of the remote repository                                    |
++-----------------------------+--------------------------------------------------------+----------------------------------------------------------------------+
 
 
 OAI-PMH Error Codes
@@ -354,5 +373,3 @@ OAI-PMH Error Codes
 |                         |                                                                                | ListIdentifiers     |
 |                         |                                                                                | ListRecords         |
 +-------------------------+--------------------------------------------------------------------------------+---------------------+
-
-

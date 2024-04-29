@@ -24,27 +24,23 @@
 
 package edu.ucsb.nceas.metacattest;
 
-import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.io.File;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-
-
-import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.AccessionNumber;
-import edu.ucsb.nceas.metacat.AccessionNumberException;
-import edu.ucsb.nceas.metacat.IdentifierManager;
-import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
-import edu.ucsb.nceas.metacat.client.MetacatAuthException;
-import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
 import org.apache.commons.io.FileUtils;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v2.SystemMetadata;
 
-public class ISO119139Test  extends MCTestCase {
+public class ISO119139Test  extends D1NodeServiceTest {
    
     public ISO119139Test(String name) {
         super(name);
@@ -76,16 +72,24 @@ public class ISO119139Test  extends MCTestCase {
      * Insert a test document, returning the docid that was used. 
      */
     public void TestInsertDocument() throws Exception {
-        String xml = FileUtils.readFileToString(new File("./test/isoTestNodc1.xml"), "UTF-8");
-        String docid = generateDocumentId() + ".1";
-        try {
-            m.login(username, password);
-            String response = insertDocumentId(docid, xml, true, false);
-        } catch (MetacatAuthException e) {
-            fail(e.getMessage());
-        } catch (MetacatInaccessibleException e) {
-            fail(e.getMessage());
-        }
+        String path = "./test/isoTestNodc1.xml";
+        Session session = getTestSession();
+        String metadataIdStr = generateDocumentId() + ".1";
+        Identifier metadataId = new Identifier();
+        metadataId.setValue(metadataIdStr);
+        InputStream metadataObject = new FileInputStream(new File(path));
+        SystemMetadata sysmeta = 
+                        createSystemMetadata(metadataId, session.getSubject(), metadataObject);
+        metadataObject.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("http://www.isotc211.org/2005/gmd");
+        sysmeta.setFormatId(formatId);
+        metadataObject = new FileInputStream(new File(path));
+        MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
+        SystemMetadata readSysmeta = MNodeService.getInstance(request)
+                                        .getSystemMetadata(session, metadataId);
+        assertTrue(readSysmeta.getIdentifier().getValue().equals(metadataIdStr));
+        metadataObject.close();
     }
     
    

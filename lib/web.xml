@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+   version="2.5">
+
+    <display-name>Metacat</display-name>
+
+    <context-param>
+      <param-name>jones</param-name>
+      <param-value>jones@nceas.ucsb.edu</param-value>
+    </context-param>
+
+    <context-param>
+      <param-name>configFileName</param-name>
+      <param-value>metacat.properties</param-value>
+    </context-param>
+
+    <!-- D1 filters -->
+    <filter>
+        <filter-name>D1URLFilter</filter-name>
+        <filter-class>edu.ucsb.nceas.metacat.restservice.D1URLFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>D1URLFilter</filter-name>
+        <url-pattern>/d1/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+    </filter-mapping>
+
+    <servlet>
+      <servlet-name>metacat</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.MetaCatServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>2</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>MetacatAdmin</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.admin.MetacatAdminServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <!-- This is an example for users who want to enable the OAI-PMH service - 
+         see: https://knb.ecoinformatics.org/knb/docs/oaipmh.html-->
+    <!--
+    <servlet>
+      <servlet-name>DataProvider</servlet-name>
+      <description>Processes OAI verbs for Metacat OAI-PMH Data Provider (MODP)
+      </description>
+      <servlet-class>edu.ucsb.nceas.metacat.oaipmh.provider.server.OAIHandler</servlet-class>
+      <load-on-startup>4</load-on-startup>
+    </servlet>
+    -->
+
+    <!-- CN REST Servlet v1 -->
+    <servlet>
+      <servlet-name>CNRestServletV1</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.v1.CNRestServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>15</load-on-startup>
+    </servlet>
+
+    <!-- CN REST Servlet v2 -->
+    <servlet>
+      <servlet-name>CNRestServletV2</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.v2.CNRestServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>15</load-on-startup>
+    </servlet>
+
+    <!-- MN REST Servlet V1 -->
+    <servlet>
+      <servlet-name>MNRestServletV1</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.v1.MNRestServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>20</load-on-startup>
+    </servlet>
+
+    <!-- MN REST Servlet V2 -->
+    <servlet>
+      <servlet-name>MNRestServletV2</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.v2.MNRestServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>20</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>metacat</servlet-name>
+        <url-pattern>/metacat</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>metacat</servlet-name>
+        <url-pattern>/metacat/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>metacat</servlet-name>
+        <url-pattern>/servlet/metacat</url-pattern>
+    </servlet-mapping>
+
+
+    <servlet-mapping>
+        <servlet-name>MetacatAdmin</servlet-name>
+        <url-pattern>/admin</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>MetacatAdmin</servlet-name>
+        <url-pattern>/admin/</url-pattern>
+    </servlet-mapping>
+
+    <!-- CN REST services v1-->
+    <servlet-mapping>
+        <servlet-name>CNRestServletV1</servlet-name>
+        <url-pattern>/d1/cn/v1/*</url-pattern>
+    </servlet-mapping>    
+
+    <!-- MN REST services v1 -->
+    <servlet-mapping>
+        <servlet-name>MNRestServletV1</servlet-name>
+        <url-pattern>/d1/mn/v1/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- CN REST services v2-->
+    <servlet-mapping>
+        <servlet-name>CNRestServletV2</servlet-name>
+        <url-pattern>/d1/cn/v2/*</url-pattern>
+    </servlet-mapping>    
+
+    <!-- MN REST services v2-->
+    <servlet-mapping>
+        <servlet-name>MNRestServletV2</servlet-name>
+        <url-pattern>/d1/mn/v2/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- MN root url -->
+    <servlet-mapping>
+        <servlet-name>MNRestServletV2</servlet-name>
+        <url-pattern>/d1/mn/</url-pattern>
+    </servlet-mapping> 
+
+     <servlet-mapping>
+        <servlet-name>MNRestServletV2</servlet-name>
+        <url-pattern>/d1/mn</url-pattern>
+    </servlet-mapping> 
+
+    <!-- This is an example for users who want to enable the OAI-PMH service - 
+         see: https://knb.ecoinformatics.org/knb/docs/oaipmh.html-->
+    <!-- 
+    <servlet-mapping>
+        <servlet-name>DataProvider</servlet-name>
+        <url-pattern>/dataProvider</url-pattern>
+    </servlet-mapping>
+    -->
+
+
+    <!-- currently the W3C havent settled on a media type for WSDL;
+    http://www.w3.org/TR/2003/WD-wsdl12-20030303/#ietf-draft
+    for now we go with the basic 'it's XML' response -->
+    <mime-mapping>
+        <extension>wsdl</extension>
+        <mime-type>text/xml</mime-type>
+    </mime-mapping>
+
+    <mime-mapping>
+        <extension>xsd</extension>
+        <mime-type>text/xml</mime-type>
+    </mime-mapping>
+  
+    <mime-mapping>
+        <extension>xsl</extension>
+        <mime-type>text/xml</mime-type>
+    </mime-mapping>
+              
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>PROPERTIES</web-resource-name>
+            <url-pattern>*.properties</url-pattern>
+        </web-resource-collection>
+        <auth-constraint/>
+    </security-constraint>
+
+</web-app>

@@ -1,0 +1,190 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "metacat.fullname" . }}
+  labels:
+    {{- include "metacat.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "metacat.fullname" . }}-hl
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "metacat.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+          {{- with .Values.podAnnotations }}
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+      labels:
+        {{- include "metacat.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if index .Values "dataone-indexer" "enabled" }}
+      initContainers:
+        - name: init-rabbitmq-metacat-dep
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - >
+              HOSTNAME={{ include "metacat.rabbitmq.hostname" . }};
+              {{- $amqp := index .Values "dataone-indexer" "rabbitmq" "service" "ports" "amqp" }}
+              PORT={{ index .Values "dataone-indexer" "rabbitmq" "hostport" | default $amqp -}};
+              until nc -z $HOSTNAME $PORT > /dev/null; do
+              echo waiting for RabbitMQ; sleep 1; done;
+        - name: init-solr-metacat-dep
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - >
+              HOSTNAME={{ include "metacat.solr.hostname" . }};
+              PORT={{- index .Values "dataone-indexer" "solr" "service" "ports" "http" -}};
+              URI="/solr/{{- index .Values "dataone-indexer" "solr" "customCollection" -}}
+                   /admin/file?file=schema.xml&contentType=text/xml";
+              until [[ $(echo -e "GET $URI HTTP/1.1\r\nHost: $HOSTNAME\r\n\r\n"{{ print " " -}}
+              | nc $HOSTNAME $PORT | grep -c "<schema name=\"dataone") == 1 ]]; do
+              echo waiting for Solr Schema to be accessible at http://$HOSTNAME:$PORT$URI;
+              sleep 1; done;
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "metacat.serviceAccountName" . }}
+      {{- if .Values.affinity }}
+      affinity: {{- include "helpers.tplvalues.render" (dict "value" .Values.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- include "helpers.tplvalues.render" (dict "value" .Values.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- include "helpers.tplvalues.render" (dict "value" .Values.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "helpers.tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      {{- if .Values.schedulerName }}
+      schedulerName: {{ .Values.schedulerName }}
+      {{- end }}
+      securityContext:
+        {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: metacat-web
+                {{- if .Values.container.ports }}
+                  {{- toYaml .Values.container.ports | nindent 12 }}
+                {{ end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            # can't do {release}-{function}-{instance} for statefulset, since k8s auto appends
+            # {podname}-{instance} (e.g. metacatknb-metacat-metacatknb-0)
+            - name: {{ .Release.Name }}-metacat
+              mountPath: /var/metacat
+              {{- if .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath }}
+              {{- end }}
+              readOnly: false
+            - name: {{ .Release.Name }}-config-volume
+              mountPath: /usr/local/etc/metacat-configMap
+              readOnly: true
+            - name: {{ .Release.Name }}-d1-cert-volume
+              mountPath: /var/metacat/certs/
+              readOnly: true
+            - name: {{ .Release.Name }}-d1-pub-cert-volume
+              mountPath: /var/metacat/pubcerts/
+              readOnly: true
+          env:
+            - name: METACAT_IN_K8S
+              value: "true"
+            - name: METACAT_DEBUG
+              value: {{ ternary "true" "false" .Values.image.debug | quote }}
+            - name: INCLUDE_METACATUI
+              value: {{ ternary "true" "false" .Values.metacat.includeMetacatUi | quote }}
+            - name: METACAT_EXTERNAL_HOSTNAME
+              value: {{ index .Values.metacat "server.name" }}
+            - name: METACAT_EXTERNAL_PORT
+              value: {{ include "metacat.serverPort" . | quote }}
+            - name: METACAT_APP_CONTEXT
+              value: {{ index .Values.metacat "application.context" }}
+            - name: METACAT_DATAONE_CN_URL
+              value: {{ index .Values.metacat "D1Client.CN_URL" }}
+            - name: TOMCAT_MEM_MIN
+              value: {{ .Values.tomcat.heapMemory.min }}
+            - name: TOMCAT_MEM_MAX
+              value: {{ .Values.tomcat.heapMemory.max }}
+            - name: POSTGRES_USER
+              value: {{ .Values.postgresql.auth.username }}
+            - name: METACAT_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-metacat-secrets
+                  key: rabbitmq-password
+                  optional: false
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-metacat-secrets
+                  {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+                    {{- omit .Values.livenessProbe "enabled" | toYaml | nindent 12 }}
+                  {{- end }}
+              {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+                {{- omit .Values.readinessProbe "enabled" | toYaml | nindent 12 }}
+              {{- end }}
+      volumes:
+      - name: {{ .Release.Name }}-config-volume
+        configMap:
+          name: {{ .Release.Name }}-metacat-configfiles
+          defaultMode: 0644
+      - name: {{ .Release.Name }}-d1-pub-cert-volume
+        configMap:
+          name: {{ .Release.Name }}-d1-certs-public
+          optional: true
+      - name: {{ .Release.Name }}-d1-cert-volume
+        secret:
+          secretName: {{ .Release.Name }}-d1-client-cert
+          optional: true
+{{- if not (.Values.persistence.enabled) }}
+      - name: {{ .Release.Name }}-volume
+        emptyDir: {}
+{{ else }}
+  {{- if .Values.persistence.existingClaim }}
+      - name: {{ .Release.Name }}-volume
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim }}
+  {{ else }}
+  volumeClaimTemplates:
+  - metadata:
+      # can't do {release}-{function}-{instance} for statefulset, since k8s auto appends
+      # {podname}-{instance} (e.g. metacatknb-metacat-metacatknb-0)
+      name: {{ .Release.Name }}-metacat
+    spec:
+      {{- if .Values.persistence.volumeName }}
+      volumeName: {{ .Values.persistence.volumeName }}
+      {{ end }}
+      accessModes:
+        {{- range .Values.persistence.accessModes }}
+        - {{ . | quote }}
+        {{- end }}
+      volumeMode: Filesystem
+        {{- $storageClass := .Values.persistence.storageClass -}}
+        {{- if $storageClass }}
+      storageClassName: {{ ternary "\"\"" $storageClass (eq "-" $storageClass) }}
+        {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size }}
+  {{- end }}
+{{- end }}

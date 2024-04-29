@@ -81,7 +81,7 @@ import org.xml.sax.SAXException;
 public class HttpSolrQueryService extends SolrQueryService {
     private static final String SELECTIONPHASE = "/select";
     private static final String SOLR_SYSTEMINFO_URLAPPENDIX = "solr.systeminfo.urlappendix";
-    private static final String SOLR_SCHEMA_URLAPPENDIX = "sorl.schema.urlappendix";
+    private static final String SOLR_SCHEMA_URLAPPENDIX = "solr.schema.urlappendix";
     private static final String SOLR_CONFIG_URLAPPENDIX = "solr.config.urlappendix";
     private static final String SPEC_PATH = "//str[@name='solr-spec-version']";
     private static final String FIELDS_PATH = "//fields//field";

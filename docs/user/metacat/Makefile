@@ -9,7 +9,7 @@ BUILDDIR      = ../../../build/docs
 GRAPHVIZ      = `which dot`
 JAVA          = `which java`
 PLANTUMLCONF  = $(CURDIR)/../../tools/plantuml.conf
-PLANTUML      = $(JAVA) -jar "$(CURDIR)/../../tools/plantuml.jar" -config "$(PLANTUMLCONF)"
+PLANTUML      = $(JAVA) -jar "$(CURDIR)/../../tools/plantuml-1.2022.5.jar" -config "$(PLANTUMLCONF)"
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4

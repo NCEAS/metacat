@@ -1,126 +1,103 @@
-/**  '$RCSfile$'
- *  Copyright: 2010 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.annotation;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import org.apache.commons.io.IOUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.junit.Before;
+import org.junit.Test;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
-public class OrcidServiceTest extends D1NodeServiceTest {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-	
-	/**
-	 * constructor for the test
-	 */
-	public OrcidServiceTest(String name) {
-		super(name);
-	}
+public class OrcidServiceTest {
 
-	/**
-	 * Establish a testing framework by initializing appropriate objects
-	 */
-	public void setUp() throws Exception {
-		super.setUp();
-	}
+    private D1NodeServiceTest d1NSTest;
 
-	/**
-	 * Release any objects after tests are complete
-	 */
-	public void tearDown() {
-	}
+    /**
+     * constructor for the test
+     */
+    public OrcidServiceTest() {
+    }
 
-	/**
-	 * Create a suite of tests to be run together
-	 */
-	public static Test suite() {
-		TestSuite suite = new TestSuite();
-		suite.addTest(new OrcidServiceTest("testLookup"));
-		suite.addTest(new OrcidServiceTest("findMatches"));
+    /**
+     * Establish a testing framework by initializing appropriate objects
+     */
+    @Before
+    public void setUp() throws Exception {
+        // D1NodeServiceTest extends MCTestCase, so it automatically calls
+        // LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
+        d1NSTest = new D1NodeServiceTest("OrcidServiceTest");
+    }
 
-		return suite;
-	}
-	
-	public void testLookup() {
-		List<String> otherNames = Arrays.asList("Matthew Bentley Jones");
-		String orcid = OrcidService.lookupOrcid(null, null, null, otherNames);
-		assertEquals("http://orcid.org/0000-0003-0077-4738", orcid);
-	}
-	
-	public void findMatches() throws Exception {
-        
+    @Test
+    public void testLookup() {
+        List<String> otherNames = List.of("Matthew Bentley Jones");
+        String orcid = OrcidService.lookupOrcid(null, null, null, otherNames);
+        assertEquals("http://orcid.org/0000-0003-0077-4738", orcid);
+    }
+
+    @Test
+    public void findMatches() throws Exception {
+
         // insert an object in case there are no objects on the server
         String path = "test/eml-datacite.xml";
-        Session session = getTestSession();
+        Session session = d1NSTest.getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("findMatches." + System.currentTimeMillis());
-        InputStream object = new FileInputStream(new File(path));
-        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        InputStream object = new FileInputStream(path);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta.setFormatId(formatId);
-        object = new FileInputStream(new File(path));
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object = new FileInputStream(path);
+        Identifier pid = MNodeService.getInstance(d1NSTest.getServletRequest())
+            .create(session, guid, object, sysmeta);
+        assertNotNull("pid was null!", pid);
         object.close();
         String query = "q=id:"+guid.getValue();
-        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
+        String resultStr;
+        InputStream stream;
         int times = 0;
-        int tryAcccounts = 20;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && times <= tryAcccounts) {
-            Thread.sleep(1000);
-            times++;
-            stream = MNodeService.getInstance(request).query(session, "solr", query);
-            resultStr = IOUtils.toString(stream, "UTF-8"); 
-        }
-        
-        
-		int count = 0;
-		Map<String, String> matches = new HashMap<String, String>();
+        int maxTries = 40;
+        do {
+            System.out.println(times);
+            Thread.sleep(500);
+            stream = MNodeService.getInstance(d1NSTest.getServletRequest()).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        } while ( (resultStr == null || !resultStr.contains("checksum")) && ++times <= maxTries);
+        assertNotNull(resultStr);
+        assertTrue("query (" + query + ") result didn't contain \"checksum\"",
+                   resultStr.contains("checksum"));
 
-		List<String> creators = OrcidService.lookupCreators(true);
-		for (String creator: creators) {
-			String orcid = OrcidService.lookupOrcid(null, null, null, Arrays.asList(creator));
-			if (orcid != null) {
-				matches.put(orcid, creator);
-				count++;
-			}
- 		}
-		assertTrue(count > 0);
-		for (Entry<String, String> entry : matches.entrySet()) {
-			System.out.println("Found ORCID: " + entry.getKey() + " for creator: " + entry.getValue());
-		}
-	}
+        int count = 0;
+        Map<String, String> matches = new HashMap<>();
+
+        List<String> creators = OrcidService.lookupCreators(true);
+        for (String creator: creators) {
+            String orcid = OrcidService.lookupOrcid(null, null, null, List.of(creator));
+            if (orcid != null) {
+                matches.put(orcid, creator);
+                count++;
+            }
+         }
+        assertTrue(count > 0);
+        for (Entry<String, String> entry : matches.entrySet()) {
+            System.out.println("Found ORCID: " + entry.getKey() + " for creator: " + entry.getValue());
+        }
+    }
 
 }

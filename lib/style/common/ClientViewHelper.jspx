@@ -35,7 +35,5 @@
             response.setContentType("text/html;charset=UTF-8");
             response.sendRedirect("../../" + newUrl);
         }
-        
-        System.out.println("ClientViewHelper.jspx: " + message);
     </jsp:scriptlet>
 </jsp:root>

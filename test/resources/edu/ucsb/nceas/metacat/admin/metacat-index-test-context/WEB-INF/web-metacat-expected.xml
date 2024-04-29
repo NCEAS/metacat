@@ -1,0 +1,18 @@
+<!DOCTYPE web-app
+        PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN"
+        "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
+
+<web-app>
+    <display-name>Metacat-index TEST DOC</display-name>
+
+    <!-- THIS IS ONLY A TEST DOCUMENT - IT IS INCOMPLETE -->
+    <!-- THIS IS ONLY A TEST DOCUMENT - IT IS INCOMPLETE -->
+    <!-- THIS IS ONLY A TEST DOCUMENT - IT IS INCOMPLETE -->
+
+    <context-param>
+        <param-name>metacat.properties.path</param-name>
+        <param-value>/metacat-index-test-context/WEB-INF/metacat.properties</param-value>
+        <description>The metacat.properties file for sibling metacat deployment. Note that the context can change
+        </description>
+    </context-param>
+</web-app>

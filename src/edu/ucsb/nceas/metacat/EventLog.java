@@ -1,26 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2004 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat;
 
 import java.sql.PreparedStatement;
@@ -29,16 +6,13 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.LogEntry;
-import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.Subject;
@@ -75,8 +49,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * 
  * @author jones
  */
-public class EventLog
-{
+public class EventLog {
     public static final String DELETE = "delete";
     /**
      * The single instance of the event log that is always returned.
@@ -85,17 +58,40 @@ public class EventLog
     private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(EventLog.class);
     private static final int USERAGENTLENGTH = 512;
     private EventLogFilter filter = null;
-    private boolean enableEvenLogIndex= false;
+    private boolean isEventLogIndexEnabled = false;
+    private boolean isEventLogEnabled = true;
 
 
     /**
      * A private constructor that initializes the class when getInstance() is
      * called.
      */
-    private EventLog()
-    {
+    private EventLog() {
         filter = new EventLogFilter();
-        enableEvenLogIndex = Settings.getConfiguration().getBoolean("index.accessLog.count.enabled", false);
+        refreshLogProperties();
+    }
+
+    /**
+     * Refresh the class fields controlled by properties
+     */
+    public void refreshLogProperties() {
+        try {
+            isEventLogIndexEnabled = Boolean.parseBoolean(
+                                    PropertyService.getProperty("index.accessLog.count.enabled"));
+        } catch (PropertyNotFoundException e) {
+            logMetacat.info("EVentLog.refreshLogProperties - the property "
+                          + "'index.accessLog.count.enabled'"
+                          + " is not found in the property files and we will use the default value "
+                          + isEventLogIndexEnabled);
+        }
+        try {
+            isEventLogEnabled = Boolean.parseBoolean(
+                                            PropertyService.getProperty("event.log.enabled"));
+        } catch (PropertyNotFoundException e) {
+            logMetacat.info("EVentLog.refreshLogProperties - the property 'event.log.enabled'"
+                    + " is not found in the property files and we will use the default value "
+                    + isEventLogEnabled);
+        }
     }
 
     /**
@@ -104,8 +100,7 @@ public class EventLog
      * 
      * @return the single EventLog instance
      */
-    public static EventLog getInstance()
-    {
+    public static EventLog getInstance() {
         if (self == null) {
             self = new EventLog();
         }
@@ -119,11 +114,16 @@ public class EventLog
      * 
      * @param ipAddress the internet protocol address for the event
      * @param userAgent the agent making the request
-	 * @param principal the principal for the event (a username, etc)
-	 * @param docid the identifier of the document to which the event applies
-	 * @param event the string code for the event
+     * @param principal the principal for the event (a username, etc)
+     * @param docid the identifier of the document to which the event applies
+     * @param event the string code for the event
      */
     public void log(String ipAddress, String userAgent, String principal, String docid, String event) {
+        if (!isEventLogEnabled) {
+            logMetacat.debug("EventLog.log - the feature of logging events is disabled,"
+                                + " so Metacat will not log any events.");
+            return;
+        }
         EventLogData logData = new EventLogData(ipAddress, userAgent, principal, docid, event);
         boolean filterOut = false;
         if(filter != null) {
@@ -131,70 +131,42 @@ public class EventLog
         }
         if(!filterOut) {
             insertLogEntry(logData);
-            
+
             // update the event information in the index
             try {
-    	        String localId = DocumentUtil.getSmartDocId(docid);
-    			int rev = DocumentUtil.getRevisionFromAccessionNumber(docid);
-    			
-    	        String guid = IdentifierManager.getInstance().getGUID(localId, rev);
-    	        Identifier pid = new Identifier();
-    	        pid.setValue(guid);
-    	        
-    	        // submit for indexing
-    	        if(enableEvenLogIndex) {
-    	            MetacatSolrIndex.getInstance().submit(pid, null, this.getIndexFields(pid, event), false);
-    	        }
-    	        
+                String localId = DocumentUtil.getSmartDocId(docid);
+                int rev = DocumentUtil.getRevisionFromAccessionNumber(docid);
+
+                String guid = IdentifierManager.getInstance().getGUID(localId, rev);
+                Identifier pid = new Identifier();
+                pid.setValue(guid);
+
+                // submit for indexing
+                if(isEventLogIndexEnabled) {
+                    MetacatSolrIndex.getInstance().submit(pid, null, false);
+                }
+
             } catch (Exception e) {
-            	logMetacat.warn("Could not update event index information " + e.getMessage());
+                logMetacat.warn("Could not update event index information " + e.getMessage());
             }
         } else {
-            logMetacat.warn("EventLog.log - The event - "+event+" generated by the user "+principal+" at the address "+ipAddress+ " is in the blacklist and Metacat wouldn't log it.");
+            logMetacat.warn("EventLog.log - The event - " + event + " generated by the user "
+                             + principal + " at the address " + ipAddress
+                             + " is in the blacklist and Metacat wouldn't log it.");
         }
     }
-    
-    public Map<String, List<Object>> getIndexFields(Identifier pid, String event) {
-    	// update the search index for the event
-        try {
-        	
-        	if (event != null) {
-        		
-	        	String fieldName = event + "_count_i";
-	        	int eventCount = 0;
-	        	
-	        	String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
-	        	Log eventLog = this.getD1Report(null, null, new String[] {docid}, event, null, null, false, 0, 0);
-	        	eventCount = eventLog.getTotal();
-	
-		        List<Object> values = new ArrayList<Object>();
-				values.add(eventCount);
-		        Map<String, List<Object>> fields = new HashMap<String, List<Object>>();
-		        fields.put(fieldName, values);
-		        
-		        return fields;
-        	}
-	        
-        } catch (Exception e) {
-        	logMetacat.error("Could not update event index information on pid: " + pid.getValue() + " for event: " + event, e);
-        }
-        // default if we can't find the event information
-    	return null;
 
-    }
-    
     /**
      * Insert a single log event record to the database.
      * 
      * @param logData the data to be logged when an event occurs
      */
-    private void insertLogEntry(EventLogData logData)
-    {
+    private void insertLogEntry(EventLogData logData) {
         String insertString = "insert into access_log"
                 + "(ip_address, user_agent, principal, docid, "
                 + "event, date_logged) "
                 + "values ( ?, ?, ?, ?, ?, ? )";
- 
+
         DBConnection dbConn = null;
         int serialNumber = -1;
         try {
@@ -205,10 +177,10 @@ public class EventLog
             if(userAgent != null && userAgent.length() > USERAGENTLENGTH) {
                 userAgent = userAgent.substring(0, USERAGENTLENGTH);
             }
-            
+
             // Execute the insert statement
             PreparedStatement stmt = dbConn.prepareStatement(insertString);
-            
+
             stmt.setString(1, logData.getIpAddress());
             stmt.setString(2, userAgent);
             stmt.setString(3, logData.getPrincipal());
@@ -218,40 +190,33 @@ public class EventLog
             stmt.executeUpdate();
             stmt.close();
         } catch (SQLException e) {
-        	logMetacat.error("Error while logging event to database: " 
+            logMetacat.error("Error while logging event to database: "
                     + e.getMessage());
         } finally {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
     }
-    
+
     /**
      * Get a report of the log events that match a set of filters.  The
      * filter parameters can be null; log records are subset based on
      * non-null filter parameters.
      * 
      * @param ipAddress the internet protocol address for the event
-	 * @param principal the principal for the event (a username, etc)
-	 * @param docid the identifier of the document to which the event applies
-	 * @param event the string code for the event
-	 * @param startDate beginning of date range for query
-	 * @param endDate end of date range for query
-	 * @return an XML-formatted report of the access log entries
+     * @param principal the principal for the event (a username, etc)
+     * @param docid the identifier of the document to which the event applies
+     * @param event the string code for the event
+     * @param startDate beginning of date range for query
+     * @param endDate end of date range for query
+     * @return an XML-formatted report of the access log entries
      */
     public String getReport(String[] ipAddress, String[] principal, String[] docid,
-            String[] event, Timestamp startDate, Timestamp endDate, boolean anonymous)
-    {
+            String[] event, Timestamp startDate, Timestamp endDate, boolean anonymous) {
         StringBuffer resultDoc = new StringBuffer();
         StringBuffer query = new StringBuffer();
         query.append("select entryid, ip_address, user_agent, principal, docid, "
             + "event, date_logged from access_log");
-//                        + ""
-//                        + "event, date_logged) " + "values (" + "'"
-//                        + logData.getIpAddress() + "', " + "'"
-//                        + logData.getPrincipal() + "', " + "'"
-//                        + logData.getDocid() + "', " + "'" + logData.getEvent()
-//                        + "', " + " ? " + ")";
         if (ipAddress != null || principal != null || docid != null
                         || event != null || startDate != null || endDate != null) {
             query.append(" where ");
@@ -259,71 +224,71 @@ public class EventLog
         boolean clauseAdded = false;
         int startIndex = 0;
         int endIndex = 0;
-        
+
         List<String> paramValues = new ArrayList<String>();
         if (ipAddress != null) {
-        	query.append("ip_address in (");
-        	for (int i = 0; i < ipAddress.length; i++) {
-        		if (i > 0) {
-            		query.append(", ");
-        		}
-        		query.append("?");
-        		paramValues.add(ipAddress[i]);
-        	}
-        	query.append(") ");
+            query.append("ip_address in (");
+            for (int i = 0; i < ipAddress.length; i++) {
+                if (i > 0) {
+                    query.append(", ");
+                }
+                query.append("?");
+                paramValues.add(ipAddress[i]);
+            }
+            query.append(") ");
             clauseAdded = true;
         }
         if (principal != null) {
-        	if (clauseAdded) {
+            if (clauseAdded) {
                 query.append(" and ");
             }
-        	query.append("principal in (");
-        	for (int i = 0; i < principal.length; i++) {
-        		if (i > 0) {
-            		query.append(", ");
-        		}
-        		query.append("?");
-        		paramValues.add(principal[i]);
-        	}
-        	query.append(") ");
+            query.append("principal in (");
+            for (int i = 0; i < principal.length; i++) {
+                if (i > 0) {
+                    query.append(", ");
+                }
+                query.append("?");
+                paramValues.add(principal[i]);
+            }
+            query.append(") ");
             clauseAdded = true;
         }
         if (docid != null) {
-        	if (clauseAdded) {
+            if (clauseAdded) {
                 query.append(" and ");
             }
-        	query.append("docid in (");
-        	for (int i = 0; i < docid.length; i++) {
-        		if (i > 0) {
-            		query.append(", ");
-        		}
-        		query.append("?");
-        		String fullDocid = docid[i];
-        		// allow docid without revision - look up latest version
-        		try {
-        			fullDocid = DocumentUtil.appendRev(fullDocid);
-        		} catch (Exception e) {
-					// just warn about this
-        			logMetacat.debug("Could not check docid for revision: " + fullDocid, e);
-				}
-        		paramValues.add(fullDocid);
-        	}
-        	query.append(") ");
+            query.append("docid in (");
+            for (int i = 0; i < docid.length; i++) {
+                if (i > 0) {
+                    query.append(", ");
+                }
+                query.append("?");
+                String fullDocid = docid[i];
+                // allow docid without revision - look up latest version
+                try {
+                    fullDocid = DocumentUtil.appendRev(fullDocid);
+                } catch (Exception e) {
+                    // just warn about this
+                    logMetacat.debug("Could not check docid for revision: " + fullDocid, e);
+                }
+                paramValues.add(fullDocid);
+            }
+            query.append(") ");
             clauseAdded = true;
         }
         if (event != null) {
-        	if (clauseAdded) {
+            if (clauseAdded) {
                 query.append(" and ");
             }
-        	query.append("event in (");
-        	for (int i = 0; i < event.length; i++) {
-        		if (i > 0) {
-            		query.append(", ");
-        		}
-        		query.append("?");
-        		paramValues.add(event[i]);
-        	}
-        	query.append(") ");
+            query.append("event in (");
+            for (int i = 0; i < event.length; i++) {
+                if (i > 0) {
+                    query.append(", ");
+                }
+                query.append("?");
+                paramValues.add(event[i]);
+            }
+            query.append(") ");
             clauseAdded = true;
         }
         if (startDate != null) {
@@ -354,13 +319,13 @@ public class EventLog
             //set the param values
             int parameterIndex = 1;
             for (String val: paramValues) {
-            	stmt.setString(parameterIndex++, val);
+                stmt.setString(parameterIndex++, val);
             }
             if (startDate != null) {
                 stmt.setTimestamp(parameterIndex++, startDate); 
             }
             if (endDate != null) {
-            	stmt.setTimestamp(parameterIndex++, endDate);
+                stmt.setTimestamp(parameterIndex++, endDate);
             }
             stmt.execute();
             ResultSet rs = stmt.getResultSet();
@@ -369,11 +334,11 @@ public class EventLog
             resultDoc.append("<log>\n");
             while (rs.next()) {
                 resultDoc.append(
-                		generateXmlRecord(
-                				rs.getString(1), //id
-                				anonymous ? "" : rs.getString(2), //ip
-                				rs.getString(3), //userAgent	
-                				anonymous ? "" : rs.getString(4), //principal
+                        generateXmlRecord(
+                                rs.getString(1), //id
+                                anonymous ? "" : rs.getString(2), //ip
+                                rs.getString(3), //userAgent
+                                anonymous ? "" : rs.getString(4), //principal
                                 rs.getString(5), 
                                 rs.getString(6), 
                                 rs.getTimestamp(7)));
@@ -381,7 +346,7 @@ public class EventLog
             resultDoc.append("</log>");
             stmt.close();
         } catch (SQLException e) {
-        	logMetacat.info("Error while logging event to database: "
+            logMetacat.info("Error while logging event to database: "
                             + e.getMessage());
         } finally {
             // Return database connection to the pool
@@ -389,15 +354,15 @@ public class EventLog
         }
         return resultDoc.toString();
     }
-    
+
     /**
-     * A utility method to determine if the given docid was deleted. 
+     * A utility method to determine if the given docid was deleted.
      * @param docid the specified docid
      * @return true if there is a delete event for the id; false otherwise.
      */
     public boolean isDeleted(String docid) {
         boolean deleted =false;
-        if(docid != null || !docid.trim().equals("")) {
+        if(docid != null && !docid.trim().equals("")) {
             String[] docids = new String[1];
             docids[0] = docid;
             String[] events = new String[1];
@@ -407,7 +372,7 @@ public class EventLog
             Timestamp startDate = null;
             Timestamp endDate = null;
             boolean anonymous = false;
-            
+
             String report =getReport(ipAddress, principal, docids,
                      events, startDate, endDate, anonymous);
             //System.out.println("the report is "+report);
@@ -417,14 +382,14 @@ public class EventLog
         }
         return deleted;
     }
-    
+
     public Log getD1Report(String[] ipAddress, String[] principal, String[] docid,
-            String event, Timestamp startDate, Timestamp endDate, boolean anonymous, Integer start, Integer count)
-    {
+            String event, Timestamp startDate, Timestamp endDate, boolean anonymous,
+            Integer start, Integer count) {
         boolean isCreateEvent = false;
         Log log = new Log();
-    	
-    	NodeReference memberNode = new NodeReference();
+
+        NodeReference memberNode = new NodeReference();
         String nodeId = "localhost";
         try {
             nodeId = PropertyService.getProperty("dataone.nodeId");
@@ -433,66 +398,66 @@ public class EventLog
             e1.printStackTrace();
         }
         memberNode.setValue(nodeId);
-        
+
         // subquery does the heavy lifting
         StringBuffer subQueryFrom = new StringBuffer();
         subQueryFrom.append("from access_log ");
-        
+
         boolean clauseAdded = false;
-        
+
         List<String> paramValues = new ArrayList<String>();
         if (ipAddress != null) {
-        	if (clauseAdded) {
-        		subQueryFrom.append(" and ");
+            if (clauseAdded) {
+                subQueryFrom.append(" and ");
             } else {
-            	subQueryFrom.append(" where ");
+                subQueryFrom.append(" where ");
             }
-        	subQueryFrom.append("ip_address in (");
-        	for (int i = 0; i < ipAddress.length; i++) {
-        		if (i > 0) {
-        			subQueryFrom.append(", ");
-        		}
-        		subQueryFrom.append("?");
-        		paramValues.add(ipAddress[i]);
-        	}
-        	subQueryFrom.append(") ");
+            subQueryFrom.append("ip_address in (");
+            for (int i = 0; i < ipAddress.length; i++) {
+                if (i > 0) {
+                    subQueryFrom.append(", ");
+                }
+                subQueryFrom.append("?");
+                paramValues.add(ipAddress[i]);
+            }
+            subQueryFrom.append(") ");
             clauseAdded = true;
         }
         if (principal != null) {
-        	if (clauseAdded) {
-        		subQueryFrom.append(" and ");
+            if (clauseAdded) {
+                subQueryFrom.append(" and ");
             } else {
-            	subQueryFrom.append(" where ");
+                subQueryFrom.append(" where ");
             }
-        	subQueryFrom.append("principal in (");
-        	for (int i = 0; i < principal.length; i++) {
-        		if (i > 0) {
-        			subQueryFrom.append(", ");
-        		}
-        		subQueryFrom.append("?");
-        		paramValues.add(principal[i]);
-        	}
-        	subQueryFrom.append(") ");
+            subQueryFrom.append("principal in (");
+            for (int i = 0; i < principal.length; i++) {
+                if (i > 0) {
+                    subQueryFrom.append(", ");
+                }
+                subQueryFrom.append("?");
+                paramValues.add(principal[i]);
+            }
+            subQueryFrom.append(") ");
             clauseAdded = true;
         }
         if (docid != null) {
-        	if (clauseAdded) {
-        		subQueryFrom.append(" and ");
+            if (clauseAdded) {
+                subQueryFrom.append(" and ");
             } else {
-            	subQueryFrom.append(" where ");
+                subQueryFrom.append(" where ");
             }
-        	subQueryFrom.append("docid in (");
-        	for (int i = 0; i < docid.length; i++) {
-        		if (i > 0) {
-        			subQueryFrom.append(", ");
-        		}
-        		subQueryFrom.append("?");
-        		paramValues.add(docid[i]);
-        	}
-        	subQueryFrom.append(") ");
+            subQueryFrom.append("docid in (");
+            for (int i = 0; i < docid.length; i++) {
+                if (i > 0) {
+                    subQueryFrom.append(", ");
+                }
+                subQueryFrom.append("?");
+                paramValues.add(docid[i]);
+            }
+            subQueryFrom.append(") ");
             clauseAdded = true;
         }
-        
+
        //please make sure the handling of event is just before the the startDate clause!!!
         if (event != null) {
             if (clauseAdded) {
@@ -504,12 +469,13 @@ public class EventLog
             subQueryFrom.append("?");
             String eventString = event;
             if (eventString.equals(Event.CREATE.xmlValue())) {
-                isCreateEvent = true; //since the create event maps create, insert and et al, we handle it in different way
+                // since the create event maps create, insert and et al,
+                // we handle it in different way
+                isCreateEvent = true;
                 subQueryFrom.append(",?");// for INSERT, the insert is handled by line 508
                 subQueryFrom.append(",?");// for upload
                 subQueryFrom.append(",?");// for UPLOAD
                 subQueryFrom.append(",?");// for create
-                //eventString = "insert,INSERT,upload,UPLOAD,create";
             } else {
                 paramValues.add(eventString);
             }
@@ -519,59 +485,58 @@ public class EventLog
 
         if (startDate != null) {
             if (clauseAdded) {
-            	subQueryFrom.append(" and ");
+                subQueryFrom.append(" and ");
             } else {
-            	subQueryFrom.append(" where ");
+                subQueryFrom.append(" where ");
             }
             subQueryFrom.append("date_logged >= ?");
             clauseAdded = true;
         }
         if (endDate != null) {
             if (clauseAdded) {
-            	subQueryFrom.append(" and ");
+                subQueryFrom.append(" and ");
             } else {
-            	subQueryFrom.append(" where ");
+                subQueryFrom.append(" where ");
             }
             subQueryFrom.append("date_logged < ?");
             clauseAdded = true;
         }
-        
-        
 
         // count query
         String countSelect = "select count(*) ";
-        
+
         // subquery select
         String subquerySelect = "select entryid ";
-        
+
         // for selecting fields we want in the join
         String fieldSelect = 
-        		"select " +
-        		"entryid, " +
-        		"id.guid as identifier, " +
-        		"ip_address, " +
-        		"user_agent, " +
-        		"principal, " +
-        		"case " +
-        		"	when event = 'insert' then 'create' " +
-        		" when event = 'INSERT' then 'create' " +
-        		" when event = 'upload' then 'create' " +
-        		" when event = 'UPLOAD' then 'create' " +
-        		"	else event " +
-        		"end as event, " +
-        		"date_logged " +	 
-        		"from access_log al, identifier id " +
-        		"where al.docid = id.docid||'.'||id.rev " +
-        		"and al.entryid in ";
-        
+                "select " +
+                "entryid, " +
+                "id.guid as identifier, " +
+                "ip_address, " +
+                "user_agent, " +
+                "principal, " +
+                "case " +
+                "    when event = 'insert' then 'create' " +
+                " when event = 'INSERT' then 'create' " +
+                " when event = 'upload' then 'create' " +
+                " when event = 'UPLOAD' then 'create' " +
+                "    else event " +
+                "end as event, " +
+                "date_logged " +
+                "from access_log al, identifier id " +
+                "where al.docid = id.docid||'.'||id.rev " +
+                "and al.entryid in ";
+
         // order by
         String orderByClause = " order by entryid ";
-        
+
         // select the count
         String countQuery = countSelect + subQueryFrom.toString();
         logMetacat.debug("The count query is " + countQuery);
-		// select the fields using paged subquery and fields join query
-        String pagedSubquery = DatabaseService.getInstance().getDBAdapter().getPagedQuery(subquerySelect + subQueryFrom.toString() + orderByClause, start, count);
+        // select the fields using paged subquery and fields join query
+        String pagedSubquery = DatabaseService.getInstance().getDBAdapter().
+              getPagedQuery(subquerySelect + subQueryFrom.toString() + orderByClause, start, count);
         String pagedQuery = fieldSelect + " ( " + pagedSubquery + " ) " + orderByClause; 
         logMetacat.debug("The selection query is " + pagedQuery);
         logMetacat.debug("The startDate in the query is " + startDate);
@@ -591,14 +556,14 @@ public class EventLog
             //set the param values
             int parameterIndex = 1;
             for (String val: paramValues) {
-            	countStmt.setString(parameterIndex, val);
-            	fieldsStmt.setString(parameterIndex, val);
-            	parameterIndex++;
+                countStmt.setString(parameterIndex, val);
+                fieldsStmt.setString(parameterIndex, val);
+                parameterIndex++;
             }
-            
+
             if(isCreateEvent) {
-                //handle the event mapping. If we add another event mapping, we need add a "?" in line 496
-                //those values are not in the paramValues.
+                //handle the event mapping. If we add another event mapping, we need add a "?"
+                //in line 496 those values are not in the paramValues.
                 countStmt.setString(parameterIndex, "insert");
                 fieldsStmt.setString(parameterIndex, "insert");
                 parameterIndex++;
@@ -615,18 +580,18 @@ public class EventLog
                 fieldsStmt.setString(parameterIndex, "create");
                 parameterIndex++;
             }
-            
+
             if (startDate != null) {
-            	countStmt.setTimestamp(parameterIndex, startDate); 
-                fieldsStmt.setTimestamp(parameterIndex, startDate); 
-            	parameterIndex++;
+                countStmt.setTimestamp(parameterIndex, startDate);
+                fieldsStmt.setTimestamp(parameterIndex, startDate);
+                parameterIndex++;
             }
             if (endDate != null) {
-            	countStmt.setTimestamp(parameterIndex, endDate);
-            	fieldsStmt.setTimestamp(parameterIndex, endDate);
-            	parameterIndex++;
+                countStmt.setTimestamp(parameterIndex, endDate);
+                fieldsStmt.setTimestamp(parameterIndex, endDate);
+                parameterIndex++;
             }
-            
+
 
             // for the return Log list
             List<LogEntry> logs = new Vector<LogEntry>();
@@ -635,105 +600,105 @@ public class EventLog
             if (count != 0) {
                 long startTime = System.currentTimeMillis();
                 logMetacat.debug("Time to start to execute the selection query "+startTime);
-	            fieldsStmt.execute();
-	            long endTime = System.currentTimeMillis();
-	            logMetacat.debug("Time to run the selection query is "+(endTime-startTime)/1000+" seconds.");
-	            ResultSet rs = fieldsStmt.getResultSet();
-	            //process the result and return it            
-	            while (rs.next()) {
-	            	LogEntry logEntry = new LogEntry();
-	            	String logId = rs.getString(1);
-	            	if (logId == null || logId.trim().equals("")) {
-	            	    logId = "N/A";
-	            	}
-	            	logEntry.setEntryId(logId);
-	            	
-	            	Identifier identifier = new Identifier();
-	            	String id = rs.getString(2);
-	            	if (id == null || id.trim().equals("")) {
-	            	    id = "N/A";
-	            	}
-	            	identifier.setValue(id);
-					logEntry.setIdentifier(identifier);
-	
-	            String ip = rs.getString(3);
-	            if (ip == null || ip.trim().equals("")) {
-	                ip = "N/A";
-	            }
-	            	logEntry.setIpAddress(anonymous ? "N/A" : ip);
-	            	
-	            	String userAgent = "N/A";
-	            	if (rs.getString(4) != null) {
-	            		userAgent = rs.getString(4);
-	            	}
-	            	logEntry.setUserAgent(userAgent);
-	            	
-	            	Subject subject = new Subject();
-	            	String subjectStr = rs.getString(5);
-	            	if (subjectStr == null || subjectStr.trim().equals("")) {
-	            	    subjectStr = "N/A";
-	            	}
-	            	subject.setValue(anonymous ? "N/A" : subjectStr);
-					logEntry.setSubject(subject);
-					
-					String logEventString = rs.getString(6);
-					if(logEventString == null) {
-					    logEventString = "unknown";
-					}
-					logEntry.setEvent(logEventString);
-					logEntry.setDateLogged(rs.getTimestamp(7));
-					
-					logEntry.setNodeIdentifier(memberNode);
-					logs.add(logEntry);
-	            }
-	            fieldsStmt.close();
-	            long endTime2 = System.currentTimeMillis();
-	            logMetacat.debug("Time to put the query result to the log is "+(endTime2-endTime)/1000+" seconds.");
+                fieldsStmt.execute();
+                long endTime = System.currentTimeMillis();
+                logMetacat.debug("Time to run the selection query is "+(endTime-startTime)/1000+" seconds.");
+                ResultSet rs = fieldsStmt.getResultSet();
+                //process the result and return it
+                while (rs.next()) {
+                    LogEntry logEntry = new LogEntry();
+                    String logId = rs.getString(1);
+                    if (logId == null || logId.trim().equals("")) {
+                        logId = "N/A";
+                    }
+                    logEntry.setEntryId(logId);
+
+                    Identifier identifier = new Identifier();
+                    String id = rs.getString(2);
+                    if (id == null || id.trim().equals("")) {
+                        id = "N/A";
+                    }
+                    identifier.setValue(id);
+                    logEntry.setIdentifier(identifier);
+
+                String ip = rs.getString(3);
+                if (ip == null || ip.trim().equals("")) {
+                    ip = "N/A";
+                }
+                    logEntry.setIpAddress(anonymous ? "N/A" : ip);
+
+                    String userAgent = "N/A";
+                    if (rs.getString(4) != null) {
+                        userAgent = rs.getString(4);
+                    }
+                    logEntry.setUserAgent(userAgent);
+
+                    Subject subject = new Subject();
+                    String subjectStr = rs.getString(5);
+                    if (subjectStr == null || subjectStr.trim().equals("")) {
+                        subjectStr = "N/A";
+                    }
+                    subject.setValue(anonymous ? "N/A" : subjectStr);
+                    logEntry.setSubject(subject);
+
+                    String logEventString = rs.getString(6);
+                    if(logEventString == null) {
+                        logEventString = "unknown";
+                    }
+                    logEntry.setEvent(logEventString);
+                    logEntry.setDateLogged(rs.getTimestamp(7));
+
+                    logEntry.setNodeIdentifier(memberNode);
+                    logs.add(logEntry);
+                }
+                fieldsStmt.close();
+                long endTime2 = System.currentTimeMillis();
+                logMetacat.debug("Time to put the query result to the log is "
+                                    + (endTime2-endTime)/1000 + " seconds.");
             }
-            
+
             // set what we have
             log.setLogEntryList(logs);
-		    log.setStart(start);
-		    log.setCount(logs.size());
-            			
-			// get total for out query
-		    int total = 0;
-		    long startTime = System.currentTimeMillis();
+            log.setStart(start);
+            log.setCount(logs.size());
+
+            // get total for out query
+            int total = 0;
+            long startTime = System.currentTimeMillis();
             logMetacat.debug("Time to start to execute the counting query "+startTime);
             countStmt.execute();
             long endTime = System.currentTimeMillis();
             logMetacat.debug("Time to run the counting query is "+(endTime-startTime)/1000+" seconds.");
             ResultSet countRs = countStmt.getResultSet();
             if (countRs.next()) {
-            	total = countRs.getInt(1);
+                total = countRs.getInt(1);
             }
             countStmt.close();
-		    log.setTotal(total);
+            log.setTotal(total);
 
         } catch (SQLException e) {
-        	logMetacat.error("Error while getting log events: " + e.getMessage(), e);
+            logMetacat.error("Error while getting log events: " + e.getMessage(), e);
         } finally {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
         return log;
     }
-    
+
     /**
      * Format each returned log record as an XML structure.
      * 
      * @param entryId the identifier of the log entry
      * @param ipAddress the internet protocol address for the event
-     * @param the agent making the request
-	 * @param principal the principal for the event (a username, etc)
-	 * @param docid the identifier of the document to which the event applies
-	 * @param event the string code for the event
+     * @param userAgent the agent making the request
+     * @param principal the principal for the event (a username, etc)
+     * @param docid the identifier of the document to which the event applies
+     * @param event the string code for the event
      * @param dateLogged the date on which the event occurred
      * @return String containing the formatted XML
      */
     private String generateXmlRecord(String entryId, String ipAddress, String userAgent,
-            String principal, String docid, String event, Timestamp dateLogged)
-    {
+            String principal, String docid, String event, Timestamp dateLogged) {
         StringBuffer rec = new StringBuffer();
         rec.append("<logEntry>");
         rec.append(generateXmlElement("entryid", entryId));
@@ -747,7 +712,7 @@ public class EventLog
 
         return rec.toString();
     }
-    
+
     /**
      * Return an XML formatted element for a given name/value pair.
      * 
@@ -755,8 +720,7 @@ public class EventLog
      * @param value the content of the xml element
      * @return the formatted XML element as a String
      */
-    private String generateXmlElement(String name, String value)
-    {
+    private String generateXmlElement(String name, String value) {
         return "<" + name + ">" + value + "</" + name + ">";
     }
 }

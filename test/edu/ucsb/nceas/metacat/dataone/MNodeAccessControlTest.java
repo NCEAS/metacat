@@ -31,8 +31,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Properties;
 import java.util.Set;
 
+import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.dataone.client.D1Node;
 import org.dataone.client.NodeLocator;
 import org.dataone.client.exception.ClientSideException;
@@ -65,6 +69,7 @@ import org.dataone.service.util.Constants;
 import edu.ucsb.nceas.utilities.IOUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.mockito.MockedStatic;
 
 public class MNodeAccessControlTest extends D1NodeServiceTest {
    
@@ -148,17 +153,38 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testMethodsWithSession() throws Exception {
-        KNBadmin = getOneKnbDataAdminsMemberSession();
-        PISCOManager = getOnePISCODataManagersMemberSession();
-        mNodeMember = getMemberOfMNodeSession();
-        cNodeMember = getMemberOfCNodeSession();
-        //rights holder on the system metadata is a user.
-        Session rightsHolder = getAnotherSession();
-        testMethodsWithGivenHightsHolder(rightsHolder, rightsHolder.getSubject());
-        //rights holder on the system metadata is a group
-        Session rightsHolder2 = getOneEssDiveUserMemberSession();
-        Subject rightsHolderGroupOnSys = getEssDiveUserGroupSubject();
-        testMethodsWithGivenHightsHolder(rightsHolder2, rightsHolderGroupOnSys);
+        final String passwdMsg =
+            """
+            \n* * * * * * * * * * * * * * * * * * *
+            DOI PASSWORD IS NOT SET!
+            Add a value for 'guid.doi.password'
+            to your metacat-site.properties file!
+            * * * * * * * * * * * * * * * * * * *
+            """;
+        try {
+            assertFalse(passwdMsg, PropertyService.getProperty("guid.doi.password").isBlank());
+        } catch (PropertyNotFoundException e) {
+            fail(passwdMsg);
+        }
+        Properties withProperties = new Properties();
+        withProperties.setProperty("server.name", "UpdateDOITestMock.edu");
+        withProperties.setProperty("guid.doi.enabled", "true");
+        withProperties.setProperty("guid.doi.username", "apitest");
+        try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
+            withProperties)) {
+            KNBadmin = getOneKnbDataAdminsMemberSession();
+
+            PISCOManager = getOnePISCODataManagersMemberSession();
+            mNodeMember = getMemberOfMNodeSession();
+            cNodeMember = getMemberOfCNodeSession();
+            //rights holder on the system metadata is a user.
+            Session rightsHolder = getAnotherSession();
+            testMethodsWithGivenHightsHolder(rightsHolder, rightsHolder.getSubject());
+            //rights holder on the system metadata is a group
+            Session rightsHolder2 = getOneEssDiveUserMemberSession();
+            Subject rightsHolderGroupOnSys = getEssDiveUserGroupSubject();
+            testMethodsWithGivenHightsHolder(rightsHolder2, rightsHolderGroupOnSys);
+        }
     }
     
     /**

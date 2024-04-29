@@ -1,0 +1,932 @@
+## Default values for metacat.
+## This is a YAML-formatted file.
+##
+##     * * *  NOTE: SOME VALUES INCLUDE THE PLACEHOLDER "${RELEASE_NAME}", WHICH  * * *
+##     * * *        MUST BE REPLACED BY THE ACTUAL RELEASE NAME, AS FOLLOWS...    * * *
+##
+## EASY OPTION: use the 'helm-install.sh' (or the 'helm-upgrade.sh') shell script.
+##     e.g. (from the metacat repo root directory):
+##
+##     $  ./helm-install.sh  myrelease   mynamespace  [other optional helm command flags]
+##
+##     # NOTE: If you see: "command not found: envsubst", you'll need to install Gnu 'gettext'
+##             (https://www.gnu.org/software/gettext/).  For example, on macOS:
+##
+##             $  brew install gettext && brew link --force gettext
+##
+## PERMANENT OPTION: either manually search and replace "${RELEASE_NAME}" with your release name, or
+##     use a command-line tool to do so - e.g. `sed`:
+##
+##     $ cp values.yaml values.yaml_ORIG
+##     $ sed -i -e "s/\${RELEASE_NAME}/myrelease/g" values.yaml
+##
+##     ...then `helm install` as usual
+##
+
+## @section Global Properties Shared Across Sub-Charts Within This Deployment
+##
+global:
+  ## @param global.passwordsSecret The name of the Secret containing application passwords
+  ## This is the secret deployed using your own private, edited version of `../admin/secrets.yaml`.
+  ##
+  ## (Note the actual key passwordsSecret is not used anywhere; only the yaml anchor/alias
+  ##  &passwordSecretName. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
+  ## NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this file for 'passwordSecretName')
+  ##
+  ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
+  ## example, if the release name is 'myrelease', the value of name: would be
+  ## 'myrelease-metacat-secrets'.
+  ##
+  passwordsSecret: &passwordSecretName ${RELEASE_NAME}-metacat-secrets
+
+  ## @param global.metacatAppContext The application context to use
+  ## - for example, if your application is hosted at https://mydomain.org, and you define the
+  ## context to be "metacat", then the application may be accessed at: https://mydomain.org/metacat/
+  ## IMPORTANT NOTE: if changing this value, ensure the following paths are also updated to match:
+  ##   readinessProbe.httpGet.path; livenessProbe.httpGet.path
+  ##
+  ## (Note the actual key metacatAppContext is used by the indexer sub-chart, and the anchor
+  ##  &passwordSecretName is used elsewhere in this file. IF YOU OVERRIDE THIS VALUE IN ANOTHER
+  ## VALUES-OVERLAY FILE, YOU ALSO NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this
+  ## file for 'metacatAppContext')
+  ##
+  metacatAppContext: &metacatAppContext metacat
+
+  ## @param global.storageClass default name of the storageClass to use for PVs
+  ##
+  ## If <storageClass> is defined,  storageClassName: <storageClass>
+  ##
+  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
+  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
+  ##   no class (no annotation, or one set equal to "")
+  ##
+  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
+  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
+  ## Instead, inspect your cluster to see what storageClass is set as default:
+  ##    $  kubectl get storageclass
+  ## ...and then explicitly set storageClass to match the name of the default storageclass
+  ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
+  ##
+  ## (Note the actual key storageClass is used by the postgres bitnami sub-chart, and the anchor
+  ##  &storageClassName is used elsewhere in this file. IF YOU OVERRIDE THIS VALUE IN ANOTHER
+  ## VALUES-OVERLAY FILE, YOU ALSO NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this
+  ## file for 'storageClassName')
+  ##
+  storageClass: &storageClassName local-path
+
+  ## @param global.ephemeralVolumeStorageClass Optional global storageClass override
+  ## Can be used to assign a storageClass that has a 'Delete' Reclaim Policy, thus allowing
+  ## ephemeral volumes to be cleaned up automatically (eg "csi-cephfs-sc-ephemeral")
+  ## Set ephemeralVolumeStorageClass: "" to use default StorageClass, if one is set on your cluster
+  ##
+  ephemeralVolumeStorageClass: ""
+
+  ## @param global.sharedVolumeSubPath The subdirectory of the metacat data volume to mount
+  ## Useful where one PV is used for multiple services, so each has its own subtree.
+  ##
+  ## (Note the actual key sharedVolumeSubPath is not used anywhere; only the yaml anchor/alias
+  ##  &sharedVolumeSubPath. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
+  ## NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this file for 'sharedVolumeSubPath')
+  ##
+  sharedVolumeSubPath: &sharedVolumeSubPath ""
+
+## @section Metacat Application-Specific Properties
+##
+## The metacat section can contain any properties that metacat would expect to find in its
+## configuration. These will be mounted in the container as metacat-site.properties,
+## and will override the corresponding values in metacat.properties.
+## The properties that have been pre-populated in this section comprise the minimum set of
+## values needed to run the app and the test suite on a development machine.
+##
+## NOTE that certain credentials must also be provided, via Kubernetes Secrets, in order for
+## metacat to function correctly. These credentials are listed in ./admin/secrets.yaml, in the
+## form of environment variables expected by metacat at runtime. Also see the mappings in the
+## `application.envSecretKeys` property in `metacat.properties`, to determine which metacat
+## property corresponds to each of these environment variables
+##
+metacat:
+  ## @param metacat.application.context see global.metacatAppContext
+  ##
+  application.context: *metacatAppContext
+
+  ## @param metacat.includeMetacatUi Include MetacatUI in the same container as metacat
+  ## A default-skin deployment of MetacatUI will be included in the metacat pod, unless this value
+  ## is set to 'false'.
+  includeMetacatUi: true
+
+  ## @param metacat.auth.administrators A semicolon-separated list of admin ORCID iDs
+  ## (https://orcid.org), denoting the users who may log into metacat with administrator privileges.
+  ## IMPORTANT NOTE: ORCID IDs *MUST* begin with http, *NOT* https! example:
+  ## auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+  ##
+  auth.administrators: ""
+
+  ## @param metacat.database.connectionURI postgres database URI, or lave blank to use sub-chart
+  ##
+  ## Format:    jdbc:postgresql://<postgres-hostname>/<database-name>
+  ##
+  ## NOTES:
+  ## 1. If you are NOT using the included postgresql sub-chart (i.e. `postgresql.enabled: false`),
+  ##    then ensure `<database-name>` is set correctly, and use the following values for
+  ##    `<postgres-hostname>`:
+  ##    *  The fully qualified domain name, for an existing postgresql instance hosted outside the
+  ##       current k8s cluster
+  ##    *  `<servicename>.<namespace>.svc.cluster.local` for an existing postgresql instance within
+  ##       the same k8s cluster
+  ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
+  ##
+  ## 2. If you ARE using the included postgresql sub-chart (i.e. `postgresql.enabled: true`),
+  ##    leave this value unset (`database.connectionURI: ""`). It will then be automatically
+  ##    populated as follows:
+  ##    `<postgres-hostname>` will be set to the current value of `.Release.Name`, prepended to
+  ##                         `-postgresql-hl` (the name of the k8s headless service for the
+  ##                         postgresql statefulset)
+  ##    `<database-name>` will be set to the value of `postgresql.auth.database`
+  ##    (Note: If you are using the postgresql sub-chart but have changed the default name for the
+  ##    headless service, then specify the full database.connectionURI as outlined in (1), above)
+  ##
+  database.connectionURI: ""
+
+  ## @param metacat.guid.doi.enabled Allow users to publish Digital Object Identifiers at doi.org?
+  ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secrets.yaml)
+  ## and either override or use the defaults in metacat.properties for all the entries that begin
+  ## with: "guid.doi."
+  ##
+  guid.doi.enabled: true
+
+  ## @param metacat.server.port The http port exposed externally, if NOT using the ingress
+  ## to allow connections from outside the k8s cluster (e.g. if you're using a loadBalancer
+  ## service or kubectl proxy instead). If not using the ingress, you will also need to specify a
+  ## value for server.https: (either "true" or "false"), depending on whether you're using TLS.
+  ##
+  ## If you ARE using the ingress (i.e. `.Values.ingress.enabled` is `true`), then leave both
+  ## 'server.port' and 'server.https' unset, and they will both be autopopulated, depending upon
+  ## whether you have TLS set up for the ingress
+  ##
+  server.port: ""
+
+  ## @param metacat.server.name The hostname for the server, as exposed by the ingress
+  ## and seen by end users outside the cluster
+  server.name: &external-hostname localhost
+
+  ## @param metacat.solr.baseURL The url to access solr, or leave blank to use sub-chart
+  ##
+  ## Format:    http://<solr-hostname>:<solr-port>/solr
+  ##
+  ## NOTES:
+  ## 1. If you are NOT using the included "dataone-indexer" sub-chart (i.e.
+  ##    `dataone-indexer.enabled: false`), ensure `<solr-port>` is set correctly, and use one of the
+  ##    following values for `<solr-hostname>`:
+  ##    *  The fully qualified domain name, for an existing solr instance hosted outside the
+  ##       current k8s cluster
+  ##    *  `<servicename>` for an existing postgresql instance within the same k8s cluster
+  ##        e.g. "http://metacatbrooke-solr-headless:8983/solr"
+  ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
+  ##        e.g. http://host.docker.internal:8983/solr
+  ##
+  ## 2. If you ARE using the included dataone-indexer sub-chart (i.e.
+  ##    `dataone-indexer.enabled: true`), leave this value unset (`solr.baseURL: ""`). It will
+  ##    then be automatically populated, as follows:
+  ##    `<solr-hostname>` will be set to the current value of `.Release.Name`, prepended to
+  ##                      `-solr-headless` (the name of the k8s headless solr service created
+  ##                      by the dataone-indexer sub-chart)
+  ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart
+  ##
+  solr.baseURL: ""
+
+  ## @param metacat.solr.coreName The solr core (solr standalone) or collection name (solr cloud)
+  ## If you are using the included dataone-indexer sub-chart (i.e. `dataone-indexer.enabled: true`),
+  ## leave this value unset (`solr.coreName: ""`). It will then be automatically populated from the
+  ## subchart settings
+  ##
+  solr.coreName: ""
+
+  ## @param metacat.replication.logdir Location for the replication logs
+  ##
+  replication.logdir: /var/metacat/logs
+
+  ## @param metacat.index.rabbitmq.hostname the hostname of the rabbitmq instance that will be used
+  ##
+  ## Leave blank to autopopulate for use with indexer sub-chart
+  ##
+  index.rabbitmq.hostname: ""
+
+  ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
+  ## at `index.rabbitmq.hostname`.
+  ##
+  index.rabbitmq.username: &rmqUsername metacat-rmq-guest
+
+  ## @section OPTIONAL DataONE Member Node (MN) Parameters
+  ##
+
+  ## @param metacat.cn.server.publiccert.filename optional cert(s) used to validate jwt auth tokens,
+  ## in addition to attempting validation against the cert chain from the cn (see D1Client.CN_URL).
+  ## It may contain a single cert path, or multiple paths, separated by semicolons.
+  ## IMPORTANT NOTE: each file must contain only one public key. Certificate chains containing
+  ## multiple public keys will not work!
+  ##
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONEProdIntCA.pem
+
+  ## @param metacat.dataone.certificate.fromHttpHeader.enabled Enable mutual auth with client certs
+  ## Setting `true` REQUIRED for all DataONE MN functionality -- mutual authentication with x509
+  ## client-side certs. Also see `ingress.d1CaCertSecretName`
+  ##
+  ## IMPORTANT NOTES
+  ## 1. X509 client authentication forwarding using HTTP headers:
+  ## Disables/enables the proxy forwarding of client X509 certificates and subjects from an upstream
+  ## ingress. Do not enable this feature unless:
+  ##    1. Your ingress performing SSL termination and your Metacat server are on the same trusted
+  ##       cluster or trusted private network
+  ##    2. The X509 client certificates have been verified by your upstream trusted ingress, and
+  ##    3. The certificate information in the HTTP headers is set by the upstream trusted ingress.
+  ## Using this feature in any other manner can result in security vulnerabilities.  It is only
+  ## intended for use in containerized systems and their internal networks.
+  ## Please do NOT enable it unless you understand what you are doing.
+  ##
+  ## 2. You will also need to set a shared secret between you trusted upstream ingress and Metacat -
+  ##    see METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY in `./admin/secrets.yaml`.
+  ##    The ingress must be configured to send HTTP requests to Metacat with an "X-Proxy-Key" HTTP
+  ##    header, with this shared secret as a value. See the `ingress` part of the `Networking &
+  ##    Monitoring` section below.
+  ##
+  ## 3. You DO NOT need to configure the Member Node client cert location. Instead, simply add it as
+  ##    a secret: https://github.com/NCEAS/metacat/tree/develop/helm#install-the-client-certificate
+  ##
+  ## (Default value shown - no need to uncomment unless changing from this)
+  ##
+#  dataone.certificate.fromHttpHeader.enabled: false
+
+  ## @param metacat.dataone.autoRegisterMemberNode Automatically push MN updates to CN? (yyyy-MM-dd)
+  ## USE WITH CARE!
+  ## Metacat checks this value upon startup, and will attempt to push the current Member Node (MN)
+  ## configuration (either new registration or updated settings - see below) to the configured
+  ## Coordinating Node (CN), but ONLY if dataone.autoRegisterMemberNode MATCHES TODAY'S DATE (at
+  ## metacat startup), IN UTC (Coordinated Universal Time) ZONE.
+  ## Format: yyyy-MM-dd; e.g. 2023-02-28
+  ##
+#  dataone.autoRegisterMemberNode: 2023-02-28
+
+  ## @param metacat.D1Client.CN_URL the url of the CN
+  ##
+  D1Client.CN_URL: https://cn.dataone.org/cn
+
+  ## @param metacat.dataone.nodeId The unique ID of your DataONE MN - must match client cert subject
+  ## The Node Identifier field is a unique identifier assigned by DataONE to identify this node even
+  ## when the node changes physical locations over time. After Metacat registers with the DataONE
+  ## Coordinating Nodes, the Node Identifier should not be changed. It is CRITICAL that you do NOT
+  ## change the Node Identifier after registration, since that would break the connection with the
+  ## DataONE network. Changing this field should only happen in the rare case in which a new
+  ## Metacat instance is being established to act as the provider for an existing DataONE Member
+  ## Node, in which case the field can be edited to set it to the value of a valid, existing Node
+  ## Identifier.
+  ##
+#  dataone.nodeId: urn:node:CHANGE_ME_TO_YOUR_VALUE!
+
+  ## @param metacat.dataone.subject The "subject" string from your DataONE MN client certificate
+  ## The Node Subject is critical for proper operation of the node. To act as a Member Node in
+  ## DataONE, you must obtain an X.509 certificate that can be used to identify this node and allow
+  ## it to securely communicate using SSL with other nodes and client applications. This
+  ## certificate can be obtained from the DataONE Certificate Authority. Be sure to protect the
+  ## certificate file, since it contains the private key that is used to authenticate this node
+  ## within DataONE.
+  ## Once you have the certificate in hand, use a tool such as openssl to determine the exact
+  ## subject distinguished name in the certificate, and use that to set the Node Subject field.
+  ## NOTE: The actual subject string in your certificate may be in the format:
+  ##           Subject: DC = org, DC = dataone, CN = urn:node:YOUR_VALUE
+  ##       ...but the dataone.subject parameter needs to have this reversed, have all whitespace
+  ##       removed, and wrapped in double quotes, so it becomes:
+  ##           dataone.subject: "CN=urn:node:YOUR_VALUE,DC=dataone,DC=org"
+  ##
+#  dataone.subject: "CN=urn:node:CHANGE_ME_TO_YOUR_VALUE!,DC=dataone,DC=org"
+
+  ## @param metacat.dataone.nodeName short name for the node that can be used in user interfaces
+  ## @param metacat.dataone.nodeDescription What is the node's intended scope and purpose?
+#  dataone.nodeName: My Metacat Node
+#  dataone.nodeDescription: Describe your Member Node briefly.
+
+  ## @param metacat.dataone.contactSubject registered contact for this MN
+  ## IMPORTANT NOTE: Before registering you MN, you will need to first register your contact subject
+  ## identity in the DataONE production environment. First, if you don't already have one, create an
+  ## ORCID (https://orcid.org/). Then use it to log in at https://search.dataone.org/signin, which
+  ## will register you automatically. Then you can use your registered ORCID when you apply for
+  ## an x509 client certificate, and use it as the value of dataone.contactSubject
+  ## NOTE: you must use 'http://...' and NOT 'https://...' for this ORCID value:
+  ##
+#  dataone.contactSubject: http://orcid.org/0000-0002-8888-999X
+
+  ## @param metacat.dataone.nodeSynchronize Enable Synchronization of Metadata to DataONE
+  ## Allows the administrator to decide whether to turn on synchronization with the DataONE
+  ## network. When `false`, the DataONE Coordinating Nodes will not attempt to synchronize at all.
+  ## When `true`, DataONE will periodically contact this node to synchronize all metadata content.
+  ## To be part of the DataONE network, this must be set to `true`, since that allows DataONE to
+  ## receive a copy of the metadata associated with each object in this Metacat system. The switch
+  ## is provided for those rare cases when a node needs to be disconnected from DataONE for
+  ## maintenance or service outages.
+  ## (Default value shown - no need to uncomment unless changing from this)
+  ##
+#  dataone.nodeSynchronize: false
+
+  ## metacat.dataone.nodeSynchronization.schedule: DataONE synchronization schedule (crontab format)
+  ##
+  ## @param metacat.dataone.nodeSynchronization.schedule.year sync schedule year
+  ## @param metacat.dataone.nodeSynchronization.schedule.mon sync schedule month
+  ## @param metacat.dataone.nodeSynchronization.schedule.mday sync schedule day of month
+  ## @param metacat.dataone.nodeSynchronization.schedule.wday sync schedule day of week
+  ## @param metacat.dataone.nodeSynchronization.schedule.hour sync schedule hour
+  ## @param metacat.dataone.nodeSynchronization.schedule.min sync schedule minute
+  ## @param metacat.dataone.nodeSynchronization.schedule.sec sync schedule second
+  ##
+  ## When dataone.nodeSynchronize is set to `true`, DataONE contacts this node using the schedule
+  ## provided in these Synchronization Schedule fields. The defaults below have synchronization
+  ## occurring once every third minute at the 10-second mark of those minutes. The syntax for these
+  ## schedules follows the Quartz Crontab Entry syntax, which provides for many flexible schedule
+  ## configurations. Less frequent updates, such as daily, can be configured by changing the '*' in
+  ## the 'Hours' field to be a concrete hour (such as 11) and the 'Minutes' field to a concrete
+  ## value like '15', which would change the schedule to synchronize at 11:15 am daily.
+  ## (Default values shown - no need to uncomment unless changing from these)
+  ##
+#  dataone.nodeSynchronization.schedule.year: "*"
+#  dataone.nodeSynchronization.schedule.mon: "*"
+#  dataone.nodeSynchronization.schedule.mday: "*"
+#  dataone.nodeSynchronization.schedule.wday: "?"
+#  dataone.nodeSynchronization.schedule.hour: "*"
+#  dataone.nodeSynchronization.schedule.min: "0/3"
+#  dataone.nodeSynchronization.schedule.sec: "10"
+
+  ## @param metacat.dataone.nodeReplicate Accept and Store Replicas?
+  ## Used to indicate that the administrator of this node is willing to allow replica data and
+  ## metadata from other Member Nodes to be stored on this node. We encourage people to allow
+  ## replication to their nodes, thus increasing the scalability and flexibility of the network
+  ## overall.
+  ## (Default value shown - no need to uncomment unless changing from this)
+  ##
+#  dataone.nodeReplicate: false
+
+  ## @param metacat.dataone.replicationpolicy.default.numreplicas # copies to store on other nodes
+  ## @param metacat.dataone.replicationpolicy.default.preferredNodeList Preferred replication nodes
+  ## @param metacat.dataone.replicationpolicy.default.blockedNodeList Nodes blocked from replication
+  ##
+  ## The above three “Default” fields set the default values for the replication policies for data
+  ## and metadata on this node that are generated when System Metadata is not available for an
+  ## object (such as when it originates from a client that is not DataONE compliant).
+  ##
+  ## The Default Number of Replicas determines how many replica copies of the object should be
+  ## stored on other Member Nodes. A value of 0 or less indicates that no replicas should be stored.
+  ##
+  ## In addition, you can specify a list of nodes that are either preferred for use when choosing
+  ## replica nodes, or that are blocked from use as replica nodes. This allows Member Nodes to
+  ## set up bidirectional agreements with partner nodes to replicate data across their sites. The
+  ## values for both Default Preferred Nodes and Default Blocked Nodes is a comma-separated list
+  ## of NodeReference identifiers that were assigned to the target nodes by DataONE.
+  ##
+#  dataone.replicationpolicy.default.numreplicas: "0"
+#  dataone.replicationpolicy.default.preferredNodeList:
+#  dataone.replicationpolicy.default.blockedNodeList:
+
+  ## @section OPTIONAL (but Recommended) Site Map Parameters
+  ##
+
+  ## @param metacat.sitemap.enabled Enable sitemaps to tell search engines which URLs are available
+  ## for crawling (recommended - see https://knb.ecoinformatics.org/knb/docs/sitemaps.html)
+  ##
+  ## NOTE: If you are creating a non-production deployment, leave 'sitemap.enabled: false', and
+  ## the chart will automatically create a robotx.txt file that prevents any search engine indexing
+  ##
+  ## When 'sitemap.enabled: true', Metacat automatically generates a sitemap index file, at:
+  ##
+  ##   https://<server.name>/<application.context>/sitemaps/sitemap_index.xml
+  ##
+  ## ...and creates a robotx.txt file that points to it (see .Values.robots).
+  ##
+  ## The index file contains a list of sitemap.xml files. Each listing is of the form:
+  ##
+  ##   <sitemap>
+  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <lastmod>2024-04-22</lastmod>
+  ##   </sitemap>
+  ##
+  ## ...for 1 or more sitemap files, named sitemap1.xml, sitemap2.xml, etc. These sitemap files
+  ## are also located at:
+  ##
+  ##   https://<server.name>/<application.context>/sitemaps/sitemap1.xml ...etc.
+  ##
+  ## Each sitemap file contains up to 50,000 entries, each pointing to a dataset that is publicly
+  ## readable metadata, is the newest version in a version chain, and has not been archived.
+  ##
+  ## URL entries are of the form:
+  ##
+  ##   <url>
+  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <lastmod>2024-03-29</lastmod>
+  ##   </url>
+  ##
+  sitemap.enabled: false
+
+  ## @param metacat.sitemap.interval Interval (in milliseconds) between rebuilding the sitemap
+  ## default (sitemap.interval: "86400000") is 24 hours.
+  ##
+  sitemap.interval: "86400000"
+
+  ## @param metacat.sitemap.location.base The first part of the URLs listed in sitemap_index.xml
+  ## Either full URL or absolute path. Trailing slash optional.
+  ##
+  ## sitemap_index.xml contains listings pointing to the sitemap(n).xml files. If we set:
+  ##   sitemap.location.base: "/metacatui"
+  ##   (or sitemap.location.base: "https://metacat.dataone.org/metacatui")
+  ##
+  ## ...then each listing will be of the form:
+  ##   <sitemap>
+  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <lastmod>2024-04-22</lastmod>
+  ##   </sitemap>
+  ##
+  ## NOTE: the actual files will always be stored in the <application.context>/sitemaps directory
+  ## (e.g. https://knb.ecoinformatics.org/knb/sitemaps/sitemap1.xml), irrespective of the
+  ## value you set for sitemap.location.base.
+  ##
+  sitemap.location.base: /
+
+  ## @param metacat.sitemap.entry.base base URI of the dataset landing page, listed in the sitemap
+  ## file(s) themselves.
+  ## Either full URI or absolute path. Trailing slash optional.
+  ##
+  ## Each sitemap(n).xml file contains listings pointing to the individual datasets to be crawled.
+  ## If we set:
+  ## sitemap.entry.base: /metacatui/view
+  ##   (or sitemap.entry.base: "https://metacat.dataone.org/metacatui/view")
+  ##
+  ## ...then each listing will be of the form:
+  ##   <url>
+  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <lastmod>2024-03-29</lastmod>
+  ##   </url>
+  ##
+  sitemap.entry.base: /metacatui/view
+
+## @section robots.txt file (search engine indexing)
+## Also see .Values.metacat.sitemap.*
+robots:
+  ## @param robots.userAgent "User-agent:" defined in robots.txt file. Defaults to "*" if not set
+  ## NOTE: this value is ignored, unless 'metacat.sitemap.enabled: true'
+  ##
+  userAgent: ""
+
+  ## @param robots.disallow the "Disallow:" value defined in robots.txt file.
+  ## NOTE: this value is ignored, unless 'metacat.sitemap.enabled: true'
+  ##
+  ## If 'metacat.sitemap.enabled: false', then 'disallow' will always default to:
+  ##     robots.disallow: /
+  ##
+  ## If left unset (i.e. disallow: "") and 'metacat.sitemap.enabled: true', then will default to:
+  ##     robots.disallow: /<metacat.application.context>/d1/mn/v2/packages/
+  ##
+  disallow: ""
+
+
+## @section Metacat Image, Container & Pod Parameters
+##
+
+image:
+  ## @param image.repository Metacat image repository
+  ##
+  repository: ghcr.io/nceas/metacat
+
+  ## @param image.pullPolicy Metacat image pull policy
+  ##
+  pullPolicy: IfNotPresent
+
+  ## @param image.tag Overrides the image tag. Will default to the chart appVersion if set to ""
+  ##
+  tag: ""
+
+  ## @param image.debug Specify if container debugging should be enabled (sets log level to "DEBUG")
+  ## Set to true if you would like to see extra information in metacat/tomcat logs.
+  ## * * WARNING - FOR TESTING ONLY! * * May result in secrets being printed to logs in plain text.
+  ##
+  debug: false
+
+## @param imagePullSecrets [array] Optional list of references to secrets in the same namespace
+## to use for pulling any of the images used by this chart
+imagePullSecrets: []
+
+## @param container.ports Optional list of additional container ports to expose within the cluster
+## This section allows ports to be opened for development, debugging and testing purposes, in
+## addition to the default metacat-web port 8080.
+## Examples:
+##     - containerPort: 5005
+##       name: tc-remote-debug
+##
+## NOTE that port 8080 should not be included here - it is already defined in statefulset.yaml as:
+##     - containerPort: 8080
+##       name: metacat-web
+##
+container:
+  ports: []
+
+## ServiceAccount
+## @param serviceAccount.create Should a service account be created to run Metacat?
+## @param serviceAccount.annotations Annotations to add to the service account
+## @param serviceAccount.name The name to use for the service account.
+##                  If not set and create is true, a name is generated using the fullname template
+##
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+## @param podAnnotations Map of annotations to add to the pods
+##
+podAnnotations: {}
+
+## PodSecurityContext - define common securityContext settings at the pod level for all containers
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param podSecurityContext.enabled Enable security context
+## @param podSecurityContext.fsGroup numerical Group ID for the pod
+## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
+## the group that owns the existing data on that filesystem!
+##
+podSecurityContext:
+  enabled: true
+  fsGroup: 1000
+
+## securityContext holds container-level security attributes that override those at pod level
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param securityContext.runAsNonRoot ensure containers run as a non-root user.
+##                                 Note users must be defined by numerical user id for this to work
+securityContext:
+  runAsNonRoot: true
+
+## @param resources Resource limits for the deployment
+##  We usually recommend not to specify default resources and to leave this as a conscious
+## choice for the user. This also increases chances charts run on environments with limited
+## resources, such as Minikube.
+resources: {}
+
+## @param tolerations Tolerations for pod assignment
+tolerations: []
+
+## @section Metacat Persistence
+##
+persistence:
+  ## @param persistence.enabled Enable metacat data persistence using Persistent Volume Claims
+  ## Always set to 'enabled: true' for production deployments.
+  ##
+  ## For development/testing ONLY: Setting 'enabled: false' will result in the use of a temporary
+  ## 'emptyDir' for saving metacat's data. This means the data saved by metacat WILL BE LOST when
+  ## the pod is deleted!
+  ##
+  enabled: true
+
+  ## @param persistence.storageClass Storage class of backing PV
+  ##
+  ## If <storageClass> is defined,  storageClassName: <storageClass>
+  ##
+  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
+  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
+  ##   no class (no annotation, or one set equal to "")
+  ##
+  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
+  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
+  ## Instead, inspect your cluster to see what storageClass is set as default:
+  ##    $  kubectl get storageclass
+  ## ...and then explicitly set storageClass to match the name of the default storageclass
+  ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
+  ##
+  storageClass: *storageClassName
+
+  ## @param persistence.existingClaim Name of an existing Persistent Volume Claim to re-use
+  ## Set a value for 'existingClaim' only if you want to re-use a Persistent Volume Claim that has
+  ## already been set up by a k8s admin ahead of time.
+  ## Leaving it blank will cause a pvc to be created dynamically using volumeClaimTemplates.
+  ##
+  existingClaim: ""
+
+  ## @param persistence.volumeName Name of an existing Volume to use for volumeClaimTemplate
+  ## Set a value for 'volumeName' only if you want to re-use a Volume that has already been set up
+  ## by a k8s admin ahead of time.
+  ## Leaving it blank will cause a pvc to be created dynamically using volumeClaimTemplates.
+  ##
+  volumeName: ""
+
+  ## @param persistence.subPath The subdirectory of the volume (see persistence.volumeName) to mount
+  ## Useful where one PV is used for multiple services, so each has its own subtree.
+  ##
+  subPath: *sharedVolumeSubPath
+
+  ## @param persistence.accessModes PVC Access Mode for metacat volume
+  ## Metacat always requires read&write access, and dataone-indexer requires read access to the
+  ## same PVC, so the ideal setup is:
+  ##    accessModes:
+  ##    - ReadWriteOnce   # allow only one node (i.e. metacat) to mount in read/write mode
+  ##    - ReadOnlyMany    # allow many nodes (e.g. dataone-indexer, metadig) to mount read-only
+  ##
+  ## However, note that the underlying PersistentVolume (or pv auto-provisioner) must be able to
+  ## provide these modes, in order for the PVC to bind successfully. Since neither NCEAS dev
+  ## cluster nor Rancher Desktop supports RWO+ROX, we have to use RWX:
+  ##   accessModes:
+  ##     - ReadWriteMany
+  ## ...and be careful to ensure that non-metacat services restrict themselves to RO access in their
+  ## own PVC definitions
+  ##
+  accessModes:
+    - ReadWriteMany
+
+  ## @param persistence.size PVC Storage Request for metacat volume
+  ##
+  size: 1Gi
+
+## @section Networking & Monitoring
+##
+
+## Ingress is a collection of rules that allow inbound connections to reach the endpoints defined
+## by a backend. An Ingress can be configured to give services externally-reachable urls, load
+## balance traffic, terminate SSL, offer name based virtual hosting etc.
+##
+ingress:
+  ## @param ingress.enabled Enable or disable the ingress
+  ##
+  enabled: true
+
+  ## @param ingress.className ClassName of the ingress provider in your cluster
+  ##  Inspect available classes in your cluster using:    $ kubectl get ingressclasses
+  ##
+  ## className: "traefik" -- For Rancher Desktop (provided you have traefik enabled:
+  ##     'preferences' -> 'kubernetes' -> 'enable traefik')
+  ## className: "nginx" -- For production, or to use certificates locally. Also:
+  ## - disable traefik ('preferences' -> 'kubernetes' -> uncheck 'enable traefik')
+  ## - install nginx:
+  ##   $  helm upgrade --install ingress-nginx ingress-nginx  \
+  ##        --repo https://kubernetes.github.io/ingress-nginx \
+  ##        --namespace ingress-nginx --create-namespace)
+  ##
+  className: "traefik"
+
+  ## @param ingress.hosts [array] A collection of rules mapping different hosts to the backend.
+  ##        host: The external hostname exposed by the ingress and seen by clients,
+  ##              that is mapped to this ingress via DNS
+  ##        paths: A collection of rules mapping different paths on this host
+  ##              to the backend. For each host, provide mappings to match incoming request paths:
+  ##              path:     the url path used to identify the mapping
+  ##              pathType: determines the interpretation of the Path-matching:
+  ##                        Exact: Matches the URL path exactly.
+  ##                        Prefix: Requires URL to begin with the pattern, not including substrings
+  ##                        (e.g. /foo/bar matches /foo/bar/baz, but does not match /foo/barbaz).
+  ##
+  ## NOTE: All paths will be mapped to port 8080 of the `metacat-hl` headless service
+  ##
+  hosts:
+    - host: *external-hostname
+      paths:
+        - path: "/"
+          pathType: Prefix
+
+  ## @param ingress.annotations Annotations for the ingress
+  ##
+  ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
+  ## client-side certs, provided:
+  ## 1. you are using the Kubernetes open source community version of the nginx ingress
+  ##    (see https://github.com/kubernetes/ingress-nginx )
+  ## 2. you have set ingress.clasName to nginx, and
+  ## 3. you have set up ingress.tls correctly for https access, and
+  ## 4. you have set the correct parameters in the metacat section
+  ##    (see `metacat.dataone.certificate.fromHttpHeader.enabled`, above, for more details)
+  ##
+  annotations: {}
+
+  ## @param ingress.tls The TLS configuration
+  #### example ###
+  ##  tls:
+  ##    - hosts:
+  ##        - *external-hostname
+  ##      secretName: tls-secret
+  tls: []
+
+  ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate chain
+  ## For DataONE Replication -- mutual authentication with x509 client-side certs.
+  ## Also see `metacat.dataone.certificate.fromHttpHeader.enabled`
+  d1CaCertSecretName: d1-ca-chain
+
+## Optional service in addition to the Headless ClusterIP that is required for StatefulSet
+service:
+  ## @param service.enabled Enable another optional service in addition to headless svc
+  enabled: false
+
+  ## @param service.type Kubernetes Service type. Defaults to ClusterIP if not set
+  type: LoadBalancer
+
+  ## @param service.clusterIP IP address of the service. Auto-generated if not set
+  ## Valid values are "None", empty string (""), or a valid IP address. Setting this to "None"
+  ## makes a "headless service" (no virtual IP). Using empty string ("") will auto-generate an IP
+  ##
+  clusterIP: ""
+
+  ## @param service.ports [array] The port(s) to be exposed
+  ##        service.ports.port The port to expose
+  ##        service.ports.name A unique name to identify this port.
+  ##        service.ports.targetPort the name (preferred) or number of the container
+  ##                                 port where traffic will be sent.
+  ##
+  ports:
+    - name: http-port
+      port: 8080
+      targetPort: metacat-web
+
+## LivenessProbe
+## Periodic probe of container liveness. Container will be restarted if the probe fails.
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+##
+## @param livenessProbe.enabled Enable livenessProbe for Metacat container
+## @param livenessProbe.httpGet.path The url path to probe.
+##                Note that the context (first path element) must match the
+##                value of metacat.application.context
+## @param livenessProbe.httpGet.port The named containerPort to probe
+##                as defined in ./templates/statefulset.yaml
+## Optional values:
+## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+##
+livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
+  enabled: true
+  initialDelaySeconds: 45
+  periodSeconds: 15
+  timeoutSeconds: 10
+  httpGet:
+    path: /metacat/
+    port: metacat-web
+
+## ReadinessProbe
+## Periodic probe of container service readiness. If the probe fails, container will be removed
+## from service endpoints (but will not be restarted unless livenessProbe fails)
+##
+## @param readinessProbe.enabled Enable readinessProbe for Metacat container
+## @param readinessProbe.httpGet.path The url path to probe.
+##                Note that the context (first path element) must match the
+##                value of metacat.application.context
+## @param readinessProbe.httpGet.port The named containerPort to probe
+##                as defined in ./templates/statefulset.yaml
+## Optional values:
+## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+##
+readinessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
+  enabled: true
+  initialDelaySeconds: 45
+  periodSeconds: 5
+  timeoutSeconds: 5
+  httpGet:
+    path: /metacat/admin
+    port: metacat-web
+
+## @section Postgresql Sub-Chart
+postgresql:
+  ## @param postgresql.enabled enable the postgresql sub-chart
+  ## set to false if you want to connect to your own existing postgresql deployment (and ensure
+  ## metacat.database.connectionURI is set accordingly).
+  ## Once the postgres container is running, test using:
+  ##   $  kubectl exec -it <postgresql-pod-name> -- psql  -U <username>  -d <databasename>
+  ## (or from a shell in metacat container: psql  -U <username>  -h <pghostname> <databasename>)
+  ##
+  enabled: true
+
+  auth:
+    ## @param postgresql.auth.username Username for accessing the database used by metacat
+    ## For the corresponding password, see POSTGRES_PASSWORD in secrets.yaml
+    ## (These values are also used by metacat to authenticate)
+    ## NOTE: config in postgresql.primary.pgHbaConfiguration must allow the username defined here!
+    ##
+    username: metacat
+
+    ## @param postgresql.auth.database The name of the database used by metacat.
+    ## Make sure metacat.database.connectionURI is using this value
+    ##
+    database: metacat
+
+    ## @param postgresql.auth.existingSecret Secrets location for postgres password
+    ## Typically the existing secrets also used by metacat - see ./admin/secrets.yaml
+    ##
+    existingSecret: *passwordSecretName
+
+    ## @param postgresql.auth.secretKeys.userPasswordKey Identifies metacat db's account password
+    ## within metacat's existing secrets
+    ##
+    secretKeys:
+      userPasswordKey: POSTGRES_PASSWORD
+
+      ## @param postgresql.auth.secretKeys.adminPasswordKey Dummy value - not used (see notes):
+      ## Bitnami expects to find it in our 'existingSecret' secrets location, and fails otherwise
+      ##
+      adminPasswordKey: POSTGRES_PASSWORD
+
+  ## @param postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
+  ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
+  primary:
+    ## override the default pg_hba.conf with our own, to allow password auth, since this is the
+    ## only method metacat currently supports (as of June 2023)
+    ## TYPE       DATABASE      USER          ADDRESS         METHOD
+    pgHbaConfiguration: |
+      host        metacat       metacat       0.0.0.0/0       password
+      host        metacat       metacat       ::0/0           password
+      local       all           all                           trust
+
+    ## @param postgresql.primary.extendedConfiguration Extended configuration, appended to defaults
+    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#allow-settings-to-be-loaded-from-files-other-than-the-default-postgresqlconf
+    ## Must exceed metacat.database.maximumConnections, since some connections will be reserved for
+    ## superuser
+    ##
+    extendedConfiguration: |
+      max_connections = 250
+
+    ## Postgresql persistence
+    ## For explanatory notes, see top-level `persistence` section for metacat, and the bitnami
+    ## postgresql README at https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md
+    ## @param postgresql.primary.persistence.enabled Enable data persistence using PVC
+    ## @param postgresql.primary.persistence.existingClaim Existing PVC to re-use
+    ## @param postgresql.primary.persistence.storageClass Storage class of backing PV
+    ## @param postgresql.primary.persistence.size PVC Storage Request for postgres volume
+    ##
+    persistence:
+      enabled: true
+      storageClass: ""
+      existingClaim: ""
+      size: 1Gi
+
+## @section Tomcat Configuration
+
+## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
+## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
+## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
+## setting memory limits using Kubernetes will have no effect on a Java application, unless you
+## specifically set a maximum heap size (using Java’s -Xmx setting).
+##
+## IMPORTANT NOTE
+## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
+## the memory limit set in Kubernetes. If you set a memory limit in Kubernetes, and Java exceeds
+## that, your container will be killed.
+##
+tomcat:
+  heapMemory:
+    min: ""
+    max: ""
+
+## @section dataone-indexer Sub-Chart
+dataone-indexer:
+  ## @param dataone-indexer.enabled enable the dataone-indexer sub-chart
+  ## set to false if you want to connect to your own existing dataone-indexer deployment
+  ##
+  enabled: true
+
+  persistence:
+    ## @param dataone-indexer.persistence.subPath The subdirectory of the volume to mount
+    ## (see persistence.volumeName)
+    ## Useful where one PV is used for multiple services, so each has its own subtree.
+    ##
+    subPath: *sharedVolumeSubPath
+
+  rabbitmq:
+    auth:
+      ## @param dataone-indexer.rabbitmq.auth.username set the username that rabbitmq will use
+      ##
+      username: *rmqUsername
+      ## @param dataone-indexer.rabbitmq.auth.existingPasswordSecret location of rabbitmq password
+      ## (must contain a value for `rabbitmq-password` key)
+      ##
+      existingPasswordSecret: *passwordSecretName
+
+  solr:
+    ## @param dataone-indexer.solr.javaMem Java memory options to pass to the Solr container
+    ##
+    javaMem: "-Xms2g -Xmx2g"
+
+    ## @param dataone-indexer.solr.customCollection name of the solr collection to use
+    ## (optional override of indexer-assigned name). Do not leave blank
+    ## NOTE: if you change this value after having run metacat for the first time, you may need
+    ## to delete and re-create the PVCs and PVs used by solr, in order for the new settings to
+    ## become effective
+    ##
+    customCollection: metacat-index
+
+    ## @param dataone-indexer.solr.coreNames Solr core names to be created
+    ## (optional override of indexer-assigned names)
+    ## NOTE: if you change this value after having run metacat for the first time, you may need
+    ## to delete and re-create the PVCs and PVs used by solr, in order for the new settings to
+    ## become effective
+    ##
+    coreNames:
+      - metacat-core
+
+    extraVolumes:
+      ## @param dataone-indexer.solr.extraVolumes[0].name DO NOT EDIT - referenced by sub-chart
+      - name: solr-config
+        configMap:
+          ## @param dataone-indexer.solr.extraVolumes[0].configMap.name see notes in values.yaml
+          ## This is the name of the configMap created by the dataone-indexer. It has to be here
+          ## because it is passed directly to the dataone-indexer subchart's own solr subchart via
+          ## .Values, so cannot be set automatically. Unfortunate but true.
+          ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
+          ## example, if the release name is 'myrelease', the value of name: would be
+          ## 'myrelease-indexer-configfiles'.
+          name: ${RELEASE_NAME}-indexer-configfiles
+          ## @param dataone-indexer.solr.extraVolumes[0].configMap.defaultMode DO NOT EDIT
+          defaultMode: 0777

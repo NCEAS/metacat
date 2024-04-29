@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "metacat.fullname" . }}-hl
+  labels:
+    {{- include "metacat.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  # The StatefulSet’s governing Service must be headless.
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - port: 8080
+      name: metacat-svc-web
+  selector:
+    {{- include "metacat.selectorLabels" . | nindent 4 }}

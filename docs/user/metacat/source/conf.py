@@ -12,12 +12,15 @@
 # serve to show the default.
 
 import sys, os, configparser, io
+import sphinx
+from itertools import chain
 
 #Read the release version from the metacat.properties file
-prop = '[dummy]\n' + open('../../../../lib/metacat.properties').read()
-config = configparser.SafeConfigParser()
-config.readfp(io.StringIO(prop))
-#print config.get('dummy', 'application.metacatVersion')
+config = configparser.ConfigParser()
+with open("../../../../lib/metacat.properties") as lines:
+    lines = chain(("[dummy]",), lines)
+    config.read_file(lines)
+#print("Metacat version: ", config.get('dummy', 'application.metacatVersion'))
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -28,6 +31,7 @@ config.readfp(io.StringIO(prop))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+#extensions = ['sphinxcontrib.mermaid']
 extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
@@ -101,13 +105,27 @@ pygments_style = 'sphinx'
 #html_theme = 'default'
 html_theme = 'metacatui'
 
+# When linking .CSS stylesheets with custom themes in sphinx versions < 7.0.0
+# the 'style' variable is used (and marked for deprecation)
+#
+# Starting sphinx version > 7.0.0, 'styles' is used, which is not backwards
+# compatible - so we need to add python code here to determine the sphinx
+# version, and then use the correct syntax to load the static .CSS stylesheets
+# (ex. metacatui.css)
+sphinx_version = list(map(int, sphinx.__version__.split('.')[:2]))
+use_deprecated_style_script = sphinx_version < [7, 0]
+
+html_context = {
+    'use_deprecated_style_script': use_deprecated_style_script
+}
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ['themes',]
+html_theme_path = ['themes']
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

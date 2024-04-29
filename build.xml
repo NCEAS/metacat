@@ -27,13 +27,15 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
-    <property name="metacatui-tag" value="2.23.0"/>
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2"/>
 
     <property environment="env"/>
     <property file="build.properties"/><!-- USER SPECIFIC PROPS -->
-    <property name="java.target.version" value="1.8"/> <!-- the target version for java compilation-->
-    <property name="java.source.version" value="1.8"/> <!-- the source code version for java compilation-->
+    <!-- the target version for java compilation-->
+    <property name="java.target.version" value="${java.target}"/>
+    <!-- the source code version for java compilation-->
+    <property name="java.source.version" value="${java.target}"/>
+    <property name="metacatui-tag" value="${metacatui.tag}"/>
 
     <!-- Configure the maven2 ant tasks -->
     <path id="maven-ant-tasks.classpath" path="lib/maven-ant-tasks-2.1.0.jar"/>
@@ -91,6 +93,12 @@
         </sequential>
     </macrodef>
 
+    <!-- added to silence: "warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last;
+        set to false for repeatable builds" since ant 9. See https://ant.apache.org/manual/Tasks/javac.html -->
+    <presetdef name="javac">
+        <javac includeantruntime="false" />
+    </presetdef>
+
     <!-- get metacatUI project -->
     <target name="getMetacatUI" depends="init">
         <git-clone-pull repository="${metacatui.git.repository.url}" dest="${metacatui.build.dir}"
@@ -108,11 +116,6 @@
     <taskdef resource="axis-tasks.properties"
              classpathref="axis.ant.classpath"/>
 
-    <!-- Determine if perl should be built-->
-    <condition property="build.perl">
-        <equals arg1="${make.perl.code}" arg2="true"/>
-    </condition>
-
     <available file="${build.tomcat.dir}/common/lib/servlet-api.jar"
                property="tomcat.common.exists"/>
 
@@ -120,7 +123,6 @@
         Attempt to find and set the path to Maven
 
         Prefers, in this order:
-
          - The value set in build.properties. The reason is that this
           build file loads all properties from build.properties and properties are
           immutable, so it's easiest to just use the same precedence chain.
@@ -252,7 +254,7 @@
     <target name="init" depends="config, build-metacat-common" unless="init.called">
 
         <property name="libdir.mvn" value="lib/maven"/>
-        <delete dir="${libdir.mvn}"></delete>
+        <delete dir="${libdir.mvn}"/>
         <mkdir dir="${libdir.mvn}"/>
 
         <path id="base.classpath">
@@ -459,6 +461,7 @@
         <property name="dist.dir" value="dist"/>
         <property name="ver.dir" value="${dist.dir}/${name}-${release}"/>
         <property name="ver.src" value="${ver.dir}/src"/>
+        <property name="ver.test" value="${ver.dir}/test"/>
         <property name="test.dir" value="${dist.dir}/test"/>
         <!-- directories for creating a Harvest List Editor distribution -->
         <property name="dist.dir.hle" value="disthle"/>
@@ -526,7 +529,7 @@
     <target name="resolveDependencies" depends="init" description="retrieve dependencies with maven">
         <echo>Moving Maven dependencies (${dependency.fileset}) to ${libdir.mvn}</echo>
         <!-- Clear out mvn dir -->
-        <delete dir="${libdir.mvn}"></delete>
+        <delete dir="${libdir.mvn}"/>
         <!-- Copy all dependencies to the correct location. -->
         <copy todir="${libdir.mvn}">
             <fileset refid="dependency.fileset"/>
@@ -606,13 +609,6 @@
         <delete file="${build.dir}/${name}-client.jar"/>
         <jar jarfile="${build.dir}/${name}-client.jar"
              basedir="${build.dest}" includes="**/metacat/client/"/>
-    </target>
-
-    <target name="advancedsearchjar" depends="compile"
-            description="Compiles and jars advanced search Java code to advancedsearch.jar in build dir">
-        <delete file="${build.dir}/advancedsearch.jar"/>
-        <jar jarfile="${build.dir}/advancedsearch.jar"
-             basedir="${build.dest}" includes="**/metacat/advancedsearch/"/>
     </target>
 
     <target name="harvester" depends="client"
@@ -904,7 +900,7 @@
     
     <target name="warPrepare" depends="documentation,warPrepareNoDocs" />
     
-    <target name="warPrepareNoDocs" depends="cgiPrepare,jar,clientjar,harvesterjar,testPrepare">
+    <target name="warPrepareNoDocs" depends="jar,clientjar,harvesterjar,testPrepare">
         <property name="war.lib" value="${build.war}/lib"/>
         <property name="war.classes" value="${build.war}/classes"/>
         <property name="war.webinf" value="${build.war}/WEB-INF"/>
@@ -938,7 +934,7 @@
             </fileset>
             <fileset dir="${libdir.mvn}"/>
         </copy>
-        <copy file="lib/web.xml.tomcat6" tofile="${build.war}/web.xml"/>
+        <copy file="lib/web.xml" tofile="${build.war}/web.xml"/>
         <copy file="lib/metacat.properties" todir="${war.webinf}"
               filtering="yes"/>
         <copy todir="${war.webinf}" filtering="yes">
@@ -965,8 +961,6 @@
             </fileset>
         </copy>
         <copy file="lib/log4j2.properties" todir="${war.classes}"
-              filtering="yes"/>
-        <copy file="lib/hazelcast.xml" todir="${war.webinf}"
               filtering="yes"/>
         <copy todir="${war.context}" filtering="no">
             <fileset dir="lib">
@@ -1010,10 +1004,7 @@
               file="src/perl/Metacat/blib/lib/auto/Metacat/autosplit.ix"
               failonerror="false"/>
 
-        <copy file="src/perl/register-dataset.cgi"
-              todir="${war.context.cgi}"/>
         <copy file="src/perl/ldapweb.cgi" todir="${war.context.cgi}"/>
-        <copy file="src/perl/Metacat/Metacat.pm" todir="${war.lib}"/>
 
         <!-- registry cgi section -->
         <!-- TODO SCW: use relative paths to grab these instead of copying to tmp,
@@ -1034,16 +1025,6 @@
                 <!-- SCW: Copy all files -->
             </fileset>
         </copy>
-    </target>
-
-    <target name="cgiPrepare" if="build.perl">
-        <exec dir="src/perl/Metacat/" executable="make">
-            <arg value="clean"/>
-        </exec>
-        <exec dir="src/perl/Metacat/" executable="perl">
-            <arg value="Makefile.PL"/>
-        </exec>
-        <exec dir="src/perl/Metacat/" executable="make"/>
     </target>
 
     <target name="testPrepare"
@@ -1131,13 +1112,38 @@
         </java>
     </target>
 
-    <target name="test" depends="testprep"
-            description="Uses the ant junit task to run all JUnit tests">
+    <!-- Common list of tests included/excluded by default from test runs -->
+    <patternset id="test.common.includes.excludes">
+        <include name="**/*.class"/>
 
-        <!-- use the ant "junit" task to run JUnit tests. -->
+        <!-- * * * exclude tests known to fail without replication/doi setup -->
+        <exclude name="**/MNodeReplicationTest.class" />
+        <exclude name="**/MultipleDOIShouldersIT.class" />
+        <exclude name="**/OstiDOIServiceIT.class" />
+
+        <!-- other valid test cases excluded for various reasons (e.g. credentials needed) -->
+        <exclude name="**/ClientViewHelperTest.class"/>
+        <exclude name="**/MultiThreadClientIT.class"/>
+
+        <!-- these are not test cases -->
+        <exclude name="**/*$*.class"/>
+        <exclude name="**/MCTestCase.class"/>
+        <exclude name="**/MockCNode.class"/>
+        <exclude name="**/MockObjectPathMap.class"/>
+        <exclude name="**/MockReplicationMNode.class"/>
+        <exclude name="**/QueryRunner.class"/>
+        <exclude name="**/WrappingServletInputStream.class"/>
+    </patternset>
+
+    <target name="test" depends="testprep"
+            description="Runs all unit and integration tests, except those covered by the 'test-replicate-doi' target">
+
         <junit printsummary="yes" haltonfailure="no" fork="yes"
                haltonerror="no">
             <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <jvmarg value="-Xshare:off"/>
+            <jvmarg line="--add-opens java.base/java.util=ALL-UNNAMED"/>
+            <jvmarg line="--add-opens java.base/java.lang=ALL-UNNAMED"/>
             <classpath>
                 <path refid="test.classpath"/>
                 <fileset dir="${build.dir}">
@@ -1153,22 +1159,89 @@
 
             <batchtest fork="yes" todir="${build.dir}">
                 <fileset dir="${build.tests}">
-                    <include name="**/*.class"/>
-                    <exclude name="**/MockReplicationMNode.class"/>
-                    <exclude name="**/MCTestCase.class"/>
-                    <exclude name="**/ClientViewHelperTest.class"/>
-                    <!-- these are not test cases -->
-                    <exclude name="**/MockCNode.class"/>
-                    <!--<exclude name="**/D1NodeServiceTest.class" />-->
-                    <exclude name="**/D1NodeServiceTest$*.class"/>
-                    <exclude name="**/QueryRunner.class"/>
-                    <exclude name="**/MockObjectPathMap.class"/>
-                    <exclude name="**/HzObjectPathMapTest$1.class"/>
-                    <exclude name="**/HzObjectPathMapTest$2.class"/>
-                    <exclude name="**/MultiThreadClientIT.class"/>
-                    <exclude name="**/MultiThreadClientIT$1.class"/>
-                    <exclude name="**/AuthUtilIT.class"/>
-                    <exclude name="**/WrappingServletInputStream.class"/>
+                    <patternset refid="test.common.includes.excludes"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <tstamp>
+            <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa"/>
+        </tstamp>
+        <echo>Tests completed at ${NOW}</echo>
+    </target>
+
+    <target name="test-fast" depends="testprep"
+            description="Runs fast unit and integration tests (~60 sec max). WARNING: omits tests named (*IT.class), and those covered by 'test-replicate-doi' target">
+
+        <junit printsummary="yes" haltonfailure="no" fork="yes"
+               haltonerror="no">
+            <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <jvmarg value="-Xshare:off"/>
+            <jvmarg line="--add-opens java.base/java.util=ALL-UNNAMED"/>
+            <jvmarg line="--add-opens java.base/java.lang=ALL-UNNAMED"/>
+            <classpath>
+                <path refid="test.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-client.jar"/>
+                    <include name="harvester.jar"/>
+                    <include name="${name}-junittests.jar"/>
+                </fileset>
+                <pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
+            </classpath>
+
+            <formatter type="plain"/>
+
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${build.tests}">
+                    <patternset refid="test.common.includes.excludes"/>
+
+                    <!-- * * * exclude all named Integration Tests (*IT.class) -->
+                    <!--       All integration tests that are named *Test.class will still run -->
+                    <exclude name="**/*IT.class" />
+
+                    <!-- * * * exclude valid but slow tests (> 60 seconds run time) -->
+                    <exclude name="**/IdentifierManagerTest.class" />
+                    <exclude name="**/InlineDataAccessTest.class" />
+                    <exclude name="**/MetacatClientTest.class" />
+                    <exclude name="**/OnlineDataAccessTest.class" />
+                    <exclude name="**/RegisterDOITest.class" />
+                    <exclude name="**/SolrQueryAccessFilterTest.class" />
+                </fileset>
+            </batchtest>
+        </junit>
+        <tstamp>
+            <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa"/>
+        </tstamp>
+        <echo>Tests completed at ${NOW}</echo>
+    </target>
+
+    <target name="test-replicate-doi" depends="testprep"
+        description="Runs ONLY the integration tests that fail without replication/DOI setup: MNodeReplicationTest; MultipleDOIShouldersIT; OstiDOIServiceIT">
+
+        <junit printsummary="yes" haltonfailure="no" fork="yes"
+               haltonerror="no">
+            <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <jvmarg value="-Xshare:off"/>
+            <jvmarg line="--add-opens java.base/java.util=ALL-UNNAMED"/>
+            <jvmarg line="--add-opens java.base/java.lang=ALL-UNNAMED"/>
+            <classpath>
+                <path refid="test.classpath"/>
+                <fileset dir="${build.dir}">
+                    <include name="${name}.jar"/>
+                    <include name="${name}-client.jar"/>
+                    <include name="harvester.jar"/>
+                    <include name="${name}-junittests.jar"/>
+                </fileset>
+                <pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
+            </classpath>
+
+            <formatter type="plain"/>
+
+            <batchtest fork="yes" todir="${build.dir}">
+                <fileset dir="${build.tests}">
+                    <include name="**/MNodeReplicationTest.class" />
+                    <include name="**/MultipleDOIShouldersIT.class" />
+                    <include name="**/OstiDOIServiceIT.class" />
                 </fileset>
             </batchtest>
         </junit>
@@ -1187,6 +1260,9 @@
         <junit printsummary="yes" haltonfailure="no" fork="yes"
                haltonerror="no" showoutput="yes">
             <jvmarg value="-Dfile.encoding=UTF-8"/>
+            <jvmarg value="-Xshare:off"/>
+            <jvmarg line="--add-opens java.base/java.util=ALL-UNNAMED"/>
+            <jvmarg line="--add-opens java.base/java.lang=ALL-UNNAMED"/>
             <classpath>
                 <path refid="test.classpath"/>
                 <fileset dir="${build.dir}">
@@ -1345,11 +1421,15 @@
             description="generates Javadoc API documentation and Admin Guide">
     </target>
 
-    <target name="admindoc" depends="prepare">
+    <target name="admindoc" depends="prepare"
+            description="build sphinx-RST-based admin guide - see inline comments for requirements">
         <!-- Build the administrator's guide, which is a Sphinx RST project
-             For this to succeed, you must have Sphinx installed on your machine
-             See: http://sphinx.pocoo.org/ for details
-             And you must also have the 'make' build tool installed
+             For this to succeed, you must have the following installed on your machine:
+             * make
+             * python3
+             * graphviz      (e.g. `brew install graphviz`)
+             * sphinx-build  (e.g. `brew install sphinx-doc`)
+             See: https://www.sphinx-doc.org/en/master/usage/installation.html for more details.
         -->
         <exec dir="${docdir}/user/metacat" executable="make">
             <arg value="plantuml"/>
@@ -1382,7 +1462,7 @@
         <mkdir dir="${ver.dir}"/>
         <copy todir="${ver.dir}">
             <fileset dir="."
-                     excludes="**/CVS* **/.#* src/** test/** build/** docs/** ${dist.dir}/** ${dist.dir.hle}/** metacat*.tar.gz metacat*.tar metacat*.zip"/>
+                     excludes="**/.* **/.*/** src/** test/** build*/** target/** helm/** docker/** docs/** ${dist.dir}/** ${dist.dir.hle}/** metacat*.tar.gz metacat*.tar metacat*.zip"/>
         </copy>
         <copy todir="${ver.dir}" file="build.xml"/>
         <copy todir="${ver.dir}" file="build.properties"/>
@@ -1400,7 +1480,7 @@
             <fileset dir="${build.dir}/src"/>
         </copy>
 
-        <mkdir dir="${ver.dir}/tests/servertestfiles"/>
+        <mkdir dir="${ver.dir}/test/servertestfiles"/>
         <copy todir="${ver.dir}/test/servertestfiles">
             <fileset dir="./test/servertestfiles"/>
         </copy>
@@ -1431,12 +1511,34 @@
         <copy todir="${ver.src}">
             <fileset dir="./src"/>
         </copy>
+        <copy todir="${ver.test}">
+            <fileset dir="${testdir}"/>
+        </copy>
+        <mkdir dir="${ver.dir}/docker"/>
+        <copy todir="${ver.dir}/docker">
+            <fileset dir="./docker">
+                <exclude name="**/.*/**"/>
+                <exclude name="**/.*"/>
+                <exclude name="*/*gz"/>
+            </fileset>
+        </copy>
+        <mkdir dir="${ver.dir}/helm"/>
+        <copy todir="${ver.dir}/helm">
+            <fileset dir="./helm">
+                <exclude name="**/.*/**"/>
+                <exclude name="**/.*"/>
+                <exclude name="charts/**"/>
+                <exclude name="admin/**"/>
+            </fileset>
+        </copy>
         <delete file="./${name}-src-${release}.zip"/>
         <zip zipfile="./${name}-src-${release}.zip"
-             basedir="${dist.dir}" excludes="metacat*.tar.gz,metacat*.zip"/>
+             basedir="${ver.dir}"
+             excludes="**/.*,**/.*/**,**/metacat*.tar.gz,metacat*.zip,metacat*.tar,docs/**,**/target/**"/>
         <delete file="./${name}-src-${release}.tar.gz"/>
         <tar tarfile="./${name}-src-${release}.tar"
-             basedir="${dist.dir}" excludes="metacat*.tar.gz,metacat*.zip"/>
+             basedir="${ver.dir}"
+             excludes="**/.*,**/.*/**,**/metacat*.tar.gz,metacat*.zip,metacat*.tar,docs/**,**/target/**"/>
         <gzip zipfile="./${name}-src-${release}.tar.gz"
               src="./${name}-src-${release}.tar"/>
         <delete file="./${name}-src-${release}.tar"/>
@@ -1555,7 +1657,7 @@
     <target name="dist-metacat-index" depends="init, build-metacat-index"
             description="Copy metacat-index.war to dist folder">
         <copy tofile="${dist.dir}/metacat-index.war">
-            <fileset dir="metacat-index/target" includes="metacat-index*.war"></fileset>
+            <fileset dir="metacat-index/target" includes="metacat-index*.war"/>
         </copy>
     </target>
 

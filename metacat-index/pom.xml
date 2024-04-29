@@ -1,76 +1,75 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>edu.ucsb.nceas.metacat.index</groupId>
-	<artifactId>metacat-index</artifactId>
-	<packaging>war</packaging>
-	<version>2.19.1</version>
-	<name>metacat-index</name>
-	<url>http://maven.apache.org</url>
-	
-	<properties>
-        <d1_cn_index_processor_version>2.3.14</d1_cn_index_processor_version>
-        <metacat_common_version>2.19.1</metacat_common_version>
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>edu.ucsb.nceas.metacat.index</groupId>
+    <artifactId>metacat-index</artifactId>
+    <packaging>war</packaging>
+    <version>3.0.0</version>
+    <name>metacat-index</name>
+    <url>http://maven.apache.org</url>
+    
+    <properties>
+        <metacat_common_version>3.0.0</metacat_common_version>
     </properties>
-	
-	<repositories>
-		<repository>
-			<id>dataone.org</id>
-			<url>https://maven.dataone.org</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-                        <id>central maven repo</id>
-                        <name>central maven repo https</name>
-                        <url>https://repo.maven.apache.org/maven2</url>
-                </repository>
-	</repositories>
+    
+    <repositories>
+        <repository>
+            <id>dataone.org</id>
+            <url>https://maven.dataone.org</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>central maven repo</id>
+            <name>central maven repo https</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+          </repository>
+    </repositories>
 
-	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
-			<type>jar</type>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>edu.ucsb.nceas.metacat.common</groupId>
-			<artifactId>metacat-common</artifactId>
-			<version>${metacat_common_version}</version>
-			<type>jar</type>
-		</dependency>
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>2.5</version>
-			<type>jar</type>
-			<scope>provided</scope>
-		</dependency>
-		 <dependency>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.1</version>
+            <type>jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.ucsb.nceas.metacat.common</groupId>
+            <artifactId>metacat-common</artifactId>
+            <version>${metacat_common_version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
+            <type>jar</type>
+            <scope>provided</scope>
+        </dependency>
+         <dependency>
         <groupId>org.dataone</groupId>
-        <artifactId>d1_cn_index_processor</artifactId>
-        <version>${d1_cn_index_processor_version}</version>
+        <artifactId>dataone-index-worker</artifactId>
+        <version>3.0.0</version>
         <type>jar</type>
         <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                 </exclusion>
-				<exclusion>
-					<groupId>com.hp.hpl.jena</groupId>
-					<artifactId>jena</artifactId>
-				</exclusion>				
-				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-				</exclusion>
-				<exclusion>
+                <exclusion>
+                    <groupId>com.hp.hpl.jena</groupId>
+                    <artifactId>jena</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpclient</artifactId>
                 </exclusion>
@@ -82,46 +81,6 @@
                      <groupId>log4j</groupId>
                       <artifactId>log4j</artifactId>
                  </exclusion>
-                 <exclusion>
-                     <groupId>org.springframework</groupId>
-                     <artifactId>spring-core</artifactId>
-                 </exclusion>
-                 <exclusion>
-                     <groupId>org.springframework</groupId>
-                     <artifactId>spring-context</artifactId>
-                 </exclusion>
-                 <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-aop</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-beans</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-context-support</artifactId>
-                </exclusion>
-            <exclusion>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-jdbc</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-orm</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-test</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-tx</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-web</artifactId>
-            </exclusion>
         </exclusions>
         </dependency>
         <dependency>
@@ -134,7 +93,7 @@
             <artifactId>commons-codec</artifactId>
             <version>1.11</version>
         </dependency>
-		<dependency>
+        <dependency>
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
             <version>2.3.2</version>
@@ -145,63 +104,13 @@
                   </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-aop</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context-support</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-orm</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-tx</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>5.3.33</version>
-        </dependency>
-	</dependencies>
+    </dependencies>
 
-	<build>
-		<plugins>
+    <build>
+        <plugins>
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>2.6</version>
+                <version>3.4.0</version>
                 <configuration>
                     <packagingExcludes>
                         WEB-INF/classes/solr-home/core.properties
@@ -210,7 +119,7 @@
            </plugin>
            <plugin>
             <artifactId>maven-resources-plugin</artifactId>
-            <version>2.6</version>
+            <version>3.3.1</version>
             <executions>
                 <execution>
                     <id>copy-resources</id>
@@ -221,12 +130,12 @@
                     </goals>
                     <configuration>
                         <outputDirectory>target/classes/solr-home</outputDirectory>
-                        <resources>          
+                        <resources>
                             <resource>
                                 <directory>../metacat-common/src/main/resources/solr-home</directory>
                                 <filtering>true</filtering>
                             </resource>
-                        </resources>              
+                        </resources>
                     </configuration> 
                  </execution>
                  <execution>
@@ -238,7 +147,7 @@
                     </goals>
                     <configuration>
                         <outputDirectory>target/classes</outputDirectory>
-                        <resources>          
+                        <resources>
                             <resource>
                                 <directory>../metacat-common/src/main/resources/solr-home/conf</directory>
                                 <excludes>
@@ -252,30 +161,30 @@
                  </execution>
                 </executions>
             </plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-		
-			<plugin>
-				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>2.6</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>integration-test</goal>
-							<goal>verify</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
+        
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.2.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
-		</plugins>
-	</build>
+        </plugins>
+    </build>
 
 </project>

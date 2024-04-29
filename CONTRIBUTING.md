@@ -102,7 +102,9 @@ the main branch is ready for work on the next release.
 ## Testing
 
 **Unit and integration tests**. Metacat has a full suite of unit tests and
-integration tests in the `tests` subdirectory.
+integration tests in the `tests` subdirectory. Please refer to the
+[test/README.md](./test/README.md) file for more information.
+
 Any new code developed should include a robust set of unit tests for each public
 method, as well as integration tests from new feature sets.  Tests should fully
 exercise the feature to ensure that it responds correctly to both good data inputs

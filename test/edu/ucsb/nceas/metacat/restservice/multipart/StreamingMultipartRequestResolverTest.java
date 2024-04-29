@@ -84,6 +84,7 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
      * Release any objects after tests are complete
      */
     public void tearDown() {
+        super.tearDown();
     }
 
     /**

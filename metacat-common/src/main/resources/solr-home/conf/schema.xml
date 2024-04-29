@@ -153,8 +153,8 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
         <field name="checksum"        	type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="archived"        type="boolean"  indexed="true" stored="true" multiValued="false"/>
         <field name="checksumAlgorithm" type="string" indexed="true" stored="true"/>
-        <field name="dateUploaded"    type="tdate"     indexed="true" stored="true" multiValued="false"/>
-        <field name="dateModified"    type="tdate"     indexed="true" stored="true" multiValued="false"/>
+        <field name="dateUploaded"    type="date"     indexed="true" stored="true" multiValued="false"/>
+        <field name="dateModified"    type="date"     indexed="true" stored="true" multiValued="false"/>
         <field name="submitter"       type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="rightsHolder"    type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="authoritativeMN"       	type="string"   indexed="true" stored="true" multiValued="false"/>
@@ -164,7 +164,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
         <field name="blockedReplicationMN"  	type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="replicaMN"      		type="string"   indexed="true" stored="true" multiValued="true"/>
 				<field name="replicationStatus"     type="string"   indexed="true" stored="true" multiValued="true"/>
-        <field name="replicaVerifiedDate" 	type="tdate"    indexed="true" stored="true" multiValued="true"/>
+        <field name="replicaVerifiedDate" 	type="date"    indexed="true" stored="true" multiValued="true"/>
         <field name="datasource"       		type="string"  indexed="true" stored="true" multiValued="false"/>
         <field name="obsoletes"       		type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="obsoletedBy"      		type="string"   indexed="true" stored="true" multiValued="false"/>
@@ -200,13 +200,13 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
         <field name="westBoundCoord"           type="tfloat"     multiValued="false" indexed="true" stored="true"/>
         <field name="eastBoundCoord"           type="tfloat"     multiValued="false" indexed="true" stored="true"/>
         <field name="namedLocation"            type="string"    multiValued="true" indexed="true" stored="true" />
-        <field name="beginDate"                type="tdate"      multiValued="false" indexed="true" stored="true" />
-        <field name="endDate"                  type="tdate"      multiValued="false" indexed="true" stored="true" />
+        <field name="beginDate"                type="date"      multiValued="false" indexed="true" stored="true" />
+        <field name="endDate"                  type="date"      multiValued="false" indexed="true" stored="true" />
         <field name="title"                    type="text_general"    multiValued="false" indexed="true" stored="true" />
         <field name="scientificName"           type="string"    multiValued="true" indexed="true" stored="true" />
         <field name="relatedOrganizations"     type="string"    multiValued="true" indexed="true" stored="true" />
-        <field name="datePublished"            type="tdate"      multiValued="false" indexed="true" stored="true" />
-        <field name="pubDate" 				   type="tdate" 							indexed="true" stored="true"/>
+        <field name="datePublished"            type="date_range"      multiValued="false" indexed="true" stored="true" />
+        <field name="pubDate"                  type="date_range"    indexed="true" stored="true"/>
 
 		<field name="investigator" 		type="string" 	indexed="true" stored="true" multiValued="true"/>
 		<field name="investigatorText" 	type="text_general" 	indexed="true" stored="false" multiValued="true"/>
@@ -220,7 +220,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
         <field name="geoform" 			type="string" 	indexed="true" stored="true"/>
         <field name="presentationCat" 	type="string" 	indexed="true" stored="true"/>
         <field name="purpose" 			type="text_general" 	indexed="true" stored="true"/>
-        <field name="updateDate" 		type="tdate" 	indexed="true" stored="true"/>
+        <field name="updateDate" 		type="date" 	indexed="true" stored="true"/>
         <field name="edition" 			type="text_general" 	indexed="true" stored="true"/>
         <field name="dataUrl" 			type="string" 	indexed="false" stored="true"/>
         <field name="originator" 		type="string" 	indexed="true" stored="true" multiValued="true"/>
@@ -252,6 +252,13 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
 
         <field name="decade" 			type="string" 	indexed="true" stored="true"/>
         <field name="gcmdKeyword" 		type="text_general" 	indexed="true" stored="true" multiValued="true"/>
+
+        <field name="licenseName"      type="string"    indexed="true" stored="true" multiValued="true"/>
+        <field name="licenseNameText"   type="text_general"   indexed="true" stored="false" multiValued="true"/>
+        <field name="licenseDescription"      type="string"    indexed="true" stored="true" multiValued="true"/>
+        <field name="licenseDescriptionText"   type="text_general"   indexed="true" stored="false" multiValued="true"/>
+        <field name="licenseUrl"      type="string"   indexed="false" stored="true" multiValued="true"/>
+
 
         <!-- these are ornl daac fields, may not be populated for nbii, but are required to be here for indexing purpose-->
         <field name="project" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
@@ -363,7 +370,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
 	<dynamicField name="*_bm" type="boolean" indexed="true" stored="true" multiValued="true"/>
 	<dynamicField name="*_fm" type="tfloat" indexed="true" stored="true" multiValued="true"/>
 	<dynamicField name="*_dm" type="tdouble" indexed="true" stored="true" multiValued="true"/>
-	<dynamicField name="*_dtm" type="tdate" indexed="true" stored="true" multiValued="true"/>
+	<dynamicField name="*_dtm" type="date" indexed="true" stored="true" multiValued="true"/>
 
    
    <dynamicField name="*_i"  type="int"    indexed="true"  stored="true"/>
@@ -394,7 +401,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
    <dynamicField name="*_tl" type="tlong"   indexed="true"  stored="true"/>
    <dynamicField name="*_tf" type="tfloat"  indexed="true"  stored="true"/>
    <dynamicField name="*_td" type="tdouble" indexed="true"  stored="true"/>
-   <dynamicField name="*_tdt" type="tdate"  indexed="true"  stored="true"/>
+   <dynamicField name="*_tdt" type="date"  indexed="true"  stored="true"/>
 
    <dynamicField name="*_c"   type="currency" indexed="true"  stored="true"/>
 
@@ -402,6 +409,9 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
    <dynamicField name="attr_*" type="text_general" indexed="true" stored="true" multiValued="true"/>
 
    <dynamicField name="random_*" type="random" />
+
+   <dynamicField name="*_s_ns" type="string" indexed="true" stored="true"/>
+   <dynamicField name="*_l_ns" type="long" indexed="true" stored="true"/>
 
    <!-- uncomment the following to ignore any fields that don't already match an existing 
         field name or dynamic field, rather than reporting them as an error. 
@@ -513,10 +523,10 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
       These fields support doc values, but they require the field to be
       single-valued and either be required or have a default value.
     -->
-    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0"/>
-    <fieldType name="float" class="solr.TrieFloatField" precisionStep="0" positionIncrementGap="0"/>
-    <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0"/>
-    <fieldType name="double" class="solr.TrieDoubleField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="int" class="solr.IntPointField" docValues="true"/>
+    <fieldType name="float" class="solr.FloatPointField" docValues="true"/>
+    <fieldType name="long" class="solr.LongPointField" docValues="true"/>
+    <fieldType name="double" class="solr.DoublePointField" docValues="true"/>
 
     <!--
      Numeric field types that index each value at various levels of precision
@@ -528,10 +538,10 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
      indexed per value, slightly larger index size, and faster range queries.
      A precisionStep of 0 disables indexing at different precision levels.
     -->
-    <fieldType name="tint" class="solr.TrieIntField" precisionStep="8" positionIncrementGap="0"/>
-    <fieldType name="tfloat" class="solr.TrieFloatField" precisionStep="8" positionIncrementGap="0"/>
-    <fieldType name="tlong" class="solr.TrieLongField" precisionStep="8" positionIncrementGap="0"/>
-    <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tint" class="solr.IntPointField" docValues="true"/>
+    <fieldType name="tfloat" class="solr.FloatPointField" docValues="true"/>
+    <fieldType name="tlong" class="solr.LongPointField" docValues="true"/>
+    <fieldType name="tdouble" class="solr.DoublePointField" docValues="true"/>
 
     <!-- The format for this date field is of the form 1995-12-31T23:59:59Z, and
          is a more restricted form of the canonical representation of dateTime
@@ -552,14 +562,11 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
                       the current day
                       
          Consult the DateField javadocs for more information.
-
-         Note: For faster range queries, consider the tdate type
       -->
-    <fieldType name="date" class="solr.TrieDateField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="date" class="solr.DatePointField" docValues="true"/>
 
-    <!-- A Trie based date field for faster date range queries and date faceting. -->
-    <fieldType name="tdate" class="solr.TrieDateField" precisionStep="6" positionIncrementGap="0"/>
-
+    <!-- A Date Range Field for truncated date searches -->
+    <fieldType name="date_range" class="solr.DateRangeField"/>
 
     <!--Binary data type. The data should be sent/retrieved in as Base64 encoded Strings -->
     <fieldtype name="binary" class="solr.BinaryField"/>
@@ -628,7 +635,8 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
       <analyzer>
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.ManagedStopFilterFactory" managed="english" />
-        <filter class="solr.ManagedSynonymFilterFactory" managed="english" />
+        <filter class="solr.ManagedSynonymGraphFilterFactory" managed="english" />
+        <filter class="solr.FlattenGraphFilterFactory"/>
       </analyzer>
     </fieldType>
 
@@ -649,7 +657,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
       <analyzer type="query">
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" />
-        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+        <filter class="solr.SynonymGraphFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
         <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
@@ -681,7 +689,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.StandardTokenizerFactory"/>
-        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+        <filter class="solr.SynonymGraphFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
         <filter class="solr.StopFilterFactory"
                 ignoreCase="true"
                 words="lang/stopwords_en.txt"
@@ -717,7 +725,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
                 ignoreCase="true"
                 words="lang/stopwords_en.txt"
                 />
-        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="0" splitOnCaseChange="1" splitOnNumerics="0"/>
+        <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="1" catenateNumbers="1" catenateAll="0" splitOnCaseChange="1" splitOnNumerics="0"/>
         <filter class="solr.LowerCaseFilterFactory"/>
         <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
         <filter class="solr.PorterStemFilterFactory"/>
@@ -725,9 +733,9 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+        <filter class="solr.SynonymGraphFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_en.txt" />
-        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0"/>
+        <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="1" generateNumberParts="1" catenateWords="0" catenateNumbers="0" catenateAll="0"/>
         <filter class="solr.LowerCaseFilterFactory"/>
         <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
         <filter class="solr.PorterStemFilterFactory"/>
@@ -739,9 +747,10 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
     <fieldType name="text_en_splitting_tight" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true">
       <analyzer>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="false"/>
+        <filter class="solr.SynonymGraphFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="false"/>
+        <filter class="solr.FlattenGraphFilterFactory"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_en.txt"/>
-        <filter class="solr.WordDelimiterFilterFactory" generateWordParts="0" generateNumberParts="0" catenateWords="1" catenateNumbers="1" catenateAll="0"/>
+        <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="0" generateNumberParts="0" catenateWords="1" catenateNumbers="1" catenateAll="0"/>
         <filter class="solr.LowerCaseFilterFactory"/>
         <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
         <filter class="solr.EnglishMinimalStemFilterFactory"/>
@@ -763,7 +772,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.StandardTokenizerFactory"/>
-        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+        <filter class="solr.SynonymGraphFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" />
         <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
@@ -888,7 +897,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
     <fieldType name="point" class="solr.PointType" dimension="2" subFieldSuffix="_d"/>
 
     <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->
-    <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate"/>
+    <fieldType name="location" class="solr.LatLonPointSpatialField" docValues="true"/>
 
     <!-- An alternative geospatial field type new to Solr 4.  It supports multiValued and polygon shapes.
       For more information about this and other Spatial fields new to Solr 4, see:
@@ -902,7 +911,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
      relevancy. -->
     <fieldType name="bbox" class="solr.BBoxField"
         geo="true" distanceUnits="degrees" numberType="_bbox_coord" />
-    <fieldType name="_bbox_coord" class="solr.TrieDoubleField" precisionStep="8" docValues="true" stored="false"/>
+    <fieldType name="_bbox_coord" class="solr.DoublePointField" docValues="true" stored="false"/>
 
    <!-- Money/currency field type. See http://wiki.apache.org/solr/MoneyFieldType
         Parameters:
@@ -915,11 +924,10 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
                              ratesFileLocation: URL or path to rates JSON file (default latest.json on the web)
                              refreshInterval: Number of minutes between each rates fetch (default: 1440, min: 60)
    -->
-   <fieldType name="currency" class="solr.CurrencyField" precisionStep="8" defaultCurrency="USD" currencyConfig="currency.xml" />
+   <fieldType name="currency" class="solr.CurrencyFieldType" amountLongSuffix="_l_ns" codeStrSuffix="_s_ns" defaultCurrency="USD" currencyConfig="currency.xml" />
    <fieldType name="booleans" class="solr.BoolField" sortMissingLast="true" multiValued="true" />
    <fieldType name="pdates" class="solr.DatePointField" docValues="true" multiValued="true"/>
    <fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
    <fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
    <field name="language" type="string" indexed="true" stored="true"/>
 </schema>
-

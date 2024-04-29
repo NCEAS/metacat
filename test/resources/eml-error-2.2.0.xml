@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:eml="https://eml.ecoinformatics.org/eml-2.2.0" xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.2" packageId="eml-test-doc" system="https://arcticdata.io" scope="system" xsi:schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0 eml.xsd">
+  <access order="allowFirst" authSystem="knb">
+        <allow>
+            <principal>public</principal>
+            <permission>read</permission>
+        </allow>
+  </access>
+  <dataset>
+    <title>EML Annotation Example</title>
+    <creator>
+      <individualName>
+        <givenName>John</givenName>
+        <surName>Smith</surName>
+      </individualName>
+      <electronicMailAddress>smith@nceas.ucsb.edu</electronicMailAddress>
+       <userId directory="https://orcid.org">https://orcid.org/0000-0002-1209-5122</userId>
+    </creator>
+    <abstract>
+      <markdown>
+        An introduction goes here.
+
+        It can include multiple paragraphs. And these paragraphs should have enough text to wrap in a wide browser.  So, repeat that last thought. And these paragraphs should have enough text to wrap in a wide browser.  So, repeat that last thought.
+
+        Text can cite other works, such as [@jones_2001], in which case the
+        associated key must be present as either the citation identifier in a
+        `bibtex` element in the EML document, or as the `id` attribute on one of the
+        `citation` elements in the EML document.  These identifiers must be unique
+        across the document.
+
+        And bulleted lists are also supported:
+
+        - Science
+        - Engineering
+        - Math
+
+        It can also include equations:
+
+        $$\left( x + a \right)^{n} = \sum_{k = 0}^{n}{\left( \frac{n}{k} \right)x^{k}a^{n - k}}$$
+
+        Plus, it can include all of the other features of [Github Flavored Markdown (GFM)](https://github.github.com/gfm/).
+     </markdown>
+    </abstract>
+    <licensed>
+      <licenseName>Creative Commons Attribution 4.0 International</licenseName>
+      <url>https://spdx.org/licenses/CC-BY-4.0.html</url>
+      <identifier>CC-BY-4.0</identifier>
+   </licensed>
+    <contact>
+      <individualName>
+        <givenName>EML</givenName>
+        <surName>Author</surName>
+      </individualName>
+    </contact>
+    <project>
+        <title>My Project</title>
+        <personnel>
+          <individualName>
+            <givenName>EML</givenName>
+            <surName>Author</surName>
+          </individualName>
+          <role>principalInvestigator</role>
+        </personnel>
+        <funding><para>Funding is from a grant from the National Science Foundation.</para></funding>
+        <award>
+           <funderName>National Science Foundation</funderName>
+           <funderIdentifier>https://doi.org/10.13039/00000001</funderIdentifier>
+           <awardNumber>1546024</awardNumber>
+           <title>Scientia Arctica: A Knowledge Archive for Discovery and Reproducible Science in the Arctic</title>
+           <awardUrl>https://www.nsf.gov/awardsearch/showAward?AWD_ID=1546024</awardUrl>
+        </award>
+      </project>
+    <dataTable>
+      <entityName>myDataTable</entityName>
+      <physical id="myatt">
+        <objectName>myDataTable</objectName>
+        <dataFormat>
+          <textFormat>
+            <numHeaderLines>1</numHeaderLines>
+            <recordDelimiter>\n\r</recordDelimiter>
+            <attributeOrientation>column</attributeOrientation>
+            <simpleDelimited>
+              <fieldDelimiter>,</fieldDelimiter>
+            </simpleDelimited>
+          </textFormat>
+        </dataFormat>
+      </physical>
+      <attributeList>
+        <attribute id="myatt">
+          <attributeName>SOME_ATTRIBUTE</attributeName>
+          <attributeDefinition>SOME_ATTRIBUTE's definition</attributeDefinition>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <textDomain>
+                  <definition>SOME_ATTRIBUTE's VALUES</definition>
+                </textDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+          <annotation>
+            <propertyURI label="contains measurements of type">http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#containsMeasurementsOfType</propertyURI>
+            <valueURI label="Chlorophyll-a Concentration">http://purl.dataone.org/odo/ECSO_00000516</valueURI>
+          </annotation>
+          <annotation>
+            <propertyURI label="has unit">http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#hasUnit</propertyURI>
+            <valueURI label="microgram per liter">http://purl.obolibrary.org/obo/UO_0000301</valueURI>
+          </annotation>
+        </attribute>
+      </attributeList>
+    </dataTable>
+    <referencePublication>
+      <bibtex>
+         @article{ludwig_2018,
+            title = {Permafrost carbon and nitrogen, Yukon-Kuskokwim Delta, Alaska},
+            url = {http://ecosphere.esa.org/article/yyyy.zzzzzzz},
+            doi = {10.xxxx/yyyy.zzzzzz},
+            journal = {EcoSphere},
+            author = {Ludwig, Sarah},
+            year = {2018}
+         }
+      </bibtex>
+   </referencePublication>
+    <usageCitation>
+      <bibtex>
+         @article{jones_2001,
+            title = {Managing scientific metadata},
+            volume = {5},
+            issn = {10897801},
+            url = {http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=957896},
+            doi = {10.1109/4236.957896},
+            number = {5},
+            journal = {IEEE Internet Computing},
+            author = {Jones, Matthew B. and Berkley, Chad and Bojilova, Jivka and Schildhauer, Mark},
+            year = {2001},
+            pages = {59--68}
+         }
+      </bibtex>
+   </usageCitation>
+    <literatureCited>
+      <citation>
+         <bibtex>
+            @article{fegraus_2005,
+               title = {Maximizing the {Value} of {Ecological} {Data} with {Structured} {Metadata}: {An} {Introduction} to {Ecological} {Metadata} {Language} ({EML}) and {Principles} for {Metadata} {Creation}},
+               journal = {Bulletin of the Ecological Society of America},
+               author = {Fegraus, Eric H. and Andelman, Sandy and Jones, Matthew B. and Schildhauer, Mark},
+               year = {2005},
+               pages = {158--168}
+            }
+         </bibtex>
+      </citation>
+      <citation>
+         <title>Title of a paper that this dataset, or its metadata, references.</title>
+         <creator>
+            <individualName>
+               <givenName>Mark</givenName>
+               <surName>Jarkady</surName>
+            </individualName>
+         </creator>
+         <pubDate>2017</pubDate>
+         <article>
+            <journal>EcoSphere</journal>
+            <publicationPlace>https://doi.org/10.1002/ecs2.2166</publicationPlace>
+         </article>
+      </citation>
+      <bibtex>
+      @article{hampton_2017,
+         title = {Skills and {Knowledge} for {Data}-{Intensive} {Environmental} {Research}},
+         volume = {67},
+         copyright = {All rights reserved},
+         issn = {0006-3568, 1525-3244},
+         url = {https://academic.oup.com/bioscience/article-lookup/doi/10.1093/biosci/bix025},
+         doi = {10.1093/biosci/bix025},
+         language = {en},
+         number = {6},
+         urldate = {2018-02-15},
+         journal = {BioScience},
+         author = {Hampton, Stephanie E. and Jones, Matthew B. and Wasser, Leah A. and Schildhauer, Mark P. and Supp, Sarah R. and Brun, Julien and Hernandez, Rebecca R. and Boettiger, Carl and Collins, Scott L. and Gross, Louis J. and Fernández, Denny S. and Budden, Amber and White, Ethan P. and Teal, Tracy K. and Labou, Stephanie G. and Aukema, Juliann E.},
+         month = jun,
+         year = {2017},
+         pages = {546--557}
+      }
+
+      @article{collins_2018,
+         title = {Temporal heterogeneity increases with spatial heterogeneity in ecological communities},
+         volume = {99},
+         copyright = {All rights reserved},
+         issn = {00129658},
+         url = {http://doi.wiley.com/10.1002/ecy.2154},
+         doi = {10.1002/ecy.2154},
+         language = {en},
+         number = {4},
+         urldate = {2018-04-16},
+         journal = {Ecology},
+         author = {Collins, Scott L. and Avolio, Meghan L. and Gries, Corinna and Hallett, Lauren M. and Koerner, Sally E. and La Pierre, Kimberly J. and Rypel, Andrew L. and Sokol, Eric R. and Fey, Samuel B. and Flynn, Dan F. B. and Jones, Sydney K. and Ladwig, Laura M. and Ripplinger, Julie and Jones, Matt B.},
+         month = apr,
+         year = {2018},
+         pages = {858--865}
+      }
+      </bibtex>
+   </literatureCited>
+  </dataset>
+</eml:eml>

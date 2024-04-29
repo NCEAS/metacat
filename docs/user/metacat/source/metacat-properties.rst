@@ -1,24 +1,16 @@
 Appendix: Metacat Properties
 ============================
-The most dynamic Metacat Properties are managed using Metacat's Configuration 
-Interface (see :doc:`configuration`). These properties, as well as other, 
-rarely modified ones can be found in the metacat.properties file. For more 
-information about the properties, click one of the following:
 
-* Server Properties
-* Application Properties
-* Database Properties
-* Authorization and Authentication Properties
-* XML/EML Properties
+.. include:: ./properties-overview.rst
+
+.. contents:: The properties themselves are detailed below
+    :local:
 
 Server Properties
 -----------------
-All of Metacat's server properties are managed with the form-based 
-configuration utility, though they can also be accessed More information on 
-each is included below.
-
-
-Metacat Server Properties
+All of Metacat's server properties are managed with the form-based configuration utility,
+though they can also be accessed directly by editing the ``metacat-site.properties`` file.
+More information on each is included below.
 
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
 | Property                  | Description                                                                              | Example                |
@@ -31,19 +23,19 @@ Metacat Server Properties
 |                           |                                                                                          |                        |
 |                           | Default Value: localhost                                                                 |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
-| .. _server-httpPort:      |                                                                                          |                        |
+| .. _server-port:          |                                                                                          |                        |
 |                           |                                                                                          |                        |
-| server.httpPort           | The network port used to access Metacat for non-secure (standard) connections.           | 80                     |
-|                           | This is usually 80 if Apache Web server is running, and 8080 if Tomcat is running alone. |                        |
-|                           |                                                                                          |                        |
-|                           | Default Value: 80                                                                        |                        |
-+---------------------------+------------------------------------------------------------------------------------------+------------------------+
-| .. _server-httpSSLPort:   |                                                                                          |                        |
-|                           |                                                                                          |                        |
-| server.httpSSLPort        | The network port used to access Metacat for secure connections. This is usually          | 443                    |
-|                           | 443 if Apache Web server is running, and 8443 if Tomcat is running alone.                |                        |
+| server.port               | The network port used to access Metacat for connections.                                 | 443                    |
+|                           | This can be either an https port, such as 443, or an http port, such as 80.              |                        |
 |                           |                                                                                          |                        |
 |                           | Default Value: 443                                                                       |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
+| .. _server-https:         |                                                                                          |                        |
+|                           |                                                                                          |                        |
+| server.https              | To indicate the server port is an https one or an http one.                              | true                   |
+|                           | True means an https port; false means an http port.                                      |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: true                                                                      |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
 | .. _server-internalName:  |                                                                                          |                        |
 |                           |                                                                                          |                        |
@@ -62,17 +54,19 @@ Metacat Server Properties
 |                           | Default Value: 80                                                                        |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
 
+.. _application-properties:
+
 Application Properties
 ----------------------
 
 Metacat's application properties are described below. Properties that can only 
-be edited manually in the ``metacat.properties`` file are marked. All 
+be edited manually in the ``metacat-site.properties`` file are marked with an asterisk (\*). All 
 others are managed with the properties configuration utility.
 
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | Property                             | Description                                                                 | Example                       |
 +======================================+=============================================================================+===============================+
-| application.metacatVersion*          | The Metacat version number. It is set by the build engineer                 | 1.9.0                         |
+| application.metacatVersion*          | The Metacat version number. It is set by the build engineer                 | 3.0.0                         |
 |                                      | at build time. Usually, the value should never be changed.                  |                               |
 |                                      |                                                                             |                               |
 |                                      | Default Value: X.X.X (where X.X.X is the current version of Metacat)        |                               |
@@ -80,6 +74,14 @@ others are managed with the properties configuration utility.
 | application.metacatReleaseInfo*      | Release information for display purposes. Typically the property            | Release Candidate 1           |
 |                                      | is set during the release candidate cycle to let users know which           |                               |
 |                                      | candidate they are downloading.                                             |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _application.envSecretKeys:       |                                                                             |                               |
+|                                      |                                                                             |                               |
+| application.envSecretKeys*           | See :ref:`secret-properties`                                                |                               |
+|                                      | A colon-delimited list of mappings between "secret" properties              |                               |
+|                                      | (e.g. passwords) and environment variables used to pass them to Metacat.    |                               |
+|                                      | Passing secrets to Metacat via environment variables avoids having them in  |                               |
+|                                      | the properties file as plain text.                                          |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _application.deployDir:           |                                                                             |                               |
 |                                      |                                                                             |                               |
@@ -91,7 +93,7 @@ others are managed with the properties configuration utility.
 | application.context                  | The name of the Metacat application directory in                            | knb                           |
 |                                      | the deployment directory. This corresponds to the first part of the         |                               |
 |                                      | WAR file name (the part before .war). Most commonly, this                   |                               |
-|                                      | is "knb", but it can be changed to other things.                            |                               |
+|                                      | is "metacat", but it can be changed to other things.                        |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _index.context:                   |                                                                             |                               |
 |                                      |                                                                             |                               |
@@ -111,11 +113,15 @@ others are managed with the properties configuration utility.
 |                                      | an organizational theme. If your organization has no                        |                               |
 |                                      | custom skin, leave the value as "default".                                  |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.knbSiteURL:          |                                                                             |                               |
+| .. _application.sitePropertiesDir:   |                                                                             |                               |
 |                                      |                                                                             |                               |
-| application.knbSiteURL               | The main KNB website.                                                       | http://knb.ecoinformatics.org |
+| application.sitePropertiesDir        | The directory in which to store the ``metacat-site.properties`` file. The   | /var/metacat/config           |
+|                                      | directory should be outside the Metacat installation directories so custom  |                               |
+|                                      | settings will not be lost when Metacat is upgraded. The site properties     |                               |
+|                                      | file directory must be writable by the user that starts Tomcat (and thus    |                               |
+|                                      | Metacat).                                                                   |                               |
 |                                      |                                                                             |                               |
-|                                      | Default Value: http://knb.ecoinformatics.org                                |                               |
+|                                      | Default Value: /var/metacat/config                                          |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _application.datafilepath:        |                                                                             |                               |
 |                                      |                                                                             |                               |
@@ -155,17 +161,29 @@ others are managed with the properties configuration utility.
 | application.tempDir                  | The directory where the Metacat data registry stores temporary              | /var/metacat/temporary        |
 |                                      | files. The directory should not be the same as ``application.datafilepath`` |                               |
 |                                      | or ``application.inlinedatafilepath`` (or any other persistent file path)   |                               |
-|                                      | because all files in this may be purged programmatically. The temporary     |                               |
-|                                      | file directory must be writable by the user that starts Apache.             |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _cn.server.publiccert.filename:   |                                                                             |                               |
 |                                      |                                                                             |                               |
-|                                      | Default Value: /var/metacat/temporary                                       |                               |
+| cn.server.publiccert.filename        | The location(s) of one or more certificate files containing public keys     |                               |
+|                                      | that will be used to verify incoming request auth (JWT) tokens, in addition |                               |
+|                                      | to verifying them against the configured CN server.                         |                               |
+|                                      | Multiple paths should be delimited by semicolons (;)                        |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: (empty: only cn is used for token verification)              |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _dataone.nodeToken.file:          |                                                                             |                               |
+|                                      |                                                                             |                               |
+| dataone.nodeToken.file               | The path to a file that contains an authentication token. This token will be|                               |
+|                                      | used by the dataone-indexer, to enable indexing of private datasets.        |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: /var/metacat/certs/token                                     |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 
 Solr Properties
 ----------------------
 
 Metacat's Solr properties are described below. Properties that can only 
-be edited manually in the ``metacat.properties`` file are marked. All 
+be edited manually in the ``metacat-site.properties`` file are marked with an asterisk (\*). All 
 others are managed with the properties configuration utility.
 
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
@@ -177,7 +195,7 @@ others are managed with the properties configuration utility.
 | solr.baseURL                         | The URL of the Solr server which Metacat can access.                        | http://localhost:8983/solr    |
 |                                      |                                                                             |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _solr-homeDir       :             |                                                                             |                               |
+| .. _solr-homeDir:                    |                                                                             |                               |
 |                                      |                                                                             |                               |
 | solr.homeDir                         | The Solr home directory (not to be confused with the Solr installation      | /var/metacat/solr-home2       |
 |                                      | directory) is where Solr manages core directories with index files.         |                               |
@@ -190,7 +208,7 @@ others are managed with the properties configuration utility.
 |                                      |                                                                             |                               |
 |                                      |                                                                             |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. solr-env-script-path:             |                                                                             |                               |
+| .. _solr-env-script-path:            |                                                                             |                               |
 |                                      |                                                                             |                               |
 | solr.env.script.path                 | An environment specific include file overrides defaults used by the         |/etc/default/solr.in.sh        |
 |                                      | bin/solr script. Metacat modifies this file to add the solr.home as the     |                               |
@@ -200,171 +218,142 @@ others are managed with the properties configuration utility.
 Database Properties
 -------------------
 Metacat's database properties are described next. Properties that can only be 
-edited manually in the metacat.properties file are marked. All others 
+edited manually in the ``metacat-site.properties`` file are marked with an asterisk (\*). All others 
 are managed with the properties configuration utility.
 
-Metacat Database Properties
-
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| Property                                   | Description                                                                                              | Example                                                 |
-+============================================+==========================================================================================================+=========================================================+
-| .. _database-connectionURI:                |                                                                                                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-| database.connectionURI                     | The JDBC connection URI for the main database instance of Metacat.                                       | ``jdbc:postgresql://yourserver.yourdomain.edu/metacat`` |
-|                                            | The URI is formatted like: ``jdbc:<database_type>:thin@<your_server_name>:1521:<metacat_database_name>`` |                                                         |
-|                                            | NOTE: You must create an empty database prior to initial Metacat configuration.                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: jdbc:postgresql://localhost/metacat                                                       |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| .. _database-user:                         |                                                                                                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-| database.user                              | The user for the main database instance of Metacat. The user must                                        | metacat-user                                            |
-|                                            | have already been created on the database.                                                               |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| .. _database-password:                     |                                                                                                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-| database.password                          | The password of the user for the main database instance of Metacat.                                      | securepassword4843                                      |
-|                                            | The password must have already been created for the user.                                                |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| .. _database-type:                         |                                                                                                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-| database.type                              | The type of database you are running. Currently, there are two supported                                 | postgres                                                |
-|                                            | types, Oracle and Postgres.                                                                              |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| .. _database-driver:                       |                                                                                                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-| database.driver                            | The JDBC driver to be used to access the main database instance of Metacat.                              | org.postgresql.Driver                                   |
-|                                            | There is one driver associated with each type of database.                                               |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| .. _database-adapter:                      |                                                                                                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-| database.adapter                           | The adapter class that allows Metacat to access your database type.                                      | edu.ucsb.nceas.dbadapter.PostgresqlAdapter              |
-|                                            | There is one adapter associated with each type of database.                                              |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| .. _database-scriptsuf:                    |                                                                                                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-| database.scriptsuffix.<database_type>      | The script suffix tells the system which database scripts to run                                         | postgres.sql                                            |
-|                                            | (postgres or oracle) when installing or updating database schema.                                        |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Values:                                                                                          |                                                         |
-|                                            | database.scriptsuffix.postgres=postgres.sql                                                              |                                                         |
-|                                            | database.scriptsuffix.oracle=oracle.sql                                                                  |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| .. _database-upgradeVersion:               |                                                                                                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-| database.upgradeVersion.<database_version> | Which database scripts to run when updating database schema. There is a                                  | upgrade-db-to-1.2                                       |
-|                                            | database.upgradeVersion entry for every Metacat database schema version.                                 |                                                         |
-|                                            | Each schema version corresponds to an application version.                                               |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Values:                                                                                          |                                                         |
-|                                            | database.upgradeVersion.0.0.0=xmltables,loaddtdschema                                                    |                                                         |
-|                                            | database.upgradeVersion.1.2.0=upgrade-db-to-1.2                                                          |                                                         |
-|                                            | database.upgradeVersion.1.3.0=upgrade-db-to-1.3                                                          |                                                         |
-|                                            | database.upgradeVersion.1.4.0=upgrade-db-to-1.4                                                          |                                                         |
-|                                            | database.upgradeVersion.1.5.0=upgrade-db-to-1.5                                                          |                                                         |
-|                                            | database.upgradeVersion.1.6.0=upgrade-db-to-1.6                                                          |                                                         |
-|                                            | database.upgradeVersion.1.7.0=upgrade-db-to-1.7                                                          |                                                         |
-|                                            | database.upgradeVersion.1.8.0=upgrade-db-to-1.8                                                          |                                                         |
-|                                            | database.upgradeVersion.1.9.0=upgrade-db-to-1.9                                                          |                                                         |
-|                                            | database.upgradeVersion.2.0.0=upgrade-db-to-2.0                                                          |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.initialConnections*               | The number of initial connection that Metacat creates to the database.                                   | 5                                                       |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 5                                                                                         |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.incrementConnections*             | The number of connections Metacat creates when it requires                                               | 5                                                       |
-|                                            | more connections.                                                                                        |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 5                                                                                         |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.maximumConnections*               | The maximum number of database connections Metacat can make.                                             | 25                                                      |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 200                                                                                       |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.maximumConnectionAge*             | The maximum time in milliseconds that a database connection can live.                                    | 120000                                                  |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 120000                                                                                    |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.maximumConnectionTime*            | The maximum time in milliseconds that a database connection can                                          | 60000                                                   |
-|                                            | accumulate in actual connection time.                                                                    |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 60000                                                                                     |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.maximumUsageNumber*               | The maximum number of times a single connection can be used.                                             | 100                                                     |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 100                                                                                       |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.numberOfIndexingThreads*          | The number of threads available for indexing.                                                            | 5                                                       |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 5                                                                                         |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.indexingTimerTaskTime*            | The time in milliseconds between indexing.                                                               | 604800000                                               |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 604800000                                                                                 |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.indexingInitialDelay*             | The delay in milliseconds before first indexing is executed.                                             | 3600000                                                 |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 3600000                                                                                   |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.maximumIndexDelay*                | The time in milliseconds that an indexing thread will wait when it                                       | 5000                                                    |
-|                                            | can't get a doc id before retrying the indexing.                                                         |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 5000                                                                                      |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.runDBConnectionRecycleThread*     | Determines whether the database connection pool should run a thread to                                   | off                                                     |
-|                                            | recycle connections. Possible values are "on" and "off"                                                  |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: off                                                                                       |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.cycleTimeOfDBConnection*          | The time in milliseconds between connection recycling runs.                                              | 30000                                                   |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 30000                                                                                     |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.queryignoredparams*               | Parameters to ignore in a structured XML query.                                                          | enableediting                                           |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: enableediting,foo                                                                         |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.usexmlindex*                      | Determines whether to use XML indexes when finding                                                       | true                                                    |
-|                                            | documents. Possible values are true and false.                                                           |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: true                                                                                      |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.appResultsetSize*                 | Determines the number of results that can be returned to an application from a query.                    | 7000                                                    |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 7000                                                                                      |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.webResultsetSize*                 | Determines the number of results that can be returned to a                                               | 7000                                                    |
-|                                            | Web browser from a query.                                                                                |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 7000                                                                                      |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.xmlReturnfieldCount*              | If the query results of a query are returned more times                                                  | 0                                                       |
-|                                            | than this value, then those results will be inserted into the xml_queryresult                            |                                                         |
-|                                            | table in the database. For example, if you want results for                                              |                                                         |
-|                                            | a query to be stored in xml_queryresult only when it has been requested                                  |                                                         |
-|                                            | 50 times, set this value to 50.                                                                          |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 0                                                                                         |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.queryresultStringLength*          | The max size of the query result string in the queryresult table. This                                   | 500000                                                  |
-|                                            | should be set to some number less than 4000 if an Oracle                                                 |                                                         |
-|                                            | database is being used.                                                                                  |                                                         |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 500000                                                                                    |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.queryresultCacheSize*             | The number of query results that will be cached.                                                         | 500                                                     |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: 500                                                                                       |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| database.queryCacheOn*                     | Determines whether query caching is turned on. Possible values are "on" and "off"                        | on                                                      |
-|                                            |                                                                                                          |                                                         |
-|                                            | Default Value: on                                                                                        |                                                         |
-+--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| Property                                   | Description                                                                   | Example                                                 |
++============================================+===============================================================================+=========================================================+
+| .. _database-connectionURI:                |                                                                               |                                                         |
+|                                            |                                                                               |                                                         |
+| database.connectionURI                     | The JDBC connection URI for the main database instance of Metacat.            | ``jdbc:postgresql://yourserver.yourdomain.edu/metacat`` |
+|                                            | The URI is formatted like this:                                               |                                                         |
+|                                            | ``jdbc:<database_type>:thin@<your_server_name>:1521:<metacat_database_name>`` |                                                         |
+|                                            | NOTE:                                                                         |                                                         |
+|                                            | You must create an empty database prior to initial Metacat configuration.     |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: jdbc:postgresql://localhost/metacat                            |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| .. _database-user:                         |                                                                               |                                                         |
+|                                            |                                                                               |                                                         |
+| database.user                              | The user for the main database instance of Metacat. The user must             | metacat-user                                            |
+|                                            | have already been created on the database.                                    |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| .. _database-password:                     |                                                                               |                                                         |
+|                                            |                                                                               |                                                         |
+| database.password                          | The password of the user for the main database instance of Metacat.           | securepassword4843                                      |
+|                                            | The password must have already been created for the user.                     |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| .. _database-type:                         |                                                                               |                                                         |
+|                                            |                                                                               |                                                         |
+| database.type                              | The type of database you are running. Currently, there are two supported      | postgres                                                |
+|                                            | types, Oracle and Postgres.                                                   |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: postgres                                                       |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| .. _database-driver:                       |                                                                               |                                                         |
+|                                            |                                                                               |                                                         |
+| database.driver                            | The JDBC driver to be used to access the main database instance of Metacat.   | org.postgresql.Driver                                   |
+|                                            | There is one driver associated with each type of database.                    |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: org.postgresql.Driver                                          |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| .. _database-adapter:                      |                                                                               |                                                         |
+|                                            |                                                                               |                                                         |
+| database.adapter                           | The adapter class that allows Metacat to access your database type.           | edu.ucsb.nceas.dbadapter.PostgresqlAdapter              |
+|                                            | There is one adapter associated with each type of database.                   |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: edu.ucsb.nceas.dbadapter.PostgresqlAdapter                     |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| .. _database-scriptsuf:                    |                                                                               |                                                         |
+|                                            |                                                                               |                                                         |
+| database.scriptsuffix.<database_type>      | The script suffix tells the system which database scripts to run              | postgres.sql                                            |
+|                                            | (postgres or oracle) when installing or updating database schema.             |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Values:                                                               |                                                         |
+|                                            | database.scriptsuffix.postgres=postgres.sql                                   |                                                         |
+|                                            | database.scriptsuffix.oracle=oracle.sql                                       |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| .. _database-upgradeVersion:               |                                                                               |                                                         |
+|                                            |                                                                               |                                                         |
+| database.upgradeVersion.<database_version> | Which database scripts to run when updating database schema. There is a       | upgrade-db-to-1.2                                       |
+|                                            | database.upgradeVersion entry for every Metacat database schema version.      |                                                         |
+|                                            | Each schema version corresponds to an application version.                    |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Values:                                                               |                                                         |
+|                                            | database.upgradeVersion.0.0.0=xmltables,loaddtdschema                         |                                                         |
+|                                            | database.upgradeVersion.1.2.0=upgrade-db-to-1.2                               |                                                         |
+|                                            | database.upgradeVersion.1.3.0=upgrade-db-to-1.3                               |                                                         |
+|                                            | database.upgradeVersion.1.4.0=upgrade-db-to-1.4                               |                                                         |
+|                                            | database.upgradeVersion.1.5.0=upgrade-db-to-1.5                               |                                                         |
+|                                            | database.upgradeVersion.1.6.0=upgrade-db-to-1.6                               |                                                         |
+|                                            | database.upgradeVersion.1.7.0=upgrade-db-to-1.7                               |                                                         |
+|                                            | database.upgradeVersion.1.8.0=upgrade-db-to-1.8                               |                                                         |
+|                                            | database.upgradeVersion.1.9.0=upgrade-db-to-1.9                               |                                                         |
+|                                            | database.upgradeVersion.2.0.0=upgrade-db-to-2.0                               |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.initialConnections*               | The number of initial connection that Metacat creates to the database.        | 5                                                       |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 5                                                              |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.incrementConnections*             | The number of connections Metacat creates when it requires                    | 5                                                       |
+|                                            | more connections.                                                             |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 5                                                              |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.maximumConnections*               | The maximum number of database connections Metacat can make.                  | 25                                                      |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 200                                                            |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.maximumConnectionAge*             | The maximum time in milliseconds that a database connection can live.         | 120000                                                  |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 120000                                                         |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.maximumConnectionTime*            | The maximum time in milliseconds that a database connection can               | 60000                                                   |
+|                                            | accumulate in actual connection time.                                         |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 60000                                                          |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.maximumUsageNumber*               | The maximum number of times a single connection can be used.                  | 100                                                     |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 100                                                            |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.numberOfIndexingThreads*          | The number of threads available for indexing.                                 | 5                                                       |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 5                                                              |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.indexingTimerTaskTime*            | The time in milliseconds between indexing.                                    | 604800000                                               |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 604800000                                                      |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.indexingInitialDelay*             | The delay in milliseconds before first indexing is executed.                  | 3600000                                                 |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 3600000                                                        |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.maximumIndexDelay*                | The time in milliseconds that an indexing thread will wait when it            | 5000                                                    |
+|                                            | can't get a doc id before retrying the indexing.                              |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 5000                                                           |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.runDBConnectionRecycleThread*     | Determines whether the database connection pool should run a thread to        | off                                                     |
+|                                            | recycle connections. Possible values are "on" and "off"                       |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: off                                                            |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.cycleTimeOfDBConnection*          | The time in milliseconds between connection recycling runs.                   | 30000                                                   |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 30000                                                          |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
+| database.webResultsetSize*                 | Determines the number of results that can be returned to a                    | 7000                                                    |
+|                                            | Web browser from a query.                                                     |                                                         |
+|                                            |                                                                               |                                                         |
+|                                            | Default Value: 7000                                                           |                                                         |
++--------------------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------------+
 
 Authorization and Authentication Properties
 -------------------------------------------
 Metacat's authorization and authentication properties are described in the 
-table below. Properties that can only be edited manually in the ``metacat.properties`` 
+table below. Properties that can only be edited manually in the ``metacat-site.properties`` 
 file are marked. All others are managed with the properties configuration utility.
 
 Authorization and Authentication Properties
@@ -392,10 +381,9 @@ Authorization and Authentication Properties
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-administrators:          |                                                                               |                                               |
 |                                   |                                                                               |                                               |
-| auth.administrators               | A colon separated list of LDAP users or groups that have administrative       | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
-|                                   | Metacat privileges. At least one user or group must be entered when           | cn=yourgroup,o=NCEAS,dc=ecoinformatics,dc=org |
-|                                   | Metacat is first installed and configured. All accounts must exist            |                                               |
-|                                   | in LDAP in order to continue with the configuration.                          |                                               |
+| auth.administrators               | A semicolon-separated list of ORCID IDs for users who have administrative     | https://orcid.org/0000-0001-2345-6789;        |
+|                                   | Metacat privileges. At least one user must be entered when Metacat is         | https://orcid.org/0000-0002-2345-678X         |
+|                                   | first installed and configured.                                               |                                               |
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-user-management-url:     |                                                                               |                                               |
 |                                   |                                                                               |                                               |
@@ -432,7 +420,7 @@ Authorization and Authentication Properties
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-allowedSubmitters:       |                                                                               |                                               |
 |                                   |                                                                               |                                               |
-| auth.allowedSubmitters            | A colon delimited list of users who should be allowed to submit documents     | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
+| auth.allowedSubmitters            | A semicolon delimited list of users who should be allowed to submit documents | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
 |                                   | to Metacat. If no value is specified, all users will be                       |                                               |
 |                                   | allowed to submit documents.                                                  |                                               |
 |                                   |                                                                               |                                               |
@@ -440,7 +428,7 @@ Authorization and Authentication Properties
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-deniedSubmitters:        |                                                                               |                                               |
 |                                   |                                                                               |                                               |
-| auth.deniedSubmitters             | A colon delimited list of users who should NOT be allowed to                  | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
+| auth.deniedSubmitters             | A semicolon delimited list of users who should NOT be allowed to              | uid=youruser,o=NCEAS,dc=ecoinformatics,dc=org |
 |                                   | submit documents. If no value is specified, all users will be allowed to      |                                               |
 |                                   | submit documents.                                                             |                                               |
 |                                   |                                                                               |                                               |
@@ -477,9 +465,7 @@ Authorization and Authentication Properties
 XML/EML Properties
 ------------------
 Metacat's XML/EML properties are described below. These properties can only be 
-edited manually in the metacat.properties file. 
-
-XML/EML Properties
+edited manually in the ``metacat-site.properties`` file. 
 
 +-----------------------+------------------------------------------------------------------+---------------------------------------------------+
 | Property              | Description                                                      | Example                                           |
@@ -515,38 +501,8 @@ XML/EML Properties
 |                       | Default Value: -//ecoinformatics.org//eml-access-2.0.0beta6//EN  |                                                   |
 +-----------------------+------------------------------------------------------------------+---------------------------------------------------+
 
-
-Data Manager Properties
-------------------------
-The EML Data Manager is also included for extended data-query operations. Note that this feature is still experimental. 
-
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| Property                          | Description                                                                   | Example                                       |
-+===================================+===============================================================================+===============================================+
-| .. _datamanager.server:           |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.server                | The server for the Datamanager library to use for temporary db storage        | localhost                                     |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| .. _datamanager.database:         |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.database              | The database name for the Datamanager                                         | datamananger                                  |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| .. _datamanager.user:             |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.user                  | The username for the Datamanager DB                                           | datamananger                                  |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-| .. _datamanager.password:         |                                                                               |                                               |
-|                                   |                                                                               |                                               |
-| datamanager.password              | The password for the Datamanager user                                         | datamananger                                  |
-|                                   |                                                                               |                                               |
-+-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
-
- .. _ezid_properties:
 EZID Properties
-------------------------
+---------------
 The EZID service assigning Digital Object Identifiers (DOIs) is included in the Metacat service. 
 
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
@@ -610,16 +566,29 @@ Metacat automatically generates sitemaps for all all publicly-readable datasets 
 
 Additional Properties
 ----------------------
-Additional configuration properties are described below, though there are many more that can be manually edited in the properties file directly. 
+Additional configuration properties are described below, though there are many more that can be manually edited in the properties file directly. Properties that can only be
+edited manually in the ``metacat-site.properties`` file are marked with an asterisk (\*). All others are managed with the properties configuration utility.
 
-+-----------------------+------------------------------------------------------------------+---------------------------------------------------+
-| Property              | Description                                                      | Example                                           |
-+=======================+==================================================================+===================================================+
-| .. _plugin.handlers:  |                                                                  |                                                   |
-|                       |                                                                  |                                                   |
-| plugin.handlers       | Implementations of the plugin interface:                         | org.example.CustomActionHandler                   |
-|                       | edu.ucsb.nceas.metacat.plugin.MetacatHandlerPlugin can be listed |                                                   |
-|                       |                                                                  |                                                   |
-|                       | Default Value: blank                                             |                                                   |
-+-----------------------+------------------------------------------------------------------+---------------------------------------------------+
-
++-----------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------+
+| Property                          | Description                                                                   | Example                                           |
++===================================+===============================================================================+===================================================+
+| .. _plugin.handlers:              |                                                                               |                                                   |
+|                                   |                                                                               |                                                   |
+| plugin.handlers                   | Implementations of the plugin interface:                                      | org.example.CustomActionHandler                   |
+|                                   | edu.ucsb.nceas.metacat.plugin.MetacatHandlerPlugin can be listed              |                                                   |
+|                                   |                                                                               |                                                   |
+|                                   | Default Value: blank                                                          |                                                   |
++-----------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------+
+| .. _event.log.deny.ipaddress:     |                                                                               |                                                   |
+|                                   |                                                                               |                                                   |
+| event.log.deny.ipaddress*         | A list of IP addresses whose actions will not be logged when Metacat records  | 192.168.0.1;255.255.255.255                       |
+|                                   |                                                                               |                                                   |
+|                                   | Previously property name: event.log.blacklist.ipaddress                       |                                                   |
++-----------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------+
+| .. _event.log.deny.subject:       |                                                                               |                                                   |
+|                                   |                                                                               |                                                   |
+| event.log.deny.subject*           | A list of subjects (strings) whose actions will not be logged when Metacat    | bbelcher;http://orcid.org/0000-0012-3456-789X     |
+|                                   | records events/logs in the db.                                                |                                                   |
+|                                   |                                                                               |                                                   |
+|                                   | Previous property name: event.log.blacklist.subject                           |                                                   |
++-----------------------------------+-------------------------------------------------------------------------------+---------------------------------------------------+

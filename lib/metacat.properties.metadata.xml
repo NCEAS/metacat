@@ -1,165 +1,147 @@
 <?xml version="1.0"?>
+<!-- NOTE:     <helpfile> entries must be formatted correctly in order to work with the
+            corresponding anchors in the rst docs:
+            1. replace periods with dashes
+            2. anchor name should be all lowercase (even if it's uppercase in rst doc)
 
+            For example:
+            * rst anchor declaration:
+                `.. _application.tempDir:`
+
+            * correct <helpFile> tags:
+                `<helpFile>docs/metacat-properties.html#application-tempdir</helpFile>`
+                (i.e. NOT `#application.tempDir` or `#application-tempDir`)
+-->
 <metadataConfig>
-	<group>
-		<index>1</index>
-		<name>Database</name>
-		<description>Database Configuration Values.</description>
-	</group>
-	<group>
-		<index>2</index>
-		<name>Solr Configuration (New)</name>
-		<description>Server Configuration Values.</description>
-	</group>
-	<group>
-        <index>3</index>
+    <group>
+        <index>1</index>
         <name>Server Configuration</name>
         <description>Solr Configuration Values.</description>
     </group>
-	<group>
-		<index>4</index>
-		<name>Application Configuration</name>
-		<description>Application Configuration Values.</description>
-	</group>
-	<group>
-		<index>5</index>
-		<name>Data Manager Configuration</name>
-		<description>Data Manager Configuration Values.</description>
-	</group>
-	<group>
-		<index>6</index>
-		<name>Handler Plugin Configuration</name>
-		<description>Register Handler Plugin extensions</description>
-	</group>
-	<group>
-		<index>7</index>
-		<name>Sitemap Configuration</name>
-		<description>Sitemap Configuration Values</description>
-	</group>
+    <group>
+        <index>2</index>
+        <name>Solr Configuration</name>
+        <description>Server Configuration Values.</description>
+    </group>
+    <group>
+        <index>3</index>
+        <name>Database</name>
+        <description>Database Configuration Values.</description>
+    </group>
+    <group>
+        <index>4</index>
+        <name>Application Configuration</name>
+        <description>Application Configuration Values.</description>
+    </group>
+    <group>
+        <index>6</index>
+        <name>Handler Plugin Configuration</name>
+        <description>Register Handler Plugin extensions</description>
+    </group>
+    <group>
+        <index>7</index>
+        <name>Sitemap Configuration</name>
+        <description>Sitemap Configuration Values</description>
+    </group>
 
-	<!-- hidden section for backup convenience -->	
-	<group>
-		<index>8</index>
-		<name> </name>
-		<description> </description>
-	</group>
+    <!-- hidden section for backup convenience -->    
+    <group>
+        <index>8</index>
+        <name> </name>
+        <description> </description>
+    </group>
 
-	<config>
-		<key>application.default-style</key>
-		<label>Default Skin Style</label>
-		<group>0</group>
-		<index>0</index>
-		<fieldType>hidden</fieldType>
-		<description>
-			Default skin type. Not shown on config page but we want it to backup.
-		</description>
-		<helpFile>docs/metacat-properties.html#application-default-style</helpFile>
-	</config>
+    <config>
+        <key>application.default-style</key>
+        <label>Default Skin Style</label>
+        <group>0</group>
+        <index>0</index>
+        <fieldType>hidden</fieldType>
+        <description>
+            Default skin type. Not shown on config page, but we want it to back up.
+        </description>
+        <helpFile>docs/metacat-properties.html#application-default-style</helpFile>
+    </config>
 
-	<config>
-		<key>database.user</key>
-		<label>Database Username</label>
-		<group>1</group>
-		<index>1</index>
-		<description>
-			Name of database user to own all tables.
-		</description>
-		<helpFile>docs/metacat-properties.html#database-user</helpFile>
-	</config>
+    <config>
+        <key>database.user</key>
+        <label>Database Username</label>
+        <group>3</group>
+        <index>1</index>
+        <description>
+            Name of database user to own all tables.
+        </description>
+        <helpFile>docs/metacat-properties.html#database-user</helpFile>
+    </config>
 
-	<config>
-		<key>database.password</key>
-		<label>Database Password</label>
-		<group>1</group>
-		<index>2</index>
-		<fieldType>password</fieldType>
-		<description>Password for database user.</description>
-		<helpFile>docs/metacat-properties.html#database-password</helpFile>
-	</config>
+    <config>
+        <key>database.password</key>
+        <label>Database Password</label>
+        <group>3</group>
+        <index>2</index>
+        <fieldType>password</fieldType>
+        <description>Password for database user.</description>
+        <helpFile>docs/metacat-properties.html#database-password</helpFile>
+    </config>
 
-	<config>
-		<key>database.type</key>
-		<label>Database Type</label>
-		<group>1</group>
-		<index>3</index>
-		<fieldType>select</fieldType>
-		<option>
-			<name>PostgreSQL</name>
-			<value>postgres</value>
-		</option>
-		<option>
-			<name>Oracle</name>
-			<value>oracle</value>
-		</option>
-		<!-- option>
-			<name>SQL Server</name>
-			<value>sqlserver</value>
-		</option -->
-		<description>What kind of database is running.</description>
-		<helpFile>docs/metacat-properties.html#database-type</helpFile>
-	</config>
+    <config>
+        <key>database.type</key>
+        <label>Database Type</label>
+        <group>3</group>
+        <index>3</index>
+        <fieldType>select</fieldType>
+        <option>
+            <name>PostgreSQL</name>
+            <value>postgres</value>
+        </option>
+        <description>What kind of database is running.</description>
+        <helpFile>docs/metacat-properties.html#database-type</helpFile>
+    </config>
 
-	<config>
-		<key>database.driver</key>
-		<label>Database Driver</label>
-		<group>1</group>
-		<index>4</index>
-		<fieldType>select</fieldType>
-		<option>
-			<name>org.postgresql.Driver</name>
-			<value>org.postgresql.Driver</value>
-		</option>
-		<option>
-			<name>oracle.jdbc.driver.OracleDriver</name>
-			<value>oracle.jdbc.driver.OracleDriver</value>
-		</option>
-		<!-- option>
-			<name>com.microsoft.jdbc.sqlserver.SQLServerDriver</name>
-			<value>com.microsoft.jdbc.sqlserver.SQLServerDriver</value>
-		</option -->
-		<description>
-			Which driver is required. This should conform to your
-			database type.
-		</description>
-		<helpFile>docs/metacat-properties.html#database-driver</helpFile>
-	</config>
+    <config>
+        <key>database.driver</key>
+        <label>Database Driver</label>
+        <group>3</group>
+        <index>4</index>
+        <fieldType>select</fieldType>
+        <option>
+            <name>org.postgresql.Driver</name>
+            <value>org.postgresql.Driver</value>
+        </option>
+        <description>
+            Which driver is required. This should conform to your
+            database type.
+        </description>
+        <helpFile>docs/metacat-properties.html#database-driver</helpFile>
+    </config>
 
-	<config>
-		<key>database.adapter</key>
-		<label>Database Adapter</label>
-		<group>1</group>
-		<index>5</index>
-		<fieldType>select</fieldType>
-		<option>
-			<name>edu.ucsb.nceas.dbadapter.PostgresqlAdapter</name>
-			<value>edu.ucsb.nceas.dbadapter.PostgresqlAdapter</value>
-		</option>
-		<option>
-			<name>edu.ucsb.nceas.dbadapter.OracleAdapter</name>
-			<value>edu.ucsb.nceas.dbadapter.OracleAdapter</value>
-		</option>
-		<!-- option>
-			<name>edu.ucsb.nceas.dbadapter.SqlserverAdapter</name>
-			<value>edu.ucsb.nceas.dbadapter.SqlserverAdapter</value>
-		</option -->
-		<description>
-			Which adapter is required. This should conform to your
-			database type.
-		</description>
-		<helpFile>docs/metacat-properties.html#database-adapter</helpFile>
-	</config>
+    <config>
+        <key>database.adapter</key>
+        <label>Database Adapter</label>
+        <group>3</group>
+        <index>5</index>
+        <fieldType>select</fieldType>
+        <option>
+            <name>edu.ucsb.nceas.dbadapter.PostgresqlAdapter</name>
+            <value>edu.ucsb.nceas.dbadapter.PostgresqlAdapter</value>
+        </option>
+        <description>
+            Which adapter is required. This should conform to your
+            database type.
+        </description>
+        <helpFile>docs/metacat-properties.html#database-adapter</helpFile>
+    </config>
 
-	<config>
-		<key>database.connectionURI</key>
-		<label>JDBC Connection String</label>
-		<group>1</group>
-		<index>6</index>
-		<description>Database connection string.</description>
-		<helpFile>docs/metacat-properties.html#database-connectionURI</helpFile>
-	</config>
-	
-	
-	<config>
+    <config>
+        <key>database.connectionURI</key>
+        <label>JDBC Connection String</label>
+        <group>3</group>
+        <index>6</index>
+        <description>Database connection string.</description>
+        <helpFile>docs/metacat-properties.html#database-connectionuri</helpFile>
+    </config>
+
+    <config>
         <key>solr.baseURL</key>
         <label>Solr BaseURL</label>
         <group>2</group>
@@ -167,42 +149,24 @@
         <description>
             The base URL of the HTTP Solr server
         </description>
-        <helpFile>docs/metacat-properties.html#solr-baseURL</helpFile>
+        <helpFile>docs/metacat-properties.html#solr-baseurl</helpFile>
     </config>
-    
-   <!-- <config>
-        <key>solr.adminUser</key>
-        <label>Solr Admin User</label>
-        <group>2</group>
-        <index>2</index>
-        <description>
-            The admin user of the HTTP Solr server
-        </description>
-        <helpFile>docs/metacat-properties.html#solr-adminUser</helpFile>
-    </config>
-    
-    <config>
-        <key>solr.password</key>
-        <label>Password</label>
-        <group>2</group>
-        <index>3</index>
-        <description>
-            The password of the admin user of the HTTP Solr server
-        </description>
-        <helpFile>docs/metacat-properties.html#solr-password</helpFile>
-    </config> -->
-    
+
     <config>
         <key>solr.homeDir</key>
         <label>Solr Home Directory</label>
         <group>2</group>
         <index>4</index>
         <description>
-            The directory to hold the Solr core. &lt;font color="red"&gt; If you are upgrading Metacat from version 2.12.2 or earlier, please choose a different directory rather than the old one. Make sure the Solr user has the write/read permission on this directory&lt;/font&gt;
+            The directory to hold the Solr core. Your solr-home path must exist, be empty, and
+            cannot be a symlink (it must be a real path). If you're upgrading from 2.19.0,
+            please back up your current solr-home directory and then delete all its contents.
+            Please see the &lt;a href="docs/install.html#upgrading-to-metacat-v3-0-0"&gt;Metacat Admin docs&lt;/a&gt; for more information.
+            &lt;em&gt;Reminder: Ensure the Solr user has the write/read permission on this directory &lt;/em&gt;
         </description>
-        <helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
+        <helpFile>docs/metacat-properties.html#solr-homedir</helpFile>
     </config>
-    
+
     <config>
         <key>solr.coreName</key>
         <label>Solr Core Name</label>
@@ -211,411 +175,396 @@
         <description>
             The name of the core storing Metacat Solr index
         </description>
-        <helpFile>docs/metacat-properties.html#solr-coreName</helpFile>
+        <helpFile>docs/metacat-properties.html#solr-corename</helpFile>
     </config>
 
-    
     <config>
         <key>solr.env.script.path</key>
         <label>Environment Override File</label>
         <group>2</group>
         <index>6</index>
         <description>
-            The path of the script file to overwrite the default Solr environment variables. &lt;font color="red"&gt; Make sure the Tomcat user has the write/read permission on this file.&lt;/font&gt; 
+            The path of the script file to overwrite the default Solr environment variables.
+            &lt;em&gt;Reminder: Ensure the Tomcat user has the write/read permission on this file.
+            &lt;/em&gt;
         </description>
         <helpFile>docs/metacat-properties.html#solr-env-script-path</helpFile>
     </config>
-	
 
-	<config>
-		<key>server.name</key>
-		<label>Server Name</label>
-		<group>3</group>
-		<index>1</index>
-		<description>
-			Name of the server where Metacat will be available.
-		</description>
-		<helpFile>docs/metacat-properties.html#server-name</helpFile>
-	</config>
+    <config>
+        <key>server.name</key>
+        <label>Server Name</label>
+        <group>1</group>
+        <index>1</index>
+        <description>
+            Name of the server where Metacat will be available.
+        </description>
+        <helpFile>docs/metacat-properties.html#server-name</helpFile>
+    </config>
 
-	<config>
-		<key>server.httpPort</key>
-		<label>HTTP Port</label>
-		<group>3</group>
-		<index>2</index>
-		<description>
-			Non secure port where Metacat will be available.
-		</description>
-		<helpFile>docs/metacat-properties.html#server-httpPort</helpFile>
-	</config>
+    <config>
+        <key>server.port</key>
+        <label>Server Port</label>
+        <group>1</group>
+        <index>2</index>
+        <description>
+            Port of the server where Metacat will be available.
+        </description>
+        <helpFile>docs/metacat-properties.html#server-port</helpFile>
+    </config>
 
-	<config>
-		<key>server.httpSSLPort</key>
-		<label>HTTP SSL Port</label>
-		<group>3</group>
-		<index>3</index>
-		<description>
-			Secure port where Metacat will be available.
-		</description>
-		<helpFile>docs/metacat-properties.html#server-httpSSLPort</helpFile>
-	</config>
-  
-  <config>
-    <key>server.internalName</key>
-    <label>Server Internal Name</label>
-    <group>3</group>
-    <index>4</index>
-    <description>
-      Local name of the server. Usually it is localhost. 
-    </description>
-    <helpFile>docs/metacat-properties.html#server-internalName</helpFile>
-  </config>
+    <config>
+        <key>server.https</key>
+        <label>Server HTTPS</label>
+        <group>1</group>
+        <index>3</index>
+        <fieldType>select</fieldType>
+        <option>
+            <name>TRUE</name>
+            <value>true</value>
+        </option>
+        <option>
+            <name>FALSE</name>
+            <value>false</value>
+        </option>
+        <description>
+            Is the Metacat server configured to use secure HTTPS connections?
+            HTTPS connections are strongly recommended.
+        </description>
+        <helpFile>docs/metacat-properties.html#server-https</helpFile>
+    </config>
 
-  <config>
-    <key>server.internalPort</key>
-    <label>Internal Port</label>
-    <group>3</group>
-    <index>5</index>
-    <description>
-      Internal port where Metacat will be available when the server local name is used.
-    </description>
-    <helpFile>docs/metacat-properties.html#server-internalPort</helpFile>
-  </config>
+    <config>
+        <key>server.internalName</key>
+        <label>Server Internal Name</label>
+        <group>1</group>
+        <index>4</index>
+        <description>
+            Local name of the server. Usually it is localhost. 
+        </description>
+        <helpFile>docs/metacat-properties.html#server-internalname</helpFile>
+    </config>
 
-	
-	<config>
-		<key>application.deployDir</key>
-		<label>Deploy Location</label>
-		<group>3</group>
-		<index>6</index>
-		<description>
-			The directory where the application is deployed.
-		</description>
-		<helpFile>docs/metacat-properties.html#application-deployDir</helpFile>
-	</config>
-	
+    <config>
+        <key>server.internalPort</key>
+        <label>Internal Port</label>
+        <group>1</group>
+        <index>5</index>
+        <description>
+            Internal port where Metacat will be available when the server local name is used.
+        </description>
+        <helpFile>docs/metacat-properties.html#server-internalport</helpFile>
+    </config>
 
-	<config>
-		<key>auth.allowedSubmitters</key>
-		<label>Allowed Submitters</label>
-		<group>4</group>
-		<index>1</index>
-		<description>Allowed Submitters</description>
-		<helpFile>docs/metacat-properties.html#auth-allowedSubmitters</helpFile>
-	</config>
 
-	<config>
-		<key>auth.deniedSubmitters</key>
-		<label>Denied Submitters</label>
-		<group>4</group>
-		<index>2</index>
-		<description>Denied Submitters</description>
-		<helpFile>docs/metacat-properties.html#auth-deniedSubmitters</helpFile>
-	</config>
+    <config>
+        <key>auth.allowedSubmitters</key>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Allowed Submitters</label>
+        <group>4</group>
+        <index>1</index>
+        <description>A list of one or more user and group names,
+                     separated by &lt;em&gt;semicolons (;)&lt;/em&gt;,
+                     which are allowed to submit objects to this server.
+        </description>
+        <helpFile>docs/metacat-properties.html#auth-allowedsubmitters</helpFile>
+    </config>
 
-	<config>
-		<key>application.context</key>
-		<label>Metacat Context</label>
-		<group>4</group>
-		<index>3</index>
-		<description>
-			Name of the context under which Metacat will run. This is
-			the directory in which the Metacat war file is deployed.
-		</description>
-		<helpFile>docs/metacat-properties.html#application-context</helpFile>
-	</config>
+    <config>
+        <key>auth.deniedSubmitters</key>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Denied Submitters</label>
+        <group>4</group>
+        <index>2</index>
+        <description>A list of one or more user and group names,
+                     separated by &lt;em&gt;semicolons (;)&lt;/em&gt;,
+                     which are NOT allowed to submit objects to this server.
+        </description>
+        <helpFile>docs/metacat-properties.html#auth-deniedsubmitters</helpFile>
+    </config>
 
-	<config>
-		<key>application.knbSiteURL</key>
-		<label>KNB Site URL</label>
-		<group>4</group>
-		<index>4</index>
-		<description>
-			Location of KNB website. Usually left as
-			http://knb.ecoinformatics.org
-		</description>
-		<helpFile>docs/metacat-properties.html#application-knbSiteURL</helpFile>
-	</config>
+    <config>
+        <key>application.context</key>
+        <label>Metacat Context</label>
+        <group>4</group>
+        <index>3</index>
+        <description>
+            Name of the context under which Metacat will run. This is
+            the directory in which the Metacat war file is deployed.
+        </description>
+        <helpFile>docs/metacat-properties.html#application-context</helpFile>
+    </config>
 
-	<config>
-		<key>application.datafilepath</key>
-		<label>Data File Path</label>
-		<group>4</group>
-		<index>5</index>
-		<description>
-			Where to store data. This should be some location outside
-			the knb install direcories.
-		</description>
-		<helpFile>docs/metacat-properties.html#application-datafilepath</helpFile>
-	</config>
+    <config>
+        <key>application.deployDir</key>
+        <label>Deploy Location</label>
+        <group>4</group>
+        <index>4</index>
+        <description>
+            The directory where the application is deployed.
+        </description>
+        <helpFile>docs/metacat-properties.html#application-deploydir</helpFile>
+    </config>
 
-	<config>
-		<key>application.inlinedatafilepath</key>
-		<label>Inline Data File Path</label>
-		<group>4</group>
-		<index>6</index>
-		<description>
-			Where to store inline data. This should be some location
-			outside the knb install direcories.
-		</description>
-		<helpFile>docs/metacat-properties.html#application-inlinedatafilepath</helpFile>
-	</config>
-	
-	<config>
-		<key>application.documentfilepath</key>
-		<label>Document File Path</label>
-		<group>4</group>
-		<index>7</index>
-		<description>
-			Where to store metadata documents. This should be some location
-			outside the knb install direcories.
-		</description>
-		<helpFile>docs/metacat-properties.html#application-documentfilepath</helpFile>
-	</config>
-	
-	<config>
-		<key>application.tempDir</key>
-		<label>Temporary File Path</label>
-		<group>4</group>
-		<index>8</index>
-		<description>
-			Where to store temporary documents. This is primarily used by
-			the data registry code. &lt;font color="red"&gt; Note: this must be 
-			set to a directory that is dedicated solely to temporary data, 
-			since the contents may be deleted programatically.&lt;/font&gt;
-		</description>
-		<helpFile>docs/metacat-properties.html#application-tempDir</helpFile>
-	</config>
-	
-	<config>
-		<key>replication.logdir</key>
-		<label>Replication Log Directory</label>
-		<group>4</group>
-		<index>9</index>
-		<description>
-			The directory where replication log should be located.
-		</description>
-		<helpFile>docs/metacat-properties.html#replication-logdir</helpFile>
-	</config>
-	
-	<config>
-		<key>index.context</key>
-		<label>Index Context</label>
-		<group>4</group>
-		<index>10</index>
-		<description>
-			The context name for the deployed Metacat index webapp.
-		</description>
-		<helpFile>docs/metacat-properties.html#index-context</helpFile>
-	</config>
-	
-	<!-- <config>
-		<key>solr.homeDir</key>
-		<label>Solr Home directory</label>
-		<group>3</group>
-		<index>11</index>
-		<description>
-			The directory where replication log should be located.
-		</description>
-		<helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
-	</config> -->
-	
-	<config>
-		<key>ui.context</key>
-		<label>UI Context</label>
-		<group>4</group>
-		<index>11</index>
-		<description>
-			The context name for the deployed Metacat UI webapp.
-		</description>
-		<helpFile>docs/metacat-properties.html#ui-context</helpFile>
-	</config>
-	
-	<!-- START Data Manager configuration -->
-	<config>
-		<key>datamanager.server</key>
-		<label>Database Server</label>
-		<group>5</group>
-		<index>1</index>
-		<description>
-			Host or IP of database server
-		</description>
-		<helpFile>docs/metacat-properties.html#datamanager-server</helpFile>
-	</config>
-	
-	<config>
-		<key>datamanager.database</key>
-		<label>Database Name</label>
-		<group>5</group>
-		<index>2</index>
-		<description>
-			Name of the data manager database
-		</description>
-		<helpFile>docs/metacat-properties.html#datamanager-database</helpFile>
-	</config>
-	
-	<config>
-		<key>datamanager.user</key>
-		<label>Database Username</label>
-		<group>5</group>
-		<index>3</index>
-		<description>
-			Name of database user to own all tables.
-		</description>
-		<helpFile>docs/metacat-properties.html#datamanager-user</helpFile>
-	</config>
+    <config>
+        <key>application.sitePropertiesDir</key>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Site Properties Directory</label>
+        <group>4</group>
+        <index>5</index>
+        <description>
+            Where to store the metacat-site.properties file. This should be somewhere outside the
+            'Deploy Location'
+        </description>
+        <helpFile>docs/metacat-properties.html#application-sitepropertiesdir</helpFile>
+    </config>
 
-	<config>
-		<key>datamanager.password</key>
-		<label>Database Password</label>
-		<group>5</group>
-		<index>4</index>
-		<fieldType>password</fieldType>
-		<description>Password for database user.</description>
-		<helpFile>docs/metacat-properties.html#datamanager-password</helpFile>
-	</config>
-	<!-- END Data Manager configuration -->
+    <config>
+        <key>application.datafilepath</key>
+        <label>Data File Path</label>
+        <group>4</group>
+        <index>6</index>
+        <description>
+            Where to store data. This should be somewhere outside the 'Deploy Location'
+        </description>
+        <helpFile>docs/metacat-properties.html#application-datafilepath</helpFile>
+    </config>
 
-	<!-- handler plugin -->
-	<config>
-		<key>plugin.handlers</key>
-		<label>Plugin class name[s]</label>
-		<group>6</group>
-		<index>1</index>
-		<description>Comma-separated list of fully-qualified class names that implement MetacatHandlerPlugin interface</description>
-		<helpFile>docs/metacat-properties.html#plugin-handlers</helpFile>
-	</config>
-	
-	<!-- DataONE configuration -->
-	<config>
-		<key>D1Client.CN_URL</key>
-		<label>Coordinating Node URL</label>
-		<group>8</group>
-		<index>1</index>
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-		<key>dataone.nodeName</key>
-		<label>Node Name</label>
-		<group>8</group>
-		<index>2</index>
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-		<key>dataone.nodeDescription</key>
-		<label>Node Description</label>
-		<group>8</group>
-		<index>3</index>
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-		<key>dataone.nodeId</key>
-		<label>Node Identifier</label>
-		<group>8</group>
-		<index>4</index>
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-		<key>dataone.subject</key>
-		<label>Node Subject</label>
-		<group>8</group>
-		<index>5</index>
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-	    <key>dataone.nodeSynchronize</key>
-	    <label>Synchronize?</label>
-	    <group>8</group>
-	    <index>6</index>                
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-	    <key>dataone.nodeReplicate</key>
-	    <label>Replicate?</label>
-	    <group>8</group>
-	    <index>7</index>                
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-	    <key>D1Client.certificate.file</key>
-	    <label>Certificate file</label>
-	    <group>8</group>
-	    <index>8</index>                
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-	    <key>dataone.ore.generated</key>
-	    <label>Have the ORE maps been generated?</label>
-	    <group>8</group>
-	    <index>9</index>                
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-	    <key>dataone.systemmetadata.generated</key>
-	    <label>Has System Metadata been generated?</label>
-	    <group>8</group>
-	    <index>10</index>                
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-	    <key>dataone.mn.services.enabled</key>
-	    <label>Have D1 MN services been enabled</label>
-	    <group>8</group>
-	    <index>11</index>                
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-	    <key>dataone.mn.registration.submitted</key>
-	    <label>Has the MN registration been submitted</label>
-	    <group>8</group>
-	    <index>12</index>                
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-	    <key>D1Client.resourcesDir</key>
-	    <label>Configurable DataONE Resources Directory</label>
-	    <group>8</group>
-	    <index>13</index>                
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	<config>
-		<key>dataone.contactSubject</key>
-		<label>Contact Subject</label>
-		<group>8</group>
-		<index>14</index>
-		<fieldType>hidden</fieldType>
-		<description> </description>
-		<helpFile> </helpFile>
-	</config>
-	
-	<!-- EZID and DOI configurations -->
-  <config>
+    <config>
+        <key>application.inlinedatafilepath</key>
+        <label>Inline Data File Path</label>
+        <group>4</group>
+        <index>7</index>
+        <description>
+            Where to store inline data. This should be somewhere outside the 'Deploy Location'.
+        </description>
+        <helpFile>docs/metacat-properties.html#application-inlinedatafilepath</helpFile>
+    </config>
+
+    <config>
+        <key>application.documentfilepath</key>
+        <label>Document File Path</label>
+        <group>4</group>
+        <index>8</index>
+        <description>
+            Where to store metadata documents. This should be somewhere outside
+            the 'Deploy Location'
+        </description>
+        <helpFile>docs/metacat-properties.html#application-documentfilepath</helpFile>
+    </config>
+
+    <config>
+        <key>application.tempDir</key>
+        <label>Temporary File Path</label>
+        <group>4</group>
+        <index>9</index>
+        <description>
+            Where to store temporary documents. This is primarily used by
+            the data registry code. &lt;em&gt; Note: this must be
+            set to a directory that is dedicated solely to temporary data, 
+            since the contents may be deleted programmatically.&lt;/em&gt;
+        </description>
+        <helpFile>docs/metacat-properties.html#application-tempdir</helpFile>
+    </config>
+
+    <config>
+        <key>replication.logdir</key>
+        <label>Replication Log Directory</label>
+        <group>4</group>
+        <index>10</index>
+        <description>
+            The directory where replication log should be located.
+        </description>
+        <helpFile>docs/metacat-properties.html#replication-logdir</helpFile>
+    </config>
+
+    <config>
+        <key>index.context</key>
+        <label>Index Context</label>
+        <group>4</group>
+        <index>11</index>
+        <description>
+            The context name for the deployed Metacat index webapp.
+        </description>
+        <helpFile>docs/metacat-properties.html#index-context</helpFile>
+    </config>
+
+    <config>
+        <key>ui.context</key>
+        <label>UI Context</label>
+        <group>4</group>
+        <index>12</index>
+        <description>
+            The context name for the deployed Metacat UI webapp.
+        </description>
+        <helpFile>docs/metacat-properties.html#ui-context</helpFile>
+    </config>
+
+    <config>
+        <key>cn.server.publiccert.filename</key>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Token Verification Certificates</label>
+        <group>4</group>
+        <index>13</index>
+        <description>
+            Semicolon-separated list of paths to certificate files, each containing a single public
+            key (not a certificate chain). These will be used to verify incoming request jwt
+            tokens, in addition to verifying against the CN server.
+        </description>
+        <helpFile>docs/metacat-properties.html#cn-server-publiccert-filename</helpFile>
+    </config>
+
+    <config>
+        <key>dataone.nodeToken.file</key>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Admin Token Path</label>
+        <group>4</group>
+        <index>14</index>
+        <description>
+            The path to the admin jwt token that will be used in dataone-indexer to access the
+            private objects' system metadata.
+        </description>
+        <helpFile>docs/metacat-properties.html#dataone-nodetoken-file</helpFile>
+    </config>
+
+    <!-- handler plugin -->
+    <config>
+        <key>plugin.handlers</key>
+        <label>Plugin class name[s]</label>
+        <group>6</group>
+        <index>1</index>
+        <description>
+            Comma-separated list of fully-qualified class names that implement
+            MetacatHandlerPlugin interface
+        </description>
+        <helpFile>docs/metacat-properties.html#plugin-handlers</helpFile>
+    </config>
+
+    <!-- DataONE configuration -->
+    <config>
+        <key>D1Client.CN_URL</key>
+        <label>Coordinating Node URL</label>
+        <group>8</group>
+        <index>1</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.nodeName</key>
+        <label>Node Name</label>
+        <group>8</group>
+        <index>2</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.nodeDescription</key>
+        <label>Node Description</label>
+        <group>8</group>
+        <index>3</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.nodeId</key>
+        <label>Node Identifier</label>
+        <group>8</group>
+        <index>4</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.subject</key>
+        <label>Node Subject</label>
+        <group>8</group>
+        <index>5</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.nodeSynchronize</key>
+        <label>Synchronize?</label>
+        <group>8</group>
+        <index>6</index>                
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.nodeReplicate</key>
+        <label>Replicate?</label>
+        <group>8</group>
+        <index>7</index>                
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>D1Client.certificate.file</key>
+        <label>Certificate file</label>
+        <group>8</group>
+        <index>8</index>                
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.ore.generated</key>
+        <label>Have the ORE maps been generated?</label>
+        <group>8</group>
+        <index>9</index>                
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.systemmetadata.generated</key>
+        <label>Has System Metadata been generated?</label>
+        <group>8</group>
+        <index>10</index>                
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.mn.services.enabled</key>
+        <label>Have D1 MN services been enabled</label>
+        <group>8</group>
+        <index>11</index>                
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.mn.registration.submitted</key>
+        <label>Has the MN registration been submitted</label>
+        <group>8</group>
+        <index>12</index>                
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>D1Client.resourcesDir</key>
+        <label>Configurable DataONE Resources Directory</label>
+        <group>8</group>
+        <index>13</index>                
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.contactSubject</key>
+        <label>Contact Subject</label>
+        <group>8</group>
+        <index>14</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+
+    <!-- EZID and DOI configurations -->
+    <config>
         <key>guid.doi.enabled</key>
         <label>Enable DOI Service</label>
         <group>8</group>
@@ -623,21 +572,21 @@
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
-  </config>
-	<config>
+    </config>
+    <config>
         <key>guid.doiservice.plugin.class</key>
         <label>DOI Service</label>
         <group>8</group>
         <index>16</index>
         <fieldType>hidden</fieldType>
-		    <option>
-    		  <name>EZID</name>
-      		<value>edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService</value>
-    		</option>
-    		<option>
-      		<name>OSTI</name>
-      		<value>edu.ucsb.nceas.metacat.doi.osti.OstiDOIService</value>
-    		</option>
+            <option>
+              <name>EZID</name>
+              <value>edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService</value>
+            </option>
+            <option>
+              <name>OSTI</name>
+              <value>edu.ucsb.nceas.metacat.doi.osti.OstiDOIService</value>
+            </option>
         <description> </description>
         <helpFile> </helpFile>
     </config>
@@ -661,73 +610,72 @@
     </config>
     <config>
         <key>guid.doi.doishoulder.1</key>
-        <label>DOI Shouder</label>
+        <label>DOI Shoulder</label>
         <group>8</group>
         <index>19</index>
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
-		</config>
-		
-		<!-- Sitemaps -->
-		<config>
-			<key>sitemap.enabled</key>
-			<label>Sitemaps Enabled</label>
-			<fieldType>select</fieldType>
-			<option>
-				<name>Enabled</name>
-				<value>true</value>
-			</option>
-			<option>
-				<name>Disabled</name>
-				<value>false</value>
-			</option>
-			<group>7</group>
-			<index>1</index>
-			<description>
-				Whether sitemaps are enabled or not.
-			</description>
-			<helpFile>docs/metacat-properties.html#sitemap-enabled</helpFile>
-		</config>
-		<config>
-			<key>sitemap.interval</key>
-			<label>Interval</label>
-			<group>7</group>
-			<index>2</index>
-			<description>
-				How often sitemaps are generated. Enter an integer in milliseconds. 
-				e.g., 86400000 for daily, 3600000 for hourly.
-			</description>
-			<helpFile>docs/metacat-properties.html#sitemap-interval</helpFile>
-		</config>
-		<config>
-			<key>sitemap.location.base</key>
-			<label>Location Base</label>
-			<group>7</group>
-			<index>3</index>
-			<description>
-				Base URL for where the sitemap index and individual sitemap files are 
-				served. i.e., sitemap_index.xml should be available at 
-				{sitemap.location.base}/sitemap_index.xml. Trailing slash is optional.
-			</description>
-			<helpFile>docs/metacat-properties.html#sitemap-location-base</helpFile>
-		</config>
-		<config>
-			<key>sitemap.entry.base</key>
-			<label>Entry Base</label>
-			<group>7</group>
-			<index>4</index>
-			<description>
-				Base URL for each entry listed in each sitemap. The identifier of each
-				record is appended to this value to determine the full URL. e.g., a
-				dataset with an identiifer of "mydataset" would show up as 
-				"{sitemap.entry.base}/mydataset" in its respective sitemap. Trailing 
-				slash is optional.
-			</description>
-			<helpFile>docs/metacat-properties.html#sitemap-entry-base</helpFile>
-		</config>
-		
-		<!-- quota configurations -->
+    </config>
+    <!-- Sitemaps -->
+    <config>
+        <key>sitemap.enabled</key>
+        <label>Sitemaps Enabled</label>
+        <fieldType>select</fieldType>
+        <option>
+            <name>Enabled</name>
+            <value>true</value>
+        </option>
+        <option>
+            <name>Disabled</name>
+            <value>false</value>
+        </option>
+        <group>7</group>
+        <index>1</index>
+        <description>
+            Whether sitemaps are enabled or not.
+        </description>
+        <helpFile>docs/metacat-properties.html#sitemap-enabled</helpFile>
+    </config>
+    <config>
+        <key>sitemap.interval</key>
+        <label>Interval</label>
+        <group>7</group>
+        <index>2</index>
+        <description>
+            How often sitemaps are generated. Enter an integer in milliseconds.
+            e.g., 86400000 for daily, 3600000 for hourly.
+        </description>
+        <helpFile>docs/metacat-properties.html#sitemap-interval</helpFile>
+    </config>
+    <config>
+        <key>sitemap.location.base</key>
+        <label>Location Base</label>
+        <group>7</group>
+        <index>3</index>
+        <description>
+            Base URL for where the sitemap index and individual sitemap files are
+            served. i.e., sitemap_index.xml should be available at
+            {sitemap.location.base}/sitemap_index.xml. Trailing slash is optional.
+        </description>
+        <helpFile>docs/metacat-properties.html#sitemap-location-base</helpFile>
+    </config>
+    <config>
+        <key>sitemap.entry.base</key>
+        <label>Entry Base</label>
+        <group>7</group>
+        <index>4</index>
+        <description>
+            Base URL for each entry listed in each sitemap. The identifier of each
+            record is appended to this value to determine the full URL. e.g., a
+            dataset with an identiifer of "mydataset" would show up as
+            "{sitemap.entry.base}/mydataset" in its respective sitemap. Trailing
+            slash is optional.
+        </description>
+        <helpFile>docs/metacat-properties.html#sitemap-entry-base</helpFile>
+    </config>
+
+    <!-- quota configurations -->
     <config>
         <key>dataone.quotas.portals.enabled</key>
         <label>Enable Portal Quota</label>
@@ -763,5 +711,5 @@
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
-        </config>
+    </config>
 </metadataConfig>
