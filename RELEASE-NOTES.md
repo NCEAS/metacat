@@ -2,8 +2,6 @@
 
 ## Release Notes for 3.0.0
 
-Release date: 2024-04-XX
-
 ### Note: Your Metacat instance MUST be either 2.19.0 or 2.19.1 before you can upgrade it to 3.0.0.
 
 ### Overview of Major Changes
