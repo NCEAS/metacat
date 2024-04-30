@@ -10,7 +10,7 @@ Release date: 2024-04-30
 
 This major release introduces breaking changes:
 - A valid admin (auth) token is required for a Metacat 3.0.0 installation to function correctly (i.e. to handle private datasets).
-  - Please [contact DataONE](https://www.dataone.org/contact/) to obtain a long-term token (valid for 1 year) 
+  - Please [contact DataONE](https://www.dataone.org/contact/) to obtain a long-term token (valid for 1 year)
     - If you are already part of the DataONE network and have a member node, we will issue you a token linked to your DataONE Node identity.
     - If you're not a DataONE member node, we [encourage you to join](https://www.dataone.org/jointhenetwork/) (it's free!) so that your data can partake in DataONE's goal of the preservation of scientific data for future use.
     - Otherwise, we can issue a token linked to your Metacat administrator's ORCID iD.
@@ -29,6 +29,12 @@ This major release introduces breaking changes:
 - Metacat admin authentication is no longer supported via LDAP or Password-based logins.
   - An ORCID iD is now required in order to log in as a Metacat administrator.
   - Please [sign up for an ORCID iD](https://orcid.org/register) if you do not already have one.
+
+Also in this release:
+- You can now deploy Metacat on Kubernetes, using a Helm chart. Note this is a beta feature. It has
+  been tested, and we believe it to be working well, but it has not yet been used in production - so
+  we recommend caution with this early release. If you try it, [we'd love to hear your
+  feedback](https://www.dataone.org/contact/)!
 
 ### Upgrade Notes (2.19.0 to 3.0.0):
 
@@ -56,7 +62,7 @@ This major release introduces breaking changes:
       # where $TOKEN is an environment variable containing your indexer token (see overview of major changes above).
       # example:
       curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
-      ``` 
+      ```
   - Ensure that `/etc/default/solr.in.sh` is group writable
     - ex. `sudo chmod g+w /etc/default/solr.in.sh`
   - In `solr.in.sh`, be sure to delete the old solr home add a new solr path:
@@ -72,7 +78,7 @@ This major release introduces breaking changes:
 - You are now ready to install Metacat 3.0.0
   - Additional notes:
     - `metacat.properties` no longer contains custom settings, and should not be edited.
-      - Please first re-configure Metacat through the Metacat Admin UI after upgrading. 
+      - Please first re-configure Metacat through the Metacat Admin UI after upgrading.
       - If you have custom properties that are not available for configuration in the Metacat Admin UI, these can be added to `metacat-site.properties`.
     - The database upgrade process may require several minutes or longer to complete.
 
@@ -84,7 +90,7 @@ This major release introduces breaking changes:
   - LDAP and Password-based login is no longer supported
 - Metacat admin users now have member node admin privileges [I-1816](https://github.com/NCEAS/metacat/issues/1816)
 - Storage and Indexing Enhancements [PR-1695](https://github.com/NCEAS/metacat/pull/1695)
-  - Revised use of port numbers to determine https vs. http [I-1697](https://github.com/NCEAS/metacat/issues/1697) 
+  - Revised use of port numbers to determine https vs. http [I-1697](https://github.com/NCEAS/metacat/issues/1697)
   - Re-implemented mechanism to handle index tasks that failed to be put into RabbitMQ [I-1603](https://github.com/NCEAS/metacat/issues/1603)
   - Increased indexing speeds by replacing hazelcast with dataone-indexer
   - Removed hazelcast dependency and added new SystemMetadataManager class to handle system metadata
@@ -92,7 +98,7 @@ This major release introduces breaking changes:
   - Moved reindexing action from old MetacatAPI to new DataONE MN.admin API [PR-1738](https://github.com/NCEAS/metacat/pull/1738)
 - Upgrade from Java 8 to 17 [I-1481](https://github.com/NCEAS/metacat/issues/1481), [PR-1731](https://github.com/NCEAS/metacat/pull/1731), [PR-1735](https://github.com/NCEAS/metacat/pull/1735)
 - Disabled old MetacatAPI and significant code clean-up (removed obsolete legacy code) [PR-1713](https://github.com/NCEAS/metacat/pull/1713), [PR-1725](https://github.com/NCEAS/metacat/pull/1725), [PR-1726](https://github.com/NCEAS/metacat/pull/1726), [PR-1744](https://github.com/NCEAS/metacat/pull/1744)
-  - Removed obsolete skin configurations [PR-1767](https://github.com/NCEAS/metacat/pull/1767) 
+  - Removed obsolete skin configurations [PR-1767](https://github.com/NCEAS/metacat/pull/1767)
 - MNAdmin API Enhancements
   - Added 'reindex' and 'reindexall' methods [I-1716](https://github.com/NCEAS/metacat/issues/1716)
   - Added 'updateIdMetadata' method [I-1766](https://github.com/NCEAS/metacat/issues/1766)
@@ -167,11 +173,11 @@ New features and bugs fixed in this release:
 * Deleting objects failed to remove solr doc
 * Sampling citation not showing up in view service
 * Mis-Formatting of Data Package Contents
-* Unhelpful error message when trying to create as a denied submitter 
+* Unhelpful error message when trying to create as a denied submitter
 * Data objects missing after a package was published
 * Multiple updates on a single DOI happen when users use the metacat admin page to update DOIs
 * Metacat updated the DOI metadata (datacite) when the system metadata of an obsoleted object was updated if the obsolescent chain has a DOI Sid
-* getPackage fails to include system metadata 
+* getPackage fails to include system metadata
 * OSTI DOI Plugin Notifications need more information
 
 ## Release Notes for 2.18.0
@@ -211,7 +217,7 @@ New features and bugs fixed in this release:
 * Refactor the DOI service to use the plug-in architecture
 * CN subjects cannot query private objects
 * Users with the write permission cannot update system metadata
-* Metacat should return a not-found error rather than the internal error when there is a typo in the old Metacat API url 
+* Metacat should return a not-found error rather than the internal error when there is a typo in the old Metacat API url
 
 ## Release Notes for 2.15.1
 New features and bugs fixed in this release:
@@ -223,7 +229,7 @@ New features and bugs fixed in this release:
 * Expand elements covered by EML's attribute index fields beyond just dataTable
 * EML to HTML/PDF is broken in the getPackage() method
 * Have MNCore.getCapabilities() report on auth.allowSubmitters parameter setting
-* GetPackage API doesn't work from R on Windows 
+* GetPackage API doesn't work from R on Windows
 * Add new indexes for column archvied and object_format in the systemmetadata table
 
 ## Release Notes for 2.15.0
@@ -234,21 +240,21 @@ New features and bugs fixed in this release:
 * Fix the bug of incorrect geohash
 * Fix the bug of incorrect collectionQuery
 * Change the default order to dateModified for the listObject method
-* Remove extra logged event in the MN.update method 
+* Remove extra logged event in the MN.update method
 * Upgrade some library jar files to fix security threats
 
 ## Release Notes for 2.14.1
 New features and bugs fixed in this release:
 * Support new XML schemas for collections-1.1.0 and portals-1.1.0
-* Metacat is creating too many Timer objects which leads to out of memory issues 
+* Metacat is creating too many Timer objects which leads to out of memory issues
   and excessive numbers of threads under high request loads
-* Users with only write permission can change the access policy on update() requests, 
+* Users with only write permission can change the access policy on update() requests,
   when this operation is reserved only for users with changePermission permission
 * Close OutputStream objects after fulfilling DataONE API requests
 * Fix how exclude filters are translated in the collectionQuery
 * Update Apache setup docs to match current practices
 * Update documentation build to Python3
-* Fix an issue where a client editor sees a "Nothing was found" error despite 
+* Fix an issue where a client editor sees a "Nothing was found" error despite
   having all permissions
 * Project abstract displays oddly
 * View service rendering EML project abstract incorrectly
@@ -280,7 +286,7 @@ New features and bugs fixed in this release:
 
 ## Release Notes for 2.12.2
 Bugs fixed in this release:
-* Modify the schema files of the format ids of portal and collections 
+* Modify the schema files of the format ids of portal and collections
 
 ## Release Notes for 2.12.1:
 Bugs fixed in this release:
@@ -337,7 +343,7 @@ New features and bugs fixed in this release:
 After installing this release, you need to issue the "reindexall" command since a new SOLR field has been added.
 New features and bugs fixed in this release:
 * Exclude EcoGrid on Metacat
-* Do not allow restrictive access control change to content with a DOI 
+* Do not allow restrictive access control change to content with a DOI
 * MN/CN.updateSystemMetadata doesn't check the field - authoritativeMemberNode
 * Integrate the fixed SeriesIdResolver class which gets SystemMetadata locally
 * EZID metadata registration doesn't seem to work with SIDs
@@ -455,7 +461,7 @@ New features and bugs fixed in this release:
 * Metacat creates an Invalid Content-Disposition value for some filenames
 * External links in the registry should open in new tab
 * Remove the support of Oracle on documentation
-* Changing a Metacat member node's synchronization value on the d1 admin page doesn't work  
+* Changing a Metacat member node's synchronization value on the d1 admin page doesn't work
 * Add the feature to support the noNamespaceSchemaLocation attribute in xml objects
 * Provide clear messages to clients if the namespaces/formatids of the schemas of xml objects are not registered in Metacat
 * Disable the feature of downloading external schemas for unregistered namespaces
@@ -468,7 +474,7 @@ New features and bugs fixed in this release:
 
 ## Release Notes for 2.7.0:
 * Use different format ids to identity variants of the schema with same namespace
-* Add EML 2.1.1 to Darwin Core supporting for OAI-PMH provider  
+* Add EML 2.1.1 to Darwin Core supporting for OAI-PMH provider
 * Bugs fixed include:
   - Series head resolution should use obsoletes field as part of determination(7020)
   - The InputStream (parameter) in the CN/MN.create and MN.update method is not closed(7005)
@@ -667,7 +673,7 @@ Concern workflow functionality (TPC).  The following issues were addressed:
 * Metacat should run against Tomcat 6 (Bug 4716)
 
 ## Release Notes for 1.9.1:
-The 1.9.1 release holds the bug fixes found after releasing 1.9.0 beta.  
+The 1.9.1 release holds the bug fixes found after releasing 1.9.0 beta.
 These bugs were primarily replication issues.  There is no difference
 in functionality between 1.9.0 and 1.9.1
 
@@ -683,7 +689,7 @@ were made to the code:
 - Database schema version detection and install/upgrade utilities were added to the application.
 
 Also, this release includes several enhancements:
-- it supports the new EML 2.1.0 version.  
+- it supports the new EML 2.1.0 version.
 - Documents are now stored on the local filesystem as well as in the database in order to preserve document integrity.
 - Metacat verifies new schemas when they are added.
 - Additional access is propegated with documents during replication.
@@ -865,7 +871,7 @@ New Features:
 * Added a new skin for Ecological Society of America.
 * Created an Advanced search servlet which can be used from the web.
 * Various connections have been modified to be secure. e.g. connection between
-ldaps is made secure now, replication is done over secure channels.  
+ldaps is made secure now, replication is done over secure channels.
 
 Performance:
 * Reduced size of xml_nodes by creating a new table for holding nodes from
@@ -1083,4 +1089,3 @@ Fixes in 1.3.0:
      were failed in replication.
   4) Decrease the time to create access rules during insert or update
      a package.
-
