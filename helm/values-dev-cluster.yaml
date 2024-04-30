@@ -9,33 +9,26 @@
 # set once here, for both metacat and indexer:
 debug: &debug true
 
-global:
-  storageClass: &storageClassName csi-cephfs-sc
-  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
-
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
   cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
 
-  ## DataONE Member Node (MN) Parameters
-  dataone.certificate.fromHttpHeader.enabled: true
-  dataone.autoRegisterMemberNode: 2024-01-25
-  D1Client.CN_URL: https://cn-sandbox.test.dataone.org/cn
+  ## optional DataONE Member Node (MN) Parameters
+#  dataone.certificate.fromHttpHeader.enabled: true
+#  dataone.autoRegisterMemberNode: 2024-01-25
+#  D1Client.CN_URL: https://cn-sandbox.test.dataone.org/cn
   dataone.nodeId: "urn:node:TestBROOKELT"
   dataone.subject: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org"
-  dataone.nodeName: Test BROOKE LT Metacat Node
-  dataone.nodeDescription: Dev cluster Test BROOKE LT Metacat Node
-  dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
-  dataone.nodeSynchronize: true
-  dataone.nodeReplicate: true
-  dataone.replicationpolicy.default.numreplicas: "1"
+#  dataone.nodeName: Test BROOKE LT Metacat Node
+#  dataone.nodeDescription: Dev cluster Test BROOKE LT Metacat Node
+#  dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
+#  dataone.nodeSynchronize: true
+#  dataone.nodeReplicate: true
+#  dataone.replicationpolicy.default.numreplicas: "1"
 
 persistence:
-  storageClass: *storageClassName
   size: 100Gi
-  accessModes:
-    - ReadWriteMany
   volumeName: cephfs-metacatbrooke-metacat
 
 image:
@@ -46,7 +39,6 @@ image:
 ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  className: "nginx"
   tls:
     - hosts:
         - *extHostname
@@ -74,10 +66,6 @@ dataone-indexer:
       labelSelector:
         matchLabels:
           app.kubernetes.io/name: d1index
-
-  idxworker:
-    # this actually puts container in debug loop mode - no indexer running
-    debug: false
 
 
 ####################################################################################################

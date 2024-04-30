@@ -72,14 +72,14 @@ global:
   ## VALUES-OVERLAY FILE, YOU ALSO NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this
   ## file for 'storageClassName')
   ##
-  storageClass: &storageClassName local-path
+  storageClass: &storageClassName csi-cephfs-sc
 
   ## @param global.ephemeralVolumeStorageClass Optional global storageClass override
   ## Can be used to assign a storageClass that has a 'Delete' Reclaim Policy, thus allowing
   ## ephemeral volumes to be cleaned up automatically (eg "csi-cephfs-sc-ephemeral")
   ## Set ephemeralVolumeStorageClass: "" to use default StorageClass, if one is set on your cluster
   ##
-  ephemeralVolumeStorageClass: ""
+  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
 
   ## @param global.sharedVolumeSubPath The subdirectory of the metacat data volume to mount
   ## Useful where one PV is used for multiple services, so each has its own subtree.
@@ -633,7 +633,7 @@ persistence:
 
   ## @param persistence.size PVC Storage Request for metacat volume
   ##
-  size: 1Gi
+  size: 100Gi
 
 ## @section Networking & Monitoring
 ##
@@ -659,7 +659,7 @@ ingress:
   ##        --repo https://kubernetes.github.io/ingress-nginx \
   ##        --namespace ingress-nginx --create-namespace)
   ##
-  className: "traefik"
+  className: "nginx"
 
   ## @param ingress.hosts [array] A collection of rules mapping different hosts to the backend.
   ##        host: The external hostname exposed by the ingress and seen by clients,

@@ -10,8 +10,6 @@
 debug: &debug false
 
 global:
-  storageClass: &storageClassName csi-cephfs-sc
-  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
   metacatAppContext: &metacatAppContext knb
 
 metacat:
@@ -43,10 +41,7 @@ podSecurityContext:
   fsGroup: 997
 
 persistence:
-  storageClass: *storageClassName
   size: 10Ti
-  accessModes:
-    - ReadWriteMany
   volumeName: cephfs-metacatknb-metacat-varmetacat
 
 image:
@@ -61,7 +56,6 @@ resources:
 ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  className: "nginx"
   tls:
     - hosts:
         - *extHostname
@@ -127,10 +121,6 @@ dataone-indexer:
       labelSelector:
         matchLabels:
           app.kubernetes.io/name: d1index
-
-  idxworker:
-    # this actually puts container in debug loop mode - no indexer running
-    debug: false
 
   ## solr Persistence parameters
   ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
