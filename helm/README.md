@@ -4,8 +4,50 @@ Metacat is repository software for preserving data and metadata (documentation a
 helps scientists find, understand and effectively use data sets they manage or that have been
 created by others. For more details, see https://github.com/NCEAS/metacat
 
-> **Warning**: this deployment does not currently work on Apple Silicon machines (e.g. in Rancher
-> Desktop), because at least one of the dependencies (RabbitMQ) doesn't work in that environment.
+> ### Before You Start:
+> 1. **This Metacat Helm chart is a beta feature**. It has been tested, and we believe it to be
+>    working well, but it has not yet been used in production - so we recommend caution with this
+>    early release. If you try it, [we'd love to hear your
+>    feedback](https://www.dataone.org/contact/)!
+>
+>
+> 2. If you are considering **migrating an existing Metacat installation to Kubernetes**, see
+>    [Appendix 5](#appendix-5-migrating-to-kubernetes-from-an-existing-metacat-219-installation)
+>    for important information
+>
+>
+> 3. For non-public dataset support, see: [Setting up a Token and Optional CA certificate for
+>    Indexer Access](#setting-up-a-token-and-optional-ca-certificate-for-indexer-access)
+>
+>
+> 4. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop),
+>    because the official Docker image for at least one of the dependencies (RabbitMQ) doesn't yet
+>    work in that environment.
+
+---
+
+- [Metacat Helm Chart](#metacat-helm-chart)
+    * [TL;DR](#tldr)
+    * [Introduction](#introduction)
+    * [Prerequisites](#prerequisites)
+    * [Installing the Chart](#installing-the-chart)
+    * [Uninstalling the Chart](#uninstalling-the-chart)
+    * [Parameters](#parameters)
+    * [Configuration and installation details](#configuration-and-installation-details)
+        + [Metacat Application-Specific Properties](#metacat-application-specific-properties-1)
+        + [Secrets](#secrets)
+    * [Persistence](#persistence)
+    * [Networking, Certificates, and Auth Tokens](#networking-certificates-and-auth-tokens)
+    * [Setting up a Token and Optional CA certificate for Indexer Access](#setting-up-a-token-and-optional-ca-certificate-for-indexer-access)
+    * [Setting up a TLS Certificate for HTTPS Traffic](#setting-up-a-tls-certificate-for-https-traffic)
+    * [Setting up Certificates for DataONE Replication](#setting-up-certificates-for-dataone-replication)
+    * [Appendix 1: Self-Signing TLS Certificates for HTTPS Traffic](#appendix-1-self-signing-tls-certificates-for-https-traffic)
+    * [Appendix 2: Self-Signing Certificates for Testing Mutual Authentication](#appendix-2-self-signing-certificates-for-testing-mutual-authentication)
+    * [Appendix 3: Troubleshooting Mutual Authentication](#appendix-3-troubleshooting-mutual-authentication)
+    * [Appendix 4: Debugging and Logging](#appendix-4-debugging-and-logging)
+    * [Appendix 5: Migrating to Kubernetes from an Existing Metacat 2.19 Installation](#appendix-5-migrating-to-kubernetes-from-an-existing-metacat-219-installation)
+
+---
 
 ## TL;DR
 Starting in the root directory of the `metacat` repo:
@@ -14,24 +56,30 @@ Starting in the root directory of the `metacat` repo:
    contents of the values overlay files (like [./values-dev-cluster.yaml](./values-dev-cluster.yaml)
    , for example), to see which settings typically need to be changed.
 
+
 2. Add your credentials to [./admin/secrets.yaml](./admin/secrets.yaml), and add to cluster:
 
     ```shell
     $ vim helm/admin/secrets.yaml    ## follow the instructions in this file
     ```
 
-3. Deploy and enjoy!
+3. Deploy
+
+   (*Note: Your k8s service account must have the necessary permissions to get information about the
+   resource `roles` in the API group `rbac.authorization.k8s.io`*).
 
     ```shell
     $ ./helm-install.sh  myreleasename  mynamespace  ./helm
     ```
 
-You should then be able to access the application via http://your-host-name/metacat!
+To access Metacat, you'll need to create a mapping between your ingress IP address (found by:
+`kubectl describe ingress | grep "Address:"`) and your metacat hostname. Do this either by adding a
+permanent DNS record for everyone to use, or by adding a line to the `/etc/hosts` file on your
+local machine, providing temporary local access for your own testing. You should then be able to
+access the application via http://your-host-name/metacat.
 
-> ### Note:
-> If you are considering **migrating an existing Metacat installation to Kubernetes**, see
-> [Appendix 5](#appendix-5-migrating-to-kubernetes-from-an-existing-metacat-219-installation)
-> for important information
+Read on for more in-depth information about the various installation and configuration options that
+are available...
 
 ## Introduction
 
@@ -1024,6 +1072,67 @@ https://knb.ecoinformatics.org, to run on our development Kubernetes cluster, he
 10. Install the DataONE jwt auth token Secret and public cert configmap for the indexer to use - see
    the README section [Setting up a Token and Optional CA certificate for Indexer
    Access](#setting-up-a-token-and-optional-ca-certificate-for-indexer-access).
+
+11. Finally, you can now re-index all your datasets, so they will show up in Metacat search:
+
+    > **Caution:** If you deploy large numbers of index workers, they can overwhelm Metacat with API
+      requests when doing a large re-index. This can lead to errors and indexing failures. A future
+      release will fix this, but in the meantime, we recommend starting with a low number of
+      indexers (3 - 5), and finding the optimal number for your own installation.
+
+    1. (*Beta workaround*) After deploying Metacat, but before starting the re-index, check that
+       all the deployed indexer pods have started up cleanly. This can only be determined by
+       inspecting the logs for each indexer pod (e.g.
+       `kubectl logs -f -l app.kubernetes.io/name=d1index`), to ensure there are no exceptions.
+       If any indexers did not start correctly, use `kubectl delete pod <podname>` to delete
+       them, and k8s will then recreate them.
+
+    2. Re-indexing can take anywhere from seconds to hours or even days, depending on how much
+       data you have, and how many index workers you choose to deploy. You can override the
+       number of index workers in the dataone-indexer sub-chart by adding the following to your
+       metacat values.yaml:
+
+        ```yaml
+        dataone-indexer:
+          # increase minReplicas from default 3
+          autoscaling:
+            minReplicas: 5
+            # set max to the same value, so we don't
+            # overwhelm Metacat (see "Caution" note, above):
+            maxReplicas: 5
+        ```
+
+    3. When you are ready to reindex, issue the following command (`$TOKEN` should contain your
+       administrator auth token -- [see this
+       section](#setting-up-a-token-and-optional-ca-certificate-for-indexer-access)). Replace
+       `myHostName.org` and `myContext` with your own:
+
+        ```shell
+        $  curl -X PUT -H "Authorization: Bearer $TOKEN" \
+                       "https://myHostName.org/myContext/d1/mn/v2/index?all=true
+
+               # expected output:
+               # <?xml version="1.0" encoding="UTF-8"?>
+               #     <scheduled>true</scheduled>
+        ```
+
+    4. You can monitor indexing progress via the RabbitMQ dashboard. Enable port forwarding:
+
+       ```shell
+       $  kubectl port-forward service/<yourReleaseName>-rabbitmq-headless 15672:15672
+       ```
+
+       ...and then point your browser at http://localhost:15672, and log in with the username
+       `metacat-rmq-guest` and the RabbitMQ password you set in your metacat Secrets, or obtain by:
+
+        ```shell
+        secret_name=$(kubectl get secrets | egrep ".*\-metacat-secrets" | awk '{print $1}')
+        rmq_pwd=$(kubectl get secret "$secret_name" \
+                -o jsonpath="{.data.rabbitmq-password}" | base64 -d)
+        echo "rmq_pwd: $rmq_pwd"
+        ```
+
+---
 
 > ### Tips:
 >
