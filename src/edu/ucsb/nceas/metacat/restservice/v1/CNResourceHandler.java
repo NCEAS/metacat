@@ -150,13 +150,13 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         try {
 
-        	// only service requests if we have D1 configured
-        	if (!isD1Enabled()) {
-        		ServiceFailure se = new ServiceFailure("0000", "DataONE services are not enabled on this node");
+            // only service requests if we have D1 configured
+            if (!isD1Enabled()) {
+                ServiceFailure se = new ServiceFailure("0000", "DataONE services are not enabled on this node");
                 serializeException(se, response.getOutputStream());
                 return;
-        	}
-        	
+            }
+
             // get the resource
             String resource = request.getPathInfo();
             resource = resource.substring(resource.indexOf("/") + 1);
@@ -306,13 +306,13 @@ public class CNResourceHandler extends D1ResourceHandler {
                     // handle checksum requests
                     if (httpVerb == GET) {
 
-                    	if (extra != null && extra.length() > 0) {
-	                        checksum(extra);
-	                        status = true;
-                    	} else {
-                    		listChecksumAlgorithms();
-                    		status = true;
-                    	}
+                        if (extra != null && extra.length() > 0) {
+                            checksum(extra);
+                            status = true;
+                        } else {
+                            listChecksumAlgorithms();
+                            status = true;
+                        }
 
                     }
 
@@ -363,12 +363,12 @@ public class CNResourceHandler extends D1ResourceHandler {
 
                 } else if (resource.startsWith(Constants.RESOURCE_MONITOR_PING)) {
                     if (httpVerb == GET) {
-                    	// after the command
+                        // after the command
                         extra = parseTrailing(resource, Constants.RESOURCE_MONITOR_PING);
                         extra = decode(extra);
                         logMetacat.debug("processing ping request");
                         Date result = CNodeService.getInstance(request).ping();
-                        // TODO: send to output	
+                        // TODO: send to output
                         status = true;
                     }
                 } else if (resource.startsWith(Constants.RESOURCE_META_OBSOLETEDBY)
@@ -428,7 +428,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Get the checksum for the given guid
-     * 
+     *
      * @param guid
      * @throws NotImplemented
      * @throws InvalidRequest
@@ -460,7 +460,7 @@ public class CNResourceHandler extends D1ResourceHandler {
      * fromDate, toDate, event. See
      * http://mule1.dataone.org/ArchitectureDocs/mn_api_crud
      * .html#MN_crud.getLogRecords for more info
-     * 
+     *
      * @throws NotImplemented
      * @throws InvalidRequest
      * @throws NotAuthorized
@@ -518,7 +518,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         } catch (Exception e) {
             logMetacat.warn("Could not parse pidFilter: " + e.getMessage());
         }
-        
+
         logMetacat.debug("calling getLogRecords");
         Log log = CNodeService.getInstance(request).getLogRecords(session,
                 fromDate, toDate, event, pidFilter, start, count);
@@ -533,7 +533,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Implements REST version of DataONE CRUD API --> get
-     * 
+     *
      * @param guid
      *            ID of data object to be read
      * @throws NotImplemented
@@ -557,12 +557,12 @@ public class CNResourceHandler extends D1ResourceHandler {
         // set the headers for the content
         String mimeType = ObjectFormatInfo.instance().getMimeType(sm.getFormatId().getValue());
         if (mimeType == null) {
-        	mimeType = "application/octet-stream";
+            mimeType = "application/octet-stream";
         }
         String extension = ObjectFormatInfo.instance().getExtension(sm.getFormatId().getValue());
         String filename = id.getValue();
         if (extension != null && filename != null && !filename.endsWith(extension)) {
-        	filename = id.getValue() + extension;
+            filename = id.getValue() + extension;
         }
         response.setContentType(mimeType);
         response.setHeader("Content-Disposition", "inline; filename=" + filename);
@@ -577,7 +577,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Implements REST version of DataONE CRUD API --> getSystemMetadata
-     * 
+     *
      * @param guid
      *            ID of data object to be read
      * @throws NotImplemented
@@ -609,7 +609,7 @@ public class CNResourceHandler extends D1ResourceHandler {
     /**
      * Earthgrid API > Put Service >Put Function : calls MetacatHandler >
      * handleInsertOrUpdateAction
-     * 
+     *
      * @param guid
      *            - ID of data object to be inserted or updated. If action is
      *            update, the pid is the existing pid. If insert, the pid is the
@@ -635,11 +635,11 @@ public class CNResourceHandler extends D1ResourceHandler {
             NotAuthorized, UnsupportedType, InsufficientResources,
             InvalidSystemMetadata, NotImplemented, IOException,
             InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
-    	    CheckedFile objFile = null;
-    	    try {
-    	        // Read the incoming data from its Mime Multipart encoding
-    	        MultipartRequestWithSysmeta multiparts = collectObjectFiles();
-    	        DetailedFileInputStream object = null;
+            CheckedFile objFile = null;
+            try {
+                // Read the incoming data from its Mime Multipart encoding
+                MultipartRequestWithSysmeta multiparts = collectObjectFiles();
+                DetailedFileInputStream object = null;
                 Map<String, File> files = multiparts.getMultipartFiles();
                 objFile = (CheckedFile) files.get("object");
                 // ensure we have the object bytes
@@ -647,39 +647,39 @@ public class CNResourceHandler extends D1ResourceHandler {
                     throw new InvalidRequest("1102", "The object param must contain the object bytes.");
                 }
                 object = new DetailedFileInputStream(objFile, objFile.getChecksum());
-    	        
-    	        // get the encoded pid string from the body and make the object
-    	        String pidString = multipartparams.get("pid").get(0);
-    	        Identifier pid = new Identifier();
-    	        pid.setValue(pidString);
-    	        
-    	        logMetacat.debug("putObject: " + pid.getValue() + "/" + action);
-    	        
-    	        SystemMetadata smd = multiparts.getSystemMetadata();
-    	        // ensure we have the system metadata
-    	        if  ( smd == null ) {
-    	            throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
-    	            
-    	        }
-    	       
 
-    	        if (action.equals(FUNCTION_NAME_INSERT)) { // handle inserts
+                // get the encoded pid string from the body and make the object
+                String pidString = multipartparams.get("pid").get(0);
+                Identifier pid = new Identifier();
+                pid.setValue(pidString);
 
-    	            logMetacat.debug("Commence creation...");
-    	           
-    	            logMetacat.debug("creating object with pid " + pid.getValue());
-    	            Identifier rId = CNodeService.getInstance(request).create(session, pid, object, smd);
+                logMetacat.debug("putObject: " + pid.getValue() + "/" + action);
 
-    	            OutputStream out = response.getOutputStream();
-    	            response.setStatus(200);
-    	            response.setContentType("text/xml");
+                SystemMetadata smd = multiparts.getSystemMetadata();
+                // ensure we have the system metadata
+                if ( smd == null ) {
+                    throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
 
-    	            TypeMarshaller.marshalTypeToOutputStream(rId, out);
+                }
 
-    	        } else {
-    	            throw new InvalidRequest("1000", "Operation must be create.");
-    	        }
-    	    } catch (Exception e) {
+
+                if (action.equals(FUNCTION_NAME_INSERT)) { // handle inserts
+
+                    logMetacat.debug("Commence creation...");
+
+                    logMetacat.debug("creating object with pid " + pid.getValue());
+                    Identifier rId = CNodeService.getInstance(request).create(session, pid, object, smd);
+
+                    OutputStream out = response.getOutputStream();
+                    response.setStatus(200);
+                    response.setContentType("text/xml");
+
+                    TypeMarshaller.marshalTypeToOutputStream(rId, out);
+
+                } else {
+                    throw new InvalidRequest("1000", "Operation must be create.");
+                }
+            } catch (Exception e) {
             if(objFile != null) {
                 //objFile.deleteOnExit();
                 StreamingMultipartRequestResolver.deleteTempFile(objFile);
@@ -690,7 +690,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * List the object formats registered with the system
-     * 
+     *
      * @throws NotImplemented
      * @throws InsufficientResources
      * @throws NotFound
@@ -725,20 +725,20 @@ public class CNResourceHandler extends D1ResourceHandler {
     }
     
     private void listChecksumAlgorithms() throws IOException, ServiceFailure,
-			NotImplemented, MarshallingException {
-		logMetacat.debug("Entering listFormats()");
+            NotImplemented, MarshallingException {
+        logMetacat.debug("Entering listFormats()");
 
-		ChecksumAlgorithmList result = CNodeService.getInstance(request).listChecksumAlgorithms();
+        ChecksumAlgorithmList result = CNodeService.getInstance(request).listChecksumAlgorithms();
 
-		// get the response output stream
-		OutputStream out = response.getOutputStream();
-		response.setStatus(200);
-		response.setContentType("text/xml");
+        // get the response output stream
+        OutputStream out = response.getOutputStream();
+        response.setStatus(200);
+        response.setContentType("text/xml");
 
-		TypeMarshaller.marshalTypeToOutputStream(result, out);
+        TypeMarshaller.marshalTypeToOutputStream(result, out);
 
-	}
-    
+    }
+
     /**
      * http://mule1.dataone.org/ArchitectureDocs-current/apis/CN_APIs.html#CNRead.describe
      * @param pid
@@ -752,22 +752,22 @@ public class CNResourceHandler extends D1ResourceHandler {
     private void describeObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest
     {
         response.setContentType("text/xml");
-        
+
         Identifier id = new Identifier();
         id.setValue(pid);
-        
+
         DescribeResponse dr = null;
         try {
             dr = CNodeService.getInstance(request).describe(session, id);
         } catch (BaseException e) {
-        	response.setStatus(e.getCode());
-        	response.addHeader("DataONE-Exception-Name", e.getClass().getName());
+            response.setStatus(e.getCode());
+            response.addHeader("DataONE-Exception-Name", e.getClass().getName());
             response.addHeader("DataONE-Exception-DetailCode", e.getDetail_code());
             response.addHeader("DataONE-Exception-Description", e.getDescription());
             response.addHeader("DataONE-Exception-PID", id.getValue());
             return;
-		}
-        
+        }
+
         response.setStatus(200);
         //response.addHeader("pid", pid);
         response.addHeader("DataONE-Checksum", dr.getDataONE_Checksum().getAlgorithm() + "," + dr.getDataONE_Checksum().getValue());
@@ -777,7 +777,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         response.addHeader("DataONE-SerialVersion", dr.getSerialVersion().toString());
 
     }
-    
+
     /**
      * Handle delete 
      * @param pid ID of data object to be deleted
@@ -805,7 +805,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         TypeMarshaller.marshalTypeToOutputStream(id, out);
         
     }
-    
+
     /**
      * Archives the given pid
      * @param pid
@@ -829,14 +829,14 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         logMetacat.debug("Calling archive");
         CNodeService.getInstance(request).archive(session, id);
-        
+
         TypeMarshaller.marshalTypeToOutputStream(id, out);
-        
+
     }
 
     /**
      * Return the requested object format
-     * 
+     *
      * @param fmtidStr
      *            the requested format identifier as a string
      * @throws NotImplemented
@@ -869,7 +869,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Reserve the given Identifier
-     * 
+     *
      * @throws InvalidToken
      * @throws ServiceFailure
      * @throws NotAuthorized
@@ -888,7 +888,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Parsing reserve parameters from the mime multipart entity");
         try {
             collectMultipartParams();
-            
+
         } catch (FileUploadException e1) {
             String msg = "FileUploadException: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -900,7 +900,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             e1.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4210", msg);
-        
+
         } catch (Exception e1) {
             String msg = "Exception: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -908,7 +908,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             throw new ServiceFailure("4210", msg);
 
         }
-        
+
         // gather the params
         try {
             String id = multipartparams.get("pid").get(0);
@@ -921,7 +921,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             throw new InvalidRequest("4200", msg);
  
         }
-        
+
         // call the implementation
         try {
             Identifier resultPid = CNodeService.getInstance(request).reserveIdentifier(session, pid);
@@ -930,24 +930,24 @@ public class CNResourceHandler extends D1ResourceHandler {
             response.setContentType("text/xml");
             // send back the reserved pid
             TypeMarshaller.marshalTypeToOutputStream(resultPid, out);
-            
+
         } catch (IOException e) {
             String msg = "Couldn't write the identifier to the response output stream: " +
                 e.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4210", msg);
-        
+
         } catch (MarshallingException e) {
             String msg = "Couldn't marshall the identifier to the response output stream: " +
             e.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4210", msg);
-            
+
         }
     }
 
     /**
-     * 
+     *
      * @param id
      * @throws InvalidRequest
      * @throws InvalidToken
@@ -974,7 +974,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Set the owner of a resource
-     * 
+     *
      * @param id
      * @throws InvalidToken
      * @throws ServiceFailure
@@ -998,7 +998,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         String serialVersionStr = null;
         String userIdStr = null;
         Subject userId = null;
-        
+
         // Parse the params out of the multipart form data
         // Read the incoming data from its Mime Multipart encoding
         logMetacat.debug("Parsing rights holder parameters from the mime multipart entity");
@@ -1016,7 +1016,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             e1.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4490", msg);
-        
+
         } catch (Exception e1) {
             String msg = "Exception: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1024,22 +1024,22 @@ public class CNResourceHandler extends D1ResourceHandler {
             throw new ServiceFailure("4490", msg);
 
         }
-        
+
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
             serialVersion = new Long(serialVersionStr).longValue();
-            
+
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4442", msg);
-                        
+
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4442", msg);
-            
+
         }
 
         // get the subject userId that will become the rights holder
@@ -1047,41 +1047,41 @@ public class CNResourceHandler extends D1ResourceHandler {
             userIdStr = multipartparams.get("userId").get(0);
             userId = new Subject();
             userId.setValue(userIdStr);
-                                    
+
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4442", msg);
-            
+
         }
 
         // set the rights holder
         Identifier retPid = CNodeService.getInstance(request).setRightsHolder(session, pid, userId, serialVersion);
-        
+
         try {
             OutputStream out = response.getOutputStream();
             response.setStatus(200);
             response.setContentType("text/xml");
             TypeMarshaller.marshalTypeToOutputStream(retPid, out);
-            
+
         } catch (IOException e) {
             String msg = "Couldn't write the identifier to the response output stream: " +
                 e.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4490", msg);
-        
+
         } catch (MarshallingException e) {
             String msg = "Couldn't marshall the identifier to the response output stream: " +
             e.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4490", msg);
-            
+
         }
     }
 
     /**
      * Processes the authorization check for given id
-     * 
+     *
      * @param id
      * @return
      * @throws ServiceFailure
@@ -1106,7 +1106,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Register System Metadata without data or metadata object
-     * 
+     *
      * @param pid
      *            identifier for System Metadata entry
      * @throws MarshallingException
@@ -1126,15 +1126,15 @@ public class CNResourceHandler extends D1ResourceHandler {
             FileUploadException, MarshallingException, NotImplemented, NotAuthorized,
             InvalidSystemMetadata, InstantiationException,
             IllegalAccessException, InvalidToken {
-    	
-    	// Read the incoming data from its Mime Multipart encoding
+
+        // Read the incoming data from its Mime Multipart encoding
         Map<String, File> files = collectMultipartFiles();
-        
-    	// get the encoded pid string from the body and make the object
+
+        // get the encoded pid string from the body and make the object
         String pidString = multipartparams.get("pid").get(0);
         Identifier pid = new Identifier();
         pid.setValue(pidString);
-        
+
         logMetacat.debug("registerSystemMetadata: " + pid);
 
         // get the system metadata from the request
@@ -1148,14 +1148,14 @@ public class CNResourceHandler extends D1ResourceHandler {
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
         response.setContentType("text/xml");
-        
+
         TypeMarshaller.marshalTypeToOutputStream(retGuid, out);
 
     }
 
     /**
      * set the access perms on a document
-     * 
+     *
      * @throws MarshallingException
      * @throws InvalidRequest
      * @throws NotImplemented
@@ -1177,7 +1177,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         long serialVersion = 0L;
         String serialVersionStr = null;
-        
+
         // parse the accessPolicy
         Map<String, File> files = collectMultipartFiles();        
         AccessPolicy accessPolicy = TypeMarshaller.unmarshalTypeFromFile(AccessPolicy.class, files.get("accessPolicy"));;
@@ -1191,7 +1191,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4402", msg);
-            
+
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
@@ -1209,7 +1209,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * List the objects
-     * 
+     *
      * @throws NotImplemented
      * @throws InvalidRequest
      * @throws NotAuthorized
@@ -1237,8 +1237,8 @@ public class CNResourceHandler extends D1ResourceHandler {
             String[] values = request.getParameterValues(name);
             String value = null;
             if (values != null && values.length > 0) {
-            	value = values[0];
-            	value = EncodingUtilities.decodeString(value);
+                value = values[0];
+                value = EncodingUtilities.decodeString(value);
             }
 
             if (name.equals("fromDate") && value != null) {
@@ -1260,8 +1260,8 @@ public class CNResourceHandler extends D1ResourceHandler {
                     //endTime = null;
                 }
             } else if (name.equals("formatId") && value != null) {
-            	formatId = new ObjectFormatIdentifier();
-            	formatId.setValue(value);
+                formatId = new ObjectFormatIdentifier();
+                formatId.setValue(value);
             } else if (name.equals("replicaStatus") && value != null) {
                 replicaStatus = Boolean.parseBoolean(value);
             } else if (name.equals("start") && value != null) {
@@ -1300,7 +1300,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Pass the request to get node replication authorization to CNodeService
-     * 
+     *
      * @param pid
      *            the identifier of the object to get authorization to replicate
      * 
@@ -1346,7 +1346,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Pass the request to set the replication policy to CNodeService
-     * 
+     *
      * @param pid
      *            the identifier of the object to set the replication policy on
      * 
@@ -1396,11 +1396,11 @@ public class CNResourceHandler extends D1ResourceHandler {
         return result;
 
     }
-    
+
     /**
      * Update the system metadata for a given pid, setting it to be obsoleted
      * by the obsoletedByPid
-     *  
+     *
      * @param pid
      * @return
      * @throws NotImplemented
@@ -1432,7 +1432,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Parsing rights holder parameters from the mime multipart entity");
         try {
             collectMultipartParams();
-            
+
         } catch (FileUploadException e1) {
             String msg = "FileUploadException: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1444,7 +1444,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             e1.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4941", msg);
-        
+
         } catch (Exception e1) {
             String msg = "Exception: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1468,7 +1468,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
             serialVersion = new Long(serialVersionStr).longValue();
-            
+
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
             logMetacat.error(msg);
@@ -1478,7 +1478,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4942", msg);
-            
+
         }
         result = CNodeService.getInstance(request).setObsoletedBy(session,
             identifier, obsoletedByPid, serialVersion);
@@ -1487,10 +1487,10 @@ public class CNResourceHandler extends D1ResourceHandler {
         return result;
 
     }
-    
+
     /**
      * Delete the replica entry with the given nodeId for the given pid
-     * 
+     *
      * @param pid
      * @return
      * @throws NotImplemented
@@ -1522,7 +1522,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Parsing delete replica parameters from the mime multipart entity");
         try {
             collectMultipartParams();
-            
+
         } catch (FileUploadException e1) {
             String msg = "FileUploadException: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1534,7 +1534,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             e1.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4951", msg);
-        
+
         } catch (Exception e1) {
             String msg = "Exception: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1542,13 +1542,13 @@ public class CNResourceHandler extends D1ResourceHandler {
             throw new ServiceFailure("4951", msg);
 
         }
-        
+
         // get the nodeId param
         try {
             String nodeIdString = multipartparams.get("nodeId").get(0);
             nodeId = new NodeReference();
             nodeId.setValue(nodeIdString);
-            
+
         } catch (NullPointerException e) {
             String msg = "The 'nodeId' must be provided as a parameter and was not.";
             logMetacat.error(msg);
@@ -1559,17 +1559,17 @@ public class CNResourceHandler extends D1ResourceHandler {
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
             serialVersion = new Long(serialVersionStr).longValue();
-            
+
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4952", msg);
-                        
+
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4952", msg);
-            
+
         }
         result = CNodeService.getInstance(request).deleteReplicationMetadata(
                 session, identifier, nodeId, serialVersion);
@@ -1581,10 +1581,10 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Pass the request to set the replication status to CNodeService
-     * 
+     *
      * @param pid
      *            the identifier of the object to set the replication status on
-     * 
+     *
      * @throws ServiceFailure
      * @throws NotImplemented
      * @throws InvalidToken
@@ -1599,7 +1599,7 @@ public class CNResourceHandler extends D1ResourceHandler {
     public boolean setReplicationStatus(String pid) throws ServiceFailure,
             NotImplemented, InvalidToken, NotAuthorized, InvalidRequest,
             NotFound {
-        
+
         boolean result = false;
         Identifier identifier = new Identifier();
         identifier.setValue(pid);
@@ -1614,19 +1614,19 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Parsing ReplicaStatus from the mime multipart entity");
 
         try {
-        	// parse the failure, if we have it
-            Map<String, File> files = collectMultipartFiles();        
+            // parse the failure, if we have it
+            Map<String, File> files = collectMultipartFiles();
             if (files.containsKey("failure")) {
-            	failure = ExceptionHandler.deserializeXml(new FileInputStream(files.get("failure")), 
+                failure = ExceptionHandler.deserializeXml(new FileInputStream(files.get("failure")),
                         "Replication failed for an unknown reason.");
             }
-            
+
         } catch (Exception e2) {
             throw new ServiceFailure("4700", "Couldn't resolve the multipart request: " +
                 e2.getMessage());
-            
+
         }
-        
+
         // get the replication status param
         try {
             replicationStatus = multipartparams.get("status").get(0);
@@ -1685,22 +1685,22 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Pass the request to update the replication metadata to CNodeService
-     * 
+     *
      * @param pid
      *            the identifier of the object to update the replication
      *            metadata on
-     * 
+     *
      * @throws ServiceFailure
      * @throws NotImplemented
      * @throws InvalidToken
      * @throws NotAuthorized
      * @throws InvalidRequest
      * @throws NotFound
-     * @throws VersionMismatch 
-     * @throws MarshallingException 
-     * @throws IOException 
-     * @throws IllegalAccessException 
-     * @throws InstantiationException 
+     * @throws VersionMismatch
+     * @throws MarshallingException
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
      */
     public boolean updateReplicationMetadata(String pid) throws ServiceFailure,
             NotImplemented, InvalidToken, NotAuthorized, InvalidRequest,
