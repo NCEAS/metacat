@@ -510,21 +510,20 @@ metadata files - each named with the hash of the `PID` + `formatId` they describ
 
  **Development Note:**
 
- Initially, only a system metadata file was described, which was proposed to be
- stored as delimited files with a header and body section. The header contains
+ Initially, only system metadata files were to be stored, which was proposed to
+ be stored as a delimited file with a header and body section. The header contains
  the 64 character hash (content identifier) of the data file described by this
  sysmeta, followed by a space, then the `formatId` of the metadata format for
  the metadata in the file, and then a NULL (`\x00`). This header is then followed
  by the content of the metadata document in UTF-8 encoding.
 
  This metadata file's permanent address is then calculated by using the SHA-256
- hash of the persistent identifier (PID) of the object that it describes, and
- stored in a `sysmeta` directory parallel to the one described above for objects,
- and structured analogously. So given just the `sysmeta` directory, we could
- reconstruct an entire member node's data and metadata content. However, since data
- and metadata uploads to Metacat must be handled as they are received, situations
- could arise where we would be unable to completely store the metadata of a
- given PID without first storing the object.
+ hash of the persistent identifier (PID) of the object, and stored in a `sysmeta`
+ directory parallel to the one described above for objects, and structured analogously.
+ So given just the `sysmeta` directory, we could reconstruct an entire member node's
+ data and metadata content. However, since data and metadata uploads to Metacat must
+ be handled as they are received, situations could arise where we would be unable to
+ completely store the metadata of a given PID without first storing the object.
 
  To retain atomicity of uploads to HashStore, we decided to extract the header section
  and separate its contents into a standalone directory, creating two types of reference
@@ -538,20 +537,20 @@ in the `/refs/cid` and `/refs/pid` directory for both an object (using its conte
 identifier as the permanent address) and its respective PID (using the SHA-256 hash
 of the given PID as the permanent address).
 
- 1. Cid Reference File
+ 1. **Cid Reference File**
 
- To ensure that an object is stored once and only once using its content identifier (cid),
- a cid reference file for each object is created upon its first storage call. This file
- contains a list of pids delimited by a new line ('\n'). When a duplicate object is found or
- deleted, a cid reference file is updated. An object can not be deleted if its cid reference
- file is still present, and this file is only deleted when no more references are found.
+    To ensure that an object is stored once and only once using its content identifier (cid),
+    a cid reference file for each object is created upon its first storage call. This file
+    contains a list of pids delimited by a new line ('\n'). When a duplicate object is found or
+    deleted, a cid reference file is updated. An object can not be deleted if its cid reference
+    file is still present, and this file is only deleted when no more references are found.
 
- 2. Pid Reference File
+ 2. **Pid Reference File**
 
- Every metadata document that is stored also generates a pid reference file. This pid
- reference file contains the content identifier that the PID describes, and lives in
- a directory in `/metadata` that is named using the SHA-256 hash of the given `PID`
- + `formatId`.
+    Every metadata document that is stored also generates a pid reference file. This pid
+    reference file contains the content identifier that the PID describes, and lives in
+    a directory in `/metadata` that is named using the SHA-256 hash of the given `PID`
+    + `formatId`.
 
 Below, is the full HashStore file layout diagram::
 
