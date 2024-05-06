@@ -471,21 +471,27 @@ So, the system metadata file (sysmeta), along with all other metadata related to
 would be stored in the folder `metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
 where each metadata file is named using the SHA-256 hash of the PID+formatId.
 
+ To pre-emptively accommodate the need for additional metadata types, we have revised
+ HashStore to store 'metadata', not only 'sysmeta'. All metadata files will be stored
+ in the metadata directory, with the permanent address being the SHA-256 hash of the
+ `pid+formatId` and broken up into directory depths and widths as defined by a configuration
+ file 'hashstore.yaml'.
+
 Extending our diagram from above, we now see the three hashes that represent data files,
 along with three that represent system metadata directory for a given PID, and the relevant
 metadata files for the given pid, each named with the hash of the PID+formatId they describe::
 
    /var/metacat/hashstore
    ├── objects
-       ├── 4d
-       │   └── 19
-       │       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
-       ├── 94
-       │   └── f9
-       │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
-       └── 44
-           └── 73
-               └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
+   |   ├── 4d
+   |   │   └── 19
+   |   │       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+   |   ├── 94
+   |   │   └── f9
+   |   │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+   |   └── 44
+   |       └── 73
+   |           └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
    └── metadata
        ├── 0d
        │   └── 55
@@ -515,31 +521,107 @@ metadata files for the given pid, each named with the hash of the PID+formatId t
  of the object that it describes, and stored in a `sysmeta` directory parallel to the one
  described above for objects, and structured analogously. So given just the `sysmeta`
  directory, we could reconstruct an entire member node's data and metadata content.
-
  However, since data and metadata uploads to Metacat must be handled as they are received,
  scenarios could arise where we would be unable to completely store the metadata of a
- given PID without first storing the object. To retain atomicity of uploads to HashStore,
- we decided to extract the header section and separate its respective contents into a
- standalone directory, creating reference files. Additionally, all metadata types for a
- given PID can now be stored with the same API call, based on the given PID and metadata
- type (formatId).
+ given PID without first storing the object.
 
-**Reference Files (Tags)**
+ To retain atomicity of uploads to HashStore, we decided to extract the header section and
+ separate its respective contents into a standalone directory, creating a reference file.
+ Additionally, all metadata types for a given PID can now be stored with the same API call,
+ based on the given PID and metadata type (formatId).
 
-// TODO
+**Reference Files (a.k.a. Tags)**
 
-**PID-based access**:  Given a PID and a `formatId`, we can discover and access both the system
+To manage the relationship between objects and metadata, reference files are created
+in the `/refs/cid` and `/refs/pid` directory for both an object (using its content
+identifier as the permanent address) and its respective PID (using the SHA-256 hash
+of the given PID as the permanent address).
+
+1. Cid Reference File
+
+To ensure that an object is stored once and only once using its content identifier (cid),
+a cid reference file for each object is created upon its first storage instance. This file
+contains a list of pids delimited with a new line ('\n'). When a duplicate object is found or
+deleted, a cid reference file is updated. An object can not be deleted if its cid reference
+file is still present, and this file is only deleted when no more references are found.
+What about the data object a metadata file describes, how do we find it with just a single PID?
+
+2. Pid Reference File
+
+Every metadata document that is stored also generates a pid reference file. The pid reference
+file contains the content identifier that the PID describes, and lives in a directory in
+`/metadata` that is named using the SHA-256 hash of the given pid.
+
+Below, is the full HashStore file layout diagram::
+
+   /var/metacat/hashstore
+   ├── hashstore.yaml
+   ├── objects
+   |   ├── 4d
+   |   │   └── 19
+   |   │       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+   |   ├── 94
+   |   │   └── f9
+   |   │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+   |   └── 44
+   |       └── 73
+   |           └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
+   └── metadata
+   |   ├── 0d
+   |   │   └── 55
+   |   │       └── 555ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
+   |   |           └── sha256(pid+formatId_sysmeta)
+   |   |           └── sha256(pid+formatId_annotations)
+   |   ├── a8
+   |   │   └── 24
+   |   │       └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+   |   |           └── sha256(pid+formatId_sysmeta)
+   |   |           └── sha256(pid+formatId_annotations)
+   |   └── 7f
+   |       └── 5c
+   |           └── c18f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
+   |               └── sha256(pid+formatId_sysmeta)
+   |               └── sha256(pid+formatId_annotations)
+   └── refs
+       ├── cid
+       |   └── 4d
+       |   |   └── 19
+       |   |       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+       |   ├── 94
+       |   │   └── f9
+       |   │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+       |   └── 44
+       |       └── 73
+       |           └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
+       └── pid
+           └── 0d
+           |   └── 55
+           |       └── 555ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
+           ├── a8
+           │   └── 24
+           │       └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+           └── 7f
+               └── 5c
+                   └── c18f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
+
+**PID-based Access**:
+
+Given a PID and a `formatId`, we can discover and access both the system
 metadata for an object and the bytes of the object itself without any further
-store of information (if no `formatId` is supplied, we will default to the agreed upon `formatId`
-for Hashstore (i.e. "http://ns.dataone.org/service/types/v2.0").
+store of information (if no `formatId` is supplied, we will default to the
+agreed upon `formatId` for Hashstore (i.e. "http://ns.dataone.org/service/types/v2.0")).
 
 The procedure for this is as follows:
 
-   1) Given the `PID`, calculate the SHA-256 hash, and base64-encode it to find `pid hash` of the data object.
+   1) Given the `PID`, calculate the SHA-256 hash, and base64-encode it to find the location
+      of the pid refs file in 'refs/pid', which contains the content identifier of the `PID`
 
-   2) Use the SHA-256 hash of the `PID` + `formatId` to locate and find the metadata object from the `metadata` tree
+   2) Use the SHA-256 hash of the `PID` + `formatId` to locate and find the desired
+      metadata object from the `metadata` tree under the directory formed by the hash of
+      the `pid` + `formatId`.
 
-   3) With the `pid hash`, open and read the data from the `objects` tree. With the hash of the `PID` + `formatId`, open and read data from the `metadata` tree.
+   3) With the content identifier of the given PID, open and read the data from the `objects` tree.
+      With the hash of the `PID` + `formatId`, open and read data from the `metadata` tree.
 
 **Other metadata types**: While we currently only have a need to access system
 metadata for each object, in the future we envision potentially including other
@@ -547,17 +629,13 @@ metadata files that can be used for describing individual data objects. This
 might include package relationships and other annotations that we wish to
 include for each data file.
 
-To pre-emptively accommodate this need, we have revised HashStore to store 'metadata', not only
-'sysmeta'. All metadata files will be stored in the metadata directory, with the
-permanent address being the SHA-256 hash of the `pid+formatId` and broken up
-into directory depths and widths as defined by a configuration file 'hashstore.yaml'.
-This configuration file is written by HashStore upon successful verification that
-a HashStore does not exist. 
-
 Public API
 ~~~~~~~~~~~~~~~~~~~
 
-While Metacat will primarily handle read/write operations, other services like MetaDig and DataONE MNs may interact with the hashstore directly. Below are the public methods implemented in the Python implementation and Java implementation of HashStore. These are pending review and integration into Metacat.
+While Metacat will primarily handle read/write operations, other services like MetaDig and
+DataONE MNs may interact with the hashstore directly. Below are the public methods implemented
+in the Python implementation and Java implementation of HashStore.
+These are pending review and integration into Metacat.
 
    - (Python) https://github.com/DataONEorg/hashstore
    - (Java) https://github.com/DataONEorg/hashstore-java
