@@ -342,24 +342,62 @@ Design choices include:
         - System processes
         - User access processes
 
-Physical File Layout
-~~~~~~~~~~~~~~~~~~~~
-   
-For physical file storage and layout, our goal is to provide a consistent directory
-structure that will be robust against naming issues such as illegal characters, and
-that allows us to access both system metadata and the file contents knowing only the
-PID for an object. This approach focuses on using the hash identifier of an authority-based
-identifier such as a PID or SID for naming objects (rather than the content identifier).
-The possibility that duplicate objects may be stored is accepted in favour of reducing the
-complexity and overhead involved in the object deduplication process.
+Physical File Layout (HashStore)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The alternative approach of using the raw bytes of each object (content identifier) 
-is discussed in: appendix/storage-subsystem-cid-file-layout.rst
+For physical file storage and layout, our goal is to provide a consistent
+directory structure that will be robust against naming issues such as
+illegal characters, and that allows us to access both system metadata and
+the file contents knowing only the PID for an object. This approach focuses
+on using a content hash identifier for naming data and metadata objects in
+their respective folders, rather than an authority-based identifier such as
+a PID or SID, along with reference files to catalogue data.
 
-**Raw File Storage**: The raw bytes of each object (data, metadata, or resource
-map) are saved in a file that is named using the hash of an authority-based identifier (PID) for that
-set of bytes. The resulting identifier (checksum value) is then used to name the file. Note, in this approach,
-a file can be uploaded multiple times under different checksums (PID hashes).
+ **Why not hash identifiers derived from a PID?**
+
+ During initial development, HashStore was implemented with a Public API
+ centering around a given PID, storing both data and metadata in its respective
+ directories using the hash identifier derived from a given PID. However, after
+ further review and testing with Metacat - it was determined to be unsuitable
+ given the usage of multipart http requests, which encapsulates the pieces of
+ data that users upload in "body parts"; and is the current method of encoding
+ data when objects are uploaded to Metacat.
+
+ In multipart http requests, we may not always have a PID available for Metacat
+ to call the HashStore Public API with since the order in which data and metadata
+ is received by Metacat cannot be guaranteed. If a data "body part" were to arrive
+ first, it would need to be stored as a temporary object until a PID is received.
+ During this process, we would have already calculated the default list of hashes
+ (content identifiers). So storing the data object with its content identifier as
+ its permanent address (and in its own directory) ensures the atomicity of this
+ storage process - there is no waiting period for a data object to be completely
+ stored.
+
+ If we could guarantee the order of uploads to Metacat, then using the hash
+ identifier of a PID would be appropriate. We have discussed the potential change
+ of forcing metadata to arrive first during the upload process, but it would
+ require extensive refactors and changes to processes which we do not have the
+ resources/time to undertake and desire to force upon users.
+
+To learn more about the initial design, please see: appendix/storage-subsystem-cid-file-layout.rst
+
+**Raw File Storage**
+
+The raw bytes of each object (data, metadata, or resource map)
+are first written into a temporary file. Data objects remain as temp objects while
+its content identifiers are calculated using a hashing algorithm such that each
+unique set of bytes produces a unique checksum value. That checksum value is then
+used to name the file. In this way, even when the same file is uploaded multiple
+times, it will only be stored once in the filesystem.
+
+**Duplicate Objects**
+
+To prevent duplicate objects from being stored, all Public
+API calls by Metacat to store data objects are synchronized. If an object already
+exists, an exception will be swallowed. Similarly, all Public API calls to store
+metadata are synchronized and executed in chronological order. It is the calling
+client's responsibility to ensure that metadata is stored and/or backed up
+appropriately.
 
 **Checksum algorithm and encoding**
 
