@@ -424,74 +424,109 @@ make the tree simpler to explore and less likely to exceed operating system
 limits on files. We store all objects in an `objects` directory, with three
 levels of 'depth' and a 'width' of 2 digits (https://github.com/DataONEorg/hashstore/issues/3).
 Because each digit in the hash can contain 16 values, the directory structure can
-contain 16,777,216 subdirectories (256^3).
-An example file layout for three objects would be::
+contain 16,777,216 subdirectories (256^3). An example file layout for three objects would be::
 
-   /var/metacat/objects
-   ├── 7f
-   │   └── 5c
-   │       └── c1
-   │           └── 8f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
-   ├── a8
-   │   └── 24
-   │       └── 19
-   │           └── 25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
-   └── 0d
-       └── 55
-           └── 5e
-               └── d77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
+   /var/metacat/hashstore
+   ├── objects
+       ├── 4d
+       │   └── 19
+       │       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+       ├── 94
+       │   └── f9
+       │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+       └── 44
+           └── 73
+               └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
+
+   // Test Data Items:
+   // - doi:10.18739/A2901ZH2M
+   // -- SHA-256 Content Hash: 4d198171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+   // - jtao.1700.1
+   // -- SHA-256 Content Hash: 94f9b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+   // - urn:uuid:1b35d0a5-b17a-423b-a2ed-de2b18dc367a
+   // -- SHA-256 Content Hash: 4473516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
 
 Note how the full hash value is obtained by appending the directory names with
-the file name (e.g., `7f5cc18f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6`
+the file name (e.g., `4d198171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c`
 for the first object).
 
-**Storing metadata** With this layout, knowing the hash value for a PID allows
-us to retrieve it. But it does not provide a mechanism to store metadata about
-the object, other system metadata for the object, or extended metadata that we
-might want to include. So, in addition to data objects, the system supports storage
-for metadata documents that are associated with any desired data object.
-These metadata files are stored in the metadata directory parallel to objects,
-and structured analogously. Additional context can be found here (https://github.com/DataONEorg/hashstore/issues/35).
+**Metadata Storage**
 
-For example, given the PID 'jtao.1700.1' and formatId 'http://ns.dataone.org/service/types/v2.0',
-one can calculate the location of its metadata document using::
+With this layout, knowing the content identifier/hash value for an object allows
+a client with sufficient privileges to directly retrieve it without the need to
+retrieve the metadata from Metacat. But what if we only had a PID?
+A mechanism is needed to store metadata about the object, including it's persistent
+identifier (PID), other system metadata for the object, or extended metadata that
+we might want to include. So, in addition to data objects, the system supports
+storage for metadata documents that are associated with a given PID by using the
+given PID and its metadata namespace (formatId).
 
-   $ echo -n "jtao.1700.1http://ns.dataone.org/service/types/v2.0" | shasum -a 256
-   ddf07952ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689
+For example, given the PID `jtao.1700.1`, one can find all metadata documents related to
+given pid by calculating the SHA-256 of that PID using::
 
-So, the system metadata file would be stored in the metadata directory, with the address
-'/dd/f0/79/52ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689' using the
-file format described above. Extending our diagram from above, we now see the three 
-hashes that represent data files, along with three that represent system metadata files 
-named with the hash of the `PID+formatId`::
+   $ echo -n "jtao.1700.1" | shasum -a 256
+   a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
 
-   /var/metacat
+So, the system metadata file (sysmeta), along with all other metadata related to the PID,
+would be stored in the folder `metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
+where each metadata file is named using the SHA-256 hash of the PID+formatId.
+
+Extending our diagram from above, we now see the three hashes that represent data files,
+along with three that represent system metadata directory for a given PID, and the relevant
+metadata files for the given pid, each named with the hash of the PID+formatId they describe::
+
+   /var/metacat/hashstore
    ├── objects
-   │   ├── 7f
-   │   │   └── 5c
-   │   │       └── c1
-   │   │           └── 555ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
-   │   ├── a8
-   │   │   └── 24
-   │   │       └── 19
-   │   │           └── 25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
-   │   └── 0d
-   │       └── 55
-   │           └── 5e
-   │               └── d77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
+       ├── 4d
+       │   └── 19
+       │       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+       ├── 94
+       │   └── f9
+       │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+       └── 44
+           └── 73
+               └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
    └── metadata
-      ├── 9a
-      │   └── 2e
-      │       └── 08
-      │           └── c666b728e6cbd04d247b9e556df3de5b2ca49f7c5a24868eb27cddbff2
-      ├── dd
-      │   └── f0
-      │       └── 79
-      │           └── 52ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689
-      └── 32
-          └── 3e
-              └── 07
-                  └── 99524cec4c7e14d31289cefd884b563b5c052f154a066de5ec1e477da7
+       ├── 0d
+       │   └── 55
+       │       └── 555ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
+       |           └── sha256(pid+formatId_sysmeta)
+       |           └── sha256(pid+formatId_annotations)
+       ├── a8
+       │   └── 24
+       │       └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+       |           └── sha256(pid+formatId_sysmeta)
+       |           └── sha256(pid+formatId_annotations)
+       └── 7f
+           └── 5c
+               └── c18f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
+                   └── sha256(pid+formatId_sysmeta)
+                   └── sha256(pid+formatId_annotations)
+
+ **Development Note:**
+
+ Initially, we proposed all metadata files to be stored as delimited files with a header
+ and body section. The header contains the 64 character hash (content identifier) of
+ the data file described by this metadata, followed by a space, then the `formatId`
+ of the metadata format for the metadata in the file, and then a NULL (`\x00`).
+ This header is then followed by the content of the metadata document in UTF-8 encoding.
+
+ This metadata file is then named using the SHA-256 hash of the persistent identifier (PID)
+ of the object that it describes, and stored in a `sysmeta` directory parallel to the one
+ described above for objects, and structured analogously. So given just the `sysmeta`
+ directory, we could reconstruct an entire member node's data and metadata content.
+
+ However, since data and metadata uploads to Metacat must be handled as they are received,
+ scenarios could arise where we would be unable to completely store the metadata of a
+ given PID without first storing the object. To retain atomicity of uploads to HashStore,
+ we decided to extract the header section and separate its respective contents into a
+ standalone directory, creating reference files. Additionally, all metadata types for a
+ given PID can now be stored with the same API call, based on the given PID and metadata
+ type (formatId).
+
+**Reference Files (Tags)**
+
+// TODO
 
 **PID-based access**:  Given a PID and a `formatId`, we can discover and access both the system
 metadata for an object and the bytes of the object itself without any further
