@@ -471,7 +471,7 @@ storage for multiple metadata documents that are associated with a given PID, an
 the creation of reference files that facilitate the relationship that exists with
 a given PID.
 
- Note: Reference files should be created when objects are stored - and the process
+ **Note:** Reference files should be created when objects are stored - and the process
  to do so can be separately invoked if the calling app cannot do it immediately
  (like in the situation when it does not have a PID yet).
 
@@ -500,7 +500,7 @@ metadata documents related to the given pid by calculating the SHA-256 of that P
     /var/metacat/hashstore
     ├── objects
     └── metadata
-        ├── a8
+        └── a8
             └── 24
                 └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
                     └── sha256("jtao.1700.1"+"http://ns.dataone.org/service/types/v2.0") // sysmeta namespace
@@ -557,29 +557,29 @@ they describe::
  So given just the `sysmeta` directory, we could reconstruct an entire member node's
  data and metadata content.
 
- However, to simplify HashStore and address the challenge of locking objects
- in a operating system that can be accessed by many processes, we attempted to
- switch to PID-based hash identifiers. In this system, metadata was stored with
- its permanent address as the `PID` + `formatId`.
-
- Additionally, the data object would be stored with the hash of the `PID` as the
- permanent address - so the proposed sysmeta (metadata) delimiter format became
- redundant, and only the body portion (metadata content) was required in the
- stored metadata file. In this proposed direction, there was no need for the
- content identifier to be stored.
+ However, to simplify HashStore, we attempted to switch to PID-based hash identifiers.
+ In this proposed system, metadata was stored with a pid-specific directory, with the
+ metadata document permanent address formed by the hash of the `PID` + `formatId`.
+ Since the `formatId` is now required to identify a metadata document, the
+ previously proposed sysmeta (metadata) delimiter format became redundant, and only
+ the body portion (metadata content) was required in the stored metadata file.
+ In this proposed direction, there was no need for the content identifier to be stored.
 
  Our reversal of this approach necessitated the reintroduction of a way to
  manage the relationships of a given PID in HashStore, leading to reference
- files (more info below).
+ files (more info below). We also kept our new change to handle multiple
+ metadata documents being stored for a single PID.
 
 **Reference Files (a.k.a. Tags)**
 
 To manage the relationship between objects and metadata, reference files are created
-in the `/refs/cid` and `/refs/pid` directory for both an object (using its content
-identifier as the permanent address) and its respective PID (using the SHA-256 hash
-of the given PID as the permanent address).
+in a separate refs directory, with a subdirectory for objects ("/refs/cid") and a
+subdirectory for metadata (`/refs/pid`).
 
  1. **Cid Reference File (content identifier)**
+
+    An object's cid reference file's permanent address is calculated by using its content
+    identifier as the base and then applying the HashStore folder layout structure.
 
     To ensure that an object is stored once and only once using its content identifier (cid),
     a cid reference file for each object is created upon its first storage call. This file
@@ -589,6 +589,9 @@ of the given PID as the permanent address).
     are found.
 
  2. **Pid Reference File (persistent identifier)**
+
+    A metadata's pid reference file's permanent address is calculated by using the SHA-256
+    hash of the given PID as the base, and then applying the HashStore folder layout structure.
 
     Every metadata document that is stored also generates a pid reference file. This pid
     reference file contains the content identifier that the PID describes, and lives in
@@ -680,17 +683,17 @@ The procedure for this without using the HashStore Public API is as follows:
 
     And as an example, the HashStore Public API equivalent commands would be as follows:
 
-        1) To get the content identifier or check that an object exists:
+    1) To get the content identifier or check that an object exists:
 
-           hashstore.find_object(pid)
+       hashstore.find_object(pid)
 
-        2) To get a buffered stream to the system metadata to read from:
+    2) To get a buffered stream to the system metadata to read from:
 
-           hashstore.retrieve_metadata(pid, format_id)
+       hashstore.retrieve_metadata(pid, format_id)
 
-        3) To get a buffered stream to the object to read from:
+    3) To get a buffered stream to the object to read from:
 
-           hashstore.retrieve_object(pid)
+       hashstore.retrieve_object(pid)
 
 Public API
 ~~~~~~~~~~~~~~~~~~~
