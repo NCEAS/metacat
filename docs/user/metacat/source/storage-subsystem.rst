@@ -579,7 +579,7 @@ in the `/refs/cid` and `/refs/pid` directory for both an object (using its conte
 identifier as the permanent address) and its respective PID (using the SHA-256 hash
 of the given PID as the permanent address).
 
- 1. **Cid Reference File**
+ 1. **Cid Reference File (content identifier)**
 
     To ensure that an object is stored once and only once using its content identifier (cid),
     a cid reference file for each object is created upon its first storage call. This file
@@ -588,7 +588,7 @@ of the given PID as the permanent address).
     file is still present, and this file (and the object) can only deleted when no more references
     are found.
 
- 2. **Pid Reference File**
+ 2. **Pid Reference File (persistent identifier)**
 
     Every metadata document that is stored also generates a pid reference file. This pid
     reference file contains the content identifier that the PID describes, and lives in
@@ -600,7 +600,7 @@ of the given PID as the permanent address).
  parse a sysmeta document to get what we need), making it easier for developers and
  others to understand and find the connections within the HashStore layout/file system.
 
-Below, is the full HashStore file layout diagram::
+Below, is the full proposed HashStore file layout diagram::
 
    /var/metacat/hashstore
    ├── hashstore.yaml
@@ -665,17 +665,32 @@ store of information.
 
 The procedure for this without using the HashStore Public API is as follows:
 
-   1) Find the content identifier: Given the `PID`, calculate the SHA-256 hash,
-   and base64-encode it to find the location of the pid refs file in 'refs/pid',
-   which contains the content identifier of the `PID`.
+    1) Find the content identifier: Given the `PID`, calculate the SHA-256 hash,
+    and base64-encode it to find the location of the pid refs file in 'refs/pid',
+    which contains the content identifier of the `PID`.
 
-   2) Find the metadata document: Use the SHA-256 hash of the `PID` to locate the
-   folder in the `metadata` tree in which the desired metadata document exists.
-   The desired document's file name is formed by the hash of the `pid` + `formatId`.
+    2) Find the metadata document: Use the SHA-256 hash of the `PID` to locate the
+    folder in the `metadata` tree in which the desired metadata document exists.
+    The desired document's file name is formed by the hash of the `pid` + `formatId`.
+    Open and read the metadata content.
 
-   3) With the content identifier of the given PID, open and read the data from the
-   `objects` tree. With the hash of the `PID` + `formatId`, open and read data from
-   the `metadata` tree.
+    3) With the content identifier of the given PID, open and read the data from the
+    `objects` tree. With the hash of the `PID` + `formatId`, open and read data from
+    the `metadata` tree.
+
+    And as an example, the HashStore Public API equivalent commands would be as follows:
+
+        1) To get the content identifier or check that an object exists:
+
+           hashstore.find_object(pid)
+
+        2) To get a buffered stream to the system metadata to read from:
+
+           hashstore.retrieve_metadata(pid, format_id)
+
+        3) To get a buffered stream to the object to read from:
+
+           hashstore.retrieve_object(pid)
 
 Public API
 ~~~~~~~~~~~~~~~~~~~
