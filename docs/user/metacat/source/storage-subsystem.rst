@@ -366,12 +366,15 @@ a PID or SID, along with reference files to catalogue data.
  to call the HashStore Public API with (since the order in which data and metadata
  is received by Metacat cannot be guaranteed, and this PID lives with the metadata
  body part). If a data "body part" were to arrive first, it would need to be stored
- as a temporary object until a PID is received. During this process, we also would have
- already calculated the default list of hashes (content identifiers). So storing the
- data object with its content identifier as its permanent address (and in its own
- directory) ensures the atomicity of this storage process and allows us to store files
- once and only once. There is no waiting period for a data object to be completely
- stored.
+ as a temporary object until a PID is received.
+
+ In this scenario where a temporary object awaits its final location, we also
+ would have already calculated the default list of hashes (content identifiers).
+ So storing the data object with its content identifier as its permanent address
+ (and in its own directory) ensures the atomicity of this storage process - there
+ is no waiting period for a data object to be completely stored, or potentially
+ lost in limbo indefinitely. It also allows us to store any data object once
+ and only once.
 
  If we could guarantee the order of uploads to Metacat, then using the hash identifier
  generated from a PID would be appropriate. We have discussed this potential change
@@ -458,19 +461,30 @@ the file name
 
 With this layout, knowing the content identifier/hash value for an object allows
 a client with sufficient privileges to directly retrieve the data object without
-the need to retrieve the metadata from Metacat first. But what our primary goal of
-obtaining both system metadata and file contents if we only had a PID?
+the need to retrieve the metadata from Metacat first. But what about our primary
+goal of obtaining both system metadata and file contents if we only had a PID?
 
 A mechanism is needed to store metadata about the object, including its persistent
 identifier (PID), other system metadata for the object, or extended metadata that
 we might want to include. So, in addition to data objects, the system supports
-storage for multiple metadata documents that are associated with a given PID, along
-with reference files that facilitate the relationship that exists with a given PID.
+storage for multiple metadata documents that are associated with a given PID, and
+the creation of reference files that facilitate the relationship that exists with
+a given PID.
 
-Multiple metadata documents can exist for a given PID, so these documents are
-stored by calculating the hash identifier of the `PID` + `formatId` (namespace).
-Reference files are created when objects are stored - and the process to do so
-can be separately invoked if the calling app cannot do it immediately.
+ Note: Reference files should be created when objects are stored - and the process
+ to do so can be separately invoked if the calling app cannot do it immediately
+ (like in the situation when it does not have a PID yet).
+
+**Other metadata types**:
+
+While we currently only have a need to access system metadata for each object,
+in the future we envision potentially including other metadata files that can be
+used for describing individual data objects. This might include package relationships
+and other annotations that we wish to include for each data file.
+
+All metadata documents will be stored in the metadata directory which is broken up into
+directory depths and widths as defined by a configuration file 'hashstore.yaml'.
+Each metadata document's file name is calculated using the SHA-256 hash of the `PID` + `formatId`.
 
 For example, given the PID `jtao.1700.1`, one can find the directory that contains all
 metadata documents related to the given pid by calculating the SHA-256 of that PID using::
@@ -478,23 +492,27 @@ metadata documents related to the given pid by calculating the SHA-256 of that P
    $ echo -n "jtao.1700.1" | shasum -a 256
    a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
 
-So, the system metadata file (sysmeta), along with all other metadata related to the PID,
-would be stored in the folder:
+ So, the system metadata file (sysmeta), along with all other metadata related to the PID,
+ would be stored in the folder:
 
- `metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
+ `.../metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
 
-Where each metadata file that belongs to the given PID can be located by calculating
-the SHA-256 hash of the `PID` + respective `formatId`.
+ /var/metacat/hashstore
+ ├── objects
+ └── metadata
+     ├── a8
+         └── 24
+             └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+                 └── sha256("jtao.1700.1"+"http://ns.dataone.org/service/types/v2.0") // sysmeta namespace
+                 └── sha256(pid+formatId_annotations)
 
- To pre-emptively accommodate the need for additional metadata types, we have revised
- HashStore to store 'metadata', not only 'sysmeta'. All metadata files will be stored
- in the metadata directory which is broken up into directory depths and widths as defined
- by a configuration file 'hashstore.yaml'. Each metadata document's file name is
- calculated using the SHA-256 hash of the `PID` + `formatId`.
+ Each metadata file that belongs to the given PID can be found in this folder,
+ and specifically located by calculating the SHA-256 hash of the `PID` + respective `formatId`.
 
-Extending our diagram from above, we now see the three hashes that represent data files,
-along with three that represent the metadata directory for a given PID, and the relevant
-metadata files - each named with the hash of the `PID` + `formatId` they describe::
+Extending our diagram from earlier & above, we now see the three hashes that represent
+data files, along with three that represent the metadata directory for a given PID,
+and the relevant metadata files - each named with the hash of the `PID` + `formatId`
+they describe::
 
    /var/metacat/hashstore
    ├── objects
@@ -546,9 +564,9 @@ metadata files - each named with the hash of the `PID` + `formatId` they describ
 
  Additionally, the data object would be stored with the hash of the `PID` as the
  permanent address - so the proposed sysmeta (metadata) delimiter format became
- redundant, and only the body portion (metadata content) was to be kept in the
- stored metadata file. In this system, there was no need for the content
- identifier to be stored.
+ redundant, and only the body portion (metadata content) was required in the
+ stored metadata file. In this proposed direction, there was no need for the
+ content identifier to be stored.
 
  Our reversal of this approach necessitated the reintroduction of a way to
  manage the relationships of a given PID in HashStore, leading to reference
@@ -638,9 +656,12 @@ Below, is the full HashStore file layout diagram::
 
 Given a `PID` and a `formatId`, we can discover and access both the system
 metadata for an object and the bytes of the object itself without any further
-store of information (if no `formatId` is supplied, we will use the default
-`formatId` for Hashstore found in the configuration file
-(i.e. "http://ns.dataone.org/service/types/v2.0")).
+store of information.
+
+ Note: If no `formatId` is supplied, HashStore should use the default `formatId`
+ based on the `hashstore.yaml` configuration file
+
+ (i.e. "http://ns.dataone.org/service/types/v2.0")).
 
 The procedure for this without using the HashStore Public API is as follows:
 
@@ -655,12 +676,6 @@ The procedure for this without using the HashStore Public API is as follows:
    3) With the content identifier of the given PID, open and read the data from the
    `objects` tree. With the hash of the `PID` + `formatId`, open and read data from
    the `metadata` tree.
-
-**Other metadata types**: While we currently only have a need to access system
-metadata for each object, in the future we envision potentially including other
-metadata files that can be used for describing individual data objects. This
-might include package relationships and other annotations that we wish to
-include for each data file.
 
 Public API
 ~~~~~~~~~~~~~~~~~~~
