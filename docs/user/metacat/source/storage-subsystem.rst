@@ -419,7 +419,7 @@ of multiple checksum algorithms.
 To reduce the number of files in a given directory, we use the first several
 characters of the hash to create a directory hierarchy and divide the files up to
 make the tree simpler to explore and less likely to exceed operating system
-limits on files. We store all objects in an `objects` directory, with three
+limits on files. We store all objects in an `objects` directory, with 3
 levels of 'depth' and a 'width' of 2 digits (https://github.com/DataONEorg/hashstore/issues/3).
 Because each digit in the hash can contain 16 values, the directory structure can
 contain 16,777,216 subdirectories (256^3). An example file layout for three objects would be::
@@ -445,20 +445,27 @@ contain 16,777,216 subdirectories (256^3). An example file layout for three obje
    // -- SHA-256 Content Hash: 4473516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
 
 Note how the full hash value is obtained by appending the directory names with
-the file name (e.g., `4d198171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c`
-for the first object).
+the file name
+
+ (e.g., `4d198171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c` for the first object).
 
 **Metadata Storage**
 
 With this layout, knowing the content identifier/hash value for an object allows
 a client with sufficient privileges to directly retrieve the data object without
-the need to retrieve the metadata from Metacat first. But what if we only had a PID?
+the need to retrieve the metadata from Metacat first. But what our primary goal of
+obtaining both system metadata and file contents if we only had a PID?
+
 A mechanism is needed to store metadata about the object, including its persistent
 identifier (PID), other system metadata for the object, or extended metadata that
 we might want to include. So, in addition to data objects, the system supports
-storage for multiple metadata documents that are associated with a given PID. These
-documents are stored by calculating the hash identifier of the `PID` + `formatId`
-(namespace).
+storage for multiple metadata documents that are associated with a given PID, along
+with reference files that facilitate the relationship that exists with a given PID.
+
+Multiple metadata documents can exist for a given PID, so these documents are
+stored by calculating the hash identifier of the `PID` + `formatId` (namespace).
+Reference files are created when objects are stored - and the process to do so
+can be separately invoked if the calling app cannot do it immediately.
 
 For example, given the PID `jtao.1700.1`, one can find the directory that contains all
 metadata documents related to the given pid by calculating the SHA-256 of that PID using::
@@ -467,8 +474,12 @@ metadata documents related to the given pid by calculating the SHA-256 of that P
    a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
 
 So, the system metadata file (sysmeta), along with all other metadata related to the PID,
-would be stored in the folder `metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
-where each metadata file is named using the SHA-256 hash of the `PID` + `formatId`.
+would be stored in the folder:
+
+ `metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
+
+Where each metadata file that belongs to the given PID is named using the SHA-256
+hash of the `PID` + `formatId`.
 
  To pre-emptively accommodate the need for additional metadata types, we have revised
  HashStore to store 'metadata', not only 'sysmeta'. All metadata files will be stored
@@ -508,7 +519,7 @@ metadata files - each named with the hash of the `PID` + `formatId` they describ
                    └── sha256(pid+formatId_sysmeta)
                    └── sha256(pid+formatId_annotations)
 
- **Sysmeta & Metadata Formats**
+ **More on Sysmeta & Metadata Formats**
 
  Initially, only system metadata files were proposed to be stored, in the format
  of a delimited file with a header and body section. The header contains
@@ -552,10 +563,11 @@ of the given PID as the permanent address).
     reference file contains the content identifier that the PID describes, and lives in
     a directory in `/metadata` that is named using the SHA-256 hash of the given `PID` + `formatId`.
 
- **Note:** Previously, this relationship was represented in the metadata document in a delimiter
- format with a header and body. Since transitioning back to content identifiers, this data was
- moved to reference files, which improves clarity by making it easier for developers and
- others to understand and find the connections within the file system.
+ **Note:** Previously, this relationship was represented in the system metadata document
+ in a delimiter format with a header and body. Since transitioning back to content identifiers,
+ this data was moved to reference files, which improves clarity by making it easier for
+ developers and others to understand and find the connections within the file system
+ (we no longer need to fully parse a sysmeta document).
 
 Below, is the full HashStore file layout diagram::
 
@@ -646,10 +658,10 @@ in the Python and Java HashStore library. For detailed information on how each m
 work, please see the respective HashStore interface class in the projects below:
 
  (Python) https://github.com/DataONEorg/hashstore
+
  (Java) https://github.com/DataONEorg/hashstore-java
 
-
-The methods below will be included in the public API:
+**The methods below will be included in the public API:**
 
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
