@@ -489,22 +489,22 @@ Each metadata document's file name is calculated using the SHA-256 hash of the `
 For example, given the PID `jtao.1700.1`, one can find the directory that contains all
 metadata documents related to the given pid by calculating the SHA-256 of that PID using::
 
-   $ echo -n "jtao.1700.1" | shasum -a 256
-   a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+    $ echo -n "jtao.1700.1" | shasum -a 256
+    a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
 
- So, the system metadata file (sysmeta), along with all other metadata related to the PID,
- would be stored in the folder:
+    So, the system metadata file (sysmeta), along with all other metadata related to the PID,
+    would be stored in the folder:
 
- `.../metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
+    `.../metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
 
- /var/metacat/hashstore
- ├── objects
- └── metadata
-     ├── a8
-         └── 24
-             └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
-                 └── sha256("jtao.1700.1"+"http://ns.dataone.org/service/types/v2.0") // sysmeta namespace
-                 └── sha256(pid+formatId_annotations)
+    /var/metacat/hashstore
+    ├── objects
+    └── metadata
+        ├── a8
+            └── 24
+                └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+                    └── sha256("jtao.1700.1"+"http://ns.dataone.org/service/types/v2.0") // sysmeta namespace
+                    └── sha256(pid+formatId_annotations)
 
  Each metadata file that belongs to the given PID can be found in this folder,
  and specifically located by calculating the SHA-256 hash of the `PID` + respective `formatId`.
