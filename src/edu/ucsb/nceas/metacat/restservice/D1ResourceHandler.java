@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -97,7 +96,8 @@ public class D1ResourceHandler {
 
     protected static AuthSession auth = null;
     protected static int authCacheSzie = Settings.getConfiguration().getInt("auth.groupCacheSize", 100);
-    protected static boolean enableAppendLdapGroups = Settings.getConfiguration().getBoolean("dataone.session.appendLdapGroups.enabled", true);
+    protected static boolean enableAppendLdapGroups =
+            Settings.getConfiguration().getBoolean("dataone.session.appendLdapGroups.enabled", true);
 
     private static Log logMetacat = LogFactory.getLog(D1ResourceHandler.class);
     protected HttpServletRequest request;
@@ -172,14 +172,17 @@ public class D1ResourceHandler {
                     }
                 }
             } else {
-                //The session is not null. However, if we got the session is from a token, the local ldap group information is missing when we logged in by the ldap account.
+                //The session is not null. However, if we got the session is from a token, the local
+                //ldap group information is missing when we logged in by the ldap account.
                 //Here we just patch it (d1_portal only patches the dataone groups)
                 if (enableAppendLdapGroups) {
-                    logMetacat.debug("D1ReourceHandler.handle - Metacat is configured to append the local ldap group information to a session.");
+                    logMetacat.debug("D1ReourceHandler.handle - Metacat is configured to append the"
+                                    + " local ldap group information to a session.");
                     Subject subject = session.getSubject();
                     if(subject != null) {
                         String dn = subject.getValue();
-                        logMetacat.debug("D1ReourceHandler.handle - the subject dn in the session is "+dn+" This dn will be used to look up the group information");
+                        logMetacat.debug("D1ReourceHandler.handle - the subject dn in the session is "
+                                + dn + " This dn will be used to look up the group information");
                         if(dn != null) {
                             String username = null;
                             String password = null;
@@ -193,22 +196,24 @@ public class D1ResourceHandler {
                                     }
                                     groups = auth.getGroups(username, password, dn);
                                } catch (Exception e) {
-                                   logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user " + dn + 
-                                                   " from the authentication interface since :", e);
+                                   logMetacat.warn("We can't get group information for the user "
+                                             + dn + " from the authentication interface since :", e);
                                }
                             } else {
                                 try {
                                     groups = auth.getGroups(username, password, dn);
                                } catch (Exception e) {
-                                   logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user " + dn + 
-                                                   " from the authentication interface since :", e);
+                                   logMetacat.warn("We can't get group information for the user "
+                                           + dn + " from the authentication interface since :", e);
                                }
                             }
 
                             if(groups != null) {
                                 SubjectInfo subjectInfo = session.getSubjectInfo();
                                 if(subjectInfo != null) {
-                                    logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
+                                    logMetacat.debug("D1ReourceHandler.handle - the subject "
+                                                     + "information is NOT null when we try to "
+                                                     + "figure out the group information.");
                                     //we don't overwrite the existing subject info, just add the new groups informations
                                     List<Person> persons = subjectInfo.getPersonList();
                                     Person targetPerson = null;
@@ -216,7 +221,8 @@ public class D1ResourceHandler {
                                         for(Person person : persons) {
                                             if(person.getSubject().equals(subject)) {
                                                 targetPerson = person;
-                                                logMetacat.debug("D1ReourceHandler.handle - we find a person with the subject "+dn+" in the subject info.");
+                                                logMetacat.debug("We find a person with the subject "
+                                                                 + dn + " in the subject info.");
                                                 break;
                                             }
                                         }
@@ -228,7 +234,8 @@ public class D1ResourceHandler {
                                         targetPerson.setSubject(subject);
                                     }
                                     for (int i=0; i<groups.length; i++) {
-                                        logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for an existing subject info.");
+                                        logMetacat.debug("D1ReourceHandler.handle - create the group "
+                                                  + groups[i] + " for an existing subject info.");
                                         Group group = new Group();
                                         group.setGroupName(groups[i]);
                                         Subject groupSubject = new Subject();
@@ -241,12 +248,14 @@ public class D1ResourceHandler {
                                         subjectInfo.addPerson(targetPerson);
                                     }
                                 } else {
-                                    logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
+                                    logMetacat.debug("The subject information is NOT null when we "
+                                                    + "try to figure out the group information.");
                                     subjectInfo = new SubjectInfo();
                                     Person person = new Person();
                                     person.setSubject(subject);
                                     for (int i=0; i<groups.length; i++) {
-                                        logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for a new subject info.");
+                                        logMetacat.debug("Create the group " + groups[i]
+                                                        + " for a new subject info.");
                                         Group group = new Group();
                                         group.setGroupName(groups[i]);
                                         Subject groupSubject = new Subject();
@@ -262,7 +271,8 @@ public class D1ResourceHandler {
                         }
                     }
                 } else {
-                    logMetacat.debug("D1ReourceHandler.handle - Metacat is configured NOT to append the local ldap group information to a session.");
+                    logMetacat.debug("Metacat is configured NOT to append the local ldap group "
+                                     + "information to a session.");
                 }
 
             }
@@ -413,8 +423,10 @@ public class D1ResourceHandler {
     }
 
     /**
-     * Parse the request by the streaming multiple part handler. This method is good for the cn.create and mn.create/update methods.
-     * @return  the MultipartRequestWithSysmeta object which includes the stored object file with its checksum and the system metadata about this object
+     * Parse the request by the streaming multiple part handler. This method is good for the
+     * cn.create and mn.create/update methods.
+     * @return  the MultipartRequestWithSysmeta object which includes the stored object file
+     *           with its checksum and the system metadata about this object
      * @throws IOException
      * @throws FileUploadException
      * @throws InstantiationException
@@ -422,7 +434,9 @@ public class D1ResourceHandler {
      * @throws NoSuchAlgorithmException
      * @throws MarshallingException
      */
-    protected MultipartRequestWithSysmeta collectObjectFiles() throws IOException, FileUploadException, InstantiationException, IllegalAccessException, NoSuchAlgorithmException, MarshallingException {
+    protected MultipartRequestWithSysmeta collectObjectFiles() throws IOException,
+                             FileUploadException, InstantiationException, IllegalAccessException,
+                             NoSuchAlgorithmException, MarshallingException {
         logMetacat.debug("Disassembling MIME multipart form with object files");
         // handle MMP inputs
         File tmpDir = getTempDirectory();
@@ -613,32 +627,33 @@ public class D1ResourceHandler {
      */
     protected void getSessionFromHeader() {
         if (enableSessionFromHeader) {
-            logMetacat.debug("D1ResourceHandler.getSessionFromHeader - In the route to get the session from a http header");
+            logMetacat.debug("In the route to get the session from a http header");
             //check the shared key between Metacat and the http server:
             if (proxyKey == null || proxyKey.trim().equals("")) {
-                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - Metacat is not configured to handle the feature passing " +
-                                " the certificate by headers since the proxy key is blank");
+                logMetacat.warn("Metacat is not configured to handle the feature passing "
+                                + " the certificate by headers since the proxy key is blank");
                 return;
             }
             String proxyKeyFromHttp = (String) request.getHeader("X-Proxy-Key");
             if (proxyKeyFromHttp == null || proxyKeyFromHttp.trim().equals("")) {
-                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - the value of the header X-Proxy-Key is null or blank. " + 
-                                "So Metacat do NOT trust the request.");
+                logMetacat.warn("The value of the header X-Proxy-Key is null or blank. "
+                                 + "So Metacat do NOT trust the request.");
                 return;
             }
             if (!proxyKey.equals(proxyKeyFromHttp)) {
-                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - the value of the header X-Proxy-Key does not match the one " + 
-                        " stored in Metacat. So Metacat do NOT trust the request.");
+                logMetacat.warn("The value of the header X-Proxy-Key does not match the one "
+                                + " stored in Metacat. So Metacat do NOT trust the request.");
                 return;
             }
 
             String verify = (String) request.getHeader("Ssl-Client-Verify");
-            logMetacat.info("D1ResourceHandler.getSessionFromHeader - the status of the ssl client verification is " + verify);
+            logMetacat.info("D1ResourceHandler.getSessionFromHeader - the status of the ssl client "
+                            + "verification is " + verify);
             if (verify != null && verify.equalsIgnoreCase("SUCCESS")) {
                 //Metacat only looks up the dn from the header when the ssl client was verified.
                 //We confirmed the client couldn't overwrite the value of the header Ssl-Client-Subject-Dn
                 String dn = (String) request.getHeader("Ssl-Client-Subject-Dn");
-                logMetacat.info("D1ResourceHandler.getSessionFromHeader - the ssl client was verified and the subject from the header is " + dn);
+                logMetacat.info("The ssl client was verified and the subject from the header is " + dn);
                 if (dn != null) {
                     Subject subject = new Subject();
                     subject .setValue(dn);
@@ -649,8 +664,8 @@ public class D1ResourceHandler {
                     try {
                         subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
                     } catch (Exception be) {
-                        logMetacat.warn("D1ResourceHandler.getSessionFromHeader - can not get subject information for subject" + dn + " since " + 
-                                        be.getMessage());
+                        logMetacat.warn("Can not get subject information for subject" + dn
+                                        + " since " + be.getMessage());
                     }
                     if (subjectInfo == null) {
                         subjectInfo = new SubjectInfo();
