@@ -40,6 +40,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.exceptions.MarshallingException;
@@ -61,7 +62,6 @@ import org.dataone.service.types.v1.ChecksumAlgorithmList;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v2.ObjectFormat;
@@ -132,10 +132,17 @@ public class CNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_REPLICATION_AUTHORIZED = "replicaAuthorizations";
     protected static final String RESOURCE_REPLICATION_NOTIFY = "replicaNotifications";
 
-    public CNResourceHandler(ServletContext servletContext,
-            HttpServletRequest request, HttpServletResponse response) {
-        super(servletContext, request, response);
-        logMetacat = LogFactory.getLog(CNResourceHandler.class);
+
+    private static Log logMetacat = LogFactory.getLog(CNResourceHandler.class);
+
+
+    /**
+     * Constructor
+     * @param request  the request that the handler will handle
+     * @param response  the response that the handler will send back
+     */
+    public CNResourceHandler(HttpServletRequest request, HttpServletResponse response) {
+        super(request, response);
     }
 
     /**
@@ -566,7 +573,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         }
 
         logMetacat.debug("calling getLogRecords");
-        Log log = CNodeService.getInstance(request).getLogRecords(session,
+        org.dataone.service.types.v2.Log log = CNodeService.getInstance(request).getLogRecords(session,
                 fromDate, toDate, event, pidFilter, start, count);
 
         OutputStream out = response.getOutputStream();

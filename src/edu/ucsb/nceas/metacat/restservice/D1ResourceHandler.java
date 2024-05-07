@@ -99,8 +99,7 @@ public class D1ResourceHandler {
     protected static int authCacheSzie = Settings.getConfiguration().getInt("auth.groupCacheSize", 100);
     protected static boolean enableAppendLdapGroups = Settings.getConfiguration().getBoolean("dataone.session.appendLdapGroups.enabled", true);
 
-    protected ServletContext servletContext;
-    protected static Log logMetacat;
+    private static Log logMetacat = LogFactory.getLog(D1ResourceHandler.class);
     protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected boolean enableSessionFromHeader = false;
@@ -112,13 +111,13 @@ public class D1ResourceHandler {
     // D1 certificate-based authentication
     protected Session session;
 
-    /**Initializes new instance by setting servlet context,request and response*/
-    public D1ResourceHandler(ServletContext servletContext,
-            HttpServletRequest request, HttpServletResponse response) {
-        this.servletContext = servletContext;
+    /**Initializes new instance by setting servlet context,request and response
+     * @param request  the request that the handler will handle
+     * @param response  the response that the handler will send back
+     */
+    public D1ResourceHandler(HttpServletRequest request, HttpServletResponse response) {
         this.request = request;
         this.response = response;
-        logMetacat = LogFactory.getLog(D1ResourceHandler.class);
         try {
             MAX_UPLOAD_SIZE = Integer.parseInt(PropertyService.getProperty("dataone.max_upload_size"));
             enableSessionFromHeader = Boolean.parseBoolean(PropertyService.getProperty("dataone.certificate.fromHttpHeader.enabled"));

@@ -42,6 +42,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.exceptions.MarshallingException;
@@ -64,7 +65,6 @@ import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Log;
 import org.dataone.service.types.v1.Node;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -90,6 +90,7 @@ import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
+
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
@@ -149,7 +150,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_PACKAGE = "packages";
     protected static final String RESOURCE_VIEWS = "views";
     protected static final String RESOURCE_TOKEN = "token";
-
+    private static Log logMetacat = LogFactory.getLog(MNResourceHandler.class);
 
 
     // shared executor
@@ -166,11 +167,11 @@ public class MNResourceHandler extends D1ResourceHandler {
 
     /**
      * Initializes new instance by setting servlet context,request and response
-     * */
-    public MNResourceHandler(ServletContext servletContext,
-            HttpServletRequest request, HttpServletResponse response) {
-        super(servletContext, request, response);
-        logMetacat = LogFactory.getLog(MNResourceHandler.class);
+     * @param request  the request that the handler will handle
+     * @param response  the response that the handler will send back
+     */
+    public MNResourceHandler(HttpServletRequest request, HttpServletResponse response) {
+        super(request, response);
     }
 
     @Override
@@ -1084,7 +1085,8 @@ public class MNResourceHandler extends D1ResourceHandler {
         }
 
         logMetacat.debug("calling getLogRecords");
-        Log log = MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
+        org.dataone.service.types.v1.Log log = MNodeService.getInstance(request)
+                          .getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
 
         OutputStream out = response.getOutputStream();
         response.setStatus(200);

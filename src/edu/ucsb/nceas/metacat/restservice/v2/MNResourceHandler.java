@@ -23,6 +23,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
@@ -54,7 +55,6 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
-import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.Node;
@@ -144,7 +144,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_PUBLISH_IDENTIFIER = "publishIdentifier";
     protected static final String RESOURCE_INDEX = "index";
     protected static final String RESOURCE_IDENTIFIERS = "identifiers";
-
+    private static Log logMetacat = LogFactory.getLog(MNResourceHandler.class);
 
 
 
@@ -162,11 +162,11 @@ public class MNResourceHandler extends D1ResourceHandler {
 
     /**
      * Initializes new instance by setting servlet context,request and response
-     * */
-    public MNResourceHandler(ServletContext servletContext,
-            HttpServletRequest request, HttpServletResponse response) {
-        super(servletContext, request, response);
-        logMetacat = LogFactory.getLog(MNResourceHandler.class);
+     * @param request  the request that the handler will handle
+     * @param response  the response that the handler will send back
+     */
+    public MNResourceHandler(HttpServletRequest request, HttpServletResponse response) {
+        super(request, response);
     }
 
     @Override
@@ -1319,7 +1319,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         }
 
         logMetacat.debug("calling getLogRecords");
-        Log log = MNodeService.getInstance(request)
+        org.dataone.service.types.v2.Log log = MNodeService.getInstance(request)
                         .getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
 
         OutputStream out = response.getOutputStream();
