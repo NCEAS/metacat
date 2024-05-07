@@ -376,7 +376,7 @@ a PID or SID, along with reference files to catalogue data.
  generated from a PID would be appropriate. We have discussed the potential change
  of forcing metadata to arrive first during the upload process, but it would
  require extensive changes to processes which we do not have the resources or
- time to undertake (not the desire to force upon users).
+ time to undertake (nor the desire to force upon users).
 
 To learn more about the initial design, please see: appendix/storage-subsystem-cid-file-layout.rst
 
@@ -508,10 +508,10 @@ metadata files - each named with the hash of the `PID` + `formatId` they describ
                    └── sha256(pid+formatId_sysmeta)
                    └── sha256(pid+formatId_annotations)
 
- **Development Note:**
+ **Sysmeta & Metadata Formats**
 
- Initially, only system metadata files were to be stored, which was proposed to
- be stored as a delimited file with a header and body section. The header contains
+ Initially, only system metadata files were proposed to be stored, in the format
+ of a delimited file with a header and body section. The header contains
  the 64 character hash (content identifier) of the data file described by this
  sysmeta, followed by a space, then the `formatId` of the metadata format for
  the metadata in the file, and then a NULL (`\x00`). This header is then followed
@@ -521,14 +521,14 @@ metadata files - each named with the hash of the `PID` + `formatId` they describ
  hash of the persistent identifier (PID) of the object, and stored in a `sysmeta`
  directory parallel to the one described above for objects, and structured analogously.
  So given just the `sysmeta` directory, we could reconstruct an entire member node's
- data and metadata content. However, since data and metadata uploads to Metacat must
- be handled as they are received, situations could arise where we would be unable to
- completely store the metadata of a given PID without first storing the object.
+ data and metadata content.
 
- To retain atomicity of uploads to HashStore, we decided to extract the header section
- and separate its contents into a standalone directory, creating two types of reference
- files. Additionally, all metadata types for a given PID can now be stored with the
- same API call, based on the given `PID` and metadata type (`formatId`).
+ However, to simplify HashStore we attempted to switch to PID-based hash identifiers.
+ In this system, metadata was stored with its permanent address as the `PID` + `formatId`.
+ Additionally, the data object would be stored with the hash of the `PID` as the permament
+ address - so the proposed sysmeta (metadata) delimiter format became redundant, and only
+ the body portion (metadata content) was to be kept in the stored metadata file. In this
+ system, there was no need for the content identifier to be stored.
 
 **Reference Files (a.k.a. Tags)**
 
@@ -549,8 +549,12 @@ of the given PID as the permanent address).
 
     Every metadata document that is stored also generates a pid reference file. This pid
     reference file contains the content identifier that the PID describes, and lives in
-    a directory in `/metadata` that is named using the SHA-256 hash of the given `PID`
-    + `formatId`.
+    a directory in `/metadata` that is named using the SHA-256 hash of the given `PID` + `formatId`.
+
+ Note: Previously, this relationship was represented in the metadata document in a delimiter
+ format with a header and body. Since transitioning back to content identifiers, this data was
+ moved to reference files, which improves clarity by making it easier for developers and
+ others to understand and find the connections within the file system.
 
 Below, is the full HashStore file layout diagram::
 
