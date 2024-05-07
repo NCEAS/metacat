@@ -543,7 +543,8 @@ of the given PID as the permanent address).
     a cid reference file for each object is created upon its first storage call. This file
     contains a list of pids delimited by a new line ('\n'). When a duplicate object is found or
     deleted, a cid reference file is updated. An object can not be deleted if its cid reference
-    file is still present, and this file is only deleted when no more references are found.
+    file is still present, and this file (and the object) can only deleted when no more references
+    are found.
 
  2. **Pid Reference File**
 
@@ -551,7 +552,7 @@ of the given PID as the permanent address).
     reference file contains the content identifier that the PID describes, and lives in
     a directory in `/metadata` that is named using the SHA-256 hash of the given `PID` + `formatId`.
 
- Note: Previously, this relationship was represented in the metadata document in a delimiter
+ **Note:** Previously, this relationship was represented in the metadata document in a delimiter
  format with a header and body. Since transitioning back to content identifiers, this data was
  moved to reference files, which improves clarity by making it easier for developers and
  others to understand and find the connections within the file system.
@@ -644,8 +645,8 @@ DataONE MNs may interact with the hashstore directly. Below are the public metho
 in the Python and Java HashStore library. For detailed information on how each method should
 work, please see the respective HashStore interface class in the projects below:
 
-   - (Python) https://github.com/DataONEorg/hashstore
-   - (Java) https://github.com/DataONEorg/hashstore-java
+ (Python) https://github.com/DataONEorg/hashstore
+ (Java) https://github.com/DataONEorg/hashstore-java
 
 
 The methods below will be included in the public API:
@@ -677,6 +678,7 @@ The methods below will be included in the public API:
  Below is a quick summary of how the Public API methods work:
 
  - **store_object**: Stores an object to HashStore with a given pid and data stream.
+
    - If a pid is available, it should not only tag the object with the pid, but verify
    that the reference files exist and correctly associated/tagged.
    - If a pid is unavailable, it should store the object. The calling app or method
@@ -698,7 +700,7 @@ The methods below will be included in the public API:
    :figclass: top
    :align: center
 
-   Figure 2. Mermaid diagram illustrating store_object flow
+   Figure 2. Mermaid diagram illustrating the initial store_object flow
    
 
 Annotations
