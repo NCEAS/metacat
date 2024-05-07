@@ -1,30 +1,7 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2011 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.restservice.v2;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,7 +10,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
@@ -60,7 +36,6 @@ import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.ChecksumAlgorithmList;
 import org.dataone.service.types.v1.DescribeResponse;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v1.NodeReference;
@@ -95,12 +70,13 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 /**
  * CN REST service implementation handler
  * 
- * ****************** CNCore -- DONE create() - POST /d1/cn/object/PID
+ * ****************** CNCore
+ * create() - POST /d1/cn/object/PID
  * listFormats() - GET /d1/cn/formats getFormat() - GET /d1/cn/formats/FMTID
  * getLogRecords - GET /d1/cn/log reserveIdentifier() - POST /d1/cn/reserve
  * listNodes() - Not implemented registerSystemMetadata() - POST /d1/meta/PID
  * 
- * CNRead -- DONE get() - GET /d1/cn/object/PID getSystemMetadata() - GET
+ * CNRead -- get() - GET /d1/cn/object/PID getSystemMetadata() - GET
  * /d1/cn/meta/PID resolve() - GET /d1/cn/resolve/PID assertRelation() - GET
  * /d1/cn/assertRelation/PID getChecksum() - GET /d1/cn/checksum search() - Not
  * implemented in Metacat
@@ -811,7 +787,8 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws NotImplemented
      * @throws InvalidRequest
      */
-    private void describeObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest
+    private void describeObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
+                                                            NotFound, NotImplemented, InvalidRequest
     {
         response.setContentType("text/xml");
 
@@ -1126,7 +1103,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
@@ -1277,12 +1254,13 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         // parse the accessPolicy
         Map<String, File> files = collectMultipartFiles();        
-        AccessPolicy accessPolicy = TypeMarshaller.unmarshalTypeFromFile(AccessPolicy.class, files.get("accessPolicy"));;
+        AccessPolicy accessPolicy = TypeMarshaller.unmarshalTypeFromFile(AccessPolicy.class,
+                                                                        files.get("accessPolicy"));
 
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
@@ -1325,7 +1303,6 @@ public class CNResourceHandler extends D1ResourceHandler {
         Date endTime = null;
         ObjectFormatIdentifier formatId = null;
         Identifier identifier = null;
-        //boolean replicaStatus = true;
         NodeReference nodeId = null;
         int start = 0;
         int count = 1000;
@@ -1346,8 +1323,8 @@ public class CNResourceHandler extends D1ResourceHandler {
                 } catch (Exception e) {
                     // if we can't parse it, just don't use the startTime param
                     logMetacat.warn("Could not parse fromDate: " + value, e);
-                    throw new InvalidRequest("1540", "Could not parse fromDate: " + value+" since "+e.getMessage());
-                    //startTime = null;
+                    throw new InvalidRequest("1540", "Could not parse fromDate: " + value
+                                             + " since " + e.getMessage());
                 }
             } else if (name.equals("toDate") && value != null) {
                 try {
@@ -1355,8 +1332,8 @@ public class CNResourceHandler extends D1ResourceHandler {
                 } catch (Exception e) {
                     // if we can't parse it, just don't use the endTime param
                     logMetacat.warn("Could not parse toDate: " + value, e);
-                    throw new InvalidRequest("1540", "Could not parse toDate: " + value+" since "+e.getMessage());
-                    //endTime = null;
+                    throw new InvalidRequest("1540", "Could not parse toDate: " + value
+                                             + " since " + e.getMessage());
                 }
             } else if (name.equals("formatId") && value != null) {
                 formatId = new ObjectFormatIdentifier();
@@ -1364,8 +1341,6 @@ public class CNResourceHandler extends D1ResourceHandler {
             } else if (name.equals("identifier") && value != null) {
                 identifier = new Identifier();
                 identifier.setValue(value);
-            /*} else if (name.equals("replicaStatus") && value != null) {
-                replicaStatus = Boolean.parseBoolean(value);*/
             } else if (name.equals("nodeId") && value != null) {
                 nodeId = new NodeReference();
                 nodeId.setValue(value);
@@ -1487,7 +1462,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
@@ -1573,7 +1548,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
@@ -1664,7 +1639,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
@@ -1810,7 +1785,8 @@ public class CNResourceHandler extends D1ResourceHandler {
      */
     public boolean updateReplicationMetadata(String pid) throws ServiceFailure,
             NotImplemented, InvalidToken, NotAuthorized, InvalidRequest,
-            NotFound, VersionMismatch, InstantiationException, IllegalAccessException, IOException, MarshallingException {
+            NotFound, VersionMismatch, InstantiationException, IllegalAccessException,
+            IOException, MarshallingException {
 
         boolean result = false;
         long serialVersion = 0L;
@@ -1825,7 +1801,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
@@ -1856,7 +1832,8 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken
      */
     protected void updateSystemMetadata() throws ServiceFailure, InvalidRequest, InstantiationException, 
-                        IllegalAccessException, IOException, MarshallingException, NotImplemented, NotAuthorized, InvalidSystemMetadata, InvalidToken {
+                        IllegalAccessException, IOException, MarshallingException, NotImplemented,
+                                           NotAuthorized, InvalidSystemMetadata, InvalidToken {
         // Read the incoming data from its Mime Multipart encoding
         Map<String, File> files = collectMultipartFiles();
 
@@ -1873,7 +1850,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, sysmeta);
 
         logMetacat.debug("updating system metadata with pid " + pid.getValue());
-        
+
         CNodeService.getInstance(request).updateSystemMetadata(session, pid, systemMetadata);
     }
 
@@ -1906,8 +1883,6 @@ public class CNResourceHandler extends D1ResourceHandler {
                 return;
             } else {
                 // TODO: list the registered views
-                //BaseException ni = new NotImplemented("9999", "MN.listViews() is not implemented at this node");
-                //throw ni;
                 OptionList list = cnode.listViews(session);
 
                 response.setContentType("text/xml");
