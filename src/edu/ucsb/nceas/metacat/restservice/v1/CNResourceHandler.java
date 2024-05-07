@@ -1,25 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2011 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.restservice.v1;
 
 import java.io.File;
@@ -32,7 +10,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
@@ -82,7 +59,6 @@ import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.dataone.v1.CNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.restservice.D1HttpRequest;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
@@ -93,12 +69,13 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 /**
  * CN REST service implementation handler
  * 
- * ****************** CNCore -- DONE create() - POST /d1/cn/object/PID
+ * ****************** CNCore
+ * create() - POST /d1/cn/object/PID
  * listFormats() - GET /d1/cn/formats getFormat() - GET /d1/cn/formats/FMTID
  * getLogRecords - GET /d1/cn/log reserveIdentifier() - POST /d1/cn/reserve
  * listNodes() - Not implemented registerSystemMetadata() - POST /d1/meta/PID
  * 
- * CNRead -- DONE get() - GET /d1/cn/object/PID getSystemMetadata() - GET
+ * CNRead get() - GET /d1/cn/object/PID getSystemMetadata() - GET
  * /d1/cn/meta/PID resolve() - GET /d1/cn/resolve/PID assertRelation() - GET
  * /d1/cn/assertRelation/PID getChecksum() - GET /d1/cn/checksum search() - Not
  * implemented in Metacat
@@ -1032,7 +1009,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
@@ -1189,7 +1166,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
@@ -1379,13 +1356,13 @@ public class CNResourceHandler extends D1ResourceHandler {
         identifier.setValue(pid);
 
         // parse the policy
-        Map<String, File> files = collectMultipartFiles();        
+        Map<String, File> files = collectMultipartFiles();
         ReplicationPolicy policy = TypeMarshaller.unmarshalTypeFromFile(ReplicationPolicy.class, files.get("policy"));
 
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
@@ -1471,7 +1448,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
@@ -1562,7 +1539,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
@@ -1723,7 +1700,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
