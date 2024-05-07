@@ -356,29 +356,30 @@ a PID or SID, along with reference files to catalogue data.
  **Why not hash identifiers derived from a PID?**
 
  During the initial development phase, HashStore was implemented with a Public API
- centering around a given PID, storing both data and metadata in its respective
+ centering around a PID, storing both data and metadata in its respective
  directories using an identifier generated from hashing the PID. However, after
  further review and testing with Metacat - it was determined to be unsuitable
  given the usage of multipart http requests in Metacat, which encapsulates the
- pieces of data that users upload in "body parts".
+ pieces of data that users upload in "body parts" when submitting to Metacat.
 
  In multipart http requests, a PID may not always be immediately available for Metacat
  to call the HashStore Public API with (since the order in which data and metadata
- is received by Metacat cannot be guaranteed). If a data "body part" were to arrive
- first, it would need to be stored as a temporary object until a PID is received.
- During this process, we would have also already calculated the default list of hashes
- (content identifiers). So storing the data object with its content identifier as
- its permanent address (and in its own directory) ensures the atomicity of this
- storage process - there is no waiting period for a data object to be completely
+ is received by Metacat cannot be guaranteed, and this PID lives with the metadata
+ body part). If a data "body part" were to arrive first, it would need to be stored
+ as a temporary object until a PID is received. During this process, we also would have
+ already calculated the default list of hashes (content identifiers). So storing the
+ data object with its content identifier as its permanent address (and in its own
+ directory) ensures the atomicity of this storage process and allows us to store files
+ once and only once. There is no waiting period for a data object to be completely
  stored.
 
  If we could guarantee the order of uploads to Metacat, then using the hash identifier
- generated from a PID would be appropriate. We have discussed the potential change
+ generated from a PID would be appropriate. We have discussed this potential change
  of forcing metadata to arrive first during the upload process, but it would
  require extensive changes to processes which we do not have the resources or
  time to undertake (nor the desire to force upon users).
 
-To learn more about the initial design, please see: appendix/storage-subsystem-cid-file-layout.rst
+ To learn more about the initial design, please see: storage-subsystem-cid-file-layout.rst
 
 **Raw File Storage**
 
@@ -391,11 +392,15 @@ times, it will only be stored once in the filesystem.
 
 **Duplicate Objects**
 
-To prevent duplicate objects from being stored, all Public API calls by Metacat
-to store data objects are synchronized. If an object already exists, an exception
-will be swallowed. Similarly, all Public API calls to store metadata are synchronized
-and executed in chronological order. It is the calling client's responsibility to
-ensure that metadata is stored and/or backed up appropriately.
+To prevent duplicate objects from being stored, all HashStore Public API calls
+by a calling app (ex. Metacat) to store data objects are synchronized. Additionally,
+all objects begin as temporary objects which are moved (renamed) only when
+HashStore has determined that the object does not exist yet.
+
+If an object already exists, an exception will be swallowed. Similarly, all HashStore
+Public API calls to store metadata are synchronized and executed in chronological order.
+It is the calling client's responsibility to ensure that metadata is stored and/or
+backed up appropriately.
 
 **Checksum algorithm and encoding**
 
@@ -478,8 +483,8 @@ would be stored in the folder:
 
  `metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
 
-Where each metadata file that belongs to the given PID is named using the SHA-256
-hash of the `PID` + `formatId`.
+Where each metadata file that belongs to the given PID can be located by calculating
+the SHA-256 hash of the `PID` + respective `formatId`.
 
  To pre-emptively accommodate the need for additional metadata types, we have revised
  HashStore to store 'metadata', not only 'sysmeta'. All metadata files will be stored
@@ -534,12 +539,20 @@ metadata files - each named with the hash of the `PID` + `formatId` they describ
  So given just the `sysmeta` directory, we could reconstruct an entire member node's
  data and metadata content.
 
- However, to simplify HashStore we attempted to switch to PID-based hash identifiers.
- In this system, metadata was stored with its permanent address as the `PID` + `formatId`.
- Additionally, the data object would be stored with the hash of the `PID` as the permanent
- address - so the proposed sysmeta (metadata) delimiter format became redundant, and only
- the body portion (metadata content) was to be kept in the stored metadata file. In this
- system, there was no need for the content identifier to be stored.
+ However, to simplify HashStore and address the challenge of locking objects
+ in a operating system that can be accessed by many processes, we attempted to
+ switch to PID-based hash identifiers. In this system, metadata was stored with
+ its permanent address as the `PID` + `formatId`.
+
+ Additionally, the data object would be stored with the hash of the `PID` as the
+ permanent address - so the proposed sysmeta (metadata) delimiter format became
+ redundant, and only the body portion (metadata content) was to be kept in the
+ stored metadata file. In this system, there was no need for the content
+ identifier to be stored.
+
+ Our reversal of this approach necessitated the reintroduction of a way to
+ manage the relationships of a given PID in HashStore, leading to reference
+ files (more info below).
 
 **Reference Files (a.k.a. Tags)**
 
@@ -564,10 +577,10 @@ of the given PID as the permanent address).
     a directory in `/metadata` that is named using the SHA-256 hash of the given `PID` + `formatId`.
 
  **Note:** Previously, this relationship was represented in the system metadata document
- in a delimiter format with a header and body. Since transitioning back to content identifiers,
- this data was moved to reference files, which improves clarity by making it easier for
- developers and others to understand and find the connections within the file system
- (we no longer need to fully parse a sysmeta document).
+ in a delimiter format with a header and body. Since transitioning back to content
+ identifiers, this data was moved to reference files (so we no longer need to fully
+ parse a sysmeta document to get what we need), making it easier for developers and
+ others to understand and find the connections within the HashStore layout/file system.
 
 Below, is the full HashStore file layout diagram::
 
