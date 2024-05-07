@@ -525,7 +525,7 @@ metadata files - each named with the hash of the `PID` + `formatId` they describ
 
  However, to simplify HashStore we attempted to switch to PID-based hash identifiers.
  In this system, metadata was stored with its permanent address as the `PID` + `formatId`.
- Additionally, the data object would be stored with the hash of the `PID` as the permament
+ Additionally, the data object would be stored with the hash of the `PID` as the permanent
  address - so the proposed sysmeta (metadata) delimiter format became redundant, and only
  the body portion (metadata content) was to be kept in the stored metadata file. In this
  system, there was no need for the content identifier to be stored.
@@ -641,8 +641,8 @@ Public API
 
 While Metacat will primarily handle read/write operations, other services like MetaDig and
 DataONE MNs may interact with the hashstore directly. Below are the public methods implemented
-in the Python implementation and Java implementation of HashStore.
-These are pending review and integration into Metacat.
+in the Python and Java HashStore library. For detailed information on how each method should
+work, please see the respective HashStore interface class in the projects below:
 
    - (Python) https://github.com/DataONEorg/hashstore
    - (Java) https://github.com/DataONEorg/hashstore-java
@@ -655,13 +655,13 @@ The methods below will be included in the public API:
 +====================+==============================+==================================+=============================================+
 | store_object       | pid, data, ...               | hash_address (object_cid, ...)   | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| verify_object      | pid, data, ...               | boolean                          | Pending Review                              |
+| tag_object         | pid, cid                     | boolean                          | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| tag_object         | pid, cid, ...                | void                             | Pending Review                              |
+| verify_object      | object_info, checksum, ...   | void                             | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | find_object        | pid                          | string (cid)                     | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| store_metadata     | pid, sysmeta, format_id      | metadata_cid                     | Pending Review                              |
+| store_metadata     | sysmeta, pid, format_id      | metadata_cid                     | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | retrieve_object    | pid                          | io.BufferedIOBase                | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
@@ -674,6 +674,25 @@ The methods below will be included in the public API:
 | get_hex_digest     | pid, algorithm               | string (hex_digest)              | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
+ Below is a quick summary of how the Public API methods work:
+
+ - **store_object**: Stores an object to HashStore with a given pid and data stream.
+   - If a pid is available, it should not only tag the object with the pid, but verify
+   that the reference files exist and correctly associated/tagged.
+   - If a pid is unavailable, it should store the object. The calling app or method
+   should then call 'tag_object' to create the necessary references, and then
+   'verify_object' to confirm that everything exists where it should be.
+ - **tag_object**: Tag an object by creating reference files
+ - **verify_object**: Verifies that the values provided match
+ - **find_object**: Check that an object exists, and if it does - return the content identifier
+ - **store_metadata**: Store a metadata document to HashStore with a pid and format_id
+ - **retrieve_object**: Returns a stream to the object if it exists
+ - **retrieve_metadata**: Returns a stream to the metadata if it exists
+ - **delete_object**: Deletes the pid reference file, removes the pid from the cid reference
+   file and only deletes the object if the cid reference files does not have any references
+ - **delete_metadata**: Deletes a metadata document
+ - **get_hex_digest**: Returns the hex digest (hash value, checksum) of the algorithm desired
+   of an object if it exists in HashStore.
 
 .. figure:: images/hashstore_publicapi_mermaid_store_object_v2.png
    :figclass: top
