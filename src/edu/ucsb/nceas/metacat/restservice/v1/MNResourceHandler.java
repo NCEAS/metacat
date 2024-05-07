@@ -1,25 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2011 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.restservice.v1;
 
 import java.io.File;
@@ -33,9 +11,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.ZipOutputStream;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
@@ -78,7 +54,6 @@ import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.ExceptionHandler;
 import org.dataone.service.util.TypeMarshaller;
-import org.dataone.speedbagit.SpeedBagIt;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
@@ -100,7 +75,7 @@ import edu.ucsb.nceas.metacat.ReadOnlyChecker;
  * MN REST service implementation handler
  *
  * ******************
- * MNCore -- DONE
+ * MNCore --
  *         ping() - GET /d1/mn/monitor/ping
  *         log() - GET /d1/mn/log
  *         **getObjectStatistics() - GET /d1/mn/monitor/object
@@ -108,7 +83,7 @@ import edu.ucsb.nceas.metacat.ReadOnlyChecker;
  *         **getStatus - GET /d1/mn/monitor/status
  *         getCapabilities() - GET /d1/mn/ and /d1/mn/node
  *
- *     MNRead -- DONE
+ *     MNRead --
  *         get() - GET /d1/mn/object/PID
  *         getSystemMetadata() - GET /d1/mn/meta/PID
  *         describe() - HEAD /d1/mn/object/PID
@@ -116,11 +91,11 @@ import edu.ucsb.nceas.metacat.ReadOnlyChecker;
  *         listObjects() - GET /d1/mn/object
  *         synchronizationFailed() - POST /d1/mn/error
  *
- *     MNAuthorization -- DONE
+ *     MNAuthorization --
  *         isAuthorized() - GET /d1/mn/isAuthorized/PID
  *         setAccessPolicy() - PUT /d1/mn/accessRules/PID
  *
- *     MNStorage - DONE
+ *     MNStorage -
  *         create() - POST /d1/mn/object/PID
  *         update() - PUT /d1/mn/object/PID
  *         delete() - DELETE /d1/mn/object/PID
@@ -218,7 +193,8 @@ public class MNResourceHandler extends D1ResourceHandler {
             // get the rest of the path info
             String extra = null;
 
-            logMetacat.info("MNResourceHanlder.handle - V1 handling verb " + httpVerb + " request with resource '" + resource + "'");
+            logMetacat.info("MNResourceHanlder.handle - V1 handling verb " + httpVerb
+                            + " request with resource '" + resource + "'");
             logMetacat.debug("resource: '" + resource + "'");
             boolean status = false;
 
@@ -545,8 +521,6 @@ public class MNResourceHandler extends D1ResourceHandler {
 
                     // set the content-type if we have it from the implementation
                     if (stream instanceof ContentTypeInputStream) {
-                        //response.setContentType("application/octet-stream");
-                        //response.setContentType("text/xml");
                         response.setContentType(((ContentTypeInputStream) stream).getContentType());
                     }
                     response.setStatus(200);
@@ -683,7 +657,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
@@ -722,7 +696,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    private void generateIdentifier() throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, IOException, MarshallingException {
+    private void generateIdentifier() throws InvalidToken, ServiceFailure, NotAuthorized,
+                                NotImplemented, InvalidRequest, IOException, MarshallingException {
 
         // make sure we have the multipart params
         try {
@@ -768,7 +743,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws NotImplemented
      * @throws InvalidRequest
      */
-    private boolean isAuthorized(String id) throws ServiceFailure, InvalidToken, NotFound, NotAuthorized, NotImplemented, InvalidRequest {
+    private boolean isAuthorized(String id) throws ServiceFailure, InvalidToken, NotFound,
+                                                    NotAuthorized, NotImplemented, InvalidRequest {
         Identifier pid = new Identifier();
         pid.setValue(id);
         Permission permission = null;
@@ -796,7 +772,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws InvalidToken
      */
-    private void syncError() throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, MarshallingException, IOException, InstantiationException, IllegalAccessException, InvalidToken {
+    private void syncError() throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest,
+                                        MarshallingException, IOException, InstantiationException,
+                                        IllegalAccessException, InvalidToken {
         SynchronizationFailed syncFailed = null;
         try {
             syncFailed = collectSynchronizationFailed();
@@ -820,7 +798,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws NotFound
      * @throws InvalidRequest
      */
-    private void checksum(String pid) throws NotImplemented, MarshallingException, IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest {
+    private void checksum(String pid) throws NotImplemented, MarshallingException, IOException,
+                            InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest {
         String checksumAlgorithm = "MD5";
         try {
             checksumAlgorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
@@ -883,12 +862,6 @@ public class MNResourceHandler extends D1ResourceHandler {
         } else {
             D1AuthHelper authDel = new D1AuthHelper(request, null, "2152", "????");
             authDel.doAdminAuthorization(session);
-//            allowed = MNodeService.getInstance(request).isAdminAuthorized(session);
-//            if (!allowed) {
-//                String msg = "User is not an admin user";
-//                NotAuthorized failure = new NotAuthorized("2152", msg);
-//                throw failure;
-//            }
         }
 
         // parse the systemMetadata
@@ -991,7 +964,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure
      * @throws InvalidToken
      */
-    private void describeObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest
+    private void describeObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
+                                                NotFound, NotImplemented, InvalidRequest
     {
 
         response.setContentType("text/xml");
@@ -1014,7 +988,8 @@ public class MNResourceHandler extends D1ResourceHandler {
         response.setStatus(200);
 
         //response.addHeader("pid", pid);
-        response.addHeader("DataONE-Checksum", dr.getDataONE_Checksum().getAlgorithm() + "," + dr.getDataONE_Checksum().getValue());
+        response.addHeader("DataONE-Checksum", dr.getDataONE_Checksum().getAlgorithm()
+                                                + "," + dr.getDataONE_Checksum().getValue());
         response.addHeader("Content-Length", dr.getContent_Length() + "");
         response.addHeader("Last-Modified", DateTimeMarshaller.serializeDateToUTC(dr.getLast_Modified()));
         response.addHeader("DataONE-ObjectFormat", dr.getDataONE_ObjectFormatIdentifier().getValue());
@@ -1035,7 +1010,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    private void getLog() throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, IOException, MarshallingException
+    private void getLog() throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest,
+                                   NotImplemented, IOException, MarshallingException
     {
 
         Date fromDate = null;
@@ -1111,7 +1087,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws MarshallingException
      * @throws InsufficientResources
      */
-    protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException, InsufficientResources {
+    protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
+                                     NotFound, InvalidRequest, NotImplemented, IOException,
+                                     MarshallingException, InsufficientResources {
         OutputStream out = null;
 
         if (pid != null) { //get a specific document
@@ -1155,15 +1133,12 @@ public class MNResourceHandler extends D1ResourceHandler {
                 {
                     try
                     {
-                      //startTime = dateFormat.parse(value[0]);
                         startTime = DateTimeMarshaller.deserializeDateToUTC(value[0]);
-                        //startTime = parseDateAndConvertToGMT(value[0]);
                     }
                     catch(Exception e)
                     {  //if we can't parse it, just don't use the fromDate param
                         logMetacat.warn("Could not parse fromDate: " + value[0], e);
                         throw new InvalidRequest("1540", "Could not parse fromDate: " + value[0]+" since "+e.getMessage());
-                        //startTime = null;
                     }
                 }
                 else if(name.equals("toDate") && value != null)
@@ -1176,7 +1151,6 @@ public class MNResourceHandler extends D1ResourceHandler {
                     {  //if we can't parse it, just don't use the toDate param
                         logMetacat.warn("Could not parse toDate: " + value[0], e);
                         throw new InvalidRequest("1540", "Could not parse toDate: " + value[0]+" since "+e.getMessage());
-                        //endTime = null;
                     }
                 }
                 else if(name.equals("formatId") && value != null)
@@ -1195,11 +1169,11 @@ public class MNResourceHandler extends D1ResourceHandler {
                 }
                 else if(name.equals("start") && value != null)
                 {
-                    start = new Integer(value[0]).intValue();
+                    start = Integer.parseInt(value[0]);
                 }
                 else if(name.equals("count") && value != null)
                 {
-                    count = new Integer(value[0]).intValue();
+                    count = Integer.parseInt(value[0]);
                 }
             }
             //make the crud call
@@ -1234,7 +1208,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws InvalidRequest
      */
-    protected void getPackage(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, InvalidRequest {
+    protected void getPackage(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
+                                            NotFound, NotImplemented, IOException, InvalidRequest {
 
         Identifier id = new Identifier();
         id.setValue(pid);
@@ -1282,7 +1257,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    protected void getSystemMetadataObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException {
+    protected void getSystemMetadataObject(String pid) throws InvalidToken, ServiceFailure,
+                                        NotAuthorized, NotFound, InvalidRequest, NotImplemented,
+                                        IOException, MarshallingException {
 
         Identifier id = new Identifier();
         id.setValue(pid);
@@ -1318,7 +1295,13 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws FileUploadException
      * @throws NoSuchAlgorithmException
      */
-    protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
+    protected void putObject(String trailingPid, String action) throws ServiceFailure,
+                                            InvalidRequest, MarshallingException, InvalidToken,
+                                            NotAuthorized, IdentifierNotUnique, UnsupportedType,
+                                            InsufficientResources, InvalidSystemMetadata,
+                                            NotImplemented, NotFound, IOException,
+                                            InstantiationException, IllegalAccessException,
+                                            NoSuchAlgorithmException, FileUploadException {
         CheckedFile objFile = null;
         try {
             // Read the incoming data from its Mime Multipart encoding
@@ -1409,8 +1392,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken 
      * @throws MarshallingException 
      */
-    private void deleteObject(String pid) throws IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest, MarshallingException 
-    {
+    private void deleteObject(String pid) throws IOException, InvalidToken, ServiceFailure,
+                                  NotAuthorized, NotFound, NotImplemented, InvalidRequest,
+                                  MarshallingException {
 
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
@@ -1436,7 +1420,8 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws MarshallingException
      */
-    private void archive(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, MarshallingException {
+    private void archive(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
+                                               NotImplemented, IOException, MarshallingException {
 
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
@@ -1452,7 +1437,10 @@ public class MNResourceHandler extends D1ResourceHandler {
         
     }
 
-    protected SynchronizationFailed collectSynchronizationFailed() throws IOException, ServiceFailure, InvalidRequest, MarshallingException, InstantiationException, IllegalAccessException, ParserConfigurationException, SAXException  {
+    protected SynchronizationFailed collectSynchronizationFailed() throws IOException,
+                                            ServiceFailure, InvalidRequest, MarshallingException,
+                                            InstantiationException, IllegalAccessException,
+                                            ParserConfigurationException, SAXException {
 
         // Read the incoming data from its Mime Multipart encoding
         logMetacat.debug("Disassembling MIME multipart form");
@@ -1488,7 +1476,8 @@ public class MNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("sfFile: " + sfFile.getAbsolutePath());
         sf = new FileInputStream(sfFile);
 
-        SynchronizationFailed syncFailed = (SynchronizationFailed) ExceptionHandler.deserializeXml(sf, "Error deserializing exception");
+        SynchronizationFailed syncFailed =(SynchronizationFailed) ExceptionHandler
+                                              .deserializeXml(sf, "Error deserializing exception");
         return syncFailed;
     }
 
