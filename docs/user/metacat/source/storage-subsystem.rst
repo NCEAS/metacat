@@ -534,47 +534,48 @@ they describe::
 
  **Metadata Format Process**
 
- Initially, only system metadata files were proposed to be stored, in the format
+ Initially, system metadata files were proposed to be stored in the format
  of a delimited file with a header and body section. The header contains
- the 64 character hash (content identifier) of the data file described by this
- sysmeta, followed by a space, then the `formatId` of the metadata format for
- the metadata in the file, and then a NULL (`\x00`). This header is then followed
- by the content of the metadata document in UTF-8 encoding.
+ the 64-character hash (content identifier) of the data file described by this
+ sysmtem metadata (sysmeta), followed by a space, then the `formatId` of
+ the metadata format for the metadata in the file, and then a NULL (`\x00`).
+ This header is then followed by the content of the metadata document in UTF-8
+ encoding.
 
- This metadata file's permanent address is then calculated by using the SHA-256
+ This metadata file's permanent address is calculated by using the SHA-256
  hash of the persistent identifier (PID) of the object, and stored in a `sysmeta`
  directory parallel to the one described above for objects, and structured analogously.
  So given just the `sysmeta` directory, we could reconstruct an entire member node's
  data and metadata content.
 
- However, to reduce complexity in HashStore, we attempted to switch to PID-based
- hash identifiers. In this proposed system, objects were stored using the hash of
- the given PID in the `/objects` directory. Metadata documents were stored using
- the hash of the given PID as well in a directory in `/metadata`, with each metadata
- document's permanent address formed by the hash of the `PID` + `formatId`.
+ However, to reduce complexity in HashStore, we switched to a system that uses
+ PID-based hash identifiers. In this proposed system:
 
- Since the `formatId` is required to identify a metadata document, the above
- proposed sysmeta (metadata) delimiter format became redundant. There was no need
- for the content identifier because a PID's respective object could be found
- directly by hashing the PID, and the namespace (formatId) was now directly part
- of the process to store a metadata document.
+ - Objects are stored using the hash of the given PID in the `/objects` directory.
+ - Metadata documents are stored using the hash of the given PID in the `/metadata`
+ directory, with each metadata document's permanent address formed by the hash
+ of the `PID` + `formatId`.
 
- Maintaining this format included parsing requirements to retrieve the metadata,
- which added complexity since only the body portion (metadata content) was
- necessary in a stored metadata document. Due to the way upload are received in
- Metacat, we had to reverse our file layout approach.
+ This proposed change made the initial sysmeta delimiter format redundant.
+ The `formatId`, which is required for identifying and storing a metadata
+ document, was incorporated directly into the metadata storage process,
+ eliminating the need for its inclusion in the delimiter format. Additionally,
+ a PID's respective object could be found directly by hashing the PID to get
+ its location in the `/objects` directory. Now, only the body portion
+ (metadata content) was necessary in a stored metadata document.
 
- While we kept our new change to handle the storage of multiple metadata documents
- for a given pid, this reversal necessitated the reintroduction of a way to manage
- the relationships of a given PID in HashStore, leading to reference files
- (more info below).
+ However, we had to reverse course on this approach due to the way uploads are
+ handled in Metacat. While we kept the change to handle the storage of multiple
+ metadata documents for a given pid, this reversal necessitated the reintroduction
+ of a way to manage the relationships of a given PID and CIDs in HashStore,
+ leading to reference files (more info below).
 
 **Reference Files (a.k.a. Tags)**
 
 To manage the relationship between objects and metadata, reference files are created
-in a separate refs directory, which includes a subdirectory for objects ("/refs/cid",
-for content identifiers) and a subdirectory for metadata (`/refs/pid`, for persistent
-identifiers).
+in a separate `refs` directory, parallel to `objects` and `metadata`. This `refs`
+directory includes a subdirectory for objects ("/refs/cid", for content identifiers)
+and a subdirectory for metadata (`/refs/pid`, for persistent identifiers).
 
  HashStore Reference Files Implementation
 
@@ -582,14 +583,14 @@ identifiers).
 
     A cid reference file for each object is created during the first storage
     operation for the object. This file lists persistent identifiers (pids)
-    associated with the object, each delimited by a newline (\n). The cid reference
+    associated with the object, each delimited by a newline (`\n`). The cid reference
     file is updated when a duplicate object is stored or an object is deleted.
     An object cannot be deleted if its cid reference file is present, and this file
     (and the associated object) can only be deleted when there are no more references
     to the object.
 
     The permanent address of an object’s cid reference file is calculated using
-    its content identifier as the base, and follows the HashStore folder layout structure.
+    its content identifier, and follows the HashStore folder layout structure.
 
  2. **Pid Reference File**
 
