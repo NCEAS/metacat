@@ -373,8 +373,7 @@ identifiers such as a PID or SID, along with reference files to catalogue data.
  Metacat cannot be guaranteed. Since the PID resides with the metadata "body part",
  a PID may not always be immediately available for Metacat to call store object
  with. So if a data "body part" were to arrive first, it would need to be stored
- as a temporary object until the metadata "body part" is received (and held
- indefinitely as we wait for the metadata to parse the PID).
+ and held as a temporary object until the metadata "body part" is received.
 
  In the above scenario where a temporary object awaits its final location, we
  would have also already calculated the default list of hashes (content identifiers).
@@ -389,9 +388,8 @@ identifiers such as a PID or SID, along with reference files to catalogue data.
  it would require extensive changes to processes which we do not have the resources or
  time to undertake (nor the desire to force upon existing and new users).
 
- To learn more about the initial design, please see: storage-subsystem-cid-file-layout.rst
-
- To learn more about http multipart requests, please see: https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
+ - To learn more about the initial design, please see: storage-subsystem-cid-file-layout.rst
+ - To learn more about http multipart requests, please see: https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
 
 **Raw File Storage**
 
@@ -532,7 +530,7 @@ they describe::
                    └── sha256(pid+formatId_sysmeta)
                    └── sha256(pid+formatId_annotations)
 
- **Metadata Format Process**
+ **Metadata Format & Reference File Process**
 
  Initially, system metadata files were proposed to be stored in the format
  of a delimited file with a header and body section. The header contains
@@ -552,7 +550,6 @@ they describe::
  PID-based hash identifiers. In this proposed system:
 
  - Objects are stored using the hash of the given PID in the `/objects` directory.
-
  - Metadata documents are stored using the hash of the given PID in the `/metadata`
  directory, with each metadata document's permanent address formed by the hash
  of the `PID` + `formatId`.
@@ -572,13 +569,13 @@ they describe::
  of a way to manage the relationships of a given PID and CIDs in HashStore.
 
  Instead of returning back to the original format, reference files were introduced
- which housed the header content. This shift eliminates the need to fully parse a
- system metadata document to retrieve a metadata document. By making the relationship
- more transparent in this way, any user (even those without comprehensive knowledge
- of HashStore), can easily navigate and find the connections for a given PID directly
- through the file layout of HashStore, without having to rely on the HashStore Public API.
+ to contain the header content. This shift eliminates the need to fully parse a
+ system metadata document to retrieve a metadata document. Additionally, by making
+ the relationship more transparent in this way, any user (even those without
+ comprehensive knowledge of HashStore), can easily navigate and find the connections
+ for a given PID directly through the file layout of HashStore.
 
- To learn more about the project that spurred this change, please see: https://github.com/mbjones/dip-noodling
+ To learn about the project that spurred this change, please see: https://github.com/mbjones/dip-noodling
 
 **Reference Files (a.k.a. Tags)**
 
