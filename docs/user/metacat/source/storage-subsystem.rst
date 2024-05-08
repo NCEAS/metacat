@@ -581,7 +581,7 @@ they describe::
 
 To manage the relationship between objects and metadata, reference files are created
 in a separate `refs` directory, parallel to `objects` and `metadata`. This `refs`
-directory includes a subdirectory for objects ("/refs/cid", for content identifiers)
+directory includes a subdirectory for objects (`/refs/cid`, for content identifiers)
 and a subdirectory for metadata (`/refs/pid`, for persistent identifiers).
 
  HashStore Reference Files Implementation
