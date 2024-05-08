@@ -180,8 +180,8 @@ metacat:
   ##
   ## NOTES:
   ## 1. If you are NOT using the included "dataone-indexer" sub-chart (i.e.
-  ##    `dataone-indexer.enabled: false`), ensure `<solr-port>` is set correctly, and use one of the
-  ##    following values for `<solr-hostname>`:
+  ##    `global.dataone-indexer.enabled: false`), ensure `<solr-port>` is set correctly, and use one
+  ##    of the following values for `<solr-hostname>`:
   ##    *  The fully qualified domain name, for an existing solr instance hosted outside the
   ##       current k8s cluster
   ##    *  `<servicename>` for an existing postgresql instance within the same k8s cluster
@@ -190,8 +190,8 @@ metacat:
   ##        e.g. http://host.docker.internal:8983/solr
   ##
   ## 2. If you ARE using the included dataone-indexer sub-chart (i.e.
-  ##    `dataone-indexer.enabled: true`), leave this value unset (`solr.baseURL: ""`). It will
-  ##    then be automatically populated, as follows:
+  ##    `global.dataone-indexer.enabled: true`), leave this value unset (`solr.baseURL: ""`). It
+  ##    will then be automatically populated, as follows:
   ##    `<solr-hostname>` will be set to the current value of `.Release.Name`, prepended to
   ##                      `-solr-headless` (the name of the k8s headless solr service created
   ##                      by the dataone-indexer sub-chart)
@@ -200,9 +200,9 @@ metacat:
   solr.baseURL: ""
 
   ## @param metacat.solr.coreName The solr core (solr standalone) or collection name (solr cloud)
-  ## If you are using the included dataone-indexer sub-chart (i.e. `dataone-indexer.enabled: true`),
-  ## leave this value unset (`solr.coreName: ""`). It will then be automatically populated from the
-  ## subchart settings
+  ## If you are using the included dataone-indexer sub-chart (i.e.
+  ## `global.dataone-indexer.enabled: true`), leave this value unset (`solr.coreName: ""`). It will
+  ## then be automatically populated from the subchart settings
   ##
   solr.coreName: ""
 
@@ -877,6 +877,11 @@ tomcat:
     max: ""
 
 ## @section dataone-indexer Sub-Chart
+##
+## Metacat depends upon the dataone-indexer subchart (i.e. 'global.dataone-indexer.enabled' is set
+## to 'true' by default). If you set 'global.dataone-indexer.enabled: false', the settings in this
+## section are ignored
+##
 dataone-indexer:
   persistence:
     ## @param dataone-indexer.persistence.subPath The subdirectory of the volume to mount
