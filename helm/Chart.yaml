@@ -43,7 +43,7 @@ dependencies:
   - name: dataone-indexer
     repository: oci://ghcr.io/dataoneorg/charts
     version: 1.0.0
-    condition: dataone-indexer.enabled
+    condition: global.dataone-indexer.enabled
     import-values:
       - child: solr
         parent: dataone-indexer.solr

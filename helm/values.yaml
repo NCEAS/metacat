@@ -90,6 +90,11 @@ global:
   ##
   sharedVolumeSubPath: &sharedVolumeSubPath ""
 
+  ## @param global.dataone-indexer.enabled Enable the dataone-indexer sub-chart
+  ## set to false if you want to connect to your own existing dataone-indexer deployment
+  ##
+  dataone-indexer.enabled: true
+
 ## @section Metacat Application-Specific Properties
 ##
 ## The metacat section can contain any properties that metacat would expect to find in its
@@ -657,7 +662,8 @@ ingress:
   ## - install nginx:
   ##   $  helm upgrade --install ingress-nginx ingress-nginx  \
   ##        --repo https://kubernetes.github.io/ingress-nginx \
-  ##        --namespace ingress-nginx --create-namespace)
+  ##        --namespace ingress-nginx --create-namespace      \
+  ##        --set controller.allowSnippetAnnotations=true
   ##
   className: "traefik"
 
@@ -872,11 +878,6 @@ tomcat:
 
 ## @section dataone-indexer Sub-Chart
 dataone-indexer:
-  ## @param dataone-indexer.enabled enable the dataone-indexer sub-chart
-  ## set to false if you want to connect to your own existing dataone-indexer deployment
-  ##
-  enabled: true
-
   persistence:
     ## @param dataone-indexer.persistence.subPath The subdirectory of the volume to mount
     ## (see persistence.volumeName)
