@@ -682,7 +682,7 @@ interacting with Metacat. Below, is the full proposed HashStore file layout diag
    |                   └── sha256(pid+formatId_annotations)
    └── refs
        ├── cids
-       |   └── 4d
+       |   ├── 4d
        |   |   └── 19
        |   |       └── 81
        |   |           └── 71eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
@@ -695,7 +695,7 @@ interacting with Metacat. Below, is the full proposed HashStore file layout diag
        |           └── 51
        |               └── 6a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
        └── pids
-           └── 0d
+           ├── 0d
            |   └── 55
            |       └── 55
            |           └── 5ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
