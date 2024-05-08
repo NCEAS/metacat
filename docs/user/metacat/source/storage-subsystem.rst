@@ -551,8 +551,8 @@ they describe::
 
  - Objects are stored using the hash of the given PID in the `/objects` directory.
  - Metadata documents are stored using the hash of the given PID in the `/metadata`
- directory, with each metadata document's permanent address formed by the hash
- of the `PID` + `formatId`.
+   directory, with each metadata document's permanent address formed by the hash
+   of the `PID` + `formatId`.
 
  This proposed change made the initial sysmeta delimiter format redundant.
  The `formatId`, which is required for identifying and storing a metadata
