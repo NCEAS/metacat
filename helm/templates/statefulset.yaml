@@ -20,7 +20,7 @@ spec:
       labels:
         {{- include "metacat.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if index .Values "dataone-indexer" "enabled" }}
+      {{- if index .Values.global "dataone-indexer.enabled" }}
       initContainers:
         - name: init-rabbitmq-metacat-dep
           image: busybox:latest

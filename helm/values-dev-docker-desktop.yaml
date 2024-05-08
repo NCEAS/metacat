@@ -1,0 +1,28 @@
+## override values.yaml with values to use for running on local machine (eg within Rancher Desktop)
+##
+## example:
+##    helm install my-release ./helm -f ./helm/values-dev-local.yaml
+##
+
+global:
+  storageClass: &storageClassName hostpath
+  ephemeralVolumeStorageClass: hostpath
+
+metacat:
+#  dataone.certificate.fromHttpHeader.enabled: true
+  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+
+image:
+  debug: true
+
+# probes will kill remote debugger
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
+persistence:
+  storageClass: *storageClassName
+
+ingress:
+  className: "nginx"

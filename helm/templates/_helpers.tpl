@@ -117,7 +117,7 @@ set RabbitMQ HostName
 */}}
 {{- define "metacat.rabbitmq.hostname" -}}
 {{- $rmqHost := (index .Values.metacat "index.rabbitmq.hostname") }}
-{{- if and (index .Values "dataone-indexer" "enabled") (not $rmqHost) -}}
+{{- if and (index .Values.global "dataone-indexer.enabled") (not $rmqHost) -}}
     {{- $rmqHost = printf "%s-rabbitmq-headless" .Release.Name -}}
 {{- end }}
 {{- $rmqHost }}
@@ -128,7 +128,7 @@ set solr HostName
 */}}
 {{- define "metacat.solr.hostname" -}}
 {{- $solrHost := (index .Values "dataone-indexer" "solr" "hostname") }}
-{{- if and (index .Values "dataone-indexer" "enabled") (not $solrHost) -}}
+{{- if and (index .Values.global "dataone-indexer.enabled") (not $solrHost) -}}
     {{- $solrHost = printf "%s-solr-headless" .Release.Name -}}
 {{- end }}
 {{- $solrHost }}
