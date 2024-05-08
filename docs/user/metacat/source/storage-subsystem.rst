@@ -438,13 +438,16 @@ contain 16,777,216 subdirectories (256^3). An example file layout for three obje
    └── objects
        ├── 4d
        │   └── 19
-       │       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+       │       └── 81
+       |           └── 71eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
        ├── 94
        │   └── f9
-       │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+       │       └── b6
+       |           └── c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
        └── 44
            └── 73
-               └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
+               └── 51
+                   └── 6a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
 
    // Additional Context for Examples (Test Data Items):
    // - doi:10.18739/A2901ZH2M
@@ -478,13 +481,34 @@ metadata document's file name is calculated using the SHA-256 hash of the `PID` 
 For example, one can find the directory that contains all the related metadata
 documents of the given PID `jtao.1700.1` by calculating the SHA-256 of that PID using::
 
+    // PID = "jtao.1700.1"
+
     $ echo -n "jtao.1700.1" | shasum -a 256
     a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
 
     So, the system metadata file (sysmeta), along with all other metadata related to the PID,
     would be stored in the folder:
 
-    `.../metadata/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
+    `.../metadata/a8/24/19/25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/`
+
+Then, to find the sysmeta document, one would calculate the SHA-256 hash of the `PID` + `formatId`
+using::
+
+    // PID = "jtao.1700.1"
+    // formatId (sysmeta namespace) = "http://ns.dataone.org/service/types/v2.0")
+
+    $ echo -n "jtao.1700.1http://ns.dataone.org/service/types/v2.0" | shasum -a 256
+    ddf07952ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689
+
+    So permanent address/name of sysmeta document for the PID "jtao.1700.1" is:
+
+    `ddf07952ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689`
+
+    with the full path being:
+
+    `.../metadata/a8/24/19/25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf/ddf07952ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689`
+
+And in the file system it would appear as such::
 
     /var/metacat/hashstore
     ├── objects
@@ -492,9 +516,10 @@ documents of the given PID `jtao.1700.1` by calculating the SHA-256 of that PID 
     └── metadata
         └── a8
             └── 24
-                └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
-                    └── sha256("jtao.1700.1"+"http://ns.dataone.org/service/types/v2.0") // sysmeta namespace
-                    └── sha256(pid+formatId_annotations)
+                └── 19
+                    └── 25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+                        └── ddf07952ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689
+                        └── sha256(pid+formatId_annotations)
 
 
 Extending our diagram from earlier & above, we now see the three hashes that represent
@@ -506,29 +531,35 @@ they describe::
    ├── objects
    |   ├── 4d
    |   │   └── 19
-   |   │       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+   |   │       └── 81
+   |   |           └── 71eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
    |   ├── 94
    |   │   └── f9
-   |   │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+   |   │       └── b6
+   |   |           └── c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
    |   └── 44
    |       └── 73
-   |           └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
+   |           └── 51
+   |               └── 6a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
    └── metadata
        ├── 0d
        │   └── 55
-       │       └── 555ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
-       |           └── sha256(pid+formatId_sysmeta)
-       |           └── sha256(pid+formatId_annotations)
+       │       └── 55
+       |           └── 5ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
+       |               └── 323e0799524cec4c7e14d31289cefd884b563b5c052f154a066de5ec1e477da7
+       |               └── sha256(pid+formatId_annotations)
        ├── a8
        │   └── 24
-       │       └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
-       |           └── sha256(pid+formatId_sysmeta)
-       |           └── sha256(pid+formatId_annotations)
+       │       └── 19
+       |           └── 25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+       |               └── ddf07952ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689
+       |               └── sha256(pid+formatId_annotations)
        └── 7f
            └── 5c
-               └── c18f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
-                   └── sha256(pid+formatId_sysmeta)
-                   └── sha256(pid+formatId_annotations)
+               └── c1
+                   └── 8f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
+                       └── 9a2e08c666b728e6cbd04d247b9e556df3de5b2ca49f7c5a24868eb27cddbff2
+                       └── sha256(pid+formatId_annotations)
 
  **Metadata Format & Reference File Process**
 
@@ -581,8 +612,8 @@ they describe::
 
 To manage the relationship between objects and metadata, reference files are created
 in a separate `refs` directory, parallel to `objects` and `metadata`. This `refs`
-directory includes a subdirectory for objects (`/refs/cid`, for content identifiers)
-and a subdirectory for metadata (`/refs/pid`, for persistent identifiers).
+directory includes a subdirectory for objects (`/refs/cids`, for content identifiers)
+and a subdirectory for metadata (`/refs/pids`, for persistent identifiers).
 
  HashStore Reference Files Implementation
 
@@ -620,50 +651,62 @@ interacting with Metacat. Below, is the full proposed HashStore file layout diag
    ├── objects
    |   ├── 4d
    |   │   └── 19
-   |   │       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+   |   │       └── 81
+   |   |           └── 71eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
    |   ├── 94
    |   │   └── f9
-   |   │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+   |   │       └── b6
+   |   |           └── c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
    |   └── 44
    |       └── 73
-   |           └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
+   |           └── 51
+   |               └── 6a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
    └── metadata
    |   ├── 0d
    |   │   └── 55
-   |   │       └── 555ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
-   |   |           └── sha256(pid+formatId_sysmeta)
-   |   |           └── sha256(pid+formatId_annotations)
+   |   │       └── 55
+   |   |           └── 5ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
+   |   |               └── 323e0799524cec4c7e14d31289cefd884b563b5c052f154a066de5ec1e477da7
+   |   |               └── sha256(pid+formatId_annotations)
    |   ├── a8
    |   │   └── 24
-   |   │       └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
-   |   |           └── sha256(pid+formatId_sysmeta)
-   |   |           └── sha256(pid+formatId_annotations)
+   |   │       └── 19
+   |   |           └── 25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+   |   |               └── ddf07952ef28efc099d10d8b682480f7d2da60015f5d8873b6e1ea75b4baf689
+   |   |               └── sha256(pid+formatId_annotations)
    |   └── 7f
    |       └── 5c
-   |           └── c18f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
-   |               └── sha256(pid+formatId_sysmeta)
-   |               └── sha256(pid+formatId_annotations)
+   |           └── c1
+   |               └── 8f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
+   |                   └── 9a2e08c666b728e6cbd04d247b9e556df3de5b2ca49f7c5a24868eb27cddbff2
+   |                   └── sha256(pid+formatId_annotations)
    └── refs
-       ├── cid
+       ├── cids
        |   └── 4d
        |   |   └── 19
-       |   |       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+       |   |       └── 81
+       |   |           └── 71eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
        |   ├── 94
        |   │   └── f9
-       |   │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+       |   │       └── b6
+       |   |           └── c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
        |   └── 44
        |       └── 73
-       |           └── 516a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
-       └── pid
+       |           └── 51
+       |               └── 6a592209cbcd3a7ba4edeebbdb374ee8e4a49d19896fafb8f278dc25fa
+       └── pids
            └── 0d
            |   └── 55
-           |       └── 555ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
+           |       └── 55
+           |           └── 5ed77052d7e166017f779cbc193357c3a5006ee8b8457230bcf7abcef65e
            ├── a8
            │   └── 24
-           │       └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+           │       └── 19
+           |           └── 25740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
            └── 7f
                └── 5c
-                   └── c18f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
+                   └── c1
+                       └── 8f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
 
 **PID-based Access (Manually Find Objects)**:
 
