@@ -350,60 +350,57 @@ directory structure that will be robust against naming issues such as
 illegal characters, and that allows us to access both system metadata and
 the file contents knowing only the PID for an object. This approach focuses
 on using a content hash identifier for naming data and metadata objects in
-their respective folders, rather than an authority-based identifier such as
-a PID or SID, along with reference files to catalogue data.
+their respective folders, rather than hashes generated from an authority-based
+identifiers such as a PID or SID, along with reference files to catalogue data.
 
- **Why not hash identifiers derived from a PID?**
+ **Why not use hash identifiers from a given PID?**
 
  During the initial development phase, HashStore was implemented with a Public API
- centering around a PID, storing both data and metadata in its respective
- directories using an identifier generated from hashing the PID. However, after
- further review and testing with Metacat - it was determined to be unsuitable
- given the usage of multipart http requests in Metacat, which encapsulates the
- pieces of data that users upload in "body parts" when submitting to Metacat.
+ centering around a PID (i.e. storing both data and metadata in its respective
+ directories using a unique identifier generated from hashing the PID). This
+ allowed us to simplify how we approached file locking. However, it was unsuitable
+ given the usage of multipart http requests in Metacat, which transports the
+ pieces of data that users upload in "body parts" when submitting datasets.
 
- In multipart http requests, a PID may not always be immediately available for Metacat
- to call the HashStore Public API with (since the order in which data and metadata
- is received by Metacat cannot be guaranteed, and this PID lives with the metadata
- body part). If a data "body part" were to arrive first, it would need to be stored
- as a temporary object until a PID is received.
+ In multipart http requests, the order in which data and metadata is received by
+ Metacat cannot be guaranteed. Since the PID resides with the metadata "body part",
+ a PID may not always be immediately available for Metacat to call store object
+ with. So if a data "body part" were to arrive first, it would need to be stored
+ as a temporary object until the metadata "body part" is received (and held
+ indefinitely as we wait for the metadata to parse the PID).
 
- In this scenario where a temporary object awaits its final location, we also
- would have already calculated the default list of hashes (content identifiers).
+ In the above scenario where a temporary object awaits its final location, we
+ would have also already calculated the default list of hashes (content identifiers).
  So storing the data object with its content identifier as its permanent address
  (and in its own directory) ensures the atomicity of this storage process - there
  is no waiting period for a data object to be completely stored, or potentially
- lost in limbo indefinitely. It also allows us to store any data object once
- and only once.
+ lost in limbo, and we store objects only once. An object is either stored, or it
+ isn't.
 
  If we could guarantee the order of uploads to Metacat, then using the hash identifier
  generated from a PID would be appropriate. We have discussed this potential change
- of forcing metadata to arrive first during the upload process, but it would
- require extensive changes to processes which we do not have the resources or
+ of forcing the metadata "body part" to arrive first during the upload process, but
+ it would require extensive changes to processes which we do not have the resources or
  time to undertake (nor the desire to force upon users).
 
  To learn more about the initial design, please see: storage-subsystem-cid-file-layout.rst
+ To learn more about http multipart requests, please see: https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
 
 **Raw File Storage**
 
-The raw bytes of each object (data, metadata, or resource map)
-are first written into a temporary file. Data objects remain as temp objects while
-its content identifiers are calculated using a hashing algorithm such that each
-unique set of bytes produces a unique checksum value. That checksum value is then
-used to name the file. In this way, even when the same file is uploaded multiple
-times, it will only be stored once in the filesystem.
+The raw bytes of each object (data, metadata, or resource map) are first written
+into a temporary file while its content identifiers are calculated (using a hashing
+algorithm such that each unique set of bytes produces a unique checksum value).
+That checksum value is then used to name the file. In this way, even when the same
+file is uploaded multiple times, it will only be stored once in the filesystem.
 
-**Duplicate Objects**
+If an object already exists, no exception should be thrown and its respective object
+info/metadata is returned upon successful storage.
 
-To prevent duplicate objects from being stored, all HashStore Public API calls
-by a calling app (ex. Metacat) to store data objects are synchronized. Additionally,
-all objects begin as temporary objects which are moved (renamed) only when
-HashStore has determined that the object does not exist yet.
-
-If an object already exists, an exception will be swallowed. Similarly, all HashStore
-Public API calls to store metadata are synchronized and executed in chronological order.
-It is the calling client's responsibility to ensure that metadata is stored and/or
-backed up appropriately.
+ **Note:** While metadata objects share the same flow, only one of each metadata
+ type (ex. sysmeta, annotation, etc.) can exist at any time. Multiple calls to store
+ metadata will all be executed in chronological order, and replace any existing files
+ of its respective metadata type (formatId).
 
 **Checksum algorithm and encoding**
 
@@ -459,11 +456,6 @@ the file name
 
 **Metadata Storage**
 
-With this layout, knowing the content identifier/hash value for an object allows
-a client with sufficient privileges to directly retrieve the data object without
-the need to retrieve the metadata from Metacat first. But what about our primary
-goal of obtaining both system metadata and file contents if we only had a PID?
-
 A mechanism is needed to store metadata about the object, including its persistent
 identifier (PID), other system metadata for the object, or extended metadata that
 we might want to include. So, in addition to data objects, the system supports
@@ -471,9 +463,9 @@ storage for multiple metadata documents that are associated with a given PID, an
 the creation of reference files that facilitate the relationship that exists with
 a given PID.
 
- **Note:** Reference files should be created when objects are stored - and the process
- to do so can be separately invoked if the calling app cannot do it immediately
- (like in the situation when it does not have a PID yet).
+With sufficient privileges, an administrator or user can manually traverse the file
+layout system (HashStore) if desired to retrieve an object with a given PID without
+interacting with Metacat.
 
 **Other metadata types**:
 
@@ -482,12 +474,12 @@ in the future we envision potentially including other metadata files that can be
 used for describing individual data objects. This might include package relationships
 and other annotations that we wish to include for each data file.
 
-All metadata documents will be stored in the metadata directory which is broken up into
-directory depths and widths as defined by a configuration file 'hashstore.yaml'.
+All metadata documents will be stored in the metadata directory which is broken up
+into directory depths and widths as defined by a configuration file 'hashstore.yaml'.
 Each metadata document's file name is calculated using the SHA-256 hash of the `PID` + `formatId`.
 
-For example, given the PID `jtao.1700.1`, one can find the directory that contains all
-metadata documents related to the given pid by calculating the SHA-256 of that PID using::
+For example, one can find the directory that contains all the related metadata
+documents of the given PID `jtao.1700.1` by calculating the SHA-256 of that PID using::
 
     $ echo -n "jtao.1700.1" | shasum -a 256
     a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
@@ -506,8 +498,6 @@ metadata documents related to the given pid by calculating the SHA-256 of that P
                     └── sha256("jtao.1700.1"+"http://ns.dataone.org/service/types/v2.0") // sysmeta namespace
                     └── sha256(pid+formatId_annotations)
 
- Each metadata file that belongs to the given PID can be found in this folder,
- and specifically located by calculating the SHA-256 hash of the `PID` + respective `formatId`.
 
 Extending our diagram from earlier & above, we now see the three hashes that represent
 data files, along with three that represent the metadata directory for a given PID,
@@ -542,7 +532,7 @@ they describe::
                    └── sha256(pid+formatId_sysmeta)
                    └── sha256(pid+formatId_annotations)
 
- **More on Sysmeta & Metadata Formats**
+ **Metadata Format Process**
 
  Initially, only system metadata files were proposed to be stored, in the format
  of a delimited file with a header and body section. The header contains
@@ -557,51 +547,75 @@ they describe::
  So given just the `sysmeta` directory, we could reconstruct an entire member node's
  data and metadata content.
 
- However, to simplify HashStore, we attempted to switch to PID-based hash identifiers.
- In this proposed system, metadata was stored with a pid-specific directory, with the
- metadata document permanent address formed by the hash of the `PID` + `formatId`.
- Since the `formatId` is now required to identify a metadata document, the
- previously proposed sysmeta (metadata) delimiter format became redundant, and only
- the body portion (metadata content) was required in the stored metadata file.
- In this proposed direction, there was no need for the content identifier to be stored.
+ However, to reduce complexity in HashStore, we attempted to switch to PID-based
+ hash identifiers. In this proposed system, objects were stored using the hash of
+ the given PID in the `/objects` directory. Metadata documents were stored using
+ the hash of the given PID as well in a directory in `/metadata`, with each metadata
+ document's permanent address formed by the hash of the `PID` + `formatId`.
 
- Our reversal of this approach necessitated the reintroduction of a way to
- manage the relationships of a given PID in HashStore, leading to reference
- files (more info below). We also kept our new change to handle multiple
- metadata documents being stored for a single PID.
+ Since the `formatId` is required to identify a metadata document, the above
+ proposed sysmeta (metadata) delimiter format became redundant. There was no need
+ for the content identifier because a PID's respective object could be found
+ directly by hashing the PID, and the namespace (formatId) was now directly part
+ of the process to store a metadata document.
+
+ Maintaining this format included parsing requirements to retrieve the metadata,
+ which added complexity since only the body portion (metadata content) was
+ necessary in a stored metadata document. Due to the way upload are received in
+ Metacat, we had to reverse our file layout approach.
+
+ While we kept our new change to handle the storage of multiple metadata documents
+ for a given pid, this reversal necessitated the reintroduction of a way to manage
+ the relationships of a given PID in HashStore, leading to reference files
+ (more info below).
 
 **Reference Files (a.k.a. Tags)**
 
 To manage the relationship between objects and metadata, reference files are created
-in a separate refs directory, with a subdirectory for objects ("/refs/cid") and a
-subdirectory for metadata (`/refs/pid`).
+in a separate refs directory, which includes a subdirectory for objects ("/refs/cid",
+for content identifiers) and a subdirectory for metadata (`/refs/pid`, for persistent
+identifiers).
 
- 1. **Cid Reference File (content identifier)**
+ HashStore Reference Files Implementation
 
-    An object's cid reference file's permanent address is calculated by using its content
-    identifier as the base and then applying the HashStore folder layout structure.
+ 1. **Cid Reference File**
 
-    To ensure that an object is stored once and only once using its content identifier (cid),
-    a cid reference file for each object is created upon its first storage call. This file
-    contains a list of pids delimited by a new line ('\n'). When a duplicate object is found or
-    deleted, a cid reference file is updated. An object can not be deleted if its cid reference
-    file is still present, and this file (and the object) can only deleted when no more references
-    are found.
+    A cid reference file for each object is created during the first storage
+    operation for the object. This file lists persistent identifiers (pids)
+    associated with the object, each delimited by a newline (\n). The cid reference
+    file is updated when a duplicate object is stored or an object is deleted.
+    An object cannot be deleted if its cid reference file is present, and this file
+    (and the associated object) can only be deleted when there are no more references
+    to the object.
 
- 2. **Pid Reference File (persistent identifier)**
+    The permanent address of an object’s cid reference file is calculated using
+    its content identifier as the base, and follows the HashStore folder layout structure.
 
-    A metadata's pid reference file's permanent address is calculated by using the SHA-256
-    hash of the given PID as the base, and then applying the HashStore folder layout structure.
+ 2. **Pid Reference File**
 
-    Every metadata document that is stored also generates a pid reference file. This pid
-    reference file contains the content identifier that the PID describes, and lives in
-    a directory in `/metadata` that is named using the SHA-256 hash of the given `PID` + `formatId`.
+    A pid reference file is created during all object storage operations given the
+    PID is unique. This reference file contains a single line representing
+    the content identifier of the object. This file is never updated, as a PID can
+    only reference one CID. When an object is deleted (using a given PID),
+    the pid reference file is deleted, and the reference is removed from the cid
+    reference file.
 
- **Note:** Previously, this relationship was represented in the system metadata document
- in a delimiter format with a header and body. Since transitioning back to content
- identifiers, this data was moved to reference files (so we no longer need to fully
- parse a sysmeta document to get what we need), making it easier for developers and
- others to understand and find the connections within the HashStore layout/file system.
+    The permanent address of a metadata’s pid reference file is determined by
+    using the SHA-256 hash of the PID, and follows the HashStore folder layout structure.
+
+ **Note:** Previously, this relationship was represented in the system metadata
+ document in a delimiter format that included a header and body. The header
+ contained a content identifier and a namespace, while the body housed the
+ metadata content. Since transitioning back to a content identifier-based
+ approach, the header content was moved to reference files. This shift eliminates
+ the need to fully parse a system metadata document to retrieve a metadata document.
+
+ By making the relationship more transparent in this way, any user (even those without
+ comprehensive knowledge of HashStore), can easily navigate and find the connections
+ for a given PID directly through the file layout of HashStore, without having to rely
+ on the HashStore Public API.
+
+ To learn more about the project that spurred this change, please see: https://github.com/mbjones/dip-noodling
 
 Below, is the full proposed HashStore file layout diagram::
 
@@ -657,25 +671,20 @@ Below, is the full proposed HashStore file layout diagram::
 
 **PID-based Access (Manually Find Objects)**:
 
-Given a `PID` and a `formatId`, we can discover and access both the system
-metadata for an object and the bytes of the object itself without any further
-store of information.
-
- Note: If no `formatId` is supplied, HashStore should use the default `formatId`
- based on the `hashstore.yaml` configuration file
-
- (i.e. "http://ns.dataone.org/service/types/v2.0")).
+Given a `PID` and a `formatId` (ex. "http://ns.dataone.org/service/types/v2.0"), it
+is possible to access both the system metadata for an object and the bytes
+of the object itself without any further store of information.
 
 The procedure for this without using the HashStore Public API is as follows:
 
     1) Find the content identifier: Given the `PID`, calculate the SHA-256 hash,
     and base64-encode it to find the location of the pid refs file in 'refs/pid',
-    which contains the content identifier of the `PID`.
+    which contains the content identifier associated with the `PID`.
 
     2) Find the metadata document: Use the SHA-256 hash of the `PID` to locate the
-    folder in the `metadata` tree in which the desired metadata document exists.
-    The desired document's file name is formed by the hash of the `pid` + `formatId`.
-    Open and read the metadata content.
+    corresponding folder in the `metadata` directory. The desired document's file
+    name is formed by the hash of the `pid` + `formatId`. Open and read the metadata
+    content from this file.
 
     3) With the content identifier of the given PID, open and read the data from the
     `objects` tree. With the hash of the `PID` + `formatId`, open and read data from
@@ -683,15 +692,15 @@ The procedure for this without using the HashStore Public API is as follows:
 
     And as an example, the HashStore Public API equivalent commands would be as follows:
 
-    1) To get the content identifier or check that an object exists:
+    1) Get the content identifier or check that an object exists:
 
        hashstore.find_object(pid)
 
-    2) To get a buffered stream to the system metadata to read from:
+    2) Get a stream to the system metadata to read from:
 
        hashstore.retrieve_metadata(pid, format_id)
 
-    3) To get a buffered stream to the object to read from:
+    3) Get a stream to the object to read from:
 
        hashstore.retrieve_object(pid)
 
