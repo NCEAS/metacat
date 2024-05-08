@@ -353,14 +353,21 @@ on using a content hash identifier for naming data and metadata objects in
 their respective folders, rather than hashes generated from an authority-based
 identifiers such as a PID or SID, along with reference files to catalogue data.
 
- **Why not use hash identifiers from a given PID?**
+ **Why not use hash identifiers based on a PID?**
 
- During the initial development phase, HashStore was implemented with a Public API
- centering around a PID (i.e. storing both data and metadata in its respective
- directories using a unique identifier generated from hashing the PID). This
- allowed us to simplify how we approached file locking. However, it was unsuitable
- given the usage of multipart http requests in Metacat, which transports the
- pieces of data that users upload in "body parts" when submitting datasets.
+ During the initial development phase, HashStore stored objects based on
+ a unique identifier generated from hashing a given PID (ex. storing both data
+ and metadata in its respective directories using this hash as the permanent
+ address). This lessened the potential issues with file locking in operating
+ systems by allowing greater control when synchronizing requests to store
+ objects.
+
+ This change also meant that HashStore would potentially store duplicate
+ objects, which was an accepted tradeoff. However, the usage of multipart
+ http requests in Metacat - which transports the pieces of data that users
+ upload in "body parts" when submitting datasets, meant that the existing
+ storage operation would become a non-atomic process if HashStore relied
+ on a PID value.
 
  In multipart http requests, the order in which data and metadata is received by
  Metacat cannot be guaranteed. Since the PID resides with the metadata "body part",
@@ -372,18 +379,18 @@ identifiers such as a PID or SID, along with reference files to catalogue data.
  In the above scenario where a temporary object awaits its final location, we
  would have also already calculated the default list of hashes (content identifiers).
  So storing the data object with its content identifier as its permanent address
- (and in its own directory) ensures the atomicity of this storage process - there
- is no waiting period for a data object to be completely stored, or potentially
- lost in limbo, and we store objects only once. An object is either stored, or it
- isn't.
+ (and in its own directory) enables this storage process to be atomic - an object
+ is either stored or it isn't. There is no waiting period for a data object to
+ be completely stored, or potentially lost in limbo, and objects are only stored once.
 
  If we could guarantee the order of uploads to Metacat, then using the hash identifier
- generated from a PID would be appropriate. We have discussed this potential change
+ generated from a PID would be suitable. We have discussed this potential change
  of forcing the metadata "body part" to arrive first during the upload process, but
  it would require extensive changes to processes which we do not have the resources or
- time to undertake (nor the desire to force upon users).
+ time to undertake (nor the desire to force upon existing and new users).
 
  To learn more about the initial design, please see: storage-subsystem-cid-file-layout.rst
+
  To learn more about http multipart requests, please see: https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
 
 **Raw File Storage**
@@ -452,31 +459,23 @@ contain 16,777,216 subdirectories (256^3). An example file layout for three obje
 Note how the full hash value is obtained by appending the directory names with
 the file name
 
- (e.g., `4d198171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c` for the first object).
+ e.g., `4d198171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c` for the first object
 
 **Metadata Storage**
 
 A mechanism is needed to store metadata about the object, including its persistent
-identifier (PID), other system metadata for the object, or extended metadata that
-we might want to include. So, in addition to data objects, the system supports
-storage for multiple metadata documents that are associated with a given PID, and
-the creation of reference files that facilitate the relationship that exists with
-a given PID.
+identifier (PID) and system metadata for the object. While we currently only have
+a need to access system metadata for each object, in the future we envision
+potentially including other metadata files that can be used for describing
+individual data objects. This might include package relationships and other
+annotations that we wish to include for each data file.
 
-With sufficient privileges, an administrator or user can manually traverse the file
-layout system (HashStore) if desired to retrieve an object with a given PID without
-interacting with Metacat.
-
-**Other metadata types**:
-
-While we currently only have a need to access system metadata for each object,
-in the future we envision potentially including other metadata files that can be
-used for describing individual data objects. This might include package relationships
-and other annotations that we wish to include for each data file.
-
-All metadata documents will be stored in the metadata directory which is broken up
-into directory depths and widths as defined by a configuration file 'hashstore.yaml'.
-Each metadata document's file name is calculated using the SHA-256 hash of the `PID` + `formatId`.
+So, in addition to data objects, the system supports storage for multiple metadata
+documents that are associated with a given PID, and the creation of reference files
+that facilitate the relationship that exists with a given PID. All metadata documents
+will be stored in the `/metadata` directory. Each `PID` will have its own
+subdirectory based on the hash of its respective PID. In this directory, each
+metadata document's file name is calculated using the SHA-256 hash of the `PID` + `formatId`.
 
 For example, one can find the directory that contains all the related metadata
 documents of the given PID `jtao.1700.1` by calculating the SHA-256 of that PID using::
@@ -491,6 +490,7 @@ documents of the given PID `jtao.1700.1` by calculating the SHA-256 of that PID 
 
     /var/metacat/hashstore
     ├── objects
+    |   └── ...
     └── metadata
         └── a8
             └── 24
@@ -552,6 +552,7 @@ they describe::
  PID-based hash identifiers. In this proposed system:
 
  - Objects are stored using the hash of the given PID in the `/objects` directory.
+
  - Metadata documents are stored using the hash of the given PID in the `/metadata`
  directory, with each metadata document's permanent address formed by the hash
  of the `PID` + `formatId`.
@@ -566,9 +567,18 @@ they describe::
 
  However, we had to reverse course on this approach due to the way uploads are
  handled in Metacat. While we kept the change to handle the storage of multiple
- metadata documents for a given pid, this reversal necessitated the reintroduction
- of a way to manage the relationships of a given PID and CIDs in HashStore,
- leading to reference files (more info below).
+ metadata documents for a given pid, this reversal and transition back to a
+ content identifier-based approach necessitated the reintroduction
+ of a way to manage the relationships of a given PID and CIDs in HashStore.
+
+ Instead of returning back to the original format, reference files were introduced
+ which housed the header content. This shift eliminates the need to fully parse a
+ system metadata document to retrieve a metadata document. By making the relationship
+ more transparent in this way, any user (even those without comprehensive knowledge
+ of HashStore), can easily navigate and find the connections for a given PID directly
+ through the file layout of HashStore, without having to rely on the HashStore Public API.
+
+ To learn more about the project that spurred this change, please see: https://github.com/mbjones/dip-noodling
 
 **Reference Files (a.k.a. Tags)**
 
@@ -604,21 +614,9 @@ and a subdirectory for metadata (`/refs/pid`, for persistent identifiers).
     The permanent address of a metadata’s pid reference file is determined by
     using the SHA-256 hash of the PID, and follows the HashStore folder layout structure.
 
- **Note:** Previously, this relationship was represented in the system metadata
- document in a delimiter format that included a header and body. The header
- contained a content identifier and a namespace, while the body housed the
- metadata content. Since transitioning back to a content identifier-based
- approach, the header content was moved to reference files. This shift eliminates
- the need to fully parse a system metadata document to retrieve a metadata document.
-
- By making the relationship more transparent in this way, any user (even those without
- comprehensive knowledge of HashStore), can easily navigate and find the connections
- for a given PID directly through the file layout of HashStore, without having to rely
- on the HashStore Public API.
-
- To learn more about the project that spurred this change, please see: https://github.com/mbjones/dip-noodling
-
-Below, is the full proposed HashStore file layout diagram::
+So with sufficient privileges, an administrator or third party can manually traverse
+the file layout system (HashStore) if desired to retrieve an object with a given PID without
+interacting with Metacat. Below, is the full proposed HashStore file layout diagram::
 
    /var/metacat/hashstore
    ├── hashstore.yaml
