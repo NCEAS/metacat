@@ -1,30 +1,7 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2011 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.restservice.v2;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,13 +10,13 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.exceptions.MarshallingException;
@@ -59,9 +36,7 @@ import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.ChecksumAlgorithmList;
 import org.dataone.service.types.v1.DescribeResponse;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v2.ObjectFormat;
@@ -95,12 +70,13 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 /**
  * CN REST service implementation handler
  * 
- * ****************** CNCore -- DONE create() - POST /d1/cn/object/PID
+ * ****************** CNCore
+ * create() - POST /d1/cn/object/PID
  * listFormats() - GET /d1/cn/formats getFormat() - GET /d1/cn/formats/FMTID
  * getLogRecords - GET /d1/cn/log reserveIdentifier() - POST /d1/cn/reserve
  * listNodes() - Not implemented registerSystemMetadata() - POST /d1/meta/PID
  * 
- * CNRead -- DONE get() - GET /d1/cn/object/PID getSystemMetadata() - GET
+ * CNRead -- get() - GET /d1/cn/object/PID getSystemMetadata() - GET
  * /d1/cn/meta/PID resolve() - GET /d1/cn/resolve/PID assertRelation() - GET
  * /d1/cn/assertRelation/PID getChecksum() - GET /d1/cn/checksum search() - Not
  * implemented in Metacat
@@ -132,10 +108,17 @@ public class CNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_REPLICATION_AUTHORIZED = "replicaAuthorizations";
     protected static final String RESOURCE_REPLICATION_NOTIFY = "replicaNotifications";
 
-    public CNResourceHandler(ServletContext servletContext,
-            HttpServletRequest request, HttpServletResponse response) {
-        super(servletContext, request, response);
-        logMetacat = LogFactory.getLog(CNResourceHandler.class);
+
+    private static Log logMetacat = LogFactory.getLog(CNResourceHandler.class);
+
+
+    /**
+     * Constructor
+     * @param request  the request that the handler will handle
+     * @param response  the response that the handler will send back
+     */
+    public CNResourceHandler(HttpServletRequest request, HttpServletResponse response) {
+        super(request, response);
     }
 
     /**
@@ -152,15 +135,18 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         try {
 
-        	// only service requests if we have D1 configured
-        	if (!isD1Enabled()) {
-        		ServiceFailure se = new ServiceFailure("0000", "DataONE services are not enabled on this node");
+            // only service requests if we have D1 configured
+            if (!isD1Enabled()) {
+                ServiceFailure se = new ServiceFailure("0000", "DataONE services are not enabled on this node");
                 serializeException(se, response.getOutputStream());
                 return;
-        	}
-        	
+            }
+
             // get the resource
             String resource = request.getPathInfo();
+            if (resource == null) {
+                throw new InvalidRequest("0000", "The resource should not be null.");
+            }
             resource = resource.substring(resource.indexOf("/") + 1);
 
             // for the rest of the resouce
@@ -169,285 +155,278 @@ public class CNResourceHandler extends D1ResourceHandler {
             logMetacat.debug("handling verb " + httpVerb
                     + " request with resource '" + resource + "'");
             boolean status = false;
+            if (resource.startsWith(RESOURCE_ACCESS_RULES)
+                    && httpVerb == PUT) {
+                logMetacat.debug("Setting access policy");
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_ACCESS_RULES);
+                extra = decode(extra);
+                setAccess(extra);
+                status = true;
+                logMetacat.debug("done setting access");
 
-            if (resource != null) {
+            } else if (resource.startsWith(RESOURCE_META)) {
+                logMetacat.debug("Using resource: " + RESOURCE_META);
 
-                if (resource.startsWith(RESOURCE_ACCESS_RULES)
-                        && httpVerb == PUT) {
-                    logMetacat.debug("Setting access policy");
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_ACCESS_RULES);
-                    extra = decode(extra);
-                    setAccess(extra);
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_META);
+                extra = decode(extra);
+                // get
+                if (httpVerb == GET) {
+                    getSystemMetadataObject(extra);
                     status = true;
-                    logMetacat.debug("done setting access");
-
-                } else if (resource.startsWith(RESOURCE_META)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_META);
-
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_META);
-                    extra = decode(extra);
-                    // get
-                    if (httpVerb == GET) {
-                        getSystemMetadataObject(extra);
-                        status = true;
-                    }
-                    // post to register system metadata
-                    if (httpVerb == POST) {
-                        registerSystemMetadata();
-                        status = true;
-                    }
-                    else if (httpVerb == PUT) {
-                        logMetacat.debug("Using resource 'meta' for PUT");
-                        updateSystemMetadata();
-                        status = true;
-                    }
-
-                } else if (resource.startsWith(RESOURCE_RESERVE)) {
-                    // reserve the ID (in params)
-                    if (httpVerb == POST) {
-                        reserve();
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_RESOLVE)) {
-
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_RESOLVE);
-                    extra = decode(extra);
-                    // resolve the object location
-                    if (httpVerb == GET) {
-                        resolve(extra);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_OWNER)) {
-
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_OWNER);
-                    extra = decode(extra);
-                    // set the owner
-                    if (httpVerb == PUT) {
-                        owner(extra);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_IS_AUTHORIZED)) {
-
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_IS_AUTHORIZED);
-                    extra = decode(extra);
-                    // authorized?
-                    if (httpVerb == GET) {
-                        isAuthorized(extra);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_OBJECTS)) {
-                    logMetacat.debug("Using resource 'object'");
-                    logMetacat
-                            .debug("D1 Rest: Starting resource processing...");
-
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_OBJECTS);
-                    extra = decode(extra);
-                    logMetacat.debug("objectId: " + extra);
-                    logMetacat.debug("verb:" + httpVerb);
-
-                    if (httpVerb == GET) {
-                        if (extra != null) {
-                            getObject(extra);
-                        } else {
-                            listObjects();
-                        }
-                        status = true;
-                    } else if (httpVerb == POST) {
-                        putObject(FUNCTION_NAME_INSERT);
-                        status = true;
-                    } else if (httpVerb == HEAD) {
-                        describeObject(extra);
-                        status = true;
-                    } else if (httpVerb == DELETE) {
-                        deleteObject(extra);
-                        status = true;
-                    } 
-
-                } else if (resource.startsWith(RESOURCE_FORMATS)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_FORMATS);
-
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_FORMATS);
-                    extra = decode(extra);
-                    // handle each verb
-                    if (httpVerb == GET) {
-                        if (extra == null) {
-                            // list the formats collection
-                            listFormats();
-                        } else {
-                            // get the specified format
-                            getFormat(extra);
-                        }
-                        status = true;
-                    } else if (httpVerb == PUT) {
-                        addFormat(extra);
-                    }
-
-                } else if (resource.startsWith(RESOURCE_LOG)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_LOG);
-                    // handle log events
-                    if (httpVerb == GET) {
-                        getLog();
-                        status = true;
-                    }
-
-                } else if (resource.startsWith(Constants.RESOURCE_ARCHIVE)) {
-                    logMetacat.debug("Using resource " + Constants.RESOURCE_ARCHIVE);
-                    // handle archive events
-                    if (httpVerb == PUT) {
-                        extra = parseTrailing(resource, Constants.RESOURCE_ARCHIVE);
-                        extra = decode(extra);
-                        archive(extra);
-                        status = true;
-                    }
-                } else if (resource.startsWith(Constants.RESOURCE_CHECKSUM)) {
-                    logMetacat.debug("Using resource: " + Constants.RESOURCE_CHECKSUM);
-
-                    // after the command
-                    extra = parseTrailing(resource, Constants.RESOURCE_CHECKSUM);
-                    extra = decode(extra);
-                    // handle checksum requests
-                    if (httpVerb == GET) {
-
-                    	if (extra != null && extra.length() > 0) {
-	                        checksum(extra);
-	                        status = true;
-                    	} else {
-                    		listChecksumAlgorithms();
-                    		status = true;
-                    	}
-
-                    }
-
-                } else if (resource.startsWith(RESOURCE_REPLICATION_POLICY)
-                        && httpVerb == PUT) {
-
-                    logMetacat.debug("Using resource: "
-                            + RESOURCE_REPLICATION_POLICY);
-                    // get the trailing pid
-                    extra = parseTrailing(resource, RESOURCE_REPLICATION_POLICY);
-                    extra = decode(extra);
-                    setReplicationPolicy(extra);
-                    status = true;
-
-                } else if (resource.startsWith(RESOURCE_REPLICATION_META)
-                        && httpVerb == PUT) {
-
-                    logMetacat.debug("Using resource: "
-                            + RESOURCE_REPLICATION_META);
-                    // get the trailing pid
-                    extra = parseTrailing(resource, RESOURCE_REPLICATION_META);
-                    extra = decode(extra);
-                    updateReplicationMetadata(extra);
-                    status = true;
-
-                } else if (resource.startsWith(RESOURCE_REPLICATION_NOTIFY)
-                        && httpVerb == PUT) {
-
-                    logMetacat.debug("Using resource: "
-                            + RESOURCE_REPLICATION_NOTIFY);
-                    // get the trailing pid
-                    extra = parseTrailing(resource, RESOURCE_REPLICATION_NOTIFY);
-                    extra = decode(extra);
-                    setReplicationStatus(extra);
-                    status = true;
-
-                } else if (resource.startsWith(RESOURCE_REPLICATION_AUTHORIZED)
-                        && httpVerb == GET) {
-
-                    logMetacat.debug("Using resource: "
-                            + RESOURCE_REPLICATION_AUTHORIZED);
-                    // get the trailing pid
-                    extra = parseTrailing(resource,
-                            RESOURCE_REPLICATION_AUTHORIZED);
-                    extra = decode(extra);
-                    isNodeAuthorized(extra);
-                    status = true;
-
-                } else if (resource.startsWith(Constants.RESOURCE_MONITOR_PING)) {
-                    if (httpVerb == GET) {
-                    	// after the command
-                        extra = parseTrailing(resource, Constants.RESOURCE_MONITOR_PING);
-                        extra = decode(extra);
-                        logMetacat.debug("processing ping request");
-                        Date result = CNodeService.getInstance(request).ping();
-                        // TODO: send to output	
-                        status = true;
-                    }
-                } else if (resource.startsWith(Constants.RESOURCE_META_OBSOLETEDBY)
-                        && httpVerb == PUT) {
-
-                    logMetacat.debug("Using resource: "
-                            + Constants.RESOURCE_META_OBSOLETEDBY);
-                    // get the trailing pid
-                    extra = parseTrailing(resource, Constants.RESOURCE_META_OBSOLETEDBY);
-                    extra = decode(extra);
-                    setObsoletedBy(extra);
-                    status = true;
-                } else if (resource.startsWith(Constants.RESOURCE_REPLICATION_DELETE_REPLICA)
-                        && httpVerb == PUT) {
-
-                    logMetacat.debug("Using resource: "
-                            + Constants.RESOURCE_REPLICATION_DELETE_REPLICA);
-                    // get the trailing pid
-                    extra = parseTrailing(resource, Constants.RESOURCE_REPLICATION_DELETE_REPLICA);
-                    extra = decode(extra);
-                    deleteReplica(extra);
-                    status = true;
-                } else if (resource.startsWith(RESOURCE_VIEWS)) {
-                    logMetacat.info("Using resource " + RESOURCE_VIEWS);
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_VIEWS);
-                    logMetacat.info("view extra: " + extra);
-
-                    String format = null;
-                    String pid = null;
-
-                    if (extra != null) {
-                        // get the format
-                        int formatIndex = extra.length();
-                        if (extra.indexOf("/") > -1) {
-                            formatIndex = extra.indexOf("/");
-                            format = extra.substring(0, formatIndex);
-                        } else {
-                            throw new InvalidRequest("2853", "The request doesn't specify the name of theme.");
-                        }
-                        format = decode(format);
-                        logMetacat.info("view format: " + format);
-                        
-                        // get the pid if it is there
-                        pid = extra.substring(formatIndex, extra.length());
-                        if (pid != null && pid.length() == 0) {
-                            pid = null;
-                        } else {
-                            if (pid.startsWith("/")) {
-                                pid = pid.substring(1);
-                            }
-                        }
-                        pid=decode(pid);
-                        logMetacat.debug("pid: " + pid);
-
-                    }
-                    logMetacat.debug("verb:" + httpVerb);
-                    if (httpVerb == GET) {
-                        doViews(format, pid);
-                        status = true;
-                    }
-                } 
-
-                if (!status) {
-                    throw new ServiceFailure("0000", "Unknown error, status = "
-                            + status);
                 }
-            } else {
-                throw new InvalidRequest("0000", "No resource matched for "
-                        + resource);
+                // post to register system metadata
+                if (httpVerb == POST) {
+                    registerSystemMetadata();
+                    status = true;
+                }
+                else if (httpVerb == PUT) {
+                    logMetacat.debug("Using resource 'meta' for PUT");
+                    updateSystemMetadata();
+                    status = true;
+                }
+
+            } else if (resource.startsWith(RESOURCE_RESERVE)) {
+                // reserve the ID (in params)
+                if (httpVerb == POST) {
+                    reserve();
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_RESOLVE)) {
+
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_RESOLVE);
+                extra = decode(extra);
+                // resolve the object location
+                if (httpVerb == GET) {
+                    resolve(extra);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_OWNER)) {
+
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_OWNER);
+                extra = decode(extra);
+                // set the owner
+                if (httpVerb == PUT) {
+                    owner(extra);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_IS_AUTHORIZED)) {
+
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_IS_AUTHORIZED);
+                extra = decode(extra);
+                // authorized?
+                if (httpVerb == GET) {
+                    isAuthorized(extra);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_OBJECTS)) {
+                logMetacat.debug("Using resource 'object'");
+                logMetacat
+                        .debug("D1 Rest: Starting resource processing...");
+
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_OBJECTS);
+                extra = decode(extra);
+                logMetacat.debug("objectId: " + extra);
+                logMetacat.debug("verb:" + httpVerb);
+
+                if (httpVerb == GET) {
+                    if (extra != null) {
+                        getObject(extra);
+                    } else {
+                        listObjects();
+                    }
+                    status = true;
+                } else if (httpVerb == POST) {
+                    putObject(FUNCTION_NAME_INSERT);
+                    status = true;
+                } else if (httpVerb == HEAD) {
+                    describeObject(extra);
+                    status = true;
+                } else if (httpVerb == DELETE) {
+                    deleteObject(extra);
+                    status = true;
+                }
+
+            } else if (resource.startsWith(RESOURCE_FORMATS)) {
+                logMetacat.debug("Using resource: " + RESOURCE_FORMATS);
+
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_FORMATS);
+                extra = decode(extra);
+                // handle each verb
+                if (httpVerb == GET) {
+                    if (extra == null) {
+                        // list the formats collection
+                        listFormats();
+                    } else {
+                        // get the specified format
+                        getFormat(extra);
+                    }
+                    status = true;
+                } else if (httpVerb == PUT) {
+                    addFormat(extra);
+                }
+
+            } else if (resource.startsWith(RESOURCE_LOG)) {
+                logMetacat.debug("Using resource: " + RESOURCE_LOG);
+                // handle log events
+                if (httpVerb == GET) {
+                    getLog();
+                    status = true;
+                }
+
+            } else if (resource.startsWith(Constants.RESOURCE_ARCHIVE)) {
+                logMetacat.debug("Using resource " + Constants.RESOURCE_ARCHIVE);
+                // handle archive events
+                if (httpVerb == PUT) {
+                    extra = parseTrailing(resource, Constants.RESOURCE_ARCHIVE);
+                    extra = decode(extra);
+                    archive(extra);
+                    status = true;
+                }
+            } else if (resource.startsWith(Constants.RESOURCE_CHECKSUM)) {
+                logMetacat.debug("Using resource: " + Constants.RESOURCE_CHECKSUM);
+
+                // after the command
+                extra = parseTrailing(resource, Constants.RESOURCE_CHECKSUM);
+                extra = decode(extra);
+                // handle checksum requests
+                if (httpVerb == GET) {
+
+                    if (extra != null && extra.length() > 0) {
+                        checksum(extra);
+                        status = true;
+                    } else {
+                        listChecksumAlgorithms();
+                        status = true;
+                    }
+
+                }
+
+            } else if (resource.startsWith(RESOURCE_REPLICATION_POLICY)
+                    && httpVerb == PUT) {
+
+                logMetacat.debug("Using resource: "
+                        + RESOURCE_REPLICATION_POLICY);
+                // get the trailing pid
+                extra = parseTrailing(resource, RESOURCE_REPLICATION_POLICY);
+                extra = decode(extra);
+                setReplicationPolicy(extra);
+                status = true;
+
+            } else if (resource.startsWith(RESOURCE_REPLICATION_META)
+                    && httpVerb == PUT) {
+
+                logMetacat.debug("Using resource: "
+                        + RESOURCE_REPLICATION_META);
+                // get the trailing pid
+                extra = parseTrailing(resource, RESOURCE_REPLICATION_META);
+                extra = decode(extra);
+                updateReplicationMetadata(extra);
+                status = true;
+
+            } else if (resource.startsWith(RESOURCE_REPLICATION_NOTIFY)
+                    && httpVerb == PUT) {
+
+                logMetacat.debug("Using resource: "
+                        + RESOURCE_REPLICATION_NOTIFY);
+                // get the trailing pid
+                extra = parseTrailing(resource, RESOURCE_REPLICATION_NOTIFY);
+                extra = decode(extra);
+                setReplicationStatus(extra);
+                status = true;
+
+            } else if (resource.startsWith(RESOURCE_REPLICATION_AUTHORIZED)
+                    && httpVerb == GET) {
+
+                logMetacat.debug("Using resource: "
+                        + RESOURCE_REPLICATION_AUTHORIZED);
+                // get the trailing pid
+                extra = parseTrailing(resource,
+                        RESOURCE_REPLICATION_AUTHORIZED);
+                extra = decode(extra);
+                isNodeAuthorized(extra);
+                status = true;
+
+            } else if (resource.startsWith(Constants.RESOURCE_MONITOR_PING)) {
+                if (httpVerb == GET) {
+                    // after the command
+                    extra = parseTrailing(resource, Constants.RESOURCE_MONITOR_PING);
+                    extra = decode(extra);
+                    logMetacat.debug("processing ping request");
+                    Date result = CNodeService.getInstance(request).ping();
+                    // TODO: send to output
+                    status = true;
+                }
+            } else if (resource.startsWith(Constants.RESOURCE_META_OBSOLETEDBY)
+                    && httpVerb == PUT) {
+
+                logMetacat.debug("Using resource: "
+                        + Constants.RESOURCE_META_OBSOLETEDBY);
+                // get the trailing pid
+                extra = parseTrailing(resource, Constants.RESOURCE_META_OBSOLETEDBY);
+                extra = decode(extra);
+                setObsoletedBy(extra);
+                status = true;
+            } else if (resource.startsWith(Constants.RESOURCE_REPLICATION_DELETE_REPLICA)
+                    && httpVerb == PUT) {
+
+                logMetacat.debug("Using resource: "
+                        + Constants.RESOURCE_REPLICATION_DELETE_REPLICA);
+                // get the trailing pid
+                extra = parseTrailing(resource, Constants.RESOURCE_REPLICATION_DELETE_REPLICA);
+                extra = decode(extra);
+                deleteReplica(extra);
+                status = true;
+            } else if (resource.startsWith(RESOURCE_VIEWS)) {
+                logMetacat.info("Using resource " + RESOURCE_VIEWS);
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_VIEWS);
+                logMetacat.info("view extra: " + extra);
+
+                String format = null;
+                String pid = null;
+
+                if (extra != null) {
+                    // get the format
+                    int formatIndex = extra.length();
+                    if (extra.indexOf("/") > -1) {
+                        formatIndex = extra.indexOf("/");
+                        format = extra.substring(0, formatIndex);
+                    } else {
+                        throw new InvalidRequest("2853", "The request doesn't specify the name of theme.");
+                    }
+                    format = decode(format);
+                    logMetacat.info("view format: " + format);
+
+                    // get the pid if it is there
+                    pid = extra.substring(formatIndex, extra.length());
+                    if (pid != null && pid.length() == 0) {
+                        pid = null;
+                    } else {
+                        if (pid.startsWith("/")) {
+                            pid = pid.substring(1);
+                        }
+                    }
+                    pid=decode(pid);
+                    logMetacat.debug("pid: " + pid);
+
+                }
+                logMetacat.debug("verb:" + httpVerb);
+                if (httpVerb == GET) {
+                    doViews(format, pid);
+                    status = true;
+                }
+            }
+
+            if (!status) {
+                throw new ServiceFailure("0000", "Unknown error, status = "
+                        + status);
             }
         } catch (BaseException be) {
             // report Exceptions as clearly and generically as possible
@@ -564,9 +543,9 @@ public class CNResourceHandler extends D1ResourceHandler {
         } catch (Exception e) {
             logMetacat.warn("Could not parse pidFilter: " + e.getMessage());
         }
-        
+
         logMetacat.debug("calling getLogRecords");
-        Log log = CNodeService.getInstance(request).getLogRecords(session,
+        org.dataone.service.types.v2.Log log = CNodeService.getInstance(request).getLogRecords(session,
                 fromDate, toDate, event, pidFilter, start, count);
 
         OutputStream out = response.getOutputStream();
@@ -579,7 +558,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Implements REST version of DataONE CRUD API --> get
-     * 
+     *
      * @param guid
      *            ID of data object to be read
      * @throws NotImplemented
@@ -603,9 +582,9 @@ public class CNResourceHandler extends D1ResourceHandler {
         // set the headers for the content
         String mimeType = ObjectFormatInfo.instance().getMimeType(sm.getFormatId().getValue());
         if (mimeType == null) {
-        	mimeType = "application/octet-stream";
+            mimeType = "application/octet-stream";
         }
-       
+
         String filename = sm.getFileName();
         if(filename == null || filename.trim().equals("")) {
             filename = id.getValue();
@@ -614,7 +593,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                 filename = id.getValue() + extension;
             }
         }
-        
+
         response.setContentType(mimeType);
         response.setHeader("Content-Disposition", "inline; filename=" + filename);
 
@@ -629,13 +608,13 @@ public class CNResourceHandler extends D1ResourceHandler {
                 IOUtils.closeQuietly(data);
             }
         }
-        
+
 
     }
 
     /**
      * Implements REST version of DataONE CRUD API --> getSystemMetadata
-     * 
+     *
      * @param guid
      *            ID of data object to be read
      * @throws NotImplemented
@@ -667,7 +646,7 @@ public class CNResourceHandler extends D1ResourceHandler {
     /**
      * Earthgrid API > Put Service >Put Function : calls MetacatHandler >
      * handleInsertOrUpdateAction
-     * 
+     *
      * @param guid
      *            - ID of data object to be inserted or updated. If action is
      *            update, the pid is the existing pid. If insert, the pid is the
@@ -685,8 +664,8 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws IllegalAccessException
      * @throws InstantiationException
-     * @throws FileUploadException 
-     * @throws NoSuchAlgorithmException 
+     * @throws FileUploadException
+     * @throws NoSuchAlgorithmException
      */
     protected void putObject(String action) throws ServiceFailure,
             InvalidRequest, IdentifierNotUnique, MarshallingException, InvalidToken,
@@ -705,20 +684,20 @@ public class CNResourceHandler extends D1ResourceHandler {
                 
             }
             DetailedFileInputStream object = new DetailedFileInputStream(objFile, objFile.getChecksum());
-            
+
             // get the encoded pid string from the body and make the object
             String pidString = multipartparams.get("pid").get(0);
             Identifier pid = new Identifier();
             pid.setValue(pidString);
-            
+
             logMetacat.debug("putObject: " + pid.getValue() + "/" + action);
-            
+
             SystemMetadata smd = (SystemMetadata) multiparts.getSystemMetadata();
             if  ( smd == null ) {
                 throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
-                
+
             }
-            
+
             if (action.equals(FUNCTION_NAME_INSERT)) { // handle inserts
 
                 logMetacat.debug("Commence creation...");
@@ -780,20 +759,20 @@ public class CNResourceHandler extends D1ResourceHandler {
     }
     
     private void listChecksumAlgorithms() throws IOException, ServiceFailure,
-			NotImplemented, MarshallingException {
-		logMetacat.debug("Entering listFormats()");
+            NotImplemented, MarshallingException {
+        logMetacat.debug("Entering listFormats()");
 
-		ChecksumAlgorithmList result = CNodeService.getInstance(request).listChecksumAlgorithms();
+        ChecksumAlgorithmList result = CNodeService.getInstance(request).listChecksumAlgorithms();
 
-		// get the response output stream
-		OutputStream out = response.getOutputStream();
-		response.setStatus(200);
-		response.setContentType("text/xml");
+        // get the response output stream
+        OutputStream out = response.getOutputStream();
+        response.setStatus(200);
+        response.setContentType("text/xml");
 
-		TypeMarshaller.marshalTypeToOutputStream(result, out);
+        TypeMarshaller.marshalTypeToOutputStream(result, out);
 
-	}
-    
+    }
+
     /**
      * http://mule1.dataone.org/ArchitectureDocs-current/apis/CN_APIs.html#CNRead.describe
      * @param pid
@@ -804,10 +783,11 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws NotImplemented
      * @throws InvalidRequest
      */
-    private void describeObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest
+    private void describeObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
+                                                            NotFound, NotImplemented, InvalidRequest
     {
         response.setContentType("text/xml");
-        
+
         Identifier id = new Identifier();
         id.setValue(pid);
         
@@ -815,14 +795,14 @@ public class CNResourceHandler extends D1ResourceHandler {
         try {
             dr = CNodeService.getInstance(request).describe(session, id);
         } catch (BaseException e) {
-        	response.setStatus(e.getCode());
-        	response.addHeader("DataONE-Exception-Name", e.getClass().getName());
+            response.setStatus(e.getCode());
+            response.addHeader("DataONE-Exception-Name", e.getClass().getName());
             response.addHeader("DataONE-Exception-DetailCode", e.getDetail_code());
             response.addHeader("DataONE-Exception-Description", e.getDescription());
             response.addHeader("DataONE-Exception-PID", id.getValue());
             return;
-		}
-        
+        }
+
         response.setStatus(200);
         //response.addHeader("pid", pid);
         response.addHeader("DataONE-Checksum", dr.getDataONE_Checksum().getAlgorithm() + "," + dr.getDataONE_Checksum().getValue());
@@ -832,7 +812,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         response.addHeader("DataONE-SerialVersion", dr.getSerialVersion().toString());
 
     }
-    
+
     /**
      * Handle delete 
      * @param pid ID of data object to be deleted
@@ -858,9 +838,9 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Calling delete for identifier " + pid);
         CNodeService.getInstance(request).delete(session, id);
         TypeMarshaller.marshalTypeToOutputStream(id, out);
-        
+
     }
-    
+
     /**
      * Archives the given pid
      * @param pid
@@ -883,14 +863,14 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         logMetacat.debug("Calling archive");
         CNodeService.getInstance(request).archive(session, id);
-        
+
         TypeMarshaller.marshalTypeToOutputStream(id, out);
-        
+
     }
 
     /**
      * Return the requested object format
-     * 
+     *
      * @param fmtidStr
      *            the requested format identifier as a string
      * @throws NotImplemented
@@ -926,41 +906,41 @@ public class CNResourceHandler extends D1ResourceHandler {
      * 
      * @param formatIdStr the format identifier
      * 
-     * @throws NotImplemented 
-     * @throws InvalidRequest 
-     * @throws ServiceFailure 
-     * @throws MarshallingException 
-     * @throws IOException 
-     * @throws IllegalAccessException 
-     * @throws InstantiationException 
-     * @throws NotFound 
-     * @throws NotAuthorized 
-     * @throws InvalidToken 
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     * @throws ServiceFailure
+     * @throws MarshallingException
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws NotFound
+     * @throws NotAuthorized
+     * @throws InvalidToken
      */
     private void addFormat(String formatIdStr) 
             throws NotImplemented, ServiceFailure, InvalidRequest, InstantiationException, 
             IllegalAccessException, IOException, MarshallingException, NotFound, NotAuthorized, InvalidToken {
-        
+
         logMetacat.debug("addFormat: " + formatIdStr);
-        
+
         Map<String, File> files = collectMultipartFiles();
         File formatFile = files.get("format");
         FileInputStream formatStream = new FileInputStream(formatFile);
         ObjectFormat objectFormat = TypeMarshaller.unmarshalTypeFromStream(ObjectFormat.class, formatStream);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue(formatIdStr);
-        
+
         ObjectFormatIdentifier formatID = CNodeService.getInstance(request).addFormat(session, formatId, objectFormat);
-        
+
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
         response.setContentType("text/xml");
         TypeMarshaller.marshalTypeToOutputStream(formatID, out);
     }
-    
+
     /**
      * Reserve the given Identifier
-     * 
+     *
      * @throws InvalidToken
      * @throws ServiceFailure
      * @throws NotAuthorized
@@ -979,7 +959,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Parsing reserve parameters from the mime multipart entity");
         try {
             collectMultipartParams();
-            
+
         } catch (FileUploadException e1) {
             String msg = "FileUploadException: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -991,7 +971,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             e1.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4210", msg);
-        
+
         } catch (Exception e1) {
             String msg = "Exception: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -999,20 +979,20 @@ public class CNResourceHandler extends D1ResourceHandler {
             throw new ServiceFailure("4210", msg);
 
         }
-        
+
         // gather the params
         try {
             String id = multipartparams.get("pid").get(0);
             pid = new Identifier();
             pid.setValue(id);
-            
+
         } catch (NullPointerException e) {
             String msg = "The 'pid' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4200", msg);
  
         }
-        
+
         // call the implementation
         try {
             Identifier resultPid = CNodeService.getInstance(request).reserveIdentifier(session, pid);
@@ -1021,24 +1001,24 @@ public class CNResourceHandler extends D1ResourceHandler {
             response.setContentType("text/xml");
             // send back the reserved pid
             TypeMarshaller.marshalTypeToOutputStream(resultPid, out);
-            
+
         } catch (IOException e) {
             String msg = "Couldn't write the identifier to the response output stream: " +
                 e.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4210", msg);
-        
+
         } catch (MarshallingException e) {
             String msg = "Couldn't marshall the identifier to the response output stream: " +
             e.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4210", msg);
-            
+
         }
     }
 
     /**
-     * 
+     *
      * @param id
      * @throws InvalidRequest
      * @throws InvalidToken
@@ -1065,7 +1045,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Set the owner of a resource
-     * 
+     *
      * @param id
      * @throws InvalidToken
      * @throws ServiceFailure
@@ -1075,11 +1055,11 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InvalidRequest
      * @throws IllegalAccessException
      * @throws InstantiationException
-     * @throws VersionMismatch 
+     * @throws VersionMismatch
      */
-    private void owner(String id) 
-        throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, 
-        NotImplemented, InvalidRequest, InstantiationException, 
+    private void owner(String id)
+        throws InvalidToken, ServiceFailure, NotFound, NotAuthorized,
+        NotImplemented, InvalidRequest, InstantiationException,
         IllegalAccessException, VersionMismatch {
 
         Identifier pid = new Identifier();
@@ -1089,13 +1069,13 @@ public class CNResourceHandler extends D1ResourceHandler {
         String serialVersionStr = null;
         String userIdStr = null;
         Subject userId = null;
-        
+
         // Parse the params out of the multipart form data
         // Read the incoming data from its Mime Multipart encoding
         logMetacat.debug("Parsing rights holder parameters from the mime multipart entity");
         try {
             collectMultipartParams();
-            
+
         } catch (FileUploadException e1) {
             String msg = "FileUploadException: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1107,7 +1087,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             e1.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4490", msg);
-        
+
         } catch (Exception e1) {
             String msg = "Exception: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1115,22 +1095,22 @@ public class CNResourceHandler extends D1ResourceHandler {
             throw new ServiceFailure("4490", msg);
 
         }
-        
+
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
-            
+            serialVersion = Long.parseLong(serialVersionStr);
+
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4442", msg);
-                        
+
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4442", msg);
-            
+
         }
 
         // get the subject userId that will become the rights holder
@@ -1138,41 +1118,41 @@ public class CNResourceHandler extends D1ResourceHandler {
             userIdStr = multipartparams.get("userId").get(0);
             userId = new Subject();
             userId.setValue(userIdStr);
-                                    
+
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4442", msg);
-            
+
         }
 
         // set the rights holder
         Identifier retPid = CNodeService.getInstance(request).setRightsHolder(session, pid, userId, serialVersion);
-        
+
         try {
             OutputStream out = response.getOutputStream();
             response.setStatus(200);
             response.setContentType("text/xml");
             TypeMarshaller.marshalTypeToOutputStream(retPid, out);
-            
+
         } catch (IOException e) {
             String msg = "Couldn't write the identifier to the response output stream: " +
                 e.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4490", msg);
-        
+
         } catch (MarshallingException e) {
             String msg = "Couldn't marshall the identifier to the response output stream: " +
             e.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4490", msg);
-            
+
         }
     }
 
     /**
      * Processes the authorization check for given id
-     * 
+     *
      * @param id
      * @return
      * @throws ServiceFailure
@@ -1197,9 +1177,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Register System Metadata without data or metadata object
-     * 
-     * @param pid
-     *            identifier for System Metadata entry
+     *
      * @throws MarshallingException
      * @throws FileUploadException
      * @throws IOException
@@ -1216,15 +1194,15 @@ public class CNResourceHandler extends D1ResourceHandler {
             FileUploadException, MarshallingException, NotImplemented, NotAuthorized,
             InvalidSystemMetadata, InstantiationException,
             IllegalAccessException {
-    	
-    	// Read the incoming data from its Mime Multipart encoding
+
+        // Read the incoming data from its Mime Multipart encoding
         Map<String, File> files = collectMultipartFiles();
-        
-    	// get the encoded pid string from the body and make the object
+
+        // get the encoded pid string from the body and make the object
         String pidString = multipartparams.get("pid").get(0);
         Identifier pid = new Identifier();
         pid.setValue(pidString);
-        
+
         logMetacat.debug("registerSystemMetadata: " + pid);
 
         // get the system metadata from the request
@@ -1238,14 +1216,14 @@ public class CNResourceHandler extends D1ResourceHandler {
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
         response.setContentType("text/xml");
-        
+
         TypeMarshaller.marshalTypeToOutputStream(retGuid, out);
 
     }
 
     /**
      * set the access perms on a document
-     * 
+     *
      * @throws MarshallingException
      * @throws InvalidRequest
      * @throws NotImplemented
@@ -1267,21 +1245,22 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         long serialVersion = 0L;
         String serialVersionStr = null;
-        
+
         // parse the accessPolicy
         Map<String, File> files = collectMultipartFiles();        
-        AccessPolicy accessPolicy = TypeMarshaller.unmarshalTypeFromFile(AccessPolicy.class, files.get("accessPolicy"));;
+        AccessPolicy accessPolicy = TypeMarshaller.unmarshalTypeFromFile(AccessPolicy.class,
+                                                                        files.get("accessPolicy"));
 
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4402", msg);
-            
+
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
@@ -1299,7 +1278,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * List the objects
-     * 
+     *
      * @throws NotImplemented
      * @throws InvalidRequest
      * @throws NotAuthorized
@@ -1318,7 +1297,6 @@ public class CNResourceHandler extends D1ResourceHandler {
         Date endTime = null;
         ObjectFormatIdentifier formatId = null;
         Identifier identifier = null;
-        //boolean replicaStatus = true;
         NodeReference nodeId = null;
         int start = 0;
         int count = 1000;
@@ -1329,8 +1307,8 @@ public class CNResourceHandler extends D1ResourceHandler {
             String[] values = request.getParameterValues(name);
             String value = null;
             if (values != null && values.length > 0) {
-            	value = values[0];
-            	value = EncodingUtilities.decodeString(value);
+                value = values[0];
+                value = EncodingUtilities.decodeString(value);
             }
 
             if (name.equals("fromDate") && value != null) {
@@ -1339,8 +1317,8 @@ public class CNResourceHandler extends D1ResourceHandler {
                 } catch (Exception e) {
                     // if we can't parse it, just don't use the startTime param
                     logMetacat.warn("Could not parse fromDate: " + value, e);
-                    throw new InvalidRequest("1540", "Could not parse fromDate: " + value+" since "+e.getMessage());
-                    //startTime = null;
+                    throw new InvalidRequest("1540", "Could not parse fromDate: " + value
+                                             + " since " + e.getMessage());
                 }
             } else if (name.equals("toDate") && value != null) {
                 try {
@@ -1348,17 +1326,15 @@ public class CNResourceHandler extends D1ResourceHandler {
                 } catch (Exception e) {
                     // if we can't parse it, just don't use the endTime param
                     logMetacat.warn("Could not parse toDate: " + value, e);
-                    throw new InvalidRequest("1540", "Could not parse toDate: " + value+" since "+e.getMessage());
-                    //endTime = null;
+                    throw new InvalidRequest("1540", "Could not parse toDate: " + value
+                                             + " since " + e.getMessage());
                 }
             } else if (name.equals("formatId") && value != null) {
-            	formatId = new ObjectFormatIdentifier();
-            	formatId.setValue(value);
+                formatId = new ObjectFormatIdentifier();
+                formatId.setValue(value);
             } else if (name.equals("identifier") && value != null) {
-            	identifier = new Identifier();
-            	identifier.setValue(value);
-            /*} else if (name.equals("replicaStatus") && value != null) {
-                replicaStatus = Boolean.parseBoolean(value);*/
+                identifier = new Identifier();
+                identifier.setValue(value);
             } else if (name.equals("nodeId") && value != null) {
                 nodeId = new NodeReference();
                 nodeId.setValue(value);
@@ -1399,7 +1375,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Pass the request to get node replication authorization to CNodeService
-     * 
+     *
      * @param pid
      *            the identifier of the object to get authorization to replicate
      * 
@@ -1445,7 +1421,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Pass the request to set the replication policy to CNodeService
-     * 
+     *
      * @param pid
      *            the identifier of the object to set the replication policy on
      * 
@@ -1474,13 +1450,13 @@ public class CNResourceHandler extends D1ResourceHandler {
         identifier.setValue(pid);
 
         // parse the policy
-        Map<String, File> files = collectMultipartFiles();        
+        Map<String, File> files = collectMultipartFiles();
         ReplicationPolicy policy = TypeMarshaller.unmarshalTypeFromFile(ReplicationPolicy.class, files.get("policy"));
 
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
@@ -1495,11 +1471,11 @@ public class CNResourceHandler extends D1ResourceHandler {
         return result;
 
     }
-    
+
     /**
      * Update the system metadata for a given pid, setting it to be obsoleted
      * by the obsoletedByPid
-     *  
+     *
      * @param pid
      * @return
      * @throws NotImplemented
@@ -1531,7 +1507,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Parsing rights holder parameters from the mime multipart entity");
         try {
             collectMultipartParams();
-            
+
         } catch (FileUploadException e1) {
             String msg = "FileUploadException: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1543,7 +1519,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             e1.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4941", msg);
-        
+
         } catch (Exception e1) {
             String msg = "Exception: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1566,18 +1542,18 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
-            
+            serialVersion = Long.parseLong(serialVersionStr);
+
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4942", msg);
-                        
+
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4942", msg);
-            
+
         }
         result = CNodeService.getInstance(request).setObsoletedBy(session,
             identifier, obsoletedByPid, serialVersion);
@@ -1586,10 +1562,10 @@ public class CNResourceHandler extends D1ResourceHandler {
         return result;
 
     }
-    
+
     /**
      * Delete the replica entry with the given nodeId for the given pid
-     * 
+     *
      * @param pid
      * @return
      * @throws NotImplemented
@@ -1615,13 +1591,13 @@ public class CNResourceHandler extends D1ResourceHandler {
         identifier.setValue(pid);
 
         NodeReference nodeId = null;
-        
+
         // Parse the params out of the multipart form data
         // Read the incoming data from its Mime Multipart encoding
         logMetacat.debug("Parsing delete replica parameters from the mime multipart entity");
         try {
             collectMultipartParams();
-            
+
         } catch (FileUploadException e1) {
             String msg = "FileUploadException: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1633,7 +1609,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             e1.getMessage();
             logMetacat.debug(msg);
             throw new ServiceFailure("4951", msg);
-        
+
         } catch (Exception e1) {
             String msg = "Exception: Couldn't parse the mime multipart information: " +
             e1.getMessage();
@@ -1641,13 +1617,13 @@ public class CNResourceHandler extends D1ResourceHandler {
             throw new ServiceFailure("4951", msg);
 
         }
-        
+
         // get the nodeId param
         try {
             String nodeIdString = multipartparams.get("nodeId").get(0);
             nodeId = new NodeReference();
             nodeId.setValue(nodeIdString);
-            
+
         } catch (NullPointerException e) {
             String msg = "The 'nodeId' must be provided as a parameter and was not.";
             logMetacat.error(msg);
@@ -1657,18 +1633,18 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
-            
+            serialVersion = Long.parseLong(serialVersionStr);
+
         } catch (NumberFormatException nfe) {
             String msg = "The 'serialVersion' must be provided as a positive integer and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4952", msg);
-                        
+
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("4952", msg);
-            
+
         }
         result = CNodeService.getInstance(request).deleteReplicationMetadata(
                 session, identifier, nodeId, serialVersion);
@@ -1680,25 +1656,25 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Pass the request to set the replication status to CNodeService
-     * 
+     *
      * @param pid
      *            the identifier of the object to set the replication status on
-     * 
+     *
      * @throws ServiceFailure
      * @throws NotImplemented
      * @throws InvalidToken
      * @throws NotAuthorized
      * @throws InvalidRequest
      * @throws NotFound
-     * @throws MarshallingException 
-     * @throws IllegalAccessException 
-     * @throws InstantiationException 
-     * @throws IOException 
+     * @throws MarshallingException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws IOException
      */
     public boolean setReplicationStatus(String pid) throws ServiceFailure,
             NotImplemented, InvalidToken, NotAuthorized, InvalidRequest,
             NotFound {
-        
+
         boolean result = false;
         Identifier identifier = new Identifier();
         identifier.setValue(pid);
@@ -1713,19 +1689,19 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Parsing ReplicaStatus from the mime multipart entity");
 
         try {
-        	// parse the failure, if we have it
-            Map<String, File> files = collectMultipartFiles();        
+            // parse the failure, if we have it
+            Map<String, File> files = collectMultipartFiles();
             if (files.containsKey("failure")) {
-            	failure = ExceptionHandler.deserializeXml(new FileInputStream(files.get("failure")), 
+                failure = ExceptionHandler.deserializeXml(new FileInputStream(files.get("failure")),
                         "Replication failed for an unknown reason.");
             }
-            
+
         } catch (Exception e2) {
             throw new ServiceFailure("4700", "Couldn't resolve the multipart request: " +
                 e2.getMessage());
-            
+
         }
-        
+
         // get the replication status param
         try {
             replicationStatus = multipartparams.get("status").get(0);
@@ -1784,26 +1760,27 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     /**
      * Pass the request to update the replication metadata to CNodeService
-     * 
+     *
      * @param pid
      *            the identifier of the object to update the replication
      *            metadata on
-     * 
+     *
      * @throws ServiceFailure
      * @throws NotImplemented
      * @throws InvalidToken
      * @throws NotAuthorized
      * @throws InvalidRequest
      * @throws NotFound
-     * @throws VersionMismatch 
-     * @throws MarshallingException 
+     * @throws VersionMismatch
+     * @throws MarshallingException
      * @throws IOException 
-     * @throws IllegalAccessException 
-     * @throws InstantiationException 
+     * @throws IllegalAccessException
+     * @throws InstantiationException
      */
     public boolean updateReplicationMetadata(String pid) throws ServiceFailure,
             NotImplemented, InvalidToken, NotAuthorized, InvalidRequest,
-            NotFound, VersionMismatch, InstantiationException, IllegalAccessException, IOException, MarshallingException {
+            NotFound, VersionMismatch, InstantiationException, IllegalAccessException,
+            IOException, MarshallingException {
 
         boolean result = false;
         long serialVersion = 0L;
@@ -1818,7 +1795,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
+            serialVersion = Long.parseLong(serialVersionStr);
 
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
@@ -1849,15 +1826,16 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken
      */
     protected void updateSystemMetadata() throws ServiceFailure, InvalidRequest, InstantiationException, 
-                        IllegalAccessException, IOException, MarshallingException, NotImplemented, NotAuthorized, InvalidSystemMetadata, InvalidToken {
+                        IllegalAccessException, IOException, MarshallingException, NotImplemented,
+                                           NotAuthorized, InvalidSystemMetadata, InvalidToken {
         // Read the incoming data from its Mime Multipart encoding
         Map<String, File> files = collectMultipartFiles();
-        
+
         // get the encoded pid string from the body and make the object
         String pidString = multipartparams.get("pid").get(0);
         Identifier pid = new Identifier();
         pid.setValue(pidString);
-        
+
         logMetacat.debug("updateSystemMetadata: " + pid);
 
         // get the system metadata from the request
@@ -1866,12 +1844,12 @@ public class CNResourceHandler extends D1ResourceHandler {
         SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, sysmeta);
 
         logMetacat.debug("updating system metadata with pid " + pid.getValue());
-        
+
         CNodeService.getInstance(request).updateSystemMetadata(session, pid, systemMetadata);
     }
-    
+
     private void doViews(String format, String pid) {
-        
+
         OutputStream out = null;
         CNodeService cnode = CNodeService.getInstance(request);
 
@@ -1896,19 +1874,16 @@ public class CNResourceHandler extends D1ResourceHandler {
                         IOUtils.closeQuietly(stream);
                     }
                 }
-                return;
             } else {
                 // TODO: list the registered views
-                //BaseException ni = new NotImplemented("9999", "MN.listViews() is not implemented at this node");
-                //throw ni;
                 OptionList list = cnode.listViews(session);
-                
+
                 response.setContentType("text/xml");
                 response.setStatus(200);
                 TypeMarshaller.marshalTypeToOutputStream(list, response.getOutputStream());
             }
-            
-            
+
+
         } catch (BaseException be) {
             // report Exceptions as clearly as possible
             try {

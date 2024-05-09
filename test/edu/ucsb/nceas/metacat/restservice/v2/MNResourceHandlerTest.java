@@ -74,7 +74,7 @@ public class MNResourceHandlerTest {
         // This is OK for now, but may become a problem for the sql query test"
         request = new MockHttpServletRequest(null, new MockHttpSession(context), context);
         resourceHandler =
-                    new MNResourceHandler(context, request, new MockHttpServletResponse(request));
+                    new MNResourceHandler(request, new MockHttpServletResponse(request));
         staticMNodeService = Mockito.mockStatic(MNodeService.class);
         mockMNodeService = Mockito.mock(MNodeService.class);
         Mockito.when(mockMNodeService.reindex(any(Session.class), any(List.class)))
@@ -296,6 +296,6 @@ public class MNResourceHandlerTest {
         request.setURL(url);
         Mockito.when(MNodeService.getInstance(request)).thenReturn(mockMNodeService);
         resourceHandler =
-                new MNResourceHandler(context, request, new MockHttpServletResponse(request));
+                new MNResourceHandler(request, new MockHttpServletResponse(request));
     }
 }

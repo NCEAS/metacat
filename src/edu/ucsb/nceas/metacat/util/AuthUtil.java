@@ -415,7 +415,7 @@ public class AuthUtil {
      * @param groups the groups name for the session
      * @return a session object
      */
-    private static Session buildSession(String user, String[] groups) {
+    public static Session buildSession(String user, String[] groups) {
         Session session = new Session();
         Subject userSubject = new Subject();
         userSubject.setValue(user);

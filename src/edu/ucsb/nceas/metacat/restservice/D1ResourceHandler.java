@@ -2,7 +2,6 @@ package edu.ucsb.nceas.metacat.restservice;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -16,7 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -47,6 +45,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.service.SessionService;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SessionData;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -69,8 +68,8 @@ public class D1ResourceHandler {
     /**HTTP Verb HEAD*/
     public static final byte HEAD = 5;
 
-	/** Maximum size of uploads, defaults to 1GB if not set in property file */
-	protected static int MAX_UPLOAD_SIZE = 1000000000;
+    /** Maximum size of uploads, defaults to 1GB if not set in property file */
+    protected static int MAX_UPLOAD_SIZE = 1000000000;
 
     /*
      * API Resources
@@ -80,27 +79,27 @@ public class D1ResourceHandler {
     protected static final String RESOURCE_OBJECTS = "object";
     protected static final String RESOURCE_META = "meta";
     protected static final String RESOURCE_LOG = "log";
-    
+
     protected static final String RESOURCE_QUERY = "query";
-    
+
     protected static final String RESOURCE_IS_AUTHORIZED = "isAuthorized";
     protected static final String RESOURCE_ACCESS_RULES = "accessRules";
-    
+
     protected static final String RESOURCE_VIEWS = "views";
 
-    
+
     /*
      * API Functions used as URL parameters
      */
     protected static final String FUNCTION_NAME_INSERT = "insert";
     protected static final String FUNCTION_NAME_UPDATE = "update";
-    
+
     protected static AuthSession auth = null;
-    protected static int authCacheSzie = Settings.getConfiguration().getInt("auth.groupCacheSize", 100);
-    protected static boolean enableAppendLdapGroups = Settings.getConfiguration().getBoolean("dataone.session.appendLdapGroups.enabled", true);
-    
-    protected ServletContext servletContext;
-    protected static Log logMetacat;
+    protected static int authCacheSize = Settings.getConfiguration().getInt("auth.groupCacheSize", 100);
+    protected static boolean enableAppendLdapGroups =
+            Settings.getConfiguration().getBoolean("dataone.session.appendLdapGroups.enabled", true);
+
+    private static Log logMetacat = LogFactory.getLog(D1ResourceHandler.class);
     protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected boolean enableSessionFromHeader = false;
@@ -108,79 +107,63 @@ public class D1ResourceHandler {
 
     protected Hashtable<String, String[]> params;
     protected Map<String, List<String>> multipartparams;
-    
+
     // D1 certificate-based authentication
     protected Session session;
 
-    /**Initializes new instance by setting servlet context,request and response*/
-    public D1ResourceHandler(ServletContext servletContext,
-            HttpServletRequest request, HttpServletResponse response) {
-        this.servletContext = servletContext;
+    /**Initializes new instance by setting servlet context,request and response
+     * @param request  the request that the handler will handle
+     * @param response  the response that the handler will send back
+     */
+    public D1ResourceHandler(HttpServletRequest request, HttpServletResponse response) {
         this.request = request;
         this.response = response;
-        logMetacat = LogFactory.getLog(D1ResourceHandler.class);
-		try {
-			MAX_UPLOAD_SIZE = Integer.parseInt(PropertyService.getProperty("dataone.max_upload_size"));
-			enableSessionFromHeader = Boolean.parseBoolean(PropertyService.getProperty("dataone.certificate.fromHttpHeader.enabled"));
-			proxyKey = PropertyService.getProperty("dataone.certificate.fromHttpHeader.proxyKey");
-		} catch (PropertyNotFoundException e) {
-			// Just use our default as no max size is set in the properties file
-			logMetacat.warn("Property not found: " + "dataone.max_upload_size");
-		}
+        try {
+            MAX_UPLOAD_SIZE = Integer.parseInt(PropertyService.getProperty("dataone.max_upload_size"));
+            enableSessionFromHeader = Boolean.parseBoolean(PropertyService.getProperty("dataone.certificate.fromHttpHeader.enabled"));
+            proxyKey = PropertyService.getProperty("dataone.certificate.fromHttpHeader.proxyKey");
+        } catch (PropertyNotFoundException e) {
+            // Just use our default as no max size is set in the properties file
+            logMetacat.warn("Property not found: " + "dataone.max_upload_size");
+        }
 
     }
 
     /**
-     * This function is called from REST API servlet and handles each request 
-     * 
+     * This function is called from REST API servlet and handles each request
+     *
      * @param httpVerb (GET, POST, PUT or DELETE)
      */
     public void handle(byte httpVerb) {
         logMetacat = LogFactory.getLog(D1ResourceHandler.class);
         try {
-  
-        	// first try the usual methods
-        	session = PortalCertificateManager.getInstance().getSession(request);
-        	
+
+            // first try the usual methods
+            session = PortalCertificateManager.getInstance().getSession(request);
+
             // last resort, check for Metacat sessionid
             if (session == null) {
-	            SessionData sessionData = RequestUtil.getSessionData(request);
-				if (sessionData != null) {
-					// is it not the public session?
-					if (!SessionService.getInstance().getPublicSession().getUserName().equals(sessionData.getUserName())) {
-						session = new Session();
-						String userName = sessionData.getUserName();
-						String[] groupNames = sessionData.getGroupNames();
-						Subject userSubject = new Subject();
-						userSubject.setValue(userName);
-						session.setSubject(userSubject);
-						SubjectInfo subjectInfo = new SubjectInfo();
-						Person person = new Person();
-						person.setSubject(userSubject);
-						if (groupNames != null && groupNames.length > 0) {
-							for (String groupName: groupNames) {
-								Group group = new Group();
-								group.setGroupName(groupName);
-								Subject groupSubject = new Subject();
-								groupSubject.setValue(groupName);
-								group.setSubject(groupSubject);
-								subjectInfo.addGroup(group);
-								person.addIsMemberOf(groupSubject);
-							}
-						}
-						subjectInfo.addPerson(person);
-						session.setSubjectInfo(subjectInfo);
-					}
-				}
+                SessionData sessionData = RequestUtil.getSessionData(request);
+                if (sessionData != null) {
+                    // is it not the public session?
+                    if (!SessionService.getInstance().getPublicSession().getUserName().equals(sessionData.getUserName())) {
+                        String userName = sessionData.getUserName();
+                        String[] groupNames = sessionData.getGroupNames();
+                        session = AuthUtil.buildSession(userName, groupNames);
+                    }
+                }
             } else {
-                //The session is not null. However, if we got the session is from a token, the local ldap group information is missing when we logged in by the ldap account.
+                //The session is not null. However, if we got the session is from a token, the local
+                //ldap group information is missing when we logged in by the ldap account.
                 //Here we just patch it (d1_portal only patches the dataone groups)
                 if (enableAppendLdapGroups) {
-                    logMetacat.debug("D1ReourceHandler.handle - Metacat is configured to append the local ldap group information to a session.");
+                    logMetacat.debug("Metacat is configured to append the"
+                                    + " local ldap group information to a session.");
                     Subject subject = session.getSubject();
                     if(subject != null) {
                         String dn = subject.getValue();
-                        logMetacat.debug("D1ReourceHandler.handle - the subject dn in the session is "+dn+" This dn will be used to look up the group information");
+                        logMetacat.debug("The subject dn in the session is "
+                                + dn + " This dn will be used to look up the group information");
                         if(dn != null) {
                             String username = null;
                             String password = null;
@@ -189,27 +172,29 @@ public class D1ResourceHandler {
                                 try {
                                     synchronized (D1ResourceHandler.class) {
                                         if (auth == null) {
-                                            auth = new AuthSession(authCacheSzie);
+                                            auth = new AuthSession(authCacheSize);
                                         }
                                     }
                                     groups = auth.getGroups(username, password, dn);
                                } catch (Exception e) {
-                                   logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user " + dn + 
-                                                   " from the authentication interface since :", e);
+                                   logMetacat.warn("We can't get group information for the user "
+                                             + dn + " from the authentication interface since: ", e);
                                }
                             } else {
                                 try {
                                     groups = auth.getGroups(username, password, dn);
                                } catch (Exception e) {
-                                   logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user " + dn + 
-                                                   " from the authentication interface since :", e);
+                                   logMetacat.warn("We can't get group information for the user "
+                                           + dn + " from the authentication interface since: ", e);
                                }
                             }
 
                             if(groups != null) {
                                 SubjectInfo subjectInfo = session.getSubjectInfo();
                                 if(subjectInfo != null) {
-                                    logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
+                                    logMetacat.debug("D1ResourceHandler.handle - the subject "
+                                                     + "information is NOT null when we try to "
+                                                     + "figure out the group information.");
                                     //we don't overwrite the existing subject info, just add the new groups informations
                                     List<Person> persons = subjectInfo.getPersonList();
                                     Person targetPerson = null;
@@ -217,7 +202,8 @@ public class D1ResourceHandler {
                                         for(Person person : persons) {
                                             if(person.getSubject().equals(subject)) {
                                                 targetPerson = person;
-                                                logMetacat.debug("D1ReourceHandler.handle - we find a person with the subject "+dn+" in the subject info.");
+                                                logMetacat.debug("We find a person with the subject "
+                                                                 + dn + " in the subject info.");
                                                 break;
                                             }
                                         }
@@ -229,7 +215,8 @@ public class D1ResourceHandler {
                                         targetPerson.setSubject(subject);
                                     }
                                     for (int i=0; i<groups.length; i++) {
-                                        logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for an existing subject info.");
+                                        logMetacat.debug("D1ReourceHandler.handle - create the group "
+                                                  + groups[i] + " for an existing subject info.");
                                         Group group = new Group();
                                         group.setGroupName(groups[i]);
                                         Subject groupSubject = new Subject();
@@ -242,12 +229,14 @@ public class D1ResourceHandler {
                                         subjectInfo.addPerson(targetPerson);
                                     }
                                 } else {
-                                    logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
+                                    logMetacat.debug("The subject information is NOT null when we "
+                                                    + "try to figure out the group information.");
                                     subjectInfo = new SubjectInfo();
                                     Person person = new Person();
                                     person.setSubject(subject);
                                     for (int i=0; i<groups.length; i++) {
-                                        logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for a new subject info.");
+                                        logMetacat.debug("Create the group " + groups[i]
+                                                        + " for a new subject info.");
                                         Group group = new Group();
                                         group.setGroupName(groups[i]);
                                         Subject groupSubject = new Subject();
@@ -263,51 +252,52 @@ public class D1ResourceHandler {
                         }
                     }
                 } else {
-                    logMetacat.debug("D1ReourceHandler.handle - Metacat is configured NOT to append the local ldap group information to a session.");
+                    logMetacat.debug("Metacat is configured NOT to append the local ldap group "
+                                     + "information to a session.");
                 }
-                
+
             }
-            
+
             if (session == null) {
                 // If certificate or token sessions are not established, get a session object from values in the request headers,
                 // but only if this feature is enabled in the metacat.properties file
                 getSessionFromHeader();
             }
-			
+
             // initialize the parameters
             params = new Hashtable<String, String[]>();
             initParams();
         } catch (Exception e) {
-        	// TODO: more D1 structure when failing here
-        	response.setStatus(400);
+            // TODO: more D1 structure when failing here
+            response.setStatus(400);
             printError("Incorrect resource!", response);
             logMetacat.error(e.getClass() + ": " + e.getMessage(), e);
         }
     }
-    
-  
+
+
     /**
      * subclasses should provide a more useful implementation
      * @return
      */
     protected boolean isD1Enabled() {
-    	
-    	return true;	
+
+        return true;
     }
-    
+
     protected String parseTrailing(String resource, String token) {
-    	// get the rest
+        // get the rest
         String extra = null;
         if (resource.indexOf(token) != -1) {
-        	// what comes after the token?
+            // what comes after the token?
             extra = resource.substring(resource.indexOf(token) + token.length());
             // remove the slash
             if (extra.startsWith("/")) {
-            	extra = extra.substring(1);
+                extra = extra.substring(1);
             }
             // is there anything left?
             if (extra.length() == 0) {
-            	extra = null;
+                extra = null;
             }
         }
         return extra;
@@ -323,7 +313,7 @@ public class D1ResourceHandler {
      */
     protected void collectMultipartParams() 
         throws IOException, FileUploadException, Exception {
-        
+
         File tmpDir = getTempDirectory();
         MultipartRequest mr = null;
 
@@ -336,12 +326,12 @@ public class D1ResourceHandler {
 
         mr = mrr.resolveMultipart(request);
         logMetacat.debug("Resolved the rights holder info from the mime multipart entity.");
-                    
+
         // we only have params in this MMP entity
         multipartparams = mr.getMultipartParameters();
-                
+
     }
-    
+
     /**
      * Process the MMP request that includes files for each param
      * @return map of param key and the temp file that contains the encoded information
@@ -350,72 +340,74 @@ public class D1ResourceHandler {
      */
     protected Map<String, File> collectMultipartFiles() 
         throws ServiceFailure, InvalidRequest {
-   
+
         // Read the incoming data from its Mime Multipart encoding
         logMetacat.debug("Disassembling MIME multipart form");
-        
+
         // handle MMP inputs
         File tmpDir = getTempDirectory();
         logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
         MultipartRequestResolver mrr = 
-        	new MultipartRequestResolver(tmpDir.getAbsolutePath(),  MAX_UPLOAD_SIZE, 0);
+            new MultipartRequestResolver(tmpDir.getAbsolutePath(),  MAX_UPLOAD_SIZE, 0);
         MultipartRequest mr = null;
-		    try {
-		    	  mr = mrr.resolveMultipart(request);
-            
-		    } catch (Exception e) {
+            try {
+                  mr = mrr.resolveMultipart(request);
+
+            } catch (Exception e) {
                 throw new ServiceFailure("1202", 
-                		"Could not resolve multipart files: " + e.getMessage());
-		    }
+                        "Could not resolve multipart files: " + e.getMessage());
+            }
         logMetacat.debug("resolved multipart request");
         Map<String, File> files = mr.getMultipartFiles();
         if (files == null) {
             throw new ServiceFailure("1202", "no multipart files found");
         }
         logMetacat.debug("got multipart files");
-        
-        if (files.keySet() == null) {
+
+        if (files.keySet().isEmpty()) {
             logMetacat.error("No file keys in MMP request.");
             throw new ServiceFailure("1202", "No file keys found in MMP.");
         }
-        
+
         multipartparams = mr.getMultipartParameters();
 
-		    // for logging purposes, dump out the key-value pairs that constitute the request
-		    // 3 types exist: request params, multipart params, and multipart files
+            // for logging purposes, dump out the key-value pairs that constitute the request
+            // 3 types exist: request params, multipart params, and multipart files
         if (logMetacat.isDebugEnabled()) {
-	        Iterator<String> it = files.keySet().iterator();
-	        logMetacat.debug("iterating through files");
-	        while (it.hasNext()) {
-	            String key = it.next();
-	            logMetacat.debug("files key: " + key);
-	            logMetacat.debug("files value: " + files.get(key));
-	        }
-	        
-	        it = multipartparams.keySet().iterator();
-	        logMetacat.debug("iterating through multipartparams");
-	        while (it.hasNext()) {
-	            String key = (String)it.next();
-	            logMetacat.debug("multipartparams key: " + key);
-	            logMetacat.debug("multipartparams value: " + multipartparams.get(key));
-	        }
-	        
-	        it = params.keySet().iterator();
-	        logMetacat.debug("iterating through params");
-	        while (it.hasNext()) {
-	            String key = (String)it.next();
-	            logMetacat.debug("param key: " + key);
-	            logMetacat.debug("param value: " + params.get(key));
-	        }
-	        logMetacat.debug("done iterating the request...");
+            Iterator<String> it = files.keySet().iterator();
+            logMetacat.debug("iterating through files");
+            while (it.hasNext()) {
+                String key = it.next();
+                logMetacat.debug("files key: " + key);
+                logMetacat.debug("files value: " + files.get(key));
+            }
+
+            it = multipartparams.keySet().iterator();
+            logMetacat.debug("iterating through multipartparams");
+            while (it.hasNext()) {
+                String key = (String)it.next();
+                logMetacat.debug("multipartparams key: " + key);
+                logMetacat.debug("multipartparams value: " + multipartparams.get(key));
+            }
+
+            it = params.keySet().iterator();
+            logMetacat.debug("iterating through params");
+            while (it.hasNext()) {
+                String key = (String)it.next();
+                logMetacat.debug("param key: " + key);
+                logMetacat.debug("param value: " + Arrays.toString(params.get(key)));
+            }
+            logMetacat.debug("done iterating the request...");
         }
-        
+
         return files;
     }
-    
+
     /**
-     * Parse the request by the streaming multiple part handler. This method is good for the cn.create and mn.create/update methods.
-     * @return  the MultipartRequestWithSysmeta object which includes the stored object file with its checksum and the system metadata about this object
+     * Parse the request by the streaming multiple part handler. This method is good for the
+     * cn.create and mn.create/update methods.
+     * @return  the MultipartRequestWithSysmeta object which includes the stored object file
+     *           with its checksum and the system metadata about this object
      * @throws IOException
      * @throws FileUploadException
      * @throws InstantiationException
@@ -423,7 +415,9 @@ public class D1ResourceHandler {
      * @throws NoSuchAlgorithmException
      * @throws MarshallingException
      */
-    protected MultipartRequestWithSysmeta collectObjectFiles() throws IOException, FileUploadException, InstantiationException, IllegalAccessException, NoSuchAlgorithmException, MarshallingException {
+    protected MultipartRequestWithSysmeta collectObjectFiles() throws IOException,
+                             FileUploadException, InstantiationException, IllegalAccessException,
+                             NoSuchAlgorithmException, MarshallingException {
         logMetacat.debug("Disassembling MIME multipart form with object files");
         // handle MMP inputs
         File tmpDir = getTempDirectory();
@@ -434,8 +428,8 @@ public class D1ResourceHandler {
         multipartparams = mq.getMultipartParameters();
         return mq;
     }
-    
-		/**
+
+        /**
      *  copies request parameters to a hashtable which is given as argument to 
      *  native metacathandler functions  
      */
@@ -450,74 +444,27 @@ public class D1ResourceHandler {
             params.put(name, value);
         }
     }
-    
+
     /**
      * Collect the multipart params from the request
-     * @throws Exception 
+     * @throws Exception
      */
-	protected void initMultipartParams() throws Exception {
-		
-		// Read the incoming data from its Mime Multipart encoding
-		logMetacat.debug("Disassembling MIME multipart form");
-	
-		// handle MMP inputs
-		File tmpDir = getTempDirectory();
-		logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
-		MultipartRequestResolver mrr = 
-			new MultipartRequestResolver(tmpDir.getAbsolutePath(),  MAX_UPLOAD_SIZE, 0);
-		MultipartRequest mr = mrr.resolveMultipart(request);
-		
-		multipartparams = mr.getMultipartParameters();
-	}
-   
-    /**
-     * locate the boundary marker for an MMP
-     * @param is
-     * @return
-     * @throws IOException
-     */
-    protected static String[] findBoundaryString(InputStream is)
-        throws IOException {
-        String[] endResult = new String[2];
-        String boundary = "";
-        String searchString = "boundary=";
-        byte[] b = new byte[1024];
-        int numbytes = is.read(b, 0, 1024);
+    protected void initMultipartParams() throws Exception {
 
-        while(numbytes != -1)
-        {
-            String s = new String(b, 0, numbytes);
-            int searchStringIndex = s.indexOf(searchString);
-            
-            if(s.indexOf("\"", searchStringIndex + searchString.length() + 1) == -1)
-            { //the end of the boundary is in the next byte array
-                boundary = s.substring(searchStringIndex + searchString.length() + 1, s.length());
-            }
-            else if(!boundary.startsWith("--"))
-            { //we can read the whole boundary from this byte array
-                boundary = s.substring(searchStringIndex + searchString.length() + 1, 
-                    s.indexOf("\"", searchStringIndex + searchString.length() + 1));
-                boundary = "--" + boundary;
-                endResult[0] = boundary;
-                endResult[1] = s.substring(s.indexOf("\"", searchStringIndex + searchString.length() + 1) + 1,
-                        s.length());
-                break;
-            }
-            else
-            { //we're now reading the 2nd byte array to get the rest of the boundary
-                searchString = "\"";
-                searchStringIndex = s.indexOf(searchString);
-                boundary += s.substring(0, searchStringIndex);
-                boundary = "--" + boundary;
-                endResult[0] = boundary;
-                endResult[1] = s.substring(s.indexOf("\"", searchStringIndex + searchString.length() + 1) + 1,
-                        s.length());
-                break;
-            }
-        }
-        return endResult;
+        // Read the incoming data from its Mime Multipart encoding
+        logMetacat.debug("Disassembling MIME multipart form");
+
+        // handle MMP inputs
+        File tmpDir = getTempDirectory();
+        logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
+        MultipartRequestResolver mrr =
+            new MultipartRequestResolver(tmpDir.getAbsolutePath(),  MAX_UPLOAD_SIZE, 0);
+        MultipartRequest mr = mrr.resolveMultipart(request);
+
+        multipartparams = mr.getMultipartParameters();
     }
-    
+
+
     /**
      * return the directory where temp files are stored
      * @return
@@ -536,11 +483,11 @@ public class D1ResourceHandler {
         }
         return tmpDir;
     }
-    
+
     /**
      * Prints xml response
      * @param message Message to be displayed
-     * @param response Servlet response that xml message will be printed 
+     * @param response Servlet response that xml message will be printed
      * */
     protected void printError(String message, HttpServletResponse response) {
         try {
@@ -553,10 +500,10 @@ public class D1ResourceHandler {
             out.println("</error>");
             out.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            logMetacat.error("Can't send back the error message since: " + e.getMessage());
         }
     }
-    
+
     /**
      * serialize a D1 exception using jibx
      * @param e
@@ -583,7 +530,7 @@ public class D1ResourceHandler {
             IOUtils.closeQuietly(out);
         }
     }
-    
+
     /**
      * A method to decode the given string which is a part of a uri.
      * The default encoding is utf-8. If the utf-8 is not support in this system, the default one in the systme will be used.
@@ -593,65 +540,67 @@ public class D1ResourceHandler {
     public static String decode(String s) {
         String result = null;
         if(s != null) {
-            try
-            {
+            try {
                 result = URLDecoder.decode(s, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                try {
+                    result = URLDecoder.decode(s, System.getProperty("file.encoding"));
+                } catch (UnsupportedEncodingException ee) {
+                    logMetacat.error("Can't decode the uri since " + ee.getMessage());
+                }
             }
-            catch (UnsupportedEncodingException e)
-            {
-                result = URLDecoder.decode(s);
-            }
-            logMetacat.info("D1ResourceHandler.decode - the string after decoding is "+result);
+            logMetacat.info("D1ResourceHandler.decode - the string after decoding is " + result);
         }
-        
+
         return result;
     }
-    
+
     /**
-     * Get the session from the header of the request. 
+     * Get the session from the header of the request.
      * This mechanism is disabled by default due to network security conditions needed for it to be secure
-     * 
+     *
      */
     protected void getSessionFromHeader() {
         if (enableSessionFromHeader) {
-            logMetacat.debug("D1ResourceHandler.getSessionFromHeader - In the route to get the session from a http header");
+            logMetacat.debug("In the route to get the session from a http header");
             //check the shared key between Metacat and the http server:
             if (proxyKey == null || proxyKey.trim().equals("")) {
-                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - Metacat is not configured to handle the feature passing " +
-                                " the certificate by headers since the proxy key is blank");
+                logMetacat.warn("Metacat is not configured to handle the feature passing "
+                                + " the certificate by headers since the proxy key is blank");
                 return;
             }
             String proxyKeyFromHttp = (String) request.getHeader("X-Proxy-Key");
             if (proxyKeyFromHttp == null || proxyKeyFromHttp.trim().equals("")) {
-                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - the value of the header X-Proxy-Key is null or blank. " + 
-                                "So Metacat do NOT trust the request.");
+                logMetacat.warn("The value of the header X-Proxy-Key is null or blank. "
+                                 + "So Metacat do NOT trust the request.");
                 return;
             }
             if (!proxyKey.equals(proxyKeyFromHttp)) {
-                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - the value of the header X-Proxy-Key does not match the one " + 
-                        " stored in Metacat. So Metacat do NOT trust the request.");
+                logMetacat.warn("The value of the header X-Proxy-Key does not match the one "
+                                + " stored in Metacat. So Metacat do NOT trust the request.");
                 return;
             }
-            
+
             String verify = (String) request.getHeader("Ssl-Client-Verify");
-            logMetacat.info("D1ResourceHandler.getSessionFromHeader - the status of the ssl client verification is " + verify);
+            logMetacat.info("D1ResourceHandler.getSessionFromHeader - the status of the ssl client "
+                            + "verification is " + verify);
             if (verify != null && verify.equalsIgnoreCase("SUCCESS")) {
                 //Metacat only looks up the dn from the header when the ssl client was verified.
                 //We confirmed the client couldn't overwrite the value of the header Ssl-Client-Subject-Dn
                 String dn = (String) request.getHeader("Ssl-Client-Subject-Dn");
-                logMetacat.info("D1ResourceHandler.getSessionFromHeader - the ssl client was verified and the subject from the header is " + dn);
+                logMetacat.info("The ssl client was verified and the subject from the header is " + dn);
                 if (dn != null) {
                     Subject subject = new Subject();
                     subject .setValue(dn);
                     session = new Session();
                     session.setSubject(subject);
-                    
+
                     SubjectInfo subjectInfo = null;
                     try {
                         subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
                     } catch (Exception be) {
-                        logMetacat.warn("D1ResourceHandler.getSessionFromHeader - can not get subject information for subject" + dn + " since " + 
-                                        be.getMessage());
+                        logMetacat.warn("Can not get subject information for subject" + dn
+                                        + " since " + be.getMessage());
                     }
                     if (subjectInfo == null) {
                         subjectInfo = new SubjectInfo();

@@ -39,7 +39,7 @@ public class D1RestServlet extends HttpServlet {
      */
     protected D1ResourceHandler createHandler(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        D1ResourceHandler handler = new D1ResourceHandler(getServletContext(), request, response);
+        D1ResourceHandler handler = new D1ResourceHandler(request, response);
         return handler;
     }
 
