@@ -28,7 +28,7 @@ icon: https://camo.githubusercontent.com/a41e704e6cbd198afed0a892f2dccfc43aef29f
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "3.0.0"
+appVersion: "3.1.0-SNAPSHOT"
 
 # Chart dependencies - also see https://github.com/bitnami/charts/tree/main/bitnami
 dependencies:
