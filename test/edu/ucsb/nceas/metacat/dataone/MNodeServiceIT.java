@@ -163,6 +163,7 @@ public class MNodeServiceIT {
                 }
                 withProperties = new Properties();
                 withProperties.setProperty("guid.doi.enabled", "true");
+                withProperties.setProperty("server.name", "MNodeServiceIT.com");
                 closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
         }
 

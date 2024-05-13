@@ -1,6 +1,7 @@
 package edu.ucsb.nceas.metacat.doi.ezid;
 
 
+import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
@@ -32,7 +33,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import static edu.ucsb.nceas.MCTestCase.printTestHeader;
 import static edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest.createSystemMetadata;
@@ -57,8 +58,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import org.junit.FixMethodOrder;
 import org.junit.runners.MethodSorters;
 
@@ -81,7 +80,7 @@ public class RegisterDOITest {
             + "Wendy</creatorName></creator><creator><creatorName>University of California Santa "
             + "Barbara</creatorName></creator></creators>";
 
-    private static String serverName = null;
+    private static String serverName = "RegisterDOITest.edu";
     // get ezid config properties
     private String ezidUsername = null;
     private String ezidPassword = null;
@@ -90,6 +89,7 @@ public class RegisterDOITest {
     private MockedStatic<PropertyService> mockProperties;
     private final D1NodeServiceTest d1NodeServiceTest;
     private final HttpServletRequest request;
+    private Properties withProperties = new Properties();
 
     /**
      * Constructor for the tests
@@ -119,17 +119,19 @@ public class RegisterDOITest {
         assertNotEquals("ezidPassword is empty!", "", ezidPassword.trim());
         assertNotEquals("ezidServiceBaseUrl is empty!", "", ezidServiceBaseUrl.trim());
 
-        ezid = new EZIDService(ezidServiceBaseUrl);
-        doiService = DOIServiceFactory.getDOIService();
-        serverName = "RegisterDOITest.edu";
-        mockProperties = Mockito.mockStatic(PropertyService.class);
-        mockProperties.when(() -> PropertyService.getProperty(eq("server.name")))
-            .thenReturn(serverName);
-        mockProperties.when(
-                () -> PropertyService.getProperty(argThat((String s) -> !s.equals("server.name"))))
-            .thenCallRealMethod();
+        withProperties.setProperty("server.name", serverName);
+        withProperties.setProperty("guid.doi.enabled", "true");
+        mockProperties = LeanTestUtils.initializeMockPropertyService(withProperties);
         mockProperties.when(() -> PropertyService.setPropertyNoPersist(anyString(), anyString()))
             .thenCallRealMethod();
+
+        assertEquals("guid.doi.enabled is FALSE", "true",
+                     PropertyService.getProperty("guid.doi.enabled"));
+
+        ezid = new EZIDService(ezidServiceBaseUrl);
+        doiService = DOIServiceFactory.getDOIService();
+
+
     }
 
     /**
