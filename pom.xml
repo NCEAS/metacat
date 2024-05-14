@@ -477,5 +477,10 @@
             <artifactId>commons-io</artifactId>
             <version>2.9.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.dataone</groupId>
+            <artifactId>hashstore</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>
