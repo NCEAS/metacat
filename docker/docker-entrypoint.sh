@@ -93,7 +93,8 @@ configMetacatUi() {
         echo "  root: \"/metacatui\","
         echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
         echo "  baseUrl: \"${PROTOCOL}://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\","
-        echo "  d1CNBaseUrl: \"${METACAT_DATAONE_CN_URL%"cn"}\""
+        echo "  d1CNBaseUrl: \"${METACAT_DATAONE_CN_URL%"cn"}\"",
+        echo "  nodeId: \"${METACAT_NODE_ID:-urn:node:METACAT1}\""
         echo '}'
     } > "${UI_HOME}"/config/config.js
 

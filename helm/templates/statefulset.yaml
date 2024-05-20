@@ -120,6 +120,8 @@ spec:
               value: {{ index .Values.metacat "application.context" }}
             - name: METACAT_DATAONE_CN_URL
               value: {{ index .Values.metacat "D1Client.CN_URL" }}
+            - name: METACAT_NODE_ID
+              value: {{ index .Values.metacat "dataone.nodeId" }}
             - name: TOMCAT_MEM_MIN
               value: {{ .Values.tomcat.heapMemory.min }}
             - name: TOMCAT_MEM_MAX
