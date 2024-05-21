@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat.admin;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.NetworkUtil;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.UtilException;
 import org.junit.After;
@@ -13,6 +14,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import javax.servlet.http.HttpServletRequest;
 import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,10 +26,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 public class PropertiesAdminTest {
 
@@ -55,10 +60,13 @@ public class PropertiesAdminTest {
     private final String MC_IDX_TEST_CONTEXT = "metacat-index-test-context";
     private final String TEST_DEPLOY_DIR = "test/resources/edu/ucsb/nceas/metacat/admin";
     private String originalWebXml;
+    private Properties mnUrlProperties;
+
+    @Rule
+    public TemporaryFolder sitePropsTempFolder = new TemporaryFolder();
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
-    private Properties mnUrlProperties;
 
     @Before
     public void setUp() {
@@ -105,10 +113,6 @@ public class PropertiesAdminTest {
         }
     }
 
-    /**
-     * Test the setMNBaseURL method
-     * @throws Exception
-     */
     @Test
     public void testSetMNBaseURL() throws Exception {
 
@@ -206,6 +210,95 @@ public class PropertiesAdminTest {
             assertFalse(
                 "Expected false, since 'application.deployDir' = " + deployDir,
                 PropertiesAdmin.getInstance().isIndexerCodeployed());
+        }
+    }
+
+    @Test
+    public void testValidateOptions() throws Exception {
+
+        Vector<String> result;
+        final String dbErrString = "DATABASE ERROR!";
+        final String deployDir = tempFolder.getRoot().getAbsolutePath();
+        final String validSitePropsDir = sitePropsTempFolder.getRoot().getAbsolutePath();;
+
+        HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+
+        try (MockedStatic<DBAdmin> ignoredDBA = Mockito.mockStatic(DBAdmin.class)) {
+            DBAdmin mockDBAdmin = Mockito.mock(DBAdmin.class);
+            when(DBAdmin.getInstance()).thenReturn(mockDBAdmin);
+
+            try (MockedStatic<SystemUtil> ignoredSysUtil = Mockito.mockStatic(SystemUtil.class)) {
+                when(SystemUtil.discoverDeployDir(any(HttpServletRequest.class)))
+                    .thenReturn(deployDir);
+
+                // database pass; Site Props location pass
+                when(mockDBAdmin.validateDBConnectivity(any(), any(), any(), any()))
+                    .thenReturn(null);
+                when(mockRequest.getParameter("application.sitePropertiesDir"))
+                    .thenReturn(validSitePropsDir);
+                result = PropertiesAdmin.getInstance().validateOptions(mockRequest);
+                assertTrue("Expected validateOptions to return an empty vector. Got: " + result,
+                           result.isEmpty());
+
+                // database pass; adjacent Site Props location pass
+                String okSitePropsDir = deployDir.substring(0, deployDir.lastIndexOf('/'));
+                when(mockRequest.getParameter("application.sitePropertiesDir"))
+                    .thenReturn(okSitePropsDir);
+                result = PropertiesAdmin.getInstance().validateOptions(mockRequest);
+                assertTrue("Expected validateOptions to return an empty vector. Got: " + result,
+                           result.isEmpty());
+
+                // database pass; Site Props location fail
+                when(mockRequest.getParameter("application.sitePropertiesDir"))
+                    .thenReturn(deployDir);
+                result = PropertiesAdmin.getInstance().validateOptions(mockRequest);
+                assertFalse("Expected validateOptions to return an error. Got: " + result,
+                            result.isEmpty());
+                assertEquals("Expected only one error.", 1, result.size());
+                String errors = result.get(0);
+                final String errSubstring = "must not be inside the application directory";
+                assertTrue(
+                    "Expected error substring " + errSubstring + ". Got: " + errors,
+                    errors.contains(errSubstring));
+
+                when(mockRequest.getParameter("application.sitePropertiesDir"))
+                    .thenReturn("/adjacent/but/non/existent");
+                result = PropertiesAdmin.getInstance().validateOptions(mockRequest);
+                assertFalse("Expected validateOptions to return an error. Got: " + result,
+                            result.isEmpty());
+                assertEquals("Expected only one error.", 1, result.size());
+                errors = result.get(0);
+                final String errMissingSubstring = "path does not exist";
+                assertTrue(
+                    "Expected error substring " + errMissingSubstring + ". Got: " + errors,
+                    errors.contains(errMissingSubstring));
+
+                // database fail; Site Props location pass
+                when(mockDBAdmin.validateDBConnectivity(any(), any(), any(), any()))
+                    .thenReturn(dbErrString);
+                when(mockRequest.getParameter("application.sitePropertiesDir"))
+                    .thenReturn(validSitePropsDir);
+                result = PropertiesAdmin.getInstance().validateOptions(mockRequest);
+                assertFalse("Expected validateOptions to return an error. Got: " + result,
+                            result.isEmpty());
+                assertEquals("Expected only one error.", 1, result.size());
+                assertEquals(dbErrString, result.get(0));
+
+
+                // database fail; Site Props location fail
+                when(mockDBAdmin.validateDBConnectivity(any(), any(), any(), any()))
+                    .thenReturn(dbErrString);
+                when(mockRequest.getParameter("application.sitePropertiesDir"))
+                    .thenReturn(deployDir);
+                result = PropertiesAdmin.getInstance().validateOptions(mockRequest);
+                assertFalse("Expected validateOptions to return an error. Got: " + result,
+                            result.isEmpty());
+                assertEquals("Expected 2 errors.", 2, result.size());
+                assertEquals(dbErrString, result.get(0));
+                assertTrue(
+                    "Expected error substring " + errSubstring + ". Got: " + result.get(1),
+                    result.get(1).contains(errSubstring));
+            }
         }
     }
 }
