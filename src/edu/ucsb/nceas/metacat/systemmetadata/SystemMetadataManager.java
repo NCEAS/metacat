@@ -191,24 +191,24 @@ public class SystemMetadataManager {
         if (sysmeta != null) {
             Identifier pid = sysmeta.getIdentifier();
             if (pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
-                try {
-                    //Check if there is another thread is storing the system metadata for the same
-                    //pid. If not, secure the lock; otherwise wait until the lock is available.
-                    synchronized (lockedIds) {
-                        while (lockedIds.contains(pid.getValue())) {
-                            logMetacat.info("SystemMetadataManager.store - waiting for the lock "
-                                            + " to store system metadata for " + pid.getValue());
-                            try {
-                                lockedIds.wait(TIME_OUT_MILLISEC);
-                            } catch (InterruptedException e) {
-                                logMetacat.info("SystemMetadataManager.store - storing system"
-                                                + " metadata to store: " + pid.getValue()
-                                                + " the lock waiting was interrupted "
-                                                + e.getMessage());
-                            }
+                //Check if there is another thread is storing the system metadata for the same
+                //pid. If not, secure the lock; otherwise wait until the lock is available.
+                synchronized (lockedIds) {
+                    while (lockedIds.contains(pid.getValue())) {
+                        logMetacat.info("SystemMetadataManager.store - waiting for the lock "
+                                        + " to store system metadata for " + pid.getValue());
+                        try {
+                            lockedIds.wait(TIME_OUT_MILLISEC);
+                        } catch (InterruptedException e) {
+                            logMetacat.info("SystemMetadataManager.store - storing system"
+                                            + " metadata to store: " + pid.getValue()
+                                            + " the lock waiting was interrupted "
+                                            + e.getMessage());
                         }
-                        lockedIds.add(pid.getValue());
                     }
+                    lockedIds.add(pid.getValue());
+                }
+                try {
                     //Check if the system metadata is based on the latest version
                     try {
                         if (sysMetaCheck == SysMetaVersion.CHECKED) {
