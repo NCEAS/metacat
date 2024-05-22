@@ -1,7 +1,10 @@
+##
+## EXAMPLE FILE FROM KNB INSTALLATION, FOR REFERENCE ONLY
+##
 ## override values.yaml with values to use for running knb metacat instance on the NCEAS dev cluster
 ##
-## example:
-##    helm install my-release ./helm -f ./helm/values-dev-cluster-knb.yaml
+## e.g.:
+##    helm install myknbreleasename ./helm -f ./helm/examples/values-dev-cluster-knb-example.yaml
 ##
 ## see values.yaml for full documentation on the following parameters
 ##

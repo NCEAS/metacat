@@ -53,7 +53,8 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 Starting in the root directory of the `metacat` repo:
 
 1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the
-   contents of the values overlay files (like [./values-dev-cluster.yaml](./values-dev-cluster.yaml)
+   contents of the values overlay files (like
+   [values-dev-cluster-example.yaml](./examples/values-dev-cluster-example.yaml)
    , for example), to see which settings typically need to be changed.
 
 
@@ -1007,8 +1008,8 @@ https://knb.ecoinformatics.org, to run on our development Kubernetes cluster, he
    > to be overridden for memory requirements, disk sizes etc. on a production system.
 
    Create a new file that contains the values you wish to override. As an example, for the values
-   that were overridden for the KNB installation, see the [values-dev-cluster-knb.yaml
-   file](./values-dev-cluster-knb.yaml).
+   that were overridden for the KNB installation, see the [values-dev-cluster-knb-example.yaml
+   file](./examples/values-dev-cluster-knb-example.yaml).
 
 7. At this point, you should be able to `helm install` and debug any startup and configuration
    issues.

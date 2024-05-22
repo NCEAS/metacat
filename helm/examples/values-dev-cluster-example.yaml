@@ -1,7 +1,7 @@
-## override values.yaml with values to use for running tests on the NCEAS dev cluster
+## override values.yaml with values to use for running on the NCEAS dev cluster
 ##
 ## example:
-##    helm install my-release ./helm -f ./helm/values-dev-cluster.yaml
+##    helm install my-release ./helm -f ./helm/examples/values-dev-cluster-example.yaml
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
