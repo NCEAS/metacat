@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
 
 import org.dataone.hashstore.ObjectMetadata;
+import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.NotFound;
 
 
 /**
@@ -57,7 +59,7 @@ public interface Storage {
      *                                    invalid
      * @throws IOException                I/O Error when writing file, generating checksums
      *                                    and/or moving file
-     * @throws PidRefsFileExistsException If a pid refs file already exists, meaning the pid is
+     * @throws InvalidRequest             If a pid refs file already exists, meaning the pid is
      *                                    already referencing a file.
      * @throws RuntimeException           Thrown when there is an issue with permissions,
      *                                    illegal arguments (ex. empty pid) or null pointers
@@ -66,7 +68,7 @@ public interface Storage {
     public ObjectMetadata storeObject(
             InputStream object, String pid, String additionalAlgorithm, String checksum,
             String checksumAlgorithm, long objSize
-    ) throws NoSuchAlgorithmException, IOException, PidRefsFileExistsException,
+    ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
 
     /**
@@ -75,7 +77,7 @@ public interface Storage {
      *      Store an object only without reference files.
      */
     public ObjectMetadata storeObject(InputStream object) throws NoSuchAlgorithmException,
-            IOException, PidRefsFileExistsException, RuntimeException, InterruptedException;
+            IOException, InvalidRequest, RuntimeException, InterruptedException;
 
     /**
      * @see #storeObject(InputStream, String, String, String, String, long)
@@ -85,7 +87,7 @@ public interface Storage {
     public ObjectMetadata storeObject(
             InputStream object, String pid, String checksum, String checksumAlgorithm,
             long objSize
-    ) throws NoSuchAlgorithmException, IOException, PidRefsFileExistsException,
+    ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
 
     /**
@@ -95,7 +97,7 @@ public interface Storage {
      */
     public ObjectMetadata storeObject(
             InputStream object, String pid, String checksum, String checksumAlgorithm
-    ) throws NoSuchAlgorithmException, IOException, PidRefsFileExistsException,
+    ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
 
     /**
@@ -105,7 +107,7 @@ public interface Storage {
      */
     public ObjectMetadata storeObject(
             InputStream object, String pid, String additionalAlgorithm
-    ) throws NoSuchAlgorithmException, IOException, PidRefsFileExistsException,
+    ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
 
     /**
@@ -114,7 +116,7 @@ public interface Storage {
      *      Store an object and validate its size.
      */
     public ObjectMetadata storeObject(InputStream object, String pid, long objSize)
-            throws NoSuchAlgorithmException, IOException, PidRefsFileExistsException,
+            throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
 
     /**
@@ -125,7 +127,7 @@ public interface Storage {
      * @param pid Authority-based identifier
      * @param cid Content-identifier (hash identifier)
      * @throws IOException                Failure to create tmp file
-     * @throws PidRefsFileExistsException When pid refs file already exists
+     * @throws InvalidRequest             When pid refs file already exists
      * @throws NoSuchAlgorithmException   When algorithm used to calculate pid refs address
      *                                    does not exist
      * @throws FileNotFoundException      If refs file is missing during verification
@@ -133,7 +135,7 @@ public interface Storage {
      *                                    interrupted
      */
     public void tagObject(String pid, String cid) throws IOException,
-            PidRefsFileExistsException, NoSuchAlgorithmException, FileNotFoundException,
+            InvalidRequest, NoSuchAlgorithmException, FileNotFoundException,
             InterruptedException;
 
     /**
@@ -161,13 +163,9 @@ public interface Storage {
      *                                           file does not exist
      * @throws OrphanRefsFilesException          pid and cid refs file found, but object does
      *                                           not exist
-     * @throws OrphanPidRefsFileException        When pid refs file exists and the cid found
-     *                                           inside does not exist.
-     * @throws PidNotFoundInCidRefsFileException When pid and cid ref files exists but the
-     *                                           expected pid is not found in the cid refs file.
+     * @throws NotFound                          Something not found
      */
-    public String findObject(String pid) throws NoSuchAlgorithmException, IOException,
-            OrphanPidRefsFileException, PidNotFoundInCidRefsFileException;
+    public String findObject(String pid) throws NoSuchAlgorithmException, IOException, NotFound;
 
     /**
      * Adds/updates metadata (ex. `sysmeta`) to the HashStore by using a given InputStream, a
