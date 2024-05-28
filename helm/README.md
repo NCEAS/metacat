@@ -534,10 +534,10 @@ configure certificates and settings for both these roles.
 #### Install the CA Chain
 
 1. Create the Kubernetes Secret (named `d1-ca-chain`) to hold the ca chain
-   (e.g. assuming it's in a file named `DataONECAChain.crt`):
+   (e.g. assuming it's in a file named `DataONEProdCAChain.crt`):
 
     ```shell
-    kubectl create secret generic d1-ca-chain --from-file=ca.crt=DataONECAChain.crt
+    kubectl create secret generic d1-ca-chain --from-file=ca.crt=DataONEProdCAChain.crt
     # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
     ```
 
