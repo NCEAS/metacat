@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
+import org.dataone.service.types.v1.Identifier;
 
 
 /**
@@ -66,7 +67,7 @@ public interface Storage {
      * @throws InterruptedException       When tagging pid and cid process is interrupted
      */
     public ObjectMetadata storeObject(
-            InputStream object, String pid, String additionalAlgorithm, String checksum,
+            InputStream object, Identifier pid, String additionalAlgorithm, String checksum,
             String checksumAlgorithm, long objSize
     ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
@@ -85,7 +86,7 @@ public interface Storage {
      *      Store an object and validate the given checksum & checksum algorithm and size.
      */
     public ObjectMetadata storeObject(
-            InputStream object, String pid, String checksum, String checksumAlgorithm,
+            InputStream object, Identifier pid, String checksum, String checksumAlgorithm,
             long objSize
     ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
@@ -96,7 +97,7 @@ public interface Storage {
      *      Store an object and validate the given checksum & checksum algorithm.
      */
     public ObjectMetadata storeObject(
-            InputStream object, String pid, String checksum, String checksumAlgorithm
+            InputStream object, Identifier pid, String checksum, String checksumAlgorithm
     ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
 
@@ -106,7 +107,7 @@ public interface Storage {
      *      Store an object and generate an additional algorithm in hex digests.
      */
     public ObjectMetadata storeObject(
-            InputStream object, String pid, String additionalAlgorithm
+            InputStream object, Identifier pid, String additionalAlgorithm
     ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
 
@@ -115,7 +116,7 @@ public interface Storage {
      * 
      *      Store an object and validate its size.
      */
-    public ObjectMetadata storeObject(InputStream object, String pid, long objSize)
+    public ObjectMetadata storeObject(InputStream object, Identifier pid, long objSize)
             throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException;
 
@@ -134,7 +135,7 @@ public interface Storage {
      * @throws InterruptedException       When tagObject is waiting to execute but is
      *                                    interrupted
      */
-    public void tagObject(String pid, String cid) throws IOException,
+    public void tagObject(Identifier pid, String cid) throws IOException,
             InvalidRequest, NoSuchAlgorithmException, FileNotFoundException,
             InterruptedException;
 
@@ -165,7 +166,7 @@ public interface Storage {
      *                                           not exist
      * @throws NotFound                          Something not found
      */
-    public String findObject(String pid) throws NoSuchAlgorithmException, IOException, NotFound;
+    public String findObject(Identifier pid) throws NoSuchAlgorithmException, IOException, NotFound;
 
     /**
      * Adds/updates metadata (ex. `sysmeta`) to the HashStore by using a given InputStream, a
@@ -189,7 +190,7 @@ public interface Storage {
      * @throws NoSuchAlgorithmException Algorithm used to calculate permanent address is not
      *                                  supported
      */
-    public String storeMetadata(InputStream metadata, String pid, String formatId)
+    public String storeMetadata(InputStream metadata, Identifier pid, String formatId)
             throws IOException, IllegalArgumentException, FileNotFoundException,
             InterruptedException, NoSuchAlgorithmException;
 
@@ -199,7 +200,7 @@ public interface Storage {
      *      If the '(InputStream metadata, String pid)' signature is used, the metadata format
      *      stored will default to `sysmeta`.
      */
-    public String storeMetadata(InputStream metadata, String pid) throws IOException,
+    public String storeMetadata(InputStream metadata, Identifier pid) throws IOException,
             IllegalArgumentException, FileNotFoundException, InterruptedException,
             NoSuchAlgorithmException;
 
@@ -214,7 +215,7 @@ public interface Storage {
      * @throws NoSuchAlgorithmException When algorithm used to calculate object address is not
      *                                  supported
      */
-    public InputStream retrieveObject(String pid) throws IllegalArgumentException,
+    public InputStream retrieveObject(Identifier pid) throws IllegalArgumentException,
             FileNotFoundException, IOException, NoSuchAlgorithmException;
 
     /**
@@ -230,7 +231,7 @@ public interface Storage {
      * @throws NoSuchAlgorithmException When algorithm used to calculate metadata address is not
      *                                  supported
      */
-    public InputStream retrieveMetadata(String pid, String formatId)
+    public InputStream retrieveMetadata(Identifier pid, String formatId)
             throws IllegalArgumentException, FileNotFoundException, IOException,
             NoSuchAlgorithmException;
 
@@ -240,7 +241,7 @@ public interface Storage {
      *      If `retrieveMetadata` is called with signature (String pid), the metadata
      *      document retrieved will be the given pid's 'sysmeta'
      */
-    public InputStream retrieveMetadata(String pid) throws IllegalArgumentException,
+    public InputStream retrieveMetadata(Identifier pid) throws IllegalArgumentException,
             FileNotFoundException, IOException, NoSuchAlgorithmException;
 
     /**
@@ -273,7 +274,7 @@ public interface Storage {
      * @param pid Authority-based identifier
      * @see #deleteObject(String, String) for more details.
      */
-    public void deleteObject(String pid) throws IllegalArgumentException, IOException,
+    public void deleteObject(Identifier pid) throws IllegalArgumentException, IOException,
             NoSuchAlgorithmException, InterruptedException;
 
     /**
@@ -287,7 +288,7 @@ public interface Storage {
      * @throws NoSuchAlgorithmException When algorithm used to calculate object address is not
      *                                  supported
      */
-    public void deleteMetadata(String pid, String formatId) throws IllegalArgumentException,
+    public void deleteMetadata(Identifier pid, String formatId) throws IllegalArgumentException,
             IOException, NoSuchAlgorithmException;
 
     /**
@@ -299,7 +300,7 @@ public interface Storage {
      * @throws NoSuchAlgorithmException When algorithm used to calculate object address is not
      *                                  supported
      */
-    public void deleteMetadata(String pid) throws IllegalArgumentException, IOException,
+    public void deleteMetadata(Identifier pid) throws IllegalArgumentException, IOException,
             NoSuchAlgorithmException;
 
     /**
@@ -315,7 +316,7 @@ public interface Storage {
      * @throws NoSuchAlgorithmException When algorithm used to calculate object address is not
      *                                  supported
      */
-    public String getHexDigest(String pid, String algorithm) throws IllegalArgumentException,
+    public String getHexDigest(Identifier pid, String algorithm) throws IllegalArgumentException,
             FileNotFoundException, IOException, NoSuchAlgorithmException;
 
 }
