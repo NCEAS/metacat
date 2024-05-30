@@ -247,7 +247,6 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | ------------------------------------ | ------------------------------------------------------------- | ---------------- |
 | `ingress.enabled`                    | Enable or disable the ingress                                 | `true`           |
 | `ingress.className`                  | ClassName of the ingress provider in your cluster             | `traefik`        |
-| `ingress.hosts`                      | A collection of rules mapping different hosts to the backend. | `[]`             |
 | `ingress.annotations`                | Annotations for the ingress                                   | `{}`             |
 | `ingress.tls`                        | The TLS configuration                                         | `[]`             |
 | `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain        | `d1-ca-chain`    |
