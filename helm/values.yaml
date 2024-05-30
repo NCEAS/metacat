@@ -665,26 +665,7 @@ ingress:
   ##        --namespace ingress-nginx --create-namespace      \
   ##        --set controller.allowSnippetAnnotations=true
   ##
-  className: "traefik"
-
-  ## @param ingress.hosts [array] A collection of rules mapping different hosts to the backend.
-  ##        host: The external hostname exposed by the ingress and seen by clients,
-  ##              that is mapped to this ingress via DNS
-  ##        paths: A collection of rules mapping different paths on this host
-  ##              to the backend. For each host, provide mappings to match incoming request paths:
-  ##              path:     the url path used to identify the mapping
-  ##              pathType: determines the interpretation of the Path-matching:
-  ##                        Exact: Matches the URL path exactly.
-  ##                        Prefix: Requires URL to begin with the pattern, not including substrings
-  ##                        (e.g. /foo/bar matches /foo/bar/baz, but does not match /foo/barbaz).
-  ##
-  ## NOTE: All paths will be mapped to port 8080 of the `metacat-hl` headless service
-  ##
-  hosts:
-    - host: *external-hostname
-      paths:
-        - path: "/"
-          pathType: Prefix
+  className: "nginx"
 
   ## @param ingress.annotations Annotations for the ingress
   ##
