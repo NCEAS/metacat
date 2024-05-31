@@ -165,8 +165,10 @@ public interface Storage {
      * @throws OrphanRefsFilesException          pid and cid refs file found, but object does
      *                                           not exist
      * @throws NotFound                          Something not found
+     * @throws InvalidRequest                    An invalid Request
      */
-    public String findObject(Identifier pid) throws NoSuchAlgorithmException, IOException, NotFound;
+    public String findObject(Identifier pid) throws NoSuchAlgorithmException, IOException,
+                                                    NotFound, InvalidRequest;
 
     /**
      * Adds/updates metadata (ex. `sysmeta`) to the HashStore by using a given InputStream, a

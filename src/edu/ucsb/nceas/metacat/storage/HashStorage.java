@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
 
+import org.dataone.hashstore.HashStore;
 import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
@@ -14,20 +15,52 @@ import org.dataone.service.types.v1.Identifier;
  * The HashStore implementation of the Storage interface.
  */
 public class HashStorage implements Storage {
+    private static HashStorage hashStorage;
+    private HashStore hashStore;
+
+    /**
+     * Private constructor
+     */
+    private HashStorage() {
+        
+    }
+
+    /**
+     * Get the instance of the class through the singleton pattern
+     * @return the instance of the class
+     */
+    public static HashStorage getInstance() {
+        if(hashStorage == null) {
+            synchronized(HashStorage.class) {
+                if (hashStorage == null) {
+                    hashStorage = new HashStorage();
+                }
+             }
+        }
+        return hashStorage;
+    }
 
     @Override
     public ObjectMetadata storeObject(InputStream object, Identifier pid, String additionalAlgorithm,
                                       String checksum, String checksumAlgorithm, long objSize)
                                      throws NoSuchAlgorithmException, IOException, InvalidRequest,
                                      RuntimeException, InterruptedException {
-        return null;
+        if (pid != null) {
+            return hashStore.storeObject(object, pid.getValue(), additionalAlgorithm, checksum,
+                    checksumAlgorithm, objSize);
+        } else {
+            throw new InvalidRequest("0000", "The stored pid should not be null in the"
+                                                + " storeObject method.");
+        }
     }
 
 
     @Override
     public ObjectMetadata storeObject(InputStream object) throws NoSuchAlgorithmException,
             IOException, InvalidRequest, RuntimeException, InterruptedException {
-        return null;
+        Identifier pid = new Identifier();
+        pid.setValue("HashStoreNoPid");
+        return storeObject(object, pid, null, null, null, -1);
     }
 
     @Override
@@ -35,107 +68,164 @@ public class HashStorage implements Storage {
                                       String checksumAlgorithm, long objSize)
                                  throws NoSuchAlgorithmException, IOException, InvalidRequest,
                                          RuntimeException, InterruptedException {
-        return null;
+        return storeObject(object, pid, null, checksum, checksumAlgorithm, objSize);
     }
 
     @Override
     public ObjectMetadata storeObject(InputStream object, Identifier pid, String checksum,
                                      String checksumAlgorithm) throws NoSuchAlgorithmException,
                            IOException, InvalidRequest,RuntimeException, InterruptedException {
-        return null;
+        return storeObject(object, pid, null, checksum, checksumAlgorithm, -1);
     }
 
     @Override
     public ObjectMetadata storeObject(InputStream object, Identifier pid, String additionalAlgorithm)
                 throws NoSuchAlgorithmException, IOException, InvalidRequest,
                        RuntimeException, InterruptedException {
-        return null;
+        return storeObject(object, pid, additionalAlgorithm, null, null, -1);
     }
 
     @Override
     public ObjectMetadata storeObject(InputStream object, Identifier pid, long objSize)
             throws NoSuchAlgorithmException, IOException, InvalidRequest,
             RuntimeException, InterruptedException {
-        return null;
+        return storeObject(object, pid, null, null, null, objSize);
     }
 
     @Override
     public void tagObject(Identifier pid, String cid) throws IOException,
             InvalidRequest, NoSuchAlgorithmException, FileNotFoundException, InterruptedException {
-        
+        if (pid != null) {
+            hashStore.tagObject(pid.getValue(), cid);
+        } else {
+            throw new InvalidRequest("0000", "The stored pid should not be null in"
+                                                + " the tagObject method.");
+        }
     }
 
     @Override
     public boolean verifyObject( ObjectMetadata objectInfo, String checksum,
             String checksumAlgorithm, long objSize) throws IllegalArgumentException {
-        return false;
+        return hashStore.verifyObject(objectInfo, checksum, checksumAlgorithm, objSize);
     }
 
     @Override
-    public String findObject(Identifier pid) throws NoSuchAlgorithmException, IOException, NotFound {
-        return null;
+    public String findObject(Identifier pid) throws NoSuchAlgorithmException, IOException,
+                                                    NotFound, InvalidRequest {
+        if (pid != null) {
+            return hashStore.findObject(pid.getValue());
+        } else {
+            throw new InvalidRequest("0000", "The stored pid should not be null in the"
+                                                + " findObject method.");
+        }
     }
 
     @Override
     public String storeMetadata(InputStream metadata, Identifier pid, String formatId)
             throws IOException, IllegalArgumentException, FileNotFoundException,
             InterruptedException, NoSuchAlgorithmException {
-        return null;
+        if (pid != null) {
+            return hashStore.storeMetadata(metadata, pid.getValue(), formatId);
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " storeMetadata method.");
+        }
     }
 
     @Override
     public String storeMetadata(InputStream metadata, Identifier pid) throws IOException,
             IllegalArgumentException, FileNotFoundException, InterruptedException,
             NoSuchAlgorithmException {
-        return null;
+        if (pid != null) {
+            return hashStore.storeMetadata(metadata, pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " storeMetadata method.");
+        }
     }
 
     @Override
     public InputStream retrieveObject(Identifier pid) throws IllegalArgumentException,
             FileNotFoundException, IOException, NoSuchAlgorithmException {
-        return null;
+        if (pid != null) {
+            return hashStore.retrieveObject(pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " retrieveObject method.");
+        }
     }
 
     @Override
     public InputStream retrieveMetadata(Identifier pid, String formatId)
             throws IllegalArgumentException, FileNotFoundException, IOException,
             NoSuchAlgorithmException {
-        return null;
+        if (pid != null) {
+            return hashStore.retrieveMetadata(pid.getValue(), formatId);
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " retrieveMetadata method.");
+        }
     }
 
     @Override
     public InputStream retrieveMetadata(Identifier pid) throws IllegalArgumentException,
             FileNotFoundException, IOException, NoSuchAlgorithmException {
-        return null;
+        if (pid != null) {
+            return hashStore.retrieveMetadata(pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " retrieveMetadata method.");
+        }
     }
 
     @Override
     public void deleteObject(String idType, String id) throws IllegalArgumentException,
             IOException, NoSuchAlgorithmException, InterruptedException {
-        
+        hashStore.deleteObject(idType, id);
     }
 
     @Override
     public void deleteObject(Identifier pid) throws IllegalArgumentException, IOException,
             NoSuchAlgorithmException, InterruptedException {
-        
+        if (pid != null) {
+            hashStore.deleteObject(pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " deleteObject method.");
+        }
     }
 
     @Override
     public void deleteMetadata(Identifier pid, String formatId) throws IllegalArgumentException,
             IOException, NoSuchAlgorithmException {
-        
+        if (pid != null) {
+            hashStore.deleteMetadata(pid.getValue(), formatId);
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " deleteMetadata method.");
+        }
     }
 
     @Override
     public void deleteMetadata(Identifier pid) throws IllegalArgumentException, IOException,
             NoSuchAlgorithmException {
+        if (pid != null) {
+            hashStore.deleteMetadata(pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " deleteMetadata method.");
+        }
     }
 
     @Override
     public String getHexDigest(Identifier pid, String algorithm) throws IllegalArgumentException,
             FileNotFoundException, IOException, NoSuchAlgorithmException {
-        return null;
+        if (pid != null) {
+            return hashStore.getHexDigest(pid.getValue(), algorithm);
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " getHexDigest method.");
+        }
     }
 
 }
