@@ -28,10 +28,16 @@ icon: https://camo.githubusercontent.com/a41e704e6cbd198afed0a892f2dccfc43aef29f
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "3.1.0-SNAPSHOT"
+appVersion: "3.0.0"
 
 # Chart dependencies - also see https://github.com/bitnami/charts/tree/main/bitnami
 dependencies:
+  - name: metacatui
+    version: 0.4.0
+    ## NOT YET AVAILABLE IN CHARTS REPO
+    # repository: oci://ghcr.io/nceas/charts
+    condition: metacatui.enabled
+
   - name: postgresql
     repository: https://charts.bitnami.com/bitnami
     # @param version  --  the bitnami postgresql CHART version, NOT the database version

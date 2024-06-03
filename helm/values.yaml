@@ -95,6 +95,16 @@ global:
   ##
   dataone-indexer.enabled: true
 
+
+## @section Metacatui Application-Specific Properties
+##
+metacatui:
+  ## @param global.metacatui.enabled Enable the metacatui sub-chart
+  ## set to false if you want to connect to your own existing metacatui deployment
+  ##
+  enabled: false
+
+
 ## @section Metacat Application-Specific Properties
 ##
 ## The metacat section can contain any properties that metacat would expect to find in its
