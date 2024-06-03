@@ -4,36 +4,91 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
+import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.hashstore.HashStore;
+import org.dataone.hashstore.HashStoreFactory;
 import org.dataone.hashstore.ObjectMetadata;
+import org.dataone.hashstore.exceptions.HashStoreFactoryException;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
+
+import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
  * The HashStore implementation of the Storage interface.
  */
 public class HashStorage implements Storage {
+    private static Log logMetacat = LogFactory.getLog(HashStorage.class);
     private static HashStorage hashStorage;
     private HashStore hashStore;
 
     /**
      * Private constructor
+     * @throws PropertyNotFoundException
+     * @throws IOException
+     * @throws HashStoreFactoryException
      */
-    private HashStorage() {
-        
+    private HashStorage() throws PropertyNotFoundException, HashStoreFactoryException, IOException {
+        String className = PropertyService.getProperty("storage.className");
+        String rootPath = PropertyService.getProperty("storage.hashstore.rootDirectory");
+        String directoryDepth = "3";
+        try {
+            directoryDepth = PropertyService.getProperty("storage.hashstore.directory.depth");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
+                            + directoryDepth);
+        }
+        String directoryNameWidth = "2";
+        try {
+            directoryNameWidth = PropertyService.getProperty("storage.hashstore.directory.width");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
+                            + directoryNameWidth);
+        }
+        String fileNameAlgorithm = "SHA-256";
+        try {
+            fileNameAlgorithm = PropertyService.getProperty("storage.hashstore.fileNameAlgorithm");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
+                            + fileNameAlgorithm);
+        }
+        String defaultNamespace = "https://ns.dataone.org/service/types/v2.0#SystemMetadata";
+        try {
+            defaultNamespace = PropertyService.getProperty("storage.hashstore.defaultNamespace");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
+                            + defaultNamespace);
+        }
+        Properties storeProperties = new Properties();
+        storeProperties.setProperty("storePath", rootPath);
+        storeProperties.setProperty("storeDepth", directoryDepth);
+        storeProperties.setProperty("storeWidth", directoryNameWidth);
+        storeProperties.setProperty("storeAlgorithm", fileNameAlgorithm);
+        storeProperties.setProperty("storeMetadataNamespace", defaultNamespace);
+        hashStore = HashStoreFactory.getHashStore(className, storeProperties);
     }
 
     /**
      * Get the instance of the class through the singleton pattern
      * @return the instance of the class
+     * @throws ServiceFailure
      */
-    public static HashStorage getInstance() {
+    public static HashStorage getInstance() throws ServiceFailure {
         if(hashStorage == null) {
             synchronized(HashStorage.class) {
                 if (hashStorage == null) {
-                    hashStorage = new HashStorage();
+                    try {
+                        hashStorage = new HashStorage();
+                    } catch (PropertyNotFoundException | IOException e) {
+                        throw new ServiceFailure("0000", "HashStore initialization failed since "
+                                                + e.getMessage());
+                    }
                 }
              }
         }
