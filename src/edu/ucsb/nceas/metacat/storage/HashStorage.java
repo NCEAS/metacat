@@ -18,6 +18,7 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -30,12 +31,13 @@ public class HashStorage implements Storage {
 
     /**
      * Private constructor
+     * @param className the name of the implementation class
      * @throws PropertyNotFoundException
      * @throws IOException
      * @throws HashStoreFactoryException
      */
-    private HashStorage() throws PropertyNotFoundException, HashStoreFactoryException, IOException {
-        String className = PropertyService.getProperty("storage.className");
+    private HashStorage(String className) throws PropertyNotFoundException,
+                                                           HashStoreFactoryException, IOException {
         String rootPath = PropertyService.getProperty("storage.hashstore.rootDirectory");
         String directoryDepth = "3";
         try {
@@ -76,18 +78,21 @@ public class HashStorage implements Storage {
 
     /**
      * Get the instance of the class through the singleton pattern
+     * @param className the name of the implementation class
      * @return the instance of the class
-     * @throws ServiceFailure
+     * @throws ServiceException
+     * @throws PropertyNotFoundException
      */
-    public static HashStorage getInstance() throws ServiceFailure {
+    public static HashStorage getInstance(String className) throws ServiceException,
+                                                                    PropertyNotFoundException {
         if(hashStorage == null) {
             synchronized(HashStorage.class) {
                 if (hashStorage == null) {
                     try {
-                        hashStorage = new HashStorage();
-                    } catch (PropertyNotFoundException | IOException e) {
-                        throw new ServiceFailure("0000", "HashStore initialization failed since "
-                                                + e.getMessage());
+                        hashStorage = new HashStorage(className);
+                    } catch (IOException e) {
+                        throw new ServiceException("HashStore initialization failed since "
+                                                   + e.getMessage());
                     }
                 }
              }

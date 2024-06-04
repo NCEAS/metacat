@@ -36,6 +36,7 @@ import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.storage.StorageFactory;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
@@ -146,6 +147,9 @@ public class MetacatInitializer implements ServletContextListener{
             if (Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"))) {
                 K8sAdminInitializer.initializeK8sInstance();
             }
+
+            //Initialize the storage system
+            StorageFactory.getStorage();
 
             // register the XML schema service
             ServiceService.registerService("XMLSchemaService", XMLSchemaService.getInstance());
