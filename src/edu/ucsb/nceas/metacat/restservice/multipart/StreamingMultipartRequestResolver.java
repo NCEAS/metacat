@@ -1,23 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2019 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacat.restservice.multipart;
 
 import java.io.ByteArrayInputStream;
@@ -66,18 +46,18 @@ import org.dataone.service.util.TypeMarshaller;
  *
  */
 public class StreamingMultipartRequestResolver extends MultipartRequestResolver {
-    
     public static final String SYSMETA = "sysmeta";
     private static Log log = LogFactory.getLog(StreamingMultipartRequestResolver.class);
     private ServletFileUpload upload;
     private SystemMetadata sysMeta = null;
-    private String defaultAlgorithm = Settings.getConfiguration().getString("multipartresolver.checksum.algorithm.default", "MD5");
     private File tempDir = null;
-    private static boolean deleteOnExit = Settings.getConfiguration().getBoolean("multipart.tempFile.deleteOnExit", false);
-    
+    private static boolean deleteOnExit =
+                    Settings.getConfiguration().getBoolean("multipart.tempFile.deleteOnExit", false);
+
     /**
      * Constructor
-     * @param tmpUploadDir  the directory will temporarily host the stored files from the file parts in the http multiparts request.
+     * @param tmpUploadDir  the directory will temporarily host the stored files from the file parts
+     *                       in the http multiparts request.
      * @param maxUploadSize  the threshold size of files which can be allowed to upload
      */
     public StreamingMultipartRequestResolver(String tmpUploadDir, int maxUploadSize) {
@@ -88,18 +68,20 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         // Set overall request size constraint
         this.upload.setSizeMax(maxUploadSize);
     }
-    
-   
+
     @Override
     /**
      * This method parses the a http request and writes them into the temporary directory as checked files.
      * @param request  the request needs to be resolved
-     * @return multipartRequest with the data structure including form fields and file items. 
+     * @return multipartRequest with the data structure including form fields and file items.
      */
-    public MultipartRequest resolveMultipart(HttpServletRequest request) throws IOException, FileUploadException, InstantiationException, IllegalAccessException, MarshallingException, NoSuchAlgorithmException {
+    public MultipartRequest resolveMultipart(HttpServletRequest request) throws IOException,
+                                FileUploadException, InstantiationException, IllegalAccessException,
+                                                MarshallingException, NoSuchAlgorithmException {
         Map<String, List<String>> mpParams = new HashMap<String, List<String>>();
         Map<String, File> mpFiles = new HashMap<String, File>();
-        MultipartRequestWithSysmeta multipartRequest = new MultipartRequestWithSysmeta(request, mpFiles, mpParams);
+        MultipartRequestWithSysmeta multipartRequest =
+                                        new MultipartRequestWithSysmeta(request, mpFiles, mpParams);
         if (!isMultipartContent(request)) {
             return multipartRequest;
         }
@@ -116,7 +98,8 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                 if (item.isFormField()) {
                     //process form parts
                     String value = Streams.asString(stream);
-                    log.debug("StreamingMultipartRequestResolver.resoloveMulitpart - form field " + name + " with value "+ value + " detected.");
+                    log.debug("StreamingMultipartRequestResolver.resoloveMulitpart - form field "
+                                + name + " with value "+ value + " detected.");
                     if (mpParams.containsKey(name)) {
                         mpParams.get(name).add(value);
                     } else {
@@ -125,23 +108,30 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                         mpParams.put(name, values);
                     }
                 } else {
-                    log.debug("StreamingMultipartRequestResolver.resoloveMulitpart -File field " + name + " with file name " + item.getName() + " detected.");
+                    log.debug("StreamingMultipartRequestResolver.resoloveMulitpart -File field "
+                                    + name + " with file name " + item.getName() + " detected.");
                     // Process the input stream
                     if (name.equals(SYSMETA)) {
-                        //copy the stream to a byte array output stream so we can read it multiple times. Since we don't know it is v1 or v2, we need to try two times.
+                        //copy the stream to a byte array output stream so we can read it multiple
+                        //times. Since we don't know it is v1 or v2, we need to try two times.
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
                         IOUtils.copy(stream, os);
                         byte[] sysmetaBytes = os.toByteArray();
                         os.close();
                         ByteArrayInputStream input = new ByteArrayInputStream(sysmetaBytes);
                         try {
-                            org.dataone.service.types.v2.SystemMetadata sysMeta2 = TypeMarshaller.unmarshalTypeFromStream(org.dataone.service.types.v2.SystemMetadata.class, input);
+                            org.dataone.service.types.v2.SystemMetadata sysMeta2 =
+                                        TypeMarshaller.unmarshalTypeFromStream(
+                                          org.dataone.service.types.v2.SystemMetadata.class, input);
                             sysMeta = sysMeta2;
                         } catch (Exception e) {
                             //Transforming to the v2 systemmeta object failed. Try to transform to v1
                             input.reset();
-                            sysMeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
-                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - the system metadata is v1 for the pid " + sysMeta.getIdentifier().getValue());
+                            sysMeta =
+                                TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
+                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - "
+                                     + "the system metadata is v1 for the pid "
+                                     + sysMeta.getIdentifier().getValue());
                         }
                         if (sysMeta != null && sysMeta.getIdentifier() != null ) {
                             pid = sysMeta.getIdentifier().getValue();
