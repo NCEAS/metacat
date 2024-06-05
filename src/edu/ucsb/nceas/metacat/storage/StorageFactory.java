@@ -17,7 +17,7 @@ public class StorageFactory {
      */
     public static Storage getStorage() throws PropertyNotFoundException, ServiceException {
         String className = PropertyService.getProperty("storage.className");
-        if (className != null && className.startsWith("")) {
+        if (className != null && className.startsWith("org.dataone.hashstore")) {
             return HashStorage.getInstance(className);
         } else {
             throw new ServiceException("StorageFactory.getStorage - Unrecognized the storage class "
