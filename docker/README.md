@@ -23,7 +23,7 @@ metacat distribution associated with a given version, and then building the dock
 that. Starting in the root directory of the "metacat" repo:
 
 ```console
-$ ant distbin
+$ ant clean distbinmc
 
 # ... a very long build process ensues, resulting in a tar.gz file
 #     e.g. metacat-bin-3.0.0.tar.gz
