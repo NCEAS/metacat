@@ -66,18 +66,14 @@ spec:
                 name: {{ $fullName }}-hl
                 port:
                   number: 8080
+          {{- if .Values.global.includeMetacatUi }}
           - path: /
             pathType: Prefix
             backend:
               service:
-              {{- if .Values.metacat.includeMetacatUi }}
-                name: {{ $fullName }}-hl
-                port:
-                  number: 8080
-              {{- else }}
                 name: {{ .Release.Name }}-metacatui
                 port:
                   number: 80
-              {{- end }}
+          {{- end }}
     {{- end }}
 {{- end }}

@@ -90,20 +90,25 @@ global:
   ##
   sharedVolumeSubPath: &sharedVolumeSubPath ""
 
+  ## @param global.includeMetacatUI  Enable or disable the metacatui sub-chart.
+  ## Set to false if you want to connect to your own existing metacatui deployment.
+  ##
+  includeMetacatUi: true
+
   ## @param global.dataone-indexer.enabled Enable the dataone-indexer sub-chart
   ## set to false if you want to connect to your own existing dataone-indexer deployment
   ##
   dataone-indexer.enabled: true
 
 
-## @section Metacatui Application-Specific Properties
+## @section Metacatui Sub-Chart Properties
+## ignored unless global.includeMetacatUi: true
 ##
 metacatui:
-  ## @param global.metacatui.enabled Enable the metacatui sub-chart
-  ## set to false if you want to connect to your own existing metacatui deployment
+  ## appConfig MetacatUI.AppConfig settings that can be overridden. See MetacatUI chart values.yaml.
   ##
-  enabled: false
-
+  appConfig:
+    theme: "knb"
 
 ## @section Metacat Application-Specific Properties
 ##
@@ -123,11 +128,6 @@ metacat:
   ## @param metacat.application.context see global.metacatAppContext
   ##
   application.context: *metacatAppContext
-
-  ## @param metacat.includeMetacatUi Include MetacatUI in the same container as metacat
-  ## A default-skin deployment of MetacatUI will be included in the metacat pod, unless this value
-  ## is set to 'false'.
-  includeMetacatUi: true
 
   ## @param metacat.auth.administrators A semicolon-separated list of admin ORCID iDs
   ## (https://orcid.org), denoting the users who may log into metacat with administrator privileges.
