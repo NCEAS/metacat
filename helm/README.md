@@ -149,13 +149,14 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `global.storageClass`                | default name of the storageClass to use for PVs         | `local-path`                      |
 | `global.ephemeralVolumeStorageClass` | Optional global storageClass override                   | `""`                              |
 | `global.sharedVolumeSubPath`         | The subdirectory of the metacat data volume to mount    | `""`                              |
+| `global.dataone-indexer.enabled`     | enable the dataone-indexer sub-chart                    | `true`                            |
+| `global.includeMetacatUi`            | enable the MetacatUI sub-chart                          | `true`                            |
 
 ### Metacat Application-Specific Properties
 
 | Name                              | Description                                                     | Value               |
 | --------------------------------- | --------------------------------------------------------------- | ------------------- |
 | `metacat.application.context`     | see global.metacatAppContext                                    | `metacat`           |
-| `metacat.includeMetacatUi`        | Include MetacatUI in the same container as metacat              | `true`              |
 | `metacat.auth.administrators`     | A semicolon-separated list of admin ORCID iDs                   | `""`                |
 | `metacat.database.connectionURI`  | postgres database URI, or lave blank to use sub-chart           | `""`                |
 | `metacat.guid.doi.enabled`        | Allow users to publish Digital Object Identifiers at doi.org?   | `true`              |
@@ -295,7 +296,6 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 | Name                                                         | Description                                       | Value                                 |
 | ------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------- |
-| `dataone-indexer.enabled`                                    | enable the dataone-indexer sub-chart              | `true`                                |
 | `dataone-indexer.persistence.subPath`                        | The subdirectory of the volume to mount           | `""`                                  |
 | `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use           | `metacat-rmq-guest`                   |
 | `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password                     | `${RELEASE_NAME}-metacat-secrets`     |
@@ -825,15 +825,9 @@ https://knb.ecoinformatics.org, to run on our development Kubernetes cluster, he
 
 ### Important Notes - Before You Start
 
-> 1. By default, the Metacat helm chart has a MetacatUI installation that runs in the same Tomcat
->    container, on the same pod as Metacat, primarily for evaluation purposes. For a production
->    installation, therefore, we strongly recommend deploying your own version of MetacatUI, in a
->    dedicated pod, and configuring it to use the Metacat back-end internally, via the Kubernetes
->    headless Service provided. That process is not described here, but (non-k8s) MetacatUI
->    installation instructions can be found in the [MetacatUI GitHub
->    repository](https://nceas.github.io/metacatui/install/). The default co-deployment can be
->    disabled by setting `metacat.includeMetacatUi: false` in values.yaml
->
+> 1. By default, the Metacat helm chart installs the latest version of MetacatUI, which is included
+>    as a sub-chart. If you would rather deploy your own custom front-end for metacat, you can
+>    disable the metacatui subchart by setting 'global.includeMetacatUi' to 'false' in values.yaml
 >
 > 2. Before starting the migration, you must have a fully-functioning installation of **Metacat
 >    version 2.19**, running with **PostgreSQL version 14**. Migrating from other versions of
