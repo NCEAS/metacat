@@ -38,10 +38,11 @@ import org.dataone.service.util.TypeMarshaller;
 
 
 /**
- * This class will stream the file parts of the multipart request into a temporary file. 
- * During the streaming, the checksum of the tmp file will be calculated and maintained. 
- * The temple file with the checksum can be moved to the permanent location 
- * rather than copying (read/write). So we only need to read/write once and the performance can be improved.
+ * This class will stream the file parts of the multipart request into a temporary file.
+ * During the streaming, the checksum of the tmp file will be calculated and maintained.
+ * The temple file with the checksum can be moved to the permanent location
+ * rather than copying (read/write). So we only need to read/write once and the
+ * performance can be improved.
  * @author tao
  *
  */
@@ -140,11 +141,16 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                         multipartRequest.setSystemMetadata(sysMeta);
                     } else if (name.equals("object")){
                         start = System.currentTimeMillis();
-                        if (sysMeta != null && sysMeta.getChecksum() != null && sysMeta.getChecksum().getAlgorithm() != null && !sysMeta.getChecksum().getAlgorithm().trim().equals("")) {
+                        if (sysMeta != null && sysMeta.getChecksum() != null
+                                && sysMeta.getChecksum().getAlgorithm() != null
+                                && !sysMeta.getChecksum().getAlgorithm().trim().equals("")) {
                             sysmetaFirst = true;
                             //We are lucky and the system metadata has been processed.
                             String algorithm = sysMeta.getChecksum().getAlgorithm();
-                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream AFTER handling the system metadata stream. StreamResolver will calculate the checksum using algorithm " + algorithm);
+                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - "
+                                      + "Metacat is handling the object stream AFTER handling the "
+                                      + "system metadata stream. StreamResolver will calculate the "
+                                      + "checksum using algorithm " + algorithm);
                             //decide the pid for debug purpose
                             if (sysMeta != null && sysMeta.getIdentifier() != null ) {
                                 pid = sysMeta.getIdentifier().getValue();
@@ -153,10 +159,13 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                 pid = "UNKNOWN";
                             }
                             File newFile = generateTmpFile("checked-object");
-                            CheckedFile checkedFile = writeStreamToCheckedFile(newFile,  stream, algorithm, pid);
+                            CheckedFile checkedFile = writeStreamToCheckedFile(newFile, stream, algorithm, pid);
                             mpFiles.put(name, checkedFile);
                         } else {
-                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream before handling the system metadata stream. StreamResolver can NOT calculate the checksum since we don't know the algorithm.");
+                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat "
+                                      + "is handling the object stream before handling the system "
+                                      + "metadata stream. StreamResolver can NOT calculate the "
+                                      + "checksum since we don't know the algorithm.");
                             File newFile = generateTmpFile("unchecked-object");
                             writeStreamToFile(newFile, stream);
                             Checksum checksum = null;//we don't have a checksum, so set it null.
@@ -196,14 +205,14 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
             } else {
                 predicate = "without";
             }
-            log.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + 
-                    pid + 
-                    edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + 
-                    " Write the object file from the http multipart to the disk " + 
-                    predicate + 
-                    " calculating the checksum" + 
-                    edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + 
-                    (end-start)/1000);
+            log.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG
+                    + pid
+                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD
+                    + " Write the object file from the http multipart to the disk "
+                    + predicate
+                    + " calculating the checksum"
+                    + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION
+                    + (end-start)/1000);
         }
         return multipartRequest;
     }
@@ -223,7 +232,8 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
             //try again if the first time fails
             newFile = File.createTempFile(newPrefix, suffix, tempDir);
         }
-        log.debug("StreamingMultiplePartRequestResolver.generateTmepFile - the new file  is " + newFile.getCanonicalPath());
+        log.debug("StreamingMultiplePartRequestResolver.generateTmepFile - the new file  is "
+                  + newFile.getCanonicalPath());
         return newFile;
     }
     
@@ -238,10 +248,13 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public static CheckedFile writeStreamToCheckedFile(File file, InputStream dataStream, String checksumAlgorithm, String pid) 
+    public static CheckedFile writeStreamToCheckedFile(File file, InputStream dataStream,
+                                                    String checksumAlgorithm, String pid)
         throws NoSuchAlgorithmException, FileNotFoundException, IOException {
         Checksum checksum = null;
-        log.debug("StreamingMultipartRequestResolver.writeStreamToCheckedFile - filename for writting is: " + file.getAbsolutePath() + " for the pid " + pid + " by the algorithm " + checksumAlgorithm);
+        log.debug("StreamingMultipartRequestResolver.writeStreamToCheckedFile - filename for writting is: "
+                    + file.getAbsolutePath() + " for the pid " + pid
+                    + " by the algorithm " + checksumAlgorithm);
         MessageDigest md = MessageDigest.getInstance(checksumAlgorithm);
         // write data stream to desired file
         DigestOutputStream os = null;
@@ -254,7 +267,8 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                     os.flush();
                     os.close();
                 } catch (Exception e) {
-                    log.warn("StreamingMultipartRequestResolver.writeStreamToCheckedFile - couldn't close the file output stream since " + e.getMessage());
+                    log.warn("StreamingMultipartRequestResolver.writeStreamToCheckedFile - couldn't "
+                              + "close the file output stream since " + e.getMessage());
                 }
             }
         }
@@ -262,7 +276,9 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         checksum = new Checksum();
         checksum.setAlgorithm(checksumAlgorithm);
         checksum.setValue(localChecksum);
-        log.info("StreamingMultipartRequestResolver.writeStreamToCheckedFile - the checksum calculated from the saved local file is " + localChecksum + " for the pid " + pid);
+        log.info("StreamingMultipartRequestResolver.writeStreamToCheckedFile - the checksum "
+                   + "calculated from the saved local file is " + localChecksum
+                   + " for the pid " + pid);
         CheckedFile checkedFile = new CheckedFile(file.getCanonicalPath(), checksum);
         return checkedFile;
     }
@@ -285,7 +301,8 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                     os.flush();
                     os.close();
                 } catch (Exception e) {
-                    log.warn("StreamingMultipartRequestResolver.writeStreamToFile - couldn't close the file output stream since " + e.getMessage());
+                    log.warn("StreamingMultipartRequestResolver.writeStreamToFile - "
+                            + "couldn't close the file output stream since " + e.getMessage());
                 }
             }
         }
@@ -315,7 +332,8 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                     log.debug("StreamingMultiPartHandler.deleteTempFile - deleted the temp file immediately");
                 }
             } catch (Exception e) {
-                log.warn("StreamingMultiPartHandler.deleteTempFile - couldn't delete the temp file since " + e.getMessage());
+                log.warn("StreamingMultiPartHandler.deleteTempFile - couldn't delete the temp file since "
+                            + e.getMessage());
             }
         }
     }
