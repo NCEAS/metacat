@@ -26,6 +26,19 @@
 ## @section Global Properties Shared Across Sub-Charts Within This Deployment
 ##
 global:
+  ## global.metacatExternalBaseUrl metacat base url accessible from outside cluster.
+  ## Include protocol and trailing slash, but not the context; e.g.: "https://test.arcticdata.io/"
+  ## NOTE: Must match metacat.server.name setting.
+  ##
+  ## TODO: auto-assign metacat.server.name and ingress settings from global.metacatExternalBaseUrl?
+  ##
+  metacatExternalBaseUrl: "https://localhost/"
+
+  ## @param global.d1ClientCnUrl the url of the CN; used to populate metacat's 'D1Client.CN_URL'.
+  ## (Also parsed by the metacatui sub-chart to retrieve the CN base URL)
+  ##
+  d1ClientCnUrl: "https://cn.dataone.org/cn"
+
   ## @param global.passwordsSecret The name of the Secret containing application passwords
   ## This is the secret deployed using your own private, edited version of `../admin/secrets.yaml`.
   ##
@@ -235,7 +248,8 @@ metacat:
   ##
 
   ## @param metacat.cn.server.publiccert.filename optional cert(s) used to validate jwt auth tokens,
-  ## in addition to attempting validation against the cert chain from the cn (see D1Client.CN_URL).
+  ## in addition to attempting validation against the cert chain from the cn (see
+  ## 'global.d1ClientCnUrl').
   ## It may contain a single cert path, or multiple paths, separated by semicolons.
   ## IMPORTANT NOTE: each file must contain only one public key. Certificate chains containing
   ## multiple public keys will not work!
@@ -281,9 +295,9 @@ metacat:
   ##
 #  dataone.autoRegisterMemberNode: 2023-02-28
 
-  ## @param metacat.D1Client.CN_URL the url of the CN
+  ## metacat.D1Client.CN_URL the url of the CN - DO NOT SET HERE
   ##
-  D1Client.CN_URL: https://cn.dataone.org/cn
+  # D1Client.CN_URL: This is set in the global value 'global.d1ClientCnUrl', above
 
   ## @param metacat.dataone.nodeId The unique ID of your DataONE MN - must match client cert subject
   ## The Node Identifier field is a unique identifier assigned by DataONE to identify this node even

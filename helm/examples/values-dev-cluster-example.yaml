@@ -10,6 +10,8 @@
 debug: &debug true
 
 global:
+  metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
+  d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
 
@@ -21,7 +23,6 @@ metacat:
   ## DataONE Member Node (MN) Parameters
   dataone.certificate.fromHttpHeader.enabled: true
   dataone.autoRegisterMemberNode: 2024-01-25
-  D1Client.CN_URL: https://cn-sandbox.test.dataone.org/cn
   dataone.nodeId: "urn:node:TestBROOKELT"
   dataone.subject: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org"
   dataone.nodeName: Test BROOKE LT Metacat Node
