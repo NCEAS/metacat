@@ -2,8 +2,6 @@
 
 # Required env variables (see values.yaml):
 # METACAT_APP_CONTEXT       (see .Values.metacat.application.context)
-# METACAT_EXTERNAL_HOSTNAME (see .Values.global.externalHostname)
-# METACAT_EXTERNAL_PORT     (see .Values.metacat.server.httpPort)
 # TOMCAT_MEM_MIN            (see .Values.tomcat.heapMemory.min)
 # TOMCAT_MEM_MAX            (see .Values.tomcat.heapMemory.max)
 #
