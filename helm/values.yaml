@@ -26,7 +26,7 @@
 ## @section Global Properties Shared Across Sub-Charts Within This Deployment
 ##
 global:
-  ## global.metacatExternalBaseUrl metacat base url accessible from outside cluster.
+  ## global.metacatExternalBaseUrl Metacat base url accessible from outside cluster.
   ## Include protocol and trailing slash, but not the context; e.g.: "https://test.arcticdata.io/"
   ## NOTE: Must match metacat.server.name setting.
   ##
@@ -34,7 +34,7 @@ global:
   ##
   metacatExternalBaseUrl: "https://localhost/"
 
-  ## @param global.d1ClientCnUrl the url of the CN; used to populate metacat's 'D1Client.CN_URL'.
+  ## @param global.d1ClientCnUrl The url of the CN; used to populate metacat's 'D1Client.CN_URL'
   ## (Also parsed by the metacatui sub-chart to retrieve the CN base URL)
   ##
   d1ClientCnUrl: "https://cn.dataone.org/cn"
