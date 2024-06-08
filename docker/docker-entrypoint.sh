@@ -2,11 +2,8 @@
 
 # Required env variables (see values.yaml):
 # METACAT_APP_CONTEXT       (see .Values.metacat.application.context)
-# METACAT_EXTERNAL_HOSTNAME (see .Values.global.externalHostname)
-# METACAT_EXTERNAL_PORT     (see .Values.metacat.server.httpPort)
 # TOMCAT_MEM_MIN            (see .Values.tomcat.heapMemory.min)
 # TOMCAT_MEM_MAX            (see .Values.tomcat.heapMemory.max)
-# INCLUDE_METACATUI         (see .Values.metacat.includeMetacatUi)
 #
 # Defined in Dockerfile:
 # TC_HOME       (tomcat home directory in container; typically /usr/local/tomcat)
@@ -74,54 +71,6 @@ setTomcatEnv() {
     echo
 }
 
-configMetacatUi() {
-    # Expand the metacatui.war
-    if [ ! -d "${UI_HOME}" ]; then
-        unzip -qq "${TC_HOME}"/webapps/metacatui.war -d "${UI_HOME}"
-    fi
-
-    # show default skin if nothing else configured.
-    # 1. Overwrite config.js
-    if [ "$METACAT_EXTERNAL_PORT" == "443" ] || [ "$METACAT_EXTERNAL_PORT" == "8443" ]; then
-      PROTOCOL="https"
-    else
-      PROTOCOL="http"
-    fi
-    {
-        echo "MetacatUI.AppConfig = {"
-        echo "  theme: \"default\","
-        echo "  root: \"/metacatui\","
-        echo "  metacatContext: \"/${METACAT_APP_CONTEXT}\","
-        echo "  baseUrl: \"${PROTOCOL}://$METACAT_EXTERNAL_HOSTNAME:$METACAT_EXTERNAL_PORT\","
-        echo "  d1CNBaseUrl: \"${METACAT_DATAONE_CN_URL%"cn"}\"",
-        echo "  nodeId: \"${METACAT_NODE_ID:-urn:node:METACAT1}\""
-        echo '}'
-    } > "${UI_HOME}"/config/config.js
-
-    # 2. edit index.html to point to it
-    sed -i 's|"/config/config.js"|"/metacatui/config/config.js"|g' "${UI_HOME}"/index.html
-
-    # 3. add a custom error handler to make one-page app work, without apache
-    #    (see https://nceas.github.io/metacatui/install/apache)
-    mkdir "${UI_HOME}"/WEB-INF
-    {
-        echo '<?xml version="1.0" encoding="UTF-8"?>'
-        echo -n '<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
-                  http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
-                  version="4.0">'
-        echo
-        echo "    <error-page>"
-        echo "          <error-code>404</error-code>"
-        echo "          <location>/index.html</location>"
-        echo "    </error-page>"
-        echo "</web-app>"
-    } > "${UI_HOME}"/WEB-INF/web.xml
-
-    echo "MetacatUI installed and configured at: ${UI_HOME}"
-}
-
 make-var-metacat-dirs() {
     mkdir -p \
         /var/metacat/.metacat    \
@@ -153,25 +102,6 @@ if [[ $DEVTOOLS == "true" ]]; then
     sh -c 'trap "exit" TERM; while true; do sleep 1; done'
 
 elif [[ $1 = "catalina.sh" ]]; then
-
-    # If $INCLUDE_METACATUI is not set, default to installing
-    if [ -z "$INCLUDE_METACATUI" ]; then
-        echo "INCLUDE_METACATUI env var not found; defaulting to INCLUDE MetacatUI..."
-        INCLUDE_METACATUI="true"
-    fi
-
-    UI_HOME="${TC_HOME}"/webapps/metacatui
-
-    if [ "$INCLUDE_METACATUI" == "true" ]; then
-        echo "Including MetacatUI, since INCLUDE_METACATUI=$INCLUDE_METACATUI"
-        configMetacatUi
-    else
-        echo "NOT including MetacatUI, since INCLUDE_METACATUI ($INCLUDE_METACATUI) != \"true\""
-        if [ -e "${UI_HOME}.war" ]; then
-            echo "deleting ${UI_HOME}.war"
-            rm -f "${UI_HOME}.war"
-        fi
-    fi
 
     if [ -z "$METACAT_APP_CONTEXT" ]; then
         METACAT_APP_CONTEXT="metacat"

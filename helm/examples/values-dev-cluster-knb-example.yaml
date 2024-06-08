@@ -13,6 +13,8 @@
 debug: &debug false
 
 global:
+  metacatExternalBaseUrl: "https://knb-dev.test.dataone.org/"
+  #  d1ClientCnUrl:
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
   metacatAppContext: &metacatAppContext knb
@@ -26,7 +28,6 @@ metacat:
   ## DataONE Member Node (MN) Parameters
 #  dataone.certificate.fromHttpHeader.enabled: true
 #  dataone.autoRegisterMemberNode: 2024-01-25
-#  D1Client.CN_URL: https://cn-sandbox.test.dataone.org/cn
   dataone.nodeId: "urn:node:KNB_dev"
   dataone.subject: "CN=urn:node:KNB_dev,DC=dataone,DC=org"
 #  dataone.nodeName: Test KNB Metacat Node
@@ -69,11 +70,6 @@ ingress:
     - hosts:
         - *extHostname
       secretName: ingress-nginx-tls-cert
-  hosts:
-    - host: *extHostname
-      paths:
-        - path: "/"
-          pathType: Prefix
 
 postgresql:
   auth:

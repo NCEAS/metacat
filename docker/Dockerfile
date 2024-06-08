@@ -56,8 +56,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         procps            \
         telnet            \
         vim               \
-    &&  rm -rf /var/lib/apt/lists/  /tmp/metacat-index.war                \
-    &&  mv /tmp/metacat.war  /tmp/metacatui.war ${TC_HOME}/webapps        \
+    &&  rm -rf /var/lib/apt/lists/                                        \
+    &&  mv /tmp/metacat.war ${TC_HOME}/webapps                            \
     &&  chown -R metacat ${TC_HOME}                                       \
     &&  mkdir -p /var/metacat  && chown metacat:metacat /var/metacat      \
     &&  mkdir -p /home/metacat && chown -R metacat:metacat /home/metacat  \
