@@ -70,11 +70,6 @@ ingress:
     - hosts:
         - *extHostname
       secretName: ingress-nginx-tls-cert
-  hosts:
-    - host: *extHostname
-      paths:
-        - path: "/"
-          pathType: Prefix
 
 postgresql:
   auth:
