@@ -139,7 +139,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                         }
                         input.close();
                         multipartRequest.setSystemMetadata(sysMeta);
-                    } else if (name.equals("object")){
+                    } else if (name.equals("object")) {
                         start = System.currentTimeMillis();
                         if (sysMeta != null && sysMeta.getChecksum() != null
                                 && sysMeta.getChecksum().getAlgorithm() != null
@@ -158,36 +158,17 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                             if(pid == null || pid.trim().equals("")) {
                                 pid = "UNKNOWN";
                             }
-                            File newFile = generateTmpFile("checked-object");
-                            CheckedFile checkedFile = writeStreamToCheckedFile(newFile, stream, algorithm, pid);
-                            mpFiles.put(name, checkedFile);
                         } else {
                             log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat "
                                       + "is handling the object stream before handling the system "
                                       + "metadata stream. StreamResolver can NOT calculate the "
                                       + "checksum since we don't know the algorithm.");
                             File newFile = generateTmpFile("unchecked-object");
-                            writeStreamToFile(newFile, stream);
-                            Checksum checksum = null;//we don't have a checksum, so set it null.
-                            CheckedFile checkedFile = new CheckedFile(newFile.getCanonicalPath(), checksum);
-                            mpFiles.put(name, checkedFile);
+
                         }
                         end = System.currentTimeMillis();
-                    } else {
-                        File newFile = generateTmpFile("other");
-                        writeStreamToFile(newFile, stream);
-                        mpFiles.put(name, newFile);
                     }
                 }
-            } catch (Exception e) {
-                //if an exception happened, we need to delete those temporary files
-                Set<String> keys = mpFiles.keySet();
-                for (String key : keys) {
-                    File tempFile = mpFiles.get(key);
-                    deleteTempFile(tempFile);
-                    mpFiles.remove(key);
-                }
-                throw e;
             } finally {
                 if(stream != null) {
                     try {
