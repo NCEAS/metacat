@@ -20,6 +20,7 @@ import javax.servlet.annotation.WebListener;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.service.exceptions.ServiceFailure;
 
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.Sitemap;
@@ -36,6 +37,7 @@ import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.storage.Storage;
 import edu.ucsb.nceas.metacat.storage.StorageFactory;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -57,6 +59,7 @@ public class MetacatInitializer implements ServletContextListener{
     private static boolean fullInit = false;
     private static Log logMetacat = LogFactory.getLog(MetacatInitializer.class);
     private static Timer timer = new Timer();
+    private static Storage storage;
 
     /**
      * An implementation of ServletContextListener that is called automatically by the servlet
@@ -149,7 +152,11 @@ public class MetacatInitializer implements ServletContextListener{
             }
 
             //Initialize the storage system
-            StorageFactory.getStorage();
+            synchronized (MetacatInitializer.class) {
+                if (storage == null) {
+                    storage = StorageFactory.getStorage();
+                }
+            }
 
             // register the XML schema service
             ServiceService.registerService("XMLSchemaService", XMLSchemaService.getInstance());
@@ -414,5 +421,17 @@ public class MetacatInitializer implements ServletContextListener{
      */
     public static boolean isFullyInitialized() {
         return fullInit;
+    }
+
+    /**
+     * Get the storage instance
+     * @return the instance of storage
+     * @throws ServiceFailure
+     */
+    public static Storage getStorage() throws ServiceFailure {
+        if (storage == null) {
+            throw new ServiceFailure("", "The storage system hasn't been initialized.");
+        }
+        return storage;
     }
 }
