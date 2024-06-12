@@ -14,7 +14,6 @@ import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.hashstore.exceptions.HashStoreFactoryException;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
-import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
