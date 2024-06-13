@@ -3,22 +3,16 @@ package edu.ucsb.nceas.metacat.restservice.multipart;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
+import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.bind.DatatypeConverter;
-
 
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
@@ -30,11 +24,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
 import org.dataone.exceptions.MarshallingException;
+import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
-import org.dataone.service.types.v1.Checksum;
+import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.ServiceFailure;
+import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
+
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 
 
 /**
@@ -51,7 +50,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
     private static Log log = LogFactory.getLog(StreamingMultipartRequestResolver.class);
     private ServletFileUpload upload;
     private SystemMetadata sysMeta = null;
-    private File tempDir = null;
+    private ObjectMetadata objectMetadata = null;
     private static boolean deleteOnExit =
                     Settings.getConfiguration().getBoolean("multipart.tempFile.deleteOnExit", false);
 
@@ -63,7 +62,6 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      */
     public StreamingMultipartRequestResolver(String tmpUploadDir, int maxUploadSize) {
         super(tmpUploadDir, maxUploadSize);
-        tempDir = new File(tmpUploadDir);
         // Create a new file upload handler
         this.upload = new ServletFileUpload();
         // Set overall request size constraint
@@ -75,10 +73,21 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      * This method parses the a http request and writes them into the temporary directory as checked files.
      * @param request  the request needs to be resolved
      * @return multipartRequest with the data structure including form fields and file items.
+     * @throws InvalidRequest
+     * @throws IOException
+     * @throws FileUploadException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws MarshallingException
+     * @throws NoSuchAlgorithmException
+     * @throws InterruptedException
+     * @throws RuntimeException
+     * @throws ServiceFailure
      */
     public MultipartRequest resolveMultipart(HttpServletRequest request) throws IOException,
                                 FileUploadException, InstantiationException, IllegalAccessException,
-                                                MarshallingException, NoSuchAlgorithmException {
+                                MarshallingException, NoSuchAlgorithmException, InvalidRequest,
+                                ServiceFailure, RuntimeException, InterruptedException {
         Map<String, List<String>> mpParams = new HashMap<String, List<String>>();
         Map<String, File> mpFiles = new HashMap<String, File>();
         MultipartRequestWithSysmeta multipartRequest =
@@ -141,30 +150,48 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                         multipartRequest.setSystemMetadata(sysMeta);
                     } else if (name.equals("object")) {
                         start = System.currentTimeMillis();
-                        if (sysMeta != null && sysMeta.getChecksum() != null
-                                && sysMeta.getChecksum().getAlgorithm() != null
-                                && !sysMeta.getChecksum().getAlgorithm().trim().equals("")) {
+                        if (sysMeta != null) {
                             sysmetaFirst = true;
+                            if (sysMeta.getChecksum() == null
+                                || sysMeta.getChecksum().getValue().isBlank()
+                                || sysMeta.getChecksum().getAlgorithm() == null
+                                || sysMeta.getChecksum().getAlgorithm().isBlank()) {
+                                throw new InvalidRequest("0000",
+                                        "StreamingMultipartRequestResolver.resolveMultipart - "
+                                        + "The system metadata object should have both checksum and "
+                                        + " checksum algorithm values.");
+                            }
                             //We are lucky and the system metadata has been processed.
+                            String checksum = sysMeta.getChecksum().getValue();
                             String algorithm = sysMeta.getChecksum().getAlgorithm();
+                            //decide the pid
+                            if (sysMeta.getIdentifier() == null
+                                    || sysMeta.getIdentifier().getValue().isBlank()) {
+                                throw new InvalidRequest("0000",
+                                        "StreamingMultipartRequestResolver.resolveMultipart - "
+                                        + "The system metadata object should have an id.");
+                            }
+                            Identifier id = sysMeta.getIdentifier();
+                            BigInteger objSize = sysMeta.getSize();
+                            if (objSize == null || objSize.longValue() <= 0) {
+                                throw new InvalidRequest("0000",
+                                        "StreamingMultipartRequestResolver.resolveMultipart - "
+                                        + "The system metadata object should a valid size value.");
+                            }
+                            long size = objSize.longValue();
                             log.info("StreamingMultipartRequestResolver.resoloveMulitpart - "
-                                      + "Metacat is handling the object stream AFTER handling the "
-                                      + "system metadata stream. StreamResolver will calculate the "
-                                      + "checksum using algorithm " + algorithm);
-                            //decide the pid for debug purpose
-                            if (sysMeta != null && sysMeta.getIdentifier() != null ) {
-                                pid = sysMeta.getIdentifier().getValue();
-                            }
-                            if(pid == null || pid.trim().equals("")) {
-                                pid = "UNKNOWN";
-                            }
+                                    + "Metacat is handling the object stream AFTER handling the "
+                                    + "system metadata stream. StreamResolver will store the object"
+                                    + " with identifier " + id.getValue() + " , declared size "
+                                  + size + "and calculating checksum using algorithm " + algorithm);
+                            MetacatInitializer.getStorage()
+                                                .storeObject(stream, id, checksum, algorithm, size);
                         } else {
                             log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat "
                                       + "is handling the object stream before handling the system "
                                       + "metadata stream. StreamResolver can NOT calculate the "
                                       + "checksum since we don't know the algorithm.");
-                            File newFile = generateTmpFile("unchecked-object");
-
+                            objectMetadata = MetacatInitializer.getStorage().storeObject(stream);
                         }
                         end = System.currentTimeMillis();
                     }
@@ -197,99 +224,8 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         }
         return multipartRequest;
     }
-    
-    /**
-     * Create a temporary new file
-     * @return
-     * @throws IOException
-     */
-    private File generateTmpFile(String prefix) throws IOException {
-        String newPrefix = prefix + "-" + System.currentTimeMillis();
-        String suffix =  null;
-        File newFile = null;
-        try {
-            newFile = File.createTempFile(newPrefix, suffix, tempDir);
-        } catch (Exception e) {
-            //try again if the first time fails
-            newFile = File.createTempFile(newPrefix, suffix, tempDir);
-        }
-        log.debug("StreamingMultiplePartRequestResolver.generateTmepFile - the new file  is "
-                  + newFile.getCanonicalPath());
-        return newFile;
-    }
-    
-    /**
-     * Write the input stream into the given fileName and directory while calculate the checksum.
-     * @param file  the file into which the stream will be written. It should exists already.
-     * @param dataStream  the source stream
-     * @param checksumAlgorithm  the algorithm will be used for calculating the checksum
-     * @param pid  the pid of the object (only used for debug information)
-     * @return  a CheckedFile object ( a File object with advertised checksum)
-     * @throws NoSuchAlgorithmException
-     * @throws FileNotFoundException
-     * @throws IOException
-     */
-    public static CheckedFile writeStreamToCheckedFile(File file, InputStream dataStream,
-                                                    String checksumAlgorithm, String pid)
-        throws NoSuchAlgorithmException, FileNotFoundException, IOException {
-        Checksum checksum = null;
-        log.debug("StreamingMultipartRequestResolver.writeStreamToCheckedFile - filename for writting is: "
-                    + file.getAbsolutePath() + " for the pid " + pid
-                    + " by the algorithm " + checksumAlgorithm);
-        MessageDigest md = MessageDigest.getInstance(checksumAlgorithm);
-        // write data stream to desired file
-        DigestOutputStream os = null;
-        try {
-            os = new DigestOutputStream(new FileOutputStream(file), md);
-            long length = IOUtils.copyLarge(dataStream, os);
-        } finally {
-            if (os != null) {
-                try {
-                    os.flush();
-                    os.close();
-                } catch (Exception e) {
-                    log.warn("StreamingMultipartRequestResolver.writeStreamToCheckedFile - couldn't "
-                              + "close the file output stream since " + e.getMessage());
-                }
-            }
-        }
-        String localChecksum = DatatypeConverter.printHexBinary(md.digest());
-        checksum = new Checksum();
-        checksum.setAlgorithm(checksumAlgorithm);
-        checksum.setValue(localChecksum);
-        log.info("StreamingMultipartRequestResolver.writeStreamToCheckedFile - the checksum "
-                   + "calculated from the saved local file is " + localChecksum
-                   + " for the pid " + pid);
-        CheckedFile checkedFile = new CheckedFile(file.getCanonicalPath(), checksum);
-        return checkedFile;
-    }
-    
-    /**
-     * Write the stream into a given file.
-     * @param file
-     * @param dataStream
-     * @return
-     * @throws IOException
-     */
-    private static File writeStreamToFile(File file, InputStream dataStream) throws IOException {
-        FileOutputStream os = null;
-        try {
-            os = new FileOutputStream(file);
-            long length = IOUtils.copyLarge(dataStream, os);
-        } finally {
-            if (os != null) {
-                try {
-                    os.flush();
-                    os.close();
-                } catch (Exception e) {
-                    log.warn("StreamingMultipartRequestResolver.writeStreamToFile - "
-                            + "couldn't close the file output stream since " + e.getMessage());
-                }
-            }
-        }
-        return file;
-    }
-    
+
+
     /**
      * Get the system metadata object which was extracted from the sysmeta part.
      * The sysmeta wasn't stored in a file and was created an object directly.
@@ -297,7 +233,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
     public SystemMetadata getSystemMetadataPart() {
         return sysMeta;
     }
-    
+
     /**
      * Delete a temp file either immediately or on program exists according to the configuration
      * @param temp  the file will be deleted
