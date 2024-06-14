@@ -427,7 +427,8 @@ public class D1ResourceHandler {
         // handle MMP inputs
         File tmpDir = getTempDirectory();
         logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
-        StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE);
+        StreamingMultipartRequestResolver resolver =
+                   new StreamingMultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE);
         MultipartRequestWithSysmeta mq = null;
         mq = (MultipartRequestWithSysmeta)resolver.resolveMultipart(request);
         multipartparams = mq.getMultipartParameters();

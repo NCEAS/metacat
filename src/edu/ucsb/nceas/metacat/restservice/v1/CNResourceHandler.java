@@ -60,10 +60,7 @@ import org.xml.sax.SAXException;
 import edu.ucsb.nceas.metacat.dataone.v1.CNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
-import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
-import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
-import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -613,19 +610,9 @@ public class CNResourceHandler extends D1ResourceHandler {
             NotAuthorized, UnsupportedType, InsufficientResources,
             InvalidSystemMetadata, NotImplemented, IOException, InterruptedException,
             InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
-            CheckedFile objFile = null;
             try {
                 // Read the incoming data from its Mime Multipart encoding
                 MultipartRequestWithSysmeta multiparts = collectObjectFiles();
-                DetailedFileInputStream object = null;
-                Map<String, File> files = multiparts.getMultipartFiles();
-                objFile = (CheckedFile) files.get("object");
-                // ensure we have the object bytes
-                if (objFile == null) {
-                    throw new InvalidRequest("1102", "The object param must contain the object bytes.");
-                }
-                object = new DetailedFileInputStream(objFile, objFile.getChecksum());
-
                 // get the encoded pid string from the body and make the object
                 String pidString = multipartparams.get("pid").get(0);
                 Identifier pid = new Identifier();
@@ -639,14 +626,13 @@ public class CNResourceHandler extends D1ResourceHandler {
                     throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
 
                 }
-
-
                 if (action.equals(FUNCTION_NAME_INSERT)) { // handle inserts
 
                     logMetacat.debug("Commence creation...");
 
                     logMetacat.debug("creating object with pid " + pid.getValue());
-                    Identifier rId = CNodeService.getInstance(request).create(session, pid, object, smd);
+                    // Set the input stream object null
+                    Identifier rId = CNodeService.getInstance(request).create(session, pid, null, smd);
 
                     OutputStream out = response.getOutputStream();
                     response.setStatus(200);
@@ -658,12 +644,8 @@ public class CNResourceHandler extends D1ResourceHandler {
                     throw new InvalidRequest("1000", "Operation must be create.");
                 }
             } catch (Exception e) {
-            if(objFile != null) {
-                //objFile.deleteOnExit();
-                StreamingMultipartRequestResolver.deleteTempFile(objFile);
+                throw e;
             }
-            throw e;
-         }
     }
 
     /**
