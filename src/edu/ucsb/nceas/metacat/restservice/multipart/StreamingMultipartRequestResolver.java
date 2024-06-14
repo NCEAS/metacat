@@ -49,8 +49,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
     public static final String SYSMETA = "sysmeta";
     private static Log log = LogFactory.getLog(StreamingMultipartRequestResolver.class);
     private ServletFileUpload upload;
-    private SystemMetadata sysMeta = null;
-    private ObjectMetadata objectMetadata = null;
+    private SystemMetadata sysMeta;
     private static boolean deleteOnExit =
                     Settings.getConfiguration().getBoolean("multipart.tempFile.deleteOnExit", false);
 
@@ -97,115 +96,123 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         }
         long start = 0;
         long end = 0;
-        String pid = null;
+        String pid = null; // for log information only
         FileItemIterator iter = upload.getItemIterator(request);
         boolean sysmetaFirst = false;
-        while (iter.hasNext()) {
-            FileItemStream item = iter.next();
-            String name = item.getFieldName();
-            InputStream stream = item.openStream();
-            try {
-                if (item.isFormField()) {
-                    //process form parts
-                    String value = Streams.asString(stream);
-                    log.debug("StreamingMultipartRequestResolver.resoloveMulitpart - form field "
-                                + name + " with value "+ value + " detected.");
-                    if (mpParams.containsKey(name)) {
-                        mpParams.get(name).add(value);
-                    } else {
-                        List<String> values = new ArrayList<String>();
-                        values.add(value);
-                        mpParams.put(name, values);
-                    }
-                } else {
-                    log.debug("StreamingMultipartRequestResolver.resoloveMulitpart -File field "
-                                    + name + " with file name " + item.getName() + " detected.");
-                    // Process the input stream
-                    if (name.equals(SYSMETA)) {
-                        //copy the stream to a byte array output stream so we can read it multiple
-                        //times. Since we don't know it is v1 or v2, we need to try two times.
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        IOUtils.copy(stream, os);
-                        byte[] sysmetaBytes = os.toByteArray();
-                        os.close();
-                        ByteArrayInputStream input = new ByteArrayInputStream(sysmetaBytes);
-                        try {
-                            org.dataone.service.types.v2.SystemMetadata sysMeta2 =
-                                        TypeMarshaller.unmarshalTypeFromStream(
-                                          org.dataone.service.types.v2.SystemMetadata.class, input);
-                            sysMeta = sysMeta2;
-                        } catch (Exception e) {
-                            //Transforming to the v2 systemmeta object failed. Try to transform to v1
-                            input.reset();
-                            sysMeta =
-                                TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
-                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - "
-                                     + "the system metadata is v1 for the pid "
-                                     + sysMeta.getIdentifier().getValue());
-                        }
-                        if (sysMeta != null && sysMeta.getIdentifier() != null ) {
-                            pid = sysMeta.getIdentifier().getValue();
-                        }
-                        input.close();
-                        multipartRequest.setSystemMetadata(sysMeta);
-                    } else if (name.equals("object")) {
-                        start = System.currentTimeMillis();
-                        if (sysMeta != null) {
-                            sysmetaFirst = true;
-                            if (sysMeta.getChecksum() == null
-                                || sysMeta.getChecksum().getValue().isBlank()
-                                || sysMeta.getChecksum().getAlgorithm() == null
-                                || sysMeta.getChecksum().getAlgorithm().isBlank()) {
-                                throw new InvalidRequest("0000",
-                                        "StreamingMultipartRequestResolver.resolveMultipart - "
-                                        + "The system metadata object should have both checksum and "
-                                        + " checksum algorithm values.");
-                            }
-                            //We are lucky and the system metadata has been processed.
-                            String checksum = sysMeta.getChecksum().getValue();
-                            String algorithm = sysMeta.getChecksum().getAlgorithm();
-                            //decide the pid
-                            if (sysMeta.getIdentifier() == null
-                                    || sysMeta.getIdentifier().getValue().isBlank()) {
-                                throw new InvalidRequest("0000",
-                                        "StreamingMultipartRequestResolver.resolveMultipart - "
-                                        + "The system metadata object should have an id.");
-                            }
-                            Identifier id = sysMeta.getIdentifier();
-                            BigInteger objSize = sysMeta.getSize();
-                            if (objSize == null || objSize.longValue() <= 0) {
-                                throw new InvalidRequest("0000",
-                                        "StreamingMultipartRequestResolver.resolveMultipart - "
-                                        + "The system metadata object should a valid size value.");
-                            }
-                            long size = objSize.longValue();
-                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - "
-                                    + "Metacat is handling the object stream AFTER handling the "
-                                    + "system metadata stream. StreamResolver will store the object"
-                                    + " with identifier " + id.getValue() + " , declared size "
-                                  + size + "and calculating checksum using algorithm " + algorithm);
-                            MetacatInitializer.getStorage()
-                                                .storeObject(stream, id, checksum, algorithm, size);
+        boolean objTaggedWithPid = false;
+        ObjectMetadata objectMetadata = null;
+        try {
+            while (iter.hasNext()) {
+                FileItemStream item = iter.next();
+                String name = item.getFieldName();
+                try (InputStream stream = item.openStream()) {
+                    if (item.isFormField()) {
+                        //process form parts
+                        String value = Streams.asString(stream);
+                        log.debug("StreamingMultipartRequestResolver.resoloveMulitpart - form field "
+                                    + name + " with value "+ value + " detected.");
+                        if (mpParams.containsKey(name)) {
+                            mpParams.get(name).add(value);
                         } else {
-                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat "
-                                      + "is handling the object stream before handling the system "
-                                      + "metadata stream. StreamResolver can NOT calculate the "
-                                      + "checksum since we don't know the algorithm.");
-                            objectMetadata = MetacatInitializer.getStorage().storeObject(stream);
+                            List<String> values = new ArrayList<String>();
+                            values.add(value);
+                            mpParams.put(name, values);
                         }
-                        end = System.currentTimeMillis();
-                    }
-                }
-            } finally {
-                if(stream != null) {
-                    try {
-                        stream.close();
-                    } catch (Exception e) {
-                        log.warn("Couldn't close the stream since" + e.getMessage());
+                    } else {
+                        log.debug("StreamingMultipartRequestResolver.resoloveMulitpart -File field "
+                                        + name + " with file name " + item.getName() + " detected.");
+                        // Process the input stream
+                        if (name.equals(SYSMETA)) {
+                            //copy the stream to a byte array output stream so we can read it multiple
+                            //times. Since we don't know it is v1 or v2, we need to try two times.
+                            byte[] sysmetaBytes;
+                            try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+                                IOUtils.copy(stream, os);
+                                sysmetaBytes = os.toByteArray();
+                            }
+                            try (ByteArrayInputStream input = new ByteArrayInputStream(sysmetaBytes)) {
+                                try {
+                                    org.dataone.service.types.v2.SystemMetadata sysMeta2 =
+                                                TypeMarshaller.unmarshalTypeFromStream(
+                                                  org.dataone.service.types.v2.SystemMetadata.class, input);
+                                    sysMeta = sysMeta2;
+                                } catch (Exception e) {
+                                    //Transforming to the v2 systemmeta object failed. Try to transform to v1
+                                    input.reset();
+                                    sysMeta =
+                                        TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
+                                    log.info("StreamingMultipartRequestResolver.resoloveMulitpart - "
+                                             + "the system metadata is v1 for the pid "
+                                             + sysMeta.getIdentifier().getValue());
+                                }
+                                checkSystemMetadata();
+                                pid = sysMeta.getIdentifier().getValue();
+                                if (objectMetadata != null) {
+                                    //this means Metacat already stored the object before process sysmeta
+                                    String checksum = sysMeta.getChecksum().getValue();
+                                    String algorithm = sysMeta.getChecksum().getAlgorithm();
+                                    long size = sysMeta.getSize().longValue();
+                                    MetacatInitializer.getStorage()
+                                               .verifyObject(objectMetadata, checksum, algorithm, size);
+                                    Identifier id = new Identifier();
+                                    id.setValue(pid);
+                                    // Hashstore will throw an exception if the id already is used.
+                                    MetacatInitializer.getStorage()
+                                                                .tagObject(id, objectMetadata.getCid());
+                                    objTaggedWithPid = true;
+                                }
+                                multipartRequest.setSystemMetadata(sysMeta);
+                            }
+                        } else if (name.equals("object")) {
+                            start = System.currentTimeMillis();
+                            if (sysMeta != null) {
+                                sysmetaFirst = true;
+                                checkSystemMetadata();
+                                //We are lucky and the system metadata has been processed.
+                                String checksum = sysMeta.getChecksum().getValue();
+                                String algorithm = sysMeta.getChecksum().getAlgorithm();
+                                //decide the pid
+                                Identifier id = sysMeta.getIdentifier();
+                                long size = sysMeta.getSize().longValue();
+                                log.info("StreamingMultipartRequestResolver.resoloveMulitpart - "
+                                        + "Metacat is handling the object stream AFTER handling the "
+                                        + "system metadata stream. StreamResolver will store the object"
+                                        + " with identifier " + id.getValue() + " , declared size "
+                                      + size + "and calculating checksum using algorithm " + algorithm);
+                                // Note: please DO assign objectMetadata in this statement
+                                // Hashstore will throw an exception if the id already is used.
+                                objectMetadata = MetacatInitializer.getStorage()
+                                                    .storeObject(stream, id, checksum, algorithm, size);
+                                // The above storeObject method implicitly tagged the id with
+                                // the cid. So we set objTaggedWithPid true.
+                                objTaggedWithPid = true;
+                            } else {
+                                log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat "
+                                          + "is handling the object stream before handling the system "
+                                          + "metadata stream. StreamResolver can NOT calculate the "
+                                          + "checksum since we don't know the algorithm.");
+                                // Note: please DO assign objectMetadata in this statement
+                                objectMetadata = MetacatInitializer.getStorage().storeObject(stream);
+                            }
+                            end = System.currentTimeMillis();
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            if (objectMetadata != null) {
+                // The object was stored into HashStore successfully and we need to delete them
+                if (objTaggedWithPid) {
+                    Identifier id = new Identifier();
+                    id.setValue(pid);
+                    MetacatInitializer.getStorage().deleteObject(id);
+                } else {
+                    MetacatInitializer.getStorage().deleteObject("cid", objectMetadata.getCid());
+                }
+            }
+            throw e;
         }
+
         if (end > start && pid != null) {
             String predicate = null;
             if (sysmetaFirst) {
@@ -224,6 +231,33 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         }
         return multipartRequest;
     }
+
+    private void checkSystemMetadata() throws InvalidRequest {
+        if(sysMeta == null) {
+            throw new InvalidRequest("0000", "StreamingMultipartRequestResolver.checkSystemMetadata"
+                                     + " - the system metadata object is null.");
+        }
+        if (sysMeta.getChecksum() == null || sysMeta.getChecksum().getValue().isBlank()
+                || sysMeta.getChecksum().getAlgorithm() == null
+                || sysMeta.getChecksum().getAlgorithm().isBlank()) {
+                throw new InvalidRequest("0000",
+                        "StreamingMultipartRequestResolver.checkSystemMetadata - "
+                        + "The system metadata object should have both checksum and "
+                        + " checksum algorithm values.");
+        }
+        if (sysMeta.getIdentifier() == null || sysMeta.getIdentifier().getValue().isBlank()) {
+            throw new InvalidRequest("0000",
+                    "StreamingMultipartRequestResolver.checkSystemMetadata - "
+                    + "The system metadata object should have an id.");
+        }
+        BigInteger objSize = sysMeta.getSize();
+        if (objSize == null || objSize.longValue() <= 0) {
+            throw new InvalidRequest("0000",
+                    "StreamingMultipartRequestResolver.checkSystemMetadata - "
+                    + "The system metadata object should a valid size value.");
+        }
+    }
+
 
 
     /**
