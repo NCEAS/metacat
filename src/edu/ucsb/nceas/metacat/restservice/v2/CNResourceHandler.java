@@ -666,11 +666,12 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InstantiationException
      * @throws FileUploadException
      * @throws NoSuchAlgorithmException
+     * @throws InterruptedException
      */
     protected void putObject(String action) throws ServiceFailure,
             InvalidRequest, IdentifierNotUnique, MarshallingException, InvalidToken,
             NotAuthorized, UnsupportedType, InsufficientResources,
-            InvalidSystemMetadata, NotImplemented, IOException,
+            InvalidSystemMetadata, NotImplemented, IOException, InterruptedException,
             InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
         CheckedFile objFile = null;
         try {

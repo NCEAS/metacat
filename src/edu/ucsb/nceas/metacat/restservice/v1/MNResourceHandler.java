@@ -1286,12 +1286,13 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InstantiationException
      * @throws FileUploadException
      * @throws NoSuchAlgorithmException
+     * @throws InterruptedException
      */
     protected void putObject(String trailingPid, String action) throws ServiceFailure,
                                             InvalidRequest, MarshallingException, InvalidToken,
                                             NotAuthorized, IdentifierNotUnique, UnsupportedType,
                                             InsufficientResources, InvalidSystemMetadata,
-                                            NotImplemented, NotFound, IOException,
+                                            NotImplemented, NotFound, IOException, InterruptedException,
                                             InstantiationException, IllegalAccessException,
                                             NoSuchAlgorithmException, FileUploadException {
         CheckedFile objFile = null;

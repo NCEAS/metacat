@@ -414,10 +414,15 @@ public class D1ResourceHandler {
      * @throws IllegalAccessException
      * @throws NoSuchAlgorithmException
      * @throws MarshallingException
+     * @throws InterruptedException
+     * @throws RuntimeException
+     * @throws ServiceFailure
+     * @throws InvalidRequest
      */
     protected MultipartRequestWithSysmeta collectObjectFiles() throws IOException,
                              FileUploadException, InstantiationException, IllegalAccessException,
-                             NoSuchAlgorithmException, MarshallingException {
+                             NoSuchAlgorithmException, MarshallingException, InvalidRequest,
+                             ServiceFailure, RuntimeException, InterruptedException {
         logMetacat.debug("Disassembling MIME multipart form with object files");
         // handle MMP inputs
         File tmpDir = getTempDirectory();

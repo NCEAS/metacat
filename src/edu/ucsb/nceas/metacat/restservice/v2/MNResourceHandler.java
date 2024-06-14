@@ -1339,9 +1339,11 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken
      * @throws IOException
      * @throws MarshallingException
+     * @throws InterruptedException
      */
     protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
-                    NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException {
+                                                InterruptedException, NotFound, InvalidRequest,
+                                                NotImplemented, IOException, MarshallingException {
         OutputStream out = null;
 
         if (pid != null) { //get a specific document
@@ -1647,12 +1649,13 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InstantiationException
      * @throws FileUploadException
      * @throws NoSuchAlgorithmException
+     * @throws InterruptedException
      */
     protected void putObject(String trailingPid, String action) throws ServiceFailure,
                             InvalidRequest, MarshallingException, InvalidToken, NotAuthorized,
                             IdentifierNotUnique, UnsupportedType, InsufficientResources,
                             InvalidSystemMetadata, NotImplemented, NotFound, IOException,
-                                            InstantiationException, IllegalAccessException,
+                            InterruptedException, InstantiationException, IllegalAccessException,
                                                 NoSuchAlgorithmException, FileUploadException {
         CheckedFile objFile = null;
         try {
