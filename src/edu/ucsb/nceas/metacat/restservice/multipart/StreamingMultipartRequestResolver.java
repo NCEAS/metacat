@@ -96,11 +96,13 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         }
         long start = 0;
         long end = 0;
-        String pid = null; // for log information only
+        String pid = null;
         FileItemIterator iter = upload.getItemIterator(request);
         boolean sysmetaFirst = false;
         boolean objTaggedWithPid = false;
         ObjectMetadata objectMetadata = null;
+        int sysmetaIndex = 0;
+        int objectIndex = 0;
         try {
             while (iter.hasNext()) {
                 FileItemStream item = iter.next();
@@ -123,6 +125,10 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                         + name + " with file name " + item.getName() + " detected.");
                         // Process the input stream
                         if (name.equals(SYSMETA)) {
+                            if (sysmetaIndex >= 1) {
+                                throw new InvalidRequest("0000", "MultipartRequest can only have "
+                                                        + "one system metadata part.");
+                            }
                             //copy the stream to a byte array output stream so we can read it multiple
                             //times. Since we don't know it is v1 or v2, we need to try two times.
                             byte[] sysmetaBytes;
@@ -162,9 +168,14 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                     objTaggedWithPid = true;
                                 }
                                 multipartRequest.setSystemMetadata(sysMeta);
+                                sysmetaIndex++;
                             }
                         } else if (name.equals("object")) {
                             start = System.currentTimeMillis();
+                            if (objectIndex >= 1) {
+                                throw new InvalidRequest("0000", "MultipartRequest can only have "
+                                                        + "one object part.");
+                            }
                             if (sysMeta != null) {
                                 sysmetaFirst = true;
                                 checkSystemMetadata();
@@ -194,6 +205,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                 // Note: please DO assign objectMetadata in this statement
                                 objectMetadata = MetacatInitializer.getStorage().storeObject(stream);
                             }
+                            objectIndex++;
                             end = System.currentTimeMillis();
                         }
                     }
