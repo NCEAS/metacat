@@ -68,6 +68,7 @@ import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -1636,6 +1637,9 @@ public class CNodeService extends D1NodeService
             if (!isValidIdentifier(pid)) {
                 throw new InvalidRequest("4891", "The provided identifier is invalid.");
             }
+            if (sysmeta == null) {
+                throw new InvalidRequest("4891", "The system metadata is null.");
+            }
             if (session == null) {
                 throw new InvalidToken("4894", "Session is required to WRITE to the Node.");
             }
@@ -1655,10 +1659,8 @@ public class CNodeService extends D1NodeService
                 // proceed if we're called by a CN
                 if (isAllowed) {
                     objectExists(pid);
-
                     //check if the series id is legitimate. It uses the same rules of the method
                     // registerSystemMetadata
-                    //checkSidInModifyingSystemMetadata(sysmeta, "4896", "4893");
                     Identifier sid = sysmeta.getSeriesId();
                     if (sid != null) {
                         if (!isValidIdentifier(sid)) {
@@ -1682,11 +1684,8 @@ public class CNodeService extends D1NodeService
                     String version = checker.getVersion("MNRead");
                     boolean changeModificationDate = false;
                     if (version != null && version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
-                        //sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                         changeModificationDate = true;
                     }
-                    //sysmeta.setArchived(false); // this is a create op, not update
-
                     // the CN should have set the origin and authoritative member node fields
                     try {
                         sysmeta.getOriginMemberNode().getValue();
@@ -1697,10 +1696,8 @@ public class CNodeService extends D1NodeService
                             "4896",
                             "Both the origin and authoritative member node identifiers need to be"
                                 + " set.");
-
                     }
                     pid = super.create(session, pid, object, sysmeta, changeModificationDate);
-
                 } else {
                     String msg = "The subject listed as " + session.getSubject().getValue()
                         + " isn't allowed to call create() on a Coordinating Node for pid "
@@ -1708,7 +1705,6 @@ public class CNodeService extends D1NodeService
                     logMetacat.error(msg);
                     throw new NotAuthorized("1100", msg);
                 }
-
             } catch (RuntimeException e) {
                 // Convert Hazelcast runtime exceptions to service failures
                 String msg =
@@ -1717,6 +1713,19 @@ public class CNodeService extends D1NodeService
                 throw new ServiceFailure("4893", msg);
 
             }
+        } catch(Exception e) {
+            // Metacat needs to delete object from hashstore
+            try {
+                // Metacat stores the object based on the pid in the system metadata,
+                // so it deletes from there.
+                if (sysmeta != null && sysmeta.getIdentifier() != null) {
+                    MetacatInitializer.getStorage().deleteObject(sysmeta.getIdentifier());
+                }
+            } catch (Exception ee) {
+                logMetacat.error("Metacat couldn't delete the object "
+                                + sysmeta.getIdentifier().getValue() + " since " + ee.getMessage());
+            }
+            throw e;
         } finally {
             IOUtils.closeQuietly(object);
         }

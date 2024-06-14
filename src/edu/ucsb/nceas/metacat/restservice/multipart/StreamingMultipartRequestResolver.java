@@ -214,12 +214,18 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         } catch (Exception e) {
             if (objectMetadata != null) {
                 // The object was stored into HashStore successfully and we need to delete them
-                if (objTaggedWithPid) {
-                    Identifier id = new Identifier();
-                    id.setValue(pid);
-                    MetacatInitializer.getStorage().deleteObject(id);
-                } else {
-                    MetacatInitializer.getStorage().deleteObject("cid", objectMetadata.getCid());
+                try {
+                    if (objTaggedWithPid) {
+                        Identifier id = new Identifier();
+                        id.setValue(pid);
+                        MetacatInitializer.getStorage().deleteObject(id);
+                    } else {
+                        MetacatInitializer.getStorage().deleteObject("cid", objectMetadata.getCid());
+                    }
+                } catch (Exception ee) {
+                    log.error("StreamingMultipartRequestResolver.resoloveMulitpart - failed to "
+                             + "delete the object with pid " + pid + " or the object with cid "
+                             + objectMetadata.getCid() + " since " + ee.getMessage());
                 }
             }
             throw e;
