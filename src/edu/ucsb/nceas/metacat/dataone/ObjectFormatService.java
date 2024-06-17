@@ -1,30 +1,8 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2000 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.dataone;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,15 +19,14 @@ import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v2.ObjectFormatList;
 
-import edu.ucsb.nceas.metacat.DBUtil;
-import edu.ucsb.nceas.metacat.DocumentImpl;
+
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
+
 import edu.ucsb.nceas.utilities.ParseLSIDException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -61,96 +38,96 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class ObjectFormatService {
 
-	private Log logMetacat = LogFactory.getLog(ObjectFormatService.class);
+    private Log logMetacat = LogFactory.getLog(ObjectFormatService.class);
 
-	/* The scope of the object formats docid used as the metacat identifier */
-	public static final String OBJECT_FORMAT_PID_PREFIX = "OBJECT_FORMAT_LIST.1.";
+    /* The scope of the object formats docid used as the metacat identifier */
+    public static final String OBJECT_FORMAT_PID_PREFIX = "OBJECT_FORMAT_LIST.1.";
 
-	/* The accession number of the object formats document */
-	private String accNumber = null;
+    /* The accession number of the object formats document */
+    private String accNumber = null;
 
-	/* The list of object formats */
-	private ObjectFormatList objectFormatList = null;
+    /* The list of object formats */
+    private ObjectFormatList objectFormatList = null;
 
-	/* the searchable map of object formats */
-	private static HashMap<String, ObjectFormat> objectFormatMap;
+    /* the searchable map of object formats */
+    private static HashMap<String, ObjectFormat> objectFormatMap;
 
-	private static ObjectFormatService instance = null;
-	
-	public static ObjectFormatService getInstance() {
-		if (instance == null) {
-			instance = new ObjectFormatService();
-		}
-		return instance;
-	}
-	
-	/**
-	 * Constructor, private for singleton access
-	 */
-	private ObjectFormatService() {
-		
-	}
+    private static ObjectFormatService instance = null;
 
-	/**
-	 * Return the object format based on the given object format identifier
-	 * 
-	 * @param fmtid
-	 *            - the object format identifier to look up
-	 * @return objectFormat - the desired object format
-	 */
-	public ObjectFormat getFormat(ObjectFormatIdentifier fmtid)
-			throws ServiceFailure, NotFound, NotImplemented {
+    public static ObjectFormatService getInstance() {
+        if (instance == null) {
+            instance = new ObjectFormatService();
+        }
+        return instance;
+    }
 
-		logMetacat.debug("CNCoreImpl.getFormat() called.");
+    /**
+     * Constructor, private for singleton access
+     */
+    private ObjectFormatService() {
 
-		ObjectFormat objectFormat = null;
+    }
 
-		// look up the format in the object format map
-		objectFormat = getObjectFormatMap().get(fmtid.getValue());
+    /**
+     * Return the object format based on the given object format identifier
+     *
+     * @param fmtid
+     *            - the object format identifier to look up
+     * @return objectFormat - the desired object format
+     */
+    public ObjectFormat getFormat(ObjectFormatIdentifier fmtid)
+            throws ServiceFailure, NotFound, NotImplemented {
 
-		// refresh the object format list if the format is null
-		if (objectFormat == null) {
-			getCachedList();
-			objectFormat = getObjectFormatMap().get(fmtid.getValue());
+        logMetacat.debug("CNCoreImpl.getFormat() called.");
 
-			// the object format isn't registered
-			if (objectFormat == null) {
-				throw new NotFound("4848", "The format specified by "
-						+ fmtid.getValue() + " does not exist at this node.");
+        ObjectFormat objectFormat = null;
 
-			}
+        // look up the format in the object format map
+        objectFormat = getObjectFormatMap().get(fmtid.getValue());
 
-		}
+        // refresh the object format list if the format is null
+        if (objectFormat == null) {
+            getCachedList();
+            objectFormat = getObjectFormatMap().get(fmtid.getValue());
 
-		return objectFormat;
-	}
+            // the object format isn't registered
+            if (objectFormat == null) {
+                throw new NotFound("4848", "The format specified by "
+                        + fmtid.getValue() + " does not exist at this node.");
 
-	/**
-	 * Return the list of object formats registered from the Coordinating Node.
-	 * 
-	 * @return objectFormatList - the list of object formats
-	 */
-	public ObjectFormatList listFormats() throws ServiceFailure, NotImplemented {
+            }
 
-		objectFormatList = getCachedList();
+        }
 
-		return objectFormatList;
-	}
+        return objectFormat;
+    }
 
-	/*
-	 * Return the hash containing the fmtid and format mapping
-	 * 
-	 * @return objectFormatMap - the hash of fmtid/format pairs
-	 */
-	private HashMap<String, ObjectFormat> getObjectFormatMap() {
+    /**
+     * Return the list of object formats registered from the Coordinating Node.
+     *
+     * @return objectFormatList - the list of object formats
+     */
+    public ObjectFormatList listFormats() throws ServiceFailure, NotImplemented {
 
-		if (objectFormatMap == null) {
-			objectFormatMap = new HashMap<String, ObjectFormat>();
+        objectFormatList = getCachedList();
 
-		}
-		return objectFormatMap;
+        return objectFormatList;
+    }
 
-	}
+    /*
+     * Return the hash containing the fmtid and format mapping
+     *
+     * @return objectFormatMap - the hash of fmtid/format pairs
+     */
+    private HashMap<String, ObjectFormat> getObjectFormatMap() {
+
+        if (objectFormatMap == null) {
+            objectFormatMap = new HashMap<String, ObjectFormat>();
+
+        }
+        return objectFormatMap;
+
+    }
 
     /**
      * Get the object format list cached in Metacat
@@ -173,7 +150,7 @@ public class ObjectFormatService {
         } catch (IOException | InstantiationException | IllegalAccessException 
                  | MarshallingException | McdbException | SQLException 
                  | PropertyNotFoundException | ClassNotFoundException
-                 | ParseLSIDException e) {
+                 | ParseLSIDException | NoSuchAlgorithmException e) {
             throw new ServiceFailure("4841",
                     "Unexpected exception from the service - "
                      + e.getClass() + ": " + e.getMessage());

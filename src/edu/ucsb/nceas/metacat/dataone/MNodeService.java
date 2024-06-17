@@ -630,6 +630,12 @@ public class MNodeService extends D1NodeService
                     // True means always change the modification date when it saves system metadata.
                     localId = handler.save(sysmeta, true, MetacatHandler.Action.UPDATE, docType,
                                            object, existingSysMeta, subject.getValue());
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidRequest("1102", "An InvalidRequest in the create method - "
+                                            + e.getMessage());
+                } catch (NoSuchAlgorithmException e) {
+                    throw new UnsupportedType("1140", "An UnsupportedType in the create method - "
+                            + e.getMessage());
                 } catch (IOException ioe) {
                     throw new ServiceFailure("1310", "Metacat cannot update " + pid.getValue()
                                             + " by " + newPid.getValue() + " : " + ioe.getMessage());

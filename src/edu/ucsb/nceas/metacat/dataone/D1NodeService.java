@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigInteger;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -406,6 +407,12 @@ public abstract class D1NodeService {
             // The sysmeta of the  obsoleted object set null
             localId = handler.save(sysmeta, changeModificationDate, MetacatHandler.Action.INSERT,
                                    docType, object, null, subject.getValue());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRequest("1102", "An InvalidRequest in the create method - "
+                                    + e.getMessage());
+        } catch (NoSuchAlgorithmException e) {
+            throw new UnsupportedType("1140", "An UnsupportedType in the create method - "
+                    + e.getMessage());
         } catch (IOException ioe) {
             throw new ServiceFailure("1190", "Metacat cannot save the object " + pid.getValue()
                                     + ioe.getMessage());
