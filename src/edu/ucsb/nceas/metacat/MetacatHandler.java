@@ -144,7 +144,7 @@ public class MetacatHandler {
     public static InputStream read(Identifier pid) throws IllegalArgumentException,
                     FileNotFoundException, NoSuchAlgorithmException, ServiceFailure, IOException {
         InputStream inputStream = null;
-        MetacatInitializer.getStorage().retrieveMetadata(pid);
+        MetacatInitializer.getStorage().retrieveObject(pid);
         return inputStream;
     }
 
