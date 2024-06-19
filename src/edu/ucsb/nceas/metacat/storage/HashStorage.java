@@ -163,9 +163,9 @@ public class HashStorage implements Storage {
     }
 
     @Override
-    public boolean verifyObject( ObjectMetadata objectInfo, String checksum,
-            String checksumAlgorithm, long objSize) throws IllegalArgumentException {
-        return hashStore.verifyObject(objectInfo, checksum, checksumAlgorithm, objSize);
+    public void verifyObject( ObjectMetadata objectInfo, String checksum,
+            String checksumAlgorithm, long objSize) throws IllegalArgumentException, IOException {
+        hashStore.verifyObject(objectInfo, checksum, checksumAlgorithm, objSize);
     }
 
     @Override
@@ -256,7 +256,7 @@ public class HashStorage implements Storage {
 
     @Override
     public void deleteMetadata(Identifier pid, String formatId) throws IllegalArgumentException,
-            IOException, NoSuchAlgorithmException {
+            IOException, NoSuchAlgorithmException, InterruptedException {
         if (pid != null) {
             hashStore.deleteMetadata(pid.getValue(), formatId);
         } else {
@@ -267,7 +267,7 @@ public class HashStorage implements Storage {
 
     @Override
     public void deleteMetadata(Identifier pid) throws IllegalArgumentException, IOException,
-            NoSuchAlgorithmException {
+            NoSuchAlgorithmException, InterruptedException {
         if (pid != null) {
             hashStore.deleteMetadata(pid.getValue());
         } else {

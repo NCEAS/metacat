@@ -140,18 +140,19 @@ public interface Storage {
             InterruptedException;
 
     /**
-     * Confirms that an ObjectMetadata's content is equal to the given values. If it is not
-     * equal, it will return False - otherwise True.
+     * Confirms that an ObjectMetadata's content is equal to the given values. If it does not
+     * equal, it will throw an exception
      * 
      * @param objectInfo        ObjectMetadata object with values
      * @param checksum          Value of checksum to validate against
      * @param checksumAlgorithm Algorithm of checksum submitted
      * @param objSize           Expected size of object to validate after storing
      * @throws IllegalArgumentException An expected value does not match
+     * @throws IOException Issue with recalculating supported algo for checksum not found
      */
-    public boolean verifyObject(
+    public void verifyObject(
             ObjectMetadata objectInfo, String checksum, String checksumAlgorithm, long objSize
-    ) throws IllegalArgumentException;
+    ) throws IllegalArgumentException, IOException;
 
     /**
      * Checks whether an object referenced by a pid exists and returns the content identifier.
@@ -289,9 +290,10 @@ public interface Storage {
      * @throws IOException              I/O error when deleting metadata or empty directories
      * @throws NoSuchAlgorithmException When algorithm used to calculate object address is not
      *                                  supported
+     * @throws InterruptedException     Issue with synchronization on metadata doc
      */
     public void deleteMetadata(Identifier pid, String formatId) throws IllegalArgumentException,
-            IOException, NoSuchAlgorithmException;
+            IOException, NoSuchAlgorithmException, InterruptedException;
 
     /**
      * Deletes all metadata related for the given 'pid' from HashStore
@@ -301,9 +303,10 @@ public interface Storage {
      * @throws IOException              I/O error when deleting metadata or empty directories
      * @throws NoSuchAlgorithmException When algorithm used to calculate object address is not
      *                                  supported
+     * @throws InterruptedException     Issue with synchronization on metadata doc
      */
     public void deleteMetadata(Identifier pid) throws IllegalArgumentException, IOException,
-            NoSuchAlgorithmException;
+            NoSuchAlgorithmException, InterruptedException;
 
     /**
      * Calculates the hex digest of an object that exists in HashStore using a given persistent
