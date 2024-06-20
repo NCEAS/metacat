@@ -1,6 +1,10 @@
 package edu.ucsb.nceas.metacat.systemmetadata;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -11,6 +15,7 @@ import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -25,6 +30,7 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.TypeMarshaller;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
@@ -32,6 +38,7 @@ import edu.ucsb.nceas.metacat.accesscontrol.XMLAccessAccess;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.shared.AccessException;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import edu.ucsb.nceas.utilities.access.XMLAccessDAO;
 
@@ -236,6 +243,14 @@ public class SystemMetadataManager {
                         }
                         // update with the values
                         updateSystemMetadata(sysmeta, dbConn);
+                        // store the system metadata into hashstore
+                        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                            TypeMarshaller.marshalTypeToOutputStream(sysmeta, out);
+                            byte[] content = out.toByteArray();
+                            try (ByteArrayInputStream in = new ByteArrayInputStream(content)) {
+                                MetacatInitializer.getStorage().storeMetadata(in, pid);
+                            }
+                        }
                     } catch (McdbDocNotFoundException e) {
                         throw new InvalidRequest("0000", "SystemMetadataManager.store - can't "
                                                     + "store the system metadata for pid "
@@ -257,6 +272,22 @@ public class SystemMetadataManager {
                         throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
                                                     + "the system metadata for pid " + pid.getValue()
                                                     + " since " + e.getMessage());
+                    } catch (IOException e) {
+                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                                                    + "the system metadata for pid " + pid.getValue()
+                                                    + " since " + e.getMessage());
+                    } catch (MarshallingException e) {
+                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                                + "the system metadata for pid " + pid.getValue()
+                                + " since " + e.getMessage());
+                    } catch (NoSuchAlgorithmException e) {
+                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                                + "the system metadata for pid " + pid.getValue()
+                                + " since " + e.getMessage());
+                    } catch (InterruptedException e) {
+                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                                + "the system metadata for pid " + pid.getValue()
+                                + " since " + e.getMessage());
                     }
                 } finally {
                     try {
