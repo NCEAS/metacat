@@ -169,17 +169,6 @@ public class HashStorage implements Storage {
     }
 
     @Override
-    public String findObject(Identifier pid) throws NoSuchAlgorithmException, IOException,
-                                                    NotFound, InvalidRequest {
-        if (pid != null) {
-            return hashStore.findObject(pid.getValue());
-        } else {
-            throw new InvalidRequest("0000", "The stored pid should not be null in the"
-                                                + " findObject method.");
-        }
-    }
-
-    @Override
     public String storeMetadata(InputStream metadata, Identifier pid, String formatId)
             throws IOException, IllegalArgumentException, FileNotFoundException,
             InterruptedException, NoSuchAlgorithmException {
