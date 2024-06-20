@@ -103,25 +103,25 @@ global:
   ##
   sharedVolumeSubPath: &sharedVolumeSubPath ""
 
-  ## @param global.includeMetacatUI  Enable or disable the metacatui sub-chart.
-  ## Set to false if you want to connect to your own existing metacatui deployment.
-  ##
-  includeMetacatUi: true
-
   ## @param global.dataone-indexer.enabled Enable the dataone-indexer sub-chart
   ## set to false if you want to connect to your own existing dataone-indexer deployment
   ##
   dataone-indexer.enabled: true
 
-
-## @section Metacatui Sub-Chart Properties
-## ignored unless global.includeMetacatUi: true
-##
-metacatui:
-  ## appConfig MetacatUI.AppConfig settings that can be overridden. See MetacatUI chart values.yaml.
+  ## @param global.includeMetacatUI  Enable or disable the metacatui sub-chart.
+  ## Set to false if you want to connect to your own existing metacatui deployment.
   ##
-  appConfig:
-    theme: "knb"
+  includeMetacatUi: true
+
+  ## @param global.metacatUiThemeName The theme name to use. Required, even if overriding config.js
+  ##
+  metacatUiThemeName: "knb"
+
+  ## @param global.metacatUiWebRoot The url root to be appended after the metacatui baseUrl.
+  ## Starts with "/". Required, even if overriding config.js
+  ##
+  metacatUiWebRoot: "/"
+
 
 ## @section Metacat Application-Specific Properties
 ##
