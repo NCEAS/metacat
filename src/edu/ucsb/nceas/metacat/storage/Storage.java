@@ -155,23 +155,6 @@ public interface Storage {
     ) throws IllegalArgumentException, IOException;
 
     /**
-     * Checks whether an object referenced by a pid exists and returns the content identifier.
-     * 
-     * @param pid Authority-based identifier
-     * @return Content identifier (cid)
-     * @throws NoSuchAlgorithmException          When algorithm used to calculate pid refs
-     *                                           file's absolute address is not valid
-     * @throws IOException                       Unable to read from a pid refs file or pid refs
-     *                                           file does not exist
-     * @throws OrphanRefsFilesException          pid and cid refs file found, but object does
-     *                                           not exist
-     * @throws NotFound                          Something not found
-     * @throws InvalidRequest                    An invalid Request
-     */
-    public String findObject(Identifier pid) throws NoSuchAlgorithmException, IOException,
-                                                    NotFound, InvalidRequest;
-
-    /**
      * Adds/updates metadata (ex. `sysmeta`) to the HashStore by using a given InputStream, a
      * persistent identifier (`pid`) and metadata format (`formatId`). All metadata documents
      * for a given pid will be stored in the directory (under ../metadata) that is determined
