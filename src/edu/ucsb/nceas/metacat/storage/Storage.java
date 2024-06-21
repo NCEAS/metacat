@@ -92,35 +92,6 @@ public interface Storage {
             RuntimeException, InterruptedException;
 
     /**
-     * @see #storeObject(InputStream, String, String, String, String, long)
-     * 
-     *      Store an object and validate the given checksum & checksum algorithm.
-     */
-    public ObjectMetadata storeObject(
-            InputStream object, Identifier pid, String checksum, String checksumAlgorithm
-    ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
-            RuntimeException, InterruptedException;
-
-    /**
-     * @see #storeObject(InputStream, String, String, String, String, long)
-     * 
-     *      Store an object and generate an additional algorithm in hex digests.
-     */
-    public ObjectMetadata storeObject(
-            InputStream object, Identifier pid, String additionalAlgorithm
-    ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
-            RuntimeException, InterruptedException;
-
-    /**
-     * @see #storeObject(InputStream, String, String, String, String, long)
-     * 
-     *      Store an object and validate its size.
-     */
-    public ObjectMetadata storeObject(InputStream object, Identifier pid, long objSize)
-            throws NoSuchAlgorithmException, IOException, InvalidRequest,
-            RuntimeException, InterruptedException;
-
-    /**
      * Creates references that allow objects stored in HashStore to be discoverable. Retrieving,
      * deleting or calculating a hex digest of an object is based on a pid argument; and to
      * proceed, we must be able to find the object associated with the pid.

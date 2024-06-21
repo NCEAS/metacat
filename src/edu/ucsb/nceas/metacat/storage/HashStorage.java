@@ -128,26 +128,6 @@ public class HashStorage implements Storage {
         return storeObject(object, pid, null, checksum, checksumAlgorithm, objSize);
     }
 
-    @Override
-    public ObjectMetadata storeObject(InputStream object, Identifier pid, String checksum,
-                                     String checksumAlgorithm) throws NoSuchAlgorithmException,
-                           IOException, InvalidRequest,RuntimeException, InterruptedException {
-        return storeObject(object, pid, null, checksum, checksumAlgorithm, -1);
-    }
-
-    @Override
-    public ObjectMetadata storeObject(InputStream object, Identifier pid, String additionalAlgorithm)
-                throws NoSuchAlgorithmException, IOException, InvalidRequest,
-                       RuntimeException, InterruptedException {
-        return storeObject(object, pid, additionalAlgorithm, null, null, -1);
-    }
-
-    @Override
-    public ObjectMetadata storeObject(InputStream object, Identifier pid, long objSize)
-            throws NoSuchAlgorithmException, IOException, InvalidRequest,
-            RuntimeException, InterruptedException {
-        return storeObject(object, pid, null, null, null, objSize);
-    }
 
     @Override
     public void tagObject(Identifier pid, String cid) throws IOException,
