@@ -117,9 +117,7 @@ public class HashStorage implements Storage {
     @Override
     public ObjectMetadata storeObject(InputStream object) throws NoSuchAlgorithmException,
             IOException, InvalidRequest, RuntimeException, InterruptedException {
-        Identifier pid = new Identifier();
-        pid.setValue("HashStoreNoPid");
-        return storeObject(object, pid, null, null, null, -1);
+        return hashStore.storeObject(object);
     }
 
     @Override
