@@ -13,7 +13,6 @@ import edu.ucsb.nceas.metacat.index.queue.FailedIndexResubmitTimerTaskIT;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager.SysMetaVersion;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
@@ -3733,7 +3732,7 @@ public class MNodeServiceIT {
             sysmeta.setFormatId(formatid);
             object.close();
             Checksum checksum = null;
-            DetailedFileInputStream data = new DetailedFileInputStream(temp1, checksum);
+            FileInputStream data = new FileInputStream(temp1);
             Identifier pid = MNodeService.getInstance(request).create(session, guid, data, sysmeta);
             SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, pid);
             assertEquals(result.getIdentifier(), guid);
@@ -3754,7 +3753,7 @@ public class MNodeServiceIT {
             SystemMetadata newMeta = D1NodeServiceTest.createSystemMetadata(newPid, session.getSubject(), object);
             newMeta.setFormatId(formatid);
             object.close();
-            data = new DetailedFileInputStream(temp2, newMeta.getChecksum());
+            data = new FileInputStream(temp2);
             try {
                 MNodeService.getInstance(request).update(session, pid, data, newPid, newMeta);
                 fail("we shouldn't get here since the new object is an invalid json-ld file");
@@ -3779,7 +3778,7 @@ public class MNodeServiceIT {
             newMeta = D1NodeServiceTest.createSystemMetadata(newPid, session.getSubject(), object);
             newMeta.setFormatId(formatid);
             object.close();
-            data = new DetailedFileInputStream(temp3, newMeta.getChecksum());
+            data = new FileInputStream(temp3);
             MNodeService.getInstance(request).update(session, pid, data, newPid, newMeta);
             data.close();
             result = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
@@ -3799,7 +3798,7 @@ public class MNodeServiceIT {
             newMeta = D1NodeServiceTest.createSystemMetadata(newPid, session.getSubject(), object);
             newMeta.setFormatId(formatid);
             object.close();
-            data = new DetailedFileInputStream(temp4, newMeta.getChecksum());
+            data = new FileInputStream(temp4);
             try {
                 MNodeService.getInstance(request).create(session, newPid, data, newMeta);
                 fail("we shouldn't get here since the object is an invalid json-ld file");
