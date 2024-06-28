@@ -11,7 +11,6 @@ import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManagerIT;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
-import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -1958,7 +1957,7 @@ public class MNodeQueryIT {
         out.close();
         input.close();
         Checksum checksum = null;
-        DetailedFileInputStream data = new DetailedFileInputStream(temp1, checksum);
+        FileInputStream data = new FileInputStream(temp1);
 
         Session session = d1NodeServiceTest.getTestSession();
         Identifier guid = new Identifier();
