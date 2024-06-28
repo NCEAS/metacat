@@ -192,8 +192,10 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                       + size + "and calculating checksum using algorithm " + algorithm);
                                 // Note: please DO assign objectMetadata in this statement
                                 // Hashstore will throw an exception if the id already is used.
+                                // null is for the parameter of additionalAlgorithm
                                 objectMetadata = MetacatInitializer.getStorage()
-                                                    .storeObject(stream, id, checksum, algorithm, size);
+                                                                    .storeObject(stream, id, null,
+                                                                        checksum, algorithm, size);
                                 // The above storeObject method implicitly tagged the id with
                                 // the cid. So we set objTaggedWithPid true.
                                 objTaggedWithPid = true;
