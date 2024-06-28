@@ -4,7 +4,6 @@ import edu.ucsb.nceas.MCTestCase;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
-import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
@@ -1898,8 +1897,7 @@ public class CNodeServiceIT {
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setFormatId(formatid);
         object.close();
-        Checksum checksum = null;
-        DetailedFileInputStream data = new DetailedFileInputStream(tempValidJsonLDFile, checksum);
+        FileInputStream data = new FileInputStream(tempValidJsonLDFile);
 
         Identifier pid;
 
@@ -1934,7 +1932,7 @@ public class CNodeServiceIT {
             D1NodeServiceTest.createSystemMetadata(newPid, session.getSubject(), object);
         newMeta.setFormatId(formatid);
         object.close();
-        data = new DetailedFileInputStream(tempInvalidJsonLDFile, newMeta.getChecksum());
+        data = new FileInputStream(tempInvalidJsonLDFile);
 
         try (MockedStatic<ObjectFormatCache> ignored =
                  Mockito.mockStatic(ObjectFormatCache.class)) {
