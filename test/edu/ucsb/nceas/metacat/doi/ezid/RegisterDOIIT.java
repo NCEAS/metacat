@@ -68,7 +68,7 @@ import org.junit.runners.MethodSorters;
  */
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class RegisterDOITest {
+public class RegisterDOIIT {
     public static final int MAX_TIMES = 20;
     public static final int SLEEP_TIME = 1000;
     public static final String EMLFILEPATH = "test/tao.14563.1.xml";
@@ -94,7 +94,7 @@ public class RegisterDOITest {
     /**
      * Constructor for the tests
      */
-    public RegisterDOITest() {
+    public RegisterDOIIT() {
         d1NodeServiceTest = new D1NodeServiceTest("RegisterDOITest");
         request = d1NodeServiceTest.getServletRequest();
     }
@@ -224,7 +224,7 @@ public class RegisterDOITest {
             }
 
             Identifier pid =
-                MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+                d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
             assertEquals(guid.getValue(), pid.getValue());
 
             // check for the metadata for title element
@@ -285,7 +285,7 @@ public class RegisterDOITest {
             InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
             Identifier pid =
-                MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+                d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
             assertEquals(guid.getValue(), pid.getValue());
 
             // check for the metadata explicitly, using ezid service
@@ -341,7 +341,7 @@ public class RegisterDOITest {
                         .getFormatId());
                 content = new FileInputStream(emlFile);
                 Identifier pid =
-                    MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+                    d1NodeServiceTest.mnCreate(session, guid, content, sysmeta);
                 content.close();
                 assertEquals(guid.getValue(), pid.getValue());
                 Thread.sleep(5000);
@@ -429,8 +429,8 @@ public class RegisterDOITest {
                     ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0")
                         .getFormatId());
                 content = new FileInputStream(emlFile);
-                Identifier pid = MNodeService.getInstance(request)
-                    .create(session, publishedIdentifier, content, sysmeta);
+                Identifier pid = d1NodeServiceTest.mnCreate(session, publishedIdentifier,
+                                                            content, sysmeta);
                 content.close();
                 assertEquals(publishedIdentifier.getValue(), pid.getValue());
                 // check for the metadata explicitly, using ezid service
@@ -490,7 +490,7 @@ public class RegisterDOITest {
                 sysmeta.setSeriesId(publishedIdentifier);
                 content = new FileInputStream(emlFile);
                 Identifier pid =
-                    MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+                    d1NodeServiceTest.mnCreate(session, guid, content, sysmeta);
                 content.close();
                 assertEquals(guid.getValue(), pid.getValue());
                 // check for the metadata explicitly, using ezid service
@@ -550,8 +550,8 @@ public class RegisterDOITest {
                         .getFormatId());
                 sysmeta.setSeriesId(doiSid);
                 content = new FileInputStream(emlFile);
-                Identifier pid = MNodeService.getInstance(request)
-                    .create(session, publishedIdentifier, content, sysmeta);
+                Identifier pid = d1NodeServiceTest.mnCreate(session, publishedIdentifier,
+                                                            content, sysmeta);
                 content.close();
                 assertEquals(publishedIdentifier.getValue(), pid.getValue());
                 // check for the metadata explicitly, using ezid service
@@ -607,12 +607,9 @@ public class RegisterDOITest {
                 System.out.println("the result is \n" + result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
                 assertTrue(result.contains(creatorsStr));
-                //System.out.println("publisher =======is"+publisher);
                 sdf = new SimpleDateFormat("yyyy");
                 year = sdf.format(sysmeta.getDateUploaded());
                 assertTrue(result.contains(year));
-                //System.out.println("publishing year =======is"+publishingYear);
-                //System.out.println("resource type =======is"+resourceType);
                 assertTrue(result.contains("Dataset"));
                 content.close();
             } catch (FileNotFoundException e) {
@@ -639,7 +636,7 @@ public class RegisterDOITest {
                 sysmeta.setSeriesId(sid);
                 content = new FileInputStream(emlFile);
                 Identifier pid =
-                    MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+                    d1NodeServiceTest.mnCreate(session, guid, content, sysmeta);
                 content.close();
                 assertEquals(guid.getValue(), pid.getValue());
                 // check for the metadata explicitly, using ezid service
@@ -707,8 +704,7 @@ public class RegisterDOITest {
             ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0")
                 .getFormatId());
         content = new FileInputStream(emlFile);
-        Identifier pid = MNodeService.getInstance(request)
-            .create(session, publishedIdentifier, content, sysmeta);
+        Identifier pid = d1NodeServiceTest.mnCreate(session, publishedIdentifier, content, sysmeta);
         content.close();
         assertEquals(publishedIdentifier.getValue(), pid.getValue());
         SystemMetadata meta =
@@ -772,7 +768,7 @@ public class RegisterDOITest {
                 .getFormatId());
         sysmeta.setSeriesId(sid);
         content = new FileInputStream(emlFile);
-        pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+        pid = d1NodeServiceTest.mnCreate(session, guid, content, sysmeta);
         content.close();
         assertEquals(guid.getValue(), pid.getValue());
         meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
@@ -847,8 +843,8 @@ public class RegisterDOITest {
             ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0")
                 .getFormatId());
         content = new FileInputStream(emlFile);
-        Identifier pid = MNodeService.getInstance(request)
-            .create(session, publishedIdentifier, content, sysmeta);
+        Identifier pid = d1NodeServiceTest.mnCreate(session, publishedIdentifier,
+                                                    content, sysmeta);
         content.close();
         assertEquals(publishedIdentifier.getValue(), pid.getValue());
         SystemMetadata meta =
@@ -906,7 +902,7 @@ public class RegisterDOITest {
                 .getFormatId());
         sysmeta.setSeriesId(sid);
         content = new FileInputStream(emlFile);
-        pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+        pid = d1NodeServiceTest.mnCreate(session, guid, content, sysmeta);
         content.close();
         assertEquals(guid.getValue(), pid.getValue());
         meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
@@ -969,7 +965,7 @@ public class RegisterDOITest {
             ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0")
                 .getFormatId());
         content = new FileInputStream(emlFile);
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+        Identifier pid = d1NodeServiceTest.mnCreate(session, guid, content, sysmeta);
         content.close();
         assertEquals(guid.getValue(), pid.getValue());
         Thread.sleep(5000);
@@ -1083,7 +1079,7 @@ public class RegisterDOITest {
                     .getFormatId());
             object = new FileInputStream(EMLFILEPATH);
             Identifier pid =
-                MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+                d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
             assertEquals(guid.getValue(), pid.getValue());
             // check for the metadata for title element
             count = 0;
@@ -1195,7 +1191,7 @@ public class RegisterDOITest {
                     .getFormatId());
             object = new FileInputStream(EMLFILEPATH);
             Identifier pid =
-                MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+                d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
             assertEquals(guid.getValue(), pid.getValue());
             // check for the metadata for title element
             count = 0;
@@ -1300,7 +1296,7 @@ public class RegisterDOITest {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setAccessPolicy(access);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
             fail("we can't get here since the object is not public readable");
@@ -1320,7 +1316,7 @@ public class RegisterDOITest {
         sysmeta2.setFormatId(formatId);
         sysmeta2.setAccessPolicy(access);
         object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        d1NodeServiceTest.mnCreate(session, guid2, object2, sysmeta2);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
             fail("we can't get here since the object is not public readable");
@@ -1387,7 +1383,7 @@ public class RegisterDOITest {
         formatId3.setValue("http://www.openarchives.org/ore/terms");
         sysmeta3.setFormatId(formatId3);
         sysmeta3.setAccessPolicy(access);
-        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        d1NodeServiceTest.mnCreate(session, resourceMapId, object3, sysmeta3);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, resourceMapId);
             fail("we can't get here since the object is not public readable");
@@ -1481,7 +1477,7 @@ public class RegisterDOITest {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setAccessPolicy(access);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
             fail("we can't get here since the object is not public readable");
@@ -1502,7 +1498,7 @@ public class RegisterDOITest {
         sysmeta2.setFormatId(formatId);
         sysmeta2.setAccessPolicy(access);
         object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        d1NodeServiceTest.mnCreate(session, guid2, object2, sysmeta2);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
             fail("we can't get here since the object is not public readable");
@@ -1569,7 +1565,7 @@ public class RegisterDOITest {
         formatId3.setValue("http://www.openarchives.org/ore/terms");
         sysmeta3.setFormatId(formatId3);
         sysmeta3.setAccessPolicy(access);
-        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        d1NodeServiceTest.mnCreate(session, resourceMapId, object3, sysmeta3);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, resourceMapId);
             fail("we can't get here since the object is not public readable");

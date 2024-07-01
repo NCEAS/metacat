@@ -44,7 +44,7 @@ import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
-import edu.ucsb.nceas.metacat.doi.ezid.RegisterDOITest;
+import edu.ucsb.nceas.metacat.doi.ezid.RegisterDOIIT;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -148,7 +148,7 @@ public class UpdateDOITest extends D1NodeServiceTest {
             String result = metadata.get(EzidDOIService.DATACITE);
             //System.out.println("the result is \n"+result);
             assertTrue(result.contains("Test EML package - public-readable from morpho"));
-            assertTrue(result.contains(RegisterDOITest.creatorsStr));
+            assertTrue(result.contains(RegisterDOIIT.creatorsStr));
             //System.out.println("publisher =======is"+publisher);
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
             String year = sdf.format(sysmeta.getDateUploaded());
@@ -194,7 +194,7 @@ public class UpdateDOITest extends D1NodeServiceTest {
             String result = metadata.get(EzidDOIService.DATACITE);
             //System.out.println("the result is \n"+result);
             assertTrue(result.contains("Test EML package - public-readable from morpho"));
-            assertTrue(result.contains(RegisterDOITest.creatorsStr));
+            assertTrue(result.contains(RegisterDOIIT.creatorsStr));
             //System.out.println("publisher =======is"+publisher);
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
             String year = sdf.format(sysmeta.getDateUploaded());
