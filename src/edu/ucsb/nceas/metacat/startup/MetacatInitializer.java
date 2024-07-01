@@ -151,12 +151,7 @@ public class MetacatInitializer implements ServletContextListener{
                 K8sAdminInitializer.initializeK8sInstance();
             }
 
-            //Initialize the storage system
-            synchronized (MetacatInitializer.class) {
-                if (storage == null) {
-                    storage = StorageFactory.getStorage();
-                }
-            }
+            initStorage();
 
             // register the XML schema service
             ServiceService.registerService("XMLSchemaService", XMLSchemaService.getInstance());
@@ -433,5 +428,20 @@ public class MetacatInitializer implements ServletContextListener{
             throw new ServiceFailure("", "The storage system hasn't been initialized.");
         }
         return storage;
+    }
+
+    /**
+     * Initialize the storage system.
+     * @throws PropertyNotFoundException
+     * @throws ServiceException
+     */
+    public static void initStorage() throws PropertyNotFoundException, ServiceException {
+        if (storage == null) {
+            synchronized (MetacatInitializer.class) {
+                if (storage == null) {
+                    storage = StorageFactory.getStorage();
+                }
+            }
+        }
     }
 }
