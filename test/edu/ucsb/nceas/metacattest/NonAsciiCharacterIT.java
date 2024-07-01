@@ -457,7 +457,7 @@ public class NonAsciiCharacterIT {
         docid.append(calendar.get(Calendar.MINUTE));
         docid.append(calendar.get(Calendar.SECOND));
        //sometimes this number is not unique, so we append a random number
-        int random = (new Double(Math.random()*10000000)).intValue();
+        int random = (Double.valueOf(Math.random()*10000000)).intValue();
         docid.append(random);
         return docid.toString();
     }
