@@ -5,7 +5,7 @@ import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.storage.Storage;
-import edu.ucsb.nceas.metacat.util.SkinUtil;;
+import edu.ucsb.nceas.metacat.util.SkinUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.apache.commons.configuration.Configuration;
@@ -55,7 +55,6 @@ import org.mockito.Mockito;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -346,7 +345,7 @@ public class D1NodeServiceTest extends MCTestCase {
         return session;
     }
 
-    public Session getCNSession() throws Exception {
+    public static Session getCNSession() throws Exception {
         Session session = new Session();
         Subject subject = null;
         CNode cn = D1Client.getCN();
@@ -365,7 +364,7 @@ public class D1NodeServiceTest extends MCTestCase {
 
     }
 
-    public Session getAnotherSession() throws Exception {
+    public static Session getAnotherSession() throws Exception {
         Session session = new Session();
         Subject subject = new Subject();
         subject.setValue("cn=test2,dc=dataone,dc=org");
@@ -374,7 +373,7 @@ public class D1NodeServiceTest extends MCTestCase {
 
     }
 
-    public Session getThirdSession() throws Exception {
+    public static Session getThirdSession() throws Exception {
         Session session = new Session();
         Subject subject = new Subject();
         subject.setValue("cn=test34,dc=dataone,dc=org");
