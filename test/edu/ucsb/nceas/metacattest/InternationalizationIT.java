@@ -28,7 +28,7 @@ import java.io.InputStream;
 /**
  * A JUnit test for testing Metacat when Non Ascii Characters are inserted
  */
-public class InternationalizationTest {
+public class InternationalizationIT {
 
     private D1NodeServiceTest d1NodeServiceTest;
     private HttpServletRequest request;
