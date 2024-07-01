@@ -2343,6 +2343,32 @@ public class MNodeService extends D1NodeService
             inputStream = this.get(session, originalIdentifier);
         }
 
+        // Store the new object into hash store. Null is the additional algorithm
+        try {
+            MetacatInitializer.getStorage().storeObject(inputStream, newIdentifier, null,
+                                                       sysmeta.getChecksum().getValue(),
+                                                       sysmeta.getChecksum().getAlgorithm(),
+                                                       sysmeta.getSize().longValue());
+        } catch (NoSuchAlgorithmException | RuntimeException | InterruptedException eee) {
+            // report as service failure
+            try {
+                MetacatInitializer.getStorage().deleteObject(newIdentifier);
+            } catch (Exception ee) {
+                logMetacat.warn("Metacat can't delete the object " + newIdentifier.getValue()
+                                + " since " + ee.getMessage());
+            }
+            ServiceFailure sf = new ServiceFailure("1030", eee.getMessage());
+            sf.initCause(eee);
+            throw sf;
+        } catch (Exception eee) {
+            try {
+                MetacatInitializer.getStorage().deleteObject(newIdentifier);
+            } catch (Exception ee) {
+                logMetacat.warn("Metacat can't delete the object " + newIdentifier.getValue()
+                + " since " + ee.getMessage());
+            }
+            throw eee;
+        }
         // update the object
         this.update(session, originalIdentifier, inputStream, newIdentifier, sysmeta);
 
@@ -2537,6 +2563,7 @@ public class MNodeService extends D1NodeService
                 ChecksumUtil.checksum(output, newSysmeta.getChecksum().getAlgorithm());
             newObject = new ByteArrayInputStream(output);
             newSysmeta.setChecksum(checksum);
+            newSysmeta.setSize(BigInteger.valueOf(output.length));
             logMetacat.debug(
                 "MNNodeService.editScienceMetadata - the new checksum is " + checksum.getValue()
                     + " with algorithm " + checksum.getAlgorithm() + " for the new pid "
