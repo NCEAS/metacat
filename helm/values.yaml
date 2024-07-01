@@ -430,7 +430,7 @@ metacat:
   ## The index file contains a list of sitemap.xml files. Each listing is of the form:
   ##
   ##   <sitemap>
-  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <loc>https://metacat.dataone.org/sitemap1.xml</loc>
   ##     <lastmod>2024-04-22</lastmod>
   ##   </sitemap>
   ##
@@ -445,7 +445,7 @@ metacat:
   ## URL entries are of the form:
   ##
   ##   <url>
-  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <loc>https://metacat.dataone.org/view/some-identifier-here</loc>
   ##     <lastmod>2024-03-29</lastmod>
   ##   </url>
   ##
@@ -460,12 +460,12 @@ metacat:
   ## Either full URL or absolute path. Trailing slash optional.
   ##
   ## sitemap_index.xml contains listings pointing to the sitemap(n).xml files. If we set:
-  ##   sitemap.location.base: "/metacatui"
-  ##   (or sitemap.location.base: "https://metacat.dataone.org/metacatui")
+  ##   sitemap.location.base: "/"
+  ##   (or sitemap.location.base: "https://metacat.dataone.org/")
   ##
   ## ...then each listing will be of the form:
   ##   <sitemap>
-  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <loc>https://metacat.dataone.org/sitemap1.xml</loc>
   ##     <lastmod>2024-04-22</lastmod>
   ##   </sitemap>
   ##
@@ -481,16 +481,16 @@ metacat:
   ##
   ## Each sitemap(n).xml file contains listings pointing to the individual datasets to be crawled.
   ## If we set:
-  ## sitemap.entry.base: /metacatui/view
-  ##   (or sitemap.entry.base: "https://metacat.dataone.org/metacatui/view")
+  ## sitemap.entry.base: /view
+  ##   (or sitemap.entry.base: "https://metacat.dataone.org/view")
   ##
   ## ...then each listing will be of the form:
   ##   <url>
-  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <loc>https://metacat.dataone.org/view/some-identifier-here</loc>
   ##     <lastmod>2024-03-29</lastmod>
   ##   </url>
   ##
-  sitemap.entry.base: /metacatui/view
+  sitemap.entry.base: /view
 
 ## @section robots.txt file (search engine indexing)
 ## Also see .Values.metacat.sitemap.*

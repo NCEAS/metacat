@@ -10,14 +10,35 @@
 debug: &debug true
 
 global:
+  metacatUiThemeName: "cerp"
+  metacatUiWebRoot: "/"
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
-  d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
+  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
 
+
+metacatui:
+  ## TODO: DELETE THIS WHEN RELEASE HAS RELPATH IN INDEX/HTML!
+  source:
+    from: "git"
+    git:
+      revision: "feature-2454-relative-appConfigPath"
+  ## END TODO
+
+  customTheme:
+    enabled: true
+    claimName: metacatbrooke-metacatui-customtheme
+    subPath: metacatui-themes/src/cerp/js/themes/cerp
+  appConfig:
+    enabled: false
+
+
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
-  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+  ## Matthew Brooke; Jing Tao; Matt Jones; Jeanette Clark
+  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268;https://orcid.org/0000-0003-0077-4738;http://orcid.org/0000-0003-4703-1974
+
   cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
 
   ## DataONE Member Node (MN) Parameters
