@@ -17,16 +17,13 @@ import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.exceptions.BaseException;
-import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
-import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -57,6 +54,7 @@ import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
@@ -150,45 +148,20 @@ public class SystemMetadataFactory {
 
         // get additional docinfo
         Hashtable<String, String> docInfo = getDocumentInfoMap(localId);
-        // set the default object format
-        String doctype = docInfo.get("doctype");
-        ObjectFormatIdentifier fmtid = new ObjectFormatIdentifier();
-
-        // set the object format, fall back to defaults
-        if (doctype.trim().equals("BIN")) {
-            // we don't know much about this file (yet)
-            fmtid.setValue("application/octet-stream");
-        } else if (doctype.trim().equals("metadata")) {
-            // special ESRI FGDC format
-            fmtid.setValue("FGDC-STD-001-1998");
-        } else {
-            // do we know the given format?
-            fmtid.setValue(doctype);
-            try {
-                ObjectFormatCache.getInstance().getFormat(fmtid);
-            } catch (NotFound nfe) {
-                fmtid.setValue("text/plain");
-            }
-        }
-
-        sysMeta.setFormatId(fmtid);
-        logMetacat.debug("The ObjectFormat for " + localId + " is " + fmtid.getValue());
 
         // for retrieving the actual object
-        InputStream inputStream = null;
-        inputStream = MetacatHandler.read(localId,
-                                ObjectFormatCache.getInstance().getFormat(fmtid).getFormatType());
-
-        // create the checksum
-        String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
-        Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
-        logMetacat.debug("The checksum for " + localId + " is " + checksum.getValue());
-        sysMeta.setChecksum(checksum);
+        try (InputStream inputStream = MetacatHandler.read(identifier)) {
+         // create the checksum
+            String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
+            Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
+            logMetacat.debug("The checksum for " + localId + " is " + checksum.getValue());
+            sysMeta.setChecksum(checksum);
+        }
 
         // set the size from file on disk, don't read bytes again
-        File fileOnDisk = getFileOnDisk(localId);
+        File fileOnDisk = MetacatInitializer.getStorage().findObject(identifier);
         long fileSize = 0;
-        if (fileOnDisk.exists()) {
+        if ( fileOnDisk != null && fileOnDisk.exists()) {
             fileSize = fileOnDisk.length();
         }
         sysMeta.setSize(BigInteger.valueOf(fileSize));
@@ -329,30 +302,6 @@ public class SystemMetadataFactory {
         }
         return size;
 
-    }
-
-    private static File getFileOnDisk(String docid)
-        throws McdbException, PropertyNotFoundException {
-
-        DocumentImpl doc = new DocumentImpl(docid, false);
-        String filepath = null;
-        String filename = null;
-
-        // deal with data or metadata cases
-        if (doc.getRootNodeID() == 0) {
-            // this is a data file
-            filepath = PropertyService.getProperty("application.datafilepath");
-        } else {
-            filepath = PropertyService.getProperty("application.documentfilepath");
-        }
-        // ensure it is a directory path
-        if (!(filepath.endsWith("/"))) {
-            filepath += "/";
-        }
-        filename = filepath + docid;
-        File documentFile = new File(filename);
-
-        return documentFile;
     }
 
     /**

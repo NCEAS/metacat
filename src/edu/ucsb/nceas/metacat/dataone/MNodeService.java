@@ -28,6 +28,7 @@ import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
+import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.storage.Storage;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
@@ -48,7 +49,6 @@ import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
-import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
@@ -3920,7 +3920,7 @@ public class MNodeService extends D1NodeService
      * @throws InterruptedException
      * @throws ServiceFailure
      */
-    public static ObjectMetadata storeData(Storage storage, InputStream inputStream,
+    public static ObjectInfo storeData(Storage storage, InputStream inputStream,
                                     org.dataone.service.types.v1.SystemMetadata sysmeta)
                                     throws NoSuchAlgorithmException, IOException, InvalidRequest,
                                         RuntimeException, InterruptedException, ServiceFailure {

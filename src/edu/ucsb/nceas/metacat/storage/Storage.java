@@ -1,13 +1,12 @@
 package edu.ucsb.nceas.metacat.storage;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
 
-import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.service.exceptions.InvalidRequest;
-import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.types.v1.Identifier;
 
 
@@ -19,7 +18,7 @@ public interface Storage {
 
     /**
      * The `storeObject` method is responsible for the atomic storage of objects to disk using a
-     * given InputStream. Upon successful storage, the method returns a (ObjectMetadata) object
+     * given InputStream. Upon successful storage, the method returns a (ObjectInfo) object
      * containing relevant file information, such as the file's id (which can be used to locate
      * the object on disk), the file's size, and a hex digest dict of algorithms and checksums.
      * Storing an object with `store_object` also tags an object (creating references) which
@@ -66,7 +65,7 @@ public interface Storage {
      *                                    illegal arguments (ex. empty pid) or null pointers
      * @throws InterruptedException       When tagging pid and cid process is interrupted
      */
-    public ObjectMetadata storeObject(
+    public ObjectInfo storeObject(
             InputStream object, Identifier pid, String additionalAlgorithm, String checksum,
             String checksumAlgorithm, long objSize
     ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
@@ -77,7 +76,7 @@ public interface Storage {
      * 
      *      Store an object only without reference files.
      */
-    public ObjectMetadata storeObject(InputStream object) throws NoSuchAlgorithmException,
+    public ObjectInfo storeObject(InputStream object) throws NoSuchAlgorithmException,
             IOException, InvalidRequest, RuntimeException, InterruptedException;
 
     /**
@@ -111,7 +110,7 @@ public interface Storage {
      * @throws IOException Issue with recalculating supported algo for checksum not found
      */
     public void verifyObject(
-            ObjectMetadata objectInfo, String checksum, String checksumAlgorithm, long objSize
+            ObjectInfo objectInfo, String checksum, String checksumAlgorithm, long objSize
     ) throws IllegalArgumentException, IOException;
 
     /**
@@ -267,4 +266,15 @@ public interface Storage {
     public String getHexDigest(Identifier pid, String algorithm) throws IllegalArgumentException,
             FileNotFoundException, IOException, NoSuchAlgorithmException;
 
+    /**
+     * Find the file path of the given identifier. Null will be return if Metacat didn't find it.
+     *
+     * @param pid Authority-based identifier
+     * @return the file path of the given identifier
+     * @throws NoSuchAlgorithmException          When algorithm used to calculate pid refs
+     *                                           file's absolute address is not valid
+     * @throws IOException                       Unable to read from a pid refs file or pid refs
+     *                                           file does not exist
+     */
+    public File findObject(Identifier pid) throws NoSuchAlgorithmException, IOException;
 }

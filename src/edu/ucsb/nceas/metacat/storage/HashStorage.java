@@ -1,9 +1,11 @@
 package edu.ucsb.nceas.metacat.storage;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -13,7 +15,6 @@ import org.dataone.hashstore.HashStoreFactory;
 import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.hashstore.exceptions.HashStoreFactoryException;
 import org.dataone.service.exceptions.InvalidRequest;
-import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.types.v1.Identifier;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -100,23 +101,14 @@ public class HashStorage implements Storage {
     }
 
     @Override
-    public ObjectMetadata storeObject(InputStream object, Identifier pid, String additionalAlgorithm,
+    public ObjectInfo storeObject(InputStream object, Identifier pid, String additionalAlgorithm,
                                       String checksum, String checksumAlgorithm, long objSize)
                                      throws NoSuchAlgorithmException, IOException, InvalidRequest,
                                      RuntimeException, InterruptedException {
         if (pid != null) {
-            try {
-                return hashStore.storeObject(object, pid.getValue(), additionalAlgorithm, checksum,
-                                            checksumAlgorithm, objSize);
-            } catch (Exception eee) {
-                try {
-                    hashStore.deleteMetadata(pid.getValue());
-                } catch (Exception ee) {
-                    logMetacat.warn("Metacat can't delete the object "
-                                    + pid.getValue() + " since " + ee.getMessage());
-                }
-                throw eee;
-            }
+            ObjectMetadata objMeta = hashStore.storeObject(object, pid.getValue(),
+                                        additionalAlgorithm, checksum, checksumAlgorithm, objSize);
+            return convertToObjectInfo(objMeta);
         } else {
             throw new InvalidRequest("0000", "The stored pid should not be null in the"
                                                 + " storeObject method.");
@@ -125,9 +117,10 @@ public class HashStorage implements Storage {
 
 
     @Override
-    public ObjectMetadata storeObject(InputStream object) throws NoSuchAlgorithmException,
+    public ObjectInfo storeObject(InputStream object) throws NoSuchAlgorithmException,
             IOException, InvalidRequest, RuntimeException, InterruptedException {
-        return hashStore.storeObject(object);
+        ObjectMetadata objMeta = hashStore.storeObject(object);
+        return convertToObjectInfo(objMeta);
     }
 
     @Override
@@ -142,9 +135,10 @@ public class HashStorage implements Storage {
     }
 
     @Override
-    public void verifyObject( ObjectMetadata objectInfo, String checksum,
+    public void verifyObject( ObjectInfo objectInfo, String checksum,
             String checksumAlgorithm, long objSize) throws IllegalArgumentException, IOException {
-        hashStore.verifyObject(objectInfo, checksum, checksumAlgorithm, objSize);
+        hashStore.verifyObject(convertToObjectMetadata(objectInfo), checksum,
+                                checksumAlgorithm, objSize);
     }
 
     @Override
@@ -253,6 +247,56 @@ public class HashStorage implements Storage {
             throw new IllegalArgumentException("The pid should not be null in the"
                                                 + " getHexDigest method.");
         }
+    }
+
+    /**
+     * If the object doesn't exist, it return null.
+     */
+    @Override
+    public File findObject(Identifier pid) throws NoSuchAlgorithmException,
+                                                            IllegalArgumentException, IOException {
+        File object = null;
+        if (pid != null) {
+             Map<String, String> map = hashStore.findObject(pid.getValue());
+             if (map != null) {
+                 String path = map.get("cid_object_path");
+                 if (path != null && !path.isBlank()) {
+                     object = new File(path);
+                    if (!object.exists()) {
+                        object = null;
+                    }
+                 }
+             }
+             if (object != null) {
+                 logMetacat.debug("The file path for object " + pid.getValue() + " is "
+                                                                     + object.getAbsolutePath());
+             } else {
+                 logMetacat.debug("The file path for object " + pid.getValue() + " is null.");
+             }
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                        + " findObject method.");
+        }
+
+        return object;
+    }
+
+    private ObjectInfo convertToObjectInfo(ObjectMetadata objMeta) {
+        ObjectInfo info = null;
+        if (objMeta != null) {
+            info = new ObjectInfo(objMeta.getPid(), objMeta.getCid(),
+                                  objMeta.getSize(), objMeta.getHexDigests());
+        }
+        return info;
+    }
+
+    private ObjectMetadata convertToObjectMetadata(ObjectInfo objInfo) {
+        ObjectMetadata metadata = null;
+        if (objInfo != null) {
+            metadata = new ObjectMetadata(objInfo.getPid(), objInfo.getCid(),
+                                          objInfo.getSize(), objInfo.getHexDigests());
+        }
+        return metadata;
     }
 
 }

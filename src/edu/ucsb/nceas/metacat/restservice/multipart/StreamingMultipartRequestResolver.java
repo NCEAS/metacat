@@ -24,7 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
 import org.dataone.exceptions.MarshallingException;
-import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -35,6 +34,7 @@ import org.dataone.service.util.TypeMarshaller;
 
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
+import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 
 
 /**
@@ -101,7 +101,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         FileItemIterator iter = upload.getItemIterator(request);
         boolean sysmetaFirst = false;
         boolean objTaggedWithPid = false;
-        ObjectMetadata objectMetadata = null;
+        ObjectInfo objectMetadata = null;
         int sysmetaIndex = 0;
         int objectIndex = 0;
         try {
