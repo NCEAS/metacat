@@ -35,6 +35,7 @@ global:
   metacatExternalBaseUrl: "https://localhost/"
 
   ## @param global.d1ClientCnUrl The url of the CN; used to populate metacat's 'D1Client.CN_URL'
+  ## and the indexer sub-chart's 'D1Client.CN_URL'.
   ## (Also parsed by the metacatui sub-chart to retrieve the CN base URL)
   ##
   d1ClientCnUrl: "https://cn.dataone.org/cn"
@@ -103,25 +104,25 @@ global:
   ##
   sharedVolumeSubPath: &sharedVolumeSubPath ""
 
-  ## @param global.includeMetacatUI  Enable or disable the metacatui sub-chart.
-  ## Set to false if you want to connect to your own existing metacatui deployment.
-  ##
-  includeMetacatUi: true
-
   ## @param global.dataone-indexer.enabled Enable the dataone-indexer sub-chart
   ## set to false if you want to connect to your own existing dataone-indexer deployment
   ##
   dataone-indexer.enabled: true
 
-
-## @section Metacatui Sub-Chart Properties
-## ignored unless global.includeMetacatUi: true
-##
-metacatui:
-  ## appConfig MetacatUI.AppConfig settings that can be overridden. See MetacatUI chart values.yaml.
+  ## @param global.includeMetacatUI  Enable or disable the metacatui sub-chart.
+  ## Set to false if you want to connect to your own existing metacatui deployment.
   ##
-  appConfig:
-    theme: "knb"
+  includeMetacatUi: true
+
+  ## @param global.metacatUiThemeName The theme name to use. Required, even if overriding config.js
+  ##
+  metacatUiThemeName: "knb"
+
+  ## @param global.metacatUiWebRoot The url root to be appended after the metacatui baseUrl.
+  ## Starts with "/". Required, even if overriding config.js
+  ##
+  metacatUiWebRoot: "/"
+
 
 ## @section Metacat Application-Specific Properties
 ##
@@ -430,7 +431,7 @@ metacat:
   ## The index file contains a list of sitemap.xml files. Each listing is of the form:
   ##
   ##   <sitemap>
-  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <loc>https://metacat.dataone.org/sitemap1.xml</loc>
   ##     <lastmod>2024-04-22</lastmod>
   ##   </sitemap>
   ##
@@ -445,7 +446,7 @@ metacat:
   ## URL entries are of the form:
   ##
   ##   <url>
-  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <loc>https://metacat.dataone.org/view/some-identifier-here</loc>
   ##     <lastmod>2024-03-29</lastmod>
   ##   </url>
   ##
@@ -460,12 +461,12 @@ metacat:
   ## Either full URL or absolute path. Trailing slash optional.
   ##
   ## sitemap_index.xml contains listings pointing to the sitemap(n).xml files. If we set:
-  ##   sitemap.location.base: "/metacatui"
-  ##   (or sitemap.location.base: "https://metacat.dataone.org/metacatui")
+  ##   sitemap.location.base: "/"
+  ##   (or sitemap.location.base: "https://metacat.dataone.org/")
   ##
   ## ...then each listing will be of the form:
   ##   <sitemap>
-  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <loc>https://metacat.dataone.org/sitemap1.xml</loc>
   ##     <lastmod>2024-04-22</lastmod>
   ##   </sitemap>
   ##
@@ -481,16 +482,16 @@ metacat:
   ##
   ## Each sitemap(n).xml file contains listings pointing to the individual datasets to be crawled.
   ## If we set:
-  ## sitemap.entry.base: /metacatui/view
-  ##   (or sitemap.entry.base: "https://metacat.dataone.org/metacatui/view")
+  ## sitemap.entry.base: /view
+  ##   (or sitemap.entry.base: "https://metacat.dataone.org/view")
   ##
   ## ...then each listing will be of the form:
   ##   <url>
-  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <loc>https://metacat.dataone.org/view/some-identifier-here</loc>
   ##     <lastmod>2024-03-29</lastmod>
   ##   </url>
   ##
-  sitemap.entry.base: /metacatui/view
+  sitemap.entry.base: /view
 
 ## @section robots.txt file (search engine indexing)
 ## Also see .Values.metacat.sitemap.*

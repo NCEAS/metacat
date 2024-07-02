@@ -33,7 +33,7 @@ appVersion: "3.0.0"
 # Chart dependencies - also see https://github.com/bitnami/charts/tree/main/bitnami
 dependencies:
   - name: metacatui
-    version: 0.5.0
+    version: 0.6.0
     ## NOT YET AVAILABLE IN CHARTS REPO
     # repository: oci://ghcr.io/nceas/charts
     condition: global.includeMetacatUi
