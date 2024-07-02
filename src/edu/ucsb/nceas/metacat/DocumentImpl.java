@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -30,6 +31,7 @@ import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -537,62 +539,20 @@ public class DocumentImpl {
 
     }
 
-
-
     /**
-     * Deletes a doc or data file from the filesystem using the accession number.
+     * Deletes a doc or data file from the filesystem using identifier.
      *
-     * @param accNumber
-     * @param isXml
-     * @throws McdbException
+     * @param id  the identifier of the object which will deleted
+     * @throws InterruptedException
+     * @throws IOException
+     * @throws ServiceFailure
+     * @throws NoSuchAlgorithmException
+     * @throws IllegalArgumentException
      */
-    public static void deleteFromFileSystem(String accNumber, boolean isXml) throws McdbException {
-
-        // must have an id
-        if (accNumber == null) {
-            throw new McdbException("Could not delete file.  Accession Number number is null");
-        }
-
-        // remove the document from disk
-        String documentPath = null;
-
-        // get the correct location on disk
-        documentPath = getFilePath(accNumber, isXml);
-        // delete it if it exists
-        if (accNumber != null && FileUtil.getFileStatus(documentPath) != FileUtil.DOES_NOT_EXIST) {
-            try {
-                FileUtil.deleteFile(documentPath);
-            } catch (IOException ioe) {
-                throw new McdbException(
-                    "Could not delete file: " + documentPath + " : " + ioe.getMessage());
-            }
-        }
-
-    }
-
-    private static String getFilePath(String accNumber, boolean isXml) throws McdbException {
-        if (accNumber == null || accNumber.trim().equals("")) {
-            throw new McdbException(
-                "Could not get the file path since the Accession Number number is null");
-        }
-        String documentPath = null;
-        try {
-            String documentDir = null;
-
-            // get the correct location on disk
-            if (isXml) {
-                documentDir = PropertyService.getProperty("application.documentfilepath");
-            } else {
-                documentDir = PropertyService.getProperty("application.datafilepath");
-            }
-            documentPath = documentDir + FileUtil.getFS() + accNumber;
-            return documentPath;
-
-        } catch (PropertyNotFoundException pnfe) {
-            throw new McdbException(
-                pnfe.getClass().getName() + ": Could not delete file because: " + documentPath
-                    + " : " + pnfe.getMessage());
-        }
+    public static void deleteFromFileSystem(Identifier id) throws IllegalArgumentException,
+                                                    NoSuchAlgorithmException, ServiceFailure,
+                                                    IOException, InterruptedException {
+        MetacatInitializer.getStorage().deleteObject(id);
     }
 
     /**
@@ -879,7 +839,7 @@ public class DocumentImpl {
         }
         DBConnection conn = null;
         int serialNumber = -1;
-        boolean isXML = true;
+
         boolean inRevisionTable = false;
         double start = System.currentTimeMillis() / 1000;
         try {
@@ -936,9 +896,6 @@ public class DocumentImpl {
                 }
             }
             logMetacat.info("DocumentImpl.delete - the deleting doc type is " + type + "...");
-            if (type != null && type.trim().equals("BIN")) {
-                isXML = false;
-            }
             logMetacat.debug("DocumentImpl.delete - Start deleting doc " + docid + "...");
             try {
                 conn.setAutoCommit(false);
@@ -970,7 +927,7 @@ public class DocumentImpl {
                 if (sysMeta != null) {
                     SystemMetadataManager.getInstance().delete(guid, conn);
                 }
-                deleteFromFileSystem(accnum, isXML);
+                deleteFromFileSystem(guid);
                 // only commit if all of this was successful
                 conn.commit();
                 try {

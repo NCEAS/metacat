@@ -1155,7 +1155,7 @@ public class MetacatHandlerIT {
         deleteXMLDocuments(localId);
         File savedFile = new File(documentDir, localId);
         assertTrue(savedFile.exists());
-        DocumentImpl.deleteFromFileSystem(localId, true);
+        DocumentImpl.deleteFromFileSystem(pid);
         assertFalse(savedFile.exists());
 
         //save the DetaiedFileInputStream from the valid json-ld object with the expected checksum
@@ -1181,7 +1181,7 @@ public class MetacatHandlerIT {
         deleteXMLDocuments(localId);
         File savedFile2 = new File(documentDir, localId);
         assertTrue(savedFile2.exists());
-        DocumentImpl.deleteFromFileSystem(localId, true);
+        DocumentImpl.deleteFromFileSystem(pid);
         assertTrue(!savedFile2.exists());
 
         Checksum expectedChecksumForInvalidJson = new Checksum();
@@ -1305,7 +1305,7 @@ public class MetacatHandlerIT {
         deleteXMLDocuments(localId);
         File savedFile = new File(documentDir, localId);
         assertTrue(savedFile.exists());
-        DocumentImpl.deleteFromFileSystem(localId, true);
+        DocumentImpl.deleteFromFileSystem(pid);
         assertTrue(!savedFile.exists());
 
         //save the valid json-ld object with the wrong checksum
@@ -1387,7 +1387,7 @@ public class MetacatHandlerIT {
         File savedFile = new File(documentDir, localId);
         assertTrue(savedFile.exists());
         data.close();
-        DocumentImpl.deleteFromFileSystem(localId, true);
+        DocumentImpl.deleteFromFileSystem(pid);
         assertTrue(!savedFile.exists());
 
         //save the  valid json-ld object with the wrong checksum
