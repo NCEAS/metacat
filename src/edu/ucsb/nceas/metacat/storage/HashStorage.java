@@ -105,8 +105,18 @@ public class HashStorage implements Storage {
                                      throws NoSuchAlgorithmException, IOException, InvalidRequest,
                                      RuntimeException, InterruptedException {
         if (pid != null) {
-            return hashStore.storeObject(object, pid.getValue(), additionalAlgorithm, checksum,
-                    checksumAlgorithm, objSize);
+            try {
+                return hashStore.storeObject(object, pid.getValue(), additionalAlgorithm, checksum,
+                                            checksumAlgorithm, objSize);
+            } catch (Exception eee) {
+                try {
+                    hashStore.deleteMetadata(pid.getValue());
+                } catch (Exception ee) {
+                    logMetacat.warn("Metacat can't delete the object "
+                                    + pid.getValue() + " since " + ee.getMessage());
+                }
+                throw eee;
+            }
         } else {
             throw new InvalidRequest("0000", "The stored pid should not be null in the"
                                                 + " storeObject method.");
@@ -225,7 +235,7 @@ public class HashStorage implements Storage {
 
     @Override
     public void deleteMetadata(Identifier pid) throws IllegalArgumentException, IOException,
-            NoSuchAlgorithmException, InterruptedException {
+                                                NoSuchAlgorithmException, InterruptedException {
         if (pid != null) {
             hashStore.deleteMetadata(pid.getValue());
         } else {

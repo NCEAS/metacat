@@ -28,6 +28,7 @@ import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
+import edu.ucsb.nceas.metacat.storage.Storage;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -1086,6 +1087,8 @@ public class MNodeService extends D1NodeService
                     // FIXME: see https://redmine.dataone.org/issues/2572
                     objectExists(pid);
                     boolean changedModificationDate = false;
+                    // Store the input stream into hash store
+                    storeData(MetacatInitializer.getStorage(), object, sysmeta);
                     retPid = super.create(session, pid, object, sysmeta, changedModificationDate);
                     result = (retPid.getValue().equals(pid.getValue()));
                 }
@@ -2345,29 +2348,12 @@ public class MNodeService extends D1NodeService
 
         // Store the new object into hash store. Null is the additional algorithm
         try {
-            MetacatInitializer.getStorage().storeObject(inputStream, newIdentifier, null,
-                                                       sysmeta.getChecksum().getValue(),
-                                                       sysmeta.getChecksum().getAlgorithm(),
-                                                       sysmeta.getSize().longValue());
+            storeData(MetacatInitializer.getStorage(), inputStream, sysmeta);
         } catch (NoSuchAlgorithmException | RuntimeException | InterruptedException eee) {
             // report as service failure
-            try {
-                MetacatInitializer.getStorage().deleteObject(newIdentifier);
-            } catch (Exception ee) {
-                logMetacat.warn("Metacat can't delete the object " + newIdentifier.getValue()
-                                + " since " + ee.getMessage());
-            }
             ServiceFailure sf = new ServiceFailure("1030", eee.getMessage());
             sf.initCause(eee);
             throw sf;
-        } catch (Exception eee) {
-            try {
-                MetacatInitializer.getStorage().deleteObject(newIdentifier);
-            } catch (Exception ee) {
-                logMetacat.warn("Metacat can't delete the object " + newIdentifier.getValue()
-                + " since " + ee.getMessage());
-            }
-            throw eee;
         }
         // update the object
         this.update(session, originalIdentifier, inputStream, newIdentifier, sysmeta);
@@ -3920,4 +3906,26 @@ public class MNodeService extends D1NodeService
         metacatSolrIndex = solrIndex;
     }
 
+    /**
+     * Store the input stream into hash store
+     * @param storage  the storage system which stores the object
+     * @param inputStream  the object
+     * @param sysmeta  the system metadata associated with the object
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     * @throws InvalidRequest
+     * @throws RuntimeException
+     * @throws InterruptedException
+     * @throws ServiceFailure
+     */
+    public static void storeData(Storage storage, InputStream inputStream,
+                                    org.dataone.service.types.v1.SystemMetadata sysmeta)
+                                    throws NoSuchAlgorithmException, IOException, InvalidRequest,
+                                        RuntimeException, InterruptedException, ServiceFailure {
+        //null is the additional algorithm
+        storage.storeObject(inputStream, sysmeta.getIdentifier(), null,
+                            sysmeta.getChecksum().getValue(),
+                            sysmeta.getChecksum().getAlgorithm(),
+                            sysmeta.getSize().longValue());
+    }
 }

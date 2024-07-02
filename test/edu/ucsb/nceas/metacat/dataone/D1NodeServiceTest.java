@@ -1024,14 +1024,13 @@ public class D1NodeServiceTest extends MCTestCase {
      * @throws InstantiationException
      * @throws IllegalAccessException
      * @throws MarshallingException
+     * @throws ServiceFailure
      */
     public static void storeData(InputStream object, org.dataone.service.types.v1.SystemMetadata sysmeta)
                                      throws NoSuchAlgorithmException, InvalidRequest, IOException,
                                      RuntimeException, InterruptedException, InstantiationException,
-                                                    IllegalAccessException, MarshallingException {
-        // null is for additional algorithm
-        storage.storeObject(object, sysmeta.getIdentifier(), null, sysmeta.getChecksum().getValue(),
-                            sysmeta.getChecksum().getAlgorithm(), sysmeta.getSize().longValue());
+                                     IllegalAccessException, MarshallingException, ServiceFailure {
+        MNodeService.storeData(storage, object, sysmeta);
     }
 
     /**
