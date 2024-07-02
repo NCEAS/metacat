@@ -514,7 +514,7 @@ public class D1NodeServiceTest extends MCTestCase {
      * we insert the default version from d1_common.jar
      * @throws Exception 
      */
-    protected void setUpFormats() throws Exception {
+    public void setUpFormats() throws Exception {
         int rev = 1;
         Identifier guid = new Identifier();
         guid.setValue(ObjectFormatService.OBJECT_FORMAT_PID_PREFIX + rev);
@@ -524,7 +524,7 @@ public class D1NodeServiceTest extends MCTestCase {
         try {
             is = CNodeService.getInstance(request).get(session, guid);
         } catch (Exception e) {
-            // probably missing the doc
+            System.out.println("the message is " + e.getMessage());
         }
         if (is == null) {
             // get the default from d1_common
@@ -536,7 +536,7 @@ public class D1NodeServiceTest extends MCTestCase {
             sysmeta.setFormatId(format);
             //sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("text/xml").getFormatId());
             object = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
-            CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            cnCreate(session, guid, object, sysmeta);
         }
     }
 
@@ -1012,7 +1012,20 @@ public class D1NodeServiceTest extends MCTestCase {
         return CNodeService.getInstance(request).create(session, id, object, sysmeta);
     }
 
-    private void storeData(InputStream object, SystemMetadata sysmeta)
+    /**
+     * Store the input stream into hash store
+     * @param object  the input stream represents the content of the object
+     * @param sysmeta  the system metadata of the object
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidRequest
+     * @throws IOException
+     * @throws RuntimeException
+     * @throws InterruptedException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws MarshallingException
+     */
+    public static void storeData(InputStream object, org.dataone.service.types.v1.SystemMetadata sysmeta)
                                      throws NoSuchAlgorithmException, InvalidRequest, IOException,
                                      RuntimeException, InterruptedException, InstantiationException,
                                                     IllegalAccessException, MarshallingException {
