@@ -13,7 +13,7 @@ global:
   metacatUiThemeName: "cerp"
   metacatUiWebRoot: "/"
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
-  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
+#  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
 
@@ -32,7 +32,8 @@ metacatui:
     subPath: metacatui-themes/src/cerp/js/themes/cerp
   appConfig:
     enabled: false
-
+    ## disabled because SFWMD uses cerp theme, overlaid with
+    ## SFWMD config.js at /config/config.js (created as configMap)
 
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
