@@ -33,6 +33,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 
 
@@ -180,22 +181,18 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                 sysmetaFirst = true;
                                 checkSystemMetadata();
                                 //We are lucky and the system metadata has been processed.
-                                String checksum = sysMeta.getChecksum().getValue();
-                                String algorithm = sysMeta.getChecksum().getAlgorithm();
-                                //decide the pid
-                                Identifier id = sysMeta.getIdentifier();
                                 long size = sysMeta.getSize().longValue();
                                 log.info("StreamingMultipartRequestResolver.resoloveMulitpart - "
                                         + "Metacat is handling the object stream AFTER handling the "
                                         + "system metadata stream. StreamResolver will store the object"
-                                        + " with identifier " + id.getValue() + " , declared size "
-                                      + size + "and calculating checksum using algorithm " + algorithm);
+                                        + " with identifier " + sysMeta.getIdentifier().getValue()
+                                        + " , declared size " + size
+                                        + "and calculating checksum using algorithm "
+                                        + sysMeta.getChecksum().getAlgorithm());
                                 // Note: please DO assign objectMetadata in this statement
                                 // Hashstore will throw an exception if the id already is used.
-                                // null is for the parameter of additionalAlgorithm
-                                objectMetadata = MetacatInitializer.getStorage()
-                                                                    .storeObject(stream, id, null,
-                                                                        checksum, algorithm, size);
+                                objectMetadata = MNodeService
+                                       .storeData(MetacatInitializer.getStorage(), stream, sysMeta);
                                 // The above storeObject method implicitly tagged the id with
                                 // the cid. So we set objTaggedWithPid true.
                                 objTaggedWithPid = true;

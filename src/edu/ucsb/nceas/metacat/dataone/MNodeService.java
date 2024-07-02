@@ -48,6 +48,7 @@ import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
+import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
@@ -3911,6 +3912,7 @@ public class MNodeService extends D1NodeService
      * @param storage  the storage system which stores the object
      * @param inputStream  the object
      * @param sysmeta  the system metadata associated with the object
+     * @return the metadata of the object
      * @throws NoSuchAlgorithmException
      * @throws IOException
      * @throws InvalidRequest
@@ -3918,12 +3920,31 @@ public class MNodeService extends D1NodeService
      * @throws InterruptedException
      * @throws ServiceFailure
      */
-    public static void storeData(Storage storage, InputStream inputStream,
+    public static ObjectMetadata storeData(Storage storage, InputStream inputStream,
                                     org.dataone.service.types.v1.SystemMetadata sysmeta)
                                     throws NoSuchAlgorithmException, IOException, InvalidRequest,
                                         RuntimeException, InterruptedException, ServiceFailure {
         //null is the additional algorithm
-        storage.storeObject(inputStream, sysmeta.getIdentifier(), null,
+        if (sysmeta.getIdentifier() == null || sysmeta.getIdentifier().getValue() == null
+                                        || sysmeta.getIdentifier().getValue().isBlank()) {
+            throw new InvalidRequest("0000",
+                                       "Metacat can't save an object whose identifier is blank");
+        }
+        if (sysmeta.getChecksum() == null || sysmeta.getChecksum().getValue() == null
+                                     || sysmeta.getChecksum().getValue().isBlank()) {
+            throw new InvalidRequest("0000",
+                    "Metacat can't save an object whose checksum is blank");
+        }
+        if (sysmeta.getChecksum().getAlgorithm() == null
+                                    || sysmeta.getChecksum().getAlgorithm().isBlank()) {
+            throw new InvalidRequest("0000",
+                            "Metacat can't save an object whose checksum algorithm is blank");
+        }
+        if (sysmeta.getSize() == null) {
+            throw new InvalidRequest("0000",
+                        "Metacat can't save an object whose size is blank in system metadata");
+        }
+        return storage.storeObject(inputStream, sysmeta.getIdentifier(), null,
                             sysmeta.getChecksum().getValue(),
                             sysmeta.getChecksum().getAlgorithm(),
                             sysmeta.getSize().longValue());
