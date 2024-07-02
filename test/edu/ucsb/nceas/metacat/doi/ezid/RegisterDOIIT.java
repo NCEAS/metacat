@@ -11,7 +11,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.doi.DOIService;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
-import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryTest;
+import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryIT;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
@@ -380,15 +380,15 @@ public class RegisterDOIIT {
                 String id = publishedIdentifier.getValue();
                 id = id.replaceFirst("doi:", "");
                 //assertTrue(result.contains(EML2DataCiteFactoryTest.section));
-                System.out.println(id + EML2DataCiteFactoryTest.section1);
-                assertTrue(result.contains(id + EML2DataCiteFactoryTest.section1));
-                assertTrue(result.contains(EML2DataCiteFactoryTest.section2));
-                assertTrue(result.contains(EML2DataCiteFactoryTest.section3));
+                System.out.println(id + EML2DataCiteFactoryIT.section1);
+                assertTrue(result.contains(id + EML2DataCiteFactoryIT.section1));
+                assertTrue(result.contains(EML2DataCiteFactoryIT.section2));
+                assertTrue(result.contains(EML2DataCiteFactoryIT.section3));
                 assertTrue(result.contains(
-                    EML2DataCiteFactoryTest.section4 + EML2DataCiteFactoryTest.section41));
-                assertTrue(result.contains(EML2DataCiteFactoryTest.section5));
-                assertTrue(result.contains(EML2DataCiteFactoryTest.section6));
-                assertTrue(result.contains(EML2DataCiteFactoryTest.section7));
+                    EML2DataCiteFactoryIT.section4 + EML2DataCiteFactoryIT.section41));
+                assertTrue(result.contains(EML2DataCiteFactoryIT.section5));
+                assertTrue(result.contains(EML2DataCiteFactoryIT.section6));
+                assertTrue(result.contains(EML2DataCiteFactoryIT.section7));
                 content.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
