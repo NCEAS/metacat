@@ -35,6 +35,7 @@ global:
   metacatExternalBaseUrl: "https://localhost/"
 
   ## @param global.d1ClientCnUrl The url of the CN; used to populate metacat's 'D1Client.CN_URL'
+  ## and the indexer sub-chart's 'D1Client.CN_URL'.
   ## (Also parsed by the metacatui sub-chart to retrieve the CN base URL)
   ##
   d1ClientCnUrl: "https://cn.dataone.org/cn"
