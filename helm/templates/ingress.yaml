@@ -1,5 +1,6 @@
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "metacat.fullname" . -}}
+{{ $serverName := index .Values.metacat "server.name" }}
 {{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
   {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
@@ -31,13 +32,17 @@ spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls }}
   tls:
-    {{- range .Values.ingress.tls }}
-    - hosts:
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-      secretName: {{ .secretName }}
+  {{- range .Values.ingress.tls }}
+  - hosts:
+    {{- if eq (len .hosts) 0 }}
+      - {{ $serverName }}
+    {{- else }}
+      {{- range .hosts }}
+      - {{ . | quote }}
+      {{- end }}
     {{- end }}
+    secretName: {{ required ".Values.ingress.tls.secretName REQUIRED" .secretName }}
+  {{- end }}
   {{- end }}
   rules:
     {{- if .Values.ingress.hosts }}
@@ -56,7 +61,7 @@ spec:
           {{- end }}
     {{- end }}
     {{- else }}
-    - host: {{ index .Values.metacat "server.name" }}
+    - host: {{ $serverName }}
       http:
         paths:
           - path: /{{ index .Values.metacat "application.context" }}
