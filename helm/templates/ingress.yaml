@@ -27,7 +27,10 @@ metadata:
       /sitemaps/$1 redirect;
       {{- end }}
       rewrite ^/robots.txt /{{- index .Values.metacat "application.context" -}}
-        /robots.txt redirect;
+      /robots.txt redirect;
+      {{- range .Values.ingress.rewriteRules -}}
+        {{ . | nindent 6 }}
+      {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls }}
