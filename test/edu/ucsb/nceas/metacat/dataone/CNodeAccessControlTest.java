@@ -40,7 +40,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import edu.ucsb.nceas.LeanTestUtils;
-import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.utilities.IOUtil;
 
 
