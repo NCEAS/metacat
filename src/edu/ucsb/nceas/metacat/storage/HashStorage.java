@@ -20,6 +20,7 @@ import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.Identifier;
 
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -108,7 +109,9 @@ public class HashStorage implements Storage {
                                       String checksum, String checksumAlgorithm, long objSize)
                                      throws NoSuchAlgorithmException, IOException, InvalidRequest,
                                      InvalidSystemMetadata, RuntimeException, InterruptedException {
-        if (pid != null) {
+        //This method checks the null value as well
+        boolean valid = D1NodeService.isValidIdentifier(pid);
+        if (valid) {
             try {
                 ObjectMetadata objMeta = hashStore.storeObject(object, pid.getValue(),
                         additionalAlgorithm, checksum, checksumAlgorithm, objSize);
@@ -121,8 +124,8 @@ public class HashStorage implements Storage {
                         + "Metacat's calculation " + e.getMessage());
             }
         } else {
-            throw new InvalidRequest("0000", "The stored pid should not be null in the"
-                                                + " storeObject method.");
+            throw new InvalidRequest("0000", "The stored pid should not be null, blank, or "
+                                     + "containing the white spaces in the storeObject method.");
         }
     }
 
@@ -137,11 +140,13 @@ public class HashStorage implements Storage {
     @Override
     public void tagObject(Identifier pid, String cid) throws IOException,
             InvalidRequest, NoSuchAlgorithmException, FileNotFoundException, InterruptedException {
-        if (pid != null) {
+        //This method checks the null value as well
+        boolean valid = D1NodeService.isValidIdentifier(pid);
+        if (valid) {
             hashStore.tagObject(pid.getValue(), cid);
         } else {
-            throw new InvalidRequest("0000", "The stored pid should not be null in"
-                                                + " the tagObject method.");
+            throw new InvalidRequest("0000", "The stored pid should not be null, blank, or "
+                                    + "containing the white spaces in the tagObject method.");
         }
     }
 
@@ -156,11 +161,13 @@ public class HashStorage implements Storage {
     public String storeMetadata(InputStream metadata, Identifier pid, String formatId)
             throws IOException, IllegalArgumentException, FileNotFoundException,
             InterruptedException, NoSuchAlgorithmException {
-        if (pid != null) {
+        //This method checks the null value as well
+        boolean valid = D1NodeService.isValidIdentifier(pid);
+        if (valid) {
             return hashStore.storeMetadata(metadata, pid.getValue(), formatId);
         } else {
-            throw new IllegalArgumentException("The pid should not be null in the"
-                                                + " storeMetadata method.");
+            throw new IllegalArgumentException("The pid should not be null, blank, or containing "
+                                                + "the white spaces in the storeMetadata method.");
         }
     }
 
@@ -168,11 +175,13 @@ public class HashStorage implements Storage {
     public String storeMetadata(InputStream metadata, Identifier pid) throws IOException,
             IllegalArgumentException, FileNotFoundException, InterruptedException,
             NoSuchAlgorithmException {
-        if (pid != null) {
+        //This method checks the null value as well
+        boolean valid = D1NodeService.isValidIdentifier(pid);
+        if (valid) {
             return hashStore.storeMetadata(metadata, pid.getValue());
         } else {
-            throw new IllegalArgumentException("The pid should not be null in the"
-                                                + " storeMetadata method.");
+            throw new IllegalArgumentException("The pid should not be null, blank, or containing "
+                                                + "the white spaces in the storeMetadata method.");
         }
     }
 

@@ -178,6 +178,7 @@ public class CNodeServiceIT {
             SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             Date originalModificationDate = sysmeta.getDateSysMetadataModified();
             Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             Identifier pid = d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
             assertEquals(guid, pid);
             SystemMetadata readSysmeta = SystemMetadataManager.getInstance().get(pid);
@@ -200,6 +201,7 @@ public class CNodeServiceIT {
             guid.setValue("testGet." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             Identifier pid = d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
             assertEquals(guid.getValue(), pid.getValue());
             System.out.println("the pid is+++++++++++++++++++++++++" + guid.getValue());
@@ -834,6 +836,7 @@ public class CNodeServiceIT {
             guid.setValue("testCreate." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             Identifier pid = d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
             assertEquals(guid, pid);
 
@@ -906,6 +909,7 @@ public class CNodeServiceIT {
             seriesId.setValue(sid1);
             System.out.println("the first sid is " + seriesId.getValue());
             sysmeta.setSeriesId(seriesId);
+            object1 = new ByteArrayInputStream(str1.getBytes(StandardCharsets.UTF_8));
             d1NodeServiceTest.cnCreate(session, guid, object1, sysmeta);
             System.out.println("the first pid is " + guid.getValue());
             //test the get(pid) for v2
@@ -1053,6 +1057,7 @@ public class CNodeServiceIT {
             SystemMetadata newSysMeta = D1NodeServiceTest.createSystemMetadata(newPid, session.getSubject(), object2);
             newSysMeta.setObsoletes(guid);
             newSysMeta.setSeriesId(seriesId);
+            object2 = new ByteArrayInputStream(str2.getBytes(StandardCharsets.UTF_8));
             d1NodeServiceTest.cnCreate(session, newPid, object2, newSysMeta);
             //update the system metadata of previous version.
             sysmeta.setObsoletedBy(newPid);
@@ -1164,6 +1169,7 @@ public class CNodeServiceIT {
             SystemMetadata sysmeta3 = D1NodeServiceTest.createSystemMetadata(newPid2, session.getSubject(), object3);
             sysmeta3.setObsoletes(newPid);
             sysmeta3.setSeriesId(seriesId2);
+            object3 = new ByteArrayInputStream(str3.getBytes(StandardCharsets.UTF_8));
             d1NodeServiceTest.cnCreate(session, newPid2, object3, sysmeta3);
             //update the system metadata of the previous version
             newSysMeta.setObsoletedBy(newPid2);
@@ -1488,6 +1494,7 @@ public class CNodeServiceIT {
         System.out.println("the first sid is " + seriesId.getValue());
         sysmeta.setSeriesId(seriesId);
         sysmeta.setArchived(false);
+        object1 = new ByteArrayInputStream(str1.getBytes(StandardCharsets.UTF_8));
         d1NodeServiceTest.cnCreate(session, guid, object1, sysmeta);
         //Test the generating object succeeded.
         SystemMetadata metadata =
@@ -1616,6 +1623,7 @@ public class CNodeServiceIT {
         replicas.add(replica2);
         sysmeta10.setReplicaList(replicas);
         sysmeta10.setArchived(false);
+        object1 = new ByteArrayInputStream(str1.getBytes(StandardCharsets.UTF_8));
         d1NodeServiceTest.cnCreate(session, id, object1, sysmeta10);
         SystemMetadata result = CNodeService.getInstance(d1NodeServiceTest.request).getSystemMetadata(session, id);
         assertTrue(result.getIdentifier().equals(id));
@@ -1694,6 +1702,7 @@ public class CNodeServiceIT {
             nr.setValue(MockCNode.V1MNNODEID);
             sysmeta.setOriginMemberNode(nr);
             sysmeta.setAuthoritativeMemberNode(nr);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             Identifier pid = d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
             CNodeService.getInstance(d1NodeServiceTest.request).archive(session, guid);
         } catch (Exception e) {
@@ -1712,6 +1721,7 @@ public class CNodeServiceIT {
             nr.setValue(MockCNode.V1MNNODEID);
             sysmeta.setOriginMemberNode(nr);
             sysmeta.setAuthoritativeMemberNode(nr);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
             //another session without any permission shouldn't archive the object
             try {
@@ -1756,6 +1766,7 @@ public class CNodeServiceIT {
             policy.addAllow(rule1);
             policy.addAllow(rule2);
             sysmeta.setAccessPolicy(policy);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
             //read permission can't archive the object
             try {
@@ -1785,6 +1796,7 @@ public class CNodeServiceIT {
             nr.setValue(MockCNode.V2MNNODEID);
             sysmeta.setOriginMemberNode(nr);
             sysmeta.setAuthoritativeMemberNode(nr);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             Identifier pid = d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
             CNodeService.getInstance(d1NodeServiceTest.request).archive(session, guid);
         } catch (Exception e) {
@@ -1799,24 +1811,6 @@ public class CNodeServiceIT {
     }
 
 
-//    public Session getMNSessionFromCN() throws NotImplemented, ServiceFailure {
-//        Session session = new Session();
-//        Subject subject = null;
-//        CNode cn = D1Client.getCN();
-//        System.out.println("the cn is " + cn.getNodeBaseServiceUrl());
-//        List<Node> nodes = cn.listNodes().getNodeList();
-//        System.out.println("the size of the list is " + nodes.size());
-//        // find the first CN in the node list
-//        for (Node node : nodes) {
-//            if (node.getType().equals(NodeType.MN)) {
-//                subject = node.getSubject(0);
-//                break;
-//            }
-//        }
-//        session.setSubject(subject);
-//        return session;
-//    }
-
     @Test
     public void testInvalidIds() throws Exception {
         Session session = d1NodeServiceTest.getTestSession();
@@ -1825,6 +1819,7 @@ public class CNodeServiceIT {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         try {
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
             fail("MNodeService should reject identifier with a whitespace");
         } catch (InvalidRequest e) {
@@ -1835,6 +1830,7 @@ public class CNodeServiceIT {
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         try {
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
             d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
             fail("MNodeService should reject identifier with a whitespace");
         } catch (InvalidRequest e) {
