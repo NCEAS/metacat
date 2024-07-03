@@ -24,6 +24,3 @@ readinessProbe:
 
 persistence:
   storageClass: *storageClassName
-
-ingress:
-  className: "nginx"

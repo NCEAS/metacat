@@ -65,7 +65,6 @@ resources:
 ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  className: "nginx"
   tls:
     - hosts:
         - *extHostname
