@@ -142,7 +142,8 @@ public class MNodeQueryIT {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta =
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -234,7 +235,8 @@ public class MNodeQueryIT {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta =
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
 
         // insert metadata
         Identifier guid2 = new Identifier();
@@ -248,7 +250,7 @@ public class MNodeQueryIT {
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta2.setFormatId(formatId);
         object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        d1NodeServiceTest.mnCreate(session, guid2, object2, sysmeta2);
 
         // Make sure both data and metadata objects have been indexed
         String query = "q=id:" + guid.getValue();
@@ -296,7 +298,8 @@ public class MNodeQueryIT {
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
         sysmeta3.setFormatId(formatId3);
-        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        object3 = new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, resourceMapId, object3, sysmeta3);
 
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -399,7 +402,7 @@ public class MNodeQueryIT {
         object4.close();
         sysmeta4.setFormatId(formatId);
         object4 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).update(session, guid2, object4, guid4, sysmeta4);
+        d1NodeServiceTest.mnUpdate(session, guid2, object4, guid4, sysmeta4);
         // make sure the new metadata object was indexed
         query = "q=id:" + guid4.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -450,8 +453,8 @@ public class MNodeQueryIT {
         SystemMetadata sysmeta5 =
             D1NodeServiceTest.createSystemMetadata(newResourceMapId, session.getSubject(), object5);
         sysmeta5.setFormatId(formatId3);
-        MNodeService.getInstance(request)
-            .update(session, resourceMapId, object5, newResourceMapId, sysmeta5);
+        object5 = new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnUpdate(session, resourceMapId, object5, newResourceMapId, sysmeta5);
         // make sure the old resource map has the obsoletedBy field.
         query = "q=id:" + resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -539,7 +542,8 @@ public class MNodeQueryIT {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta =
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
 
         // insert metadata
         Identifier sid = new Identifier();
@@ -556,7 +560,7 @@ public class MNodeQueryIT {
         sysmeta2.setFormatId(formatId);
         sysmeta2.setSeriesId(sid);
         object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        d1NodeServiceTest.mnCreate(session, guid2, object2, sysmeta2);
 
         // Make sure both data and metadata objects have been indexed
         String query = "q=id:" + guid.getValue();
@@ -598,7 +602,8 @@ public class MNodeQueryIT {
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
         sysmeta3.setFormatId(formatId3);
-        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        object3 = new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, resourceMapId, object3, sysmeta3);
 
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -689,7 +694,7 @@ public class MNodeQueryIT {
         sysmeta4.setSeriesId(sid);
         sysmeta4.setObsoletes(guid2);
         object4 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).update(session, guid2, object4, guid4, sysmeta4);
+        d1NodeServiceTest.mnUpdate(session, guid2, object4, guid4, sysmeta4);
 
         // update the resourceMap
         query = "q=id:" + guid4.getValue();
@@ -717,8 +722,8 @@ public class MNodeQueryIT {
         SystemMetadata sysmeta5 =
             D1NodeServiceTest.createSystemMetadata(resourceMapId2, session.getSubject(), object5);
         sysmeta5.setFormatId(formatId3);
-        MNodeService.getInstance(request)
-            .update(session, resourceMapId, object5, resourceMapId2, sysmeta5);
+        object5 = new ByteArrayInputStream(resourceMapXML2.getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnUpdate(session, resourceMapId, object5, resourceMapId2, sysmeta5);
 
 
         query = "q=id:" + guid.getValue();
@@ -821,7 +826,8 @@ public class MNodeQueryIT {
         SystemMetadata sysmeta =
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setAccessPolicy(new AccessPolicy());
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -947,7 +953,8 @@ public class MNodeQueryIT {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta =
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -1082,7 +1089,7 @@ public class MNodeQueryIT {
         sysmeta.setFormatId(formatId);
         object.close();
         object = new FileInputStream(taxonomyFilePath);
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -1147,7 +1154,8 @@ public class MNodeQueryIT {
         sysmeta.setIdentifier(guid);
         sysmeta.setAuthoritativeMemberNode(
             MNodeService.getInstance(request).getCapabilities().getIdentifier());
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object = new FileInputStream("test/pangaea.xml");
+        Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         assertEquals(pid.getValue(), guid.getValue());
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1193,7 +1201,7 @@ public class MNodeQueryIT {
         if (QuotaServiceManager.getInstance().isEnabled()) {
             try {
                 Identifier pid =
-                    MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+                    d1NodeServiceTest.mnCreate(session, guid, object2, sysmeta);
                 fail("We shouldn't get there since the test session doesn't have a portal quota.");
             } catch (Exception e) {
                 LeanTestUtils.debug("the error is " + e.getMessage());
@@ -1207,8 +1215,9 @@ public class MNodeQueryIT {
         session.setSubject(subject);
         if (QuotaServiceManager.getInstance().isEnabled()) {
             try {
+                object2 = new FileInputStream(portalFilePath);
                 Identifier pid =
-                    MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+                    d1NodeServiceTest.mnCreate(session, guid, object2, sysmeta);
                 fail("We shouldn't get there since the quota subject header hasn't been set.");
             } catch (Exception e) {
                 LeanTestUtils.debug("the error is " + e.getMessage());
@@ -1217,10 +1226,11 @@ public class MNodeQueryIT {
         }
 
         try {
+            object2 = new FileInputStream(portalFilePath);
             request.setHeader(
                 QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
             Identifier pid =
-                MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+                d1NodeServiceTest.mnCreate(session, guid, object2, sysmeta);
         } catch (Exception e) {
             LeanTestUtils.debug("the error is " + e.getMessage());
             e.printStackTrace();
@@ -1277,7 +1287,7 @@ public class MNodeQueryIT {
         sysmeta.setFormatId(formatId4);
         request.setHeader(
             QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
-        MNodeService.getInstance(request).create(session, guid, object8, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object8, sysmeta);
         object8.close();
 
         // insert a metadata object
@@ -1293,7 +1303,7 @@ public class MNodeQueryIT {
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta2.setFormatId(formatId);
         object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        d1NodeServiceTest.mnCreate(session, guid2, object2, sysmeta2);
 
         // insert another metadata object
         Identifier guid3 = new Identifier();
@@ -1308,7 +1318,7 @@ public class MNodeQueryIT {
         formatId5.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
         sysmeta5.setFormatId(formatId5);
         object5 = new FileInputStream("test/eml-2.2.0.xml");
-        MNodeService.getInstance(request).create(session, guid3, object5, sysmeta5);
+        d1NodeServiceTest.mnCreate(session, guid3, object5, sysmeta5);
 
 
         // Make sure both portal and metadata objects have been indexed
@@ -1400,7 +1410,8 @@ public class MNodeQueryIT {
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
         sysmeta3.setFormatId(formatId3);
-        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        object3 = new ByteArrayInputStream(output.toByteArray());
+        d1NodeServiceTest.mnCreate(session, resourceMapId, object3, sysmeta3);
 
         query = "q=id:" + "\"" + guid.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1491,7 +1502,7 @@ public class MNodeQueryIT {
         formatId5.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
         sysmeta5.setFormatId(formatId5);
         object5 = new FileInputStream("test/eml-2.2.0.xml");
-        MNodeService.getInstance(request).create(session, guid3, object5, sysmeta5);
+        d1NodeServiceTest.mnCreate(session, guid3, object5, sysmeta5);
 
         String newId = guid3.getValue().replaceAll(":", "\\\\:");
         String queryWithExtraSlash = "(id:(" + "\"" + newId + "\" OR "
@@ -1612,7 +1623,7 @@ public class MNodeQueryIT {
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
 
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
 
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1654,7 +1665,7 @@ public class MNodeQueryIT {
         sysmeta.setAccessPolicy(null);
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
 
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
 
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
@@ -1705,7 +1716,7 @@ public class MNodeQueryIT {
         accessPolicy.addAllow(allow);
         sysmeta.setAccessPolicy(accessPolicy);
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -1750,7 +1761,7 @@ public class MNodeQueryIT {
         accessPolicy.addAllow(allow);
         sysmeta.setAccessPolicy(accessPolicy);
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -1795,7 +1806,7 @@ public class MNodeQueryIT {
         accessPolicy.addAllow(allow);
         sysmeta.setAccessPolicy(accessPolicy);
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -1859,7 +1870,7 @@ public class MNodeQueryIT {
             request.setHeader(
                 QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
             Identifier pid =
-                MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+                d1NodeServiceTest.mnCreate(session, guid, object2, sysmeta);
         } catch (Exception e) {
             LeanTestUtils.debug("the error is " + e.getMessage());
             e.printStackTrace();
@@ -1914,7 +1925,7 @@ public class MNodeQueryIT {
             request.setHeader(
                 QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
             Identifier pid =
-                MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+                d1NodeServiceTest.mnCreate(session, guid, object2, sysmeta);
         } catch (Exception e) {
             LeanTestUtils.debug("the error is " + e.getMessage());
             e.printStackTrace();
@@ -1970,7 +1981,7 @@ public class MNodeQueryIT {
         try {
             request.setHeader(
                 QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerIT.SUBSCRIBER);
-            Identifier pid = MNodeService.getInstance(request).create(session, guid, data, sysmeta);
+            Identifier pid = d1NodeServiceTest.mnCreate(session, guid, data, sysmeta);
         } catch (Exception e) {
             LeanTestUtils.debug("the error is " + e.getMessage());
             e.printStackTrace();
@@ -2018,7 +2029,7 @@ public class MNodeQueryIT {
         sysmeta.setFormatId(formatId);
         object.close();
         object = new FileInputStream("test/context-http-vocab.jsonld");
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         object.close();
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2044,7 +2055,7 @@ public class MNodeQueryIT {
         sysmeta.setFormatId(formatId);
         object.close();
         object = new FileInputStream("test/context-http.jsonld");
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         object.close();
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2070,7 +2081,7 @@ public class MNodeQueryIT {
         sysmeta.setFormatId(formatId);
         object.close();
         object = new FileInputStream("test/context-https-vocab.jsonld");
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         object.close();
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2096,7 +2107,7 @@ public class MNodeQueryIT {
         sysmeta.setFormatId(formatId);
         object.close();
         object = new FileInputStream("test/context-https.jsonld");
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         object.close();
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2120,7 +2131,7 @@ public class MNodeQueryIT {
         sysmeta.setFormatId(formatId);
         object.close();
         object = new FileInputStream("test/context-http-doc.jsonld");
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         object.close();
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2146,7 +2157,7 @@ public class MNodeQueryIT {
         sysmeta.setFormatId(formatId);
         object.close();
         object = new FileInputStream("test/context-https-doc.jsonld");
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         object.close();
         query = "q=id:" + guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2182,7 +2193,8 @@ public class MNodeQueryIT {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta =
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
 
         // insert data
         Identifier guid1 = new Identifier();
@@ -2191,7 +2203,8 @@ public class MNodeQueryIT {
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta1 =
             D1NodeServiceTest.createSystemMetadata(guid1, session.getSubject(), object);
-        MNodeService.getInstance(request).create(session, guid1, object, sysmeta1);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, guid1, object, sysmeta1);
 
         // insert data
         Identifier guid2 = new Identifier();
@@ -2200,7 +2213,8 @@ public class MNodeQueryIT {
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta2 =
             D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object);
-        MNodeService.getInstance(request).create(session, guid2, object, sysmeta2);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, guid2, object, sysmeta2);
 
         SystemMetadata sysmeta3 =
             MNodeService.getInstance(request).getSystemMetadata(session, guid);
@@ -2286,7 +2300,7 @@ public class MNodeQueryIT {
         sysmeta.setFormatId(formatId);
         object.close();
         object = new FileInputStream(emlWithAnnotation);
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         String query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -2339,7 +2353,8 @@ public class MNodeQueryIT {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta =
             D1NodeServiceTest.createSystemMetadata(guid0, session.getSubject(), object);
-        MNodeService.getInstance(request).create(session, guid0, object, sysmeta);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, guid0, object, sysmeta);
         String query = "q=id:" + guid0.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -2389,7 +2404,8 @@ public class MNodeQueryIT {
         InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta =
             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
 
         // insert metadata
         Identifier guid2 = new Identifier();
@@ -2403,7 +2419,7 @@ public class MNodeQueryIT {
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta2.setFormatId(formatId);
         object2 = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        d1NodeServiceTest.mnCreate(session, guid2, object2, sysmeta2);
 
         // Make sure both data and metadata objects have been indexed
         String query = "q=id:" + guid.getValue();
@@ -2445,7 +2461,8 @@ public class MNodeQueryIT {
         ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
         formatId3.setValue("http://www.openarchives.org/ore/terms");
         sysmeta3.setFormatId(formatId3);
-        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        object3 = new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, resourceMapId, object3, sysmeta3);
         // make sure the metadata and data has the relationship
         query = "q=id:" + guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -2558,7 +2575,8 @@ public class MNodeQueryIT {
         InputStream dataObject = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmetaForData =
             D1NodeServiceTest.createSystemMetadata(dataGuid, session.getSubject(), dataObject);
-        MNodeService.getInstance(request).create(session, dataGuid, dataObject, sysmetaForData);
+        dataObject = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, dataGuid, dataObject, sysmetaForData);
 
         // insert metadata
         Identifier metadataGuid = new Identifier();
@@ -2575,8 +2593,7 @@ public class MNodeQueryIT {
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmetaForMetadata.setFormatId(formatId);
         metadataObject = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request)
-            .create(session, metadataGuid, metadataObject, sysmetaForMetadata);
+        d1NodeServiceTest.mnCreate(session, metadataGuid, metadataObject, sysmetaForMetadata);
 
         // Make sure both data and metadata objects have been indexed
         String query = "q=id:" + dataGuid.getValue();
@@ -2635,8 +2652,9 @@ public class MNodeQueryIT {
         ObjectFormatIdentifier resourcemapFormatId = new ObjectFormatIdentifier();
         resourcemapFormatId.setValue("http://www.openarchives.org/ore/terms");
         resourcemapSysmeta.setFormatId(resourcemapFormatId);
-        MNodeService.getInstance(request)
-            .create(session, resourceMapId, resourcemapObject, resourcemapSysmeta);
+        resourcemapObject =
+                new ByteArrayInputStream(resourceMapXML.getBytes(StandardCharsets.UTF_8));
+        d1NodeServiceTest.mnCreate(session, resourceMapId, resourcemapObject, resourcemapSysmeta);
 
         // make sure the metadata and data has the relationship
         query = "q=id:" + metadataGuid.getValue();
