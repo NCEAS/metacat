@@ -22,14 +22,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class OrcidServiceTest {
+public class OrcidServiceIT {
 
     private D1NodeServiceTest d1NSTest;
 
     /**
      * constructor for the test
      */
-    public OrcidServiceTest() {
+    public OrcidServiceIT() {
     }
 
     /**
