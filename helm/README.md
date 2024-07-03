@@ -53,9 +53,9 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 Starting in the root directory of the `metacat` repo:
 
 1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the
-   contents of the values overlay files (like
-   [values-dev-cluster-example.yaml](./examples/values-dev-cluster-example.yaml)
-   , for example), to see which settings typically need to be changed.
+   contents of the values overlay files (like the ones in the [./examples directory](./examples)),
+   to see which settings typically need to be overridden. Save your settings in a yaml file,
+   e.g: `/your/values-overrides.yaml`
 
 
 2. Add your credentials to [./admin/secrets.yaml](./admin/secrets.yaml), and add to cluster:
@@ -70,7 +70,8 @@ Starting in the root directory of the `metacat` repo:
    resource `roles` in the API group `rbac.authorization.k8s.io`*).
 
     ```shell
-    $ ./helm-install.sh  myreleasename  mynamespace  ./helm
+    $ ./helm-upstall.sh  myreleasename  mynamespace oci://ghcr.io/nceas/charts/metacat  \
+                                            --version 1.0.0  -f  /your/values-overrides.yaml
     ```
 
 To access Metacat, you'll need to create a mapping between your ingress IP address (found by:
@@ -98,7 +99,7 @@ using the [Helm](https://helm.sh) package manager.
 To install the chart with the release name `my-release`:
 
 ```shell
-helm install my-release ./helm
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version 1.0.0
 ```
 
 This command deploys Metacat on the Kubernetes cluster in the default configuration. The
@@ -112,7 +113,8 @@ installation.
 Parameters may be provided on the command line to override those in values.yaml; e.g.
 
 ```shell
-helm install my-release ./helm  --set postgres.auth.existingSecret=my-release-secrets
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version 1.0.0  \
+                                              --set postgres.auth.existingSecret=my-release-secrets
 ```
 
 ## Uninstalling the Chart
@@ -326,14 +328,15 @@ Parameters may be provided on the command line to override those in [values.yaml
 for example:
 
 ```shell
-helm install my-release ./helm  --set metacat.solr.baseURL=http://mysolrhost:8983/solr
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version 1.0.0  \
+                                              --set metacat.solr.baseURL=http://mysolrhost:8983/solr
 ```
 
 Alternatively, a YAML file that specifies the override values for the parameters can be provided
 while installing the chart. For example:
 
 ```shell
-helm install my-release -f myValues.yaml ./helm
+helm install my-release  -f myValues.yaml  oci://ghcr.io/nceas/charts/metacat --version 1.0.0
 ```
 
 > **Tip**: You can also edit and use the default [values.yaml](./values.yaml)

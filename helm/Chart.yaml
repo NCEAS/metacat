@@ -33,9 +33,9 @@ appVersion: "3.0.0"
 # Chart dependencies - also see https://github.com/bitnami/charts/tree/main/bitnami
 dependencies:
   - name: metacatui
+    repository: oci://ghcr.io/nceas/charts
     version: 0.6.0
-    ## NOT YET AVAILABLE IN CHARTS REPO
-    # repository: oci://ghcr.io/nceas/charts
+    ## NOT YET PUBLIC IN CHARTS REPO
     condition: global.includeMetacatUi
 
   - name: postgresql
@@ -48,7 +48,7 @@ dependencies:
 
   - name: dataone-indexer
     repository: oci://ghcr.io/dataoneorg/charts
-    version: 1.0.1-develop
+    version: 1.0.1
     condition: global.dataone-indexer.enabled
     import-values:
       - child: solr
