@@ -2452,6 +2452,15 @@ public class MNodeService extends D1NodeService
                 logMetacat.info(
                     "MNodeService.publish - the new ore document is " + newOreIdentifier.getValue()
                         + " for the doi " + newIdentifier.getValue());
+                try {
+                    storeData(MetacatInitializer.getStorage(),
+                         new ByteArrayInputStream(resourceMapString.getBytes("UTF-8")), oreSysMeta);
+                } catch (NoSuchAlgorithmException | RuntimeException | InterruptedException eee) {
+                    // report as service failure
+                    ServiceFailure sf = new ServiceFailure("1030", eee.getMessage());
+                    sf.initCause(eee);
+                    throw sf;
+                }
                 this.update(session, potentialOreIdentifier,
                     new ByteArrayInputStream(resourceMapString.getBytes("UTF-8")), newOreIdentifier,
                     oreSysMeta);
@@ -3916,6 +3925,7 @@ public class MNodeService extends D1NodeService
      * @throws NoSuchAlgorithmException
      * @throws IOException
      * @throws InvalidRequest
+     * @throws InvalidSystemMetadata
      * @throws RuntimeException
      * @throws InterruptedException
      * @throws ServiceFailure
@@ -3923,7 +3933,8 @@ public class MNodeService extends D1NodeService
     public static ObjectInfo storeData(Storage storage, InputStream inputStream,
                                     org.dataone.service.types.v1.SystemMetadata sysmeta)
                                     throws NoSuchAlgorithmException, IOException, InvalidRequest,
-                                        RuntimeException, InterruptedException, ServiceFailure {
+                                           InvalidSystemMetadata, RuntimeException,
+                                           InterruptedException, ServiceFailure {
         //null is the additional algorithm
         if (sysmeta.getIdentifier() == null || sysmeta.getIdentifier().getValue() == null
                                         || sysmeta.getIdentifier().getValue().isBlank()) {

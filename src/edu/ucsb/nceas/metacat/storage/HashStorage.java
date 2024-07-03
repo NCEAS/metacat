@@ -14,7 +14,10 @@ import org.dataone.hashstore.HashStore;
 import org.dataone.hashstore.HashStoreFactory;
 import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.hashstore.exceptions.HashStoreFactoryException;
+import org.dataone.hashstore.exceptions.NonMatchingChecksumException;
+import org.dataone.hashstore.exceptions.NonMatchingObjSizeException;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.Identifier;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -104,11 +107,19 @@ public class HashStorage implements Storage {
     public ObjectInfo storeObject(InputStream object, Identifier pid, String additionalAlgorithm,
                                       String checksum, String checksumAlgorithm, long objSize)
                                      throws NoSuchAlgorithmException, IOException, InvalidRequest,
-                                     RuntimeException, InterruptedException {
+                                     InvalidSystemMetadata, RuntimeException, InterruptedException {
         if (pid != null) {
-            ObjectMetadata objMeta = hashStore.storeObject(object, pid.getValue(),
-                                        additionalAlgorithm, checksum, checksumAlgorithm, objSize);
-            return convertToObjectInfo(objMeta);
+            try {
+                ObjectMetadata objMeta = hashStore.storeObject(object, pid.getValue(),
+                        additionalAlgorithm, checksum, checksumAlgorithm, objSize);
+                return convertToObjectInfo(objMeta);
+            } catch (NonMatchingChecksumException e) {
+                throw new InvalidSystemMetadata("0000", "The given checksum doesn't match "
+                                                + "Metacat's calculation " + e.getMessage());
+            } catch (NonMatchingObjSizeException e) {
+                throw new InvalidSystemMetadata("0000", "The given size doesn't match "
+                        + "Metacat's calculation " + e.getMessage());
+            }
         } else {
             throw new InvalidRequest("0000", "The stored pid should not be null in the"
                                                 + " storeObject method.");

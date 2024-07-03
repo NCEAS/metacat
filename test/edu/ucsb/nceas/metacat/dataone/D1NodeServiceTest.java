@@ -1025,11 +1025,13 @@ public class D1NodeServiceTest extends MCTestCase {
      * @throws IllegalAccessException
      * @throws MarshallingException
      * @throws ServiceFailure
+     * @throws InvalidSystemMetadata
      */
     public static void storeData(InputStream object, org.dataone.service.types.v1.SystemMetadata sysmeta)
                                      throws NoSuchAlgorithmException, InvalidRequest, IOException,
                                      RuntimeException, InterruptedException, InstantiationException,
-                                     IllegalAccessException, MarshallingException, ServiceFailure {
+                                     IllegalAccessException, MarshallingException,
+                                     ServiceFailure, InvalidSystemMetadata{
         MNodeService.storeData(storage, object, sysmeta);
     }
 

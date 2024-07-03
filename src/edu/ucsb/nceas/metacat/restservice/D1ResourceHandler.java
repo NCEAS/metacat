@@ -30,6 +30,7 @@ import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
@@ -418,11 +419,13 @@ public class D1ResourceHandler {
      * @throws RuntimeException
      * @throws ServiceFailure
      * @throws InvalidRequest
+     * @throws InvalidSystemMetadata
      */
     protected MultipartRequestWithSysmeta collectObjectFiles() throws IOException,
                              FileUploadException, InstantiationException, IllegalAccessException,
                              NoSuchAlgorithmException, MarshallingException, InvalidRequest,
-                             ServiceFailure, RuntimeException, InterruptedException {
+                             ServiceFailure, RuntimeException,
+                             InterruptedException, InvalidSystemMetadata {
         logMetacat.debug("Disassembling MIME multipart form with object files");
         // handle MMP inputs
         File tmpDir = getTempDirectory();

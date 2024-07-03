@@ -27,6 +27,7 @@ import org.dataone.exceptions.MarshallingException;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.SystemMetadata;
@@ -83,11 +84,13 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      * @throws InterruptedException
      * @throws RuntimeException
      * @throws ServiceFailure
+     * @throws InvalidSystemMetadata
      */
     public MultipartRequest resolveMultipart(HttpServletRequest request) throws IOException,
                                 FileUploadException, InstantiationException, IllegalAccessException,
                                 MarshallingException, NoSuchAlgorithmException, InvalidRequest,
-                                ServiceFailure, RuntimeException, InterruptedException {
+                                InvalidSystemMetadata, ServiceFailure, RuntimeException,
+                                                                              InterruptedException {
         Map<String, List<String>> mpParams = new HashMap<String, List<String>>();
         Map<String, File> mpFiles = new HashMap<String, File>();
         MultipartRequestWithSysmeta multipartRequest =

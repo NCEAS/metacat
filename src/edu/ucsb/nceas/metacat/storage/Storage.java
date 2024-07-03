@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
 
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.Identifier;
 
 
@@ -61,6 +62,7 @@ public interface Storage {
      *                                    and/or moving file
      * @throws InvalidRequest             If a pid refs file already exists, meaning the pid is
      *                                    already referencing a file.
+     * @throws InvalidSystemMetadata      The checksum or size don't match the calculation
      * @throws RuntimeException           Thrown when there is an issue with permissions,
      *                                    illegal arguments (ex. empty pid) or null pointers
      * @throws InterruptedException       When tagging pid and cid process is interrupted
@@ -68,7 +70,7 @@ public interface Storage {
     public ObjectInfo storeObject(
             InputStream object, Identifier pid, String additionalAlgorithm, String checksum,
             String checksumAlgorithm, long objSize
-    ) throws NoSuchAlgorithmException, IOException, InvalidRequest,
+    ) throws NoSuchAlgorithmException, IOException, InvalidRequest, InvalidSystemMetadata,
             RuntimeException, InterruptedException;
 
     /**
