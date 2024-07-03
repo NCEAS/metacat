@@ -33,6 +33,7 @@ import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 
@@ -61,8 +62,11 @@ public class CNodeAccessControlTest {
     /**
      * Establish a testing framework by initializing appropriate objects
      */
+    @Before
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
+        v1NodeRef = new NodeReference();
+        v1NodeRef.setValue(MockCNode.V1MNNODEID);
         d1NodeTest = new D1NodeServiceTest("initialize");
         request = (MockHttpServletRequest)d1NodeTest.getServletRequest();
         d1NodeTest.setUp();
