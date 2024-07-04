@@ -69,10 +69,8 @@ image:
 ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  className: "nginx"
   tls:
-    - hosts:
-        - *extHostname
+    - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
 
 dataone-indexer:
