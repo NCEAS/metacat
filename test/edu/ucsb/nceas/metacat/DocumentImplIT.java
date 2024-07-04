@@ -30,11 +30,10 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -88,7 +87,7 @@ public class DocumentImplIT {
             SystemMetadata sysmeta = D1NodeServiceTest
                                             .createSystemMetadata(guid, session.getSubject(), object);
             object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
                                     IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -142,9 +141,10 @@ public class DocumentImplIT {
             property.setValue("test_media_value");
             MediaType type = new MediaType();
             type.addProperty(property);
+            type.setName("test_name1");
             sysmeta.setMediaType(type);
             object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-            MNodeService.getInstance(request).update(session, guid, object, newPid, sysmeta);
+            d1NodeTest.mnUpdate(session, guid, object, newPid, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
                                  IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -271,7 +271,7 @@ public class DocumentImplIT {
             sysmeta.setFormatId(formatId);
             object.close();
             object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             object.close();
             //check record
             assertTrue("The identifier table should have value",
@@ -328,9 +328,10 @@ public class DocumentImplIT {
             property.setValue("test_media_value");
             MediaType type = new MediaType();
             type.addProperty(property);
+            type.setName("test_name");
             sysmeta.setMediaType(type);
             object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-            MNodeService.getInstance(request).update(session, guid, object, newPid, sysmeta);
+            d1NodeTest.mnUpdate(session, guid, object, newPid, sysmeta);
             object.close();
             //check record
             assertTrue("The identifier table should have value",
@@ -471,9 +472,10 @@ public class DocumentImplIT {
             property.setValue("test_media_value");
             MediaType type = new MediaType();
             type.addProperty(property);
+            type.setName("test_name");
             sysmeta.setMediaType(type);
             object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
                                   IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -506,10 +508,10 @@ public class DocumentImplIT {
             input.close();
 
             //Mock a failed deleting
-            try (MockedStatic<PropertyService> mock =
-                                            Mockito.mockStatic(PropertyService.class)) {
-                Mockito.when(PropertyService.getProperty("application.datafilepath"))
-                                                        .thenThrow(PropertyNotFoundException.class);
+            try (MockedStatic<MetacatInitializer> mock =
+                                            Mockito.mockStatic(MetacatInitializer.class)) {
+                Mockito.when(MetacatInitializer.getStorage())
+                                                        .thenThrow(ServiceFailure.class);
                 try {
                     DocumentImpl.delete(accnum, guid);
                     fail("The test can't be here since the failed delete should throw an exception");
@@ -570,7 +572,7 @@ public class DocumentImplIT {
             SystemMetadata sysmeta = D1NodeServiceTest
                                             .createSystemMetadata(guid, session.getSubject(), object);
             object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
                                   IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -662,7 +664,7 @@ public class DocumentImplIT {
         SystemMetadata sysmeta = D1NodeServiceTest
                                         .createSystemMetadata(guid, session.getSubject(), object);
         object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeTest.mnCreate(session, guid, object, sysmeta);
         String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
         try (MockedStatic<SystemMetadataManager> mock =
                              Mockito.mockStatic(SystemMetadataManager.class, CALLS_REAL_METHODS)) {
@@ -715,7 +717,7 @@ public class DocumentImplIT {
             sysmeta.setFormatId(formatId);
             object.close();
             object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             object.close();
             //check record
             assertTrue("The identifier table should have value",
@@ -774,9 +776,10 @@ public class DocumentImplIT {
             property.setValue("test_media_value");
             MediaType type = new MediaType();
             type.addProperty(property);
+            type.setName("test_name");
             sysmeta.setMediaType(type);
             object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-            MNodeService.getInstance(request).update(session, guid, object, newPid, sysmeta);
+            d1NodeTest.mnUpdate(session, guid, object, newPid, sysmeta);
             object.close();
             //check record
             assertTrue("The identifier table should have value",
@@ -950,9 +953,10 @@ public class DocumentImplIT {
             property.setValue("test_media_value");
             MediaType type = new MediaType();
             type.addProperty(property);
+            type.setName("test_name");
             sysmeta.setMediaType(type);
             object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             //check record
             assertTrue("The identifier table should have value",
                                   IntegrationTestUtils.hasRecord("identifier", dbConn,

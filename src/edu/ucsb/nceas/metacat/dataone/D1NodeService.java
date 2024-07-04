@@ -68,6 +68,7 @@ import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -416,6 +417,9 @@ public abstract class D1NodeService {
         } catch (IOException ioe) {
             throw new ServiceFailure("1190", "Metacat cannot save the object " + pid.getValue()
                                     + ioe.getMessage());
+        } catch (McdbException e) {
+            throw new ServiceFailure("1190", "Metacat cannot save the object " + pid.getValue()
+                                    + "since it cannot find it in validation" + e.getMessage());
         }
         logMetacat.debug("Done inserting new object: " + pid.getValue());
         try {

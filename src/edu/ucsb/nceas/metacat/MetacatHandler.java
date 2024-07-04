@@ -140,10 +140,20 @@ public class MetacatHandler {
      * @throws NoSuchAlgorithmException
      * @throws ServiceFailure
      * @throws IOException
+     * @throws McdbException
      */
     public static InputStream read(Identifier pid) throws IllegalArgumentException,
-                    FileNotFoundException, NoSuchAlgorithmException, ServiceFailure, IOException {
-        return MetacatInitializer.getStorage().retrieveObject(pid);
+                                                    FileNotFoundException, NoSuchAlgorithmException,
+                                                    ServiceFailure, IOException, McdbException {
+        if (pid == null || pid.getValue() == null || pid.getValue().isBlank()) {
+            throw new IllegalArgumentException("Pid should not be blank in the read method");
+        }
+        try {
+            return MetacatInitializer.getStorage().retrieveObject(pid);
+        } catch (FileNotFoundException e) {
+            throw new McdbException("Metacat cannot find the object with id " + pid.getValue()
+                                        + " since " + e.getMessage());
+        }
     }
 
     /**
@@ -164,12 +174,12 @@ public class MetacatHandler {
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws IllegalArgumentException
+     * @throws McdbException
      */
     public String save(SystemMetadata sysmeta, boolean changeModificationDate, Action action,
                         String docType, InputStream object, SystemMetadata preSys, String user)
-                                                            throws InvalidRequest, ServiceFailure,
-                                                             InvalidSystemMetadata, IOException,
-                                               IllegalArgumentException, NoSuchAlgorithmException {
+                         throws InvalidRequest, ServiceFailure, InvalidSystemMetadata, IOException,
+                               IllegalArgumentException, NoSuchAlgorithmException, McdbException {
         String localId = null;
         if (sysmeta == null) {
             throw new InvalidRequest("1181", "Metacat cannot save the object "
@@ -365,12 +375,13 @@ public class MetacatHandler {
      * @throws IOException
      * @throws NoSuchAlgorithmException
      * @throws IllegalArgumentException
+     * @throws McdbException
      * @throws SAXException
      * @throws MetacatException
      */
     protected void validateSciMeta(Identifier pid, ObjectFormatIdentifier formatId)
                                          throws InvalidRequest, ServiceFailure, IOException,
-                                         IllegalArgumentException, NoSuchAlgorithmException {
+                                IllegalArgumentException, NoSuchAlgorithmException, McdbException {
         NonXMLMetadataHandler handler =
                 NonXMLMetadataHandlers.newNonXMLMetadataHandler(formatId);
             if (handler != null) {
@@ -396,10 +407,11 @@ public class MetacatHandler {
      * @throws InvalidRequest
      * @throws NoSuchAlgorithmException
      * @throws IllegalArgumentException
+     * @throws McdbException
      */
-    protected void validateXmlSciMeta(Identifier pid, String formatId) throws IOException,
-                                                            ServiceFailure, InvalidRequest,
-                                               IllegalArgumentException, NoSuchAlgorithmException {
+    protected void validateXmlSciMeta(Identifier pid, String formatId)
+                                 throws IOException,ServiceFailure, InvalidRequest,
+                                IllegalArgumentException, NoSuchAlgorithmException, McdbException {
         boolean needValidation = false;
         String rule = null;
         String namespace = null;

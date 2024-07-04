@@ -7,6 +7,7 @@ import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
@@ -641,6 +642,10 @@ public class MNodeService extends D1NodeService
                 } catch (IOException ioe) {
                     throw new ServiceFailure("1310", "Metacat cannot update " + pid.getValue()
                                             + " by " + newPid.getValue() + " : " + ioe.getMessage());
+                }catch (McdbException e) {
+                    throw new ServiceFailure("1310", "Metacat cannot save the object "
+                                        + pid.getValue() + " since it cannot find it in validation "
+                                        + e.getMessage());
                 }
                 long end3 = System.currentTimeMillis();
                 logMetacat.debug(
