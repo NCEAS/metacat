@@ -4,10 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,8 +14,6 @@ import java.util.Date;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.solr.util.SystemIdResolver;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -49,8 +44,7 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.service.ServiceService;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 
@@ -72,8 +66,6 @@ public class MetacatHandlerIT {
     private static final String eml_format = "https://eml.ecoinformatics.org/eml-2.2.0";
     private static final String MD5 = "MD5";
     private MetacatHandler handler;
-    private String dataDir;
-    private String documentDir;
 
     /**
      * Setup
@@ -83,14 +75,8 @@ public class MetacatHandlerIT {
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         handler = new MetacatHandler();
-        documentDir = PropertyService.getProperty("application.documentfilepath");
-        if (!documentDir.endsWith("/")) {
-            documentDir = documentDir + "/";
-        }
-        dataDir = PropertyService.getProperty("application.datafilepath");
-        if (!dataDir.endsWith("/")) {
-            dataDir = dataDir + "/";
-        }
+        // Initialize the storage system
+        new D1NodeServiceTest("initialize");
     }
 
     /**
@@ -393,6 +379,7 @@ public class MetacatHandlerIT {
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
         dataStream = new FileInputStream(test_file_path);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         // null is the obsoleted system metadata. Inserting should succeed
         // True means changing the modification date in the system metadata
         handler.save(sysmeta, true, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
@@ -429,6 +416,8 @@ public class MetacatHandlerIT {
         newSys.setChecksum(incorrectChecksum);
         try {
             // True means changing the modification date in the system metadata
+            dataStream = new FileInputStream(another_test_file);
+            D1NodeServiceTest.storeData(dataStream, newSys);
             handler.save(newSys, true, MetacatHandler.Action.UPDATE,
                         DocumentImpl.BIN, dataStream, sysmeta, user);
             fail("Test cannot get here since the checksum is wrong in the system metadata");
@@ -465,6 +454,7 @@ public class MetacatHandlerIT {
         // Recreate the stream since it was closed in the previous failure
         dataStream = new FileInputStream(another_test_file);
         // True means changing the modification date in the system metadata
+        D1NodeServiceTest.storeData(dataStream, newSys);
         handler.save(newSys, true, MetacatHandler.Action.UPDATE,
                      DocumentImpl.BIN, dataStream, sysmeta, user);
         // Check the old object
@@ -527,6 +517,7 @@ public class MetacatHandlerIT {
         dataStream = new FileInputStream(test_eml_file);
         try {
             // null is the obsoleted system metadata. Inserting should succeed
+            D1NodeServiceTest.storeData(dataStream, sysmeta);
             handler.save(sysmeta, false, MetacatHandler.Action.INSERT, eml_format,
                         dataStream, null, user);
             fail("Test cannot get here since the checksum is wrong in the system metadata");
@@ -550,6 +541,7 @@ public class MetacatHandlerIT {
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
         dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         // null is the obsoleted system metadata. Inserting should succeed
         // false means not to change the modification date of the system metadata
         handler.save(sysmeta, false, MetacatHandler.Action.INSERT, eml_format,
@@ -585,6 +577,7 @@ public class MetacatHandlerIT {
         sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
         // Recreate the stream since it was closed in the generating sysmeta method
         dataStream = new FileInputStream(test_eml_essdive_file);
+        D1NodeServiceTest.storeData(dataStream, newSys);
         // False means not change the modification date in the system metadata
         handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                      eml_format, dataStream, sysmeta, user);
@@ -642,6 +635,7 @@ public class MetacatHandlerIT {
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
         dataStream = new FileInputStream(test_file_path);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         // null is the obsoleted system metadata. Inserting should succeed
         // False means not to change the modification date of system metadata
         handler.save(sysmeta, false, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
@@ -677,6 +671,8 @@ public class MetacatHandlerIT {
         incorrectChecksum.setValue("234dfa343af");
         newSys.setChecksum(incorrectChecksum);
         try {
+            dataStream = new FileInputStream(another_test_file);
+            D1NodeServiceTest.storeData(dataStream, newSys);
             // False means not to change the modification date
             handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                         DocumentImpl.BIN, dataStream, sysmeta, user);
@@ -713,6 +709,7 @@ public class MetacatHandlerIT {
         long originUploadDateOfSecondObj = newSys.getDateUploaded().getTime();
         // Recreate the stream since it was closed in the previous failure
         dataStream = new FileInputStream(another_test_file);
+        D1NodeServiceTest.storeData(dataStream, newSys);
         // False means not changing the modification date in system metadata
         handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                      DocumentImpl.BIN, dataStream, sysmeta, user);
@@ -774,7 +771,8 @@ public class MetacatHandlerIT {
         sysmeta.setFormatId(formatId);
         dataStream = new FileInputStream(test_eml_file);
         try {
-         // null is the obsoleted system metadata. Inserting should succeed
+            D1NodeServiceTest.storeData(dataStream, sysmeta);
+            // null is the obsoleted system metadata. Inserting should succeed
             handler.save(sysmeta, true, MetacatHandler.Action.INSERT, eml_format,
                         dataStream, null, user);
             fail("Test cannot get here since the checksum is wrong in the system metadata");
@@ -798,6 +796,7 @@ public class MetacatHandlerIT {
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
         dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         // null is the obsoleted system metadata. Inserting should succeed
         // True means changing the modification date in system metadata
         handler.save(sysmeta, true, MetacatHandler.Action.INSERT, eml_format,
@@ -832,6 +831,7 @@ public class MetacatHandlerIT {
         long originUploadDateOfSecondObj = newSys.getDateUploaded().getTime();
         // Recreate the stream since it was closed in the generating sysmeta method
         dataStream = new FileInputStream(test_eml_essdive_file);
+        D1NodeServiceTest.storeData(dataStream, newSys);
         handler.save(newSys, true, MetacatHandler.Action.UPDATE,
                      eml_format, dataStream, sysmeta, user);
         // Check the objects
@@ -889,6 +889,7 @@ public class MetacatHandlerIT {
         InputStream dataStream = new FileInputStream(test_eml_file);
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
         dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         // null is the obsoleted system metadata. Inserting should succeed
         String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT, eml_format,
                         dataStream, null, user);
@@ -927,8 +928,8 @@ public class MetacatHandlerIT {
                                                eml_format, dataStream, sysmeta, user);
             fail("Test can't get here since the save method should throw an exception.");
         } catch (Exception e) {
-            assertTrue("The exception should be ServiceFailure rather than "
-                                            + e.getClass().getName(), e instanceof ServiceFailure);
+            assertTrue("The exception should be McdbException rather than "
+                                            + e.getClass().getName(), e instanceof McdbException);
         }
         // The first object doesn't change
         readSys = SystemMetadataManager.getInstance().get(pid);
@@ -962,8 +963,8 @@ public class MetacatHandlerIT {
                                             eml_format, dataStream3, sysmeta, user);
             fail("Test can't get here since the save method should throw an exception.");
         } catch (Exception e) {
-            assertTrue("The exception should be ServiceFailure rather than "
-                                            + e.getClass().getName(), e instanceof ServiceFailure);
+            assertTrue("The exception should be McdbException rather than "
+                                            + e.getClass().getName(), e instanceof McdbException);
         }
         // The first object doesn't change
         readSys = SystemMetadataManager.getInstance().get(pid);
@@ -1000,8 +1001,8 @@ public class MetacatHandlerIT {
                                 eml_format, dataStream4, sysmeta, user);
             fail("Test can't get here since the save method should throw an exception.");
         } catch (Exception e) {
-            assertTrue("The exception should be ServiceFailure rather than "
-                            + e.getClass().getName(), e instanceof ServiceFailure);
+            assertTrue("The exception should be McdbException rather than "
+                            + e.getClass().getName(), e instanceof McdbException);
         }
         // The first object doesn't change
         readSys = SystemMetadataManager.getInstance().get(pid);
@@ -1051,6 +1052,7 @@ public class MetacatHandlerIT {
         FileInputStream dataStream = new FileInputStream(test_eml_file);
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
         dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         //Mock
         try (MockedStatic<DBConnectionPool> mockDbConnPool =
                                                 Mockito.mockStatic(DBConnectionPool.class)) {
@@ -1084,6 +1086,7 @@ public class MetacatHandlerIT {
             InputStream dataStream2 = new FileInputStream(test_file_path);
             SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream2);
             dataStream2 = new FileInputStream(test_file_path);
+            D1NodeServiceTest.storeData(dataStream2, sysmeta2);
             try (MockedStatic<DBConnectionPool> mockDbConnPool =
                     Mockito.mockStatic(DBConnectionPool.class)) {
                 DBConnection mockConnection = Mockito.mock(DBConnection.class,
@@ -1130,80 +1133,33 @@ public class MetacatHandlerIT {
         SystemMetadata sysmeta = new SystemMetadata();
 
         //save the DetailedFileInputStream from the valid json-ld object without a checksum
-        File temp1 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
-        InputStream input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
-        OutputStream out = new FileOutputStream(temp1);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        Checksum checksum = null;
-        FileInputStream data = new FileInputStream(temp1);
+        InputStream data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
         MetacatHandler handler = new MetacatHandler();
         Identifier pid = new Identifier();
         pid.setValue("test-id1-" + System.currentTimeMillis());
-        assertTrue(temp1.exists());
         sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
-        data = new FileInputStream(temp1);
+        data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        D1NodeServiceTest.storeData(data, sysmeta);
         // True means changing the modification date in the system metadata
         String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                                        NonXMLMetadataHandlers.JSON_LD, data, null, user);
 
-        assertFalse(temp1.exists());
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
-        File savedFile = new File(documentDir, localId);
+        File savedFile = MetacatInitializer.getStorage().findObject(sysmeta.getIdentifier());
         assertTrue(savedFile.exists());
-        DocumentImpl.deleteFromFileSystem(pid);
-        assertFalse(savedFile.exists());
-
-        //save the DetaiedFileInputStream from the valid json-ld object with the expected checksum
-        File temp2 = JsonLDHandlerTest.generateTmpFile("temp2-json-ld-valid");
-        input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
-        out = new FileOutputStream(temp2);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        data = new FileInputStream(temp2);
-        pid = new Identifier();
-        pid.setValue("test-id2-" + System.currentTimeMillis());
-        assertTrue(temp2.exists());
-        sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
-        sysmeta.setFormatId(format);
-        data = new FileInputStream(temp2);
-        // True means changing the modification date in the system metadata
-        localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
-                NonXMLMetadataHandlers.JSON_LD, data, null, user);
-        assertTrue(!temp2.exists());
-        assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
-        deleteXMLDocuments(localId);
-        File savedFile2 = new File(documentDir, localId);
-        assertTrue(savedFile2.exists());
-        DocumentImpl.deleteFromFileSystem(pid);
-        assertTrue(!savedFile2.exists());
-
-        Checksum expectedChecksumForInvalidJson = new Checksum();
-        expectedChecksumForInvalidJson.setAlgorithm("MD5");
-        expectedChecksumForInvalidJson.setValue(JsonLDHandlerTest.CHECKSUM_INVALID_JSON_FILE);
 
         //save the DetaiedFileInputStream from the invalid json-ld object without a checksum
-        File temp3 = JsonLDHandlerTest.generateTmpFile("temp3-json-ld-valid");
-        input = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
-        out = new FileOutputStream(temp3);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        checksum = null;
-        data = new FileInputStream(temp3);
+        data = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
         pid = new Identifier();
         pid.setValue("test-id3-" + System.currentTimeMillis());
-        assertTrue(temp3.exists());
         try {
             sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setFormatId(format);
-            data = new FileInputStream(temp3);
+            data = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                               NonXMLMetadataHandlers.JSON_LD, data, null, user);
@@ -1212,60 +1168,6 @@ public class MetacatHandlerIT {
             assertTrue(e instanceof InvalidRequest);
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        temp3.delete();
-
-        //save the DetaiedFileInputStream from the invalid json-ld object with the expected checksum
-        File temp4 = JsonLDHandlerTest.generateTmpFile("temp4-json-ld-valid");
-        input = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
-        out = new FileOutputStream(temp4);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        data = new FileInputStream(temp4);
-        pid = new Identifier();
-        pid.setValue("test-id4-" + System.currentTimeMillis());
-        assertTrue(temp4.exists());
-        try {
-            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
-            sysmeta.setFormatId(format);
-            data = new FileInputStream(temp4);
-            // True means changing the modification date in the system metadata
-            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
-                            NonXMLMetadataHandlers.JSON_LD, data, null, user);
-            fail("We can't reach here since it should throw an exception");
-        } catch (Exception e) {
-            assertTrue(e instanceof InvalidRequest);
-        }
-        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        temp4.delete();
-
-        //save the DetaiedFileInputStream from the valid json-ld object with a wrong checksum
-        File temp5 = JsonLDHandlerTest.generateTmpFile("temp5-json-ld-valid");
-        input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
-        out = new FileOutputStream(temp5);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        data = new FileInputStream(temp5);
-        pid = new Identifier();
-        pid.setValue("test-id5-" + System.currentTimeMillis());
-        assertTrue(temp5.exists());
-        try {
-            checksum = new Checksum();
-            checksum.setAlgorithm("MD5");
-            checksum.setValue(JsonLDHandlerTest.CHECKSUM_INVALID_JSON_FILE);
-            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
-            sysmeta.setFormatId(format);
-            data = new FileInputStream(temp5);
-            // True means changing the modification date in the system metadata
-            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
-                            NonXMLMetadataHandlers.JSON_LD, data, null, user);
-            fail("We can't reach here since it should throw an exception");
-        } catch (Exception e) {
-            assertTrue(e instanceof InvalidSystemMetadata);
-        }
-        assertFalse(IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        temp5.delete();
     }
 
     /**
@@ -1297,16 +1199,16 @@ public class MetacatHandlerIT {
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
         data = new ByteArrayInputStream(content.getBytes());
+        D1NodeServiceTest.storeData(data, sysmeta);
         // True means changing the modification date in the system metadata
         String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
-        File savedFile = new File(documentDir, localId);
+        File savedFile = MetacatInitializer.getStorage().findObject(sysmeta.getIdentifier());
         assertTrue(savedFile.exists());
-        DocumentImpl.deleteFromFileSystem(pid);
-        assertTrue(!savedFile.exists());
+
 
         //save the valid json-ld object with the wrong checksum
         data = new ByteArrayInputStream(content.getBytes());
@@ -1318,6 +1220,7 @@ public class MetacatHandlerIT {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new ByteArrayInputStream(content.getBytes());
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
@@ -1339,6 +1242,7 @@ public class MetacatHandlerIT {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new ByteArrayInputStream(content.getBytes());
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
@@ -1378,17 +1282,17 @@ public class MetacatHandlerIT {
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
         data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        D1NodeServiceTest.storeData(data, sysmeta);
         // True means changing the modification date in the system metadata
         String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
-        File savedFile = new File(documentDir, localId);
+        File savedFile = MetacatInitializer.getStorage().findObject(sysmeta.getIdentifier());
         assertTrue(savedFile.exists());
         data.close();
-        DocumentImpl.deleteFromFileSystem(pid);
-        assertTrue(!savedFile.exists());
+
 
         //save the  valid json-ld object with the wrong checksum
         data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
@@ -1400,6 +1304,7 @@ public class MetacatHandlerIT {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                         NonXMLMetadataHandlers.JSON_LD, data, null, user);
@@ -1420,6 +1325,7 @@ public class MetacatHandlerIT {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                     NonXMLMetadataHandlers.JSON_LD, data, null, user);

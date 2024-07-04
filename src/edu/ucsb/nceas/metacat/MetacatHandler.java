@@ -523,7 +523,7 @@ public class MetacatHandler {
      * Parse XML Document to look for <!DOCTYPE ... PUBLIC/SYSTEM ... > in order to decide whether
      * to use validation parser
      */
-    private static boolean needDTDValidation(StringReader xmlreader) throws IOException {
+    private boolean needDTDValidation(StringReader xmlreader) throws IOException {
         StringBuffer cbuff = new StringBuffer();
         java.util.Stack<String> st = new java.util.Stack<String>();
         boolean validate = false;
