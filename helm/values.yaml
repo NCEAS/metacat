@@ -4,10 +4,10 @@
 ##     * * *  NOTE: SOME VALUES INCLUDE THE PLACEHOLDER "${RELEASE_NAME}", WHICH  * * *
 ##     * * *        MUST BE REPLACED BY THE ACTUAL RELEASE NAME, AS FOLLOWS...    * * *
 ##
-## EASY OPTION: use the 'helm-install.sh' (or the 'helm-upgrade.sh') shell script.
+## EASY OPTION: use the 'helm-upstall.sh' (helm upgrade --install) shell script.
 ##     e.g. (from the metacat repo root directory):
 ##
-##     $  ./helm-install.sh  myrelease   mynamespace  [other optional helm command flags]
+##     $  ./helm-upstall.sh  myrelease   mynamespace  [other optional helm command flags]
 ##
 ##     # NOTE: If you see: "command not found: envsubst", you'll need to install Gnu 'gettext'
 ##             (https://www.gnu.org/software/gettext/).  For example, on macOS:
@@ -697,20 +697,55 @@ ingress:
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
   ## 1. you are using the Kubernetes open source community version of the nginx ingress
-  ##    (see https://github.com/kubernetes/ingress-nginx )
-  ## 2. you have set ingress.clasName to nginx, and
+  ##    (see https://github.com/kubernetes/ingress-nginx)
+  ## 2. you have set ingress.className to nginx, and
   ## 3. you have set up ingress.tls correctly for https access, and
   ## 4. you have set the correct parameters in the metacat section
   ##    (see `metacat.dataone.certificate.fromHttpHeader.enabled`, above, for more details)
   ##
+  ## For other nginx annotation options, see:
+  ## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
+  ##
   annotations: {}
 
+
+  ## @param ingress.rewriteRules rewrite rules for the nginx ingress
+  ## These rules will be added to the section
+  ## metadata:
+  ##   annotations:
+  ##     nginx.ingress.kubernetes.io/configuration-snippet: |
+  ##       (list of rewrite rules here)
+  ##
+  ## Example syntax:
+  ##     rewriteRules: |
+  ##       - rewrite ^/(sitemap.+) /metacat/sitemaps/$1 redirect;
+  ##       - rewrite ^/robots.txt /metacat/robots.txt redirect;
+  ##
+  ## (For example only; note that these two rules are already automatically included as needed - see
+  ## .Values.robots.* and .Values.metacat.sitemap.*)
+  ##
+  rewriteRules: []
+
   ## @param ingress.tls The TLS configuration
-  #### example ###
+  ##
+  ## Example:
   ##  tls:
   ##    - hosts:
-  ##        - *external-hostname
-  ##      secretName: tls-secret
+  ##        - arcticdata.io
+  ##        - www.arcticdata.io
+  ##        - permafrost.arcticdata.io
+  ##      secretName: ingress-nginx-tls-cert
+  ##
+  ## To disable TLS altogether (i.e. use http only), set:
+  ##    tls: []
+  ##
+  ## To have tls.hosts auto-populated with the external hostname (from metacat.server.name),
+  ## set only the secretName (always required), and leave hosts as an empty list - i.e:
+  ##
+  ##    tls:
+  #       - hosts: []
+  #         secretName: tls-secret-values-yaml
+  ##
   tls: []
 
   ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate chain
