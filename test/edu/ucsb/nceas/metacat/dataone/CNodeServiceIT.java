@@ -11,6 +11,7 @@ import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.service.exceptions.BaseException;
+import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
@@ -120,6 +121,39 @@ public class CNodeServiceIT {
     }
 
     /**
+     * Test the scenario that to use a delete id
+     * @throws Exception
+     */
+    @Test
+    public void testReusingDeletedId() throws Exception {
+        Session session = D1NodeServiceTest.getCNSession();
+        Identifier deletedId = new Identifier();
+        deletedId.setValue("testResuingDeletedId234." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(deletedId, session.getSubject(), object);
+        d1NodeServiceTest.cnCreate(session, deletedId, object, sysmeta);
+        InputStream result =
+            CNodeService.getInstance(d1NodeServiceTest.getServletRequest()).get(session, deletedId);
+        assertNotNull(result);
+        CNodeService.getInstance(d1NodeServiceTest.getServletRequest()).delete(session, deletedId);
+        try {
+            CNodeService.getInstance(d1NodeServiceTest.getServletRequest()).get(session, deletedId);
+            fail("Tes can't get there since the id was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+        try {
+            d1NodeServiceTest.cnCreate(session, deletedId, object, sysmeta);
+            fail("Tes can't get there since mnCreate was using a deleted id");
+        } catch (Exception e) {
+            assertTrue(e instanceof IdentifierNotUnique);
+        }
+
+    }
+
+    /**
      * test for getting system metadata
      */
     @Test
@@ -200,6 +234,7 @@ public class CNodeServiceIT {
      * in the create request
      * @throws Exception
      */
+    @Test
     public void testPidNotMatchSysmeta() throws Exception {
         Session session = D1NodeServiceTest.getCNSession();
         //a data file
@@ -225,22 +260,26 @@ public class CNodeServiceIT {
         try {
             SystemMetadata readOne = CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
                 .getSystemMetadata(session, guid);
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof NotFound);
         }
         try {
             SystemMetadata readOne = CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
                 .getSystemMetadata(session, sysmeta.getIdentifier());
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof NotFound);
         }
         try {
             InputStream data = MetacatHandler.read(guid);
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof McdbException);
         }
         try {
             InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof McdbException);
         }
@@ -253,17 +292,20 @@ public class CNodeServiceIT {
         try {
             CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
                 .create(session, guid, object, sysmeta);
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
         }
         assertFalse(file.exists());
         try {
             InputStream data = MetacatHandler.read(guid);
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof McdbException);
         }
         try {
             InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof McdbException);
         }
@@ -277,17 +319,20 @@ public class CNodeServiceIT {
         try {
             CNodeService.getInstance(d1NodeServiceTest.getServletRequest()).create(session, guid,
                                                                                    object, sysmeta);
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
         }
         assertFalse(file.exists());
         try {
             InputStream data = MetacatHandler.read(guid);
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof McdbException);
         }
         try {
             InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+            fail("Test shouldn't get there since the object wasn't created");
         } catch (Exception e) {
             assertTrue(e instanceof McdbException);
         }
@@ -323,7 +368,7 @@ public class CNodeServiceIT {
         MCTestCase.printTestHeader("testChecksum");
 
         try {
-            Session session = d1NodeServiceTest.getCNSession();
+            Session session = D1NodeServiceTest.getCNSession();
             Identifier guid = new Identifier();
             guid.setValue("testChecksum." + System.currentTimeMillis());
             InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));

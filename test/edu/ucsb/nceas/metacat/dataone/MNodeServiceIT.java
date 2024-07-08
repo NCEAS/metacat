@@ -30,6 +30,7 @@ import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
+import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.NotAuthorized;
@@ -173,6 +174,38 @@ public class MNodeServiceIT {
             d1NodeTest.tearDown();
         }
 
+        /**
+         * Test the scenario that to use a delete id
+         * @throws Exception
+         */
+        @Test
+        public void testReusingDeletedId() throws Exception {
+            Session session = d1NodeTest.getTestSession();
+            Identifier deletedId = new Identifier();
+            deletedId.setValue("testResuingDeletedId." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta =
+                D1NodeServiceTest.createSystemMetadata(deletedId, session.getSubject(), object);
+            d1NodeTest.mnCreate(session, deletedId, object, sysmeta);
+            InputStream result = MNodeService.getInstance(request).get(session, deletedId);
+            assertNotNull(result);
+            Session nodeSession = d1NodeTest.getMNSession();
+            MNodeService.getInstance(request).delete(nodeSession, deletedId);
+            try {
+                MNodeService.getInstance(request).get(session,deletedId);
+                fail("Tes can't get there since the id was deleted");
+            } catch (Exception e) {
+                assertTrue(e instanceof NotFound);
+            }
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            try {
+                d1NodeTest.mnCreate(session, deletedId, object, sysmeta);
+                fail("Tes can't get there since mnCreate was using a deleted id");
+            } catch (Exception e) {
+                assertTrue(e instanceof IdentifierNotUnique);
+            }
+
+        }
 
         /**
          * Test getting a known object
@@ -4414,22 +4447,26 @@ public class MNodeServiceIT {
             try {
                 SystemMetadata readOne = MNodeService.getInstance(request)
                                                             .getSystemMetadata(session, guid);
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof NotFound);
             }
             try {
                 SystemMetadata readOne = MNodeService.getInstance(request)
                                             .getSystemMetadata(session, sysmeta.getIdentifier());
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof NotFound);
             }
             try {
                 InputStream data = MetacatHandler.read(guid);
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                assertTrue(e instanceof McdbException);
             }
             try {
                 InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof McdbException);
             }
@@ -4441,17 +4478,20 @@ public class MNodeServiceIT {
             assertTrue(file.exists());
             try {
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof InvalidRequest);
             }
             assertFalse(file.exists());
             try {
                 InputStream data = MetacatHandler.read(guid);
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof McdbException);
             }
             try {
                 InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof McdbException);
             }
@@ -4464,17 +4504,20 @@ public class MNodeServiceIT {
             assertTrue(file.exists());
             try {
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof InvalidRequest);
             }
             assertFalse(file.exists());
             try {
                 InputStream data = MetacatHandler.read(guid);
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof McdbException);
             }
             try {
                 InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+                fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof McdbException);
             }
