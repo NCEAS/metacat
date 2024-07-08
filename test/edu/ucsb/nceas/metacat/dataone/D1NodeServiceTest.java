@@ -1031,8 +1031,16 @@ public class D1NodeServiceTest extends MCTestCase {
                                      throws NoSuchAlgorithmException, InvalidRequest, IOException,
                                      RuntimeException, InterruptedException, InstantiationException,
                                      IllegalAccessException, MarshallingException,
-                                     ServiceFailure, InvalidSystemMetadata{
+                                     ServiceFailure, InvalidSystemMetadata {
         MNodeService.storeData(storage, object, sysmeta);
+    }
+
+    /**
+     * Get the storage object
+     * @return the storage object initialized from the class
+     */
+    public static Storage getStorage() {
+        return storage;
     }
 
     /**

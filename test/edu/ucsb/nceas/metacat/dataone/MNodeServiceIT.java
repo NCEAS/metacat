@@ -3,6 +3,8 @@ package edu.ucsb.nceas.metacat.dataone;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.McdbException;
+import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.admin.upgrade.UpdateDOI;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -13,6 +15,7 @@ import edu.ucsb.nceas.metacat.index.queue.FailedIndexResubmitTimerTaskIT;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager.SysMetaVersion;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
@@ -69,14 +72,7 @@ import org.junit.runners.Suite;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
@@ -4398,14 +4394,16 @@ public class MNodeServiceIT {
             //a data file
             Identifier guid = new Identifier();
             guid.setValue("testIdNotMatchSysmetaInCreateAndUpdate." + System.currentTimeMillis());
-            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            String objValue =
+                    "testIdNotMatchSysmetaInCreateAndUpdate2." + System.currentTimeMillis();
+            InputStream object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
             SystemMetadata sysmeta =
                             D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             // Set to another pid into system metadata to make it invalid
             Identifier another = new Identifier();
             another.setValue("testIdNotMatchSysmetaInCreateAndUpdate2." + System.currentTimeMillis());
             sysmeta.setIdentifier(another);
-            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
             try {
                 d1NodeTest.mnCreate(session, guid, object, sysmeta);
                 fail("Test shouldn't get there since the system metadata has a different user");
@@ -4413,19 +4411,87 @@ public class MNodeServiceIT {
                 assertTrue("The exception should be InvalidRequest rather than "
                             + e.getClass().getName(), e instanceof InvalidRequest);
             }
+            try {
+                SystemMetadata readOne = MNodeService.getInstance(request)
+                                                            .getSystemMetadata(session, guid);
+            } catch (Exception e) {
+                assertTrue(e instanceof NotFound);
+            }
+            try {
+                SystemMetadata readOne = MNodeService.getInstance(request)
+                                            .getSystemMetadata(session, sysmeta.getIdentifier());
+            } catch (Exception e) {
+                assertTrue(e instanceof NotFound);
+            }
+            try {
+                InputStream data = MetacatHandler.read(guid);
+            } catch (Exception e) {
+               assertTrue(e instanceof McdbException);
+            }
+            try {
+                InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbException);
+            }
+
+            object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
+            ObjectInfo objectMetadata = D1NodeServiceTest.getStorage().storeObject(object);
+            D1NodeServiceTest.getStorage().tagObject(sysmeta.getIdentifier(), objectMetadata.getCid());
+            File file = D1NodeServiceTest.getStorage().findObject(sysmeta.getIdentifier());
+            assertTrue(file.exists());
+            try {
+                MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidRequest);
+            }
+            assertFalse(file.exists());
+            try {
+                InputStream data = MetacatHandler.read(guid);
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbException);
+            }
+            try {
+                InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbException);
+            }
+
+            object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
+            objectMetadata = D1NodeServiceTest.getStorage()
+                .storeObject(object, sysmeta.getIdentifier(), null, sysmeta.getChecksum().getValue(),
+                             sysmeta.getChecksum().getAlgorithm(), sysmeta.getSize().longValue());
+            file = D1NodeServiceTest.getStorage().findObject(sysmeta.getIdentifier());
+            assertTrue(file.exists());
+            try {
+                MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidRequest);
+            }
+            assertFalse(file.exists());
+            try {
+                InputStream data = MetacatHandler.read(guid);
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbException);
+            }
+            try {
+                InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbException);
+            }
+
             // Set back to make it valid and the create method should succeed
             sysmeta.setIdentifier(guid);
-            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             assertTrue("The returned pid should be " + guid.getValue(),
                         guid.getValue().equals(pid.getValue()));
             // Update it by a wrong pid in the systemetadata
             Identifier newId = new Identifier();
             newId.setValue("testIdNotMatchSysmetaInCreateAndUpdate." + System.currentTimeMillis());
-            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
             sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setIdentifier(another);
-            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
             try {
                 d1NodeTest.mnUpdate(session, pid, object, newId, sysmeta);
                 fail("Test shouldn't get there since the system metadata has a different user");
@@ -4435,7 +4501,7 @@ public class MNodeServiceIT {
             }
             // Set back to make it valid
             sysmeta.setIdentifier(newId);
-            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
             pid = d1NodeTest.mnUpdate(session, pid, object, newId, sysmeta);
             assertTrue("The returned pid should be " + newId.getValue(),
                                 newId.getValue().equals(pid.getValue()));
