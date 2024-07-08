@@ -1,6 +1,9 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import edu.ucsb.nceas.MCTestCase;
+import edu.ucsb.nceas.metacat.McdbException;
+import edu.ucsb.nceas.metacat.MetacatHandler;
+import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
@@ -55,6 +58,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -188,6 +192,104 @@ public class CNodeServiceIT {
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test the scenario that the pid doesn't match the one in the system metadata
+     * in the create request
+     * @throws Exception
+     */
+    public void testPidNotMatchSysmeta() throws Exception {
+        Session session = d1NodeServiceTest.getCNSession();
+        //a data file
+        Identifier guid = new Identifier();
+        guid.setValue("testPidNotMatchSysmeta." + System.currentTimeMillis());
+        String objValue =
+            "testPidNotMatchSysmeta231." + System.currentTimeMillis();
+        InputStream object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        // Set to another pid into system metadata to make it invalid
+        Identifier another = new Identifier();
+        another.setValue("testPidNotMatchSysmeta2." + System.currentTimeMillis());
+        sysmeta.setIdentifier(another);
+        object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
+        try {
+            d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
+            fail("Test shouldn't get there since the system metadata has a different user");
+        } catch (Exception e) {
+            assertTrue("The exception should be InvalidRequest rather than "
+                           + e.getClass().getName(), e instanceof InvalidRequest);
+        }
+        try {
+            SystemMetadata readOne = MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .getSystemMetadata(session, guid);
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        try {
+            SystemMetadata readOne = MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .getSystemMetadata(session, sysmeta.getIdentifier());
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        try {
+            InputStream data = MetacatHandler.read(guid);
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbException);
+        }
+        try {
+            InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbException);
+        }
+
+        object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
+        ObjectInfo objectMetadata = D1NodeServiceTest.getStorage().storeObject(object);
+        D1NodeServiceTest.getStorage().tagObject(sysmeta.getIdentifier(), objectMetadata.getCid());
+        File file = D1NodeServiceTest.getStorage().findObject(sysmeta.getIdentifier());
+        assertTrue(file.exists());
+        try {
+            CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .create(session, guid, object, sysmeta);
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+        assertFalse(file.exists());
+        try {
+            InputStream data = MetacatHandler.read(guid);
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbException);
+        }
+        try {
+            InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbException);
+        }
+
+        object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
+        objectMetadata = D1NodeServiceTest.getStorage()
+            .storeObject(object, sysmeta.getIdentifier(), null, sysmeta.getChecksum().getValue(),
+                         sysmeta.getChecksum().getAlgorithm(), sysmeta.getSize().longValue());
+        file = D1NodeServiceTest.getStorage().findObject(sysmeta.getIdentifier());
+        assertTrue(file.exists());
+        try {
+            CNodeService.getInstance(d1NodeServiceTest.getServletRequest()).create(session, guid,
+                                                                                   object, sysmeta);
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+        assertFalse(file.exists());
+        try {
+            InputStream data = MetacatHandler.read(guid);
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbException);
+        }
+        try {
+            InputStream data = MetacatHandler.read(sysmeta.getIdentifier());
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbException);
         }
     }
 
