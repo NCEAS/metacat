@@ -201,7 +201,7 @@ public class CNodeServiceIT {
      * @throws Exception
      */
     public void testPidNotMatchSysmeta() throws Exception {
-        Session session = d1NodeServiceTest.getCNSession();
+        Session session = D1NodeServiceTest.getCNSession();
         //a data file
         Identifier guid = new Identifier();
         guid.setValue("testPidNotMatchSysmeta." + System.currentTimeMillis());
