@@ -223,13 +223,13 @@ public class CNodeServiceIT {
                            + e.getClass().getName(), e instanceof InvalidRequest);
         }
         try {
-            SystemMetadata readOne = MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+            SystemMetadata readOne = CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
                 .getSystemMetadata(session, guid);
         } catch (Exception e) {
             assertTrue(e instanceof NotFound);
         }
         try {
-            SystemMetadata readOne = MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+            SystemMetadata readOne = CNodeService.getInstance(d1NodeServiceTest.getServletRequest())
                 .getSystemMetadata(session, sysmeta.getIdentifier());
         } catch (Exception e) {
             assertTrue(e instanceof NotFound);
