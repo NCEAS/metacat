@@ -13,6 +13,8 @@ import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
+import edu.ucsb.nceas.metacat.MetacatHandler;
+import edu.ucsb.nceas.metacat.MetacatHandlerIT;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -139,6 +141,11 @@ public class StreamingMultipartRequestResolverTest {
         Map<String, List<String>> stringMaps = result.getMultipartParameters();
         assertEquals(guid.getValue(), stringMaps.get("pid").get(0));
         assertNull(stringMaps.get("foo"));
+        try (InputStream data = MetacatHandler.read(guid)){
+            String checksum = MetacatHandlerIT.getChecksum(data, algorithm);
+            assertEquals(sysmeta.getChecksum().getValue(), checksum);
+        }
+
     }
 
     /**
@@ -211,9 +218,11 @@ public class StreamingMultipartRequestResolverTest {
         Map<String, List<String>> stringMaps = result.getMultipartParameters();
         assertEquals(guid.getValue(), stringMaps.get("pid").get(0));
         assertNull(stringMaps.get("foo"));
-        
-        Map<String, File> fileMaps = result.getMultipartFiles();
-        File file = fileMaps.get("object");
+
+        try (InputStream data = MetacatHandler.read(guid)){
+            String checksum = MetacatHandlerIT.getChecksum(data, algorithm);
+            assertEquals(sysmeta.getChecksum().getValue(), checksum);
+        }
     }
 
     /**

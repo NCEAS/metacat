@@ -1412,7 +1412,7 @@ public class MetacatHandlerIT {
     /*
      * Note: this method write input stream into memory. So it can only handle the small files.
      */
-    private String getChecksum(InputStream input, String checkAlgor) throws Exception {
+    public static String getChecksum(InputStream input, String checkAlgor) throws Exception {
         byte[] buffer = new byte[1024];
         ByteArrayOutputStream out = new ByteArrayOutputStream(2000000);
         MessageDigest md5 = MessageDigest.getInstance(checkAlgor);
