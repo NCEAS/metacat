@@ -66,6 +66,7 @@ public class MetacatHandlerIT {
     private static final String eml_format = "https://eml.ecoinformatics.org/eml-2.2.0";
     private static final String MD5 = "MD5";
     private MetacatHandler handler;
+    private D1NodeServiceTest d1NodeServiceTest;
 
     /**
      * Setup
@@ -76,7 +77,7 @@ public class MetacatHandlerIT {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         handler = new MetacatHandler();
         // Initialize the storage system
-        new D1NodeServiceTest("initialize");
+        d1NodeServiceTest = new D1NodeServiceTest("initialize");
     }
 
     /**
@@ -178,6 +179,45 @@ public class MetacatHandlerIT {
             } catch (Exception e) {
                 assertTrue("The exception should be InvalidRequest",e instanceof InvalidRequest);
             }
+        }
+    }
+
+    /**
+     * Test the read method
+     * @throws Exception
+     */
+    @Test
+    public void testRead() throws Exception {
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testRead-" + System.currentTimeMillis());
+        FileInputStream dataStream = new FileInputStream(test_file_path);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
+        dataStream = new FileInputStream(test_file_path);
+        d1NodeServiceTest.mnCreate(d1NodeServiceTest.getTestSession(), pid, dataStream, sysmeta);
+        InputStream readObj = MetacatHandler.read(pid);
+        String readChecksum = getChecksum(readObj, MD5);
+        assertEquals("The read object should have the checksum " + test_file_checksum + " rather "
+                       + "than " + readChecksum, test_file_checksum, readChecksum);
+        String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        readObj = MetacatHandler.read(localId, null);
+        readChecksum = getChecksum(readObj, MD5);
+        assertEquals("The read object should have the checksum " + test_file_checksum + " rather "
+                         + "than " + readChecksum, test_file_checksum, readChecksum);
+        pid.setValue("MetacatHandler.testRead.foo-" + System.currentTimeMillis());
+        try  {
+            MetacatHandler.read(pid);
+            fail("Test can't get there since MetacatHandler read a non-existed pid");
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbException);
+        }
+        try  {
+            MetacatHandler.read("metacatHandlerRead123." + System.currentTimeMillis() + ".1", null);
+            fail("Test can't get there since MetacatHandler read a non-existed pid");
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbException);
         }
     }
 
