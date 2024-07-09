@@ -149,6 +149,86 @@ public class StreamingMultipartRequestResolverTest {
     }
 
     /**
+     * Test the method resolveMultipart with the v2 system metadata.
+     * This scenario is the object comes first.
+     * @throws Exception
+     */
+    @Test
+    public void testV2ResolveMultipart2() throws Exception {
+        String algorithm = "MD5";
+        Session session = d1NodeServiceTest.getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testV2ResolveMultipart." + System.currentTimeMillis());
+        byte[] fileContent = Files.readAllBytes((new File(objectFile)).toPath());
+        InputStream object = new ByteArrayInputStream(fileContent);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid,
+                                                                        session.getSubject(), object);
+        assertTrue(sysmeta instanceof org.dataone.service.types.v2.SystemMetadata);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta.setFormatId(formatId);
+        ByteArrayOutputStream sysOutput = new ByteArrayOutputStream();
+        TypeMarshaller.marshalTypeToOutputStream(sysmeta, sysOutput);
+        byte[] sysContent = sysOutput.toByteArray();
+
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        StringBody pidBody = new StringBody(guid.getValue(), ContentType.MULTIPART_FORM_DATA);
+        builder.addPart("pid", pidBody);
+        // Add the object part first
+        ByteArrayBody objectBody = new ByteArrayBody(fileContent, objectFile);
+        builder.addPart("object", objectBody);
+        ByteArrayBody sysmetaBody = new ByteArrayBody(sysContent, "sysmetametadata.xml");
+        builder.addPart(StreamingMultipartRequestResolver.SYSMETA, sysmetaBody);
+        HttpEntity entity = builder.build();
+        // Serialize request body
+        ByteArrayOutputStream requestContent = new ByteArrayOutputStream();
+        entity.writeTo(requestContent);
+        ByteArrayInputStream requestInput = new ByteArrayInputStream(requestContent.toByteArray());
+        ServletInputStream objectInputStream = new  WrappingServletInputStream(requestInput);
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(request.getMethod()).thenReturn("post");
+        Mockito.when(request.getContentType()).thenReturn(entity.getContentType().getValue());
+        Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
+        StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver("build", 10000000);
+        MultipartRequest result = resolver.resolveMultipart(request);
+        org.dataone.service.types.v1.SystemMetadata parsedSys = resolver.getSystemMetadataPart();
+
+        //v2 system metadata object is both v1 and v2
+        assertTrue(parsedSys instanceof org.dataone.service.types.v1.SystemMetadata);
+        assertTrue(parsedSys instanceof org.dataone.service.types.v2.SystemMetadata);
+        SystemMetadata parsedSysmeta = (SystemMetadata) parsedSys;
+        assertEquals(guid.getValue(), parsedSysmeta.getIdentifier().getValue());
+        assertEquals("https://eml.ecoinformatics.org/eml-2.2.0",
+                     parsedSysmeta.getFormatId().getValue());
+        assertEquals(algorithm, parsedSysmeta.getChecksum().getAlgorithm());
+        assertEquals(sysmeta.getChecksum().getValue(), parsedSysmeta.getChecksum().getValue());
+        assertEquals(Permission.READ, parsedSysmeta.getAccessPolicy().getAllow(0).getPermission(0));
+        assertEquals(Constants.SUBJECT_PUBLIC,
+                     parsedSysmeta.getAccessPolicy().getAllow(0).getSubject(0).getValue());
+        assertEquals(sysmeta.getSize(), parsedSysmeta.getSize());
+        assertEquals(session.getSubject().getValue(), parsedSysmeta.getSubmitter().getValue());
+        assertEquals(session.getSubject().getValue(), parsedSysmeta.getRightsHolder().getValue());
+        assertEquals(Settings.getConfiguration().getString("dataone.nodeId"),
+                     parsedSysmeta.getOriginMemberNode().getValue());
+        assertEquals(Settings.getConfiguration().getString("dataone.nodeId"),
+                     parsedSysmeta.getAuthoritativeMemberNode().getValue());
+        assertEquals(sysmeta.getDateUploaded().getTime(),
+                     parsedSysmeta.getDateUploaded().getTime());
+        assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
+                     parsedSysmeta.getDateSysMetadataModified().getTime());
+
+        Map<String, List<String>> stringMaps = result.getMultipartParameters();
+        assertEquals(guid.getValue(), stringMaps.get("pid").get(0));
+        assertNull(stringMaps.get("foo"));
+        try (InputStream data = MetacatHandler.read(guid)){
+            String checksum = MetacatHandlerIT.getChecksum(data, algorithm);
+            assertEquals(sysmeta.getChecksum().getValue(), checksum);
+        }
+
+    }
+
+    /**
      * Test the method resolveMultipart with the v1 system metadata
      * @throws Exception
      */
