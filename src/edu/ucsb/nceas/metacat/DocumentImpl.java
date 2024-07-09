@@ -1059,29 +1059,6 @@ public class DocumentImpl {
     }
 
 
-    /**
-     * Check for "WRITE" permission on @docid for @user and/or @groups from DB connection
-     */
-    public static boolean hasWritePermission(String user, String[] groups, String docid)
-        throws SQLException, Exception {
-        // Check for WRITE permission on @docid for @user and/or @groups
-        PermissionController controller = new PermissionController(docid);
-        return controller.hasPermission(user, groups, AccessControlInterface.WRITESTRING);
-    }
-
-
-    /**
-     * Check for "ALL" or "CHMOD" permission on @docid for @user and/or @groups from DB connection
-     */
-    public static boolean hasAllPermission(String user, String[] groups, String docid)
-        throws SQLException, Exception {
-        // Check for either ALL or CHMOD permission on @docid for @user and/or @groups
-        PermissionController controller = new PermissionController(docid);
-        boolean hasAll = controller.hasPermission(user, groups, AccessControlInterface.ALLSTRING);
-        boolean hasChmod =
-            controller.hasPermission(user, groups, AccessControlInterface.CHMODSTRING);
-        return hasAll || hasChmod;
-    }
 
     /**
      * Set up the parser handlers for writing the document to the database
