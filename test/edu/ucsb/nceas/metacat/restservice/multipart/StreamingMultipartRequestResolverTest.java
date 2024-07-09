@@ -33,6 +33,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
@@ -114,23 +116,29 @@ public class StreamingMultipartRequestResolverTest {
         assertTrue(parsedSys instanceof org.dataone.service.types.v1.SystemMetadata);
         assertTrue(parsedSys instanceof org.dataone.service.types.v2.SystemMetadata);
         SystemMetadata parsedSysmeta = (SystemMetadata) parsedSys;
-        assertTrue(parsedSysmeta.getIdentifier().equals(guid));
-        assertTrue(parsedSysmeta.getFormatId().getValue().equals("https://eml.ecoinformatics.org/eml-2.2.0"));
-        assertTrue(parsedSysmeta.getChecksum().getAlgorithm().equals(algorithm));
-        assertTrue(parsedSysmeta.getChecksum().getValue().equals(sysmeta.getChecksum().getValue()));
-        assertTrue(parsedSysmeta.getAccessPolicy().getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(parsedSysmeta.getAccessPolicy().getAllow(0).getSubject(0).getValue().equals(Constants.SUBJECT_PUBLIC));
-        assertTrue(parsedSysmeta.getSize().equals(sysmeta.getSize()));
-        assertTrue(parsedSysmeta.getSubmitter().getValue().equals(session.getSubject().getValue()));
-        assertTrue(parsedSysmeta.getRightsHolder().getValue().equals(session.getSubject().getValue()));
-        assertTrue(parsedSysmeta.getOriginMemberNode().getValue().equals(Settings.getConfiguration().getString("dataone.nodeId")));
-        assertTrue(parsedSysmeta.getAuthoritativeMemberNode().getValue().equals(Settings.getConfiguration().getString("dataone.nodeId")));
-        assertTrue(parsedSysmeta.getDateUploaded().getTime() == sysmeta.getDateUploaded().getTime());
-        assertTrue(parsedSysmeta.getDateSysMetadataModified().getTime() == sysmeta.getDateSysMetadataModified().getTime());
+        assertEquals(guid.getValue(), parsedSysmeta.getIdentifier().getValue());
+        assertEquals("https://eml.ecoinformatics.org/eml-2.2.0",
+                                                        parsedSysmeta.getFormatId().getValue());
+        assertEquals(algorithm, parsedSysmeta.getChecksum().getAlgorithm());
+        assertEquals(sysmeta.getChecksum().getValue(), parsedSysmeta.getChecksum().getValue());
+        assertEquals(Permission.READ, parsedSysmeta.getAccessPolicy().getAllow(0).getPermission(0));
+        assertEquals(Constants.SUBJECT_PUBLIC,
+                     parsedSysmeta.getAccessPolicy().getAllow(0).getSubject(0).getValue());
+        assertEquals(sysmeta.getSize(), parsedSysmeta.getSize());
+        assertEquals(session.getSubject().getValue(), parsedSysmeta.getSubmitter().getValue());
+        assertEquals(session.getSubject().getValue(), parsedSysmeta.getRightsHolder().getValue());
+        assertEquals(Settings.getConfiguration().getString("dataone.nodeId"),
+                     parsedSysmeta.getOriginMemberNode().getValue());
+        assertEquals(Settings.getConfiguration().getString("dataone.nodeId"),
+                     parsedSysmeta.getAuthoritativeMemberNode().getValue());
+        assertEquals(sysmeta.getDateUploaded().getTime(),
+                     parsedSysmeta.getDateUploaded().getTime());
+        assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
+                     parsedSysmeta.getDateSysMetadataModified().getTime());
        
         Map<String, List<String>> stringMaps = result.getMultipartParameters();
-        assertTrue(stringMaps.get("pid").get(0).equals(guid.getValue()));
-        assertTrue(stringMaps.get("foo") == null);
+        assertEquals(guid.getValue(), stringMaps.get("pid").get(0));
+        assertNull(stringMaps.get("foo"));
     }
 
     /**
@@ -180,23 +188,29 @@ public class StreamingMultipartRequestResolverTest {
         //v1 system metadata object is only v1, not v2
         assertTrue(parsedSysmeta instanceof org.dataone.service.types.v1.SystemMetadata);
         assertTrue(!(parsedSysmeta instanceof org.dataone.service.types.v2.SystemMetadata));
-        assertTrue(parsedSysmeta.getIdentifier().equals(guid));
-        assertTrue(parsedSysmeta.getFormatId().getValue().equals("https://eml.ecoinformatics.org/eml-2.2.0"));
-        assertTrue(parsedSysmeta.getChecksum().getAlgorithm().equals(algorithm));
-        assertTrue(parsedSysmeta.getChecksum().getValue().equals(sysmeta.getChecksum().getValue()));
-        assertTrue(parsedSysmeta.getAccessPolicy().getAllow(0).getPermission(0).equals(Permission.READ));
-        assertTrue(parsedSysmeta.getAccessPolicy().getAllow(0).getSubject(0).getValue().equals(Constants.SUBJECT_PUBLIC));
-        assertTrue(parsedSysmeta.getSize().equals(sysmeta.getSize()));
-        assertTrue(parsedSysmeta.getSubmitter().getValue().equals(session.getSubject().getValue()));
-        assertTrue(parsedSysmeta.getRightsHolder().getValue().equals(session.getSubject().getValue()));
-        assertTrue(parsedSysmeta.getOriginMemberNode().getValue().equals(Settings.getConfiguration().getString("dataone.nodeId")));
-        assertTrue(parsedSysmeta.getAuthoritativeMemberNode().getValue().equals(Settings.getConfiguration().getString("dataone.nodeId")));
-        assertTrue(parsedSysmeta.getDateUploaded().getTime() == sysmeta.getDateUploaded().getTime());
-        assertTrue(parsedSysmeta.getDateSysMetadataModified().getTime() == sysmeta.getDateSysMetadataModified().getTime());
+        assertEquals(guid, parsedSysmeta.getIdentifier());
+        assertEquals("https://eml.ecoinformatics.org/eml-2.2.0",
+                     parsedSysmeta.getFormatId().getValue());
+        assertEquals(algorithm, parsedSysmeta.getChecksum().getAlgorithm());
+        assertEquals(sysmeta.getChecksum().getValue(), parsedSysmeta.getChecksum().getValue());
+        assertEquals(Permission.READ, parsedSysmeta.getAccessPolicy().getAllow(0).getPermission(0));
+        assertEquals(Constants.SUBJECT_PUBLIC,
+                     parsedSysmeta.getAccessPolicy().getAllow(0).getSubject(0).getValue());
+        assertEquals(sysmeta.getSize(), parsedSysmeta.getSize());
+        assertEquals(session.getSubject().getValue(), parsedSysmeta.getSubmitter().getValue());
+        assertEquals(session.getSubject().getValue(), parsedSysmeta.getRightsHolder().getValue());
+        assertEquals(Settings.getConfiguration().getString("dataone.nodeId"),
+                     parsedSysmeta.getOriginMemberNode().getValue());
+        assertEquals(Settings.getConfiguration().getString("dataone.nodeId"),
+                     parsedSysmeta.getAuthoritativeMemberNode().getValue());
+        assertEquals(sysmeta.getDateUploaded().getTime(),
+                     parsedSysmeta.getDateUploaded().getTime());
+        assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
+                     parsedSysmeta.getDateSysMetadataModified().getTime());
        
         Map<String, List<String>> stringMaps = result.getMultipartParameters();
-        assertTrue(stringMaps.get("pid").get(0).equals(guid.getValue()));
-        assertTrue(stringMaps.get("foo") == null);
+        assertEquals(guid.getValue(), stringMaps.get("pid").get(0));
+        assertNull(stringMaps.get("foo"));
         
         Map<String, File> fileMaps = result.getMultipartFiles();
         File file = fileMaps.get("object");
