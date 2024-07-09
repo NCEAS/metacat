@@ -3,7 +3,6 @@ package edu.ucsb.nceas.metacat.restservice.multipart;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -22,83 +21,65 @@ import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.dataone.configuration.Settings;
 import org.dataone.mimemultipart.MultipartRequest;
-import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
-import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertTrue;
+
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+
 
 /**
  * Junit test class for the class StreamingMultipartRequestResolver
  * @author tao
  *
  */
-public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
-    
+public class StreamingMultipartRequestResolverTest {
+
     private static String objectFile = "test/eml-2.2.0.xml";
-    
-    /**
-     * Constructor
-     * @param name
-     */
-    public StreamingMultipartRequestResolverTest(String name){
-        super(name);
-    }
-    
+    D1NodeServiceTest d1NodeServiceTest;
+
     /**
      * Establish a testing framework by initializing appropriate objects
      */
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
+        d1NodeServiceTest = new D1NodeServiceTest("initialize");
+        d1NodeServiceTest.setUp();
     }
 
     /**
      * Release any objects after tests are complete
      */
+    @After
     public void tearDown() {
-        super.tearDown();
+        d1NodeServiceTest.tearDown();
     }
 
-    /**
-     * Create a suite of tests to be run together
-     */
-    public static Test suite()  {
-        TestSuite suite = new TestSuite();
-        suite.addTest(new StreamingMultipartRequestResolverTest("initialize"));
-        suite.addTest(new StreamingMultipartRequestResolverTest("testV2ResolveMultipart"));
-        suite.addTest(new StreamingMultipartRequestResolverTest("testV1ResolveMultipart"));
-        suite.addTest(new StreamingMultipartRequestResolverTest("testDeleteTempFile"));
-        return suite;
-    }
-    
-    /**
-     * init
-     */
-    public void initialize() {
-        assertTrue(1==1);
-    }
-    
+
     /**
      * Test the method resolveMultipart with the v2 system metadata
      * @throws Exception
      */
+    @Test
     public void testV2ResolveMultipart() throws Exception {
         String algorithm = "MD5";
-        Session session = getTestSession();
+        Session session = d1NodeServiceTest.getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("testV2ResolveMultipart." + System.currentTimeMillis());
         byte[] fileContent = Files.readAllBytes((new File(objectFile)).toPath());
         InputStream object = new ByteArrayInputStream(fileContent);
-        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(guid,
+                                                                        session.getSubject(), object);
         assertTrue(sysmeta instanceof org.dataone.service.types.v2.SystemMetadata);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
@@ -150,33 +131,22 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
         Map<String, List<String>> stringMaps = result.getMultipartParameters();
         assertTrue(stringMaps.get("pid").get(0).equals(guid.getValue()));
         assertTrue(stringMaps.get("foo") == null);
-        
-        Map<String, File> fileMaps = result.getMultipartFiles();
-        File file = fileMaps.get("object");
-        /*CheckedFile savedFile = (CheckedFile) file;
-        assertTrue(savedFile.exists());
-        Checksum savedChecksum = savedFile.getChecksum();
-        InputStream savedFileInputStream = new FileInputStream(savedFile);
-        Checksum calculatedChecksum = ChecksumUtil.checksum(savedFileInputStream, algorithm);
-        savedFileInputStream.close();
-        assertTrue(savedChecksum.getAlgorithm().equals(algorithm));
-        assertTrue(savedChecksum.getValue().equalsIgnoreCase(sysmeta.getChecksum().getValue()));
-        assertTrue(savedChecksum.getValue().equalsIgnoreCase(calculatedChecksum.getValue()));*/
     }
-    
-    
+
     /**
      * Test the method resolveMultipart with the v1 system metadata
      * @throws Exception
      */
+    @Test
     public void testV1ResolveMultipart() throws Exception {
         String algorithm = "MD5";
-        Session session = getTestSession();
+        Session session = d1NodeServiceTest.getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("testV1ResolveMultipart." + System.currentTimeMillis());
         byte[] fileContent = Files.readAllBytes((new File(objectFile)).toPath());
         InputStream object = new ByteArrayInputStream(fileContent);
-        org.dataone.service.types.v1.SystemMetadata sysmeta = createV1SystemMetadata(guid, session.getSubject(), object);
+        org.dataone.service.types.v1.SystemMetadata sysmeta =
+            d1NodeServiceTest.createV1SystemMetadata(guid, session.getSubject(), object);
         assertTrue(!(sysmeta instanceof org.dataone.service.types.v2.SystemMetadata));
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
@@ -230,21 +200,13 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
         
         Map<String, File> fileMaps = result.getMultipartFiles();
         File file = fileMaps.get("object");
-        /*CheckedFile savedFile = (CheckedFile) file;
-        assertTrue(savedFile.exists());
-        Checksum savedChecksum = savedFile.getChecksum();
-        InputStream savedFileInputStream = new FileInputStream(savedFile);
-        Checksum calculatedChecksum = ChecksumUtil.checksum(savedFileInputStream, algorithm);
-        savedFileInputStream.close();
-        assertTrue(savedChecksum.getAlgorithm().equals(algorithm));
-        assertTrue(savedChecksum.getValue().equalsIgnoreCase(sysmeta.getChecksum().getValue()));
-        assertTrue(savedChecksum.getValue().equalsIgnoreCase(calculatedChecksum.getValue()));*/
     }
-    
+
     /**
      * Test the method of deleteTempFile
      * @throws Exception
      */
+    @Test
     public void testDeleteTempFile() throws Exception {
         boolean deleteOnExit = Settings.getConfiguration().getBoolean("multipart.tempFile.deleteOnExit");
         if(!deleteOnExit) {
