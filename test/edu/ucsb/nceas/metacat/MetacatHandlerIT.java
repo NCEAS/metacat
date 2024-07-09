@@ -362,7 +362,7 @@ public class MetacatHandlerIT {
 
     /**
      * Test the save method
-     * @throws Excetpion
+     * @throws Exception
      */
     @Test
     public void testSaveDetailedInputStreamData() throws Exception {
@@ -493,7 +493,7 @@ public class MetacatHandlerIT {
 
     /**
      * Test the save method
-     * @throws Excetpion
+     * @throws Exception
      */
     @Test
     public void testSaveDetailedInputStreamMetadata() throws Exception {
@@ -618,7 +618,7 @@ public class MetacatHandlerIT {
 
     /**
      * Test the save method
-     * @throws Excetpion
+     * @throws Exception
      */
     @Test
     public void testSaveInputStreamData() throws Exception {
@@ -748,7 +748,7 @@ public class MetacatHandlerIT {
 
     /**
      * Test the save method
-     * @throws Excetpion
+     * @throws Exception
      */
     @Test
     public void testSaveInputStreamMetadata() throws Exception {
