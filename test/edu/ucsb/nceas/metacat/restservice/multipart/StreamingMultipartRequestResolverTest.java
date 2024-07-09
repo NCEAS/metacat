@@ -233,14 +233,12 @@ public class StreamingMultipartRequestResolverTest {
     public void testDeleteTempFile() throws Exception {
         boolean deleteOnExit = Settings.getConfiguration().getBoolean("multipart.tempFile.deleteOnExit");
         if(!deleteOnExit) {
-            System.out.println("+++++++++++++ delete immediately");
             //delete the file immediately
             File tmp = File.createTempFile("testDeleteTempFile", "testtemp");
             assertTrue(tmp.exists());
             StreamingMultipartRequestResolver.deleteTempFile(tmp);
             assertTrue(!tmp.exists());
         } else {
-            System.out.println("============== delete on exit");
             File tmp = File.createTempFile("testDeleteTempFile", "testtemp");
             assertTrue(tmp.exists());
             StreamingMultipartRequestResolver.deleteTempFile(tmp);
