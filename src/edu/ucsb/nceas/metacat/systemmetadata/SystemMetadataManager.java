@@ -186,7 +186,7 @@ public class SystemMetadataManager {
      * Note: the calling code is responsible for (a) setting setAutoCommit(false) before passing the
      * DBConnection, and (b) calling commit() after this method has finished execution.
      * @param sysmeta  the new system metadata will be inserted
-     * @param changeModifyTIme  if we need to change the modify time
+     * @param changeModifyTime  if we need to change the modify time
      * @param dbConn  the db connection will be used during storing the system metadata into db
      * @param sysMetaCheck  if Metacat needs to check the version of the coming system metadata
      *                      matching the version of the existing one.

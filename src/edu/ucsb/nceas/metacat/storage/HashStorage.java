@@ -81,6 +81,13 @@ public class HashStorage implements Storage {
     }
 
     /**
+     * Reset the hashStorage object to null. This should only be used in tests.
+     */
+    protected static void resetHashStorage() {
+        hashStorage = null;
+    }
+
+    /**
      * Get the instance of the class through the singleton pattern
      * @param className the name of the implementation class
      * @return the instance of the class

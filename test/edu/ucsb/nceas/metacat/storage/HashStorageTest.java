@@ -49,6 +49,7 @@ public class HashStorageTest {
      */
     @Test
     public void testGetInstance() throws Exception {
+        HashStorage.resetHashStorage();
         try {
             Storage storage = HashStorage.getInstance(null);
             fail("Test shouldn't get here since the class name is null");
