@@ -833,7 +833,7 @@
     </target>
     
     <target name="build-metacat" depends="war, dist-metacat-index, build-metacat-ui"
-            description="Build Metacat">
+            description="Build Metacat, including indexer and UI">
     </target>
 
     <target name="install-skin" depends="init"
@@ -1489,8 +1489,13 @@
     <target name="fulldist" depends="distbin, distsrc"
             description="full distribution - source and bin"/>
 
-    <target name="distbin" depends="build-metacat"
-            description="prepares a binary distribution">
+    <target name="distbinmc" depends="war, distbincommon"
+            description="prepares a binary distribution containing only metacat.war" />
+
+    <target name="distbin" depends="build-metacat, distbincommon"
+            description="prepares a full binary distribution of metacat, indexer and ui" />
+
+    <target name="distbincommon">
         <copy todir="${dist.dir}">
             <fileset dir="./src/scripts"/>
         </copy>

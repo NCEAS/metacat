@@ -9,11 +9,12 @@ global:
   ephemeralVolumeStorageClass: hostpath
 
 metacat:
-#  dataone.certificate.fromHttpHeader.enabled: true
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
 
 image:
   debug: true
+  tag: "DEVELOP"
+
 
 # probes will kill remote debugger
 livenessProbe:
@@ -23,6 +24,3 @@ readinessProbe:
 
 persistence:
   storageClass: *storageClassName
-
-ingress:
-  className: "nginx"

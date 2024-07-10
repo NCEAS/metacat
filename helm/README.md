@@ -53,8 +53,9 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 Starting in the root directory of the `metacat` repo:
 
 1. You should not need to edit much in [values.yaml](./values.yaml), but you can look at the
-   contents of the values overlay files (like [./values-dev-cluster.yaml](./values-dev-cluster.yaml)
-   , for example), to see which settings typically need to be changed.
+   contents of the values overlay files (like the ones in the [./examples directory](./examples)),
+   to see which settings typically need to be overridden. Save your settings in a yaml file,
+   e.g: `/your/values-overrides.yaml`
 
 
 2. Add your credentials to [./admin/secrets.yaml](./admin/secrets.yaml), and add to cluster:
@@ -69,7 +70,8 @@ Starting in the root directory of the `metacat` repo:
    resource `roles` in the API group `rbac.authorization.k8s.io`*).
 
     ```shell
-    $ ./helm-install.sh  myreleasename  mynamespace  ./helm
+    $ ./helm-upstall.sh  myreleasename  mynamespace oci://ghcr.io/nceas/charts/metacat  \
+                                            --version 1.0.0  -f  /your/values-overrides.yaml
     ```
 
 To access Metacat, you'll need to create a mapping between your ingress IP address (found by:
@@ -97,7 +99,7 @@ using the [Helm](https://helm.sh) package manager.
 To install the chart with the release name `my-release`:
 
 ```shell
-helm install my-release ./helm
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version 1.0.0
 ```
 
 This command deploys Metacat on the Kubernetes cluster in the default configuration. The
@@ -111,7 +113,8 @@ installation.
 Parameters may be provided on the command line to override those in values.yaml; e.g.
 
 ```shell
-helm install my-release ./helm  --set postgres.auth.existingSecret=my-release-secrets
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version 1.0.0  \
+                                              --set postgres.auth.existingSecret=my-release-secrets
 ```
 
 ## Uninstalling the Chart
@@ -141,20 +144,23 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Global Properties Shared Across Sub-Charts Within This Deployment
 
-| Name                                 | Description                                             | Value                             |
-| ------------------------------------ | ------------------------------------------------------- | --------------------------------- |
-| `global.passwordsSecret`             | The name of the Secret containing application passwords | `${RELEASE_NAME}-metacat-secrets` |
-| `global.metacatAppContext`           | The application context to use                          | `metacat`                         |
-| `global.storageClass`                | default name of the storageClass to use for PVs         | `local-path`                      |
-| `global.ephemeralVolumeStorageClass` | Optional global storageClass override                   | `""`                              |
-| `global.sharedVolumeSubPath`         | The subdirectory of the metacat data volume to mount    | `""`                              |
+| Name                                 | Description                                                     | Value                             |
+|--------------------------------------|-----------------------------------------------------------------|-----------------------------------|
+| `global.metacatExternalBaseUrl`      | Metacat base url accessible from outside cluster                | `https://localhost/`              |
+| `global.passwordsSecret`             | The name of the Secret containing application passwords         | `${RELEASE_NAME}-metacat-secrets` |
+| `global.metacatAppContext`           | The application context to use                                  | `metacat`                         |
+| `global.storageClass`                | default name of the storageClass to use for PVs                 | `local-path`                      |
+| `global.ephemeralVolumeStorageClass` | Optional global storageClass override                           | `""`                              |
+| `global.sharedVolumeSubPath`         | The subdirectory of the metacat data volume to mount            | `""`                              |
+| `global.dataone-indexer.enabled`     | enable the dataone-indexer sub-chart                            | `true`                            |
+| `global.includeMetacatUi`            | enable the MetacatUI sub-chart                                  | `true`                            |
+| `global.d1ClientCnUrl`               | The url of the CN; used to populate metacat's 'D1Client.CN_URL' | `https://cn.dataone.org/cn`       |
 
 ### Metacat Application-Specific Properties
 
 | Name                              | Description                                                     | Value               |
-| --------------------------------- | --------------------------------------------------------------- | ------------------- |
+|-----------------------------------|-----------------------------------------------------------------|---------------------|
 | `metacat.application.context`     | see global.metacatAppContext                                    | `metacat`           |
-| `metacat.includeMetacatUi`        | Include MetacatUI in the same container as metacat              | `true`              |
 | `metacat.auth.administrators`     | A semicolon-separated list of admin ORCID iDs                   | `""`                |
 | `metacat.database.connectionURI`  | postgres database URI, or lave blank to use sub-chart           | `""`                |
 | `metacat.guid.doi.enabled`        | Allow users to publish Digital Object Identifiers at doi.org?   | `true`              |
@@ -169,11 +175,10 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### OPTIONAL DataONE Member Node (MN) Parameters
 
 | Name                                                          | Description                                                       | Value                                                    |
-| ------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
+|---------------------------------------------------------------|-------------------------------------------------------------------|----------------------------------------------------------|
 | `metacat.cn.server.publiccert.filename`                       | optional cert(s) used to validate jwt auth tokens,                | `/var/metacat/pubcerts/DataONEProdIntCA.pem`             |
 | `metacat.dataone.certificate.fromHttpHeader.enabled`          | Enable mutual auth with client certs                              | `false`                                                  |
 | `metacat.dataone.autoRegisterMemberNode`                      | Automatically push MN updates to CN? (yyyy-MM-dd)                 | `2023-02-28`                                             |
-| `metacat.D1Client.CN_URL`                                     | the url of the CN                                                 | `https://cn.dataone.org/cn`                              |
 | `metacat.dataone.nodeId`                                      | The unique ID of your DataONE MN - must match client cert subject | `urn:node:CHANGE_ME_TO_YOUR_VALUE!`                      |
 | `metacat.dataone.subject`                                     | The "subject" string from your DataONE MN client certificate      | `CN=urn:node:CHANGE_ME_TO_YOUR_VALUE!,DC=dataone,DC=org` |
 | `metacat.dataone.nodeName`                                    | short name for the node that can be used in user interfaces       | `My Metacat Node`                                        |
@@ -195,7 +200,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### OPTIONAL (but Recommended) Site Map Parameters
 
 | Name                            | Description                                                     | Value             |
-| ------------------------------- | --------------------------------------------------------------- | ----------------- |
+|---------------------------------|-----------------------------------------------------------------|-------------------|
 | `metacat.sitemap.enabled`       | Enable sitemaps to tell search engines which URLs are available | `false`           |
 | `metacat.sitemap.interval`      | Interval (in milliseconds) between rebuilding the sitemap       | `86400000`        |
 | `metacat.sitemap.location.base` | The first part of the URLs listed in sitemap_index.xml          | `/`               |
@@ -204,14 +209,14 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### robots.txt file (search engine indexing)
 
 | Name               | Description                                                          | Value |
-| ------------------ | -------------------------------------------------------------------- | ----- |
+|--------------------|----------------------------------------------------------------------|-------|
 | `robots.userAgent` | "User-agent:" defined in robots.txt file. Defaults to "*" if not set | `""`  |
 | `robots.disallow`  | the "Disallow:" value defined in robots.txt file.                    | `""`  |
 
 ### Metacat Image, Container & Pod Parameters
 
 | Name                           | Description                                                                  | Value                   |
-| ------------------------------ | ---------------------------------------------------------------------------- | ----------------------- |
+|--------------------------------|------------------------------------------------------------------------------|-------------------------|
 | `image.repository`             | Metacat image repository                                                     | `ghcr.io/nceas/metacat` |
 | `image.pullPolicy`             | Metacat image pull policy                                                    | `IfNotPresent`          |
 | `image.tag`                    | Overrides the image tag. Will default to the chart appVersion if set to ""   | `""`                    |
@@ -231,7 +236,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### Metacat Persistence
 
 | Name                        | Description                                                          | Value               |
-| --------------------------- | -------------------------------------------------------------------- | ------------------- |
+|-----------------------------|----------------------------------------------------------------------|---------------------|
 | `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims       | `true`              |
 | `persistence.storageClass`  | Storage class of backing PV                                          | `local-path`        |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use                | `""`                |
@@ -242,35 +247,34 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Networking & Monitoring
 
-| Name                                 | Description                                                   | Value            |
-| ------------------------------------ | ------------------------------------------------------------- | ---------------- |
-| `ingress.enabled`                    | Enable or disable the ingress                                 | `true`           |
-| `ingress.className`                  | ClassName of the ingress provider in your cluster             | `traefik`        |
-| `ingress.hosts`                      | A collection of rules mapping different hosts to the backend. | `[]`             |
-| `ingress.annotations`                | Annotations for the ingress                                   | `{}`             |
-| `ingress.tls`                        | The TLS configuration                                         | `[]`             |
-| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain        | `d1-ca-chain`    |
-| `service.enabled`                    | Enable another optional service in addition to headless svc   | `false`          |
-| `service.type`                       | Kubernetes Service type. Defaults to ClusterIP if not set     | `LoadBalancer`   |
-| `service.clusterIP`                  | IP address of the service. Auto-generated if not set          | `""`             |
-| `service.ports`                      | The port(s) to be exposed                                     | `[]`             |
-| `livenessProbe.enabled`              | Enable livenessProbe for Metacat container                    | `true`           |
-| `livenessProbe.httpGet.path`         | The url path to probe.                                        | `/metacat/`      |
-| `livenessProbe.httpGet.port`         | The named containerPort to probe                              | `metacat-web`    |
-| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe                       | `45`             |
-| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe                              | `15`             |
-| `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe                             | `10`             |
-| `readinessProbe.enabled`             | Enable readinessProbe for Metacat container                   | `true`           |
-| `readinessProbe.httpGet.path`        | The url path to probe.                                        | `/metacat/admin` |
-| `readinessProbe.httpGet.port`        | The named containerPort to probe                              | `metacat-web`    |
-| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe                      | `45`             |
-| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe                             | `5`              |
-| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe                            | `5`              |
+| Name                                 | Description                                                 | Value            |
+|--------------------------------------|-------------------------------------------------------------|------------------|
+| `ingress.enabled`                    | Enable or disable the ingress                               | `true`           |
+| `ingress.className`                  | ClassName of the ingress provider in your cluster           | `traefik`        |
+| `ingress.annotations`                | Annotations for the ingress                                 | `{}`             |
+| `ingress.tls`                        | The TLS configuration                                       | `[]`             |
+| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain      | `d1-ca-chain`    |
+| `service.enabled`                    | Enable another optional service in addition to headless svc | `false`          |
+| `service.type`                       | Kubernetes Service type. Defaults to ClusterIP if not set   | `LoadBalancer`   |
+| `service.clusterIP`                  | IP address of the service. Auto-generated if not set        | `""`             |
+| `service.ports`                      | The port(s) to be exposed                                   | `[]`             |
+| `livenessProbe.enabled`              | Enable livenessProbe for Metacat container                  | `true`           |
+| `livenessProbe.httpGet.path`         | The url path to probe.                                      | `/metacat/`      |
+| `livenessProbe.httpGet.port`         | The named containerPort to probe                            | `metacat-web`    |
+| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe                     | `45`             |
+| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe                            | `15`             |
+| `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe                           | `10`             |
+| `readinessProbe.enabled`             | Enable readinessProbe for Metacat container                 | `true`           |
+| `readinessProbe.httpGet.path`        | The url path to probe.                                      | `/metacat/admin` |
+| `readinessProbe.httpGet.port`        | The named containerPort to probe                            | `metacat-web`    |
+| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe                    | `45`             |
+| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe                           | `5`              |
+| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe                          | `5`              |
 
 ### Postgresql Sub-Chart
 
 | Name                                           | Description                                         | Value                                |
-| ---------------------------------------------- | --------------------------------------------------- | ------------------------------------ |
+|------------------------------------------------|-----------------------------------------------------|--------------------------------------|
 | `postgresql.enabled`                           | enable the postgresql sub-chart                     | `true`                               |
 | `postgresql.auth.username`                     | Username for accessing the database used by metacat | `metacat`                            |
 | `postgresql.auth.database`                     | The name of the database used by metacat.           | `metacat`                            |
@@ -287,15 +291,14 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### Tomcat Configuration
 
 | Name                    | Description                                              | Value |
-| ----------------------- | -------------------------------------------------------- | ----- |
+|-------------------------|----------------------------------------------------------|-------|
 | `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
 | `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
 
 ### dataone-indexer Sub-Chart
 
 | Name                                                         | Description                                       | Value                                 |
-| ------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------- |
-| `dataone-indexer.enabled`                                    | enable the dataone-indexer sub-chart              | `true`                                |
+|--------------------------------------------------------------|---------------------------------------------------|---------------------------------------|
 | `dataone-indexer.persistence.subPath`                        | The subdirectory of the volume to mount           | `""`                                  |
 | `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use           | `metacat-rmq-guest`                   |
 | `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password                     | `${RELEASE_NAME}-metacat-secrets`     |
@@ -325,14 +328,15 @@ Parameters may be provided on the command line to override those in [values.yaml
 for example:
 
 ```shell
-helm install my-release ./helm  --set metacat.solr.baseURL=http://mysolrhost:8983/solr
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version 1.0.0  \
+                                              --set metacat.solr.baseURL=http://mysolrhost:8983/solr
 ```
 
 Alternatively, a YAML file that specifies the override values for the parameters can be provided
 while installing the chart. For example:
 
 ```shell
-helm install my-release -f myValues.yaml ./helm
+helm install my-release  -f myValues.yaml  oci://ghcr.io/nceas/charts/metacat --version 1.0.0
 ```
 
 > **Tip**: You can also edit and use the default [values.yaml](./values.yaml)
@@ -533,10 +537,10 @@ configure certificates and settings for both these roles.
 #### Install the CA Chain
 
 1. Create the Kubernetes Secret (named `d1-ca-chain`) to hold the ca chain
-   (e.g. assuming it's in a file named `DataONECAChain.crt`):
+   (e.g. assuming it's in a file named `DataONEProdCAChain.crt`):
 
     ```shell
-    kubectl create secret generic d1-ca-chain --from-file=ca.crt=DataONECAChain.crt
+    kubectl create secret generic d1-ca-chain --from-file=ca.crt=DataONEProdCAChain.crt
     # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
     ```
 
@@ -825,15 +829,9 @@ https://knb.ecoinformatics.org, to run on our development Kubernetes cluster, he
 
 ### Important Notes - Before You Start
 
-> 1. By default, the Metacat helm chart has a MetacatUI installation that runs in the same Tomcat
->    container, on the same pod as Metacat, primarily for evaluation purposes. For a production
->    installation, therefore, we strongly recommend deploying your own version of MetacatUI, in a
->    dedicated pod, and configuring it to use the Metacat back-end internally, via the Kubernetes
->    headless Service provided. That process is not described here, but (non-k8s) MetacatUI
->    installation instructions can be found in the [MetacatUI GitHub
->    repository](https://nceas.github.io/metacatui/install/). The default co-deployment can be
->    disabled by setting `metacat.includeMetacatUi: false` in values.yaml
->
+> 1. By default, the Metacat helm chart installs the latest version of MetacatUI, which is included
+>    as a sub-chart. If you would rather deploy your own custom front-end for metacat, you can
+>    disable the metacatui subchart by setting 'global.includeMetacatUi' to 'false' in values.yaml
 >
 > 2. Before starting the migration, you must have a fully-functioning installation of **Metacat
 >    version 2.19**, running with **PostgreSQL version 14**. Migrating from other versions of
@@ -1007,8 +1005,8 @@ https://knb.ecoinformatics.org, to run on our development Kubernetes cluster, he
    > to be overridden for memory requirements, disk sizes etc. on a production system.
 
    Create a new file that contains the values you wish to override. As an example, for the values
-   that were overridden for the KNB installation, see the [values-dev-cluster-knb.yaml
-   file](./values-dev-cluster-knb.yaml).
+   that were overridden for the KNB installation, see the [values-dev-cluster-knb-example.yaml
+   file](./examples/values-dev-cluster-knb-example.yaml).
 
 7. At this point, you should be able to `helm install` and debug any startup and configuration
    issues.

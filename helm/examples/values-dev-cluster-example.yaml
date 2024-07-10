@@ -1,7 +1,7 @@
-## override values.yaml with values to use for running tests on the NCEAS dev cluster
+## override values.yaml with values to use for running on the NCEAS dev cluster
 ##
 ## example:
-##    helm install my-release ./helm -f ./helm/values-dev-cluster.yaml
+##    helm install my-release ./helm -f ./helm/examples/values-dev-cluster-example.yaml
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
@@ -10,18 +10,41 @@
 debug: &debug true
 
 global:
+  metacatUiThemeName: "cerp"
+  metacatUiWebRoot: "/"
+  metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
+#  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
 
+
+metacatui:
+  ## TODO: DELETE THIS WHEN RELEASE HAS RELPATH IN INDEX/HTML!
+  source:
+    from: "git"
+    git:
+      revision: "feature-2454-relative-appConfigPath"
+  ## END TODO
+
+  customTheme:
+    enabled: true
+    claimName: metacatbrooke-metacatui-customtheme
+    subPath: metacatui-themes/src/cerp/js/themes/cerp
+  appConfig:
+    enabled: false
+    ## disabled because SFWMD uses cerp theme, overlaid with
+    ## SFWMD config.js at /config/config.js (created as configMap)
+
 metacat:
   server.name: &extHostname metacat-dev.test.dataone.org
-  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+  ## Matthew Brooke; Jing Tao; Matt Jones; Jeanette Clark
+  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268;https://orcid.org/0000-0003-0077-4738;http://orcid.org/0000-0003-4703-1974
+
   cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
 
   ## DataONE Member Node (MN) Parameters
   dataone.certificate.fromHttpHeader.enabled: true
   dataone.autoRegisterMemberNode: 2024-01-25
-  D1Client.CN_URL: https://cn-sandbox.test.dataone.org/cn
   dataone.nodeId: "urn:node:TestBROOKELT"
   dataone.subject: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org"
   dataone.nodeName: Test BROOKE LT Metacat Node
@@ -46,16 +69,9 @@ image:
 ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  className: "nginx"
   tls:
-    - hosts:
-        - *extHostname
+    - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
-  hosts:
-    - host: *extHostname
-      paths:
-        - path: "/"
-          pathType: Prefix
 
 dataone-indexer:
   # increase minReplicas from default 3

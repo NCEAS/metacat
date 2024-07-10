@@ -1,7 +1,10 @@
+##
+## EXAMPLE FILE FROM KNB INSTALLATION, FOR REFERENCE ONLY
+##
 ## override values.yaml with values to use for running knb metacat instance on the NCEAS dev cluster
 ##
-## example:
-##    helm install my-release ./helm -f ./helm/values-dev-cluster-knb.yaml
+## e.g.:
+##    helm install myknbreleasename ./helm -f ./helm/examples/values-dev-cluster-knb-example.yaml
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
@@ -10,6 +13,8 @@
 debug: &debug false
 
 global:
+  metacatExternalBaseUrl: "https://knb-dev.test.dataone.org/"
+  #  d1ClientCnUrl:
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
   metacatAppContext: &metacatAppContext knb
@@ -23,7 +28,6 @@ metacat:
   ## DataONE Member Node (MN) Parameters
 #  dataone.certificate.fromHttpHeader.enabled: true
 #  dataone.autoRegisterMemberNode: 2024-01-25
-#  D1Client.CN_URL: https://cn-sandbox.test.dataone.org/cn
   dataone.nodeId: "urn:node:KNB_dev"
   dataone.subject: "CN=urn:node:KNB_dev,DC=dataone,DC=org"
 #  dataone.nodeName: Test KNB Metacat Node
@@ -61,16 +65,9 @@ resources:
 ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  className: "nginx"
   tls:
-    - hosts:
-        - *extHostname
+    - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
-  hosts:
-    - host: *extHostname
-      paths:
-        - path: "/"
-          pathType: Prefix
 
 postgresql:
   auth:
