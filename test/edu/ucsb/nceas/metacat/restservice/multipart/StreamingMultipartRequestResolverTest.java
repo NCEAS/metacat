@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.MetacatHandlerIT;
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -116,8 +117,9 @@ public class StreamingMultipartRequestResolverTest {
         
         //v2 system metadata object is both v1 and v2
         assertTrue(parsedSys instanceof org.dataone.service.types.v1.SystemMetadata);
-        assertTrue(parsedSys instanceof org.dataone.service.types.v2.SystemMetadata);
-        SystemMetadata parsedSysmeta = (SystemMetadata) parsedSys;
+        assertTrue(parsedSys instanceof SystemMetadata);
+        assertTrue(parsedSys instanceof MCSystemMetadata);
+        MCSystemMetadata parsedSysmeta = (MCSystemMetadata) parsedSys;
         assertEquals(guid.getValue(), parsedSysmeta.getIdentifier().getValue());
         assertEquals("https://eml.ecoinformatics.org/eml-2.2.0",
                                                         parsedSysmeta.getFormatId().getValue());
@@ -137,7 +139,9 @@ public class StreamingMultipartRequestResolverTest {
                      parsedSysmeta.getDateUploaded().getTime());
         assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
                      parsedSysmeta.getDateSysMetadataModified().getTime());
-       
+        assertEquals(5, parsedSysmeta.getChecksums().size());
+        assertEquals(sysmeta.getChecksum().getValue(), parsedSysmeta.getChecksums().get("MD5"));
+
         Map<String, List<String>> stringMaps = result.getMultipartParameters();
         assertEquals(guid.getValue(), stringMaps.get("pid").get(0));
         assertNull(stringMaps.get("foo"));
@@ -196,8 +200,9 @@ public class StreamingMultipartRequestResolverTest {
 
         //v2 system metadata object is both v1 and v2
         assertTrue(parsedSys instanceof org.dataone.service.types.v1.SystemMetadata);
-        assertTrue(parsedSys instanceof org.dataone.service.types.v2.SystemMetadata);
-        SystemMetadata parsedSysmeta = (SystemMetadata) parsedSys;
+        assertTrue(parsedSys instanceof SystemMetadata);
+        assertTrue(parsedSys instanceof MCSystemMetadata);
+        MCSystemMetadata parsedSysmeta = (MCSystemMetadata) parsedSys;
         assertEquals(guid.getValue(), parsedSysmeta.getIdentifier().getValue());
         assertEquals("https://eml.ecoinformatics.org/eml-2.2.0",
                      parsedSysmeta.getFormatId().getValue());
@@ -217,6 +222,8 @@ public class StreamingMultipartRequestResolverTest {
                      parsedSysmeta.getDateUploaded().getTime());
         assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
                      parsedSysmeta.getDateSysMetadataModified().getTime());
+        assertEquals(5, parsedSysmeta.getChecksums().size());
+        assertEquals(sysmeta.getChecksum().getValue(), parsedSysmeta.getChecksums().get("MD5"));
 
         Map<String, List<String>> stringMaps = result.getMultipartParameters();
         assertEquals(guid.getValue(), stringMaps.get("pid").get(0));
@@ -274,7 +281,8 @@ public class StreamingMultipartRequestResolverTest {
         
         //v1 system metadata object is only v1, not v2
         assertTrue(parsedSysmeta instanceof org.dataone.service.types.v1.SystemMetadata);
-        assertTrue(!(parsedSysmeta instanceof org.dataone.service.types.v2.SystemMetadata));
+        assertTrue(parsedSysmeta instanceof SystemMetadata);
+        assertTrue(parsedSysmeta instanceof MCSystemMetadata);
         assertEquals(guid, parsedSysmeta.getIdentifier());
         assertEquals("https://eml.ecoinformatics.org/eml-2.2.0",
                      parsedSysmeta.getFormatId().getValue());
@@ -298,6 +306,9 @@ public class StreamingMultipartRequestResolverTest {
         Map<String, List<String>> stringMaps = result.getMultipartParameters();
         assertEquals(guid.getValue(), stringMaps.get("pid").get(0));
         assertNull(stringMaps.get("foo"));
+        assertEquals(5, ((MCSystemMetadata)parsedSysmeta).getChecksums().size());
+        assertEquals(sysmeta.getChecksum().getValue(),
+            ((MCSystemMetadata) parsedSysmeta).getChecksums().get("MD5"));
 
         try (InputStream data = MetacatHandler.read(guid)){
             String checksum = MetacatHandlerIT.getChecksum(data, algorithm);

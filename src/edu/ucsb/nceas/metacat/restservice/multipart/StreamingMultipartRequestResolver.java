@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
@@ -85,12 +87,12 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      * @throws RuntimeException
      * @throws ServiceFailure
      * @throws InvalidSystemMetadata
+     * @throws InvocationTargetException
      */
-    public MultipartRequest resolveMultipart(HttpServletRequest request) throws IOException,
-                                FileUploadException, InstantiationException, IllegalAccessException,
-                                MarshallingException, NoSuchAlgorithmException, InvalidRequest,
-                                InvalidSystemMetadata, ServiceFailure, RuntimeException,
-                                                                              InterruptedException {
+    public MultipartRequest resolveMultipart(HttpServletRequest request)
+        throws IOException, FileUploadException, InstantiationException, IllegalAccessException,
+        MarshallingException, NoSuchAlgorithmException, InvalidRequest, InvalidSystemMetadata,
+        ServiceFailure, RuntimeException, InterruptedException, InvocationTargetException {
         Map<String, List<String>> mpParams = new HashMap<String, List<String>>();
         Map<String, File> mpFiles = new HashMap<String, File>();
         MultipartRequestWithSysmeta multipartRequest =
@@ -169,6 +171,11 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                     // Hashstore will throw an exception if the id already is used.
                                     MetacatInitializer.getStorage()
                                                                 .tagObject(id, objectMetadata.getCid());
+                                    // attach the multiple checksums into the system metadata object
+                                    MCSystemMetadata mcSysMeta = new MCSystemMetadata();
+                                    MCSystemMetadata.copy(mcSysMeta, sysMeta);
+                                    mcSysMeta.setChecksums(objectMetadata.getHexDigests());
+                                    sysMeta = mcSysMeta;
                                     objTaggedWithPid = true;
                                 }
                                 multipartRequest.setSystemMetadata(sysMeta);
@@ -196,6 +203,11 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                 // Hashstore will throw an exception if the id already is used.
                                 objectMetadata = MNodeService
                                        .storeData(MetacatInitializer.getStorage(), stream, sysMeta);
+                                // attach the multiple checksums into the system metadata object
+                                MCSystemMetadata mcSysMeta = new MCSystemMetadata();
+                                MCSystemMetadata.copy(mcSysMeta, sysMeta);
+                                mcSysMeta.setChecksums(objectMetadata.getHexDigests());
+                                sysMeta = mcSysMeta;
                                 // The above storeObject method implicitly tagged the id with
                                 // the cid. So we set objTaggedWithPid true.
                                 objTaggedWithPid = true;

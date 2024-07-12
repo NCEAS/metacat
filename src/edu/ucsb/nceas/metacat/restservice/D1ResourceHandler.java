@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -420,12 +421,12 @@ public class D1ResourceHandler {
      * @throws ServiceFailure
      * @throws InvalidRequest
      * @throws InvalidSystemMetadata
+     * @throws InvocationTargetException
      */
-    protected MultipartRequestWithSysmeta collectObjectFiles() throws IOException,
-                             FileUploadException, InstantiationException, IllegalAccessException,
-                             NoSuchAlgorithmException, MarshallingException, InvalidRequest,
-                             ServiceFailure, RuntimeException,
-                             InterruptedException, InvalidSystemMetadata {
+    protected MultipartRequestWithSysmeta collectObjectFiles()
+        throws IOException, FileUploadException, InstantiationException, IllegalAccessException,
+        NoSuchAlgorithmException, MarshallingException, InvalidRequest, ServiceFailure,
+        RuntimeException, InterruptedException, InvalidSystemMetadata, InvocationTargetException {
         logMetacat.debug("Disassembling MIME multipart form with object files");
         // handle MMP inputs
         File tmpDir = getTempDirectory();

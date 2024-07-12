@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -1628,8 +1629,8 @@ public class MNResourceHandler extends D1ResourceHandler {
     /**
      * Inserts or updates the object
      *
-     * @param pid - ID of data object to be inserted or updated.  If action is update, the pid
-     *               is the existing pid.  If insert, the pid is the new one
+     * @param trailingPid  the pid part of in the url
+     * @param action  indicate that it is insert or update
      * @throws InvalidRequest
      * @throws ServiceFailure
      * @throws MarshallingException
@@ -1647,13 +1648,14 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws FileUploadException
      * @throws NoSuchAlgorithmException
      * @throws InterruptedException
+     * @throws InvocationTargetException
      */
-    protected void putObject(String trailingPid, String action) throws ServiceFailure,
-                            InvalidRequest, MarshallingException, InvalidToken, NotAuthorized,
-                            IdentifierNotUnique, UnsupportedType, InsufficientResources,
-                            InvalidSystemMetadata, NotImplemented, NotFound, IOException,
-                            InterruptedException, InstantiationException, IllegalAccessException,
-                                                NoSuchAlgorithmException, FileUploadException {
+    protected void putObject(String trailingPid, String action)
+        throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized,
+        IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata,
+        NotImplemented, NotFound, IOException, InterruptedException, InstantiationException,
+        IllegalAccessException, NoSuchAlgorithmException, FileUploadException,
+        InvocationTargetException {
         try {
             long start = System.currentTimeMillis();
             // Read the incoming data from its Mime Multipart encoding

@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Enumeration;
@@ -664,12 +665,14 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws FileUploadException
      * @throws NoSuchAlgorithmException
      * @throws InterruptedException
+     * @throws InvocationTargetException
      */
-    protected void putObject(String action) throws ServiceFailure,
-            InvalidRequest, IdentifierNotUnique, MarshallingException, InvalidToken,
-            NotAuthorized, UnsupportedType, InsufficientResources,
-            InvalidSystemMetadata, NotImplemented, IOException, InterruptedException,
-            InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
+    protected void putObject(String action)
+        throws ServiceFailure, InvalidRequest, IdentifierNotUnique, MarshallingException,
+        InvalidToken, NotAuthorized, UnsupportedType, InsufficientResources, InvalidSystemMetadata,
+        NotImplemented, IOException, InterruptedException, InstantiationException,
+        IllegalAccessException, NoSuchAlgorithmException, FileUploadException,
+        InvocationTargetException {
         try {
             // Read the incoming data from its Mime Multipart encoding
             MultipartRequestWithSysmeta multiparts = collectObjectFiles();
