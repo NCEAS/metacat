@@ -20,7 +20,14 @@ Release date: 2024-07-11
 - The dataone-indexer subchart has been updated to version 1.0.1, which includes the dataone-indexer
   app version 3.0.1 - see [indexer release
   notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md#dataone-indexer-version-301--helm-chart-version-101) for details
-
+- `values.yaml` changes:
+  - Some values have been moved to `.Values.global`, and a new one added:
+    - `global.dataone-indexer.enabled` (moved from `dataone-indexer.enabled`)
+    - `global.includeMetacatUi` (moved from `metacat.includeMetacatUi`)
+    - `global.metacatExternalBaseUrl`
+    - `global.d1ClientCnUrl` (moved from `metacat.D1Client.CN_URL`)
+  - `ingress.rewriteRules` allows for arbitrary nginx rewrite rules to be defined
+  - Improvements to `ingress.hosts` and `ingress.tls`, allowing optional auto-population of hostname
 
 ## Release Notes for 3.0.0
 
