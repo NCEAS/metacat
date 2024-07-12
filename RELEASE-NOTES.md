@@ -1,5 +1,27 @@
 # Metacat Release Notes
 
+## Release Notes for Helm Chart 1.1.0
+
+Release date: 2024-07-11
+
+> Note the helm chart is a beta feature. It has been tested, and we believe it to be working well,
+  but it has not yet been used in production - so we recommend caution with this early release. If
+  you try it, [we'd love to hear your feedback](https://www.dataone.org/contact/)!
+
+- The helm chart now includes an optional sub-chart for
+  [MetacatUI](https://nceas.github.io/metacatui/). The MetacatUI sub-chart is highly configurable,
+  and can be used with included themes, or you can provide your own custom theme, mounted on a PVC.
+  More information can be found in the [MetacatUI
+  README](https://github.com/NCEAS/metacatui/tree/develop/helm#readme).
+- The docker image has been updated to `Metacat:3.0.0-no-mcui`, reducing its size by almost 0.5GB,
+  since it now no longer includes metacatui files bundled in the same container as metacat. Note
+  that the version of metacat itself has not changed - it is identical to the [3.0.0
+  release](#release-notes-for-300)
+- The dataone-indexer subchart has been updated to version 1.0.1, which includes the dataone-indexer
+  app version 3.0.1 - see [indexer release
+  notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md#dataone-indexer-version-301--helm-chart-version-101) for details
+
+
 ## Release Notes for 3.0.0
 
 Release date: 2024-04-30
