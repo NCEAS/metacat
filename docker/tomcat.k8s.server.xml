@@ -93,6 +93,16 @@
                resourceName="UserDatabase"/>
       </Realm>
 
+      <!-- Web crawlers can trigger the creation of many thousands of sessions as they crawl a
+          site which may result in significant memory consumption. This Valve ensures that
+          crawlers are associated with a single session - regardless of whether they provide a
+          session token with their requests.
+          This Valve may be used at the Engine, Host or Context level as required. Normally,
+          this Valve would be used at the Engine level. See:
+          https://tomcat.apache.org/tomcat-9.0-doc/config/valve.html#Crawler_Session_Manager_Valve
+           -->
+      <Valve className="org.apache.catalina.valves.CrawlerSessionManagerValve" />
+
       <Host name="localhost"  appBase="webapps"
             unpackWARs="true" autoDeploy="true">
 
@@ -100,7 +110,7 @@
              Documentation at: /docs/config/valve.html -->
         <Valve className="org.apache.catalina.valves.AccessLogValve"
                pattern="%h %l %u %t &quot;%r&quot; %s %b" rotatable="false"
-               directory="/dev/stdout" fileDateFormat="" prefix="" suffix="" />
+               directory="/dev" fileDateFormat="" prefix="stdout" suffix="" />
       </Host>
     </Engine>
   </Service>

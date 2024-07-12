@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# * * NOTE: NEEDS TO BE RUN AS K8S ADMIN, OR A CONTEXT THAT CAN MODIFY THE NGINX NAMESPACE * *
+# 
 # This script populates the `nginx-config-mutual-auth.yaml` file with values passed in from the
 # command line. This, in turn, tells the nginx ingress where to find a configmap that contains a
 # custom "X-Proxy-Key" header, which enables it to share a secret with metacat, so metacat can

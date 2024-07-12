@@ -23,31 +23,31 @@ metacat distribution associated with a given version, and then building the dock
 that. Starting in the root directory of the "metacat" repo:
 
 ```console
-$ ant distbin
+$ ant clean distbinmc
 
 # ... a very long build process ensues, resulting in a tar.gz file
 #     e.g. metacat-bin-3.0.0.tar.gz
 
 $ cd docker
-$ ./build.sh  -t 3.0.0  -v 3.0.0
+$ ./build.sh  -t 3.0.0-no-mcui  -v 3.0.0
 
 # ...image is built
 
 $ docker image ls
 
-REPOSITORY               TAG      IMAGE ID        CREATED           SIZE
-ghcr.io/nceas/metacat    3.0.0    8da92210dfc4    1 minute ago      1.27GB
+REPOSITORY               TAG              IMAGE ID        CREATED           SIZE
+ghcr.io/nceas/metacat    3.0.0-no-mcui    8da92210dfc4    1 minute ago      1.09GB
 ```
 
 You can then [publish the image to GitHub Container Repository (GHCR)](#publish-the-image-to-ghcr).
 
 Finally, the image can then be deployed in a Kubernetes environment - [see the helm chart](..
 /helm/README.md). Don't forget to change the image tag in your values.yaml file, to match the one 
-you used when building the image. In the above example, it would be `3.0.0`; e.g:
+you used when building the image. In the above example, it would be `3.0.0-no-mcui`; e.g:
 
 ```yaml
 image:
-  tag: "3.0.0"
+  tag: "3.0.0-no-mcui"
 ```
 
 # How to build the Metacat TEST image

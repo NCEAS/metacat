@@ -20,7 +20,7 @@ spec:
       labels:
         {{- include "metacat.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if index .Values "dataone-indexer" "enabled" }}
+      {{- if index .Values.global "dataone-indexer.enabled" }}
       initContainers:
         - name: init-rabbitmq-metacat-dep
           image: busybox:latest
@@ -110,16 +110,8 @@ spec:
               value: "true"
             - name: METACAT_DEBUG
               value: {{ ternary "true" "false" .Values.image.debug | quote }}
-            - name: INCLUDE_METACATUI
-              value: {{ ternary "true" "false" .Values.metacat.includeMetacatUi | quote }}
-            - name: METACAT_EXTERNAL_HOSTNAME
-              value: {{ index .Values.metacat "server.name" }}
-            - name: METACAT_EXTERNAL_PORT
-              value: {{ include "metacat.serverPort" . | quote }}
             - name: METACAT_APP_CONTEXT
               value: {{ index .Values.metacat "application.context" }}
-            - name: METACAT_DATAONE_CN_URL
-              value: {{ index .Values.metacat "D1Client.CN_URL" }}
             - name: TOMCAT_MEM_MIN
               value: {{ .Values.tomcat.heapMemory.min }}
             - name: TOMCAT_MEM_MAX
