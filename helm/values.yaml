@@ -4,10 +4,10 @@
 ##     * * *  NOTE: SOME VALUES INCLUDE THE PLACEHOLDER "${RELEASE_NAME}", WHICH  * * *
 ##     * * *        MUST BE REPLACED BY THE ACTUAL RELEASE NAME, AS FOLLOWS...    * * *
 ##
-## EASY OPTION: use the 'helm-install.sh' (or the 'helm-upgrade.sh') shell script.
+## EASY OPTION: use the 'helm-upstall.sh' (helm upgrade --install) shell script.
 ##     e.g. (from the metacat repo root directory):
 ##
-##     $  ./helm-install.sh  myrelease   mynamespace  [other optional helm command flags]
+##     $  ./helm-upstall.sh  myrelease   mynamespace  [other optional helm command flags]
 ##
 ##     # NOTE: If you see: "command not found: envsubst", you'll need to install Gnu 'gettext'
 ##             (https://www.gnu.org/software/gettext/).  For example, on macOS:
@@ -26,6 +26,20 @@
 ## @section Global Properties Shared Across Sub-Charts Within This Deployment
 ##
 global:
+  ## global.metacatExternalBaseUrl Metacat base url accessible from outside cluster.
+  ## Include protocol and trailing slash, but not the context; e.g.: "https://test.arcticdata.io/"
+  ## NOTE: Must match metacat.server.name setting.
+  ##
+  ## TODO: auto-assign metacat.server.name and ingress settings from global.metacatExternalBaseUrl?
+  ##
+  metacatExternalBaseUrl: "https://localhost/"
+
+  ## @param global.d1ClientCnUrl The url of the CN; used to populate metacat's 'D1Client.CN_URL'
+  ## and the indexer sub-chart's 'D1Client.CN_URL'.
+  ## (Also parsed by the metacatui sub-chart to retrieve the CN base URL)
+  ##
+  d1ClientCnUrl: "https://cn.dataone.org/cn"
+
   ## @param global.passwordsSecret The name of the Secret containing application passwords
   ## This is the secret deployed using your own private, edited version of `../admin/secrets.yaml`.
   ##
@@ -90,6 +104,26 @@ global:
   ##
   sharedVolumeSubPath: &sharedVolumeSubPath ""
 
+  ## @param global.dataone-indexer.enabled Enable the dataone-indexer sub-chart
+  ## set to false if you want to connect to your own existing dataone-indexer deployment
+  ##
+  dataone-indexer.enabled: true
+
+  ## @param global.includeMetacatUI  Enable or disable the metacatui sub-chart.
+  ## Set to false if you want to connect to your own existing metacatui deployment.
+  ##
+  includeMetacatUi: true
+
+  ## @param global.metacatUiThemeName The theme name to use. Required, even if overriding config.js
+  ##
+  metacatUiThemeName: "knb"
+
+  ## @param global.metacatUiWebRoot The url root to be appended after the metacatui baseUrl.
+  ## Starts with "/". Required, even if overriding config.js
+  ##
+  metacatUiWebRoot: "/"
+
+
 ## @section Metacat Application-Specific Properties
 ##
 ## The metacat section can contain any properties that metacat would expect to find in its
@@ -108,11 +142,6 @@ metacat:
   ## @param metacat.application.context see global.metacatAppContext
   ##
   application.context: *metacatAppContext
-
-  ## @param metacat.includeMetacatUi Include MetacatUI in the same container as metacat
-  ## A default-skin deployment of MetacatUI will be included in the metacat pod, unless this value
-  ## is set to 'false'.
-  includeMetacatUi: true
 
   ## @param metacat.auth.administrators A semicolon-separated list of admin ORCID iDs
   ## (https://orcid.org), denoting the users who may log into metacat with administrator privileges.
@@ -175,8 +204,8 @@ metacat:
   ##
   ## NOTES:
   ## 1. If you are NOT using the included "dataone-indexer" sub-chart (i.e.
-  ##    `dataone-indexer.enabled: false`), ensure `<solr-port>` is set correctly, and use one of the
-  ##    following values for `<solr-hostname>`:
+  ##    `global.dataone-indexer.enabled: false`), ensure `<solr-port>` is set correctly, and use one
+  ##    of the following values for `<solr-hostname>`:
   ##    *  The fully qualified domain name, for an existing solr instance hosted outside the
   ##       current k8s cluster
   ##    *  `<servicename>` for an existing postgresql instance within the same k8s cluster
@@ -185,8 +214,8 @@ metacat:
   ##        e.g. http://host.docker.internal:8983/solr
   ##
   ## 2. If you ARE using the included dataone-indexer sub-chart (i.e.
-  ##    `dataone-indexer.enabled: true`), leave this value unset (`solr.baseURL: ""`). It will
-  ##    then be automatically populated, as follows:
+  ##    `global.dataone-indexer.enabled: true`), leave this value unset (`solr.baseURL: ""`). It
+  ##    will then be automatically populated, as follows:
   ##    `<solr-hostname>` will be set to the current value of `.Release.Name`, prepended to
   ##                      `-solr-headless` (the name of the k8s headless solr service created
   ##                      by the dataone-indexer sub-chart)
@@ -195,9 +224,9 @@ metacat:
   solr.baseURL: ""
 
   ## @param metacat.solr.coreName The solr core (solr standalone) or collection name (solr cloud)
-  ## If you are using the included dataone-indexer sub-chart (i.e. `dataone-indexer.enabled: true`),
-  ## leave this value unset (`solr.coreName: ""`). It will then be automatically populated from the
-  ## subchart settings
+  ## If you are using the included dataone-indexer sub-chart (i.e.
+  ## `global.dataone-indexer.enabled: true`), leave this value unset (`solr.coreName: ""`). It will
+  ## then be automatically populated from the subchart settings
   ##
   solr.coreName: ""
 
@@ -220,7 +249,8 @@ metacat:
   ##
 
   ## @param metacat.cn.server.publiccert.filename optional cert(s) used to validate jwt auth tokens,
-  ## in addition to attempting validation against the cert chain from the cn (see D1Client.CN_URL).
+  ## in addition to attempting validation against the cert chain from the cn (see
+  ## 'global.d1ClientCnUrl').
   ## It may contain a single cert path, or multiple paths, separated by semicolons.
   ## IMPORTANT NOTE: each file must contain only one public key. Certificate chains containing
   ## multiple public keys will not work!
@@ -266,9 +296,9 @@ metacat:
   ##
 #  dataone.autoRegisterMemberNode: 2023-02-28
 
-  ## @param metacat.D1Client.CN_URL the url of the CN
+  ## metacat.D1Client.CN_URL the url of the CN - DO NOT SET HERE
   ##
-  D1Client.CN_URL: https://cn.dataone.org/cn
+  # D1Client.CN_URL: This is set in the global value 'global.d1ClientCnUrl', above
 
   ## @param metacat.dataone.nodeId The unique ID of your DataONE MN - must match client cert subject
   ## The Node Identifier field is a unique identifier assigned by DataONE to identify this node even
@@ -401,7 +431,7 @@ metacat:
   ## The index file contains a list of sitemap.xml files. Each listing is of the form:
   ##
   ##   <sitemap>
-  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <loc>https://metacat.dataone.org/sitemap1.xml</loc>
   ##     <lastmod>2024-04-22</lastmod>
   ##   </sitemap>
   ##
@@ -416,7 +446,7 @@ metacat:
   ## URL entries are of the form:
   ##
   ##   <url>
-  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <loc>https://metacat.dataone.org/view/some-identifier-here</loc>
   ##     <lastmod>2024-03-29</lastmod>
   ##   </url>
   ##
@@ -431,12 +461,12 @@ metacat:
   ## Either full URL or absolute path. Trailing slash optional.
   ##
   ## sitemap_index.xml contains listings pointing to the sitemap(n).xml files. If we set:
-  ##   sitemap.location.base: "/metacatui"
-  ##   (or sitemap.location.base: "https://metacat.dataone.org/metacatui")
+  ##   sitemap.location.base: "/"
+  ##   (or sitemap.location.base: "https://metacat.dataone.org/")
   ##
   ## ...then each listing will be of the form:
   ##   <sitemap>
-  ##     <loc>https://metacat.dataone.org/metacatui/sitemap1.xml</loc>
+  ##     <loc>https://metacat.dataone.org/sitemap1.xml</loc>
   ##     <lastmod>2024-04-22</lastmod>
   ##   </sitemap>
   ##
@@ -452,16 +482,16 @@ metacat:
   ##
   ## Each sitemap(n).xml file contains listings pointing to the individual datasets to be crawled.
   ## If we set:
-  ## sitemap.entry.base: /metacatui/view
-  ##   (or sitemap.entry.base: "https://metacat.dataone.org/metacatui/view")
+  ## sitemap.entry.base: /view
+  ##   (or sitemap.entry.base: "https://metacat.dataone.org/view")
   ##
   ## ...then each listing will be of the form:
   ##   <url>
-  ##     <loc>https://metacat.dataone.org/metacatui/view/some-identifier-here</loc>
+  ##     <loc>https://metacat.dataone.org/view/some-identifier-here</loc>
   ##     <lastmod>2024-03-29</lastmod>
   ##   </url>
   ##
-  sitemap.entry.base: /metacatui/view
+  sitemap.entry.base: /view
 
 ## @section robots.txt file (search engine indexing)
 ## Also see .Values.metacat.sitemap.*
@@ -657,48 +687,68 @@ ingress:
   ## - install nginx:
   ##   $  helm upgrade --install ingress-nginx ingress-nginx  \
   ##        --repo https://kubernetes.github.io/ingress-nginx \
-  ##        --namespace ingress-nginx --create-namespace)
+  ##        --namespace ingress-nginx --create-namespace      \
+  ##        --set controller.allowSnippetAnnotations=true
   ##
-  className: "traefik"
-
-  ## @param ingress.hosts [array] A collection of rules mapping different hosts to the backend.
-  ##        host: The external hostname exposed by the ingress and seen by clients,
-  ##              that is mapped to this ingress via DNS
-  ##        paths: A collection of rules mapping different paths on this host
-  ##              to the backend. For each host, provide mappings to match incoming request paths:
-  ##              path:     the url path used to identify the mapping
-  ##              pathType: determines the interpretation of the Path-matching:
-  ##                        Exact: Matches the URL path exactly.
-  ##                        Prefix: Requires URL to begin with the pattern, not including substrings
-  ##                        (e.g. /foo/bar matches /foo/bar/baz, but does not match /foo/barbaz).
-  ##
-  ## NOTE: All paths will be mapped to port 8080 of the `metacat-hl` headless service
-  ##
-  hosts:
-    - host: *external-hostname
-      paths:
-        - path: "/"
-          pathType: Prefix
+  className: "nginx"
 
   ## @param ingress.annotations Annotations for the ingress
   ##
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
   ## 1. you are using the Kubernetes open source community version of the nginx ingress
-  ##    (see https://github.com/kubernetes/ingress-nginx )
-  ## 2. you have set ingress.clasName to nginx, and
+  ##    (see https://github.com/kubernetes/ingress-nginx)
+  ## 2. you have set ingress.className to nginx, and
   ## 3. you have set up ingress.tls correctly for https access, and
   ## 4. you have set the correct parameters in the metacat section
   ##    (see `metacat.dataone.certificate.fromHttpHeader.enabled`, above, for more details)
   ##
-  annotations: {}
+  ## For other nginx annotation options, see:
+  ## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
+  ##
+  annotations:
+    # https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
+    nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
+    # https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
+    nginx.ingress.kubernetes.io/client_max_body_size: "10m"
+
+  ## @param ingress.rewriteRules rewrite rules for the nginx ingress
+  ## These rules will be added to the section
+  ## metadata:
+  ##   annotations:
+  ##     nginx.ingress.kubernetes.io/configuration-snippet: |
+  ##       (list of rewrite rules here)
+  ##
+  ## Example syntax:
+  ##     rewriteRules: |
+  ##       - rewrite ^/(sitemap.+) /metacat/sitemaps/$1 redirect;
+  ##       - rewrite ^/robots.txt /metacat/robots.txt redirect;
+  ##
+  ## (For example only; note that these two rules are already automatically included as needed - see
+  ## .Values.robots.* and .Values.metacat.sitemap.*)
+  ##
+  rewriteRules: []
 
   ## @param ingress.tls The TLS configuration
-  #### example ###
+  ##
+  ## Example:
   ##  tls:
   ##    - hosts:
-  ##        - *external-hostname
-  ##      secretName: tls-secret
+  ##        - arcticdata.io
+  ##        - www.arcticdata.io
+  ##        - permafrost.arcticdata.io
+  ##      secretName: ingress-nginx-tls-cert
+  ##
+  ## To disable TLS altogether (i.e. use http only), set:
+  ##    tls: []
+  ##
+  ## To have tls.hosts auto-populated with the external hostname (from metacat.server.name),
+  ## set only the secretName (always required), and leave hosts as an empty list - i.e:
+  ##
+  ##    tls:
+  #       - hosts: []
+  #         secretName: tls-secret-values-yaml
+  ##
   tls: []
 
   ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate chain
@@ -871,12 +921,12 @@ tomcat:
     max: ""
 
 ## @section dataone-indexer Sub-Chart
+##
+## Metacat depends upon the dataone-indexer subchart (i.e. 'global.dataone-indexer.enabled' is set
+## to 'true' by default). If you set 'global.dataone-indexer.enabled: false', the settings in this
+## section are ignored
+##
 dataone-indexer:
-  ## @param dataone-indexer.enabled enable the dataone-indexer sub-chart
-  ## set to false if you want to connect to your own existing dataone-indexer deployment
-  ##
-  enabled: true
-
   persistence:
     ## @param dataone-indexer.persistence.subPath The subdirectory of the volume to mount
     ## (see persistence.volumeName)

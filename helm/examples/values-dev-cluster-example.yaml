@@ -1,0 +1,122 @@
+## override values.yaml with values to use for running on the NCEAS dev cluster
+##
+## example:
+##    helm install my-release ./helm -f ./helm/examples/values-dev-cluster-example.yaml
+##
+## see values.yaml for full documentation on the following parameters
+##
+
+# set once here, for both metacat and indexer:
+debug: &debug true
+
+global:
+  metacatUiThemeName: "cerp"
+  metacatUiWebRoot: "/"
+  metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
+#  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
+  storageClass: &storageClassName csi-cephfs-sc
+  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
+
+
+metacatui:
+  ## TODO: DELETE THIS WHEN RELEASE HAS RELPATH IN INDEX/HTML!
+  source:
+    from: "git"
+    git:
+      revision: "feature-2454-relative-appConfigPath"
+  ## END TODO
+
+  customTheme:
+    enabled: true
+    claimName: metacatbrooke-metacatui-customtheme
+    subPath: metacatui-themes/src/cerp/js/themes/cerp
+  appConfig:
+    enabled: false
+    ## disabled because SFWMD uses cerp theme, overlaid with
+    ## SFWMD config.js at /config/config.js (created as configMap)
+
+metacat:
+  server.name: &extHostname metacat-dev.test.dataone.org
+  ## Matthew Brooke; Jing Tao; Matt Jones; Jeanette Clark
+  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268;https://orcid.org/0000-0003-0077-4738;http://orcid.org/0000-0003-4703-1974
+
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
+
+  ## DataONE Member Node (MN) Parameters
+  dataone.certificate.fromHttpHeader.enabled: true
+  dataone.autoRegisterMemberNode: 2024-01-25
+  dataone.nodeId: "urn:node:TestBROOKELT"
+  dataone.subject: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org"
+  dataone.nodeName: Test BROOKE LT Metacat Node
+  dataone.nodeDescription: Dev cluster Test BROOKE LT Metacat Node
+  dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
+  dataone.nodeSynchronize: true
+  dataone.nodeReplicate: true
+  dataone.replicationpolicy.default.numreplicas: "1"
+
+persistence:
+  storageClass: *storageClassName
+  size: 100Gi
+  accessModes:
+    - ReadWriteMany
+  volumeName: cephfs-metacatbrooke-metacat
+
+image:
+  # tag: TEST
+  pullPolicy: Always
+  debug: *debug
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  tls:
+    - hosts: [] # defaults to metacat.server.name
+      secretName: ingress-nginx-tls-cert
+
+dataone-indexer:
+  # increase minReplicas from default 3
+  autoscaling:
+    minReplicas: 3
+    targetCPUUtilizationPercentage: 80
+
+  image:
+    pullPolicy: Always
+    debug: *debug
+
+  topologySpreadConstraints:
+    - maxSkew: 2
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: d1index
+
+  idxworker:
+    # this actually puts container in debug loop mode - no indexer running
+    debug: false
+
+
+####################################################################################################
+## FOR DEBUGGING ONLY
+####################################################################################################
+##
+## probes will kill remote debugger
+
+#livenessProbe:
+#  enabled: false
+#readinessProbe:
+#  enabled: false
+
+#service:
+#  enabled: true
+#  type: LoadBalancer
+#  clusterIP: ""
+#  ports:
+#    - name: debug-port
+#      port: 5005
+#      targetPort: tc-remote-debug
+#
+#container:
+#  ports:
+#    - containerPort: 5005
+#      name: tc-remote-debug

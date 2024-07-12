@@ -2,10 +2,10 @@
 ARG ENVIRONMENT="prod"
 
 # The first stage is used to select the base image for production, based on the JRE
-FROM tomcat:9.0.82-jre17-temurin-jammy as prod-base
+FROM tomcat:9.0.82-jre17-temurin-jammy AS prod-base
 
 # The second stage is used for testing, if needed, based on the JDK
-FROM tomcat:9.0.82-jdk17-temurin-jammy as test-base
+FROM tomcat:9.0.82-jdk17-temurin-jammy AS test-base
 
 RUN    printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
     && printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
@@ -56,8 +56,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         procps            \
         telnet            \
         vim               \
-    &&  rm -rf /var/lib/apt/lists/  /tmp/metacat-index.war                \
-    &&  mv /tmp/metacat.war  /tmp/metacatui.war ${TC_HOME}/webapps        \
+    &&  rm -rf /var/lib/apt/lists/                                        \
+    &&  mv /tmp/metacat.war ${TC_HOME}/webapps                            \
     &&  chown -R metacat ${TC_HOME}                                       \
     &&  mkdir -p /var/metacat  && chown metacat:metacat /var/metacat      \
     &&  mkdir -p /home/metacat && chown -R metacat:metacat /home/metacat  \

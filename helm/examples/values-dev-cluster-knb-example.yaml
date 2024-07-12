@@ -1,0 +1,187 @@
+##
+## EXAMPLE FILE FROM KNB INSTALLATION, FOR REFERENCE ONLY
+##
+## override values.yaml with values to use for running knb metacat instance on the NCEAS dev cluster
+##
+## e.g.:
+##    helm install myknbreleasename ./helm -f ./helm/examples/values-dev-cluster-knb-example.yaml
+##
+## see values.yaml for full documentation on the following parameters
+##
+
+# set once here, for both metacat and indexer:
+debug: &debug false
+
+global:
+  metacatExternalBaseUrl: "https://knb-dev.test.dataone.org/"
+  #  d1ClientCnUrl:
+  storageClass: &storageClassName csi-cephfs-sc
+  ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
+  metacatAppContext: &metacatAppContext knb
+
+metacat:
+  server.name: &extHostname knb-dev.test.dataone.org
+  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
+  application.context: *metacatAppContext
+
+  ## DataONE Member Node (MN) Parameters
+#  dataone.certificate.fromHttpHeader.enabled: true
+#  dataone.autoRegisterMemberNode: 2024-01-25
+  dataone.nodeId: "urn:node:KNB_dev"
+  dataone.subject: "CN=urn:node:KNB_dev,DC=dataone,DC=org"
+#  dataone.nodeName: Test KNB Metacat Node
+#  dataone.nodeDescription: Dev cluster Test KNB Metacat Node
+#  dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
+#  dataone.nodeSynchronize: true
+#  dataone.nodeReplicate: true
+#  dataone.replicationpolicy.default.numreplicas: "1"
+
+## PodSecurityContext - define common securityContext settings at the pod level for all containers
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+## @param podSecurityContext.fsGroup numerical Group ID for the pod.
+## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
+## the group that owns the existing data on that filesystem!
+##
+podSecurityContext:
+  fsGroup: 997
+
+persistence:
+  storageClass: *storageClassName
+  size: 10Ti
+  accessModes:
+    - ReadWriteMany
+  volumeName: cephfs-metacatknb-metacat-varmetacat
+
+image:
+  pullPolicy: Always
+  debug: *debug
+
+resources:
+  requests:
+    cpu: 12
+    memory: 32Gi
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  tls:
+    - hosts: [] # defaults to metacat.server.name
+      secretName: ingress-nginx-tls-cert
+
+postgresql:
+  auth:
+    ## NOTE: config in postgresql.primary.pgHbaConfiguration must allow the username defined here!
+    username: metacat
+    database: knb
+
+  ## @param postgresqlDataDir PostgreSQL data dir folder
+  ##
+  postgresqlDataDir: /bitnami/postgresql/14/main
+
+  primary:
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 106 # from original filesystem
+    podSecurityContext:
+      fsGroup: 114 # from original filesystem
+    ## override the default pg_hba.conf with our own, to allow password auth
+    ## TYPE       DATABASE      USER          ADDRESS         METHOD
+    pgHbaConfiguration: |
+      host        knb           metacat       0.0.0.0/0       password
+      host        knb           metacat       ::0/0           password
+      local       all           all                           trust
+    persistence:
+      size: 500Gi
+      selector:
+        matchLabels:
+          metacatVolumeName: cephfs-metacatknb-metacat-postgresdata
+
+dataone-indexer:
+#  resources:
+#    requests:
+#      cpu: 300m
+#      memory: 1Gi
+
+  # increase minReplicas from default 3
+  autoscaling:
+    # This is a work in progress; too many indexers (e.g. 50) can lead to DDoS on Metacat's DataONE
+    # API, since metacat exhausts the PostgreSQL database connection pool...
+    minReplicas: 20
+    targetCPUUtilizationPercentage: 80
+
+  podSecurityContext:
+    fsGroup: 997 # must match metacat group for shared volume at /var/metacat
+
+  image:
+    pullPolicy: Always
+    debug: *debug
+
+  topologySpreadConstraints:
+    - maxSkew: 10
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: d1index
+
+  idxworker:
+    # this actually puts container in debug loop mode - no indexer running
+    debug: false
+
+  ## solr Persistence parameters
+  ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+  ## @param solr.persistence.size Persistent Volume size
+  ##
+  solr:
+    persistence:
+      size: 100Gi
+
+    ## ZooKeeper Persistence parameters
+    ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    ## @param zookeeper.persistence.size Persistent Volume size
+    ##
+    zookeeper:
+      persistence:
+        size: 100Gi
+
+tomcat:
+  heapMemory:
+    min: 8G
+    max: 16G
+
+livenessProbe:
+  httpGet:
+    path: /knb/
+    port: metacat-web
+
+readinessProbe:
+  httpGet:
+    path: /knb/admin
+    port: metacat-web
+
+
+####################################################################################################
+## FOR DEBUGGING ONLY
+####################################################################################################
+##
+## probes will kill remote debugger
+
+#livenessProbe:
+#  enabled: false
+#readinessProbe:
+#  enabled: false
+
+#service:
+#  enabled: true
+#  type: LoadBalancer
+#  clusterIP: ""
+#  ports:
+#    - name: debug-port
+#      port: 5005
+#      targetPort: tc-remote-debug
+#
+#container:
+#  ports:
+#    - containerPort: 5005
+#      name: tc-remote-debug
