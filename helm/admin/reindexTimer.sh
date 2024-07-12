@@ -27,15 +27,26 @@ rmq_pwd=$(kubectl get secret "$secret_name" \
 function usage() {
   echo
   echo "USAGE:"
+  echo
   echo "* Monitoring only; NO re-index:"
-  echo "    $    ./$0"
   echo
-  echo "* Monitoring WITH a full re-index:"
+  echo "    $    $0"
+  echo
+  echo "* Monitoring WITH a full re-index:  (IMPORTANT: used 'export' when setting TOKEN!)"
+  echo
   echo "    $    export TOKEN=\$(cat /path/to/admin/token)"
-  echo "    $    ./$0  <base url for metacat api>"
+  echo "    $    $0  <base url for metacat api>"
   echo
-  echo "    # EXAMPLE: $    export TOKEN=\$(cat urn_node_KNB_dev_from_DataONETestIntCA.jwt)"
-  echo "               $    ./$0  https://knb-dev.test.dataone.org/metacat"
+  echo "    # EXAMPLES:"
+  echo
+  echo "    # jwt token from filesystem:"
+  echo "               $    export TOKEN=\$(cat urn_node_KNB_dev_from_DataONETestIntCA.jwt)"
+  echo "               $    $0  https://knb-dev.test.dataone.org/metacat"
+  echo
+  echo "    # jwt token from k8s Secret"
+  echo "    #          $    export TOKEN=\$( kubectl get secret MYRELEASE-indexer-token \\"
+  echo "                                -o jsonpath=\"{.data.DataONEauthToken}\" | base64 -d )"
+  echo "               $    $0  https://knb-dev.test.dataone.org/metacat"
   echo
 }
 
@@ -44,10 +55,10 @@ function reindexWarningMsg() {
   echo "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
   echo "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
   echo
-  echo "    BEWARE! the FULL RE-INDEX option will trigger a FULL RE-INDEX of all datasets on:"
-  echo "            $base_url"
-  echo "    ...which cannot before stopped, and which may take a very long time (hours or days),"
-  echo "    and will likely affect the responsiveness of your metacat instance during that time"
+  echo "  BEWARE! the FULL RE-INDEX option will trigger a FULL RE-INDEX of all datasets on:"
+  echo "          $base_url"
+  echo "  ...which cannot before stopped, and which may take a very long time (hours or days),"
+  echo "  and will likely affect the responsiveness of your metacat instance during that time"
   echo
   echo "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
   echo "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"

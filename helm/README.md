@@ -154,6 +154,8 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `global.sharedVolumeSubPath`         | The subdirectory of the metacat data volume to mount            | `""`                              |
 | `global.dataone-indexer.enabled`     | enable the dataone-indexer sub-chart                            | `true`                            |
 | `global.includeMetacatUi`            | enable the MetacatUI sub-chart                                  | `true`                            |
+| `global.metacatUiThemeName`          | The theme name to use. Required, even if overriding config.js   | `"knb"`                           |
+| `global.metacatUiWebRoot`            | The url root to be appended after the metacatui baseUrl.        | `"/"`                             |
 | `global.d1ClientCnUrl`               | The url of the CN; used to populate metacat's 'D1Client.CN_URL' | `https://cn.dataone.org/cn`       |
 
 ### Metacat Application-Specific Properties
@@ -252,6 +254,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `ingress.enabled`                    | Enable or disable the ingress                               | `true`           |
 | `ingress.className`                  | ClassName of the ingress provider in your cluster           | `traefik`        |
 | `ingress.annotations`                | Annotations for the ingress                                 | `{}`             |
+| `ingress.rewriteRules`               | Rewrite rules for the ingress                               | `[]`             |
 | `ingress.tls`                        | The TLS configuration                                       | `[]`             |
 | `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain      | `d1-ca-chain`    |
 | `service.enabled`                    | Enable another optional service in addition to headless svc | `false`          |
@@ -364,6 +367,18 @@ remember to NEVER ADD SECRETS TO GITHUB!
 > the release name referenced whenever you use `helm` commands.
 > 2. The parameter `postgresql.auth.existingSecret` in [values.yaml](./values.yaml) must be set to
 > match the name of these installed secrets (which will change if the release name is changed).
+
+### User Interface
+
+The Metacat helm chart also installs [MetacatUI](https://nceas.github.io/metacatui/), which is
+included as a sub-chart. The MetacatUI sub-chart is highly configurable, and can be used with
+included themes, or you can provide your own custom theme, mounted on a PVC. More information
+can be found in the [MetacatUI README](https://github.com/NCEAS/metacatui/tree/develop/helm#readme).
+
+At a minimum, you should provide values for the ['global'
+properties](#global-properties-shared-across-sub-charts-within-this-deployment), and can also choose
+to set `global.includeMetacatUi: false` if you wish to disable the subchart altogether, and instead
+provide your own MetacatUI installation.
 
 ## Persistence
 
@@ -830,8 +845,10 @@ https://knb.ecoinformatics.org, to run on our development Kubernetes cluster, he
 ### Important Notes - Before You Start
 
 > 1. By default, the Metacat helm chart installs the latest version of MetacatUI, which is included
->    as a sub-chart. If you would rather deploy your own custom front-end for metacat, you can
->    disable the metacatui subchart by setting 'global.includeMetacatUi' to 'false' in values.yaml
+>    as a sub-chart. The MetacatUI sub-chart is highly configurable - see the [User
+>    Interface](#user-interface) section, above.  If you would rather deploy your own custom
+>    front-end for metacat, you can disable the MetacatUI subchart by setting
+>    `global.includeMetacatUi: false` in values.yaml
 >
 > 2. Before starting the migration, you must have a fully-functioning installation of **Metacat
 >    version 2.19**, running with **PostgreSQL version 14**. Migrating from other versions of
