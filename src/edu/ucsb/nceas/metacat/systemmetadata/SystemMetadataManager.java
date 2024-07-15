@@ -99,6 +99,9 @@ public class SystemMetadataManager {
 
     /**
      * Store a system metadata record into the store
+     * Note: This method is not thread safe. Please put it into a try-finally statement.
+     * Before call this method, you need to call the lock method first in the `try` block and
+     * unLock method in the `finally` block.
      * The modification time will be changed and system metadata version will be checked during
      * the process
      * @param sysmeta  the new system metadata will be inserted
@@ -113,6 +116,9 @@ public class SystemMetadataManager {
 
     /**
      * Store a system metadata record into the store
+     * Note: This method is not thread safe. Please put it into a try-finally statement.
+     * Before call this method, you need to call the lock method first in the `try` block and
+     * unLock method in the `finally` block.
      * @param sysmeta  the new system metadata will be inserted
      * @param changeModifyTime  if we need to change the modify time
      * @param sysMetaCheck  check whether the version of the provided '@param sysmeta'
@@ -124,6 +130,7 @@ public class SystemMetadataManager {
                                                         throws InvalidRequest, ServiceFailure {
         if (sysmeta != null) {
             Identifier pid = sysmeta.getIdentifier();
+            SystemMetadata backupCopy  = get(pid);
             if (pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
                 DBConnection dbConn = null;
                 int serialNumber = -1;
@@ -140,6 +147,32 @@ public class SystemMetadataManager {
                     } catch (Exception e) {
                         try {
                             dbConn.rollback();
+                            if (backupCopy == null) {
+                                //delete it from hashstore
+                                try {
+                                    MetacatInitializer.getStorage().deleteMetadata(pid,
+                                                                                   MetacatInitializer
+                                                                                       .getStorage()
+                                                                                       .getDefaultNameSpace());
+                                } catch (IOException | NoSuchAlgorithmException |
+                                         InterruptedException ex) {
+                                    logMetacat.error("Metacat cannot restore the previous status "
+                                                         + "in Hashstore by deleting the system "
+                                                         + "metadata since " + ex.getMessage());
+                                }
+                            } else {
+                                //restore the backup copy
+                                try {
+                                    store(
+                                        sysmeta, changeModifyTime, dbConn,
+                                        SysMetaVersion.UNCHECKED);
+                                } catch (Exception ee) {
+                                    logMetacat.error("Metacat cannot restore the previous status "
+                                                         + "in Hashstore by restoring the "
+                                                         + "backup system " + "metadata since "
+                                                         + ee.getMessage());
+                                }
+                            }
                         } catch (SQLException ee) {
                            throw new ServiceFailure ("0000", "SystemMetadataManager.store - "
                                      + "storing system metadata to the store for " + pid.getValue()
@@ -183,7 +216,10 @@ public class SystemMetadataManager {
 
     /**
      * Store a system metadata record into the store.
-     * Note: the calling code is responsible for (a) setting setAutoCommit(false) before passing the
+     * Note: This method is not thread safe. Please put it into a try-finally statement.
+     * Before call this method, you need to call the lock method first in the `try` block and
+     * unLock method in the `finally` block.
+     * The calling code is responsible for (a) setting setAutoCommit(false) before passing the
      * DBConnection, and (b) calling commit() after this method has finished execution.
      * @param sysmeta  the new system metadata will be inserted
      * @param changeModifyTime  if we need to change the modify time
@@ -198,23 +234,6 @@ public class SystemMetadataManager {
         if (sysmeta != null) {
             Identifier pid = sysmeta.getIdentifier();
             if (pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
-                //Check if there is another thread is storing the system metadata for the same
-                //pid. If not, secure the lock; otherwise wait until the lock is available.
-                synchronized (lockedIds) {
-                    while (lockedIds.contains(pid.getValue())) {
-                        logMetacat.info("SystemMetadataManager.store - waiting for the lock "
-                                        + " to store system metadata for " + pid.getValue());
-                        try {
-                            lockedIds.wait(TIME_OUT_MILLISEC);
-                        } catch (InterruptedException e) {
-                            logMetacat.info("SystemMetadataManager.store - storing system"
-                                            + " metadata to store: " + pid.getValue()
-                                            + " the lock waiting was interrupted "
-                                            + e.getMessage());
-                        }
-                    }
-                    lockedIds.add(pid.getValue());
-                }
                 try {
                     //Check if the system metadata is based on the latest version
                     try {
@@ -233,77 +252,60 @@ public class SystemMetadataManager {
                         Date now = Calendar.getInstance().getTime();
                         sysmeta.setDateSysMetadataModified(now);
                     }
-
-                    try {
-                        logMetacat.debug("SystemMetadataManager.store - storing system metadata "
-                                        + "to store: " + pid.getValue());
-                        // insert the record if needed
-                        if (!IdentifierManager.getInstance().systemMetadataPIDExists(pid.getValue())) {
-                            insertSystemMetadata(pid.getValue(), dbConn);
+                    logMetacat.debug("SystemMetadataManager.store - storing system metadata "
+                                    + "to store: " + pid.getValue());
+                    // insert the record if needed
+                    if (!IdentifierManager.getInstance().systemMetadataPIDExists(pid.getValue())) {
+                        insertSystemMetadata(pid.getValue(), dbConn);
+                    }
+                    // update with the values
+                    updateSystemMetadata(sysmeta, dbConn);
+                    // store the system metadata into hashstore
+                    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                        TypeMarshaller.marshalTypeToOutputStream(sysmeta, out);
+                        byte[] content = out.toByteArray();
+                        try (ByteArrayInputStream in = new ByteArrayInputStream(content)) {
+                            MetacatInitializer.getStorage().storeMetadata(in, pid);
                         }
-                        // update with the values
-                        updateSystemMetadata(sysmeta, dbConn);
-                        // store the system metadata into hashstore
-                        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                            TypeMarshaller.marshalTypeToOutputStream(sysmeta, out);
-                            byte[] content = out.toByteArray();
-                            try (ByteArrayInputStream in = new ByteArrayInputStream(content)) {
-                                MetacatInitializer.getStorage().storeMetadata(in, pid);
-                            }
-                        }
-                    } catch (McdbDocNotFoundException e) {
-                        throw new InvalidRequest("0000", "SystemMetadataManager.store - can't "
-                                                    + "store the system metadata for pid "
-                                                    + pid.getValue() + " since " + e.getMessage());
-                    } catch (SQLException e) {
-                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                                                    + "the system metadata for pid " + pid.getValue()
-                                                    + " since " + e.getMessage());
-                    } catch (InvalidSystemMetadata e) {
-                        throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store "
+                    }
+                } catch (McdbDocNotFoundException e) {
+                    throw new InvalidRequest("0000", "SystemMetadataManager.store - can't "
+                                                + "store the system metadata for pid "
+                                                + pid.getValue() + " since " + e.getMessage());
+                } catch (SQLException e) {
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
                                                 + "the system metadata for pid " + pid.getValue()
                                                 + " since " + e.getMessage());
-                    } catch (AccessException e) {
+                } catch (InvalidSystemMetadata e) {
+                    throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store "
+                                            + "the system metadata for pid " + pid.getValue()
+                                            + " since " + e.getMessage());
+                } catch (AccessException e) {
 
-                        throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store "
-                                                    + " the system metadata for pid " + pid.getValue()
-                                                    + " since " + e.getMessage());
-                    } catch (RuntimeException e) {
-                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                                                    + "the system metadata for pid " + pid.getValue()
-                                                    + " since " + e.getMessage());
-                    } catch (IOException e) {
-                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                                                    + "the system metadata for pid " + pid.getValue()
-                                                    + " since " + e.getMessage());
-                    } catch (MarshallingException e) {
-                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                                + "the system metadata for pid " + pid.getValue()
-                                + " since " + e.getMessage());
-                    } catch (NoSuchAlgorithmException e) {
-                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                                + "the system metadata for pid " + pid.getValue()
-                                + " since " + e.getMessage());
-                    } catch (InterruptedException e) {
-                        throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                                + "the system metadata for pid " + pid.getValue()
-                                + " since " + e.getMessage());
-                    }
-                } finally {
-                    try {
-                        // Release the lock
-                        synchronized (lockedIds) {
-                            lockedIds.remove(pid.getValue());
-                            lockedIds.notifyAll();
-                        }
-                    } catch (RuntimeException e) {
-                        logMetacat.error("SystemMetadataManager.store - storing system metadata "
-                                + "to store: " + pid.getValue() 
-                                + " we can't move the id from the control list (lockedIds) since "
-                                + e.getMessage());
-                    }
+                    throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store "
+                                                + " the system metadata for pid " + pid.getValue()
+                                                + " since " + e.getMessage());
+                } catch (RuntimeException e) {
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                                                + "the system metadata for pid " + pid.getValue()
+                                                + " since " + e.getMessage());
+                } catch (IOException e) {
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                                                + "the system metadata for pid " + pid.getValue()
+                                                + " since " + e.getMessage());
+                } catch (MarshallingException e) {
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                            + "the system metadata for pid " + pid.getValue()
+                            + " since " + e.getMessage());
+                } catch (NoSuchAlgorithmException e) {
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                            + "the system metadata for pid " + pid.getValue()
+                            + " since " + e.getMessage());
+                } catch (InterruptedException e) {
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                            + "the system metadata for pid " + pid.getValue()
+                            + " since " + e.getMessage());
                 }
-
             } else {
                 throw new InvalidRequest("0000", "SystemMetadataManager.store - the identifier "
                         + "field in system metadata should not be null or blank.");
@@ -757,21 +759,7 @@ public class SystemMetadataManager {
             try {
                 //Check if there is another thread is storing the system metadata for the same
                 //pid. If not, secure the lock; otherwise wait until the lock is available.
-                synchronized (lockedIds) {
-                    while (lockedIds.contains(guid.getValue())) {
-                        logMetacat.info("SystemMetadataManager.delete - waiting for the lock "
-                                            + " to delete system metadata for " + guid.getValue());
-                        try {
-                            lockedIds.wait(TIME_OUT_MILLISEC);
-                        } catch (InterruptedException e) {
-                            logMetacat.info("SystemMetadataManager.delete - deleting system"
-                                            + " metadata from the store: " + guid.getValue()
-                                            + " the lock waiting was interrupted "
-                                            + e.getMessage());
-                        }
-                    }
-                    lockedIds.add(guid.getValue());
-                }
+                lock(guid);
                 logMetacat.debug("SystemMetadataManager.delete - delete the identifier"
                                 + guid.getValue());
                 // remove the smReplicationPolicy
@@ -810,17 +798,7 @@ public class SystemMetadataManager {
                     stmt.executeUpdate();
                 }
             } finally {
-                try {
-                    synchronized (lockedIds) {
-                        lockedIds.remove(guid.getValue());
-                        lockedIds.notifyAll();
-                    }
-                } catch (RuntimeException e) {
-                    logMetacat.error("SystemMetadataManager.store - storing system metadata "
-                            + "to store: " + guid.getValue()
-                            + " we can't move the id from the control list (lockedIds) since "
-                            + e.getMessage());
-                }
+                unLock(guid);
             }
 
         } else {
