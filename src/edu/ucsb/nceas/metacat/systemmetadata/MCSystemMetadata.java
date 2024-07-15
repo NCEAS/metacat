@@ -9,7 +9,7 @@ import java.util.Map;
 
 /**
  * A class of SystemMetadata which can hold multiple checksums
- * @Author  Jing Tao
+ * @author Jing Tao
  */
 public class MCSystemMetadata extends SystemMetadata {
 
@@ -24,8 +24,8 @@ public class MCSystemMetadata extends SystemMetadata {
 
     /**
      * Copy all properties from a SystemMetacat object to an MCSystemMetadata object
-     * @param mcSysmeta
-     * @param sysmeta
+     * @param mcSysmeta  the destination object will accept the instance variables' values
+     * @param sysmeta  the source object
      * @throws InvocationTargetException
      * @throws IllegalAccessException
      */
