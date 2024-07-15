@@ -279,4 +279,10 @@ public interface Storage {
      *                                           file does not exist
      */
     public File findObject(Identifier pid) throws NoSuchAlgorithmException, IOException;
+
+    /**
+     * Get the default namespace in the storage system
+     * @return the default namespace
+     */
+    public String getDefaultNameSpace();
 }

@@ -32,6 +32,7 @@ public class HashStorage implements Storage {
     private static Log logMetacat = LogFactory.getLog(HashStorage.class);
     private static HashStorage hashStorage;
     private HashStore hashStore;
+    private String defaultNamespace = "https://ns.dataone.org/service/types/v2.0#SystemMetadata";
 
     /**
      * Private constructor
@@ -64,7 +65,6 @@ public class HashStorage implements Storage {
             logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
                             + fileNameAlgorithm);
         }
-        String defaultNamespace = "https://ns.dataone.org/service/types/v2.0#SystemMetadata";
         try {
             defaultNamespace = PropertyService.getProperty("storage.hashstore.defaultNamespace");
         } catch (PropertyNotFoundException e) {
@@ -306,6 +306,11 @@ public class HashStorage implements Storage {
         }
 
         return object;
+    }
+
+    @Override
+    public String getDefaultNameSpace() {
+        return defaultNamespace;
     }
 
     private ObjectInfo convertToObjectInfo(ObjectMetadata objMeta) {

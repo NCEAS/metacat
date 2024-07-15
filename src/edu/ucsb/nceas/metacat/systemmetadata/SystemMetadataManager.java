@@ -315,6 +315,56 @@ public class SystemMetadataManager {
     }
 
     /**
+     * Lock a PID so only one thread can modify the system metadata in database/file system.
+     * Note: put the lock and store method in the try block while the unLock method in the final
+     * block.
+     * @param pid  the identifier which will be locked
+     * @throws RuntimeException
+     */
+    public static void lock(Identifier pid) throws RuntimeException {
+        if (pid != null && pid.getValue() != null && !pid.getValue().isBlank()) {
+            //Check if there is another thread is storing the system metadata for the same
+            //pid. If not, secure the lock; otherwise wait until the lock is available.
+            synchronized (lockedIds) {
+                while (lockedIds.contains(pid.getValue())) {
+                    logMetacat.info("SystemMetadataManager.lock - waiting for the lock "
+                                        + " to modify the system metadata for " + pid.getValue());
+                    try {
+                        lockedIds.wait(TIME_OUT_MILLISEC);
+                    } catch (InterruptedException e) {
+                        logMetacat.info("SystemMetadataManager.lock - modifying system"
+                                            + " metadata in the store: " + pid.getValue()
+                                            + ". The lock waiting was interrupted "
+                                            + e.getMessage());
+                    }
+                }
+                lockedIds.add(pid.getValue());
+            }
+        }
+    }
+
+    /**
+     * Unlock a pid so allow another thread to modify the system metadata in database/file system
+     * Note: put this method in the final block while put the lock and store method in the try block
+     * @param pid  the identifier which will be unlocked
+     */
+    public static void unLock(Identifier pid) {
+        if (pid != null && pid.getValue() != null && !pid.getValue().isBlank()) {
+            try {
+                // Release the lock
+                synchronized (lockedIds) {
+                    lockedIds.remove(pid.getValue());
+                    lockedIds.notifyAll();
+                }
+            } catch (RuntimeException e) {
+                logMetacat.error(
+                    "SystemMetadataManager.unLock - we can't move the id " + pid.getValue()
+                        + "from the control list (lockedIds) since " + e.getMessage());
+            }
+        }
+    }
+
+    /**
      * Delete a system metadata record from the store
      * @param id  the identifier to determine the system metadata record
      * @throws InvalidRequest
