@@ -44,9 +44,12 @@ public class MCSystemMetadata extends SystemMetadata {
      */
     public static SystemMetadata convert(MCSystemMetadata mcSystemMetadata)
         throws InvocationTargetException, IllegalAccessException {
+        //Preserve the original checksums
+        Map<String, String> checksums = mcSystemMetadata.getChecksums();
         mcSystemMetadata.setChecksums(null);// Get rid of the extra field
         SystemMetadata systemMetadata = new SystemMetadata();
         BeanUtils.copyProperties(systemMetadata, mcSystemMetadata);
+        mcSystemMetadata.setChecksums(checksums);// Set it back
         return systemMetadata;
     }
 
