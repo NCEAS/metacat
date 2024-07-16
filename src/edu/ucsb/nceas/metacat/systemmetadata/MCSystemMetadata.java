@@ -36,6 +36,21 @@ public class MCSystemMetadata extends SystemMetadata {
     }
 
     /**
+     * A utility method to convert an MCSystemMetadata object to a SystemMetadata object
+     * @param mcSystemMetadata  the object which needs to be converted
+     * @return a new SystemMetadata object which has all fields except the checksums information
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
+    public static SystemMetadata convert(MCSystemMetadata mcSystemMetadata)
+        throws InvocationTargetException, IllegalAccessException {
+        mcSystemMetadata.setChecksums(null);// Get rid of the extra field
+        SystemMetadata systemMetadata = new SystemMetadata();
+        BeanUtils.copyProperties(systemMetadata, mcSystemMetadata);
+        return systemMetadata;
+    }
+
+    /**
      * Get the checksums associated with the MCSystemMetadata object
      * @return a map of hash algorithm names to their hex-encoded digest values
      */

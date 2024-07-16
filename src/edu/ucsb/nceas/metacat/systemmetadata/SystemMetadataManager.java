@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat.systemmetadata;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
@@ -218,6 +219,11 @@ public class SystemMetadataManager {
                         Date now = Calendar.getInstance().getTime();
                         sysmeta.setDateSysMetadataModified(now);
                     }
+                    // Get rid of the extra information attached to MCSystemMetadata so Metacat can
+                    // store it successfully
+                    if (sysmeta instanceof MCSystemMetadata) {
+                        sysmeta = MCSystemMetadata.convert((MCSystemMetadata)sysmeta);
+                    }
                     logMetacat.debug("SystemMetadataManager.store - storing system metadata "
                                     + "to store: " + pid.getValue());
                     // insert the record if needed
@@ -252,11 +258,11 @@ public class SystemMetadataManager {
                 } catch (IOException e) {
                     throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
                                                 + "the system metadata for pid " + pid.getValue()
-                                                + " since " + e.getMessage());
+                                                + " since IOException " + e.getMessage());
                 } catch (MarshallingException e) {
                     throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
                             + "the system metadata for pid " + pid.getValue()
-                            + " since " + e.getMessage());
+                            + " since a MarshallingException " + e.getMessage());
                 } catch (NoSuchAlgorithmException e) {
                     throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
                             + "the system metadata for pid " + pid.getValue()
@@ -265,6 +271,14 @@ public class SystemMetadataManager {
                     throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
                             + "the system metadata for pid " + pid.getValue()
                             + " since " + e.getMessage());
+                } catch (InvocationTargetException e) {
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                        + "the system metadata for pid " + pid.getValue()
+                        + " since " + e.getMessage());
+                } catch (IllegalAccessException e) {
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
+                        + "the system metadata for pid " + pid.getValue()
+                        + " since " + e.getMessage());
                 }
             } else {
                 throw new InvalidRequest("0000", "SystemMetadataManager.store - the identifier "

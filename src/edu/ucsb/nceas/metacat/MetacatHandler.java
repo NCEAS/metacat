@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletResponse;
@@ -211,6 +212,11 @@ public class MetacatHandler {
         int serialNumber = -1;
         DBConnection conn = null;
         try {
+            // Preserve the checksums
+            Map<String, String> checksums = null;
+            if (sysmeta instanceof MCSystemMetadata) {
+                checksums = ((MCSystemMetadata) sysmeta).getChecksums();
+            }
             conn = DBConnectionPool.getDBConnection("MetacatHandler.save");
             serialNumber = conn.getCheckOutSerialNumber();
             StringBuffer error = new StringBuffer();
@@ -224,15 +230,15 @@ public class MetacatHandler {
                 }
                 // Register the new object into the xml_documents and identifier table.
                 localId = registerToDB(pid, action, conn, user, docType, prePid);
-                // Store the checksums
-                if (sysmeta instanceof MCSystemMetadata) {
-                    ChecksumsManager manager = new ChecksumsManager();
-                    manager.save(pid, ((MCSystemMetadata) sysmeta).getChecksums(), conn);
-                }
                 // Save the system metadata for the new object
                 // Since this is a new object, we don't need to check system metadata version
                 SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate, conn,
                                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                // Store the checksums. It needs to be called after the system metadata was stored
+                if (checksums != null && !checksums.isEmpty()) {
+                    ChecksumsManager manager = new ChecksumsManager();
+                    manager.save(pid, checksums, conn);
+                }
                 if (action == Action.UPDATE) {
                     if(preSys ==  null) {
                         throw new InvalidRequest("1181", "Metacat cannot save the object for "

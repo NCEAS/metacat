@@ -4,6 +4,7 @@ import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
+import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.storage.Storage;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
 import junit.framework.Test;
@@ -1016,6 +1017,7 @@ public class D1NodeServiceTest extends MCTestCase {
      * Store the input stream into hash store
      * @param object  the input stream represents the content of the object
      * @param sysmeta  the system metadata of the object
+     * @return the ObjectInfo object which holds some checksum information
      * @throws NoSuchAlgorithmException
      * @throws InvalidRequest
      * @throws IOException
@@ -1027,12 +1029,13 @@ public class D1NodeServiceTest extends MCTestCase {
      * @throws ServiceFailure
      * @throws InvalidSystemMetadata
      */
-    public static void storeData(InputStream object, org.dataone.service.types.v1.SystemMetadata sysmeta)
+    public static ObjectInfo storeData(InputStream object,
+                                       org.dataone.service.types.v1.SystemMetadata sysmeta)
                                      throws NoSuchAlgorithmException, InvalidRequest, IOException,
                                      RuntimeException, InterruptedException, InstantiationException,
                                      IllegalAccessException, MarshallingException,
                                      ServiceFailure, InvalidSystemMetadata {
-        MNodeService.storeData(storage, object, sysmeta);
+        return MNodeService.storeData(storage, object, sysmeta);
     }
 
     /**

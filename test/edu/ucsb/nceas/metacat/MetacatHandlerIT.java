@@ -10,9 +10,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.List;
 
 import javax.xml.bind.DatatypeConverter;
 
+import edu.ucsb.nceas.metacat.storage.ObjectInfo;
+import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import org.apache.commons.io.FileUtils;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
@@ -675,11 +679,25 @@ public class MetacatHandlerIT {
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
         dataStream = new FileInputStream(test_file_path);
-        D1NodeServiceTest.storeData(dataStream, sysmeta);
+        ObjectInfo info = D1NodeServiceTest.storeData(dataStream, sysmeta);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        mcSystemMetadata.setChecksums(info.getHexDigests());
         // null is the obsoleted system metadata. Inserting should succeed
         // False means not to change the modification date of system metadata
-        handler.save(sysmeta, false, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
+        handler.save(mcSystemMetadata, false, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
                     dataStream, null, user);
+        ChecksumsManager manager = new ChecksumsManager();
+        List<Checksum> checksums = manager.get(sysmeta.getIdentifier());
+        assertEquals(5, checksums.size());
+        boolean found = false;
+        for (Checksum checksum1 : checksums) {
+            if(checksum1.getAlgorithm().equals(MD5)) {
+                assertEquals(sysmeta.getChecksum().getValue(), checksum1.getValue());
+                found = true;
+            }
+        }
+        assertTrue("Test should find a checksum with algorithm MD5", found);
         SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
                               + readSys.getIdentifier().getValue(),
@@ -753,6 +771,12 @@ public class MetacatHandlerIT {
         // False means not changing the modification date in system metadata
         handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                      DocumentImpl.BIN, dataStream, sysmeta, user);
+        // Since newSys is not an MCSystemMetadata object, the checksum is not stored
+        checksums = manager.get(newSys.getIdentifier());
+        assertEquals(0, checksums.size());
+        // The previous saved checksums for sysmeta should be still there
+        checksums = manager.get(sysmeta.getIdentifier());
+        assertEquals(5, checksums.size());
         // Check the objects
         readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
