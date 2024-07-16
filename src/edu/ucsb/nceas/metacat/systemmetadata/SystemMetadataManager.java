@@ -845,6 +845,10 @@ public class SystemMetadataManager {
                     logMetacat.debug("delete xml_access: " + stmt.toString());
                     stmt.executeUpdate();
                 }
+                // remove the checksums table
+                ChecksumsManager manager = new ChecksumsManager();
+                manager.delete(guid, dbConn);
+
                 // remove main system metadata entry
                 query = "delete from " + IdentifierManager.TYPE_SYSTEM_METADATA + " where guid = ? ";
                 try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
