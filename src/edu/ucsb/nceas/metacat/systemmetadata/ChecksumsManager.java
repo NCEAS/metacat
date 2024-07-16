@@ -1,6 +1,5 @@
 package edu.ucsb.nceas.metacat.systemmetadata;
 
-import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.storage.ObjectInfo;
@@ -138,7 +137,7 @@ public class ChecksumsManager {
                 + "not be null or the algorithm/value pair should not be blank");
         }
         List<Identifier> list = new ArrayList<Identifier>();
-        String query = "SELECT guid from checksums where checksum_algorithm=?, checksum=?;";
+        String query = "SELECT guid from checksums where checksum_algorithm=? and checksum=?;";
         DBConnection dbConn = null;
         int serialNumber = -1;
         try {
