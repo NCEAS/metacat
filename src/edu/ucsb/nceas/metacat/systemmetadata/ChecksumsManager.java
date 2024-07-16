@@ -25,14 +25,14 @@ public class ChecksumsManager {
 
     /**
      * Save the checksums into database. The callers need to provide the database connection
-     * @param objInfo  the object holds the checksums and identifier information
+     * @param id  the identifier which has the checksums
+     * @param checksums  the checksums map whose key is algorithm and value is the checksum value
      * @param dbConn  the connection used to connect database
      * @throws SQLException
      */
-    public void save(ObjectInfo objInfo, DBConnection dbConn) throws SQLException {
-        if (objInfo != null && objInfo.getPid() != null && !objInfo.getPid().isBlank()) {
-            String pid = objInfo.getPid();
-            Map<String, String> checksums = objInfo.getHexDigests();
+    public void save(Identifier id, Map<String, String> checksums, DBConnection dbConn) throws SQLException {
+        if (id != null && !id.getValue().isBlank()) {
+            String pid = id.getValue();
             if (checksums != null) {
                 String query = "INSERT INTO checksums (guid, checksum_algorithm, checksum) values"
                     + " (?, ?, ?);";

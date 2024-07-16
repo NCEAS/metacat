@@ -12,6 +12,8 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletResponse;
 
+import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -222,6 +224,11 @@ public class MetacatHandler {
                 }
                 // Register the new object into the xml_documents and identifier table.
                 localId = registerToDB(pid, action, conn, user, docType, prePid);
+                // Store the checksums
+                if (sysmeta instanceof MCSystemMetadata) {
+                    ChecksumsManager manager = new ChecksumsManager();
+                    manager.save(pid, ((MCSystemMetadata) sysmeta).getChecksums(), conn);
+                }
                 // Save the system metadata for the new object
                 // Since this is a new object, we don't need to check system metadata version
                 SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate, conn,
