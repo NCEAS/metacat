@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -90,6 +91,7 @@ public class MCSystemMetadataTest {
         assertTrue(newSysMeta instanceof SystemMetadata);
         assertEquals(0, mcSysmeta.getChecksums().size());
         compareValues(newSysMeta, mcSysmeta);
+        assertNotEquals(newSysMeta.hashCode(), mcSysmeta.hashCode());
 
         // Test the scenario that MCSystem has checksum
         Map<String, String> checksums =  new HashMap<String, String>();
@@ -102,6 +104,7 @@ public class MCSystemMetadataTest {
         assertTrue(newSysMeta2 instanceof SystemMetadata);
         assertEquals(2, mcSysmeta.getChecksums().size());
         compareValues(newSysMeta2, mcSysmeta);
+        assertNotEquals(newSysMeta2.hashCode(), mcSysmeta.hashCode());
     }
 
     private void compareValues(
