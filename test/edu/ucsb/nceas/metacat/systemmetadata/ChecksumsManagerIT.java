@@ -1,6 +1,8 @@
 package edu.ucsb.nceas.metacat.systemmetadata;
 
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.storage.ObjectInfo;
@@ -68,7 +70,16 @@ public class ChecksumsManagerIT {
         ObjectInfo info = storage.storeObject(object, pid, null, sysmeta.getChecksum().getValue(),
                                        "MD5", -1);
         ChecksumsManager manager = new ChecksumsManager();
-        manager.save(info);
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("ChecksumsManagerIT.testSave");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            manager.save(info, dbConn);
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
         List<Checksum> checksums = manager.get(pid);
         boolean found = false;
         Checksum targetChecksum = null;

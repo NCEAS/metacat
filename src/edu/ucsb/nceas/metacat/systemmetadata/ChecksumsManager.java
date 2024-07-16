@@ -24,51 +24,43 @@ public class ChecksumsManager {
     private static Log logMetacat = LogFactory.getLog(ChecksumsManager.class);
 
     /**
-     * Save the checksums into database
+     * Save the checksums into database. The callers need to provide the database connection
      * @param objInfo  the object holds the checksums and identifier information
+     * @param dbConn  the connection used to connect database
      * @throws SQLException
      */
-    public void save(ObjectInfo objInfo) throws SQLException {
+    public void save(ObjectInfo objInfo, DBConnection dbConn) throws SQLException {
         if (objInfo != null && objInfo.getPid() != null && !objInfo.getPid().isBlank()) {
             String pid = objInfo.getPid();
             Map<String, String> checksums = objInfo.getHexDigests();
             if (checksums != null) {
                 String query = "INSERT INTO checksums (guid, checksum_algorithm, checksum) values"
                     + " (?, ?, ?);";
-                DBConnection dbConn = null;
-                int serialNumber = -1;
-                try {
-                    // Get a database connection from the pool
-                    dbConn = DBConnectionPool.getDBConnection("ChecksumsManager.save");
-                    serialNumber = dbConn.getCheckOutSerialNumber();
-                    try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
-                        for (String algorithm : checksums.keySet()) {
-                            if (algorithm != null && !algorithm.isBlank()
-                                && checksums.get(algorithm) != null && !checksums.get(algorithm)
-                                .isBlank()) {
-                                // Execute the insert statement. It will continue even though one
-                                // fails
-                                try {
-                                    stmt.setString(1, pid);
-                                    stmt.setString(2, algorithm);
-                                    stmt.setString(3, checksums.get(algorithm));
-                                    stmt.execute();
-                                    logMetacat.debug(
-                                        "Save the checksum " + checksums.get(algorithm) + " with"
-                                            + " algorithm " + algorithm + " for " + pid + " into "
-                                            + "db.");
-                                } catch (Exception e) {
-                                    logMetacat.warn(
-                                        "Metacat cannot save the checksum " + checksums.get(
-                                            algorithm) + " with" + " algorithm " + algorithm
-                                            + " for " + pid + " into db " + "since "
-                                            + e.getMessage());
-                                }
+                try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
+                    for (String algorithm : checksums.keySet()) {
+                        if (algorithm != null && !algorithm.isBlank()
+                            && checksums.get(algorithm) != null && !checksums.get(algorithm)
+                            .isBlank()) {
+                            // Execute the insert statement. It will continue even though one
+                            // fails
+                            try {
+                                stmt.setString(1, pid);
+                                stmt.setString(2, algorithm);
+                                stmt.setString(3, checksums.get(algorithm));
+                                stmt.execute();
+                                logMetacat.debug(
+                                    "Save the checksum " + checksums.get(algorithm) + " with"
+                                        + " algorithm " + algorithm + " for " + pid + " into "
+                                        + "db.");
+                            } catch (Exception e) {
+                                logMetacat.warn(
+                                    "Metacat cannot save the checksum " + checksums.get(
+                                        algorithm) + " with" + " algorithm " + algorithm
+                                        + " for " + pid + " into db " + "since "
+                                        + e.getMessage());
                             }
                         }
                     }
-                } finally {
-                    DBConnectionPool.returnDBConnection(dbConn, serialNumber);
                 }
             }
         }
