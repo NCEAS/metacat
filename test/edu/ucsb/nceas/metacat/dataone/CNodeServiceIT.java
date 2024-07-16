@@ -4,6 +4,7 @@ import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.storage.ObjectInfo;
+import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
@@ -223,6 +224,17 @@ public class CNodeServiceIT {
             assertTrue(
                 originalModificationDate.getTime() == readSysmeta.getDateSysMetadataModified()
                     .getTime());
+            ChecksumsManager manager = new ChecksumsManager();
+            List<Checksum> checksums = manager.get(sysmeta.getIdentifier());
+            assertEquals(5, checksums.size());
+            boolean found = false;
+            for (Checksum checksum1 : checksums) {
+                if(checksum1.getAlgorithm().equals("MD5")) {
+                    assertEquals(sysmeta.getChecksum().getValue(), checksum1.getValue());
+                    found = true;
+                }
+            }
+            assertTrue("Test should find a checksum with algorithm MD5", found);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());

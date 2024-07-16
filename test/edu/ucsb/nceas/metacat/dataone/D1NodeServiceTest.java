@@ -6,6 +6,7 @@ import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.storage.Storage;
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -58,6 +59,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -930,14 +932,15 @@ public class D1NodeServiceTest extends MCTestCase {
      */
     public Identifier mnCreate(Session session, Identifier id, InputStream object,
                                     SystemMetadata sysmeta)
-                                        throws InvalidToken, ServiceFailure, NotAuthorized,
-                                        IdentifierNotUnique, UnsupportedType, InsufficientResources,
-                                         InvalidSystemMetadata, NotImplemented, InvalidRequest,
-                                         NoSuchAlgorithmException, InstantiationException,
-                                         IllegalAccessException, IOException, RuntimeException,
-                                        InterruptedException, MarshallingException {
-        storeData(object, sysmeta);
-        return MNodeService.getInstance(request).create(session, id, object, sysmeta);
+        throws InvalidToken, ServiceFailure, NotAuthorized, IdentifierNotUnique, UnsupportedType,
+        InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest,
+        NoSuchAlgorithmException, InstantiationException, IllegalAccessException, IOException,
+        RuntimeException, InterruptedException, MarshallingException, InvocationTargetException {
+        ObjectInfo info = storeData(object, sysmeta);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        mcSystemMetadata.setChecksums(info.getHexDigests());
+        return MNodeService.getInstance(request).create(session, id, object, mcSystemMetadata);
     }
 
     /**
@@ -968,14 +971,16 @@ public class D1NodeServiceTest extends MCTestCase {
      */
     public Identifier mnUpdate(Session session, Identifier pid, InputStream object,
                                            Identifier newPid, SystemMetadata sysmeta)
-                              throws IdentifierNotUnique, InsufficientResources,
-                              InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized,
-                              NotImplemented, ServiceFailure, UnsupportedType, NotFound,
-                              NoSuchAlgorithmException, InstantiationException,
-                              IllegalAccessException, IOException, RuntimeException,
-                                                   InterruptedException, MarshallingException {
-        storeData(object, sysmeta);
-        return MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
+        throws IdentifierNotUnique, InsufficientResources, InvalidRequest, InvalidSystemMetadata,
+        InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, UnsupportedType, NotFound,
+        NoSuchAlgorithmException, InstantiationException, IllegalAccessException, IOException,
+        RuntimeException, InterruptedException, MarshallingException, InvocationTargetException {
+        ObjectInfo info = storeData(object, sysmeta);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        mcSystemMetadata.setChecksums(info.getHexDigests());
+        return MNodeService.getInstance(request)
+            .update(session, pid, object, newPid, mcSystemMetadata);
     }
 
     /**
@@ -1003,14 +1008,15 @@ public class D1NodeServiceTest extends MCTestCase {
      * @throws NoSuchAlgorithmException
      */
     public Identifier cnCreate(Session session, Identifier id, InputStream object, SystemMetadata sysmeta)
-                                throws InvalidToken, ServiceFailure, NotAuthorized,
-                                IdentifierNotUnique, UnsupportedType, InsufficientResources,
-                                InvalidSystemMetadata, NotImplemented, InvalidRequest,
-                                NoSuchAlgorithmException, InstantiationException,
-                                IllegalAccessException, IOException, RuntimeException,
-                                InterruptedException, MarshallingException {
-        storeData(object, sysmeta);
-        return CNodeService.getInstance(request).create(session, id, object, sysmeta);
+        throws InvalidToken, ServiceFailure, NotAuthorized, IdentifierNotUnique, UnsupportedType,
+        InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest,
+        NoSuchAlgorithmException, InstantiationException, IllegalAccessException, IOException,
+        RuntimeException, InterruptedException, MarshallingException, InvocationTargetException {
+        ObjectInfo info = storeData(object, sysmeta);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        mcSystemMetadata.setChecksums(info.getHexDigests());
+        return CNodeService.getInstance(request).create(session, id, object, mcSystemMetadata);
     }
 
     /**
