@@ -31,6 +31,7 @@ import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.storage.Storage;
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -122,6 +123,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -1094,8 +1096,11 @@ public class MNodeService extends D1NodeService
                     objectExists(pid);
                     boolean changedModificationDate = false;
                     // Store the input stream into hash store
-                    storeData(MetacatInitializer.getStorage(), object, sysmeta);
-                    retPid = super.create(session, pid, object, sysmeta, changedModificationDate);
+                    ObjectInfo info = storeData(MetacatInitializer.getStorage(), object, sysmeta);
+                    MCSystemMetadata mcSysMeta = new MCSystemMetadata();
+                    MCSystemMetadata.copy(mcSysMeta, sysmeta);
+                    mcSysMeta.setChecksums(info.getHexDigests());
+                    retPid = super.create(session, pid, object, mcSysMeta, changedModificationDate);
                     result = (retPid.getValue().equals(pid.getValue()));
                 }
 
@@ -2352,17 +2357,21 @@ public class MNodeService extends D1NodeService
             inputStream = this.get(session, originalIdentifier);
         }
 
-        // Store the new object into hash store. Null is the additional algorithm
+        // Store the new object into hash store
+        MCSystemMetadata mcSys = new MCSystemMetadata();
         try {
-            storeData(MetacatInitializer.getStorage(), inputStream, sysmeta);
-        } catch (NoSuchAlgorithmException | RuntimeException | InterruptedException eee) {
+            MCSystemMetadata.copy(mcSys, sysmeta);
+            ObjectInfo doiInfo = storeData(MetacatInitializer.getStorage(), inputStream, sysmeta);
+            mcSys.setChecksums(doiInfo.getHexDigests());
+        } catch (NoSuchAlgorithmException | RuntimeException | InterruptedException |
+                 InvocationTargetException | IllegalAccessException eee) {
             // report as service failure
             ServiceFailure sf = new ServiceFailure("1030", eee.getMessage());
             sf.initCause(eee);
             throw sf;
         }
         // update the object
-        this.update(session, originalIdentifier, inputStream, newIdentifier, sysmeta);
+        this.update(session, originalIdentifier, inputStream, newIdentifier, mcSys);
 
         // update ORE that references the scimeta
         // first try the naive method, then check the SOLR index
@@ -2457,10 +2466,14 @@ public class MNodeService extends D1NodeService
                 logMetacat.info(
                     "MNodeService.publish - the new ore document is " + newOreIdentifier.getValue()
                         + " for the doi " + newIdentifier.getValue());
+                MCSystemMetadata oreMCsysMeta = new MCSystemMetadata();
                 try {
-                    storeData(MetacatInitializer.getStorage(),
+                    MCSystemMetadata.copy(oreMCsysMeta, oreSysMeta);
+                    ObjectInfo oreInfo = storeData(MetacatInitializer.getStorage(),
                          new ByteArrayInputStream(resourceMapString.getBytes("UTF-8")), oreSysMeta);
-                } catch (NoSuchAlgorithmException | RuntimeException | InterruptedException eee) {
+                    oreMCsysMeta.setChecksums(oreInfo.getHexDigests());
+                } catch (NoSuchAlgorithmException | RuntimeException | InterruptedException |
+                         InvocationTargetException | IllegalAccessException eee) {
                     // report as service failure
                     ServiceFailure sf = new ServiceFailure("1030", eee.getMessage());
                     sf.initCause(eee);
@@ -2468,7 +2481,7 @@ public class MNodeService extends D1NodeService
                 }
                 this.update(session, potentialOreIdentifier,
                     new ByteArrayInputStream(resourceMapString.getBytes("UTF-8")), newOreIdentifier,
-                    oreSysMeta);
+                            oreMCsysMeta);
 
             } else {
                 // create a new ORE for them
