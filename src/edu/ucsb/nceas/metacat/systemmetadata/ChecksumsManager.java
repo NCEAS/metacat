@@ -159,4 +159,20 @@ public class ChecksumsManager {
         return list;
     }
 
+    /**
+     * Delete the checksums from the table for the given pid
+     * @param pid  the pid which will be deleted
+     * @param conn  the connection which will be used to delete
+     * @throws SQLException
+     */
+    public void delete(Identifier pid, DBConnection conn) throws SQLException {
+        if (pid != null && !pid.getValue().isBlank()) {
+            String query = "DELETE FROM checksums where guid=?;";
+            try (PreparedStatement pst = conn.prepareStatement(query)) {
+                pst.setString(1, pid.getValue());
+                pst.execute();
+            }
+        }
+    }
+
 }

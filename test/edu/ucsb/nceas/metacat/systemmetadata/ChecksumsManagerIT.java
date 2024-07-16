@@ -77,31 +77,35 @@ public class ChecksumsManagerIT {
             dbConn = DBConnectionPool.getDBConnection("ChecksumsManagerIT.testSave");
             serialNumber = dbConn.getCheckOutSerialNumber();
             manager.save(pid, info.getHexDigests(), dbConn);
+            List<Checksum> checksums = manager.get(pid);
+            boolean found = false;
+            Checksum targetChecksum = null;
+            int index = 0;
+            for (Checksum checksum : checksums) {
+                if (checksum.getAlgorithm().equals("MD5")) {
+                    assertEquals(sysmeta.getChecksum().getValue(), checksum.getValue());
+                    targetChecksum = checksum;
+                    found = true;
+                }
+                index++;
+            }
+            assertTrue("Test should find the checksum with algorithm MD5", found);
+            assertEquals("ChecksumsManager should store five checksums", 5, index);
+            List<Identifier> identifiers = manager.query(targetChecksum);
+            found = false;
+            for (Identifier identifier : identifiers) {
+                if (identifier != null && identifier.getValue().equals(pid.getValue())) {
+                    found = true;
+                }
+            }
+            assertTrue("Test should find the identifier " + pid.getValue(), found);
+            // Test the delete method
+            manager.delete(pid, dbConn);
+            checksums = manager.get(pid);
+            assertEquals(0, checksums.size());
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
-        List<Checksum> checksums = manager.get(pid);
-        boolean found = false;
-        Checksum targetChecksum = null;
-        int index = 0;
-        for (Checksum checksum : checksums) {
-            if (checksum.getAlgorithm().equals("MD5")) {
-                assertEquals(sysmeta.getChecksum().getValue(), checksum.getValue());
-                targetChecksum = checksum;
-                found = true;
-            }
-            index++;
-        }
-        assertTrue("Test should find the checksum with algorithm MD5", found);
-        assertEquals("ChecksumsManager should store five checksums", 5, index);
-        List<Identifier> identifiers = manager.query(targetChecksum);
-        found = false;
-        for (Identifier identifier : identifiers) {
-            if (identifier != null && identifier.getValue().equals(pid.getValue())) {
-                found = true;
-            }
-        }
-        assertTrue("Test should find the identifier " + pid.getValue(), found);
     }
 
     /**

@@ -16,6 +16,7 @@ import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.storage.ObjectInfo;
+import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager.SysMetaVersion;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
@@ -278,7 +279,17 @@ public class MNodeServiceIT {
                 Identifier pid =
                     d1NodeTest.mnCreate(session, guid, object, sysmeta);
                 assertEquals(guid.getValue(), pid.getValue());
-
+                ChecksumsManager manager = new ChecksumsManager();
+                List<Checksum> checksums = manager.get(sysmeta.getIdentifier());
+                assertEquals(5, checksums.size());
+                boolean found = false;
+                for (Checksum checksum1 : checksums) {
+                    if(checksum1.getAlgorithm().equals("MD5")) {
+                        assertEquals(sysmeta.getChecksum().getValue(), checksum1.getValue());
+                        found = true;
+                    }
+                }
+                assertTrue("Test should find a checksum with algorithm MD5", found);
                 try {
                     Identifier guid2 = new Identifier();
                     guid2.setValue("testCreate2." + System.currentTimeMillis());
@@ -569,6 +580,16 @@ public class MNodeServiceIT {
                 // do the update
                 Identifier updatedPid =
                     d1NodeTest.mnUpdate(session, pid, object, newPid, newSysMeta);
+                ChecksumsManager manager = new ChecksumsManager();
+                List<Checksum> checksums = manager.get(newSysMeta.getIdentifier());
+                assertEquals(5, checksums.size());
+                boolean found = false;
+                for (Checksum checksum1 : checksums) {
+                    if(checksum1.getAlgorithm().equals("MD5")) {
+                        assertEquals(sysmeta.getChecksum().getValue(), checksum1.getValue());
+                        found = true;
+                    }
+                }
 
                 // get the updated system metadata
                 SystemMetadata updatedSysMeta =
@@ -597,13 +618,14 @@ public class MNodeServiceIT {
                     MNodeService.getInstance(request).getSystemMetadata(session, newPid);
                 BigInteger version = meta.getSerialVersion();
                 version = version.add(BigInteger.ONE);
-                newSysMeta.setSerialVersion(version);
+                meta.setSerialVersion(version);
                 NodeReference newMN = new NodeReference();
                 newMN.setValue("urn:node:river1");
-                newSysMeta.setAuthoritativeMemberNode(newMN);
-                newSysMeta.setArchived(false);
+                meta.setAuthoritativeMemberNode(newMN);
+                meta.setArchived(false);
                 try {
-                    MNodeService.getInstance(request).updateSystemMetadata(session, newPid, newSysMeta);
+                    MNodeService.getInstance(request).updateSystemMetadata(session, newPid, meta);
+                    fail("Test shouldn't get here since it changes authoritative node.");
                 } catch (InvalidRequest ee) {
                     assertTrue(ee.getMessage().contains("urn:node:river1"));
                 }
@@ -1804,6 +1826,9 @@ public class MNodeServiceIT {
                 List<Identifier> oreId2 =
                     MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
                 assertEquals(2, oreId2.size());
+                ChecksumsManager manager = new ChecksumsManager();
+                List<Checksum> checksums = manager.get(doi);
+                assertEquals(5, checksums.size());
             } catch (Exception e) {
                 e.printStackTrace();
                 fail("Unexpected error: " + e.getMessage());
