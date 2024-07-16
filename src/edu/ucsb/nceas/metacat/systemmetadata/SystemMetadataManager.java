@@ -145,41 +145,7 @@ public class SystemMetadataManager {
                         // commit if we got here with no errors
                         dbConn.commit();
                     } catch (Exception e) {
-                        try {
-                            dbConn.rollback();
-                            if (backupCopy == null) {
-                                //delete it from hashstore
-                                try {
-                                    MetacatInitializer.getStorage().deleteMetadata(pid,
-                                                                                   MetacatInitializer
-                                                                                       .getStorage()
-                                                                                       .getDefaultNameSpace());
-                                } catch (IOException | NoSuchAlgorithmException |
-                                         InterruptedException ex) {
-                                    logMetacat.error("Metacat cannot restore the previous status "
-                                                         + "in Hashstore by deleting the system "
-                                                         + "metadata since " + ex.getMessage());
-                                }
-                            } else {
-                                //restore the backup copy
-                                try {
-                                    store(
-                                        sysmeta, changeModifyTime, dbConn,
-                                        SysMetaVersion.UNCHECKED);
-                                } catch (Exception ee) {
-                                    logMetacat.error("Metacat cannot restore the previous status "
-                                                         + "in Hashstore by restoring the "
-                                                         + "backup system " + "metadata since "
-                                                         + ee.getMessage());
-                                }
-                            }
-                        } catch (SQLException ee) {
-                           throw new ServiceFailure ("0000", "SystemMetadataManager.store - "
-                                     + "storing system metadata to the store for " + pid.getValue()
-                                     + " failed since " + e.getMessage()
-                                     + ". Also we can't roll back the database changes since "
-                                     + ee.getMessage());
-                        }
+                        storeRollBack(pid, e, dbConn, backupCopy);
                         if (e instanceof InvalidRequest ie) {
                             throw ie;
                         }
@@ -261,13 +227,7 @@ public class SystemMetadataManager {
                     // update with the values
                     updateSystemMetadata(sysmeta, dbConn);
                     // store the system metadata into hashstore
-                    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                        TypeMarshaller.marshalTypeToOutputStream(sysmeta, out);
-                        byte[] content = out.toByteArray();
-                        try (ByteArrayInputStream in = new ByteArrayInputStream(content)) {
-                            MetacatInitializer.getStorage().storeMetadata(in, pid);
-                        }
-                    }
+                    storeToHashStore(pid, sysmeta);
                 } catch (McdbDocNotFoundException e) {
                     throw new InvalidRequest("0000", "SystemMetadataManager.store - can't "
                                                 + "store the system metadata for pid "
@@ -317,13 +277,94 @@ public class SystemMetadataManager {
     }
 
     /**
+     * RollBack the change in database and hashtore when the store methods failed
+     * @param pid  the pid Metacat would like to save
+     * @param e  the exception causes the failure of store.
+     * @param conn  the connection used to store system metadata into database
+     * @param backupCopies  the original copies of system metadata before Metacat modified them
+     */
+    public void storeRollBack(Identifier pid, Exception e, DBConnection conn,
+                              SystemMetadata... backupCopies) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (Exception ex) {
+                logMetacat.error("Storing Systemmetadata for " + pid.getValue() + " failed since "
+                                     + e.getMessage()
+                                     + " and also the database roll back failed since"
+                                     + ex.getMessage());
+            }
+        }
+        // Restore hashstore into previous status
+        if (backupCopies != null) {
+            for (SystemMetadata backupCopy : backupCopies) {
+                if (backupCopy == null) {
+                    // Null means there was no system metadata before. So delete it from hashstore
+                    try {
+                        MetacatInitializer.getStorage().deleteMetadata(pid, MetacatInitializer
+                            .getStorage().getDefaultNameSpace());
+                    } catch (Exception ex) {
+                        logMetacat.error(
+                            "Storing system metadata failed for " + pid.getValue()
+                                + " since " + e.getMessage()
+                                + ". Also Metacat cannot restore the previous status "
+                                + "in Hashstore " + " by " + "deleting the system "
+                                + "metadata since " + ex.getMessage());
+                    }
+                } else {
+                    //restore the backup copy
+                    try {
+                        //set changeModifyTime false
+                        storeToHashStore(backupCopy.getIdentifier(), backupCopy);
+                    } catch (Exception ee) {
+                        logMetacat.error(
+                            "Storing system metadata failed for " + backupCopy.getIdentifier()
+                                .getValue() + " since " + e.getMessage() + ". Also Metacat cannot "
+                                + "restore the " + "previous status " + "in "
+                                + "Hashstore by restoring the " + "backup system "
+                                + "metadata since " + ee.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Store the system metadata into hashstore.
+     * @param pid  the pid associated with the system metadata
+     * @param sysmeta  the system metadata object will be stored
+     * @throws IOException
+     * @throws MarshallingException
+     * @throws ServiceFailure
+     * @throws NoSuchAlgorithmException
+     * @throws InterruptedException
+     * @throws IllegalArgumentException
+     */
+    private void storeToHashStore(Identifier pid, SystemMetadata sysmeta)
+        throws IOException, MarshallingException, ServiceFailure, NoSuchAlgorithmException,
+        InterruptedException, IllegalArgumentException {
+        if (pid == null || pid.getValue().isBlank() || sysmeta == null) {
+            throw new IllegalArgumentException(
+                "SystemMetadataManager.storeToHashStore - the pid or "
+                    + "the system metadata object should not be null.");
+        }
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            TypeMarshaller.marshalTypeToOutputStream(sysmeta, out);
+            byte[] content = out.toByteArray();
+            try (ByteArrayInputStream in = new ByteArrayInputStream(content)) {
+                MetacatInitializer.getStorage().storeMetadata(in, pid);
+            }
+        }
+    }
+
+    /**
      * Lock a PID so only one thread can modify the system metadata in database/file system.
      * Note: put the lock and store method in the try block while the unLock method in the final
      * block.
      * @param pid  the identifier which will be locked
      * @throws RuntimeException
      */
-    public static void lock(Identifier pid) throws RuntimeException {
+    public void lock(Identifier pid) throws RuntimeException {
         if (pid != null && pid.getValue() != null && !pid.getValue().isBlank()) {
             //Check if there is another thread is storing the system metadata for the same
             //pid. If not, secure the lock; otherwise wait until the lock is available.
@@ -350,7 +391,7 @@ public class SystemMetadataManager {
      * Note: put this method in the final block while put the lock and store method in the try block
      * @param pid  the identifier which will be unlocked
      */
-    public static void unLock(Identifier pid) {
+    public void unLock(Identifier pid) {
         if (pid != null && pid.getValue() != null && !pid.getValue().isBlank()) {
             try {
                 // Release the lock
