@@ -399,6 +399,13 @@ public class MNodeService extends D1NodeService
                     "The new identifier " + newPid.getValue() + " doesn't match the identifier "
                         + sysmeta.getIdentifier().getValue() + " in the system metadata.");
             }
+            if (newPid.equals(pid)) {
+                throw new InvalidRequest(
+                    "1202",
+                    "The new identifier " + newPid.getValue() + " cannot " + "update itself.");
+            }
+            // lock existing pid
+            SystemMetadataManager.lock(pid);
             // make sure that the newPid doesn't exists
             boolean idExists = true;
             try {
@@ -726,6 +733,8 @@ public class MNodeService extends D1NodeService
                                 + sysmeta.getIdentifier().getValue() + " since " + de.getMessage());
             }
             throw fle;
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
     }
 

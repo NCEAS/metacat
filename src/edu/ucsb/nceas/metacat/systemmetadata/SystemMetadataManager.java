@@ -385,7 +385,7 @@ public class SystemMetadataManager {
      * @param pid  the identifier which will be locked
      * @throws RuntimeException
      */
-    public void lock(Identifier pid) throws RuntimeException {
+    public static void lock(Identifier pid) throws RuntimeException {
         if (pid != null && pid.getValue() != null && !pid.getValue().isBlank()) {
             //Check if there is another thread is storing the system metadata for the same
             //pid. If not, secure the lock; otherwise wait until the lock is available.
@@ -412,7 +412,7 @@ public class SystemMetadataManager {
      * Note: put this method in the final block while put the lock and store method in the try block
      * @param pid  the identifier which will be unlocked
      */
-    public void unLock(Identifier pid) {
+    public static void unLock(Identifier pid) {
         if (pid != null && pid.getValue() != null && !pid.getValue().isBlank()) {
             try {
                 // Release the lock
@@ -420,7 +420,7 @@ public class SystemMetadataManager {
                     lockedIds.remove(pid.getValue());
                     lockedIds.notifyAll();
                 }
-            } catch (RuntimeException e) {
+            } catch (Exception e) {
                 logMetacat.error(
                     "SystemMetadataManager.unLock - we can't move the id " + pid.getValue()
                         + "from the control list (lockedIds) since " + e.getMessage());

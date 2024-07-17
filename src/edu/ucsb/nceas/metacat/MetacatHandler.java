@@ -212,6 +212,7 @@ public class MetacatHandler {
         int serialNumber = -1;
         DBConnection conn = null;
         try {
+            SystemMetadataManager.lock(pid);
             conn = DBConnectionPool.getDBConnection("MetacatHandler.save");
             serialNumber = conn.getCheckOutSerialNumber();
             StringBuffer error = new StringBuffer();
@@ -258,6 +259,7 @@ public class MetacatHandler {
                 logMetacat.warn("Metacat cannot set back autoCommit true for DBConnection since "
                                 + e.getMessage());
             }
+            SystemMetadataManager.unLock(pid);
             // Return database connection to the pool
             if (conn != null) {
                 DBConnectionPool.returnDBConnection(conn, serialNumber);
