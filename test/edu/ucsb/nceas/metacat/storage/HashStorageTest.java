@@ -5,11 +5,15 @@ import edu.ucsb.nceas.metacat.MetacatHandlerIT;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 
+import org.dataone.hashstore.exceptions.NonMatchingChecksumException;
+import org.dataone.hashstore.exceptions.NonMatchingObjSizeException;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 import org.junit.Before;
@@ -20,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -223,6 +228,71 @@ public class HashStorageTest {
             fail("Test shouldn't get here since the pid doesn't exist.");
         } catch (Exception e) {
             assertTrue(e instanceof FileNotFoundException);
+        }
+    }
+
+    /**
+     * Test a special checksumAlgorithm which is not in the default hashstore list
+     * @throws Exception
+     */
+    @Test
+    public void testSpecialCheckAlgorithm() throws Exception {
+        String algorithm = "MD2";
+        Identifier guid = new Identifier();
+        guid.setValue("testSpecialCheckAlgorithm." + System.currentTimeMillis());
+        String contentStr = "testSpecialCheckAlgorithmContent-" + System.currentTimeMillis();
+        byte[] content = contentStr.getBytes(StandardCharsets.UTF_8);
+        Checksum checksum;
+        try (InputStream object = new ByteArrayInputStream(content)) {
+            checksum = ChecksumUtil.checksum(object, algorithm);
+        }
+        int size = content.length;
+        // Test the successful scenario
+        try (InputStream object = new ByteArrayInputStream(content)) {
+            ObjectInfo info =
+                storage.storeObject(object, guid, null, checksum.getValue(), algorithm, size);
+            assertEquals(6, info.getHexDigests().size());
+        }
+        // Test the failure scenario
+        try (InputStream object = new ByteArrayInputStream(content)) {
+            try {
+                ObjectInfo info =
+                    storage.storeObject(object, guid, null, "foo", algorithm, size);
+                fail("Test can't get here since the checksum was wrong");
+            } catch (Exception e) {
+                assertTrue("The exception class should be InvalidSystemMetadata rather than " + e
+                    .getClass().getName(), e instanceof InvalidSystemMetadata);
+            }
+        }
+        // Test the successful scenario
+        try (InputStream object = new ByteArrayInputStream(content)) {
+            ObjectInfo info = storage.storeObject(object);
+            assertEquals(5, info.getHexDigests().size());
+            storage.verifyObject(info, checksum.getValue(), algorithm, size);
+        }
+        // Test the failure scenario with the wrong checksum
+        try (InputStream object = new ByteArrayInputStream(content)) {
+            try {
+                ObjectInfo info = storage.storeObject(object);
+                storage.verifyObject(info, "foo", algorithm, size);
+                fail("Test can't get here since the checksum was wrong");
+            } catch (Exception e) {
+                assertTrue(
+                    "The exception class should be NonMatchingChecksumException rather than " + e
+                        .getClass().getName(), e instanceof NonMatchingChecksumException);
+            }
+        }
+        // Test the failure scenario with the wrong size
+        try (InputStream object = new ByteArrayInputStream(content)) {
+            try {
+                ObjectInfo info = storage.storeObject(object);
+                storage.verifyObject(info, checksum.getValue(), algorithm, 10);
+                fail("Test can't get here since the checksum was wrong");
+            } catch (Exception e) {
+                assertTrue(
+                    "The exception class should be NonMatchingObjSizeException rather than " + e
+                        .getClass().getName(), e instanceof NonMatchingObjSizeException);
+            }
         }
     }
 }
