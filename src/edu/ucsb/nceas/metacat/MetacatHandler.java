@@ -221,8 +221,19 @@ public class MetacatHandler {
             StringBuffer error = new StringBuffer();
             error.append("Metacat cannot save the object ").append(pid.getValue())
                                                                 .append(" into disk since ");
-            SystemMetadata backcopyOfPre = new SystemMetadata();
-            BeanUtils.copyProperties(backcopyOfPre, preSys);
+            SystemMetadata backcopyOfPre = null;
+            if (action == Action.UPDATE) {
+                if (preSys ==  null) {
+                    throw new InvalidRequest("1181", "Metacat cannot save the object for "
+                        + pid.getValue() + " into disk since the system metadata of the "
+                        + "obsoleted object should not be blank.");
+                } else {
+                    // Keep this block out of the following try-finally block since the restoration
+                    // can be messed up if the exceptions happens here
+                    backcopyOfPre = new SystemMetadata();
+                    BeanUtils.copyProperties(backcopyOfPre, preSys);
+                }
+            }
             try {
                 conn.setAutoCommit(false);
                 Identifier prePid = null;
@@ -236,11 +247,6 @@ public class MetacatHandler {
                 SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate, conn,
                                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
                 if (action == Action.UPDATE) {
-                    if(preSys ==  null) {
-                        throw new InvalidRequest("1181", "Metacat cannot save the object for "
-                                + pid.getValue() + " into disk since the system metadata of the "
-                                + "obsoleted object should not be blank.");
-                    }
                     // add the newPid to the obsoletedBy list for the previous sysmeta
                     preSys.setObsoletedBy(pid);
                     //increase version
@@ -256,10 +262,18 @@ public class MetacatHandler {
                 conn.commit();
             } catch (Exception e) {
                 SystemMetadata nullBackupCopy = null;
-                String errorMessage =
-                    SystemMetadataManager.storeRollBack(pid, e, conn, nullBackupCopy,
-                                                        backcopyOfPre);
-                error.append(errorMessage);
+                if (action == Action.UPDATE) {
+                    // Metacat needs to restore two copies of system metadata in the update action
+                    String errorMessage =
+                        SystemMetadataManager.storeRollBack(pid, e, conn, nullBackupCopy,
+                                                            backcopyOfPre);
+                    error.append(errorMessage);
+                } else {
+                    // it is the insert action. Only restore the one copy system metadata
+                    String errorMessage =
+                        SystemMetadataManager.storeRollBack(pid, e, conn, nullBackupCopy);
+                    error.append(errorMessage);
+                }
                 throw new ServiceFailure("1190", error.toString());
             }
         } catch (SQLException e) {
