@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
@@ -219,19 +220,25 @@ public class SystemMetadataManager {
                         Date now = Calendar.getInstance().getTime();
                         sysmeta.setDateSysMetadataModified(now);
                     }
-                    // Get rid of the extra information attached to MCSystemMetadata so Metacat can
-                    // store it successfully
-                    if (sysmeta instanceof MCSystemMetadata) {
-                        sysmeta = MCSystemMetadata.convert((MCSystemMetadata)sysmeta);
-                    }
                     logMetacat.debug("SystemMetadataManager.store - storing system metadata "
                                     + "to store: " + pid.getValue());
-                    // insert the record if needed
+                    // insert a new dummy record in the systemmetadata table if needed
                     if (!IdentifierManager.getInstance().systemMetadataPIDExists(pid.getValue())) {
                         insertSystemMetadata(pid.getValue(), dbConn);
                     }
                     // update with the values
                     updateSystemMetadata(sysmeta, dbConn);
+                    if (sysmeta instanceof MCSystemMetadata) {
+                        // Store the checksum information into database
+                        // It must be done after the main systemmetadata table having a record
+                        // since the foreign key restriction
+                        Map<String, String> checksums = ((MCSystemMetadata) sysmeta).getChecksums();
+                        ChecksumsManager manager = new ChecksumsManager();
+                        manager.save(pid, checksums, dbConn);
+                        // Get rid of the extra information attached to MCSystemMetadata so Metacat
+                        // can store it into hashstore successfully
+                        sysmeta = MCSystemMetadata.convert((MCSystemMetadata)sysmeta);
+                    }
                     // store the system metadata into hashstore
                     storeToHashStore(pid, sysmeta);
                 } catch (McdbDocNotFoundException e) {

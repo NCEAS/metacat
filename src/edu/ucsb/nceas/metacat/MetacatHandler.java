@@ -212,11 +212,6 @@ public class MetacatHandler {
         int serialNumber = -1;
         DBConnection conn = null;
         try {
-            // Preserve the checksums
-            Map<String, String> checksums = null;
-            if (sysmeta instanceof MCSystemMetadata) {
-                checksums = ((MCSystemMetadata) sysmeta).getChecksums();
-            }
             conn = DBConnectionPool.getDBConnection("MetacatHandler.save");
             serialNumber = conn.getCheckOutSerialNumber();
             StringBuffer error = new StringBuffer();
@@ -230,15 +225,10 @@ public class MetacatHandler {
                 }
                 // Register the new object into the xml_documents and identifier table.
                 localId = registerToDB(pid, action, conn, user, docType, prePid);
-                // Save the system metadata for the new object
+                // Save the system metadata for the new object (also including checksums info)
                 // Since this is a new object, we don't need to check system metadata version
                 SystemMetadataManager.getInstance().store(sysmeta, changeModificationDate, conn,
                                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
-                // Store the checksums. It needs to be called after the system metadata was stored
-                if (checksums != null && !checksums.isEmpty()) {
-                    ChecksumsManager manager = new ChecksumsManager();
-                    manager.save(pid, checksums, conn);
-                }
                 if (action == Action.UPDATE) {
                     if(preSys ==  null) {
                         throw new InvalidRequest("1181", "Metacat cannot save the object for "
