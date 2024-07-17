@@ -555,13 +555,29 @@ public class MNodeServiceIT {
                 Identifier pid =
                     d1NodeTest.mnCreate(session, guid, object, sysmeta);
 
+                //Test the case that an object update itself
+                Identifier obsoletedId = new Identifier();
+                obsoletedId.setValue(newPid.getValue());
+                object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                SystemMetadata newMeta =
+                    D1NodeServiceTest.createSystemMetadata(newPid, session.getSubject(), object);
+                object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                try {
+                    d1NodeTest.mnUpdate(session, newPid, object, obsoletedId, newMeta);
+                    fail("we shouldn't get here since the new pid is the same as the obsoleted "
+                             + "one");
+                } catch (Exception e) {
+                    assertTrue(e instanceof InvalidRequest);
+                    assertTrue(e.getMessage().contains(newPid.getValue()));
+                }
+
                 //test the case that the new pid doesn't match the identifier on the system metadata
                 Identifier newPid_6 = new Identifier();
                 newPid_6.setValue("testUpdateFailed." + System.currentTimeMillis());
                 Identifier newPid_7 = new Identifier();
                 newPid_7.setValue("testUpdateFailedAnother." + System.currentTimeMillis());
                 object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
-                SystemMetadata newMeta = D1NodeServiceTest.createSystemMetadata(newPid_7, session.getSubject(), object);
+                newMeta = D1NodeServiceTest.createSystemMetadata(newPid_7, session.getSubject(), object);
                 object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
                 try {
                     d1NodeTest.mnUpdate(session, pid, object, newPid_6, newMeta);
