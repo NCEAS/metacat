@@ -2699,6 +2699,7 @@ public class MNodeServiceIT {
             assertEquals(metadata.getSize(), sysmeta.getSize());
             System.out.println("the identifier is " + guid.getValue());
 
+            sysmeta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
             Date current = sysmeta.getDateSysMetadataModified();
             //updating system metadata failed since the date doesn't match
             sysmeta.setArchived(true);
@@ -2950,6 +2951,7 @@ public class MNodeServiceIT {
 
 
             //update the system metadata without touching the obsoletes and obsoletdBy
+            sysmeta1 = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
             AccessPolicy accessPolicy = new AccessPolicy();
             AccessRule allow = new AccessRule();
             allow.addPermission(Permission.WRITE);
@@ -2972,6 +2974,7 @@ public class MNodeServiceIT {
                 MNodeService.getInstance(request).isAuthorized(newSession, guid1, Permission.WRITE);
             assertTrue(isAuthorized);
 
+            sysmeta2 = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
             sysmeta2.setAccessPolicy(accessPolicy);
             serialVersion = metadata.getSerialVersion();
             serialVersion = serialVersion.add(BigInteger.ONE);
@@ -2988,6 +2991,7 @@ public class MNodeServiceIT {
 
 
             //update obsolets and obsoletedBy sucessfully - set p2 obsoletes p1
+            sysmeta1 = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
             sysmeta1.setObsoletedBy(guid2);
             serialVersion = metadata.getSerialVersion();
             serialVersion = serialVersion.add(BigInteger.ONE);
@@ -2999,6 +3003,7 @@ public class MNodeServiceIT {
             assertNull(metadata.getObsoletes());
             assertEquals(metadata.getChecksum().getValue(), sysmeta1.getChecksum().getValue());
 
+            sysmeta2 = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
             sysmeta2.setObsoletes(guid1);
             serialVersion = metadata.getSerialVersion();
             serialVersion = serialVersion.add(BigInteger.ONE);
@@ -3012,6 +3017,7 @@ public class MNodeServiceIT {
 
 
             //update obsolets and obsoletedBy sucessfully - set p1 obsoletedBy p2
+            sysmeta1 = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
             sysmeta1.setObsoletedBy(guid2);
             serialVersion = metadata.getSerialVersion();
             serialVersion = serialVersion.add(BigInteger.ONE);
@@ -3023,6 +3029,7 @@ public class MNodeServiceIT {
             assertNull(metadata.getObsoletes());
             assertEquals(metadata.getChecksum().getValue(), sysmeta1.getChecksum().getValue());
 
+            sysmeta2 = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
             sysmeta2.setObsoletes(guid1);
             serialVersion = metadata.getSerialVersion();
             serialVersion = serialVersion.add(BigInteger.ONE);
@@ -3036,6 +3043,7 @@ public class MNodeServiceIT {
 
 
             //resetting the obsoletes and obsoletedBy fails
+            sysmeta1 = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
             Identifier newId = new Identifier();
             newId.setValue("newValue");
             sysmeta1.setObsoletedBy(newId);
@@ -3046,10 +3054,10 @@ public class MNodeServiceIT {
                 MNodeService.getInstance(request).updateSystemMetadata(session, guid1, sysmeta1);
                 fail("We shouldn't get there");
             } catch (Exception e) {
-                e.printStackTrace();
                 assertTrue(e instanceof InvalidRequest);
             }
 
+            sysmeta2 = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
             sysmeta2.setObsoletes(newId);
             serialVersion = metadata.getSerialVersion();
             serialVersion = serialVersion.add(BigInteger.ONE);
@@ -3076,6 +3084,7 @@ public class MNodeServiceIT {
 
 
             //Setting p5 obsoletes p1 fails since p2 already obsoletes p1
+            sysmeta5 = MNodeService.getInstance(request).getSystemMetadata(session, guid5);
             sysmeta5.setObsoletes(guid1);
             serialVersion = metadata.getSerialVersion();
             serialVersion = serialVersion.add(BigInteger.ONE);
@@ -3084,12 +3093,12 @@ public class MNodeServiceIT {
                 MNodeService.getInstance(request).updateSystemMetadata(session, guid5, sysmeta5);
                 fail("We shouldn't get there");
             } catch (Exception e) {
-                e.printStackTrace();
 
             }
 
 
             //Setting p5 obsoletedBy p2 fails since p1 already is obsoletedBy p2
+            sysmeta5 = MNodeService.getInstance(request).getSystemMetadata(session, guid5);
             sysmeta5.setObsoletes(null);
             sysmeta5.setObsoletedBy(guid2);
             try {
@@ -3103,6 +3112,7 @@ public class MNodeServiceIT {
 
             //Setting p5 obsoletes p2 succeeds since the obsoletes of p5 is null and noone obsoletes
             // p2.
+            sysmeta5 = MNodeService.getInstance(request).getSystemMetadata(session, guid5);
             sysmeta5.setObsoletedBy(null);
             sysmeta5.setObsoletes(guid2);
             MNodeService.getInstance(request).updateSystemMetadata(session, guid5, sysmeta5);
@@ -3115,6 +3125,7 @@ public class MNodeServiceIT {
 
             //Setting p2 obsoletedBy p5 succeeds since the obsoletedBy of p2 is null and p5 doesn't
             // obsolete anything
+            sysmeta2 = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
             sysmeta2.setObsoletes(guid1);
             sysmeta2.setObsoletedBy(guid5);
             serialVersion = sysmeta2.getSerialVersion();
@@ -3629,6 +3640,7 @@ public class MNodeServiceIT {
             System.out.println("the identifier is " + guid.getValue());
 
             System.out.println("the identifier is ----------------------- " + guid.getValue());
+            sysmeta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
             MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
             SystemMetadata metadata2 =
                 MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
@@ -4727,7 +4739,7 @@ public class MNodeServiceIT {
             SystemMetadata storedSysMeta = SystemMetadataManager.getInstance().get(retPid);
             long originModificationDate = storedSysMeta.getDateSysMetadataModified().getTime();
             long originUploadDate = storedSysMeta.getDateUploaded().getTime();
-            SystemMetadata newSysMeta = SerializationUtils.clone(sysmeta);
+            SystemMetadata newSysMeta = SerializationUtils.clone(storedSysMeta);
             storedSysMeta.setAuthoritativeMemberNode(node);
             SystemMetadataManager.getInstance().store(storedSysMeta, false, SysMetaVersion.CHECKED);
 
