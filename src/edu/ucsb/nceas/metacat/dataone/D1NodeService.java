@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
@@ -414,9 +415,9 @@ public abstract class D1NodeService {
         } catch (NoSuchAlgorithmException e) {
             throw new UnsupportedType("1140", "An UnsupportedType in the create method - "
                     + e.getMessage());
-        } catch (IOException ioe) {
+        } catch (IOException | InvocationTargetException | IllegalAccessException e) {
             throw new ServiceFailure("1190", "Metacat cannot save the object " + pid.getValue()
-                                    + ioe.getMessage());
+                                    + e.getMessage());
         } catch (McdbException e) {
             throw new ServiceFailure("1190", "Metacat cannot save the object " + pid.getValue()
                                     + "since it cannot find it in validation" + e.getMessage());

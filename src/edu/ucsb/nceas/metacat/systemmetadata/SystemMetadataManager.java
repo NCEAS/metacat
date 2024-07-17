@@ -147,13 +147,11 @@ public class SystemMetadataManager {
                         // commit if we got here with no errors
                         dbConn.commit();
                     } catch (Exception e) {
-                        storeRollBack(pid, e, dbConn, backupCopy);
+                        String error = storeRollBack(pid, e, dbConn, backupCopy);
                         if (e instanceof InvalidRequest ie) {
-                            throw ie;
+                            throw new InvalidRequest("0000", error);
                         }
-                        throw new ServiceFailure ("0000", "SystemMetadataManager.store - "
-                                + "storing system metadata to the store for " + pid.getValue()
-                                + " failed since " + e.getMessage());
+                        throw new ServiceFailure ("0000", error);
                     }
                 } catch (SQLException e) {
                     throw new ServiceFailure("0000", 
@@ -299,21 +297,32 @@ public class SystemMetadataManager {
 
     /**
      * RollBack the change in database and hashtore when the store methods failed
+     * @return the error message. It combines both the main exception and exceptions occurs
+     * during the rollback process. If rollback doesn't have any exceptions, it only has the main
+     * exception message.
      * @param pid  the pid Metacat would like to save
      * @param e  the exception causes the failure of store.
      * @param conn  the connection used to store system metadata into database
      * @param backupCopies  the original copies of system metadata before Metacat modified them
      */
-    public void storeRollBack(Identifier pid, Exception e, DBConnection conn,
+    public static String storeRollBack(Identifier pid, Exception e, DBConnection conn,
                               SystemMetadata... backupCopies) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("Storing Systemmetadata for ");
+        if (pid != null) {
+            buffer.append(pid.getValue());
+        }
+        buffer.append(" failed since ");
+        if (e != null) {
+            buffer.append(e.getMessage());
+        }
         if (conn != null) {
             try {
                 conn.rollback();
             } catch (Exception ex) {
-                logMetacat.error("Storing Systemmetadata for " + pid.getValue() + " failed since "
-                                     + e.getMessage()
-                                     + " and also the database roll back failed since"
-                                     + ex.getMessage());
+                buffer.append(". And also the database roll back failed since ");
+                buffer.append(ex.getMessage());
+                logMetacat.error(buffer.toString());
             }
         }
         // Restore hashstore into previous status
@@ -325,12 +334,10 @@ public class SystemMetadataManager {
                         MetacatInitializer.getStorage().deleteMetadata(pid, MetacatInitializer
                             .getStorage().getDefaultNameSpace());
                     } catch (Exception ex) {
-                        logMetacat.error(
-                            "Storing system metadata failed for " + pid.getValue()
-                                + " since " + e.getMessage()
-                                + ". Also Metacat cannot restore the previous status "
-                                + "in Hashstore " + " by " + "deleting the system "
-                                + "metadata since " + ex.getMessage());
+                        buffer.append(". Also Metacat cannot restore the previous status ");
+                        buffer.append("in Hashstore by deleting the systemmetadata since ");
+                        buffer.append(ex.getMessage());
+                        logMetacat.error(buffer.toString());
                     }
                 } else {
                     //restore the backup copy
@@ -338,16 +345,15 @@ public class SystemMetadataManager {
                         //set changeModifyTime false
                         storeToHashStore(backupCopy.getIdentifier(), backupCopy);
                     } catch (Exception ee) {
-                        logMetacat.error(
-                            "Storing system metadata failed for " + backupCopy.getIdentifier()
-                                .getValue() + " since " + e.getMessage() + ". Also Metacat cannot "
-                                + "restore the " + "previous status " + "in "
-                                + "Hashstore by restoring the " + "backup system "
-                                + "metadata since " + ee.getMessage());
+                        buffer.append(". Also Metacat cannot restore the previous status ");
+                        buffer.append("in Hashstore by restoring the backup copy since ");
+                        buffer.append(ee.getMessage());
+                        logMetacat.error(buffer.toString());
                     }
                 }
             }
         }
+        return buffer.toString();
     }
 
     /**
@@ -361,7 +367,7 @@ public class SystemMetadataManager {
      * @throws InterruptedException
      * @throws IllegalArgumentException
      */
-    private void storeToHashStore(Identifier pid, SystemMetadata sysmeta)
+    private static void storeToHashStore(Identifier pid, SystemMetadata sysmeta)
         throws IOException, MarshallingException, ServiceFailure, NoSuchAlgorithmException,
         InterruptedException, IllegalArgumentException {
         if (pid == null || pid.getValue().isBlank() || sysmeta == null) {

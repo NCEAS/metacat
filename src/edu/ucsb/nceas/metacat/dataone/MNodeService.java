@@ -619,12 +619,6 @@ public class MNodeService extends D1NodeService
                     "MNodeService.update - the time spending on checking the sid validation of the "
                         + "old pid " + pid.getValue() + " and the new pid " + newPid.getValue() + " is "
                         + (end2 - end) + " milli seconds.");
-                // add the newPid to the obsoletedBy list for the existing sysmeta
-                existingSysMeta.setObsoletedBy(newPid);
-                //increase version
-                BigInteger current = existingSysMeta.getSerialVersion();
-                current = current.add(BigInteger.ONE);
-                existingSysMeta.setSerialVersion(current);
                 // prep the new system metadata, add pid to the affected lists
                 sysmeta.setObsoletes(pid);
                 isScienceMetadata = isScienceMetadata(sysmeta);
@@ -648,7 +642,7 @@ public class MNodeService extends D1NodeService
                 } catch (NoSuchAlgorithmException e) {
                     throw new UnsupportedType("1140", "An UnsupportedType in the create method - "
                             + e.getMessage());
-                } catch (IOException ioe) {
+                } catch (IOException | IllegalAccessException |InvocationTargetException ioe) {
                     throw new ServiceFailure("1310", "Metacat cannot update " + pid.getValue()
                                             + " by " + newPid.getValue() + " : " + ioe.getMessage());
                 }catch (McdbException e) {

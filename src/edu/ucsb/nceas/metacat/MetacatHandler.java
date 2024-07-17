@@ -5,16 +5,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletResponse;
 
-import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
-import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -178,12 +178,15 @@ public class MetacatHandler {
      * @throws NoSuchAlgorithmException
      * @throws IllegalArgumentException
      * @throws McdbException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
      */
     public String save(SystemMetadata sysmeta, boolean changeModificationDate, Action action,
                         String docType, InputStream object, SystemMetadata preSys, String user)
-                         throws InvalidRequest, ServiceFailure, InvalidSystemMetadata, IOException,
-                               IllegalArgumentException, NoSuchAlgorithmException, McdbException {
-        String localId = null;
+        throws InvalidRequest, ServiceFailure, InvalidSystemMetadata, IOException,
+        IllegalArgumentException, NoSuchAlgorithmException, McdbException,
+        InvocationTargetException, IllegalAccessException {
+        String localId;
         if (sysmeta == null) {
             throw new InvalidRequest("1181", "Metacat cannot save the object "
                             + " into disk since its system metadata is blank");
@@ -218,6 +221,8 @@ public class MetacatHandler {
             StringBuffer error = new StringBuffer();
             error.append("Metacat cannot save the object ").append(pid.getValue())
                                                                 .append(" into disk since ");
+            SystemMetadata backcopyOfPre = new SystemMetadata();
+            BeanUtils.copyProperties(backcopyOfPre, preSys);
             try {
                 conn.setAutoCommit(false);
                 Identifier prePid = null;
@@ -236,6 +241,12 @@ public class MetacatHandler {
                                 + pid.getValue() + " into disk since the system metadata of the "
                                 + "obsoleted object should not be blank.");
                     }
+                    // add the newPid to the obsoletedBy list for the previous sysmeta
+                    preSys.setObsoletedBy(pid);
+                    //increase version
+                    BigInteger current = preSys.getSerialVersion();
+                    current = current.add(BigInteger.ONE);
+                    preSys.setSerialVersion(current);
                     //It is update, we need to store the system metadata of the obsoleted pid as well
                     // We need to check if the previous system has the latest version
                     // Set changeModifyTime true
@@ -244,13 +255,18 @@ public class MetacatHandler {
                 }
                 conn.commit();
             } catch (Exception e) {
-                error = clearUp(e, error, conn);
+                SystemMetadata nullBackupCopy = null;
+                String errorMessage =
+                    SystemMetadataManager.storeRollBack(pid, e, conn, nullBackupCopy,
+                                                        backcopyOfPre);
+                error.append(errorMessage);
                 throw new ServiceFailure("1190", error.toString());
             }
         } catch (SQLException e) {
             throw new ServiceFailure("1190", "Metacat cannot save the object into disk since "
                                     + " it can't get a DBConnection: "+ e.getMessage());
         } finally {
+            SystemMetadataManager.unLock(pid);
             try {
                 if (conn != null) {
                     conn.setAutoCommit(true);
@@ -259,7 +275,6 @@ public class MetacatHandler {
                 logMetacat.warn("Metacat cannot set back autoCommit true for DBConnection since "
                                 + e.getMessage());
             }
-            SystemMetadataManager.unLock(pid);
             // Return database connection to the pool
             if (conn != null) {
                 DBConnectionPool.returnDBConnection(conn, serialNumber);
@@ -267,25 +282,6 @@ public class MetacatHandler {
             IOUtils.closeQuietly(object);
         }
         return localId;
-    }
-
-    /**
-     * Clear up database and object file when the save failed. Try to restore the original state.
-     * @param e  the exception arose in the save method
-     * @param error  the string buffer holding the error message
-     * @param conn  the connection to db
-     * @return the string buffer which holds all error message.
-     */
-    private StringBuffer clearUp(Exception e, StringBuffer error, DBConnection conn) {
-        error.append(e.getMessage());
-        // Clean up database
-        try {
-            conn.rollback();
-        } catch (SQLException ee) {
-            error.append(" Moreover, it cannot roll back the change in DB since ")
-                            .append(ee.getMessage());
-        }
-        return error;
     }
 
     /**
