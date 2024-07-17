@@ -161,6 +161,7 @@ public class MNodeAccessControlIT {
         testCreate(submitter, id1, sysmeta, object, true);
 
         //3 The object id1 doesn't have any access policy, it can be read by rights holder, cn and mn.
+        sysmeta = MNodeService.getInstance(request).getSystemMetadata(rightsHolderSession, id1);
         testGetAPI(D1NodeServiceTest.getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
         testGetAPI(d1NodeTest.getMNSession(), id1, sysmeta.getChecksum(), true);//mn can read it
         //member of MNode subject (which is a group) can read it
@@ -186,6 +187,7 @@ public class MNodeAccessControlIT {
         testIsAuthorized(nullSession, id1,Permission.READ,false); //nullSession can't read it
 
         //4 Test update the system metadata with new access rule (knb group can read it)
+        sysmeta = MNodeService.getInstance(request).getSystemMetadata(rightsHolderSession, id1);
         AccessPolicy policy = new AccessPolicy();
         AccessRule rule = new AccessRule();
         rule.addPermission(Permission.READ);
