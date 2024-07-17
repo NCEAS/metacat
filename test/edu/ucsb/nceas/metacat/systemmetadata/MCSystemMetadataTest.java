@@ -107,7 +107,7 @@ public class MCSystemMetadataTest {
         assertNotEquals(newSysMeta2.hashCode(), mcSysmeta.hashCode());
     }
 
-    private void compareValues(
+    public static void compareValues(
         SystemMetadata mcSysmeta, org.dataone.service.types.v1.SystemMetadata sysmeta)
         throws Exception {
         assertEquals(sysmeta.getIdentifier().getValue(), mcSysmeta.getIdentifier().getValue());

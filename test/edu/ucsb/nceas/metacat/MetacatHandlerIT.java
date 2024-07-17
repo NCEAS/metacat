@@ -4,7 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,12 +16,15 @@ import java.util.List;
 
 import javax.xml.bind.DatatypeConverter;
 
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadataTest;
 import org.apache.commons.io.FileUtils;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
@@ -31,6 +36,7 @@ import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.withSettings;
@@ -1143,40 +1149,189 @@ public class MetacatHandlerIT {
         assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
         SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
         assertNull("The systemmetadata for pid " + pid.getValue() + " should be null", readSys);
+        try (InputStream inputStream = D1NodeServiceTest.getStorage().retrieveObject(pid)) {
+            assertNotNull(inputStream);
+        }
+        try {
+            D1NodeServiceTest.getStorage().retrieveMetadata(pid);
+            fail("Test can't reach here since the pid should be removed.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .get(d1NodeServiceTest.getTestSession(), pid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .getSystemMetadata(d1NodeServiceTest.getTestSession(), pid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
 
-            // Insert a data object
-            Identifier newPid = new Identifier();
-            newPid.setValue("MetacatHandler.testsave2-" + System.currentTimeMillis());
-            InputStream dataStream2 = new FileInputStream(test_file_path);
-            SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream2);
-            dataStream2 = new FileInputStream(test_file_path);
-            D1NodeServiceTest.storeData(dataStream2, sysmeta2);
-            try (MockedStatic<DBConnectionPool> mockDbConnPool =
-                    Mockito.mockStatic(DBConnectionPool.class)) {
-                DBConnection mockConnection = Mockito.mock(DBConnection.class,
-                        withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
-                Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
-                                                                    .thenReturn(mockConnection);
-                Mockito.doThrow(SQLException.class).when(mockConnection).commit();
-                try {
-                    handler.save(sysmeta2, true, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
-                            dataStream2, null, user);
-                    fail("Test shouldn't get there since the above method should throw an exception");
-                } catch (Exception e) {
-                    assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
-                }
+        // Insert a data object
+        Identifier newPid = new Identifier();
+        newPid.setValue("MetacatHandler.testsave2-" + System.currentTimeMillis());
+        InputStream dataStream2 = new FileInputStream(test_file_path);
+        SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream2);
+        dataStream2 = new FileInputStream(test_file_path);
+        D1NodeServiceTest.storeData(dataStream2, sysmeta2);
+        try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                Mockito.mockStatic(DBConnectionPool.class)) {
+            DBConnection mockConnection = Mockito.mock(DBConnection.class,
+                    withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                                                                .thenReturn(mockConnection);
+            Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+            try {
+                handler.save(sysmeta2, true, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
+                        dataStream2, null, user);
+                fail("Test shouldn't get there since the above method should throw an exception");
+            } catch (Exception e) {
+                assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
             }
-            // After a failed saving, nothing should change
-            sysCount = getRecordCount("systemmetadata");
-            assertEquals("The records in systemmetadata should be " + originSysCount,
-                                                                originSysCount, sysCount);
-            idCount = getRecordCount("identifier");
-            assertEquals("The identifier count should be " + originIdCount, originIdCount, idCount);
-            docCount = getRecordCount("xml_documents");
-            assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
-            readSys = SystemMetadataManager.getInstance().get(newPid);
-            assertNull("The systemmetadata for pid " + newPid.getValue() + " should be null", readSys);
+        }
+        // After a failed saving, nothing should change
+        sysCount = getRecordCount("systemmetadata");
+        assertEquals("The records in systemmetadata should be " + originSysCount,
+                                                            originSysCount, sysCount);
+        idCount = getRecordCount("identifier");
+        assertEquals("The identifier count should be " + originIdCount, originIdCount, idCount);
+        docCount = getRecordCount("xml_documents");
+        assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
+        readSys = SystemMetadataManager.getInstance().get(newPid);
+        assertNull("The systemmetadata for pid " + newPid.getValue() + " should be null", readSys);
+        // Since our rollback code only delete metadata on both database and hashtore,
+        // We can still get the object by the hashstore api
+        // Deleting object happens in MN.create.
+        try (InputStream inputStream = D1NodeServiceTest.getStorage().retrieveObject(newPid)) {
+            assertNotNull(inputStream);
+        }
+        try {
+            D1NodeServiceTest.getStorage().retrieveMetadata(newPid);
+            fail("Test can't reach here since the pid should be removed.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .get(d1NodeServiceTest.getTestSession(), newPid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .getSystemMetadata(d1NodeServiceTest.getTestSession(), newPid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+    }
 
+    /**
+     * Test a failure of save process can roll back clearly when the action is update.
+     * @throws Exception IOUtils.closeQuietly(dataStream);
+     */
+    @Test
+    public void testUpdateRollBack() throws Exception {
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+
+        // Save a metadata inpustream in Metacat
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm(MD5);
+        checksum.setValue(test_eml_file_checksum);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testUpdate-" + System.currentTimeMillis());
+        FileInputStream dataStream = new FileInputStream(test_eml_file);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
+        dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
+        handler.save(sysmeta, true, MetacatHandler.Action.INSERT, eml_format,
+                     dataStream, null, user);
+        // Preserve the pid's system metadata
+        SystemMetadata originalPidMeta = SystemMetadataManager.getInstance().get(pid);
+        Date dateUploaded = originalPidMeta.getDateUploaded();
+        Date dateModified = originalPidMeta.getDateSysMetadataModified();
+        BigInteger version = originalPidMeta.getSerialVersion();
+
+        // original database counts:
+        long originSysCount = getRecordCount("systemmetadata");
+        long originIdCount = getRecordCount("identifier");
+        long originDocCount = getRecordCount("xml_documents");
+        SystemMetadata obsoletedMeta = SystemMetadataManager.getInstance().get(pid);
+        //Mock the update
+        Identifier newPid = new Identifier();
+        newPid.setValue("MetacatHandler.testUpdate2-" + System.currentTimeMillis());
+        dataStream = new FileInputStream(test_eml_file);
+        sysmeta = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
+        dataStream = new FileInputStream(test_eml_file);
+        ObjectInfo info = D1NodeServiceTest.storeData(dataStream, sysmeta);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        mcSystemMetadata.setChecksums(info.getHexDigests());
+        try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                 Mockito.mockStatic(DBConnectionPool.class)) {
+            DBConnection mockConnection = Mockito.mock(DBConnection.class,
+                                                       withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                .thenReturn(mockConnection);
+            Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+            try {
+                handler.save(mcSystemMetadata, true, Action.UPDATE, eml_format,
+                             dataStream, obsoletedMeta, user);
+                fail("Test shouldn't get there since the above method should throw an exception");
+            } catch (Exception e) {
+                assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
+            }
+        }
+        // The failure change nothing.
+        long sysCount = getRecordCount("systemmetadata");
+        assertEquals("The records in systemmetadata should be " + originSysCount,
+                     originSysCount, sysCount);
+        long idCount = getRecordCount("identifier");
+        assertEquals("The identifier count should be " + originIdCount, originIdCount, idCount);
+        long docCount = getRecordCount("xml_documents");
+        assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(newPid);
+        assertNull("The systemmetadata for pid " + newPid.getValue() + " should be null", readSys);
+        try (InputStream inputStream = D1NodeServiceTest.getStorage().retrieveObject(newPid)) {
+            assertNotNull(inputStream);
+        }
+        try {
+            D1NodeServiceTest.getStorage().retrieveMetadata(newPid);
+            fail("Test can't reach here since the pid should be removed.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .get(d1NodeServiceTest.getTestSession(), newPid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .getSystemMetadata(d1NodeServiceTest.getTestSession(), newPid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        // Make sure there are no changes on the system metadata of pid
+        assertNull(originalPidMeta.getObsoletedBy());
+        SystemMetadata readAgain = SystemMetadataManager.getInstance().get(pid);
+        assertNull(readAgain.getObsoletedBy());
+        assertEquals(dateUploaded, readAgain.getDateUploaded());
+        assertEquals(dateModified, readAgain.getDateSysMetadataModified());
+        assertEquals(version, readAgain.getSerialVersion());
+        MCSystemMetadataTest.compareValues(originalPidMeta, readAgain);
     }
 
 
