@@ -1271,12 +1271,14 @@ public class MetacatHandlerIT {
         Identifier newPid = new Identifier();
         newPid.setValue("MetacatHandler.testUpdate2-" + System.currentTimeMillis());
         dataStream = new FileInputStream(test_eml_file);
-        sysmeta = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
+        SystemMetadata sysmeta1 = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
         dataStream = new FileInputStream(test_eml_file);
-        ObjectInfo info = D1NodeServiceTest.storeData(dataStream, sysmeta);
+        ObjectInfo info = D1NodeServiceTest.storeData(dataStream, sysmeta1);
         MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
-        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta1);
         mcSystemMetadata.setChecksums(info.getHexDigests());
+        assertNull(mcSystemMetadata.getObsoletes());
+        assertNull(mcSystemMetadata.getObsoletes());
         try (MockedStatic<DBConnectionPool> mockDbConnPool =
                  Mockito.mockStatic(DBConnectionPool.class)) {
             DBConnection mockConnection = Mockito.mock(DBConnection.class,
@@ -1327,8 +1329,13 @@ public class MetacatHandlerIT {
         }
         // Make sure there are no changes on the system metadata of pid from db
         assertNull(originalPidMeta.getObsoletedBy());
+        assertNull(originalPidMeta.getObsoletes());
+        assertEquals(dateUploaded.getTime(), originalPidMeta.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), originalPidMeta.getDateSysMetadataModified().getTime());
+        assertEquals(version.longValue(), originalPidMeta.getSerialVersion().longValue());
         SystemMetadata readAgain = SystemMetadataManager.getInstance().get(pid);
         assertNull(readAgain.getObsoletedBy());
+        assertNull(readAgain.getObsoletes());
         assertEquals(dateUploaded.getTime(), readAgain.getDateUploaded().getTime());
         assertEquals(dateModified.getTime(), readAgain.getDateSysMetadataModified().getTime());
         assertEquals(version.longValue(), readAgain.getSerialVersion().longValue());

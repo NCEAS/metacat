@@ -327,6 +327,15 @@ public class SystemMetadataManagerIT {
         obsoleteById.setValue("foo");
         readSys.setObsoletedBy(obsoleteById);
         readSys.setSerialVersion(BigInteger.TEN);
+        assertEquals("foo", readSys.getObsoletedBy().getValue());
+        assertNull(originalPidMeta.getObsoletedBy());
+        assertEquals(BigInteger.TEN.intValue(), readSys.getSerialVersion().intValue());
+        assertEquals(version.intValue(), originalPidMeta.getSerialVersion().intValue());
+        assertNotEquals(version.intValue(), BigInteger.TEN.intValue());
+        assertEquals(dateModified.getTime(), readSys.getDateSysMetadataModified().getTime());
+        assertEquals(dateUploaded.getTime(), readSys.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), originalPidMeta.getDateSysMetadataModified().getTime());
+        assertEquals(dateUploaded.getTime(), originalPidMeta.getDateUploaded().getTime());
         try (MockedStatic<DBConnectionPool> mockDbConnPool =
                  Mockito.mockStatic(DBConnectionPool.class)) {
             DBConnection mockConnection = Mockito.mock(DBConnection.class,
@@ -363,8 +372,8 @@ public class SystemMetadataManagerIT {
         assertNull(sysmetaFromHash2.getObsoletedBy());
         assertEquals(dateUploaded.getTime(), sysmetaFromHash2.getDateUploaded().getTime());
         assertEquals(dateModified.getTime(), sysmetaFromHash2.getDateSysMetadataModified().getTime());
-        assertEquals(version.longValue(), sysmetaFromHash2.getSerialVersion().longValue());
-        assertNotEquals(BigInteger.TEN, sysmetaFromHash2.getSerialVersion().longValue());
+        assertEquals(version.intValue(), sysmetaFromHash2.getSerialVersion().intValue());
+        assertNotEquals(BigInteger.TEN.intValue(), sysmetaFromHash2.getSerialVersion().intValue());
         MCSystemMetadataTest.compareValues(originalPidMeta, sysmetaFromHash2);
 
     }
