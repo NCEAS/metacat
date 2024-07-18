@@ -1006,6 +1006,7 @@ public class DocumentImpl {
             // Check if the document exists.
             //this only archives a document from xml_documents to xml_revisions
             logMetacat.debug("DocumentImp.archive - archive the document " + accnum);
+            SystemMetadataManager.lock(guid);
             try {
                 conn.setAutoCommit(false);
                 // Copy the record to the xml_revisions table if it exists in
@@ -1044,6 +1045,7 @@ public class DocumentImpl {
                                                 + guid.getValue() + " since " + e.getMessage());
             }
         } finally {
+            SystemMetadataManager.unLock(guid);
             if (conn != null) {
                 try {
                     conn.setAutoCommit(true);
