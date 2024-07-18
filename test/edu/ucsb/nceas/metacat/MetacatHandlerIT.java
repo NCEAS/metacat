@@ -31,6 +31,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.TypeMarshaller;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -1324,14 +1325,23 @@ public class MetacatHandlerIT {
         } catch (Exception e) {
             assertTrue(e instanceof NotFound);
         }
-        // Make sure there are no changes on the system metadata of pid
+        // Make sure there are no changes on the system metadata of pid from db
         assertNull(originalPidMeta.getObsoletedBy());
         SystemMetadata readAgain = SystemMetadataManager.getInstance().get(pid);
         assertNull(readAgain.getObsoletedBy());
-        assertEquals(dateUploaded, readAgain.getDateUploaded());
-        assertEquals(dateModified, readAgain.getDateSysMetadataModified());
-        assertEquals(version, readAgain.getSerialVersion());
+        assertEquals(dateUploaded.getTime(), readAgain.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), readAgain.getDateSysMetadataModified().getTime());
+        assertEquals(version.longValue(), readAgain.getSerialVersion().longValue());
         MCSystemMetadataTest.compareValues(originalPidMeta, readAgain);
+        // Make sure there are no changes on the system metadata of pid from hashstore
+        InputStream metaInput = D1NodeServiceTest.getStorage().retrieveMetadata(pid);
+        SystemMetadata sysmetaFromHash =
+            TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, metaInput);
+        assertNull(sysmetaFromHash.getObsoletedBy());
+        assertEquals(dateUploaded.getTime(), sysmetaFromHash.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), sysmetaFromHash.getDateSysMetadataModified().getTime());
+        assertEquals(version.longValue(), sysmetaFromHash.getSerialVersion().longValue());
+        MCSystemMetadataTest.compareValues(originalPidMeta, sysmetaFromHash);
     }
 
 
