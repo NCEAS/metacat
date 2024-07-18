@@ -1007,6 +1007,12 @@ public class DocumentImpl {
             //this only archives a document from xml_documents to xml_revisions
             logMetacat.debug("DocumentImp.archive - archive the document " + accnum);
             SystemMetadataManager.lock(guid);
+            SystemMetadata backup = SystemMetadataManager.getInstance().get(guid);
+            if (backup == null) {
+                throw new InvalidRequest(
+                    "0000", "Can't archive this object " + guid.getValue()
+                    + " since the system metadata can't be found");
+            }
             try {
                 conn.setAutoCommit(false);
                 // Copy the record to the xml_revisions table if it exists in
@@ -1018,6 +1024,10 @@ public class DocumentImpl {
                     sysMeta.setArchived(true);
                     SystemMetadataManager.getInstance().store(sysMeta, changeDateModified,
                                                                 conn, sysMetaCheck);
+                } else {
+                    throw new InvalidRequest(
+                        "0000", "Can't archive this object " + guid.getValue()
+                        + " since the system metadata can't be found");
                 }
                 // only commit if all of this was successful
                 conn.commit();
@@ -1030,19 +1040,13 @@ public class DocumentImpl {
                 }
             } catch (Exception e) {
                 // rollback the archive action if there was an error
-                if (conn != null) {
-                    try {
-                        conn.rollback();
-                    } catch (SQLException sqe) {
-                        throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
-                                                        + guid.getValue() + " since "+ e.getMessage()
-                                                        + " Also the database cannot roll back since "
-                                                        + sqe.getMessage());
-                    }
-                }
-                logMetacat.error("DocumentImpl.archive -  Error: " + e.getMessage());
-                throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
-                                                + guid.getValue() + " since " + e.getMessage());
+                StringBuffer error = new StringBuffer();
+                error.append("DocumentImpl.archive - failed for ");
+                error.append(guid.getValue());
+                String errorString = SystemMetadataManager.storeRollBack(guid, e, conn, backup);
+                error.append(errorString);
+                logMetacat.error(error.toString());
+                throw new ServiceFailure("0000", errorString);
             }
         } finally {
             SystemMetadataManager.unLock(guid);
