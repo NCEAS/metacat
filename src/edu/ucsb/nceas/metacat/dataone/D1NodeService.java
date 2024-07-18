@@ -477,49 +477,6 @@ public abstract class D1NodeService {
         }
     }
 
-    /*
-     * Roll-back method when inserting data object fails.
-     */
-    protected void removeSystemMetaAndIdentifier(Identifier id) {
-        if (id != null) {
-            try {
-                SystemMetadataManager.getInstance().delete(id);
-                logMetacat.info("D1NodeService.removeSystemMeta - the system metadata of object "
-                                    + id.getValue() + " has been removed from db tables since "
-                                    + "the object creation failed");
-                if (IdentifierManager.getInstance().mappingExists(id.getValue())) {
-                    String localId = IdentifierManager.getInstance().getLocalId(id.getValue());
-                    IdentifierManager.getInstance().removeMapping(id.getValue(), localId);
-                    logMetacat.info(
-                        "D1NodeService.removeSystemMeta - the identifier " + id.getValue()
-                            + " and local id " + localId
-                            + " have been removed from the identifier table since the object "
-                            + "creation failed");
-                }
-            } catch (Exception e) {
-                logMetacat.warn(
-                    "D1NodeService.removeSysteMeta - can't decide if the mapping of  the pid "
-                        + id.getValue() + " exists on the identifier table.");
-            }
-        }
-    }
-
-    /*
-     * Roll-back method when inserting data object fails.
-     */
-    protected void removeSolrIndex(SystemMetadata sysMeta) {
-        sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-        sysMeta.setArchived(true);
-        //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-        try {
-            //MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, false);
-            MetacatSolrIndex.getInstance().submitDeleteTask(sysMeta.getIdentifier(), sysMeta);
-        } catch (Exception e) {
-            logMetacat.warn(
-                "Can't remove the solr index for pid " + sysMeta.getIdentifier().getValue());
-        }
-
-    }
 
 
     /**
