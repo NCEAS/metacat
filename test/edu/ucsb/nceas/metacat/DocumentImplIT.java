@@ -3,9 +3,12 @@ package edu.ucsb.nceas.metacat;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.Date;
 
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadataTest;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -19,6 +22,7 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.TypeMarshaller;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -38,13 +42,14 @@ import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.withSettings;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
+
 
 
 /**
@@ -652,6 +657,136 @@ public class DocumentImplIT {
     }
 
     /**
+     * Test the archive method when it fails
+     * @throws Exception
+     */
+    @Test
+    public void testArchiveFailure() throws Exception {
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("SystemMetadataManager.deleteData");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            Session session = d1NodeTest.getTestSession();
+            Identifier guid = new Identifier();
+            guid.setValue("DocumentImpl_archiveData." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta = D1NodeServiceTest
+                .createSystemMetadata(guid, session.getSubject(), object);
+            object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
+            //check record
+            assertTrue("The identifier table should have value",
+                       IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                       IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertTrue("The xml_access table should have value",
+                       IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationpolicy table should not have value",
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationstatus table should not have value",
+                        IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The smmediatypeproperties table should not have value",
+                        IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            String accnum = IdentifierManager.getInstance().getLocalId(guid.getValue());
+            String docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            assertTrue("The xml_documents table should have value",
+                       IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                      " docid like ?", docid));
+            assertFalse("The xml_revisions table should not have value",
+                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                       " docid like ?", docid));
+            InputStream input = MetacatHandler.read(accnum, null);
+            assertNotNull("The file should exist", input);
+            input.close();
+            SystemMetadata originSys = SystemMetadataManager.getInstance().get(guid);
+            Date originalDateUploaded = originSys.getDateUploaded();
+            Date originalDateModified = originSys.getDateSysMetadataModified();
+            BigInteger version = originSys.getSerialVersion();
+            assertFalse("System metadata should have archived false", originSys.getArchived());
+
+            //archive
+            String user = "test";
+            try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                     Mockito.mockStatic(DBConnectionPool.class)) {
+                DBConnection mockConnection = Mockito.mock(DBConnection.class,
+                                                           withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+                Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                    .thenReturn(mockConnection);
+                Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+                try {
+                    // Set changeDateModified false
+                    DocumentImpl.archive(accnum, guid, user, false,
+                                         SystemMetadataManager.SysMetaVersion.CHECKED);
+                    fail("Test shouldn't get there since the above method should throw an exception");
+                } catch (Exception e) {
+                    assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
+                }
+            }
+            //Nothing should change since the rollback
+            assertTrue("The identifier table should have value",
+                       IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertTrue("The systemmetadata table should have value",
+                       IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertTrue("The xml_access table should have value",
+                       IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                      " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationpolicy table should not have value",
+                        IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The smreplicationstatus table should not have value",
+                        IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            assertFalse("The smmediatypeproperties table should not have value",
+                        IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                       " guid like ?", guid.getValue()));
+            docid = DocumentUtil.getDocIdFromAccessionNumber(accnum);
+            assertTrue("The xml_documents table should have value",
+                        IntegrationTestUtils.hasRecord("xml_documents",
+                                                       dbConn, " docid like ?", docid));
+            assertFalse("The xml_revisions table should have value",
+                       IntegrationTestUtils.hasRecord("xml_revisions",
+                                                      dbConn, " docid like ?", docid));
+            input = MetacatHandler.read(accnum, null);
+            assertNotNull("The file should exist", input);
+            input.close();
+            SystemMetadata sysRead = SystemMetadataManager.getInstance().get(guid);
+            assertFalse("System metadata should have archived true", sysRead.getArchived());
+            Date currentDateModified = sysRead.getDateSysMetadataModified();
+            assertEquals("The current dateModified should equal the original one.",
+                         originalDateModified.getTime(), currentDateModified.getTime());
+            assertFalse(originSys.getArchived());
+            assertEquals(originalDateModified.getTime(), sysRead.getDateSysMetadataModified().getTime());
+            assertEquals(originalDateUploaded.getTime(), sysRead.getDateUploaded().getTime());
+            assertEquals(version.intValue(), sysRead.getSerialVersion().intValue());
+            MCSystemMetadataTest.compareValues(originSys, sysRead);
+            // Make sure there are no changes on the system metadata of pid from hashstore
+            InputStream metaInput = D1NodeServiceTest.getStorage().retrieveMetadata(guid);
+            SystemMetadata sysmetaFromHash =
+                TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, metaInput);
+            assertNull(sysmetaFromHash.getObsoletedBy());
+            assertFalse(sysmetaFromHash.getArchived());
+            assertEquals(originalDateUploaded.getTime(),
+                         sysmetaFromHash.getDateUploaded().getTime());
+            assertEquals(originalDateModified.getTime(),
+                         sysmetaFromHash.getDateSysMetadataModified().getTime());
+            assertEquals(version.longValue(), sysmetaFromHash.getSerialVersion().longValue());
+            MCSystemMetadataTest.compareValues(originSys, sysmetaFromHash);
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+    }
+
+    /**
      * Test the archive method with the parameters of SysMetaVersion.CHECKED/UNCHECKED
      * @throws Exception
      */
@@ -674,9 +809,15 @@ public class DocumentImplIT {
             Date original = new Date();
             SystemMetadata newSysmeta = SerializationUtils.clone(sysmeta);
             newSysmeta.setDateSysMetadataModified(original);
-            // The first and second call return different results
-            Mockito.when(mockManager.get(guid)).thenReturn(sysmeta).thenReturn(newSysmeta);
+            // The first, second and third call return different results
+            Mockito.when(mockManager.get(guid)).thenReturn(sysmeta).thenReturn(sysmeta)
+                .thenReturn(newSysmeta);
             Mockito.when(SystemMetadataManager.getInstance()).thenReturn(mockManager);
+            mock.when(() -> SystemMetadataManager.storeRollBack(any(Identifier.class),
+                                                                any(Exception.class),
+                                                                any(DBConnection.class),
+                                                                any(SystemMetadata.class)))
+                .thenReturn("hello");
             // Archive with checking should fail
             try {
                 // False means not to change the dateModified field
@@ -991,23 +1132,22 @@ public class DocumentImplIT {
             assertFalse("System metadata should have archived false", sys.getArchived());
 
             //Mock a failed archiving
-            try (MockedStatic<SystemMetadataManager> mock = Mockito
-                            .mockStatic(SystemMetadataManager.class, CALLS_REAL_METHODS)) {
-                SystemMetadataManager mockManager = Mockito.mock(SystemMetadataManager.class,
-                                 withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
-                Mockito.doThrow(ServiceFailure.class).when(mockManager)
-                           .store(any(SystemMetadata.class), anyBoolean(), any(DBConnection.class),
-                                   any(SystemMetadataManager.SysMetaVersion.class));
-                Mockito.when(SystemMetadataManager.getInstance()).thenReturn(mockManager);
+            try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                     Mockito.mockStatic(DBConnectionPool.class)) {
+                DBConnection mockConnection = Mockito.mock(DBConnection.class,
+                                                           withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+                Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                    .thenReturn(mockConnection);
+                Mockito.doThrow(SQLException.class).when(mockConnection).commit();
                 try {
                     String user = "test";
                     // Set changeDateModified true
                     DocumentImpl.archive(accnum, guid, user, true,
-                                        SystemMetadataManager.SysMetaVersion.CHECKED);
+                                         SystemMetadataManager.SysMetaVersion.CHECKED);
                     fail("The test can't be here since archive should throw an exception");
                 } catch (Exception e) {
                     assertTrue("The exception class should be ServiceFailure",
-                                                                      e instanceof ServiceFailure);
+                               e instanceof ServiceFailure);
                 }
             }
             //Records in the db shouldn't change

@@ -23,7 +23,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
