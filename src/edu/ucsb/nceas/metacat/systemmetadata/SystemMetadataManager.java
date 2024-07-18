@@ -444,6 +444,7 @@ public class SystemMetadataManager {
             DBConnection dbConn = null;
             int serialNumber = -1;
             try {
+                lock(id);
                  // Get a database connection from the pool
                 dbConn = DBConnectionPool.getDBConnection("SystemMetadataManager.delete");
                 serialNumber = dbConn.getCheckOutSerialNumber();
@@ -470,6 +471,7 @@ public class SystemMetadataManager {
                         + "the system metadata of guid - " + id.getValue()
                         + " can't be removed successfully since " + e.getMessage());
             } finally {
+                unLock(id);
                 if (dbConn != null) {
                     try {
                         dbConn.setAutoCommit(true);
@@ -816,6 +818,9 @@ public class SystemMetadataManager {
 
     /**
      * Delete the system metadata for the given guid with the DBConnection object
+     * Note: This method is not thread safe. Please put it into a try-finally statement.
+     * Before call this method, you need to call the lock method first in the `try` block and
+     * unLock method in the `finally` block.
      * @param guid  the identifier of the object whose system metadata will be deleted
      * @param dbConn  the DBConnection object which will execute the delete actions
      * @throws InvalidRequest
@@ -824,53 +829,46 @@ public class SystemMetadataManager {
     public void delete(Identifier guid, DBConnection dbConn) throws InvalidRequest, SQLException {
         if(guid != null && guid.getValue() != null && !guid.getValue().trim().equals("")
                                                                             && dbConn != null) {
-            try {
-                //Check if there is another thread is storing the system metadata for the same
-                //pid. If not, secure the lock; otherwise wait until the lock is available.
-                lock(guid);
-                logMetacat.debug("SystemMetadataManager.delete - delete the identifier"
-                                + guid.getValue());
-                // remove the smReplicationPolicy
-                String query = "delete from smReplicationPolicy where guid = ?";
-                try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
-                    stmt.setString(1, guid.getValue());
-                    logMetacat.debug("delete smReplicationPolicy: " + stmt.toString());
-                    stmt.executeUpdate();
-                }
-                // remove the smReplicationStatus
-                query = "delete from smReplicationStatus where guid = ?";
-                try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
-                    stmt.setString(1, guid.getValue());
-                    logMetacat.debug("delete smReplicationStatus: " + stmt.toString());
-                    stmt.executeUpdate();
-                }
-                // remove the smmediatypeproperties
-                query = "delete from smMediaTypeProperties where guid = ?";
-                try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
-                    stmt.setString(1, guid.getValue());
-                    logMetacat.debug("delete smMediaTypeProperties: " + stmt.toString());
-                    stmt.executeUpdate();
-                }
-                // remove the xml_access
-                query = "delete from xml_access where guid = ?";
-                try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
-                    stmt.setString(1, guid.getValue());
-                    logMetacat.debug("delete xml_access: " + stmt.toString());
-                    stmt.executeUpdate();
-                }
-                // remove the checksums table
-                ChecksumsManager manager = new ChecksumsManager();
-                manager.delete(guid, dbConn);
+            logMetacat.debug("SystemMetadataManager.delete - delete the identifier"
+                            + guid.getValue());
+            // remove the smReplicationPolicy
+            String query = "delete from smReplicationPolicy where guid = ?";
+            try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
+                stmt.setString(1, guid.getValue());
+                logMetacat.debug("delete smReplicationPolicy: " + stmt.toString());
+                stmt.executeUpdate();
+            }
+            // remove the smReplicationStatus
+            query = "delete from smReplicationStatus where guid = ?";
+            try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
+                stmt.setString(1, guid.getValue());
+                logMetacat.debug("delete smReplicationStatus: " + stmt.toString());
+                stmt.executeUpdate();
+            }
+            // remove the smmediatypeproperties
+            query = "delete from smMediaTypeProperties where guid = ?";
+            try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
+                stmt.setString(1, guid.getValue());
+                logMetacat.debug("delete smMediaTypeProperties: " + stmt.toString());
+                stmt.executeUpdate();
+            }
+            // remove the xml_access
+            query = "delete from xml_access where guid = ?";
+            try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
+                stmt.setString(1, guid.getValue());
+                logMetacat.debug("delete xml_access: " + stmt.toString());
+                stmt.executeUpdate();
+            }
+            // remove the checksums table
+            ChecksumsManager manager = new ChecksumsManager();
+            manager.delete(guid, dbConn);
 
-                // remove main system metadata entry
-                query = "delete from " + IdentifierManager.TYPE_SYSTEM_METADATA + " where guid = ? ";
-                try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
-                    stmt.setString(1, guid.getValue());
-                    logMetacat.debug("delete system metadata: " + stmt.toString());
-                    stmt.executeUpdate();
-                }
-            } finally {
-                unLock(guid);
+            // remove main system metadata entry
+            query = "delete from " + IdentifierManager.TYPE_SYSTEM_METADATA + " where guid = ? ";
+            try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
+                stmt.setString(1, guid.getValue());
+                logMetacat.debug("delete system metadata: " + stmt.toString());
+                stmt.executeUpdate();
             }
 
         } else {
