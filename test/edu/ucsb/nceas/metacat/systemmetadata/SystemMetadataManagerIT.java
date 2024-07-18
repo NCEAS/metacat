@@ -1,13 +1,18 @@
 package edu.ucsb.nceas.metacat.systemmetadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
@@ -17,6 +22,7 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.TypeMarshaller;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,13 +32,19 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.withSettings;
 
 
 public class SystemMetadataManagerIT {
@@ -229,6 +241,132 @@ public class SystemMetadataManagerIT {
                                         storedSysmeta.getDateSysMetadataModified().getTime());
         assertEquals("The DateUploaded field shouldn't change", originUploadDate,
                                         storedSysmeta.getDateUploaded().getTime());
+    }
+
+    /**
+     * Test the rollback feature for creating
+     * @throws Exception
+     */
+    @Test
+    public void testRollBackCreate() throws Exception {
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testUpdate-" + System.currentTimeMillis());
+        InputStream object =
+            new ByteArrayInputStream("testtestRollBackCreate".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        //Mock the store method failed when Metacat does a database commit
+        try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                 Mockito.mockStatic(DBConnectionPool.class)) {
+            DBConnection mockConnection = Mockito.mock(
+                DBConnection.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                .thenReturn(mockConnection);
+            Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+            try {
+                SystemMetadataManager.lock(pid);
+                SystemMetadataManager.getInstance().store(sysmeta);
+                fail("Test shouldn't get there since the above method should throw an exception");
+            } catch (Exception e) {
+                assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
+            } finally {
+                SystemMetadataManager.unLock(pid);
+            }
+        }
+        // The system metadata read from db should be null
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
+        assertNull("The systemmetadata for pid " + pid.getValue() + " should be null", readSys);
+        try {
+            // Reading system metadata from hashstore should throw a FileNotFoundException
+            D1NodeServiceTest.getStorage().retrieveMetadata(pid);
+            fail("Test can't reach here since the pid should be removed.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+    }
+
+    /**
+     * Test the rollback feature for updating
+     * @throws Exception
+     */
+    @Test
+    public void testRollBackUpdate() throws Exception {
+        // First to create system metadata successfully
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testUpdate-" + System.currentTimeMillis());
+        InputStream object =
+            new ByteArrayInputStream("testtestRollBackCreate".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        SystemMetadataManager.getInstance().store(sysmeta);
+        // Preserve the pid's system metadata
+        SystemMetadata originalPidMeta = SystemMetadataManager.getInstance().get(pid);
+        Date dateUploaded = originalPidMeta.getDateUploaded();
+        Date dateModified = originalPidMeta.getDateSysMetadataModified();
+        BigInteger version = originalPidMeta.getSerialVersion();
+        // The system metadata read from db should not be null
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
+        assertNotNull("The systemmetadata for pid " + pid.getValue() + " should be null", readSys);
+        // Reading system metadata from hashstore and compare it to the database one
+        InputStream metaInput = D1NodeServiceTest.getStorage().retrieveMetadata(pid);
+        SystemMetadata sysmetaFromHash =
+            TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, metaInput);
+        assertNull(sysmetaFromHash.getObsoletedBy());
+        assertEquals(dateUploaded.getTime(), sysmetaFromHash.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), sysmetaFromHash.getDateSysMetadataModified().getTime());
+        assertEquals(version.longValue(), sysmetaFromHash.getSerialVersion().longValue());
+        MCSystemMetadataTest.compareValues(originalPidMeta, sysmetaFromHash);
+
+        //Mock a failed update
+        Identifier obsoleteById = new Identifier();
+        obsoleteById.setValue("foo");
+        readSys.setObsoletedBy(obsoleteById);
+        readSys.setSerialVersion(BigInteger.TEN);
+        try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                 Mockito.mockStatic(DBConnectionPool.class)) {
+            DBConnection mockConnection = Mockito.mock(DBConnection.class,
+                                                       withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                .thenReturn(mockConnection);
+            Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+            try {
+                SystemMetadataManager.lock(pid);
+                SystemMetadataManager.getInstance().store(readSys);
+                fail("Test shouldn't get there since the above method should throw an exception");
+            } catch (Exception e) {
+                assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
+            } finally {
+                SystemMetadataManager.unLock(pid);
+            }
+        }
+        // The failure change nothing.
+        // Make sure there are no changes on the system metadata of pid from db
+        assertNull(originalPidMeta.getObsoletedBy());
+        SystemMetadata readAgain = SystemMetadataManager.getInstance().get(pid);
+        assertNull(readAgain.getObsoletedBy());
+        assertEquals(dateUploaded.getTime(), readAgain.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), readAgain.getDateSysMetadataModified().getTime());
+        assertEquals(version.longValue(), readAgain.getSerialVersion().longValue());
+        assertNotEquals(BigInteger.TEN, readAgain.getSerialVersion().longValue());
+        MCSystemMetadataTest.compareValues(originalPidMeta, readAgain);
+        // Make sure there are no changes on the system metadata of pid from hashstore
+        SystemMetadata sysmetaFromHash2;
+        try (InputStream metaInput2 = D1NodeServiceTest.getStorage().retrieveMetadata(pid)) {
+            sysmetaFromHash2 = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                                      metaInput2);
+        }
+        assertNull(sysmetaFromHash2.getObsoletedBy());
+        assertEquals(dateUploaded.getTime(), sysmetaFromHash2.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), sysmetaFromHash2.getDateSysMetadataModified().getTime());
+        assertEquals(version.longValue(), sysmetaFromHash2.getSerialVersion().longValue());
+        assertNotEquals(BigInteger.TEN, sysmetaFromHash2.getSerialVersion().longValue());
+        MCSystemMetadataTest.compareValues(originalPidMeta, sysmetaFromHash2);
+
     }
 
 }
