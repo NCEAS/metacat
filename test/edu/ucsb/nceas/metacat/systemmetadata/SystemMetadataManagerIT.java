@@ -217,8 +217,10 @@ public class SystemMetadataManagerIT {
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
         // false means not to change the modification date
+        SystemMetadataManager.lock(guid);
         SystemMetadataManager.getInstance().store(sysmeta, false,
                                                       SystemMetadataManager.SysMetaVersion.CHECKED);
+        SystemMetadataManager.unLock(guid);
         SystemMetadata storedSysmeta = SystemMetadataManager.getInstance().get(guid);
         assertEquals("The DateSysMetadataModified field shouldn't change", originModificationDate,
                                         storedSysmeta.getDateSysMetadataModified().getTime());
@@ -229,17 +231,22 @@ public class SystemMetadataManagerIT {
         originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         try {
             // True means Metacat needs to change the modification date
+            SystemMetadataManager.lock(guid);
             SystemMetadataManager.getInstance().store(sysmeta, true,
                     SystemMetadataManager.SysMetaVersion.CHECKED);
             fail("Test can't get here since the modification date in the new system metadata "
                   + " does not match the one in the system.");
         } catch (Exception e) {
             assertTrue( e instanceof InvalidRequest);
+        } finally {
+            SystemMetadataManager.unLock(guid);
         }
         // Skip checking version will make the save method work
         // True means Metacat needs to change the modification date
+        SystemMetadataManager.lock(guid);
         SystemMetadataManager.getInstance().store(sysmeta, true,
                                             SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        SystemMetadataManager.unLock(guid);
         storedSysmeta = SystemMetadataManager.getInstance().get(guid);
         assertNotEquals("The DateSysMetadataModified field should change.", originModificationDate,
                                         storedSysmeta.getDateSysMetadataModified().getTime());

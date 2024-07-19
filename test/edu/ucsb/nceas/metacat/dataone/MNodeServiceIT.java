@@ -4757,8 +4757,9 @@ public class MNodeServiceIT {
             long originUploadDate = storedSysMeta.getDateUploaded().getTime();
             SystemMetadata newSysMeta = SerializationUtils.clone(storedSysMeta);
             storedSysMeta.setAuthoritativeMemberNode(node);
+            SystemMetadataManager.lock(retPid);
             SystemMetadataManager.getInstance().store(storedSysMeta, false, SysMetaVersion.CHECKED);
-
+            SystemMetadataManager.unLock(retPid);
             NodeList cnList = new NodeList();
             cnList.addNode(cnNode);
             Mockito.when(mockCN.getNodeId()).thenReturn(node);
@@ -4781,7 +4782,9 @@ public class MNodeServiceIT {
             NodeReference node2 = new NodeReference();
             node2.setValue("urn:node:foo");
             storedSysMeta.setAuthoritativeMemberNode(node2);
+            SystemMetadataManager.lock(retPid);
             SystemMetadataManager.getInstance().store(storedSysMeta, false, SysMetaVersion.CHECKED);
+            SystemMetadataManager.unLock(retPid);
             try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
                 newSysMeta.setDateSysMetadataModified(new Date());
                 originModificationDate = newSysMeta.getDateSysMetadataModified().getTime();
@@ -4800,7 +4803,9 @@ public class MNodeServiceIT {
             NodeReference node3 = new NodeReference();
             node3.setValue("urn:node:foo1");
             storedSysMeta.setAuthoritativeMemberNode(node3);
+            SystemMetadataManager.lock(retPid);
             SystemMetadataManager.getInstance().store(storedSysMeta, false, SysMetaVersion.CHECKED);
+            SystemMetadataManager.unLock(retPid);
             try (MockedStatic<D1Client> mockD1Client = Mockito.mockStatic(D1Client.class)) {
                 newSysMeta.setDateSysMetadataModified(new Date());
                 originModificationDate = newSysMeta.getDateSysMetadataModified().getTime();
