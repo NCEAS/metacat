@@ -146,6 +146,7 @@ public class CNodeService extends D1NodeService
 
         SystemMetadata systemMetadata = null;
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
                     systemMetadata = SystemMetadataManager.getInstance().get(pid);
@@ -211,6 +212,8 @@ public class CNodeService extends D1NodeService
         } catch (RuntimeException e) {
             throw new ServiceFailure("4882", e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
@@ -563,9 +566,6 @@ public class CNodeService extends D1NodeService
         }
 
 
-        // The lock to be used for this identifier
-        //Lock lock = null;
-
         // get the subject
         Subject subject = session.getSubject();
 
@@ -580,6 +580,7 @@ public class CNodeService extends D1NodeService
 
         SystemMetadata systemMetadata = null;
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
                     systemMetadata = SystemMetadataManager.getInstance().get(pid);
@@ -643,6 +644,8 @@ public class CNodeService extends D1NodeService
 
         } catch (RuntimeException e) {
             throw new ServiceFailure("4882", e.getMessage());
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
@@ -1386,16 +1389,11 @@ public class CNodeService extends D1NodeService
         throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, NotImplemented,
         InvalidRequest, VersionMismatch {
 
-        // The lock to be used for this identifier
-        //Lock lock = null;
 
         // do we have a valid pid?
         if (pid == null || pid.getValue().trim().equals("")) {
             throw new InvalidRequest("4442", "The provided identifier was invalid.");
         }
-
-        // get the subject
-        Subject subject = session.getSubject();
 
         String serviceFailureCode = "4490";
         String notFoundCode = "4460";
@@ -1406,17 +1404,18 @@ public class CNodeService extends D1NodeService
         if (HeadOfSid != null) {
             pid = HeadOfSid;
         }
-        SystemMetadata systemMetadata =
-            getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode,
-                                    needDeleteInfo);
-        //SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,
-        // invalidRequestCode);
 
-        D1AuthHelper authDel =
-            new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
-        authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
 
         try {
+            SystemMetadataManager.lock(pid);
+            SystemMetadata systemMetadata =
+                getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode,
+                                        needDeleteInfo);
+
+
+            D1AuthHelper authDel =
+                new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
+            authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
             try {
                 // does the request have the most current system metadata?
                 if (systemMetadata.getSerialVersion().longValue() != serialVersion) {
@@ -1471,6 +1470,8 @@ public class CNodeService extends D1NodeService
         } catch (RuntimeException e) {
             throw new ServiceFailure("4490", e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return pid;
@@ -1777,6 +1778,7 @@ public class CNodeService extends D1NodeService
         authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
 
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 systemMetadata = SystemMetadataManager.getInstance().get(pid);
                 if (systemMetadata == null) {
@@ -1839,6 +1841,8 @@ public class CNodeService extends D1NodeService
         } catch (RuntimeException e) {
             throw new ServiceFailure("4430", e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         // TODO: how do we know if the map was persisted?
