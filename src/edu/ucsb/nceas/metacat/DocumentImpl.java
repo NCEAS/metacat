@@ -972,6 +972,7 @@ public class DocumentImpl {
      * Archive an object. Set the archived flag true, also move the object from the xml_documents
      * table to the xml_revisions table if it exists in the xml_documents table.
      * This method will submit the reindex task as well.
+     * Note: this method doesn't lock identifiers for storing the system metadata
      * @param accnum  the local id (including the revision) will be applied.
      * @param guid  the dataone identifier associated with the given accnum
      * @param user  the identity of operator
@@ -1005,7 +1006,6 @@ public class DocumentImpl {
             // Check if the document exists.
             //this only archives a document from xml_documents to xml_revisions
             logMetacat.debug("DocumentImp.archive - archive the document " + accnum);
-            SystemMetadataManager.lock(guid);
             SystemMetadata backup = SystemMetadataManager.getInstance().get(guid);
             if (backup == null) {
                 throw new InvalidRequest(
@@ -1048,7 +1048,6 @@ public class DocumentImpl {
                 throw new ServiceFailure("0000", errorString);
             }
         } finally {
-            SystemMetadataManager.unLock(guid);
             if (conn != null) {
                 try {
                     conn.setAutoCommit(true);

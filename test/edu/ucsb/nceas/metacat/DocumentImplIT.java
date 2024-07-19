@@ -615,8 +615,10 @@ public class DocumentImplIT {
             //archive
             String user = "test";
             // Set changeDateModified false
+            SystemMetadataManager.lock(guid);
             DocumentImpl.archive(accnum, guid, user, false,
                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
+            SystemMetadataManager.unLock(guid);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                 " guid like ?", guid.getValue()));
@@ -723,10 +725,12 @@ public class DocumentImplIT {
                 Mockito.doThrow(SQLException.class).when(mockConnection).commit();
                 try {
                     // Set changeDateModified false
+                    SystemMetadataManager.lock(guid);
                     DocumentImpl.archive(accnum, guid, user, false,
                                          SystemMetadataManager.SysMetaVersion.CHECKED);
                     fail("Test shouldn't get there since the above method should throw an exception");
                 } catch (Exception e) {
+                    SystemMetadataManager.unLock(guid);
                     assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
                 }
             }
@@ -821,16 +825,20 @@ public class DocumentImplIT {
             // Archive with checking should fail
             try {
                 // False means not to change the dateModified field
+                SystemMetadataManager.lock(guid);
                 DocumentImpl.archive(accnum, guid, "test", false,
                                     SystemMetadataManager.SysMetaVersion.CHECKED);
                 fail("Test cannot get there since the dataOfModified was change during archive");
             } catch (Exception e) {
+                SystemMetadataManager.unLock(guid);
                 assertTrue( e instanceof ServiceFailure);
             }
             // Using UNCHECKED, archive should succeed.
             // False means not to change the dateModified field
+            SystemMetadataManager.lock(guid);
             DocumentImpl.archive(accnum, guid, "test", false,
                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
+            SystemMetadataManager.unLock(guid);
         }
 
     }
@@ -967,8 +975,10 @@ public class DocumentImplIT {
             //Archive
             String user = "test";
             // Set changeDateModified true
+            SystemMetadataManager.lock(guid);
             DocumentImpl.archive(accnum, guid, user, true,
                                 SystemMetadataManager.SysMetaVersion.UNCHECKED);
+            SystemMetadataManager.unLock(guid);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                  " guid like ?", guid.getValue()));
@@ -1013,8 +1023,10 @@ public class DocumentImplIT {
             assertFalse("System metadata should have archived false", sys.getArchived());
 
             // Set changeDateModified true
+            SystemMetadataManager.lock(newPid);
             DocumentImpl.archive(accnum2, newPid, user, true,
                                 SystemMetadataManager.SysMetaVersion.CHECKED);
+            SystemMetadataManager.unLock(newPid);
             //check record
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -1142,10 +1154,12 @@ public class DocumentImplIT {
                 try {
                     String user = "test";
                     // Set changeDateModified true
+                    SystemMetadataManager.lock(guid);
                     DocumentImpl.archive(accnum, guid, user, true,
                                          SystemMetadataManager.SysMetaVersion.CHECKED);
                     fail("The test can't be here since archive should throw an exception");
                 } catch (Exception e) {
+                    SystemMetadataManager.unLock(guid);
                     assertTrue("The exception class should be ServiceFailure",
                                e instanceof ServiceFailure);
                 }
