@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.exceptions.MarshallingException;
@@ -51,14 +52,24 @@ public class SystemMetadataManager {
     private static SystemMetadataManager manager = null;
     private final static int TIME_OUT_MILLISEC = 1000;
     private final static ArrayList<String> lockedIds = new ArrayList<String>(100);
-
+    // A flag indicates If Metacat needs to check a pid
+    // is in the lock before modify the system metadata.
+    private static boolean checkLock = true;
     public enum SysMetaVersion {CHECKED, UNCHECKED};
 
     /**
      * Private constructor
      */
     private SystemMetadataManager() {
-
+        try {
+            checkLock = Boolean.parseBoolean(
+                PropertyService.getProperty("systemMetadataManager.checkLock"));
+        } catch (Exception e) {
+            logMetacat.warn(
+                "Metacat can't get the value from property systemMetadataManager.checkLock and it"
+                    + " will use its "
+                    + "default value " + checkLock);
+        }
     }
     /**
      * Get the singleton SystemMetadataManager instance
@@ -200,6 +211,14 @@ public class SystemMetadataManager {
         if (sysmeta != null) {
             Identifier pid = sysmeta.getIdentifier();
             if (pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
+                if(checkLock && !lockedIds.contains(pid.getValue())) {
+                    throw new ServiceFailure(
+                        "0000",
+                        "The pid " + pid.getValue() + " is not locked before " + "storing its "
+                            + "systemmetadata. There is a bug in the code. The "
+                            + "SystemMetadataManager"
+                            + ".lock" + " method must be called before call the store method");
+                }
                 try {
                     //Check if the system metadata is based on the latest version
                     try {
@@ -875,5 +894,12 @@ public class SystemMetadataManager {
             throw new InvalidRequest("0000", "SystemMetadataManager.delete - the given pid or "
                                     + " the DBConnection object can't be null.");
         }
+    }
+
+    /**
+     * Reset the manager instance to null. This is for testing only!
+     */
+    protected void refreshInstance() {
+        manager = null;
     }
 }

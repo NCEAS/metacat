@@ -506,8 +506,10 @@ public class MetacatHandlerIT {
         dataStream = new FileInputStream(another_test_file);
         // True means changing the modification date in the system metadata
         D1NodeServiceTest.storeData(dataStream, newSys);
+        SystemMetadataManager.lock(pid);
         handler.save(newSys, true, MetacatHandler.Action.UPDATE,
                      DocumentImpl.BIN, dataStream, sysmeta, user);
+        SystemMetadataManager.unLock(pid);
         // Check the old object
         readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
@@ -630,8 +632,10 @@ public class MetacatHandlerIT {
         dataStream = new FileInputStream(test_eml_essdive_file);
         D1NodeServiceTest.storeData(dataStream, newSys);
         // False means not change the modification date in the system metadata
+        SystemMetadataManager.lock(pid);
         handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                      eml_format, dataStream, sysmeta, user);
+        SystemMetadataManager.unLock(pid);
         // Check the objects
         readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
@@ -776,8 +780,10 @@ public class MetacatHandlerIT {
         dataStream = new FileInputStream(another_test_file);
         D1NodeServiceTest.storeData(dataStream, newSys);
         // False means not changing the modification date in system metadata
+        SystemMetadataManager.lock(pid);
         handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                      DocumentImpl.BIN, dataStream, sysmeta, user);
+        SystemMetadataManager.unLock(pid);
         // Since newSys is not an MCSystemMetadata object, the checksum is not stored
         checksums = manager.get(newSys.getIdentifier());
         assertEquals(0, checksums.size());
@@ -903,8 +909,10 @@ public class MetacatHandlerIT {
         // Recreate the stream since it was closed in the generating sysmeta method
         dataStream = new FileInputStream(test_eml_essdive_file);
         D1NodeServiceTest.storeData(dataStream, newSys);
+        SystemMetadataManager.lock(pid);
         handler.save(newSys, true, MetacatHandler.Action.UPDATE,
                      eml_format, dataStream, sysmeta, user);
+        SystemMetadataManager.unLock(pid);
         // Check the objects
         readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "

@@ -8,7 +8,9 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
@@ -34,6 +36,8 @@ import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+
+import javax.servlet.ServletContext;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -388,6 +392,56 @@ public class SystemMetadataManagerIT {
         assertEquals(version.intValue(), sysmetaFromHash2.getSerialVersion().intValue());
         assertNotEquals(BigInteger.TEN.intValue(), sysmetaFromHash2.getSerialVersion().intValue());
         MCSystemMetadataTest.compareValues(originalPidMeta, sysmetaFromHash2);
+
+    }
+
+    /**
+     * Test the case ckeckLock == true. The store method will fail if we don't call the lock method
+     * before it.
+     * @throws Exception
+     */
+    @Test
+    public void testCheckLock() throws Exception {
+        try {
+            String user = "http://orcid.org/1234/4567";
+            Subject owner = new Subject();
+            owner.setValue(user);
+            Identifier pid = new Identifier();
+            pid.setValue("SystemMetadataManager.testCheckLock-" + System.currentTimeMillis());
+            InputStream object =
+                new ByteArrayInputStream("testCheckLock".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+            SystemMetadataManager.getInstance().store(sysmeta);
+        } catch (Exception e) {
+            assertTrue(e instanceof ServiceFailure);
+            assertTrue(e.getMessage().contains("lock"));
+        }
+    }
+
+    /**
+     * Test the case that ckeckLock == false. Even without calling SystemMetadataManager.lock,
+     * the store method should work since we set the checkLock value false.
+     * @throws Exception
+     */
+    @Test
+    public void testCheckLockFalse() throws Exception {
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("SystemMetadataManager.testCheckLockFalse-" + System.currentTimeMillis());
+        InputStream object =
+            new ByteArrayInputStream("testCheckLockFalse".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        Properties withProperties = new Properties();
+        SystemMetadataManager.getInstance().refreshInstance();
+        withProperties.setProperty("systemMetadataManager.checkLock", "false");
+        try (MockedStatic<PropertyService> mock = LeanTestUtils.initializeMockPropertyService(
+            withProperties)) {
+            mock.when(() -> PropertyService.getInstance((ServletContext) any()))
+                .thenReturn(Mockito.mock(PropertyService.class));
+            SystemMetadataManager.getInstance().store(sysmeta);
+        }
 
     }
 
