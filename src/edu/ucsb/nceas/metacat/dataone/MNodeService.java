@@ -3174,10 +3174,10 @@ public class MNodeService extends D1NodeService
                 "No Session - could not authorize for updating system metadata."
                     + "  If you are not logged in, please do so and retry the request.");
         }
+        boolean success = false;
         try {
             SystemMetadataManager.lock(pid);
             //update the system metadata locally
-            boolean success = false;
             SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
             if (currentSysmeta == null) {
                 throw new InvalidRequest(
