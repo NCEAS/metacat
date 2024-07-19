@@ -3119,6 +3119,7 @@ public class MNodeService extends D1NodeService
 
         if (allowed) {
             try {
+                SystemMetadataManager.lock(pid);
                 SystemMetadata sysmeta = SystemMetadataManager.getInstance().get(pid);
                 //check the if it has enough quota if th quota service is enabled
                 String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
@@ -3134,6 +3135,8 @@ public class MNodeService extends D1NodeService
                     "The user doesn't have enough quota to perform this request " + e.getMessage());
             } catch (InvalidRequest ee) {
                 throw new InvalidToken("2913", "The request is invalid - " + ee.getMessage());
+            } finally {
+                SystemMetadataManager.unLock(pid);
             }
         } else {
             throw new NotAuthorized("1320", "The provided identity does not have "
