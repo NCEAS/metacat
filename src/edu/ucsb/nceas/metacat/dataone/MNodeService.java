@@ -2081,17 +2081,22 @@ public class MNodeService extends D1NodeService
             // well, certainly not authorized for public read!
         }
         if (!isPublic) {
-            if (sysmeta.getAccessPolicy() != null) {
-                sysmeta.getAccessPolicy().addAllow(publicRule);
-            } else {
-                AccessPolicy policy = new AccessPolicy();
-                policy.addAllow(publicRule);
-                sysmeta.setAccessPolicy(policy);
-            }
-            if (needIndex) {
-                // Set needToUpdateModificationTime true
-                this.updateSystemMetadata(sysmeta, true,
-                                          SystemMetadataManager.SysMetaVersion.CHECKED);
+            try {
+                SystemMetadataManager.lock(pid);
+                if (sysmeta.getAccessPolicy() != null) {
+                    sysmeta.getAccessPolicy().addAllow(publicRule);
+                } else {
+                    AccessPolicy policy = new AccessPolicy();
+                    policy.addAllow(publicRule);
+                    sysmeta.setAccessPolicy(policy);
+                }
+                if (needIndex) {
+                    // Set needToUpdateModificationTime true
+                    this.updateSystemMetadata(sysmeta, true,
+                                              SystemMetadataManager.SysMetaVersion.CHECKED);
+                }
+            } finally {
+                SystemMetadataManager.unLock(pid);
             }
         }
 
