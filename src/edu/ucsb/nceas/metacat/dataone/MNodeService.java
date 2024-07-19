@@ -1833,184 +1833,195 @@ public class MNodeService extends D1NodeService
 
         D1AuthHelper authDel = new D1AuthHelper(request, pid, "1331", serviceFailureCode);
         authDel.doCNOnlyAuthorization(session);
-        
-        // compare what we have locally to what is sent in the change notification
+
         try {
-            currentLocalSysMeta = SystemMetadataManager.getInstance().get(pid);
-        } catch (RuntimeException e) {
-            String msg = "SystemMetadata for pid " + pid.getValue()
-                + " couldn't be updated because it couldn't be found locally: "
-                + e.getMessage();
-            logMetacat.error(msg);
-            ServiceFailure sf = new ServiceFailure("1333", msg);
-            sf.initCause(e);
-            throw sf;
-        }
-
-        if (currentLocalSysMeta == null) {
-            throw new InvalidRequest("1334",
-                "We can't find the system metadata in the node for the id " + pid.getValue());
-        }
-        if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion) {
+            SystemMetadataManager.lock(pid);
+            // compare what we have locally to what is sent in the change notification
             try {
-                this.cn = D1Client.getCN();
-                newSysMeta = cn.getSystemMetadata(null, pid);
-            } catch (NotFound e) {
-                // huh? you just said you had it
-                String msg = "On updating the local copy of system metadata " + "for pid "
-                    + pid.getValue() + ", the CN reports it is not found."
-                    + " The error message was: " + e.getMessage();
-                logMetacat.error(msg);
-                //ServiceFailure sf = new ServiceFailure("1333", msg);
-                InvalidRequest sf = new InvalidRequest("1334", msg);
-                sf.initCause(e);
-                throw sf;
-            }
-
-            //check about the sid in the system metadata
-            Identifier newSID = newSysMeta.getSeriesId();
-            if (newSID != null) {
-                if (!isValidIdentifier(newSID)) {
-                    throw new InvalidRequest("1334",
-                        "The series identifier in the new system metadata is invalid.");
-                }
-                Identifier currentSID = currentLocalSysMeta.getSeriesId();
-                if (currentSID != null && currentSID.getValue() != null) {
-                    if (!newSID.getValue().equals(currentSID.getValue())) {
-                        //newSID doesn't match the currentSID. The newSID shouldn't be used.
-                        try {
-                            if (IdentifierManager.getInstance()
-                                .identifierExists(newSID.getValue())) {
-                                throw new InvalidRequest("1334",
-                                    "The series identifier " + newSID.getValue()
-                                        + " in the new system metadata has been used by "
-                                        + "another object.");
-                            }
-                        } catch (SQLException sql) {
-                            throw new ServiceFailure("1333",
-                                "Couldn't determine if the SID " + newSID.getValue()
-                                    + " in the system metadata exists in the node since "
-                                    + sql.getMessage());
-                        }
-
-                    }
-                } else {
-                    //newSID shouldn't be used
-                    try {
-                        if (IdentifierManager.getInstance()
-                            .identifierExists(newSID.getValue())) {
-                            throw new InvalidRequest("1334",
-                                "The series identifier " + newSID.getValue()
-                                    + " in the new system metadata has been used by another "
-                                    + "object.");
-                        }
-                    } catch (SQLException sql) {
-                        throw new ServiceFailure("1333",
-                            "Couldn't determine if the SID " + newSID.getValue()
-                                + " in the system metadata exists in the node since "
-                                + sql.getMessage());
-                    }
-                }
-            }
-            // update the local copy of system metadata for the pid
-            try {
-                if (needCheckAuthoriativeNode) {
-                    //this is for the v2 api.
-                    if (isAuthoritativeNode(pid)) {
-                        //this is the authoritative node, so we only accept replica and
-                        // serial version
-                        logMetacat.debug(
-                            "MNodeService.systemMetadataChanged - this is the authoritative "
-                                + "node for the pid " + pid.getValue());
-                        List<Replica> replicas = newSysMeta.getReplicaList();
-                        newSysMeta = currentLocalSysMeta;
-                        newSysMeta.setSerialVersion(BigInteger.valueOf(serialVersion));
-                        newSysMeta.setReplicaList(replicas);
-                    } else {
-                        //we need to archive the object in the replica node
-                        logMetacat.debug("MNodeService.systemMetadataChanged - this is NOT the "
-                            + "authoritative node for the pid " + pid.getValue());
-                        logMetacat.debug(
-                            "MNodeService.systemMetadataChanged - the new value of archive is "
-                                + newSysMeta.getArchived() + " for the pid " + pid.getValue());
-                        logMetacat.debug(
-                            "MNodeService.systemMetadataChanged - the local value of archive "
-                                + "is " + currentLocalSysMeta.getArchived() + " for the pid "
-                                + pid.getValue());
-                        if (newSysMeta.getArchived() != null && newSysMeta.getArchived() == true
-                            && ((currentLocalSysMeta.getArchived() != null
-                            && currentLocalSysMeta.getArchived() == false)
-                            || currentLocalSysMeta.getArchived() == null)) {
-                            logMetacat.debug(
-                                "MNodeService.systemMetadataChanged - start to archive object "
-                                    + pid.getValue());
-                            boolean logArchive = false;
-                            boolean needUpdateModificationDate = false;
-                            try {
-                                archiveObject(logArchive, session, pid, newSysMeta,
-                                              needUpdateModificationDate,
-                                              SystemMetadataManager.SysMetaVersion.UNCHECKED);
-                            } catch (NotFound e) {
-                                throw new InvalidRequest("1334",
-                                    "Can't find the pid " + pid.getValue() + " for archive.");
-                            }
-
-                        } else if ((newSysMeta.getArchived() == null
-                            || newSysMeta.getArchived() == false) && (
-                            currentLocalSysMeta.getArchived() != null
-                                && currentLocalSysMeta.getArchived() == true)) {
-                            throw new InvalidRequest("1334", "The pid " + pid.getValue()
-                                + " has been archived and it can't be reset to false.");
-                        }
-                    }
-                }
-                // Set changeModifyTime false
-                SystemMetadataManager.getInstance().store(newSysMeta, false,
-                                                    SystemMetadataManager.SysMetaVersion.UNCHECKED);
-                logMetacat.info("Updated local copy of system metadata for pid " + pid.getValue()
-                                + " after change notification from the CN.");
-
+                currentLocalSysMeta = SystemMetadataManager.getInstance().get(pid);
             } catch (RuntimeException e) {
-                String msg =
-                    "SystemMetadata for pid " + pid.getValue() + " couldn't be updated: "
-                        + e.getMessage();
+                String msg = "SystemMetadata for pid " + pid.getValue()
+                    + " couldn't be updated because it couldn't be found locally: "
+                    + e.getMessage();
                 logMetacat.error(msg);
                 ServiceFailure sf = new ServiceFailure("1333", msg);
                 sf.initCause(e);
                 throw sf;
             }
 
-            try {
-                String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-                if (ipAddress == null) {
-                    request.getRemoteAddr();
+            if (currentLocalSysMeta == null) {
+                throw new InvalidRequest("1334",
+                                         "We can't find the system metadata in the node for the id "
+                                             + pid.getValue());
+            }
+            if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion) {
+                try {
+                    this.cn = D1Client.getCN();
+                    newSysMeta = cn.getSystemMetadata(null, pid);
+                } catch (NotFound e) {
+                    // huh? you just said you had it
+                    String msg = "On updating the local copy of system metadata " + "for pid "
+                        + pid.getValue() + ", the CN reports it is not found."
+                        + " The error message was: " + e.getMessage();
+                    logMetacat.error(msg);
+                    //ServiceFailure sf = new ServiceFailure("1333", msg);
+                    InvalidRequest sf = new InvalidRequest("1334", msg);
+                    sf.initCause(e);
+                    throw sf;
                 }
-                if (userAgent == null) {
-                    userAgent = request.getHeader("User-Agent");
+
+                //check about the sid in the system metadata
+                Identifier newSID = newSysMeta.getSeriesId();
+                if (newSID != null) {
+                    if (!isValidIdentifier(newSID)) {
+                        throw new InvalidRequest("1334",
+                                                 "The series identifier in the new system metadata is invalid.");
+                    }
+                    Identifier currentSID = currentLocalSysMeta.getSeriesId();
+                    if (currentSID != null && currentSID.getValue() != null) {
+                        if (!newSID.getValue().equals(currentSID.getValue())) {
+                            //newSID doesn't match the currentSID. The newSID shouldn't be used.
+                            try {
+                                if (IdentifierManager.getInstance()
+                                    .identifierExists(newSID.getValue())) {
+                                    throw new InvalidRequest("1334", "The series identifier "
+                                        + newSID.getValue()
+                                        + " in the new system metadata has been used by "
+                                        + "another object.");
+                                }
+                            } catch (SQLException sql) {
+                                throw new ServiceFailure("1333", "Couldn't determine if the SID "
+                                    + newSID.getValue()
+                                    + " in the system metadata exists in the node since "
+                                    + sql.getMessage());
+                            }
+
+                        }
+                    } else {
+                        //newSID shouldn't be used
+                        try {
+                            if (IdentifierManager.getInstance()
+                                .identifierExists(newSID.getValue())) {
+                                throw new InvalidRequest("1334", "The series identifier "
+                                    + newSID.getValue()
+                                    + " in the new system metadata has been used by another "
+                                    + "object.");
+                            }
+                        } catch (SQLException sql) {
+                            throw new ServiceFailure("1333", "Couldn't determine if the SID "
+                                + newSID.getValue()
+                                + " in the system metadata exists in the node since "
+                                + sql.getMessage());
+                        }
+                    }
                 }
-                EventLog.getInstance()
-                    .log(ipAddress, userAgent, session.getSubject().getValue(), localId,
-                        "updateSystemMetadata");
-            } catch (Exception e) {
-                // do nothing, no localId to log with
-                logMetacat.warn("MNodeService.systemMetadataChanged - Could not log "
-                    + "'updateSystemMetadata' event because no localId was found for pid: "
-                    + pid.getValue());
+                // update the local copy of system metadata for the pid
+                try {
+                    if (needCheckAuthoriativeNode) {
+                        //this is for the v2 api.
+                        if (isAuthoritativeNode(pid)) {
+                            //this is the authoritative node, so we only accept replica and
+                            // serial version
+                            logMetacat.debug(
+                                "MNodeService.systemMetadataChanged - this is the authoritative "
+                                    + "node for the pid " + pid.getValue());
+                            List<Replica> replicas = newSysMeta.getReplicaList();
+                            newSysMeta = currentLocalSysMeta;
+                            newSysMeta.setSerialVersion(BigInteger.valueOf(serialVersion));
+                            newSysMeta.setReplicaList(replicas);
+                        } else {
+                            //we need to archive the object in the replica node
+                            logMetacat.debug("MNodeService.systemMetadataChanged - this is NOT the "
+                                                 + "authoritative node for the pid "
+                                                 + pid.getValue());
+                            logMetacat.debug(
+                                "MNodeService.systemMetadataChanged - the new value of archive is "
+                                    + newSysMeta.getArchived() + " for the pid " + pid.getValue());
+                            logMetacat.debug(
+                                "MNodeService.systemMetadataChanged - the local value of archive "
+                                    + "is " + currentLocalSysMeta.getArchived() + " for the pid "
+                                    + pid.getValue());
+                            if (newSysMeta.getArchived() != null && newSysMeta.getArchived() == true
+                                && ((currentLocalSysMeta.getArchived() != null
+                                && currentLocalSysMeta.getArchived() == false)
+                                || currentLocalSysMeta.getArchived() == null)) {
+                                logMetacat.debug(
+                                    "MNodeService.systemMetadataChanged - start to archive object "
+                                        + pid.getValue());
+                                boolean logArchive = false;
+                                boolean needUpdateModificationDate = false;
+                                try {
+                                    archiveObject(logArchive, session, pid, newSysMeta,
+                                                  needUpdateModificationDate,
+                                                  SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                                } catch (NotFound e) {
+                                    throw new InvalidRequest("1334",
+                                                             "Can't find the pid " + pid.getValue()
+                                                                 + " for archive.");
+                                }
+
+                            } else if ((newSysMeta.getArchived() == null
+                                || newSysMeta.getArchived() == false) && (
+                                currentLocalSysMeta.getArchived() != null
+                                    && currentLocalSysMeta.getArchived() == true)) {
+                                throw new InvalidRequest(
+                                    "1334", "The pid " + pid.getValue()
+                                    + " has been archived and it can't be reset to false.");
+                            }
+                        }
+                    }
+                    // Set changeModifyTime false
+                    SystemMetadataManager.getInstance()
+                        .store(newSysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
+                    logMetacat.info(
+                        "Updated local copy of system metadata for pid " + pid.getValue()
+                            + " after change notification from the CN.");
+
+                } catch (RuntimeException e) {
+                    String msg =
+                        "SystemMetadata for pid " + pid.getValue() + " couldn't be updated: "
+                            + e.getMessage();
+                    logMetacat.error(msg);
+                    ServiceFailure sf = new ServiceFailure("1333", msg);
+                    sf.initCause(e);
+                    throw sf;
+                }
+
+                try {
+                    String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+                    if (ipAddress == null) {
+                        request.getRemoteAddr();
+                    }
+                    if (userAgent == null) {
+                        userAgent = request.getHeader("User-Agent");
+                    }
+                    EventLog.getInstance()
+                        .log(ipAddress, userAgent, session.getSubject().getValue(), localId,
+                             "updateSystemMetadata");
+                } catch (Exception e) {
+                    // do nothing, no localId to log with
+                    logMetacat.warn("MNodeService.systemMetadataChanged - Could not log "
+                                        + "'updateSystemMetadata' event because no localId was found for pid: "
+                                        + pid.getValue());
+                }
+
             }
 
 
-        }
-        
-
-        if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion) {
-            // submit for indexing
-            try {
-                boolean isSysmetaChangeOnly = true;
-                MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta,  isSysmetaChangeOnly, false);
-            } catch (Exception e) {
-                logMetacat.error("Could not submit changed systemMetadata for indexing, pid: "
-                    + newSysMeta.getIdentifier().getValue(), e);
+            if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion) {
+                // submit for indexing
+                try {
+                    boolean isSysmetaChangeOnly = true;
+                    MetacatSolrIndex.getInstance()
+                        .submit(newSysMeta.getIdentifier(), newSysMeta, isSysmetaChangeOnly, false);
+                } catch (Exception e) {
+                    logMetacat.error(
+                        "Could not submit changed systemMetadata for indexing, pid: " + newSysMeta
+                            .getIdentifier().getValue(), e);
+                }
             }
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
