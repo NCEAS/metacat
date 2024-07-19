@@ -3174,95 +3174,104 @@ public class MNodeService extends D1NodeService
                 "No Session - could not authorize for updating system metadata."
                     + "  If you are not logged in, please do so and retry the request.");
         }
-        //update the system metadata locally
-        boolean success = false;
-        SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
-        if (currentSysmeta == null) {
-            throw new InvalidRequest("4869",
-                "We can't find the current system metadata on the member node for the id "
-                    + pid.getValue());
-        }
-        D1AuthHelper authDel = null;
         try {
-            authDel = new D1AuthHelper(request, pid, "4861", "4868");
-            authDel.doUpdateAuth(session, currentSysmeta, Permission.CHANGE_PERMISSION,
-                this.getCurrentNodeId());
-        } catch (ServiceFailure e) {
-            throw new ServiceFailure("4868",
-                "Can't determine if the client has the permission to update the system "
-                    + "metacat of the object with id " + pid.getValue() + " since "
-                    + e.getDescription());
-        } catch (NotAuthorized e) {
-            //the user doesn't have the change permission. However, if it has the write
-            // permission and doesn't modify the access rules, Metacat still allows it to
-            // update the system metadata
-            try {
-                authDel.doUpdateAuth(session, currentSysmeta, Permission.WRITE,
-                    this.getCurrentNodeId());
-                //now the user has the write the permission. If the access rules in the new
-                // and old system metadata are the same, it is fine; otherwise, Metacat
-                // throws an exception
-                if (D1NodeService.isAccessControlDirty(sysmeta, currentSysmeta)) {
-                    throw new NotAuthorized("4861",
-                        "Can't update the system metadata of the object with id "
-                            + pid.getValue()
-                            + " since the user try to change the access rules without the "
-                            + "change permission: " + e.getDescription());
-                }
-            } catch (ServiceFailure ee) {
-                throw new ServiceFailure("4868",
-                    "Can't determine if the client has the permission to update the system "
-                        + "metadata the object with id " + pid.getValue() + " since "
-                        + ee.getDescription());
-            } catch (NotAuthorized ee) {
-                throw new NotAuthorized("4861",
-                    "Can't update the system metadata of object with id " + pid.getValue()
-                        + " since " + ee.getDescription());
+            SystemMetadataManager.lock(pid);
+            //update the system metadata locally
+            boolean success = false;
+            SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
+            if (currentSysmeta == null) {
+                throw new InvalidRequest(
+                    "4869",
+                    "We can't find the current system metadata on the member node for the id "
+                        + pid.getValue());
             }
-        }
-        Date currentModiDate = currentSysmeta.getDateSysMetadataModified();
-        Date commingModiDate = sysmeta.getDateSysMetadataModified();
-        if (commingModiDate == null) {
-            throw new InvalidRequest("4869",
-                "The system metadata modification date can't be null.");
-        }
-        if (currentModiDate != null && commingModiDate.getTime() != currentModiDate.getTime()) {
-            throw new InvalidRequest("4869",
-                "Your system metadata modification date is " + commingModiDate.toString()
+            D1AuthHelper authDel = null;
+            try {
+                authDel = new D1AuthHelper(request, pid, "4861", "4868");
+                authDel.doUpdateAuth(session, currentSysmeta, Permission.CHANGE_PERMISSION,
+                                     this.getCurrentNodeId());
+            } catch (ServiceFailure e) {
+                throw new ServiceFailure("4868",
+                                         "Can't determine if the client has the permission to update the system "
+                                             + "metacat of the object with id " + pid.getValue()
+                                             + " since " + e.getDescription());
+            } catch (NotAuthorized e) {
+                //the user doesn't have the change permission. However, if it has the write
+                // permission and doesn't modify the access rules, Metacat still allows it to
+                // update the system metadata
+                try {
+                    authDel.doUpdateAuth(session, currentSysmeta, Permission.WRITE,
+                                         this.getCurrentNodeId());
+                    //now the user has the write the permission. If the access rules in the new
+                    // and old system metadata are the same, it is fine; otherwise, Metacat
+                    // throws an exception
+                    if (D1NodeService.isAccessControlDirty(sysmeta, currentSysmeta)) {
+                        throw new NotAuthorized("4861",
+                                                "Can't update the system metadata of the object with id "
+                                                    + pid.getValue()
+                                                    + " since the user try to change the access rules without the "
+                                                    + "change permission: " + e.getDescription());
+                    }
+                } catch (ServiceFailure ee) {
+                    throw new ServiceFailure(
+                        "4868",
+                        "Can't determine if the client has the permission to update the system "
+                            + "metadata the object with id " + pid.getValue() + " since "
+                            + ee.getDescription());
+                } catch (NotAuthorized ee) {
+                    throw new NotAuthorized("4861",
+                                            "Can't update the system metadata of object with id "
+                                                + pid.getValue() + " since " + ee.getDescription());
+                }
+            }
+            Date currentModiDate = currentSysmeta.getDateSysMetadataModified();
+            Date commingModiDate = sysmeta.getDateSysMetadataModified();
+            if (commingModiDate == null) {
+                throw new InvalidRequest("4869",
+                                         "The system metadata modification date can't be null.");
+            }
+            if (currentModiDate != null && commingModiDate.getTime() != currentModiDate.getTime()) {
+                throw new InvalidRequest("4869", "Your system metadata modification date is "
+                    + commingModiDate.toString()
                     + ". It doesn't match our current system metadata modification date in "
                     + "the member node - " + currentModiDate.toString()
                     + ". Please check if you have got the newest version of the system "
                     + "metadata before the modification.");
+            }
+            //check the if client change the authoritative member node.
+            if (currentSysmeta.getAuthoritativeMemberNode() != null
+                && sysmeta.getAuthoritativeMemberNode() != null && !currentSysmeta
+                .getAuthoritativeMemberNode().equals(sysmeta.getAuthoritativeMemberNode())) {
+                throw new InvalidRequest(
+                    "4869", "Current authoriativeMemberNode is " + currentSysmeta
+                    .getAuthoritativeMemberNode().getValue()
+                    + " but the value on the new system metadata is " + sysmeta
+                    .getAuthoritativeMemberNode().getValue()
+                    + ". They don't match. Clients don't have the permission to change it.");
+            } else if (currentSysmeta.getAuthoritativeMemberNode() != null
+                && sysmeta.getAuthoritativeMemberNode() == null) {
+                throw new InvalidRequest(
+                    "4869", "Current authoriativeMemberNode is " + currentSysmeta
+                    .getAuthoritativeMemberNode().getValue()
+                    + " but the value on the new system metadata is null. They don't match. "
+                    + "Clients don't have the permission to change it.");
+            } else if (currentSysmeta.getAuthoritativeMemberNode() == null
+                && sysmeta.getAuthoritativeMemberNode() != null) {
+                throw new InvalidRequest(
+                    "4869",
+                    "Current authoriativeMemberNode is null but the value on the new system "
+                        + "metadata is not null. They don't match. Clients don't have the "
+                        + "permission " + "to change it.");
+            }
+            checkAddRestrictiveAccessOnDOI(currentSysmeta, sysmeta);
+            boolean needUpdateModificationDate = true;
+            boolean fromCN = false;
+            success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate,
+                                           currentSysmeta, fromCN,
+                                           SystemMetadataManager.SysMetaVersion.CHECKED);
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
-        //check the if client change the authoritative member node.
-        if (currentSysmeta.getAuthoritativeMemberNode() != null
-            && sysmeta.getAuthoritativeMemberNode() != null
-            && !currentSysmeta.getAuthoritativeMemberNode()
-            .equals(sysmeta.getAuthoritativeMemberNode())) {
-            throw new InvalidRequest("4869", "Current authoriativeMemberNode is "
-                + currentSysmeta.getAuthoritativeMemberNode().getValue()
-                + " but the value on the new system metadata is "
-                + sysmeta.getAuthoritativeMemberNode().getValue()
-                + ". They don't match. Clients don't have the permission to change it.");
-        } else if (currentSysmeta.getAuthoritativeMemberNode() != null
-            && sysmeta.getAuthoritativeMemberNode() == null) {
-            throw new InvalidRequest("4869", "Current authoriativeMemberNode is "
-                + currentSysmeta.getAuthoritativeMemberNode().getValue()
-                + " but the value on the new system metadata is null. They don't match. "
-                + "Clients don't have the permission to change it.");
-        } else if (currentSysmeta.getAuthoritativeMemberNode() == null
-            && sysmeta.getAuthoritativeMemberNode() != null) {
-            throw new InvalidRequest("4869",
-                "Current authoriativeMemberNode is null but the value on the new system "
-                    + "metadata is not null. They don't match. Clients don't have the "
-                    + "permission "
-                    + "to change it.");
-        }
-        checkAddRestrictiveAccessOnDOI(currentSysmeta, sysmeta);
-        boolean needUpdateModificationDate = true;
-        boolean fromCN = false;
-        success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate,
-            currentSysmeta, fromCN, SystemMetadataManager.SysMetaVersion.CHECKED);
 
         if (success) {
             // attempt to re-register the identifier (it checks if it is a doi)

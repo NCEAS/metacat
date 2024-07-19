@@ -2121,26 +2121,30 @@ public class CNodeService extends D1NodeService
 
         //update the system metadata locally
         boolean success = false;
+        try {
+            SystemMetadataManager.lock(pid);
+            SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
 
-        SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
-
-        if (currentSysmeta == null) {
-            throw new InvalidRequest(
-                "4863", "We can't find the current system metadata on the member node for the id "
-                + pid.getValue());
+            if (currentSysmeta == null) {
+                throw new InvalidRequest(
+                    "4863",
+                    "We can't find the current system metadata on the member node for the id "
+                        + pid.getValue());
+            }
+            // CN will ignore the coming serial version and replica list fields from the mn node.
+            BigInteger currentSerialVersion = currentSysmeta.getSerialVersion();
+            sysmeta.setSerialVersion(currentSerialVersion);
+            List<Replica> replicas = currentSysmeta.getReplicaList();
+            sysmeta.setReplicaList(replicas);
+            boolean needUpdateModificationDate =
+                false;//cn doesn't need to change the modification date.
+            boolean fromCN = true;
+            success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate,
+                                           currentSysmeta, fromCN,
+                                           SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
-        // CN will ignore the coming serial version and replica list fields from the mn node.
-        BigInteger currentSerialVersion = currentSysmeta.getSerialVersion();
-        sysmeta.setSerialVersion(currentSerialVersion);
-        List<Replica> replicas = currentSysmeta.getReplicaList();
-        sysmeta.setReplicaList(replicas);
-        boolean needUpdateModificationDate =
-            false;//cn doesn't need to change the modification date.
-        boolean fromCN = true;
-        success =
-            updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta,
-                                 fromCN, SystemMetadataManager.SysMetaVersion.UNCHECKED);
-
         return success;
     }
 
