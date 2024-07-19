@@ -456,37 +456,41 @@ public class CNodeService extends D1NodeService
         }
         SystemMetadata sysmeta = null;
         try {
-            sysmeta =
-                getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode,
-                                        needDeleteInfo);
-        } catch (InvalidRequest e) {
-            throw new InvalidToken(invalidTokenCode, e.getMessage());
-        }
-        D1AuthHelper authDel =
-            new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
-        authDel.doIsAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION);
+            SystemMetadataManager.lock(pid);
+            try {
+                sysmeta =
+                    getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode,
+                                            needDeleteInfo);
+            } catch (InvalidRequest e) {
+                throw new InvalidToken(invalidTokenCode, e.getMessage());
+            }
+            D1AuthHelper authDel =
+                new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
+            authDel.doIsAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION);
 
-        D1NodeVersionChecker checker =
-            new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
-        String version = checker.getVersion("MNRead");
-        if (version == null) {
-            throw new ServiceFailure(
-                "4972",
-                "Couldn't determine the MNRead version of the authoritative member node for the "
-                    + "pid "
-                    + pid.getValue());
-        } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
-            //we don't apply this method to an object whose authoritative node is v2
-            throw new NotAuthorized("4970", V2V1MISSMATCH);
-        } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
-            //we don't understand this version (it is not v1 or v2)
-            throw new NotImplemented(
-                "4974", "The version of the MNRead is " + version
-                + " for the authoritative member node of the object " + pid.getValue()
-                + ". We don't support it.");
+            D1NodeVersionChecker checker =
+                new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
+            String version = checker.getVersion("MNRead");
+            if (version == null) {
+                throw new ServiceFailure(
+                    "4972",
+                    "Couldn't determine the MNRead version of the authoritative member node for the "
+                        + "pid " + pid.getValue());
+            } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
+                //we don't apply this method to an object whose authoritative node is v2
+                throw new NotAuthorized("4970", V2V1MISSMATCH);
+            } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+                //we don't understand this version (it is not v1 or v2)
+                throw new NotImplemented(
+                    "4974", "The version of the MNRead is " + version
+                    + " for the authoritative member node of the object " + pid.getValue()
+                    + ". We don't support it.");
+            }
+            boolean needModifyDate = true;
+            archiveCNObjectWithNotificationReplica(session, pid, sysmeta, needModifyDate);
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
-        boolean needModifyDate = true;
-        archiveCNObjectWithNotificationReplica(session, pid, sysmeta, needModifyDate);
 
 
         return pid;
