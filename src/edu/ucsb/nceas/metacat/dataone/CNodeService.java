@@ -257,6 +257,7 @@ public class CNodeService extends D1NodeService
 
         SystemMetadata systemMetadata = null;
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
                     systemMetadata = SystemMetadataManager.getInstance().get(pid);
@@ -308,6 +309,8 @@ public class CNodeService extends D1NodeService
 
         } catch (RuntimeException e) {
             throw new ServiceFailure("4882", e.getMessage());
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
@@ -684,8 +687,6 @@ public class CNodeService extends D1NodeService
 
         }
 
-        // The lock to be used for this identifier
-        //Lock lock = null;
 
         boolean allowed = false;
         int replicaEntryIndex = -1;
@@ -698,6 +699,7 @@ public class CNodeService extends D1NodeService
         SystemMetadata systemMetadata = null;
 
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 systemMetadata = SystemMetadataManager.getInstance().get(pid);
                 // did we get it correctly?
@@ -879,6 +881,8 @@ public class CNodeService extends D1NodeService
             String msg = "There was a RuntimeException getting the lock for " + pid.getValue();
             logMetacat.info(msg);
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
@@ -1195,8 +1199,7 @@ public class CNodeService extends D1NodeService
         throws NotImplemented, NotAuthorized, ServiceFailure, InvalidRequest,
         InvalidSystemMetadata {
 
-        // The lock to be used for this identifier
-        //Lock lock = null;
+
 
         // TODO: control who can call this?
         if (session == null) {
@@ -1244,6 +1247,7 @@ public class CNodeService extends D1NodeService
         }
 
         try {
+            SystemMetadataManager.lock(pid);
             logMetacat.debug("Checking if identifier exists...");
             // Check that the identifier does not already exist
             try {
@@ -1283,6 +1287,8 @@ public class CNodeService extends D1NodeService
             throw new ServiceFailure(
                 "4862", "Error inserting system metadata: " + e.getClass() + ": " + e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
 
@@ -1870,9 +1876,6 @@ public class CNodeService extends D1NodeService
         throws NotImplemented, NotAuthorized, ServiceFailure, InvalidRequest, NotFound,
         VersionMismatch {
 
-        // get the subject
-        Subject subject = session.getSubject();
-
         // are we allowed to do this?
         if (session == null) {
             throw new NotAuthorized(
@@ -1887,7 +1890,7 @@ public class CNodeService extends D1NodeService
 
         SystemMetadata systemMetadata = null;
         try {
-
+            SystemMetadataManager.lock(pid);
             try {
                 systemMetadata = SystemMetadataManager.getInstance().get(pid);
                 // does the request have the most current system metadata?
@@ -1962,6 +1965,8 @@ public class CNodeService extends D1NodeService
             logMetacat.info("Unknown RuntimeException thrown: " + e.getCause().getMessage());
             throw new ServiceFailure("4852", e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
