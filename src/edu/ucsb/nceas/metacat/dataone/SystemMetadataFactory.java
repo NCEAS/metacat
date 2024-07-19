@@ -223,31 +223,41 @@ public class SystemMetadataFactory {
 
         // update the system metadata for the object[s] we are revising
         if (obsoletedBy != null) {
-            SystemMetadata obsoletedBySysMeta = null;
             try {
-                obsoletedBySysMeta =
-                    IdentifierManager.getInstance().getSystemMetadata(obsoletedBy.getValue());
-            } catch (McdbDocNotFoundException e) {
-                // ignore
-            }
-            if (obsoletedBySysMeta != null) {
-                obsoletedBySysMeta.setObsoletes(identifier);
-                SystemMetadataManager.getInstance().store(obsoletedBySysMeta);
+                SystemMetadataManager.lock(obsoletedBy);
+                SystemMetadata obsoletedBySysMeta = null;
+                try {
+                    obsoletedBySysMeta =
+                        IdentifierManager.getInstance().getSystemMetadata(obsoletedBy.getValue());
+                } catch (McdbDocNotFoundException e) {
+                    // ignore
+                }
+                if (obsoletedBySysMeta != null) {
+                    obsoletedBySysMeta.setObsoletes(identifier);
+                    SystemMetadataManager.getInstance().store(obsoletedBySysMeta);
+                }
+            } finally {
+                SystemMetadataManager.unLock(obsoletedBy);
             }
         }
         if (obsoletes != null) {
-            SystemMetadata obsoletesSysMeta = null;
             try {
-                obsoletesSysMeta =
-                    IdentifierManager.getInstance().getSystemMetadata(obsoletes.getValue());
-            } catch (McdbDocNotFoundException e) {
-                // ignore
-            }
-            if (obsoletesSysMeta != null) {
-                obsoletesSysMeta.setObsoletedBy(identifier);
-                // DO NOT set archived to true -- it will have unintended consequences if the CN
-                // sees this.
-                SystemMetadataManager.getInstance().store(obsoletesSysMeta);
+                SystemMetadataManager.lock(obsoletes);
+                SystemMetadata obsoletesSysMeta = null;
+                try {
+                    obsoletesSysMeta =
+                        IdentifierManager.getInstance().getSystemMetadata(obsoletes.getValue());
+                } catch (McdbDocNotFoundException e) {
+                    // ignore
+                }
+                if (obsoletesSysMeta != null) {
+                    obsoletesSysMeta.setObsoletedBy(identifier);
+                    // DO NOT set archived to true -- it will have unintended consequences if the CN
+                    // sees this.
+                    SystemMetadataManager.getInstance().store(obsoletesSysMeta);
+                }
+            } finally {
+                SystemMetadataManager.unLock(obsoletes);
             }
         }
 
