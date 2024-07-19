@@ -89,7 +89,9 @@ public class SystemMetadataManagerIT {
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
         SystemMetadata sysmeta =
                            D1NodeServiceTest.createSystemMetadata(id, session.getSubject(), object);
+        SystemMetadataManager.lock(id);
         SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(id);
         SystemMetadata read = im.getSystemMetadata(guid);
         assertTrue(read.getIdentifier().equals(id));
         assertTrue(read.getFileName() == null);
@@ -121,7 +123,9 @@ public class SystemMetadataManagerIT {
         p2.setValue(p2Value);
         media.addProperty(p2);
         sysmeta.setMediaType(media);
+        SystemMetadataManager.lock(id);
         SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(id);
         read = im.getSystemMetadata(guid);
         assertTrue(read.getIdentifier().equals(id));
         assertTrue(read.getFileName().equals(fileName));
@@ -303,7 +307,9 @@ public class SystemMetadataManagerIT {
         InputStream object =
             new ByteArrayInputStream("testtestRollBackCreate".getBytes(StandardCharsets.UTF_8));
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        SystemMetadataManager.lock(pid);
         SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(pid);
         // Preserve the pid's system metadata
         SystemMetadata originalPidMeta = SystemMetadataManager.getInstance().get(pid);
         Date dateUploaded = originalPidMeta.getDateUploaded();
