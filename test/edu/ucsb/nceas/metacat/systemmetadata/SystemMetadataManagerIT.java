@@ -25,6 +25,7 @@ import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,6 +66,11 @@ public class SystemMetadataManagerIT {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
         d1NodeTester = new D1NodeServiceTest("initialize");
         request = (MockHttpServletRequest)d1NodeTester.getServletRequest();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        SystemMetadataManager.getInstance().refreshInstance();
     }
 
 
@@ -442,7 +448,6 @@ public class SystemMetadataManagerIT {
                 .thenReturn(Mockito.mock(PropertyService.class));
             SystemMetadataManager.getInstance().store(sysmeta);
         }
-
     }
 
 }
