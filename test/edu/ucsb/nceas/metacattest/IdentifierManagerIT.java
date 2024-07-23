@@ -128,6 +128,13 @@ public class IdentifierManagerIT {
         } catch (Exception e) {
             fail(e.getMessage());
         }
+        try {
+            String guid = "testGetLocalIdfoo" + System.currentTimeMillis();
+            IdentifierManager.getInstance().getLocalId(guid);
+            fail("Test shouldn't get here since the guid doesn't exist");
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbDocNotFoundException);
+        }
     }
     
     /** Test that unknown LocalId's return the proper exception. */
