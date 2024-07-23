@@ -121,7 +121,9 @@ public class SystemMetadataValidatorIT {
         }
 
         //remove the system metadata
+        SystemMetadataManager.lock(id);
         SystemMetadataManager.getInstance().delete(id);
+        SystemMetadataManager.unLock(id);
         //remove the mapping
         im.removeMapping(guid, docid);
     }

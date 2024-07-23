@@ -107,7 +107,9 @@ public class SystemMetadataManagerIT {
         assertTrue(read.getFileName() == null);
         assertTrue(read.getMediaType() == null);
         //remove the system metadata
+        SystemMetadataManager.lock(id);
         SystemMetadataManager.getInstance().delete(id);
+        SystemMetadataManager.unLock(id);
         //remove the mapping
         im.removeMapping(guid, docid);
 
@@ -155,10 +157,14 @@ public class SystemMetadataManagerIT {
         SystemMetadata sys = SystemMetadataManager.getInstance().get(id);
         assertTrue("The system metadata should exist for " + id.getValue(),
                                             sys.getIdentifier().getValue().equals(id.getValue()));
+        SystemMetadataManager.lock(id);
         SystemMetadataManager.getInstance().delete(id);
+        SystemMetadataManager.unLock(id);
         sys = SystemMetadataManager.getInstance().get(id);
         assertNull("The system metadata should be null after deleted ", sys);
+        SystemMetadataManager.lock(id);
         SystemMetadataManager.getInstance().delete(id);
+        SystemMetadataManager.unLock(id);
 
         //remove the mapping
         im.removeMapping(guid, docid);
