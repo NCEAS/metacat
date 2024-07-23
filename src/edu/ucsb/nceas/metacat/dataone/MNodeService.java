@@ -297,45 +297,52 @@ public class MNodeService extends D1NodeService
             throw new ServiceFailure("2902", ReadOnlyChecker.DATAONEERROR);
         }
 
-        Identifier HeadOfSid = getPIDForSID(id, serviceFailureCode);
-        if (HeadOfSid != null) {
-            id = HeadOfSid;
-        }
-        SystemMetadata sysmeta = null;
         try {
-            sysmeta =
-                getSystemMetadataForPID(id, serviceFailureCode, invalidTokenCode, notFoundCode,
-                    needDeleteInfo);
-        } catch (InvalidRequest e) {
-            throw new InvalidToken(invalidTokenCode, e.getMessage());
-        }
+            SystemMetadataManager.lock(id);
+            Identifier HeadOfSid = getPIDForSID(id, serviceFailureCode);
+            if (HeadOfSid != null) {
+                id = HeadOfSid;
+            }
+            SystemMetadata sysmeta = null;
+            try {
+                sysmeta =
+                    getSystemMetadataForPID(id, serviceFailureCode, invalidTokenCode, notFoundCode,
+                                            needDeleteInfo);
+            } catch (InvalidRequest e) {
+                throw new InvalidToken(invalidTokenCode, e.getMessage());
+            }
 
-        try {
-            D1AuthHelper authDel =
-                new D1AuthHelper(request, id, notAuthorizedCode, serviceFailureCode);
-            authDel.doAdminAuthorization(session);
-        } catch (NotAuthorized na) {
-            NotAuthorized na2 = new NotAuthorized(notAuthorizedCode,
-                "The provided identity does not have permission to delete objects on the Node.");
-            na2.initCause(na);
-            throw na2;
-        }
+            try {
+                D1AuthHelper authDel =
+                    new D1AuthHelper(request, id, notAuthorizedCode, serviceFailureCode);
+                authDel.doAdminAuthorization(session);
+            } catch (NotAuthorized na) {
+                NotAuthorized na2 = new NotAuthorized(
+                    notAuthorizedCode,
+                    "The provided identity does not have permission to delete objects on the Node.");
+                na2.initCause(na);
+                throw na2;
+            }
 
-        try {
-            String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
-            QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta,
-                QuotaServiceManager.DELETEMETHOD);
-        } catch (InsufficientResources e) {
-            throw new ServiceFailure(serviceFailureCode,
-                "The user doesn't have enough quota to delete the pid " + id.getValue() + " since "
-                    + e.getMessage());
-        } catch (InvalidRequest e) {
-            throw new InvalidToken("2903",
-                "The quota service in the delete action has an invalid request - "
-                    + e.getMessage());
+            try {
+                String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
+                QuotaServiceManager.getInstance()
+                    .enforce(quotaSubject, session.getSubject(), sysmeta,
+                             QuotaServiceManager.DELETEMETHOD);
+            } catch (InsufficientResources e) {
+                throw new ServiceFailure(serviceFailureCode,
+                                         "The user doesn't have enough quota to delete the pid "
+                                             + id.getValue() + " since " + e.getMessage());
+            } catch (InvalidRequest e) {
+                throw new InvalidToken("2903",
+                                       "The quota service in the delete action has an invalid request - "
+                                           + e.getMessage());
+            }
+            // defer to superclass implementation
+            return super.delete(session.getSubject().getValue(), id);
+        } finally {
+            SystemMetadataManager.unLock(id);
         }
-        // defer to superclass implementation
-        return super.delete(session.getSubject().getValue(), id);
     }
 
     /**

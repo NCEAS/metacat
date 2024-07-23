@@ -351,65 +351,72 @@ public class CNodeService extends D1NodeService
         String serviceFailureCode = "4962";
         String invalidTokenCode = "4963";
         boolean needDeleteInfo = false;
-
-        //SystemMetadata sysmeta = getSeriesHead(pid, notFoundCode, serviceFailureCode);
-        Identifier HeadOfSid = getPIDForSID(pid, serviceFailureCode);
-        if (HeadOfSid != null) {
-            pid = HeadOfSid;
-        }
-        SystemMetadata sysmeta = null;
         try {
-            sysmeta =
-                getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode,
-                                        needDeleteInfo);
-        } catch (InvalidRequest e) {
-            throw new InvalidToken(invalidTokenCode, e.getMessage());
-        }
+            SystemMetadataManager.lock(pid);
+            //SystemMetadata sysmeta = getSeriesHead(pid, notFoundCode, serviceFailureCode);
+            Identifier HeadOfSid = getPIDForSID(pid, serviceFailureCode);
+            if (HeadOfSid != null) {
+                pid = HeadOfSid;
+            }
+            SystemMetadata sysmeta = null;
+            try {
+                sysmeta =
+                    getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode,
+                                            needDeleteInfo);
+            } catch (InvalidRequest e) {
+                throw new InvalidToken(invalidTokenCode, e.getMessage());
+            }
 
-        D1AuthHelper authDel =
-            new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
-        authDel.doCNOnlyAuthorization(session);
+            D1AuthHelper authDel =
+                new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
+            authDel.doCNOnlyAuthorization(session);
 
-        super.delete(session.getSubject().getValue(), pid);
-        // get the node list
-        try {
-            nodeList = getCNNodeList().getNodeList();
+            super.delete(session.getSubject().getValue(), pid);
+            // get the node list
+            try {
+                nodeList = getCNNodeList().getNodeList();
 
-        } catch (Exception e) { // handle BaseException and other I/O issues
+            } catch (Exception e) { // handle BaseException and other I/O issues
 
-            // swallow errors since the call is not critical
-            logMetacat.error("Can't inform MNs of the deletion of " + pid.getValue()
-                                 + " due to communication issues with the CN: " + e.getMessage());
+                // swallow errors since the call is not critical
+                logMetacat.error("Can't inform MNs of the deletion of " + pid.getValue()
+                                     + " due to communication issues with the CN: "
+                                     + e.getMessage());
 
-        }
+            }
 
-        // notify the replicas
-        if (sysmeta.getReplicaList() != null) {
-            for (Replica replica : sysmeta.getReplicaList()) {
-                NodeReference replicaNode = replica.getReplicaMemberNode();
-                try {
-                    if (nodeList != null) {
-                        // find the node type
-                        for (Node node : nodeList) {
-                            if (node.getIdentifier().getValue().equals(replicaNode.getValue())) {
-                                nodeType = node.getType();
-                                break;
+            // notify the replicas
+            if (sysmeta.getReplicaList() != null) {
+                for (Replica replica : sysmeta.getReplicaList()) {
+                    NodeReference replicaNode = replica.getReplicaMemberNode();
+                    try {
+                        if (nodeList != null) {
+                            // find the node type
+                            for (Node node : nodeList) {
+                                if (node.getIdentifier().getValue()
+                                    .equals(replicaNode.getValue())) {
+                                    nodeType = node.getType();
+                                    break;
 
+                                }
                             }
                         }
-                    }
 
-                    // only send call MN.delete() to avoid an infinite loop with the CN
-                    if (nodeType != null && nodeType == NodeType.MN) {
-                        Identifier mnRetId = D1Client.getMN(replicaNode).delete(null, pid);
-                    }
+                        // only send call MN.delete() to avoid an infinite loop with the CN
+                        if (nodeType != null && nodeType == NodeType.MN) {
+                            Identifier mnRetId = D1Client.getMN(replicaNode).delete(null, pid);
+                        }
 
-                } catch (Exception e) {
-                    // all we can really do is log errors and carry on with life
-                    logMetacat.error("Error deleting pid: " + pid.getValue() + " from replica MN: "
-                                         + replicaNode.getValue(), e);
+                    } catch (Exception e) {
+                        // all we can really do is log errors and carry on with life
+                        logMetacat.error(
+                            "Error deleting pid: " + pid.getValue() + " from replica MN: "
+                                + replicaNode.getValue(), e);
+                    }
                 }
             }
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return pid;
