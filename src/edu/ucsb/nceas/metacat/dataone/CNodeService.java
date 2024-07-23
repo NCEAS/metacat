@@ -352,12 +352,11 @@ public class CNodeService extends D1NodeService
         String invalidTokenCode = "4963";
         boolean needDeleteInfo = false;
         try {
-            SystemMetadataManager.lock(pid);
-            //SystemMetadata sysmeta = getSeriesHead(pid, notFoundCode, serviceFailureCode);
             Identifier HeadOfSid = getPIDForSID(pid, serviceFailureCode);
             if (HeadOfSid != null) {
                 pid = HeadOfSid;
             }
+            SystemMetadataManager.lock(pid);
             SystemMetadata sysmeta = null;
             try {
                 sysmeta =

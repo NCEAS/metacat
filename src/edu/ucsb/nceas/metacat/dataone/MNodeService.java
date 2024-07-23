@@ -298,11 +298,11 @@ public class MNodeService extends D1NodeService
         }
 
         try {
-            SystemMetadataManager.lock(id);
             Identifier HeadOfSid = getPIDForSID(id, serviceFailureCode);
             if (HeadOfSid != null) {
                 id = HeadOfSid;
             }
+            SystemMetadataManager.lock(id);
             SystemMetadata sysmeta = null;
             try {
                 sysmeta =
