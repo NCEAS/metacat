@@ -455,6 +455,9 @@ public class SystemMetadataManager {
 
     /**
      * Delete a system metadata record from the store
+     * Note: This method is not thread safe. Please put it into a try-finally statement.
+     *       Before call this method, you need to call the lock method first in the `try` block and
+     *       unLock method in the `finally` block.
      * @param id  the identifier to determine the system metadata record
      * @throws InvalidRequest
      * @throws ServiceFailure
@@ -463,7 +466,6 @@ public class SystemMetadataManager {
             DBConnection dbConn = null;
             int serialNumber = -1;
             try {
-                lock(id);
                  // Get a database connection from the pool
                 dbConn = DBConnectionPool.getDBConnection("SystemMetadataManager.delete");
                 serialNumber = dbConn.getCheckOutSerialNumber();
@@ -490,7 +492,6 @@ public class SystemMetadataManager {
                         + "the system metadata of guid - " + id.getValue()
                         + " can't be removed successfully since " + e.getMessage());
             } finally {
-                unLock(id);
                 if (dbConn != null) {
                     try {
                         dbConn.setAutoCommit(true);
