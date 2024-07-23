@@ -182,7 +182,9 @@ public class DocumentImplIT {
             input.close();
 
             //Delete
+            SystemMetadataManager.lock(guid);
             DocumentImpl.delete(accnum, guid);
+            SystemMetadataManager.unLock(guid);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                 " guid like ?", guid.getValue()));
@@ -215,7 +217,9 @@ public class DocumentImplIT {
                 assertTrue(e instanceof McdbException);
             }
 
+            SystemMetadataManager.lock(newPid);
             DocumentImpl.delete(accnum2, newPid);
+            SystemMetadataManager.unLock(newPid);
             //check record
             assertTrue("The identifier table should have value",
                                  IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -370,7 +374,9 @@ public class DocumentImplIT {
             input.close();
 
             //Delete
+            SystemMetadataManager.lock(guid);
             DocumentImpl.delete(accnum, guid);
+            SystemMetadataManager.unLock(guid);
             assertTrue("The identifier table should have value",
                                 IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                 " guid like ?", guid.getValue()));
@@ -404,7 +410,9 @@ public class DocumentImplIT {
                 assertTrue(e instanceof McdbException);
             }
 
+            SystemMetadataManager.lock(newPid);
             DocumentImpl.delete(accnum2, newPid);
+            SystemMetadataManager.unLock(newPid);
             //check record
             assertTrue("The identifier table should have value",
                                  IntegrationTestUtils.hasRecord("identifier", dbConn,
@@ -518,9 +526,11 @@ public class DocumentImplIT {
                 Mockito.when(MetacatInitializer.getStorage())
                                                         .thenThrow(ServiceFailure.class);
                 try {
+                    SystemMetadataManager.lock(guid);
                     DocumentImpl.delete(accnum, guid);
                     fail("The test can't be here since the failed delete should throw an exception");
                 } catch (Exception e) {
+                    SystemMetadataManager.unLock(guid);
                     assertTrue("The exception class should be ServiceFailure",
                                                                       e instanceof ServiceFailure);
                 }
