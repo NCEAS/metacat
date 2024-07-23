@@ -844,10 +844,20 @@ public class SystemMetadataManager {
      * @param dbConn  the DBConnection object which will execute the delete actions
      * @throws InvalidRequest
      * @throws SQLException
+     * @throws ServiceFailure
      */
-    public void delete(Identifier guid, DBConnection dbConn) throws InvalidRequest, SQLException {
+    public void delete(Identifier guid, DBConnection dbConn)
+        throws InvalidRequest, SQLException, ServiceFailure {
         if(guid != null && guid.getValue() != null && !guid.getValue().trim().equals("")
                                                                             && dbConn != null) {
+            if(checkLock && !lockedIds.contains(guid.getValue())) {
+                throw new ServiceFailure(
+                    "0000",
+                    "The pid " + guid.getValue() + " is not locked before " + "deleting its "
+                        + "systemmetadata. There is a bug in the code. The "
+                        + "SystemMetadataManager"
+                        + ".lock" + " method must be called before call the delete method");
+            }
             logMetacat.debug("SystemMetadataManager.delete - delete the identifier"
                             + guid.getValue());
             // remove the smReplicationPolicy
