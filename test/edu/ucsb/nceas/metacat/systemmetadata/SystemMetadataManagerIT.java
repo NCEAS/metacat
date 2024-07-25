@@ -408,6 +408,66 @@ public class SystemMetadataManagerIT {
     }
 
     /**
+     * Test the rollback feature for delete
+     * @throws Exception
+     */
+    @Test
+    public void testRollBackDelete() throws Exception {
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testDelete-" + System.currentTimeMillis());
+        InputStream object =
+            new ByteArrayInputStream("testtestRollBackDelete".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        SystemMetadataManager.lock(pid);
+        SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(pid);
+        // The system metadata read from db should be null
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
+        Date uploadedDate = readSys.getDateUploaded();
+        Date modifiedDate = readSys.getDateSysMetadataModified();
+        BigInteger version = readSys.getSerialVersion();
+        //Mock the delete method failed when Metacat does a database commit
+        try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                 Mockito.mockStatic(DBConnectionPool.class)) {
+            DBConnection mockConnection = Mockito.mock(
+                DBConnection.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                .thenReturn(mockConnection);
+            Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+            try {
+                SystemMetadataManager.lock(pid);
+                SystemMetadataManager.getInstance().delete(pid);
+                fail("Test shouldn't get there since the above method should throw an exception");
+            } catch (Exception e) {
+                assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
+            } finally {
+                SystemMetadataManager.unLock(pid);
+            }
+        }
+        // Nothing changed from db
+        SystemMetadata readSys2 = SystemMetadataManager.getInstance().get(pid);
+        assertEquals(uploadedDate.getTime(), readSys2.getDateUploaded().getTime());
+        assertEquals(modifiedDate.getTime(), readSys2.getDateSysMetadataModified().getTime());
+        assertEquals(version.intValue(), readSys2.getSerialVersion().intValue());
+        MCSystemMetadataTest.compareValues(readSys, readSys2);
+        // Nothing changed from hashtore
+        SystemMetadata sysmetaFromHash;
+        try (InputStream metaInput2 = D1NodeServiceTest.getStorage().retrieveMetadata(pid)) {
+            sysmetaFromHash = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                                      metaInput2);
+            assertEquals(uploadedDate.getTime(), sysmetaFromHash.getDateUploaded().getTime());
+            assertEquals(
+                modifiedDate.getTime(), sysmetaFromHash.getDateSysMetadataModified().getTime());
+            assertEquals(version.intValue(), sysmetaFromHash.getSerialVersion().intValue());
+            MCSystemMetadataTest.compareValues(readSys, sysmetaFromHash);
+        }
+    }
+
+    /**
      * Test the case ckeckLock == true. The store method will fail if we don't call the lock method
      * before it.
      * @throws Exception
