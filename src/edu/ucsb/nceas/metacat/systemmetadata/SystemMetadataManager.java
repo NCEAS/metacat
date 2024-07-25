@@ -327,7 +327,7 @@ public class SystemMetadataManager {
     public static String storeRollBack(Identifier pid, Exception e, DBConnection conn,
                               SystemMetadata... backupCopies) {
         StringBuffer buffer = new StringBuffer();
-        buffer.append("Storing Systemmetadata for ");
+        buffer.append("Storing/Deleting Systemmetadata for ");
         if (pid != null) {
             buffer.append(pid.getValue());
         }
@@ -454,7 +454,7 @@ public class SystemMetadataManager {
     }
 
     /**
-     * Delete a system metadata record from the store
+     * Delete a system metadata record from the store.
      * Note: This method is not thread safe. Please put it into a try-finally statement.
      *       Before call this method, you need to call the lock method first in the `try` block and
      *       unLock method in the `finally` block.
@@ -466,26 +466,21 @@ public class SystemMetadataManager {
             DBConnection dbConn = null;
             int serialNumber = -1;
             try {
+                SystemMetadata backup = get(id);
                  // Get a database connection from the pool
                 dbConn = DBConnectionPool.getDBConnection("SystemMetadataManager.delete");
                 serialNumber = dbConn.getCheckOutSerialNumber();
                 dbConn.setAutoCommit(false);
                 try {
                     delete(id, dbConn);
+                    MetacatInitializer.getStorage().deleteMetadata(id);
                     dbConn.commit();
                 } catch (Exception e) {
-                    try {
-                        dbConn.rollback();
-                    } catch (SQLException ee) {
-                        throw new ServiceFailure("0000", "SystemMetadataManager.delete - "
-                                + "the system metadata of guid - " + id.getValue()
-                                + " can't be removed successfully since " + e.getMessage()
-                                + " Also, the system metadata change can't roll back since "
-                                + ee.getMessage());
-                    }
-                    throw new ServiceFailure("0000", "SystemMetadataManager.delete - "
-                            + "the system metadata of guid - " + id.getValue()
-                            + " can't be removed successfully since " + e.getMessage());
+                    String deleteError = "SystemMetadataManager.delete - "
+                        + "the system metadata of guid - " + id.getValue()
+                        + " can't be removed successfully since ";
+                    String error = storeRollBack(id, e, dbConn, backup);
+                    throw new ServiceFailure("0000", deleteError + error);
                 }
             } catch (SQLException e) {
                 throw new ServiceFailure("0000", "SystemMetadataManager.delete - "
@@ -837,7 +832,8 @@ public class SystemMetadataManager {
     }
 
     /**
-     * Delete the system metadata for the given guid with the DBConnection object
+     * Delete the system metadata for the given guid with the DBConnection object. It doesn't
+     * delete the system metadata in hashstore. The caller should do the job.
      * Note: This method is not thread safe. Please put it into a try-finally statement.
      * Before call this method, you need to call the lock method first in the `try` block and
      * unLock method in the `finally` block.
