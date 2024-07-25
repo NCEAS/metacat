@@ -468,6 +468,45 @@ public class SystemMetadataManagerIT {
     }
 
     /**
+     * Test the delete method
+     * @throws Exception
+     */
+    @Test
+    public void testDelete() throws Exception {
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testDelete-" + System.currentTimeMillis());
+        InputStream object =
+            new ByteArrayInputStream("testDelete".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        SystemMetadataManager.lock(pid);
+        SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(pid);
+        // The system metadata read from db should be null
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
+        assertNotNull("The system metadata should not be null", readSys);
+        assertEquals(pid, readSys.getIdentifier());
+
+        SystemMetadataManager.lock(pid);
+        SystemMetadataManager.getInstance().delete(pid);
+        SystemMetadataManager.unLock(pid);
+
+        // After deleting, the system metadata from db should be null
+        SystemMetadata readSys2 = SystemMetadataManager.getInstance().get(pid);
+        assertNull("The system metadata should  be null", readSys2);
+        // Reading system metadata from hash store should throw a FileNotFoundException
+        try {
+            // Reading system metadata from hashstore should throw a FileNotFoundException
+            D1NodeServiceTest.getStorage().retrieveMetadata(pid);
+            fail("Test can't reach here since the pid should be removed.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+    }
+
+    /**
      * Test the case ckeckLock == true. The store method will fail if we don't call the lock method
      * before it.
      * @throws Exception
