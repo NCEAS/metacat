@@ -2,7 +2,7 @@
 
 ## Release Notes for Helm Chart 1.1.1
 
-Release date: 2024-07-29
+Release date: 2024-07-25
 
 > Note the helm chart is a beta feature. It has been tested, and we believe it to be working well,
 but it has not yet been used in production - so we recommend caution with this early release. If
@@ -11,6 +11,8 @@ you try it, [we'd love to hear your feedback](https://www.dataone.org/contact/)!
 - Change version of `dataone-indexer` sub-chart from 1.0.1 to 1.0.2
 - See [`dataone-indexer` release
   notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details
+- No changes to Metacat code - still uses `Metacat:3.0.0-no-mcui` docker image, which is identical
+  to the Metacat 3.0.0 release
 
 ## Release Notes for Helm Chart 1.1.0
 
