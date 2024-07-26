@@ -926,7 +926,6 @@ public class DocumentImpl {
                 if (sysMeta != null) {
                     SystemMetadataManager.getInstance().delete(guid, conn);
                 }
-                deleteFromFileSystem(guid);
                 // only commit if all of this was successful
                 conn.commit();
                 try {
@@ -935,6 +934,8 @@ public class DocumentImpl {
                     logMetacat.error("DocumentImpl.delete - Metacat failed to submit index task: "
                                                                            + ee.getMessage());
                 }
+                // This line will delete system metadata in hastore as well
+                deleteFromFileSystem(guid);
             } catch (Exception e) {
                 // rollback the delete if there was an error
                 if (conn != null) {
