@@ -2,6 +2,7 @@ package edu.ucsb.nceas.metacat;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +35,6 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
-import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 
@@ -97,6 +97,9 @@ public class DocumentImplIT {
             assertTrue("The identifier table should have value",
                                     IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                                  " guid like ?", guid.getValue()));
+            assertTrue("The checksums table should have value",
+                       IntegrationTestUtils.hasRecord("checksums", dbConn,
+                                                      " guid like ?", guid.getValue()));
             assertTrue("The systemmetadata table should have value",
                                      IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
                                                                  " guid like ?", guid.getValue()));
@@ -123,6 +126,14 @@ public class DocumentImplIT {
             InputStream input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
+            SystemMetadata read = SystemMetadataManager.getInstance().get(guid);
+            assertEquals(guid, read.getIdentifier());
+            SystemMetadata sysmetaFromHash;
+            try (InputStream metaInput = D1NodeServiceTest.getStorage().retrieveMetadata(guid)) {
+                sysmetaFromHash = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                                          metaInput);
+            }
+            assertEquals(guid, sysmetaFromHash.getIdentifier());
 
             //update
             Identifier newPid = new Identifier();
@@ -154,6 +165,9 @@ public class DocumentImplIT {
             assertTrue("The identifier table should have value",
                                  IntegrationTestUtils.hasRecord("identifier", dbConn,
                                                              " guid like ?", newPid.getValue()));
+            assertTrue("The checksums table should have value",
+                       IntegrationTestUtils.hasRecord("checksums", dbConn,
+                                                      " guid like ?", newPid.getValue()));
             assertTrue("The systemmetadata table should have value",
                             IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
                                                                 " guid like ?", newPid.getValue()));
@@ -181,6 +195,7 @@ public class DocumentImplIT {
             assertNotNull("The file should exist", input);
             input.close();
 
+
             //Delete
             SystemMetadataManager.lock(guid);
             DocumentImpl.delete(accnum, guid);
@@ -191,6 +206,9 @@ public class DocumentImplIT {
             assertFalse("The systemmetadata table should not have value",
                             IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
                                                                 " guid like ?", guid.getValue()));
+            assertFalse("The checksums table should not have value",
+                        IntegrationTestUtils.hasRecord("checksums", dbConn,
+                                                       " guid like ?", guid.getValue()));
             assertFalse("The xml_access table should not have value",
                                 IntegrationTestUtils.hasRecord("xml_access", dbConn,
                                                                 " guid like ?", guid.getValue()));
@@ -214,7 +232,15 @@ public class DocumentImplIT {
                 input = MetacatHandler.read(accnum, null);
                 fail("The test can not get here since it should throw an exception");
             } catch (Exception e) {
-                assertTrue(e instanceof McdbException);
+                assertTrue(e instanceof McdbDocNotFoundException);
+            }
+            SystemMetadata read2 = SystemMetadataManager.getInstance().get(guid);
+            assertNull("The system metadata should be deleted.", read2);
+            try {
+                D1NodeServiceTest.getStorage().retrieveMetadata(guid);
+                fail("Test shouldn't get there since the system metadata was deleted.");
+            } catch (Exception ee) {
+                assertTrue(ee instanceof FileNotFoundException);
             }
 
             SystemMetadataManager.lock(newPid);
@@ -227,6 +253,9 @@ public class DocumentImplIT {
             assertFalse("The systemmetadata table should not have value",
                             IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
                                                             " guid like ?", newPid.getValue()));
+            assertFalse("The checksums table should not have value",
+                        IntegrationTestUtils.hasRecord("checksums", dbConn,
+                                                       " guid like ?", newPid.getValue()));
             assertFalse("The xml_access table should not have value",
                                  IntegrationTestUtils.hasRecord("xml_access", dbConn,
                                                                 " guid like ?", newPid.getValue()));
@@ -250,7 +279,15 @@ public class DocumentImplIT {
                 input = MetacatHandler.read(accnum2, null);
                 fail("The test can not get here since it should throw an exception");
             } catch (Exception e) {
-                assertTrue(e instanceof McdbException);
+                assertTrue(e instanceof McdbDocNotFoundException);
+            }
+            SystemMetadata read3 = SystemMetadataManager.getInstance().get(newPid);
+            assertNull("The system metadata should be deleted.", read3);
+            try {
+                D1NodeServiceTest.getStorage().retrieveMetadata(newPid);
+                fail("Test shouldn't get there since the system metadata was deleted.");
+            } catch (Exception ee) {
+                assertTrue(ee instanceof FileNotFoundException);
             }
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
@@ -309,7 +346,7 @@ public class DocumentImplIT {
             assertFalse("The xml_revisions table should not have value",
                                         IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
                                                                         " docid like ?", docid));
-            InputStream input = MetacatHandler.read(accnum, null);
+            InputStream input = MetacatHandler.read(guid);
             assertNotNull("The file should exist", input);
             input.close();
 
@@ -404,10 +441,10 @@ public class DocumentImplIT {
                                         IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
                                                                         " docid like ?", docid));
             try {
-                input = MetacatHandler.read(accnum, null);
+                input = MetacatHandler.read(guid);
                 fail("The test can not get here since it should throw an exception");
             } catch (Exception e) {
-                assertTrue(e instanceof McdbException);
+                assertTrue(e instanceof McdbDocNotFoundException);
             }
 
             SystemMetadataManager.lock(newPid);
@@ -443,7 +480,7 @@ public class DocumentImplIT {
                 input = MetacatHandler.read(accnum2, null);
                 fail("The test can not get here since it should throw an exception");
             } catch (Exception e) {
-                assertTrue(e instanceof McdbException);
+                assertTrue(e instanceof McdbDocNotFoundException);
             }
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
@@ -521,10 +558,14 @@ public class DocumentImplIT {
             input.close();
 
             //Mock a failed deleting
-            try (MockedStatic<MetacatInitializer> mock =
-                                            Mockito.mockStatic(MetacatInitializer.class)) {
-                Mockito.when(MetacatInitializer.getStorage())
-                                                        .thenThrow(ServiceFailure.class);
+            try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                     Mockito.mockStatic(DBConnectionPool.class)) {
+                DBConnection mockConnection = Mockito.mock(
+                    DBConnection.class,
+                    withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+                Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                    .thenReturn(mockConnection);
+                Mockito.doThrow(SQLException.class).when(mockConnection).commit();
                 try {
                     SystemMetadataManager.lock(guid);
                     DocumentImpl.delete(accnum, guid);
