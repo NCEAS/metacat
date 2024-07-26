@@ -1,6 +1,7 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import edu.ucsb.nceas.MCTestCase;
+import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.storage.ObjectInfo;
@@ -39,6 +40,7 @@ import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
+import org.dataone.service.util.TypeMarshaller;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,6 +50,7 @@ import org.mockito.Mockito;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -999,7 +1002,6 @@ public class CNodeServiceIT {
             Identifier pid = d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
             assertEquals(guid, pid);
 
-            Thread.sleep(3000);
             // use MN admin to delete
             session = d1NodeServiceTest.getCNSession();
             Identifier deletedPid = CNodeService.getInstance(d1NodeServiceTest.request).delete(session, pid);
@@ -1039,9 +1041,43 @@ public class CNodeServiceIT {
             } catch (NotFound nf) {
                 assertTrue(nf.getMessage().contains("deleted"));
             }
-
-
             assertNull(deletedObject);
+
+            // Test to delete object which only has system metadata. CN only harvests the system for
+            // data objects for saving space
+            guid = new Identifier();
+            guid.setValue("testDelete2." + System.currentTimeMillis());
+            object = new ByteArrayInputStream("test1238973".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta2 =
+                D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            // Store the system metadata only
+            SystemMetadataManager.lock(guid);
+            SystemMetadataManager.getInstance().store(sysmeta2);
+            SystemMetadataManager.unLock(guid);
+            SystemMetadata read = SystemMetadataManager.getInstance().get(guid);
+            assertEquals(guid, read.getIdentifier());
+            SystemMetadata sysmetaFromHash2;
+            try (InputStream metaInput2 = D1NodeServiceTest.getStorage().retrieveMetadata(guid)) {
+                sysmetaFromHash2 = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                                          metaInput2);
+            }
+            assertEquals(guid, sysmetaFromHash2.getIdentifier());
+            try {
+                MetacatHandler.read(guid);
+                fail("Test can't get here since the object was not saved.");
+            } catch (Exception ee) {
+                assertTrue(ee instanceof McdbDocNotFoundException);
+            }
+            CNodeService.getInstance(d1NodeServiceTest.request)
+                .delete(d1NodeServiceTest.getCNSession(), guid);
+            SystemMetadata read2 = SystemMetadataManager.getInstance().get(guid);
+            assertNull("The system metadata should be deleted.", read2);
+            try {
+                D1NodeServiceTest.getStorage().retrieveMetadata(guid);
+                fail("Test shouldn't get there since the system metadata was deleted.");
+            } catch (Exception ee) {
+                assertTrue(ee instanceof FileNotFoundException);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());

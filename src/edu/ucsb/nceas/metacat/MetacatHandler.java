@@ -97,7 +97,7 @@ public class MetacatHandler {
      * @throws InsufficientKarmaException
      * @throws ParseLSIDException
      * @throws PropertyNotFoundException
-     * @throws McdbException
+     * @throws McdbDocNotFoundException
      * @throws SQLException
      * @throws ClassNotFoundException
      * @throws IOException
@@ -106,7 +106,7 @@ public class MetacatHandler {
      * @throws IllegalArgumentException
      */
     public static InputStream read(String localId, String dataType)
-        throws ParseLSIDException, PropertyNotFoundException, McdbException, SQLException,
+        throws ParseLSIDException, PropertyNotFoundException, McdbDocNotFoundException, SQLException,
                                 ClassNotFoundException, IOException, IllegalArgumentException,
                                     NoSuchAlgorithmException, ServiceFailure {
         logMetacat.debug("MetacatHandler.read() called and the data type is " + dataType);
@@ -139,22 +139,21 @@ public class MetacatHandler {
      * @param pid  the pid which will be read
      * @return  the input stream representation of the object
      * @throws IllegalArgumentException
-     * @throws FileNotFoundException
      * @throws NoSuchAlgorithmException
      * @throws ServiceFailure
      * @throws IOException
-     * @throws McdbException
+     * @throws McdbDocNotFoundException
      */
-    public static InputStream read(Identifier pid) throws IllegalArgumentException,
-                                                    FileNotFoundException, NoSuchAlgorithmException,
-                                                    ServiceFailure, IOException, McdbException {
+    public static InputStream read(Identifier pid)
+        throws IllegalArgumentException, NoSuchAlgorithmException,
+        ServiceFailure, IOException, McdbDocNotFoundException {
         if (pid == null || pid.getValue() == null || pid.getValue().isBlank()) {
             throw new IllegalArgumentException("Pid should not be blank in the read method");
         }
         try {
             return MetacatInitializer.getStorage().retrieveObject(pid);
         } catch (FileNotFoundException e) {
-            throw new McdbException("Metacat cannot find the object with id " + pid.getValue()
+            throw new McdbDocNotFoundException("Metacat cannot find the object with id " + pid.getValue()
                                         + " since " + e.getMessage());
         }
     }
