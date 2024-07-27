@@ -940,9 +940,9 @@ public class DocumentImpl {
                 } catch (Exception ee) {
                     logMetacat.error("Can not delete the object or the associated system "
                                          + "metadata from Hashstore for object " + guid.getValue()
-                                         + " since " + ee.getMessage() + " even though we "
-                                         + "successfully remove it from the Metacat database. You"
-                                         + " may manually to remove them from Hashstore");
+                                         + " since " + ee.getMessage() + ", even though we "
+                                         + "successfully removed it from the Metacat database. You"
+                                         + " have to manually to remove them from Hashstore.");
                 }
             } catch (Exception e) {
                 // rollback the delete if there was an error
