@@ -3,6 +3,7 @@ package edu.ucsb.nceas.metacat;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -533,6 +534,9 @@ public class DocumentImplIT {
             assertTrue("The systemmetadata table should have value",
                              IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
                                                                  " guid like ?", guid.getValue()));
+            assertTrue("The checksums table should have value",
+                       IntegrationTestUtils.hasRecord("checksums", dbConn,
+                                                      " guid like ?", guid.getValue()));
             assertTrue("The xml_access table should have value",
                                  IntegrationTestUtils.hasRecord("xml_access", dbConn,
                                                                  " guid like ?", guid.getValue()));
@@ -557,7 +561,7 @@ public class DocumentImplIT {
             assertNotNull("The file should exist", input);
             input.close();
 
-            //Mock a failed deleting
+            //Mock a failed deleting during the commit
             try (MockedStatic<DBConnectionPool> mockDbConnPool =
                      Mockito.mockStatic(DBConnectionPool.class)) {
                 DBConnection mockConnection = Mockito.mock(
@@ -604,9 +608,71 @@ public class DocumentImplIT {
             input = MetacatHandler.read(accnum, null);
             assertNotNull("The file should exist", input);
             input.close();
+            SystemMetadata read = SystemMetadataManager.getInstance().get(guid);
+            assertNotNull(read);
+            SystemMetadata sysmetaFromHash;
+            try (InputStream metaInput = D1NodeServiceTest.getStorage().retrieveMetadata(guid)) {
+                sysmetaFromHash = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                                         metaInput);
+            }
+            assertNotNull(sysmetaFromHash);
+
+            //Mock a failed deleting during the delete files from hashstore
+            try (MockedStatic<DocumentImpl> mockDocImpl =
+                     Mockito.mockStatic(DocumentImpl.class, CALLS_REAL_METHODS)) {
+                mockDocImpl.when(() -> DocumentImpl.deleteFromFileSystem(guid))
+                    .thenThrow(IOException.class);
+                SystemMetadataManager.lock(guid);
+                DocumentImpl.delete(accnum, guid);
+                SystemMetadataManager.unLock(guid);
+                //check record - the database records should be gone except the identifier table
+                assertTrue("The identifier table should have value",
+                           IntegrationTestUtils.hasRecord("identifier", dbConn,
+                                                          " guid like ?", guid.getValue()));
+                assertFalse("The systemmetadata table should not have value",
+                           IntegrationTestUtils.hasRecord("systemmetadata", dbConn,
+                                                          " guid like ?", guid.getValue()));
+                assertFalse("The checksums table should not have value",
+                            IntegrationTestUtils.hasRecord("checksums", dbConn,
+                                                           " guid like ?", guid.getValue()));
+                assertFalse("The xml_access table should not have value",
+                           IntegrationTestUtils.hasRecord("xml_access", dbConn,
+                                                          " guid like ?", guid.getValue()));
+                assertFalse("The smreplicationpolicy table should not have value",
+                           IntegrationTestUtils.hasRecord("smreplicationpolicy", dbConn,
+                                                          " guid like ?", guid.getValue()));
+                assertFalse("The smreplicationstatus table should not have value",
+                           IntegrationTestUtils.hasRecord("smreplicationstatus", dbConn,
+                                                          " guid like ?", guid.getValue()));
+                assertFalse("The smmediatypeproperties table should not have value",
+                           IntegrationTestUtils.hasRecord("smmediatypeproperties", dbConn,
+                                                          " guid like ?", guid.getValue()));
+                assertFalse("The xml_documents table should not have value",
+                           IntegrationTestUtils.hasRecord("xml_documents", dbConn,
+                                                          " docid like ?", docid));
+                assertFalse("The xml_revisions table should not have value",
+                            IntegrationTestUtils.hasRecord("xml_revisions", dbConn,
+                                                           " docid like ?", docid));
+                try {
+                    InputStream intput = MetacatHandler.read(guid);
+                    fail("Test can't get here since the records in database is deleted");
+                } catch (Exception ee) {
+                    assertTrue(ee instanceof McdbDocNotFoundException);
+                }
+                SystemMetadata read2 = SystemMetadataManager.getInstance().get(guid);
+                assertNull(read2);
+
+                try {
+                    D1NodeServiceTest.getStorage().retrieveMetadata(guid);
+                    fail("Test can't get here since the system metadata is deleted");
+                } catch (Exception ee) {
+                    assertTrue(ee instanceof FileNotFoundException);
+                }
+            }
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
+
     }
 
     /**

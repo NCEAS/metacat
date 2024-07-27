@@ -548,7 +548,7 @@ public class DocumentImpl {
      * @throws NoSuchAlgorithmException
      * @throws IllegalArgumentException
      */
-    public static void deleteFromFileSystem(Identifier id) throws IllegalArgumentException,
+    protected static void deleteFromFileSystem(Identifier id) throws IllegalArgumentException,
                                                     NoSuchAlgorithmException, ServiceFailure,
                                                     IOException, InterruptedException {
         MetacatInitializer.getStorage().deleteObject(id);
@@ -935,7 +935,13 @@ public class DocumentImpl {
                                                                            + ee.getMessage());
                 }
                 // This line will delete system metadata in hastore as well
-                deleteFromFileSystem(guid);
+                try {
+                    deleteFromFileSystem(guid);
+                } catch (Exception ee) {
+                    logMetacat.error("Can not delete the object or the associated system "
+                                         + "metadata from hashstore for object " + guid.getValue()
+                                         + " since " + ee.getMessage());
+                }
             } catch (Exception e) {
                 // rollback the delete if there was an error
                 if (conn != null) {
