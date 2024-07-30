@@ -13,7 +13,7 @@
 <%@ include file="./header-section.jsp"%>
 
 <div class="document">
-    <h2>DOI Configuration</h2>
+    <h2>Hashstore Conversion</h2>
     <p>
         Metacat will convert the storage system from the legacy file system to Hashstore after you
         click the okay button. Note: The process may take several hours.
@@ -24,7 +24,7 @@
                                             onsubmit="return submitForm(this);">
         <div class="buttons-wrapper">
 
-            <input class=button type="button" value="Okay" onClick="forward('./admin?configureType=hashstore&start=true&processForm=true')"
+            <input class=button type="button" value="Okay" onClick="forward('./admin?configureType=hashstore&processForm=true')"
             <input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
         </div>
     </form>

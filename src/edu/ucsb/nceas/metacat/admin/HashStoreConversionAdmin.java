@@ -53,57 +53,39 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         HttpServletRequest request, HttpServletResponse response) throws AdminException {
         logMetacat.debug("HashStoreConversionAdmin.convert - the start of the method");
         String processForm = request.getParameter("processForm");
-        String bypass = request.getParameter("bypass");
         String formErrors = (String) request.getAttribute("formErrors");
 
         if (processForm == null || !processForm.equals("true") || formErrors != null) {
             // The servlet configuration parameters have not been set, or there
             // were form errors on the last attempt to configure, so redirect to
             // the web form for configuring metacat
-            logMetacat.debug("HashStoreConversionAdmin.convert - in the error handling routine");
+            logMetacat.debug("HashStoreConversionAdmin.convert - in the initialization routine");
             try {
                 // Forward the request to the JSP page
                 RequestUtil.forwardRequest(request, response,
-                                           "/admin/quota-configuration.jsp", null);
+                                           "/admin/hashstore-conversion.jsp", null);
             } catch (MetacatUtilException mue) {
                 throw new AdminException("HashStoreConversionAdmin.convert - utility problem "
                                              + "while initializing "
                                              + "system properties page:" + mue.getMessage());
             }
-        } else if (bypass != null && bypass.equals("true")) {
-            logMetacat.debug("HashStoreConversionAdmin.convert - in the bypass routine...");
-            Vector<String> processingErrors = new Vector<String>();
-            Vector<String> processingSuccess = new Vector<String>();
-            try {
-
-                    // Reload the main metacat configuration page
-                    processingSuccess.add("HashStoreConversionAdmin.convert successfully bypassed");
-                    RequestUtil.clearRequestMessages(request);
-                    RequestUtil.setRequestSuccess(request, processingSuccess);
-                RequestUtil.forwardRequest(request, response,
-                                           "/admin?configureType=configure&processForm=false",
-                                           null);
-
-            } catch (MetacatUtilException mue) {
-                throw new AdminException("HashStoreConversionAdmin.convert - utility problem "
-                                             + "while processing the hashstore conversion: "
-                                             + mue.getMessage());
-            }
-
         } else {
-            logMetacat.debug("HashStoreConversionAdmin.convert - in the else routine...");
+            logMetacat.debug("HashStoreConversionAdmin.convert - in the else routine to do the "
+                                 + "conversion");
             Vector<String> processingSuccess = new Vector<String>();
             try {
-                    // Now that the options have been set, change the
-                    // 'propertiesConfigured' option to 'true'
-                    PropertyService.setProperty("configutil.quotaConfigured",
-                                                PropertyService.CONFIGURED);
 
-                    // Reload the main metacat configuration page
-                    processingSuccess.add("Metacat's storage was converted to hashstore "
-                                              + "successfully ");
-                    RequestUtil.clearRequestMessages(request);
-                    RequestUtil.setRequestSuccess(request, processingSuccess);
+                // Do the job of conversion
+                
+                // Now that the options have been set, change the
+                // 'propertiesConfigured' option to 'true'
+                PropertyService.setProperty("storage.hashstoreConverted",
+                                            PropertyService.CONFIGURED);
+                // Reload the main metacat configuration page
+                processingSuccess.add("Metacat's storage was converted to hashstore "
+                                          + "successfully ");
+                RequestUtil.clearRequestMessages(request);
+                RequestUtil.setRequestSuccess(request, processingSuccess);
                 RequestUtil.forwardRequest(request, response,
                                            "/admin?configureType=configure&processForm=false",
                                            null);

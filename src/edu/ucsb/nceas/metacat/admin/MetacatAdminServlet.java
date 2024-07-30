@@ -183,6 +183,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 case "solrserver" -> SolrAdmin.getInstance().configureSolr(request, response);
                 case "refreshStylesheets" -> clearStylesheetCache(response);
                 case "removeSysmetaLock" -> removeSysmetaLock(request, response);
+                case "hashstore" -> HashStoreConversionAdmin.getInstance().convert(request,response);
                 default -> {
                     String errorMessage =
                         "MetacatAdminServlet - Invalid action in configuration request: " + action;
@@ -289,6 +290,8 @@ public class MetacatAdminServlet extends HttpServlet {
                 request.setAttribute("databaseVersion", DBAdmin.getInstance().getDBVersion());
                 request.setAttribute("contextURL", SystemUtil.getContextURL());
             }
+            request.setAttribute(
+                "hashstoreConverted", PropertyService.getProperty("storage.hashstoreConverted"));
         }
     }
 
