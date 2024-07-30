@@ -76,7 +76,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
             try {
 
                 // Do the job of conversion
-                
+
                 // Now that the options have been set, change the
                 // 'propertiesConfigured' option to 'true'
                 PropertyService.setProperty("storage.hashstoreConverted",
