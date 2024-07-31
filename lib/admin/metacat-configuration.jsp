@@ -189,50 +189,6 @@
         %>
 
         <%
-           if (hashStoreConverted != null && hashStoreConverted.equals(
-                            PropertyService.CONFIGURED)) {
-         %>
-        <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> converted</td>
-            <td class="property-title"> HashStore Conversion</td>
-            <td class="configure-link inactive"> Done</td>
-        </tr>
-        <%
-        } else {
-        %>
-        <tr>
-            <td class="unconfigured-tag">unconverted</td>
-            <td class="property-title"> HashStore Conversion</td>
-            <%
-                if (propsConfigured != null && propsConfigured) {
-                    if ((dbConfigured != null && dbConfigured) || (metacatVersion != null
-                            && databaseVersion != null
-                            && metacatVersion.compareTo(databaseVersion) == 0)) {
-            %>
-            <td class="configure-link">
-                <a href="<%= request.getContextPath() %>/admin?configureType=hashstore">
-                    <i class="icon-cogs"></i> Convert Now</a></td>
-            <%
-            } else {
-            %>
-            <td class="configure-link inactive"> Configure Database Installation/Upgrade First</td>
-            <%
-                }
-            %>
-
-            <%
-            } else {
-            %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
-            <%
-                }
-            %>
-        </tr>
-        <%
-            }
-        %>
-
-        <%
 
             if (dataoneConfigured != null && dataoneConfigured.equals(PropertyService.CONFIGURED)) {
         %>
