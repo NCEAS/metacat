@@ -9,7 +9,7 @@
     Boolean propsConfigured = (Boolean) request.getAttribute("propsConfigured");
     Boolean orgsConfigured = (Boolean) request.getAttribute("orgsConfigured");
     Boolean authConfigured = (Boolean) request.getAttribute("authConfigured");
-    Boolean dbConfigured = (Boolean) request.getAttribute("dbConfigured");
+    String dbConfigured = (String) request.getAttribute("dbConfigured");
     String dataoneConfigured = (String) request.getAttribute("dataoneConfigured");
     String solrserverConfigured = (String) request.getAttribute("solrserverConfigured");
     String ezidConfigured = (String) request.getAttribute("ezidConfigured");
@@ -85,7 +85,7 @@
         %>
 
         <%
-            if ((dbConfigured != null && dbConfigured) || (metacatVersion != null
+            if ((dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) || (metacatVersion != null
                     && databaseVersion != null && metacatVersion.compareTo(databaseVersion) == 0)) {
         %>
         <tr>
@@ -161,7 +161,7 @@
             <td class="property-title"> Solr Server Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
-                    if ((dbConfigured != null && dbConfigured) || (metacatVersion != null
+                    if ((dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) || (metacatVersion != null
                             && databaseVersion != null
                             && metacatVersion.compareTo(databaseVersion) == 0)) {
             %>
