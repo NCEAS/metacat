@@ -77,6 +77,8 @@ public class DBAdmin extends MetacatAdmin {
     public static final int DB_DOES_NOT_EXIST = 0;
     public static final int TABLES_DO_NOT_EXIST = 1;
     public static final int TABLES_EXIST = 2;
+    public static final String IN_PROGRESS = "in_progress";
+    public static final String FAILED = "failed";
 
     // db version statuses. This allows us to keep version history
     // in the db. Only the latest version record should be active.

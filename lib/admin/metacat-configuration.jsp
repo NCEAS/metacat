@@ -95,6 +95,14 @@
             </td>
         </tr>
         <%
+        } else if (dbConfigured != null && dbConfigured.equals(DBAdmin.IN_PROGRESS)) {
+        %>
+        <tr>
+                    <td class="configured-tag"><i class="icon-ok"></i> in progress</td>
+                    <td class="property-title"> Database Installation/Upgrade</td>
+                    <td class="configure-link inactive"> Refresh page to update status</td>
+        </tr>
+        <%
         } else {
         %>
         <tr>
