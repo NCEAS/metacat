@@ -19,6 +19,9 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
 
     private static Log logMetacat = LogFactory.getLog(HashStoreConversionAdmin.class);
     private static HashStoreConversionAdmin hashStoreConverter = null;
+    private String status;
+    private String error;
+    private String info;
 
     /**
      * Default private constructor
@@ -104,6 +107,42 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     @Override
     protected Vector<String> validateOptions(HttpServletRequest request) {
         return new Vector<>();
+    }
+
+    /**
+     * Get the status of conversion
+     * @return the status. It can be converted, unconverted, in_progress and failed
+     */
+    public String getStatus() {
+        return this.status;
+    }
+
+    /**
+     * Get the error message if the conversion fails
+     * @return the error message
+     */
+    public String getError() {
+        return this.error;
+    }
+
+    /**
+     * Get the information that some conversion failed
+     * @return the information
+     */
+    public String getInfo() {
+        return this.info;
+    }
+
+    private void setStatus(String status) {
+        this.status = status;
+    }
+
+    private void setError(String error) {
+        this.error = error;
+    }
+
+    private void setInfo(String info) {
+        this.info = info;
     }
 
 }
