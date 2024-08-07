@@ -1,6 +1,8 @@
 <%@ page language="java" %>
 <%@ page import="edu.ucsb.nceas.metacat.database.DBVersion,edu.ucsb.nceas.metacat.MetacatVersion" %>
 <%@ page import="edu.ucsb.nceas.metacat.properties.PropertyService" %>
+<%@ page import="edu.ucsb.nceas.metacat.admin.MetacatAdmin" %>
+<%@ page import="edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin" %>
 
 
 <%
@@ -95,7 +97,7 @@
             </td>
         </tr>
         <%
-        } else if (dbConfigured != null && dbConfigured.equals(DBAdmin.IN_PROGRESS)) {
+        } else if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.IN_PROGRESS)) {
         %>
         <tr>
                     <td class="configured-tag"><i class="icon-ok"></i> in progress</td>
@@ -123,6 +125,44 @@
             <%
                 }
             %>
+        </tr>
+        <%
+            }
+        %>
+
+        <%
+            if ((hashStoreConverted != null && hashStoreConverted.equals(HashStoreConversionAdmin.CONVERTED))) {
+        %>
+        <tr>
+            <td class="configured-tag"><i class="icon-ok"></i> converted</td>
+            <td class="property-title"> Hashtore Conversion</td>
+            <td class="configure-link inactive"> </td>
+        </tr>
+        <%
+            } else if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin
+            .IN_PROGRESS)) {
+        %>
+        <tr>
+                    <td class="configured-tag"><i class="icon-ok"></i> in progress</td>
+                    <td class="property-title"> Hashtore Conversion</td>
+                    <td class="configure-link inactive"> Refresh page to update status</td>
+        </tr>
+        <%
+            } else if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin
+            .FAILURE)) {
+        %>
+        <tr>
+                      <td class="configured-tag"><i class="icon-ok"></i> Failure</td>
+                      <td class="property-title"> Hashtore Conversion</td>
+                      <td class="configure-link inactive"> Refresh page to update status</td>
+        </tr>
+        <%
+            } else {
+        %>
+        <tr>
+            <td class="unconfigured-tag"> unconverted</td>
+            <td class="property-title"> Hashtore Conversion</td>
+            <td class="configure-link inactive"> </td>
         </tr>
         <%
             }
