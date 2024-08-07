@@ -183,7 +183,6 @@ public class MetacatAdminServlet extends HttpServlet {
                 case "solrserver" -> SolrAdmin.getInstance().configureSolr(request, response);
                 case "refreshStylesheets" -> clearStylesheetCache(response);
                 case "removeSysmetaLock" -> removeSysmetaLock(request, response);
-                case "hashstore" -> HashStoreConversionAdmin.getInstance().convert(request,response);
                 default -> {
                     String errorMessage =
                         "MetacatAdminServlet - Invalid action in configuration request: " + action;
