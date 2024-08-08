@@ -94,6 +94,7 @@ public class DBAdmin extends MetacatAdmin {
     private Map<String, String> scriptSuffixMap = new HashMap<String, String>();
     private static DBVersion databaseVersion = null;
 
+    private static String error = "";
 
     /**
      * private constructor since this is a singleton
@@ -1025,5 +1026,13 @@ public class DBAdmin extends MetacatAdmin {
         // TODO MCD validate options.
 
         return errorVector;
+    }
+
+    /**
+     * Get the error message during the process
+     * @return the error
+     */
+    public static String getError() {
+        return error;
     }
 }
