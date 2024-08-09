@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -30,6 +31,7 @@ import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
@@ -414,15 +416,23 @@ public class D1ResourceHandler {
      * @throws IllegalAccessException
      * @throws NoSuchAlgorithmException
      * @throws MarshallingException
+     * @throws InterruptedException
+     * @throws RuntimeException
+     * @throws ServiceFailure
+     * @throws InvalidRequest
+     * @throws InvalidSystemMetadata
+     * @throws InvocationTargetException
      */
-    protected MultipartRequestWithSysmeta collectObjectFiles() throws IOException,
-                             FileUploadException, InstantiationException, IllegalAccessException,
-                             NoSuchAlgorithmException, MarshallingException {
+    protected MultipartRequestWithSysmeta collectObjectFiles()
+        throws IOException, FileUploadException, InstantiationException, IllegalAccessException,
+        NoSuchAlgorithmException, MarshallingException, InvalidRequest, ServiceFailure,
+        RuntimeException, InterruptedException, InvalidSystemMetadata, InvocationTargetException {
         logMetacat.debug("Disassembling MIME multipart form with object files");
         // handle MMP inputs
         File tmpDir = getTempDirectory();
         logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
-        StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE);
+        StreamingMultipartRequestResolver resolver =
+                   new StreamingMultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE);
         MultipartRequestWithSysmeta mq = null;
         mq = (MultipartRequestWithSysmeta)resolver.resolveMultipart(request);
         multipartparams = mq.getMultipartParameters();

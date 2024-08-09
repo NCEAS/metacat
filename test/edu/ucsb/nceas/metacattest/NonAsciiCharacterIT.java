@@ -208,7 +208,7 @@ public class NonAsciiCharacterIT {
             SystemMetadata sysmeta =
                         D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(D1NodeServiceTest.eml_2_0_1_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
             d1NodeTest.readDocidWhichEqualsDoc(newdocid, testdocument, true, session);
             // this tests searching for the document in the database
@@ -242,7 +242,7 @@ public class NonAsciiCharacterIT {
             SystemMetadata sysmeta =
                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(D1NodeServiceTest.eml_2_1_0_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
             d1NodeTest.readDocidWhichEqualsDoc(newdocid, testdocument, MCTestCase.SUCCESS, session);
             // this tests searching for the document in the database
@@ -272,7 +272,7 @@ public class NonAsciiCharacterIT {
             SystemMetadata sysmeta =
                         D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(D1NodeServiceTest.eml_2_0_1_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
             d1NodeTest.readDocidWhichEqualsDoc(newdocid, testdocument, MCTestCase.SUCCESS, session);
             // this tests searching for the document in the database
@@ -302,7 +302,7 @@ public class NonAsciiCharacterIT {
             SystemMetadata sysmeta =
                         D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(D1NodeServiceTest.eml_2_1_0_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
             d1NodeTest.readDocidWhichEqualsDoc(newdocid, testdocument, MCTestCase.SUCCESS, session);
             // this tests searching for the document in the database
@@ -332,7 +332,7 @@ public class NonAsciiCharacterIT {
             SystemMetadata sysmeta =
                         D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(D1NodeServiceTest.eml_2_0_1_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
             d1NodeTest.readDocidWhichEqualsDoc(newdocid, testdocument, MCTestCase.SUCCESS, session);
             // this tests searching for the document in the database
@@ -362,7 +362,7 @@ public class NonAsciiCharacterIT {
             SystemMetadata sysmeta =
                         D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(D1NodeServiceTest.eml_2_1_0_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
             d1NodeTest.readDocidWhichEqualsDoc(newdocid, testdocument, MCTestCase.SUCCESS, session);
             // this tests searching for the document in the database
@@ -391,7 +391,7 @@ public class NonAsciiCharacterIT {
             SystemMetadata sysmeta =
                          D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(D1NodeServiceTest.eml_2_0_1_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
             d1NodeTest.readDocidWhichEqualsDoc(newdocid, testdocument, MCTestCase.SUCCESS, session);
             // this tests searching for the document in the database
@@ -420,7 +420,7 @@ public class NonAsciiCharacterIT {
             SystemMetadata sysmeta =
                         D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             sysmeta.setFormatId(D1NodeServiceTest.eml_2_1_0_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            d1NodeTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
             d1NodeTest.readDocidWhichEqualsDoc(newdocid, testdocument, MCTestCase.SUCCESS, session);
             // this tests searching for the document in the database
@@ -457,7 +457,7 @@ public class NonAsciiCharacterIT {
         docid.append(calendar.get(Calendar.MINUTE));
         docid.append(calendar.get(Calendar.SECOND));
        //sometimes this number is not unique, so we append a random number
-        int random = (new Double(Math.random()*10000000)).intValue();
+        int random = (Double.valueOf(Math.random()*10000000)).intValue();
         docid.append(random);
         return docid.toString();
     }

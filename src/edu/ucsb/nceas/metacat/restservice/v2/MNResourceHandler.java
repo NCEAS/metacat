@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -75,10 +76,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.doi.DOIException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
-import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
-import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
-import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -1339,9 +1337,11 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken
      * @throws IOException
      * @throws MarshallingException
+     * @throws InterruptedException
      */
     protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
-                    NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException {
+                                                InterruptedException, NotFound, InvalidRequest,
+                                                NotImplemented, IOException, MarshallingException {
         OutputStream out = null;
 
         if (pid != null) { //get a specific document
@@ -1629,8 +1629,8 @@ public class MNResourceHandler extends D1ResourceHandler {
     /**
      * Inserts or updates the object
      *
-     * @param pid - ID of data object to be inserted or updated.  If action is update, the pid
-     *               is the existing pid.  If insert, the pid is the new one
+     * @param trailingPid  the pid part of in the url
+     * @param action  indicate that it is insert or update
      * @throws InvalidRequest
      * @throws ServiceFailure
      * @throws MarshallingException
@@ -1647,26 +1647,19 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InstantiationException
      * @throws FileUploadException
      * @throws NoSuchAlgorithmException
+     * @throws InterruptedException
+     * @throws InvocationTargetException
      */
-    protected void putObject(String trailingPid, String action) throws ServiceFailure,
-                            InvalidRequest, MarshallingException, InvalidToken, NotAuthorized,
-                            IdentifierNotUnique, UnsupportedType, InsufficientResources,
-                            InvalidSystemMetadata, NotImplemented, NotFound, IOException,
-                                            InstantiationException, IllegalAccessException,
-                                                NoSuchAlgorithmException, FileUploadException {
-        CheckedFile objFile = null;
+    protected void putObject(String trailingPid, String action)
+        throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized,
+        IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata,
+        NotImplemented, NotFound, IOException, InterruptedException, InstantiationException,
+        IllegalAccessException, NoSuchAlgorithmException, FileUploadException,
+        InvocationTargetException {
         try {
             long start = System.currentTimeMillis();
             // Read the incoming data from its Mime Multipart encoding
             MultipartRequestWithSysmeta multiparts = collectObjectFiles();
-            Map<String, File> files = multiparts.getMultipartFiles();
-            objFile = (CheckedFile) files.get("object");
-            // ensure we have the object bytes
-            if (objFile == null) {
-                throw new InvalidRequest("1102", "The object param must contain the object bytes.");
-            }
-            DetailedFileInputStream object = new DetailedFileInputStream(objFile, objFile.getChecksum());
-
                 Identifier pid = new Identifier();
                 if (trailingPid == null) {
                     // get the pid string from the body and set the value
@@ -1701,7 +1694,8 @@ public class MNResourceHandler extends D1ResourceHandler {
                     logMetacat.debug("Commence creation...");
 
                     logMetacat.debug("creating object with pid " + pid.getValue());
-                    Identifier rId = MNodeService.getInstance(request).create(session, pid, object, smd);
+                    // Set the input stream object null
+                    Identifier rId = MNodeService.getInstance(request).create(session, pid, null, smd);
                     TypeMarshaller.marshalTypeToOutputStream(rId, out);
 
                 } else if (action.equals(FUNCTION_NAME_UPDATE)) {
@@ -1717,8 +1711,9 @@ public class MNResourceHandler extends D1ResourceHandler {
                         logMetacat.error("Could not get newPid from request");
                     }
                     logMetacat.debug("Commence update...");
+                    // Set the input stream object null
                     Identifier rId = MNodeService.getInstance(request)
-                                                .update(session, pid, object, newPid, smd);
+                                                .update(session, pid, null, newPid, smd);
                     TypeMarshaller.marshalTypeToOutputStream(rId, out);
                 } else {
                     throw new InvalidRequest("1000", "Operation must be create or update.");
@@ -1730,9 +1725,6 @@ public class MNResourceHandler extends D1ResourceHandler {
                         + " Total create/update method" + Settings.PERFORMANCELOG_DURATION
                             + (end-start)/1000);
         } catch (Exception e) {
-            if(objFile != null) {
-                StreamingMultipartRequestResolver.deleteTempFile(objFile);
-            }
             throw e;
         }
     }

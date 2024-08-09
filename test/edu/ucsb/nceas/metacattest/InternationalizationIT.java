@@ -1,28 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2004 Regents of the University of California and the
- *              National Center for Ecological Analysis and Synthesis
- *  Purpose: To test the Access Controls in metacat by JUnit
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 package edu.ucsb.nceas.metacattest;
 
 import java.util.Calendar;
@@ -31,15 +6,20 @@ import java.util.GregorianCalendar;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.junit.Before;
+import org.junit.Test;
 
+import static org.junit.Assert.fail;
+
+import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.utilities.FileUtil;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -48,110 +28,85 @@ import java.io.InputStream;
 /**
  * A JUnit test for testing Metacat when Non Ascii Characters are inserted
  */
-public class InternationalizationTest extends D1NodeServiceTest {
+public class InternationalizationIT {
 
-    /**
-     * Constructor to build the test
-     *
-     * @param name the name of the test method
-     */
-    public InternationalizationTest(String name) {
-        super(name);
-    }
+    private D1NodeServiceTest d1NodeServiceTest;
+    private HttpServletRequest request;
 
 
     /**
-     * Release any objects after tests are complete
+     * Set up the test frame work
+     * @throws Exception
      */
-    public void tearDown() {
-        super.tearDown();
+    @Before
+    public void setUp() throws Exception {
+        d1NodeServiceTest = new D1NodeServiceTest("initialize");
+        request = d1NodeServiceTest.getServletRequest();
     }
-
-    /**
-     * Create a suite of tests to be run together
-     */
-    public static Test suite() {
-        TestSuite suite = new TestSuite();
-        suite.addTest(new InternationalizationTest("initialize"));
-        // Test basic functions
-        suite.addTest(new InternationalizationTest("unicodeCharacterTest"));
-        suite.addTest(new InternationalizationTest("translation211Test"));
-        return suite;
-    }
-
-    /**
-     * Run an initial test that always passes to check that the test
-     * harness is working.
-     */
-    public void initialize() {
-        assertTrue(1 == 1);
-    }
-
-    
 
     /**
      * Test inserting and reading an EML 2.1.1 document with the multiple title translations. 
      * Read should succeed since the same document should be read back from disk 
      * that was submitted.  Query should succeed because we look for the same original and translation
      */
+    @Test
     public void translation211Test() {
-    	debug("\nRunning: translation211Test");
         try {
-            Session session = getTestSession();
+            Session session = d1NodeServiceTest.getTestSession();
             String newdocid = generateDocid();
             newdocid += ".1";
             String title_en_US = "Translation for document: " + newdocid;
             String title_zh_TW = "翻譯的文件: " + newdocid;
 
-            String mixedTitle = 
-            		title_en_US + 
-            		"<value xml:lang=\"zh-TW\">" +
-            		title_zh_TW +
-            		"</value>";
-            
-            testdocument = getTestEmlDoc(mixedTitle, EML2_1_1);
+            String mixedTitle = title_en_US + "<value xml:lang=\"zh-TW\">" + title_zh_TW + "</value>";
+
+            String testdocument = D1NodeServiceTest.getTestEmlDoc(mixedTitle,
+                                                                        D1NodeServiceTest.EML2_1_1);
             InputStream object = new ByteArrayInputStream(testdocument.getBytes());
             Identifier guid = new Identifier();
             guid.setValue(newdocid);
-            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-            sysmeta.setFormatId(eml_2_1_1_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            SystemMetadata sysmeta = D1NodeServiceTest
+                                        .createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(D1NodeServiceTest.eml_2_1_1_format);
+            d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
+            d1NodeServiceTest.readDocidWhichEqualsDoc(newdocid, testdocument, MCTestCase.SUCCESS, session);
             // this tests searching for the document in the database
-            queryTile(title_en_US, newdocid, session);
-            queryTile(title_zh_TW, newdocid, session);
+            d1NodeServiceTest.queryTile(title_en_US, newdocid, session);
+            d1NodeServiceTest.queryTile(title_zh_TW, newdocid, session);
             MNodeService.getInstance(request).archive(session, guid);
         } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
         }
     }
-    
+
     /**
      * Test inserting and reading an EML 2.1.0 with Chinese
      */
+    @Test
     public void unicodeCharacterTest() {
-    	debug("\nRunning: unicodeCharacterTest");
+
         try {
-            Session session = getTestSession();
-        	String filePath = "test/clienttestfiles/unicodeEML.xml";
+            Session session = d1NodeServiceTest.getTestSession();
+            String filePath = "test/clienttestfiles/unicodeEML.xml";
             String testTitle = "測試中的數據包 (Test Chinese data package) _DOCID_";
             String newdocid = generateDocid() + ".1";
-            testdocument = FileUtil.readFileToString(filePath, "UTF-8");
-            
+            String testdocument = FileUtil.readFileToString(filePath, "UTF-8");
+
             // include the docid
             testdocument = testdocument.replaceAll("_DOCID_", newdocid);
             testTitle = testTitle.replaceAll("_DOCID_", newdocid);
             InputStream object = new ByteArrayInputStream(testdocument.getBytes());
             Identifier guid = new Identifier();
             guid.setValue(newdocid);
-            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-            sysmeta.setFormatId(eml_2_1_1_format);
-            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            SystemMetadata sysmeta = D1NodeServiceTest
+                                        .createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(D1NodeServiceTest.eml_2_1_1_format);
+            d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
             // this tests reading the document back from disk
-            readDocidWhichEqualsDoc(newdocid, testdocument, SUCCESS, session);
+            d1NodeServiceTest.readDocidWhichEqualsDoc(newdocid, testdocument, MCTestCase.SUCCESS, session);
             // this tests searching for the document in the database
-            queryTile(testTitle, newdocid, session);
+            d1NodeServiceTest.queryTile(testTitle, newdocid, session);
             MNodeService.getInstance(request).archive(session, guid);
         } catch (Exception e) {
             fail("General exception:\n" + e.getMessage());
@@ -167,7 +122,7 @@ public class InternationalizationTest extends D1NodeServiceTest {
      * @return a String docid based on the current date and time
      */
     private String generateDocid() {
-        StringBuffer docid = new StringBuffer(prefix);
+        StringBuffer docid = new StringBuffer("test");
         docid.append(".");
 
         // Create a calendar to get the date formatted properly
@@ -184,9 +139,9 @@ public class InternationalizationTest extends D1NodeServiceTest {
         docid.append(calendar.get(Calendar.HOUR_OF_DAY));
         docid.append(calendar.get(Calendar.MINUTE));
         docid.append(calendar.get(Calendar.SECOND));
-   	    //sometimes this number is not unique, so we append a random number
-    	int random = (new Double(Math.random()*100)).intValue();
-    	docid.append(random);
+        //sometimes this number is not unique, so we append a random number
+        int random = (Double.valueOf(Math.random()*100)).intValue();
+        docid.append(random);
         return docid.toString();
     }
 }

@@ -78,6 +78,7 @@ public class DBAdmin extends MetacatAdmin {
     public static final int TABLES_DO_NOT_EXIST = 1;
     public static final int TABLES_EXIST = 2;
 
+
     // db version statuses. This allows us to keep version history
     // in the db. Only the latest version record should be active.
     public static final int VERSION_INACTIVE = 0;
@@ -93,6 +94,7 @@ public class DBAdmin extends MetacatAdmin {
     private Map<String, String> scriptSuffixMap = new HashMap<String, String>();
     private static DBVersion databaseVersion = null;
 
+    private static String error = "";
 
     /**
      * private constructor since this is a singleton
@@ -151,11 +153,10 @@ public class DBAdmin extends MetacatAdmin {
             HttpServletResponse response) throws AdminException {
 
         String processForm = request.getParameter("processForm");
-        String formErrors = (String) request.getAttribute("formErrors");
         HttpSession session = request.getSession();
         String supportEmail = null;
 
-        if (processForm == null || !processForm.equals("true") || formErrors != null) {
+        if (processForm == null || !processForm.equals("true")) {
             // The servlet configuration parameters have not been set, or there
             // were form errors on the last attempt to configure, so redirect to
             // the web form for configuring metacat
@@ -205,7 +206,6 @@ public class DBAdmin extends MetacatAdmin {
 
             // The configuration form is being submitted and needs to be
             // processed.
-            Vector<String> validationErrors = new Vector<String>();
             Vector<String> processingSuccess = new Vector<String>();
 
             try {
@@ -215,34 +215,35 @@ public class DBAdmin extends MetacatAdmin {
                 // and
                 // preserve their entries.
                 supportEmail = PropertyService.getProperty("email.recipient");
-                validationErrors.addAll(validateOptions(request));
-                
-                
-                upgradeDatabase();
-                
-                
-
-                // Now that the options have been set, change the
-                // 'databaseConfigured' option to 'true' so that normal metacat
-                // requests will go through
                 PropertyService.setProperty("configutil.databaseConfigured",
-                        PropertyService.CONFIGURED);
-                PropertyService.persistMainBackupProperties();
-               
-                    // Reload the main metacat configuration page
-                    processingSuccess.add("Database successfully upgraded");
-                    RequestUtil.clearRequestMessages(request);
-                    RequestUtil.setRequestSuccess(request, processingSuccess);
-                    RequestUtil.forwardRequest(request, response,
-                            "/admin?configureType=configure&processForm=false", null);
-                 
-            
+                                            MetacatAdmin.IN_PROGRESS);
+                // Reload the main metacat configuration page
+                RequestUtil.clearRequestMessages(request);
+                //RequestUtil.setRequestSuccess(request, processingSuccess);
+                response.sendRedirect(SystemUtil.getContextURL() + "/admin");
+
+
+
+                try {
+                    upgradeDatabase();
+                    // Now that the options have been set, change the
+                    // 'databaseConfigured' option to 'true' so that normal metacat
+                    // requests will go through
+                    PropertyService.setProperty("configutil.databaseConfigured",
+                                                PropertyService.CONFIGURED);
+                    PropertyService.persistMainBackupProperties();
+                } catch (Exception e) {
+                    error = e.getMessage();
+                    PropertyService.setProperty("configutil.databaseConfigured",
+                                                MetacatAdmin.FAILURE);
+                }
+
             } catch (GeneralPropertyException gpe) {
                 throw new AdminException("DBAdmin.configureDatabase - Problem getting or setting " 
                                     + "property while upgrading database: " + gpe.getMessage());
-            }  catch (MetacatUtilException mue) {
-                throw new AdminException("DBAdmin.configureDatabase - utility problem while"
-                                            + " upgrading database: " + mue.getMessage());
+            }  catch (IOException ie) {
+                throw new AdminException("DBAdmin.configureDatabase - redirect url problem while"
+                                            + " upgrading database: " + ie.getMessage());
             } 
         }
     }
@@ -1024,5 +1025,13 @@ public class DBAdmin extends MetacatAdmin {
         // TODO MCD validate options.
 
         return errorVector;
+    }
+
+    /**
+     * Get the error message during the process
+     * @return the error
+     */
+    public static String getError() {
+        return error;
     }
 }

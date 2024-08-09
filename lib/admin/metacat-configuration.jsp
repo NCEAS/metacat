@@ -1,33 +1,10 @@
 <%@ page language="java" %>
 <%@ page import="edu.ucsb.nceas.metacat.database.DBVersion,edu.ucsb.nceas.metacat.MetacatVersion" %>
 <%@ page import="edu.ucsb.nceas.metacat.properties.PropertyService" %>
+<%@ page import="edu.ucsb.nceas.metacat.admin.MetacatAdmin" %>
+<%@ page import="edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin" %>
+<%@ page import="edu.ucsb.nceas.metacat.admin.DBAdmin" %>
 
-<%
-    /**
-     *  '$RCSfile$'
-     *    Copyright: 2008 Regents of the University of California and the
-     *               National Center for Ecological Analysis and Synthesis
-     *  For Details: http://www.nceas.ucsb.edu/
-     *
-     *   '$Author$'
-     *     '$Date$'
-     * '$Revision$'
-     *
-     * This program is free software; you can redistribute it and/or modify
-     * it under the terms of the GNU General Public License as published by
-     * the Free Software Foundation; either version 2 of the License, or
-     * (at your option) any later version.
-     *
-     * This program is distributed in the hope that it will be useful,
-     * but WITHOUT ANY WARRANTY; without even the implied warranty of
-     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     * GNU General Public License for more details.
-     *
-     * You should have received a copy of the GNU General Public License
-     * along with this program; if not, write to the Free Software
-     * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-     */
-%>
 
 <%
     MetacatVersion metacatVersion = (MetacatVersion) request.getAttribute("metaCatVersion");
@@ -35,14 +12,16 @@
     Boolean propsConfigured = (Boolean) request.getAttribute("propsConfigured");
     Boolean orgsConfigured = (Boolean) request.getAttribute("orgsConfigured");
     Boolean authConfigured = (Boolean) request.getAttribute("authConfigured");
-    Boolean dbConfigured = (Boolean) request.getAttribute("dbConfigured");
+    String dbConfigured = PropertyService.getProperty("configutil.databaseConfigured");
     String dataoneConfigured = (String) request.getAttribute("dataoneConfigured");
     String solrserverConfigured = (String) request.getAttribute("solrserverConfigured");
     String ezidConfigured = (String) request.getAttribute("ezidConfigured");
     String quotaConfigured = (String) request.getAttribute("quotaConfigured");
     Boolean metacatConfigured = (Boolean) request.getAttribute("metacatConfigured");
     Boolean metacatServletInitialized = (Boolean) request.getAttribute("metacatServletInitialized");
+    String hashStoreConverted = (String) request.getAttribute("hashstoreConverted");
     String contextURL = (String) request.getAttribute("contextURL");
+    String dbError = DBAdmin.getError();
 %>
 
 <html>
@@ -57,7 +36,22 @@
     <h2>Metacat Configuration</h2>
 
     <p>All of the following sections must be in a configured state for Metacat to run properly:</p>
-    <br class="main-header">
+
+    <%
+       if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.FAILURE) && dbError != null &&
+       !dbError
+       .isBlank()) {
+
+    %>
+      <br class="main-header">
+        <div class="alert">
+            <%= dbError %>
+        </div>
+      </br>
+    <%
+        }
+    %>
+
 
     <%@ include file="page-message-section.jsp" %>
 
@@ -110,7 +104,7 @@
         %>
 
         <%
-            if ((dbConfigured != null && dbConfigured) || (metacatVersion != null
+            if ((dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) || (metacatVersion != null
                     && databaseVersion != null && metacatVersion.compareTo(databaseVersion) == 0)) {
         %>
         <tr>
@@ -118,6 +112,14 @@
             <td class="property-title"> Database Installation/Upgrade</td>
             <td class="configure-link inactive"> Version: <%=databaseVersion.getVersionString()%>
             </td>
+        </tr>
+        <%
+        } else if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.IN_PROGRESS)) {
+        %>
+        <tr>
+                    <td class="configured-tag"><i class="icon-ok"></i> in progress</td>
+                    <td class="property-title"> Database Installation/Upgrade</td>
+                    <td class="configure-link inactive"> Refresh page to update status</td>
         </tr>
         <%
         } else {
@@ -140,6 +142,44 @@
             <%
                 }
             %>
+        </tr>
+        <%
+            }
+        %>
+
+        <%
+            if ((hashStoreConverted != null && hashStoreConverted.equals(HashStoreConversionAdmin.CONVERTED))) {
+        %>
+        <tr>
+            <td class="configured-tag"><i class="icon-ok"></i> converted</td>
+            <td class="property-title"> Hashtore Conversion</td>
+            <td class="configure-link inactive"> </td>
+        </tr>
+        <%
+            } else if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin
+            .IN_PROGRESS)) {
+        %>
+        <tr>
+                    <td class="configured-tag"><i class="icon-ok"></i> in progress</td>
+                    <td class="property-title"> Hashtore Conversion</td>
+                    <td class="configure-link inactive"> Refresh page to update status</td>
+        </tr>
+        <%
+            } else if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin
+            .FAILURE)) {
+        %>
+        <tr>
+                      <td class="configured-tag"><i class="icon-ok"></i> Failure</td>
+                      <td class="property-title"> Hashtore Conversion</td>
+                      <td class="configure-link inactive"> Refresh page to update status</td>
+        </tr>
+        <%
+            } else {
+        %>
+        <tr>
+            <td class="unconfigured-tag"> unconverted</td>
+            <td class="property-title"> Hashtore Conversion</td>
+            <td class="configure-link inactive"> </td>
         </tr>
         <%
             }
@@ -186,7 +226,7 @@
             <td class="property-title"> Solr Server Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
-                    if ((dbConfigured != null && dbConfigured) || (metacatVersion != null
+                    if ((dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) || (metacatVersion != null
                             && databaseVersion != null
                             && metacatVersion.compareTo(databaseVersion) == 0)) {
             %>

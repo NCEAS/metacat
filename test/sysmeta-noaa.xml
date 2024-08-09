@@ -4,7 +4,7 @@
   <identifier>tao.4.1</identifier>
   <formatId>http://www.isotc211.org/2005/gmd-noaa</formatId>
   <size>80768</size>
-  <checksum algorithm="md5">8cd61d7798eeef7b797274f613695011</checksum>
+  <checksum algorithm="MD5">8cd61d7798eeef7b797274f613695011</checksum>
   <submitter>CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org</submitter>
   <rightsHolder>CN=arctica,UID=arctica,DC=arctica,DC=org</rightsHolder>
   <accessPolicy>

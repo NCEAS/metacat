@@ -121,18 +121,18 @@ public class MultipleDOIShouldersIT {
                 try {
                     metadata = ezid.getMetadata(guid.getValue());
                 } catch (Exception e) {
-                    Thread.sleep(RegisterDOITest.SLEEP_TIME);
+                    Thread.sleep(RegisterDOIIT.SLEEP_TIME);
                 }
                 count++;
-            } while (metadata == null && count < RegisterDOITest.MAX_TIMES);
+            } while (metadata == null && count < RegisterDOIIT.MAX_TIMES);
             assertNotNull(metadata);
 
             // add the actual object for the newly-minted DOI
             SystemMetadata sysmeta = null;
-            InputStream object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
+            InputStream object = new FileInputStream(RegisterDOIIT.EMLFILEPATH);
             sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
             object.close();
-            object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
+            object = new FileInputStream(RegisterDOIIT.EMLFILEPATH);
             sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
             Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             assertEquals(guid.getValue(), pid.getValue());
@@ -151,10 +151,10 @@ public class MultipleDOIShouldersIT {
                         }
                     }
                 } catch (Exception e) {
-                    Thread.sleep(RegisterDOITest.SLEEP_TIME);
+                    Thread.sleep(RegisterDOIIT.SLEEP_TIME);
                 }
                 count++;
-            } while (metadata == null && count < RegisterDOITest.MAX_TIMES);
+            } while (metadata == null && count < RegisterDOIIT.MAX_TIMES);
             assertNotNull(metadata);
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
             
@@ -183,10 +183,10 @@ public class MultipleDOIShouldersIT {
         
         Session session = d1NodeServiceTest.getTestSession();
         SystemMetadata sysmeta = null;
-        InputStream object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
+        InputStream object = new FileInputStream(RegisterDOIIT.EMLFILEPATH);
         sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         object.close();
-        object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
+        object = new FileInputStream(RegisterDOIIT.EMLFILEPATH);
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         assertEquals(guid.getValue(), pid.getValue());
@@ -207,10 +207,10 @@ public class MultipleDOIShouldersIT {
                     }
                 }
             } catch (Exception e) {
-                Thread.sleep(RegisterDOITest.SLEEP_TIME);
+                Thread.sleep(RegisterDOIIT.SLEEP_TIME);
             }
             count++;
-        } while (metadata == null && count < RegisterDOITest.MAX_TIMES);
+        } while (metadata == null && count < RegisterDOIIT.MAX_TIMES);
         assertNotNull(metadata);
         assertTrue(metadata.containsKey("datacite"));
         String datacite = metadata.get("datacite");
@@ -239,10 +239,10 @@ public class MultipleDOIShouldersIT {
         
         Session session = d1NodeServiceTest.getTestSession();
         SystemMetadata sysmeta = null;
-        InputStream object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
+        InputStream object = new FileInputStream(RegisterDOIIT.EMLFILEPATH);
         sysmeta = D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
         object.close();
-        object = new FileInputStream(RegisterDOITest.EMLFILEPATH);
+        object = new FileInputStream(RegisterDOIIT.EMLFILEPATH);
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         assertEquals(guid.getValue(), pid.getValue());
@@ -263,10 +263,10 @@ public class MultipleDOIShouldersIT {
                     }
                 }
             } catch (Exception e) {
-                Thread.sleep(RegisterDOITest.SLEEP_TIME);
+                Thread.sleep(RegisterDOIIT.SLEEP_TIME);
             }
             count++;
-        } while (metadata == null && count < RegisterDOITest.MAX_TIMES);
+        } while (metadata == null && count < RegisterDOIIT.MAX_TIMES);
         assertNull(metadata);
     }
 

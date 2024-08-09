@@ -1,6 +1,5 @@
 package edu.ucsb.nceas.metacat;
 
-import java.io.File;
 import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -1862,32 +1861,6 @@ public class IdentifierManager {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
-    }
-
-
-
-
-
-    /**
-     * Determine if the object file exist for the given localId.
-     * @param localId
-     * @param isScienceMetadata
-     * @return
-     * @throws PropertyNotFoundException
-     */
-    public boolean objectFileExists(String localId, boolean isScienceMetadata) throws PropertyNotFoundException {
-        boolean exist =false;
-        if (localId != null) {
-            String documentPath = getObjectFilePath(localId, isScienceMetadata);
-            if(documentPath != null) {
-                File file = new File(documentPath);
-                exist = file.exists();
-            }
-        } 
-        logMetacat.debug("IdentifierManager.ObjectFileExist - Does the object file for the local id "
-                          + localId + " which is science metadata " + isScienceMetadata
-                          + " exist in the Metacast file system? The answer is " + exist);
-        return exist;
     }
 
     /**

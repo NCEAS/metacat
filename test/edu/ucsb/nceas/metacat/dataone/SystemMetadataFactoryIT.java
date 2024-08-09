@@ -57,7 +57,7 @@ public class SystemMetadataFactoryIT {
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta.setFormatId(formatId);
         object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeTest.mnCreate(session, guid, object, sysmeta);
         // the docid
         String docid = IdentifierManager.getInstance().getLocalId(guid.getValue());
         Map<String, String> docInfo = SystemMetadataFactory.getDocumentInfoMap(docid);

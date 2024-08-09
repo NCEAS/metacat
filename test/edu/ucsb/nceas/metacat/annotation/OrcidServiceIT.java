@@ -22,14 +22,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class OrcidServiceTest {
+public class OrcidServiceIT {
 
     private D1NodeServiceTest d1NSTest;
 
     /**
      * constructor for the test
      */
-    public OrcidServiceTest() {
+    public OrcidServiceIT() {
     }
 
     /**
@@ -38,7 +38,6 @@ public class OrcidServiceTest {
     @Before
     public void setUp() throws Exception {
         // D1NodeServiceTest extends MCTestCase, so it automatically calls
-        // LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
         d1NSTest = new D1NodeServiceTest("OrcidServiceTest");
     }
 
@@ -64,8 +63,7 @@ public class OrcidServiceTest {
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta.setFormatId(formatId);
         object = new FileInputStream(path);
-        Identifier pid = MNodeService.getInstance(d1NSTest.getServletRequest())
-            .create(session, guid, object, sysmeta);
+        Identifier pid = d1NSTest.mnCreate(session, guid, object, sysmeta);
         assertNotNull("pid was null!", pid);
         object.close();
         String query = "q=id:"+guid.getValue();

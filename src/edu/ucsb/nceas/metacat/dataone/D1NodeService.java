@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -67,6 +69,7 @@ import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -406,9 +409,18 @@ public abstract class D1NodeService {
             // The sysmeta of the  obsoleted object set null
             localId = handler.save(sysmeta, changeModificationDate, MetacatHandler.Action.INSERT,
                                    docType, object, null, subject.getValue());
-        } catch (IOException ioe) {
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRequest("1102", "An InvalidRequest in the create method - "
+                                    + e.getMessage());
+        } catch (NoSuchAlgorithmException e) {
+            throw new UnsupportedType("1140", "An UnsupportedType in the create method - "
+                    + e.getMessage());
+        } catch (IOException | InvocationTargetException | IllegalAccessException e) {
             throw new ServiceFailure("1190", "Metacat cannot save the object " + pid.getValue()
-                                    + ioe.getMessage());
+                                    + e.getMessage());
+        } catch (McdbException e) {
+            throw new ServiceFailure("1190", "Metacat cannot save the object " + pid.getValue()
+                                    + "since it cannot find it in validation" + e.getMessage());
         }
         logMetacat.debug("Done inserting new object: " + pid.getValue());
         try {
@@ -465,49 +477,6 @@ public abstract class D1NodeService {
         }
     }
 
-    /*
-     * Roll-back method when inserting data object fails.
-     */
-    protected void removeSystemMetaAndIdentifier(Identifier id) {
-        if (id != null) {
-            try {
-                SystemMetadataManager.getInstance().delete(id);
-                logMetacat.info("D1NodeService.removeSystemMeta - the system metadata of object "
-                                    + id.getValue() + " has been removed from db tables since "
-                                    + "the object creation failed");
-                if (IdentifierManager.getInstance().mappingExists(id.getValue())) {
-                    String localId = IdentifierManager.getInstance().getLocalId(id.getValue());
-                    IdentifierManager.getInstance().removeMapping(id.getValue(), localId);
-                    logMetacat.info(
-                        "D1NodeService.removeSystemMeta - the identifier " + id.getValue()
-                            + " and local id " + localId
-                            + " have been removed from the identifier table since the object "
-                            + "creation failed");
-                }
-            } catch (Exception e) {
-                logMetacat.warn(
-                    "D1NodeService.removeSysteMeta - can't decide if the mapping of  the pid "
-                        + id.getValue() + " exists on the identifier table.");
-            }
-        }
-    }
-
-    /*
-     * Roll-back method when inserting data object fails.
-     */
-    protected void removeSolrIndex(SystemMetadata sysMeta) {
-        sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-        sysMeta.setArchived(true);
-        //sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-        try {
-            //MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, false);
-            MetacatSolrIndex.getInstance().submitDeleteTask(sysMeta.getIdentifier(), sysMeta);
-        } catch (Exception e) {
-            logMetacat.warn(
-                "Can't remove the solr index for pid " + sysMeta.getIdentifier().getValue());
-        }
-
-    }
 
 
     /**
