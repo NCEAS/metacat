@@ -220,8 +220,9 @@ public class DBAdmin extends MetacatAdmin {
                 // Reload the main metacat configuration page
                 RequestUtil.clearRequestMessages(request);
                 //RequestUtil.setRequestSuccess(request, processingSuccess);
-                RequestUtil.forwardRequest(request, response,
-                                           "/admin?configureType=configure&processForm=false", null);
+                response.sendRedirect(SystemUtil.getContextURL() + "/admin");
+
+
 
                 try {
                     upgradeDatabase();
@@ -240,9 +241,9 @@ public class DBAdmin extends MetacatAdmin {
             } catch (GeneralPropertyException gpe) {
                 throw new AdminException("DBAdmin.configureDatabase - Problem getting or setting " 
                                     + "property while upgrading database: " + gpe.getMessage());
-            }  catch (MetacatUtilException mue) {
-                throw new AdminException("DBAdmin.configureDatabase - utility problem while"
-                                            + " upgrading database: " + mue.getMessage());
+            }  catch (IOException ie) {
+                throw new AdminException("DBAdmin.configureDatabase - redirect url problem while"
+                                            + " upgrading database: " + ie.getMessage());
             } 
         }
     }
