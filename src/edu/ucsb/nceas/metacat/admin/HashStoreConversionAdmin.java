@@ -4,6 +4,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -21,7 +22,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     public static final String UNCONVERTED = "unconverted";
     private static Log logMetacat = LogFactory.getLog(HashStoreConversionAdmin.class);
     private static HashStoreConversionAdmin hashStoreConverter = null;
-    private String status;
+
     private String error;
     private String info;
 
@@ -114,9 +115,24 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     /**
      * Get the status of conversion
      * @return the status. It can be converted, unconverted, in_progress and failed
+     * @AdminException
      */
-    public String getStatus() {
-        return this.status;
+    public static String getStatus() throws AdminException {
+        try {
+            return PropertyService.getProperty("storage.hashstoreConverted");
+        } catch (PropertyNotFoundException e) {
+            throw new AdminException("Metacat cannot get the status of the hashstore conversion "
+                                         + "since " + e.getMessage());
+        }
+    }
+
+    /**
+     * Check if the hashstore was converted
+     * @return true if the status is true; otherwise false.
+     * @AdminException
+     */
+    public static boolean isConverted() throws AdminException {
+        return getStatus().equals(PropertyService.CONFIGURED);
     }
 
     /**
@@ -135,8 +151,13 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         return this.info;
     }
 
-    private void setStatus(String status) {
-        this.status = status;
+    private static void setStatus(String status) throws AdminException {
+        try {
+            PropertyService.setProperty("storage.hashstoreConverted", status);
+        } catch (GeneralPropertyException e) {
+            throw new AdminException("Metacat cannot set the status " + status + " for Hashtore "
+                                         + "conversion since " + e.getMessage());
+        }
     }
 
     private void setError(String error) {
