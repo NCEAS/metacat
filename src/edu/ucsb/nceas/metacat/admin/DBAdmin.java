@@ -153,11 +153,10 @@ public class DBAdmin extends MetacatAdmin {
             HttpServletResponse response) throws AdminException {
 
         String processForm = request.getParameter("processForm");
-        String formErrors = (String) request.getAttribute("formErrors");
         HttpSession session = request.getSession();
         String supportEmail = null;
 
-        if (processForm == null || !processForm.equals("true") || formErrors != null) {
+        if (processForm == null || !processForm.equals("true")) {
             // The servlet configuration parameters have not been set, or there
             // were form errors on the last attempt to configure, so redirect to
             // the web form for configuring metacat
@@ -207,7 +206,6 @@ public class DBAdmin extends MetacatAdmin {
 
             // The configuration form is being submitted and needs to be
             // processed.
-            Vector<String> validationErrors = new Vector<String>();
             Vector<String> processingSuccess = new Vector<String>();
 
             try {
@@ -217,28 +215,28 @@ public class DBAdmin extends MetacatAdmin {
                 // and
                 // preserve their entries.
                 supportEmail = PropertyService.getProperty("email.recipient");
-                validationErrors.addAll(validateOptions(request));
-                
-                
-                upgradeDatabase();
-                
-                
-
-                // Now that the options have been set, change the
-                // 'databaseConfigured' option to 'true' so that normal metacat
-                // requests will go through
                 PropertyService.setProperty("configutil.databaseConfigured",
-                        PropertyService.CONFIGURED);
-                PropertyService.persistMainBackupProperties();
-               
-                    // Reload the main metacat configuration page
-                    processingSuccess.add("Database successfully upgraded");
-                    RequestUtil.clearRequestMessages(request);
-                    RequestUtil.setRequestSuccess(request, processingSuccess);
-                    RequestUtil.forwardRequest(request, response,
-                            "/admin?configureType=configure&processForm=false", null);
-                 
-            
+                                            MetacatAdmin.IN_PROGRESS);
+                // Reload the main metacat configuration page
+                RequestUtil.clearRequestMessages(request);
+                //RequestUtil.setRequestSuccess(request, processingSuccess);
+                RequestUtil.forwardRequest(request, response,
+                                           "/admin?configureType=configure&processForm=false", null);
+
+                try {
+                    upgradeDatabase();
+                    // Now that the options have been set, change the
+                    // 'databaseConfigured' option to 'true' so that normal metacat
+                    // requests will go through
+                    PropertyService.setProperty("configutil.databaseConfigured",
+                                                PropertyService.CONFIGURED);
+                    PropertyService.persistMainBackupProperties();
+                } catch (Exception e) {
+                    error = e.getMessage();
+                    PropertyService.setProperty("configutil.databaseConfigured",
+                                                MetacatAdmin.FAILURE);
+                }
+
             } catch (GeneralPropertyException gpe) {
                 throw new AdminException("DBAdmin.configureDatabase - Problem getting or setting " 
                                     + "property while upgrading database: " + gpe.getMessage());

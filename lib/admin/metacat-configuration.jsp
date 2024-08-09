@@ -3,6 +3,7 @@
 <%@ page import="edu.ucsb.nceas.metacat.properties.PropertyService" %>
 <%@ page import="edu.ucsb.nceas.metacat.admin.MetacatAdmin" %>
 <%@ page import="edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin" %>
+<%@ page import="edu.ucsb.nceas.metacat.admin.DBAdmin" %>
 
 
 <%
@@ -11,7 +12,7 @@
     Boolean propsConfigured = (Boolean) request.getAttribute("propsConfigured");
     Boolean orgsConfigured = (Boolean) request.getAttribute("orgsConfigured");
     Boolean authConfigured = (Boolean) request.getAttribute("authConfigured");
-    String dbConfigured = (String) request.getAttribute("dbConfigured");
+    String dbConfigured = PropertyService.getProperty("configutil.databaseConfigured");
     String dataoneConfigured = (String) request.getAttribute("dataoneConfigured");
     String solrserverConfigured = (String) request.getAttribute("solrserverConfigured");
     String ezidConfigured = (String) request.getAttribute("ezidConfigured");
@@ -20,6 +21,7 @@
     Boolean metacatServletInitialized = (Boolean) request.getAttribute("metacatServletInitialized");
     String hashStoreConverted = (String) request.getAttribute("hashstoreConverted");
     String contextURL = (String) request.getAttribute("contextURL");
+    String dbError = DBAdmin.getError();
 %>
 
 <html>
@@ -34,7 +36,22 @@
     <h2>Metacat Configuration</h2>
 
     <p>All of the following sections must be in a configured state for Metacat to run properly:</p>
-    <br class="main-header">
+
+    <%
+       if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.FAILURE) && dbError != null &&
+       !dbError
+       .isBlank()) {
+
+    %>
+      <br class="main-header">
+        <div class="alert">
+            <%= dbError %>
+        </div>
+      </br>
+    <%
+        }
+    %>
+
 
     <%@ include file="page-message-section.jsp" %>
 
