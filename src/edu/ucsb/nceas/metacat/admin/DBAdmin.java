@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.concurrent.Executors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -201,43 +202,40 @@ public class DBAdmin extends MetacatAdmin {
             } 
         } else {
             // The configuration form is being submitted and needs to be
-            // processed, setting the properties in the configuration file
-            // then restart metacat
-
-            // The configuration form is being submitted and needs to be
             // processed.
-            Vector<String> processingSuccess = new Vector<String>();
-
             try {
-                // Validate that the options provided are legitimate. Note that
-                // we've allowed them to persist their entries. As of this point
-                // there is no other easy way to go back to the configure form
-                // and
-                // preserve their entries.
-                supportEmail = PropertyService.getProperty("email.recipient");
-                PropertyService.setProperty("configutil.databaseConfigured",
-                                            MetacatAdmin.IN_PROGRESS);
                 // Reload the main metacat configuration page
                 RequestUtil.clearRequestMessages(request);
-                //RequestUtil.setRequestSuccess(request, processingSuccess);
                 response.sendRedirect(SystemUtil.getContextURL() + "/admin");
-
-
-
-                try {
-                    upgradeDatabase();
-                    // Now that the options have been set, change the
-                    // 'databaseConfigured' option to 'true' so that normal metacat
-                    // requests will go through
-                    PropertyService.setProperty("configutil.databaseConfigured",
-                                                PropertyService.CONFIGURED);
-                    PropertyService.persistMainBackupProperties();
-                } catch (Exception e) {
-                    error = e.getMessage();
-                    PropertyService.setProperty("configutil.databaseConfigured",
-                                                MetacatAdmin.FAILURE);
+                if (PropertyService.getProperty("configutil.databaseConfigured")
+                    .equals(MetacatAdmin.IN_PROGRESS)) {
+                    // Prevent doing upgrade again while another thread is doing the upgrade
+                    return;
                 }
 
+                PropertyService.setPropertyNoPersist("configutil.databaseConfigured",
+                                            MetacatAdmin.IN_PROGRESS);
+                // Make the database jsp page return by doing the upgrade in another thread
+                Executors.newSingleThreadExecutor().submit(() -> {
+                    try {
+                        upgradeDatabase();
+                        // Now that the options have been set, change the
+                        // 'databaseConfigured' option to 'true' so that normal metacat
+                        // requests will go through
+                        PropertyService.setProperty("configutil.databaseConfigured",
+                                                    PropertyService.CONFIGURED);
+                        PropertyService.persistMainBackupProperties();
+                    } catch (Exception e) {
+                        error = e.getMessage();
+                        try {
+                            PropertyService.setProperty("configutil.databaseConfigured",
+                                                        MetacatAdmin.FAILURE);
+                        } catch (GeneralPropertyException ex) {
+                            logMetacat.error("Can't change the database configuration status to "
+                                                 + "failure since " + ex.getMessage());
+                        }
+                    }
+                });
             } catch (GeneralPropertyException gpe) {
                 throw new AdminException("DBAdmin.configureDatabase - Problem getting or setting " 
                                     + "property while upgrading database: " + gpe.getMessage());
