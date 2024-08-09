@@ -6,7 +6,6 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
@@ -25,6 +24,7 @@ import java.nio.file.Paths;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author Tao
@@ -35,6 +35,7 @@ public class HashStoreUpgrader {
     private Log logMetacat = LogFactory.getLog(HashStoreUpgrader.class);
     private String dataPath;
     private String documentPath;
+    private static ExecutorService executor = null;
 
     public HashStoreUpgrader() throws PropertyNotFoundException {
         documentPath = PropertyService.getProperty("application.documentfilepath");
@@ -52,8 +53,10 @@ public class HashStoreUpgrader {
 
     /**
      * Do the upgrade job
+     * @return the information which the operators may need to handle manually
      */
-    public void upgrade() throws SQLException {
+    public String upgrade() throws SQLException {
+        StringBuffer info = new StringBuffer();
         // Iterate the systemmetadata table
         String query = "SELECT guid FROM systemmetadata;";
         DBConnection dbConn = null;
@@ -91,6 +94,7 @@ public class HashStoreUpgrader {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
+        return info.toString();
     }
 
     /**
