@@ -225,6 +225,8 @@ public class DBAdmin extends MetacatAdmin {
                         PropertyService.setProperty("configutil.databaseConfigured",
                                                     PropertyService.CONFIGURED);
                         PropertyService.persistMainBackupProperties();
+                        // Automatically to convert Metacat to use hashstore
+                        HashStoreConversionAdmin.convert();
                     } catch (Exception e) {
                         error = e.getMessage();
                         try {

@@ -27,6 +27,7 @@ import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
+import org.apache.solr.client.solrj.io.eval.ScalarSubtractEvaluator;
 import org.dataone.service.types.v1.Identifier;
 
 /**
@@ -183,6 +184,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 case "solrserver" -> SolrAdmin.getInstance().configureSolr(request, response);
                 case "refreshStylesheets" -> clearStylesheetCache(response);
                 case "removeSysmetaLock" -> removeSysmetaLock(request, response);
+                case "hashstore" -> HashStoreConversionAdmin.getInstance().convert(request, response);
                 default -> {
                     String errorMessage =
                         "MetacatAdminServlet - Invalid action in configuration request: " + action;
