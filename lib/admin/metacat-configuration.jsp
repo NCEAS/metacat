@@ -45,6 +45,9 @@
     %>
       <br class="main-header">
         <div class="alert">
+         Some errors when Metacat upgraded its database:
+        </div>
+        <div class="alert">
             <%= dbError %>
         </div>
       </br>
