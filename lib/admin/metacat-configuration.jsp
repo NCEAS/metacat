@@ -37,6 +37,8 @@
 <div class="document">
     <h2>Metacat Configuration</h2>
 
+    <p><span class="red">Note:</span> The process of Database upgrade and HashStore conversion may
+    take several hours. Please do NOT stop Tomcat during the process.</p>
     <p>All of the following sections must be in a configured state for Metacat to run properly:</p>
 
     <%
