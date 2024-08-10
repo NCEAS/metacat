@@ -20,9 +20,6 @@ import java.util.concurrent.Executors;
  * @author Tao
  */
 public class HashStoreConversionAdmin extends MetacatAdmin {
-
-    public static final String CONVERTED = "converted";
-    public static final String UNCONVERTED = "unconverted";
     private static Log logMetacat = LogFactory.getLog(HashStoreConversionAdmin.class);
     private static HashStoreConversionAdmin hashStoreConverter = new HashStoreConversionAdmin();
 

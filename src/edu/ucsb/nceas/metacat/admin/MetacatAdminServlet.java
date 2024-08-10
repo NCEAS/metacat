@@ -275,6 +275,9 @@ public class MetacatAdminServlet extends HttpServlet {
         if (request != null) {
             request.setAttribute("metaCatVersion", SystemUtil.getMetacatVersion());
             request.setAttribute("propsConfigured", PropertyService.arePropertiesConfigured());
+            request.setAttribute(
+                "dbConfigured", PropertyService.getProperty("configutil.databaseConfigured"));
+            request.setAttribute("hashstoreConverted", HashStoreConversionAdmin.getStatus());
             request.setAttribute("authConfigured", AuthUtil.isAuthConfigured());
             request.setAttribute("metacatConfigured", ConfigurationUtil.isMetacatConfigured());
             request.setAttribute(

@@ -12,7 +12,7 @@
     Boolean propsConfigured = (Boolean) request.getAttribute("propsConfigured");
     Boolean orgsConfigured = (Boolean) request.getAttribute("orgsConfigured");
     Boolean authConfigured = (Boolean) request.getAttribute("authConfigured");
-    String dbConfigured = PropertyService.getProperty("configutil.databaseConfigured");
+    String dbConfigured = (String) request.getAttribute("dbConfigured");;
     String dataoneConfigured = (String) request.getAttribute("dataoneConfigured");
     String solrserverConfigured = (String) request.getAttribute("solrserverConfigured");
     String ezidConfigured = (String) request.getAttribute("ezidConfigured");
@@ -187,7 +187,7 @@
         %>
 
         <%
-            if ((hashStoreConverted != null && hashStoreConverted.equals(HashStoreConversionAdmin.CONVERTED))) {
+            if ((hashStoreConverted != null && hashStoreConverted.equals(PropertyService.CONFIGURED))) {
         %>
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i> converted</td>
@@ -204,7 +204,8 @@
                     <td class="configure-link inactive"> Refresh page to update status</td>
         </tr>
         <%
-            } else if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin.FAILURE)
+            } else if (hashStoreConverted != null
+             && (hashStoreConverted.equals(MetacatAdmin.FAILURE) || hashStoreConverted.equals(PropertyService.UNCONFIGURED))
              && dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) {
         %>
         <tr>
