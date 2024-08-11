@@ -95,7 +95,7 @@ public class DBAdmin extends MetacatAdmin {
     private Map<String, String> scriptSuffixMap = new HashMap<String, String>();
     private static DBVersion databaseVersion = null;
 
-    private static String error = "";
+    private static Vector<String> error = new Vector<>();
 
     /**
      * private constructor since this is a singleton
@@ -228,7 +228,9 @@ public class DBAdmin extends MetacatAdmin {
                         // Automatically to convert Metacat to use hashstore
                         HashStoreConversionAdmin.convert();
                     } catch (Exception e) {
-                        error = e.getMessage();
+                        error.add("Some errors arose when Metacat upgraded its database. Please "
+                                      + "fix the issues and configure again.");
+                        error.add(e.getMessage());
                         try {
                             PropertyService.setProperty("configutil.databaseConfigured",
                                                         MetacatAdmin.FAILURE);
@@ -1031,7 +1033,7 @@ public class DBAdmin extends MetacatAdmin {
      * Get the error message during the process
      * @return the error
      */
-    public static String getError() {
+    public static Vector<String> getError() {
         return error;
     }
 }

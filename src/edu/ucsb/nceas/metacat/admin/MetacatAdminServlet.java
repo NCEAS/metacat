@@ -273,10 +273,10 @@ public class MetacatAdminServlet extends HttpServlet {
     private void initialConfigurationParameters(HttpServletRequest request)
         throws GeneralPropertyException, AdminException, MetacatUtilException {
         if (request != null) {
+            String dbConfigured = PropertyService.getProperty("configutil.databaseConfigured");
             request.setAttribute("metaCatVersion", SystemUtil.getMetacatVersion());
             request.setAttribute("propsConfigured", PropertyService.arePropertiesConfigured());
-            request.setAttribute(
-                "dbConfigured", PropertyService.getProperty("configutil.databaseConfigured"));
+            request.setAttribute("dbConfigured", dbConfigured);
             request.setAttribute("hashstoreConverted", HashStoreConversionAdmin.getStatus());
             request.setAttribute("authConfigured", AuthUtil.isAuthConfigured());
             request.setAttribute("metacatConfigured", ConfigurationUtil.isMetacatConfigured());
@@ -296,6 +296,12 @@ public class MetacatAdminServlet extends HttpServlet {
             }
             request.setAttribute(
                 "hashstoreConverted", PropertyService.getProperty("storage.hashstoreConverted"));
+            // Add the db configure errors
+            if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.FAILURE)
+                && DBAdmin.getError().size() > 0) {
+                request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
+                RequestUtil.setRequestErrors(request, DBAdmin.getError());
+            }
         }
     }
 

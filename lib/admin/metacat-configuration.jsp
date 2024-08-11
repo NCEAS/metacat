@@ -21,7 +21,6 @@
     Boolean metacatServletInitialized = (Boolean) request.getAttribute("metacatServletInitialized");
     String hashStoreConverted = (String) request.getAttribute("hashstoreConverted");
     String contextURL = (String) request.getAttribute("contextURL");
-    String dbError = DBAdmin.getError();
     String hashStoreError = HashStoreConversionAdmin.getError();
     String hashStoreInfo = HashStoreConversionAdmin.getInfo();
 %>
@@ -40,24 +39,6 @@
     <p><span class="red">Note:</span> The process of Database upgrade and HashStore conversion may
     take several hours. Please do NOT stop Tomcat during the process.</p>
     <p>All of the following sections must be in a configured state for Metacat to run properly:</p>
-
-    <%
-       if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.FAILURE) && dbError != null
-       && !dbError.isBlank()) {
-
-    %>
-      <br class="main-header">
-        <div class="alert">
-         Some errors arose when Metacat upgraded its database. Please fix the issues and configure
-         again.
-        </div>
-        <div class="alert">
-            <%= dbError %>
-        </div>
-      </br>
-    <%
-        }
-    %>
 
     <%
        if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin.FAILURE)
