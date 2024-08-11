@@ -294,13 +294,22 @@ public class MetacatAdminServlet extends HttpServlet {
                 request.setAttribute("databaseVersion", DBAdmin.getInstance().getDBVersion());
                 request.setAttribute("contextURL", SystemUtil.getContextURL());
             }
-            request.setAttribute(
-                "hashstoreConverted", PropertyService.getProperty("storage.hashstoreConverted"));
+            String hashStoreConverted = HashStoreConversionAdmin.getStatus();
+            request.setAttribute("hashstoreConverted", hashStoreConverted);
             // Add the db configure errors
             if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.FAILURE)
                 && DBAdmin.getError().size() > 0) {
                 request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
                 RequestUtil.setRequestErrors(request, DBAdmin.getError());
+            }
+            if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin.FAILURE)
+                && HashStoreConversionAdmin.getError().size() > 0) {
+                request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
+                RequestUtil.setRequestErrors(request, HashStoreConversionAdmin.getError());
+            } else if (hashStoreConverted != null && hashStoreConverted.equals(
+                PropertyService.CONFIGURED) && HashStoreConversionAdmin.getInfo().size() > 0) {
+                request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
+                RequestUtil.setRequestMessage(request, HashStoreConversionAdmin.getInfo());
             }
         }
     }

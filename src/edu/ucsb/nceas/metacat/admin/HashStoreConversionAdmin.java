@@ -23,8 +23,8 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     private static Log logMetacat = LogFactory.getLog(HashStoreConversionAdmin.class);
     private static HashStoreConversionAdmin hashStoreConverter = new HashStoreConversionAdmin();
 
-    private static String error = null;
-    private static String info = null;
+    private static Vector<String> error = new Vector<>();
+    private static Vector<String> info = new Vector<>();
 
     /**
      * Default private constructor
@@ -98,7 +98,9 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
                                      + " done(true) since " + ex.getMessage());
             }
         } catch (Exception e) {
-            setError(e.getMessage());
+            addError("Some errors arose when Metacat converted its storage to HashStore. Please "
+                         + "fix the issues and convert it again.");
+            addError(e.getMessage());
             try {
                 setStatus(MetacatAdmin.FAILURE);
             } catch (AdminException ex) {
@@ -140,7 +142,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * Get the error message if the conversion fails
      * @return the error message
      */
-    public static String getError() {
+    public static Vector<String> getError() {
         return error;
     }
 
@@ -148,7 +150,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * Get the information that some conversion failed
      * @return the information
      */
-    public static String getInfo() {
+    public static Vector<String> getInfo() {
         return info;
     }
 
@@ -161,12 +163,14 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         }
     }
 
-    private static void setError(String errorMessage) {
-        error = errorMessage;
+    private static void addError(String errorMessage) {
+        error.add(errorMessage);
     }
 
     private static void setInfo(String infoStr) {
-        info = infoStr;
+        info.add("The HashStore conversion was done. However, some objects may not succeed. You "
+                     + "have to manually fix the issues.");
+        info.add(infoStr);
     }
 
 }

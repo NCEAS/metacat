@@ -21,8 +21,6 @@
     Boolean metacatServletInitialized = (Boolean) request.getAttribute("metacatServletInitialized");
     String hashStoreConverted = (String) request.getAttribute("hashstoreConverted");
     String contextURL = (String) request.getAttribute("contextURL");
-    String hashStoreError = HashStoreConversionAdmin.getError();
-    String hashStoreInfo = HashStoreConversionAdmin.getInfo();
 %>
 
 <html>
@@ -39,41 +37,6 @@
     <p><span class="red">Note:</span> The process of Database upgrade and HashStore conversion may
     take several hours. Please do NOT stop Tomcat during the process.</p>
     <p>All of the following sections must be in a configured state for Metacat to run properly:</p>
-
-    <%
-       if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin.FAILURE)
-           && hashStoreError != null && !hashStoreError.isBlank()) {
-    %>
-      <br class="main-header">
-        <div class="alert">
-         Some errors arose when Metacat converted to HashStore. Please fix the issues and
-         convert it again.
-        </div>
-        <div class="alert">
-            <%= hashStoreError %>
-        </div>
-      </br>
-    <%
-        }
-    %>
-
-    <%
-       if (hashStoreConverted != null && hashStoreConverted.equals(PropertyService.CONFIGURED)
-           && hashStoreInfo != null && !hashStoreInfo.isBlank()) {
-    %>
-      <br class="main-header">
-        <div class="alert">
-         The HashStore conversion was done. However, some objects may not succeed. You have to
-         manually fix the issues.
-        </div>
-        <div class="alert">
-            <%= hashStoreInfo %>
-        </div>
-      </br>
-    <%
-        }
-    %>
-
 
     <%@ include file="page-message-section.jsp" %>
 
