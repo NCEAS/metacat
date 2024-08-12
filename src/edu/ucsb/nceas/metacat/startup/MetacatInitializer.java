@@ -38,7 +38,6 @@ import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.storage.Storage;
-import edu.ucsb.nceas.metacat.storage.StorageFactory;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
@@ -439,7 +438,7 @@ public class MetacatInitializer implements ServletContextListener{
         if (storage == null) {
             synchronized (MetacatInitializer.class) {
                 if (storage == null) {
-                    storage = StorageFactory.getStorage();
+                    storage = Storage.getInstance();
                 }
             }
         }

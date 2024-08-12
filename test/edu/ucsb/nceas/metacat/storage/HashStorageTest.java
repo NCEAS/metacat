@@ -44,30 +44,8 @@ public class HashStorageTest {
     @Before
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
-        storage = HashStorage.getInstance("org.dataone.hashstore.filehashstore.FileHashStore");
+        storage = Storage.getInstance();
         assertNotNull(storage);
-    }
-
-    /**
-     * Test the getInstance method
-     * @throws Exception
-     */
-    @Test
-    public void testGetInstance() throws Exception {
-        HashStorage.resetHashStorage();
-        try {
-            Storage storage = HashStorage.getInstance(null);
-            fail("Test shouldn't get here since the class name is null");
-        } catch (Exception e) {
-            assertTrue(e instanceof ServiceException);
-        }
-        try {
-            Storage storage = HashStorage.getInstance("foo");
-            fail("Test shouldn't get here since the class name is null");
-        } catch (Exception e) {
-            assertTrue(e instanceof ServiceException);
-        }
-
     }
 
     /**

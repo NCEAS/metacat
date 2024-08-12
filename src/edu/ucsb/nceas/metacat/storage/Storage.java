@@ -5,17 +5,106 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
+import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.dataone.hashstore.HashStore;
+import org.dataone.hashstore.HashStoreFactory;
+import org.dataone.hashstore.ObjectMetadata;
+import org.dataone.hashstore.exceptions.HashStoreFactoryException;
+import org.dataone.hashstore.exceptions.NonMatchingChecksumException;
+import org.dataone.hashstore.exceptions.NonMatchingObjSizeException;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.Identifier;
 
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
- * This is an abstract layer to store objects (data and scientific metadata) and their associated
- * metadata into a storage system
+ * The HashStore implementation of the Storage interface.
  */
-public interface Storage {
+public class Storage {
+    private static Log logMetacat = LogFactory.getLog(Storage.class);
+    private static Storage storage;
+    private static HashStore hashStore;
+    private String defaultNamespace = "https://ns.dataone.org/service/types/v2.0#SystemMetadata";
+
+    static {
+        try {
+            storage = new Storage();
+        } catch (PropertyNotFoundException | IOException e) {
+            logMetacat.error("Metacat cannot initialize the Storage class since " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Private constructor
+     * @throws PropertyNotFoundException
+     * @throws IOException
+     * @throws HashStoreFactoryException
+     */
+    private Storage() throws PropertyNotFoundException,
+                                                           HashStoreFactoryException, IOException {
+        String className = PropertyService.getProperty("storage.className");
+        String rootPath = PropertyService.getProperty("storage.hashstore.rootDirectory");
+        String directoryDepth = "3";
+        try {
+            directoryDepth = PropertyService.getProperty("storage.hashstore.directory.depth");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
+                            + directoryDepth);
+        }
+        String directoryNameWidth = "2";
+        try {
+            directoryNameWidth = PropertyService.getProperty("storage.hashstore.directory.width");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
+                            + directoryNameWidth);
+        }
+        String fileNameAlgorithm = "SHA-256";
+        try {
+            fileNameAlgorithm = PropertyService.getProperty("storage.hashstore.fileNameAlgorithm");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
+                            + fileNameAlgorithm);
+        }
+        try {
+            defaultNamespace = PropertyService.getProperty("storage.hashstore.defaultNamespace");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
+                            + defaultNamespace);
+        }
+        Properties storeProperties = new Properties();
+        storeProperties.setProperty("storePath", rootPath);
+        storeProperties.setProperty("storeDepth", directoryDepth);
+        storeProperties.setProperty("storeWidth", directoryNameWidth);
+        storeProperties.setProperty("storeAlgorithm", fileNameAlgorithm);
+        storeProperties.setProperty("storeMetadataNamespace", defaultNamespace);
+        hashStore = HashStoreFactory.getHashStore(className, storeProperties);
+    }
+
+    /**
+     * Reset the hashStorage object to null. This should only be used in tests.
+     */
+    protected static void resetHashStorage() {
+        storage = null;
+    }
+
+    /**
+     * Get the instance of the class through the singleton pattern
+     * @return the instance of the class
+     * @throws ServiceException
+     * @throws PropertyNotFoundException
+     */
+    public static Storage getInstance() throws ServiceException, PropertyNotFoundException {
+        return storage;
+    }
 
     /**
      * The `storeObject` method is responsible for the atomic storage of objects to disk using a
@@ -24,19 +113,19 @@ public interface Storage {
      * the object on disk), the file's size, and a hex digest dict of algorithms and checksums.
      * Storing an object with `store_object` also tags an object (creating references) which
      * allow the object to be discoverable.
-     * 
+     *
      * `storeObject` also ensures that an object is stored only once by synchronizing multiple
      * calls and rejecting calls to store duplicate objects. Note, calling `storeObject` without
      * a pid is a possibility, but should only store the object without tagging the object. It
      * is then the caller's responsibility to finalize the process by calling `tagObject` after
      * verifying the correct object is stored.
-     * 
+     *
      * The file's id is determined by calculating the object's content identifier based on the
      * store's default algorithm, which is also used as the permanent address of the file. The
      * file's identifier is then sharded using the store's configured depth and width, delimited
      * by '/' and concatenated to produce the final permanent address and is stored in the
      * `./[storePath]/objects/` directory.
-     * 
+     *
      * By default, the hex digest map includes the following hash algorithms: MD5, SHA-1,
      * SHA-256, SHA-384, SHA-512 - which are the most commonly used algorithms in dataset
      * submissions to DataONE and the Arctic Data Center. If an additional algorithm is
@@ -44,11 +133,11 @@ public interface Storage {
      * digests dict along with its corresponding hex digest. An algorithm is considered
      * "supported" if it is recognized as a valid hash algorithm in
      * `java.security.MessageDigest` class.
-     * 
+     *
      * Similarly, if a file size and/or checksum & checksumAlgorithm value are provided,
      * `storeObject` validates the object to ensure it matches the given arguments before moving
      * the file to its permanent address.
-     * 
+     *
      * @param object              Input stream to file
      * @param pid                 Authority-based identifier
      * @param additionalAlgorithm Additional hex digest to include in hexDigests
@@ -67,25 +156,47 @@ public interface Storage {
      *                                    illegal arguments (ex. empty pid) or null pointers
      * @throws InterruptedException       When tagging pid and cid process is interrupted
      */
-    public ObjectInfo storeObject(
-            InputStream object, Identifier pid, String additionalAlgorithm, String checksum,
-            String checksumAlgorithm, long objSize
-    ) throws NoSuchAlgorithmException, IOException, InvalidRequest, InvalidSystemMetadata,
-            RuntimeException, InterruptedException;
+    public ObjectInfo storeObject(InputStream object, Identifier pid, String additionalAlgorithm,
+                                      String checksum, String checksumAlgorithm, long objSize)
+                                     throws NoSuchAlgorithmException, IOException, InvalidRequest,
+                                     InvalidSystemMetadata, RuntimeException, InterruptedException {
+        //This method checks the null value as well
+        boolean valid = D1NodeService.isValidIdentifier(pid);
+        if (valid) {
+            try {
+                ObjectMetadata objMeta = hashStore.storeObject(object, pid.getValue(),
+                        additionalAlgorithm, checksum, checksumAlgorithm, objSize);
+                return convertToObjectInfo(objMeta);
+            } catch (NonMatchingChecksumException e) {
+                throw new InvalidSystemMetadata("0000", "The given checksum doesn't match "
+                                                + "Metacat's calculation " + e.getMessage());
+            } catch (NonMatchingObjSizeException e) {
+                throw new InvalidSystemMetadata("0000", "The given size doesn't match "
+                        + "Metacat's calculation " + e.getMessage());
+            }
+        } else {
+            throw new InvalidRequest("0000", "The stored pid should not be null, blank, or "
+                                     + "containing the white spaces in the storeObject method.");
+        }
+    }
+
 
     /**
-     * @see #storeObject(InputStream, String, String, String, String, long)
-     * 
+     * @see #storeObject(InputStream, Identifier, String, String, String, long)
+     *
      *      Store an object only without reference files.
      */
     public ObjectInfo storeObject(InputStream object) throws NoSuchAlgorithmException,
-            IOException, InvalidRequest, RuntimeException, InterruptedException;
+            IOException, InvalidRequest, RuntimeException, InterruptedException {
+        ObjectMetadata objMeta = hashStore.storeObject(object);
+        return convertToObjectInfo(objMeta);
+    }
 
     /**
      * Creates references that allow objects stored in HashStore to be discoverable. Retrieving,
      * deleting or calculating a hex digest of an object is based on a pid argument; and to
      * proceed, we must be able to find the object associated with the pid.
-     * 
+     *
      * @param pid Authority-based identifier
      * @param cid Content-identifier (hash identifier)
      * @throws IOException                Failure to create tmp file
@@ -97,13 +208,21 @@ public interface Storage {
      *                                    interrupted
      */
     public void tagObject(Identifier pid, String cid) throws IOException,
-            InvalidRequest, NoSuchAlgorithmException, FileNotFoundException,
-            InterruptedException;
+            InvalidRequest, NoSuchAlgorithmException, FileNotFoundException, InterruptedException {
+        //This method checks the null value as well
+        boolean valid = D1NodeService.isValidIdentifier(pid);
+        if (valid) {
+            hashStore.tagObject(pid.getValue(), cid);
+        } else {
+            throw new InvalidRequest("0000", "The stored pid should not be null, blank, or "
+                                    + "containing the white spaces in the tagObject method.");
+        }
+    }
 
     /**
      * Confirms that an ObjectMetadata's content is equal to the given values. If it does not
      * equal, it will throw an exception
-     * 
+     *
      * @param objectInfo        ObjectMetadata object with values
      * @param checksum          Value of checksum to validate against
      * @param checksumAlgorithm Algorithm of checksum submitted
@@ -111,9 +230,11 @@ public interface Storage {
      * @throws IllegalArgumentException An expected value does not match
      * @throws IOException Issue with recalculating supported algo for checksum not found
      */
-    public void verifyObject(
-            ObjectInfo objectInfo, String checksum, String checksumAlgorithm, long objSize
-    ) throws IllegalArgumentException, IOException;
+    public void verifyObject( ObjectInfo objectInfo, String checksum,
+            String checksumAlgorithm, long objSize) throws IllegalArgumentException, IOException {
+        hashStore.verifyObject(convertToObjectMetadata(objectInfo), checksum,
+                                checksumAlgorithm, objSize);
+    }
 
     /**
      * Adds/updates metadata (ex. `sysmeta`) to the HashStore by using a given InputStream, a
@@ -121,10 +242,10 @@ public interface Storage {
      * for a given pid will be stored in the directory (under ../metadata) that is determined
      * by calculating the hash of the given pid, with the document name being the hash of the
      * metadata format (`formatId`).
-     * 
+     *
      * Note, multiple calls to store the same metadata content will all be accepted, but is not
      * guaranteed to execute sequentially.
-     * 
+     *
      * @param metadata Input stream to metadata document
      * @param pid      Authority-based identifier
      * @param formatId Metadata namespace/format
@@ -139,21 +260,39 @@ public interface Storage {
      */
     public String storeMetadata(InputStream metadata, Identifier pid, String formatId)
             throws IOException, IllegalArgumentException, FileNotFoundException,
-            InterruptedException, NoSuchAlgorithmException;
+            InterruptedException, NoSuchAlgorithmException {
+        //This method checks the null value as well
+        boolean valid = D1NodeService.isValidIdentifier(pid);
+        if (valid) {
+            return hashStore.storeMetadata(metadata, pid.getValue(), formatId);
+        } else {
+            throw new IllegalArgumentException("The pid should not be null, blank, or containing "
+                                                + "the white spaces in the storeMetadata method.");
+        }
+    }
 
     /**
-     * @see #storeMetadata(InputStream, String, String)
-     * 
+     * @see #storeMetadata(InputStream, Identifier, String)
+     *
      *      If the '(InputStream metadata, String pid)' signature is used, the metadata format
      *      stored will default to `sysmeta`.
      */
     public String storeMetadata(InputStream metadata, Identifier pid) throws IOException,
             IllegalArgumentException, FileNotFoundException, InterruptedException,
-            NoSuchAlgorithmException;
+            NoSuchAlgorithmException {
+        //This method checks the null value as well
+        boolean valid = D1NodeService.isValidIdentifier(pid);
+        if (valid) {
+            return hashStore.storeMetadata(metadata, pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null, blank, or containing "
+                                                + "the white spaces in the storeMetadata method.");
+        }
+    }
 
     /**
      * Returns an InputStream to an object from HashStore using a given persistent identifier.
-     * 
+     *
      * @param pid Authority-based identifier
      * @return Object InputStream
      * @throws IllegalArgumentException When pid is null or empty
@@ -163,12 +302,19 @@ public interface Storage {
      *                                  supported
      */
     public InputStream retrieveObject(Identifier pid) throws IllegalArgumentException,
-            FileNotFoundException, IOException, NoSuchAlgorithmException;
+            FileNotFoundException, IOException, NoSuchAlgorithmException {
+        if (pid != null) {
+            return hashStore.retrieveObject(pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " retrieveObject method.");
+        }
+    }
 
     /**
      * Returns an InputStream to the metadata content of a given pid and metadata namespace from
      * HashStore.
-     * 
+     *
      * @param pid      Authority-based identifier
      * @param formatId Metadata namespace/format
      * @return Metadata InputStream
@@ -180,16 +326,30 @@ public interface Storage {
      */
     public InputStream retrieveMetadata(Identifier pid, String formatId)
             throws IllegalArgumentException, FileNotFoundException, IOException,
-            NoSuchAlgorithmException;
+            NoSuchAlgorithmException {
+        if (pid != null) {
+            return hashStore.retrieveMetadata(pid.getValue(), formatId);
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " retrieveMetadata method.");
+        }
+    }
 
     /**
-     * @see #retrieveMetadata(String, String)
-     * 
+     * @see #retrieveMetadata(Identifier, String)
+     *
      *      If `retrieveMetadata` is called with signature (String pid), the metadata
      *      document retrieved will be the given pid's 'sysmeta'
      */
     public InputStream retrieveMetadata(Identifier pid) throws IllegalArgumentException,
-            FileNotFoundException, IOException, NoSuchAlgorithmException;
+            FileNotFoundException, IOException, NoSuchAlgorithmException {
+        if (pid != null) {
+            return hashStore.retrieveMetadata(pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " retrieveMetadata method.");
+        }
+    }
 
     /**
      * Deletes an object and its related data permanently from HashStore using a given
@@ -197,10 +357,10 @@ public interface Storage {
      * be deleted if it is not referenced by any other pids, along with its reference files and
      * all metadata documents found in its respective metadata directory. If the `idType` is
      * 'cid', only the object will be deleted if it is not referenced by other pids.
-     * 
+     *
      * Notes: All objects are renamed at their existing path with a '_deleted' appended
      * to their file name before they are deleted.
-     * 
+     *
      * @param idType 'pid' or 'cid'
      * @param id     Authority-based identifier or content identifier
      * @throws IllegalArgumentException When pid is null or empty
@@ -211,23 +371,32 @@ public interface Storage {
      * @throws InterruptedException     When deletion synchronization is interrupted
      */
     public void deleteObject(String idType, String id) throws IllegalArgumentException,
-            IOException, NoSuchAlgorithmException, InterruptedException;
+            IOException, NoSuchAlgorithmException, InterruptedException {
+        hashStore.deleteObject(idType, id);
+    }
 
     /**
      * Deletes an object and all relevant associated files (ex. system metadata, reference
      * files, etc.) based on a given pid. If other pids still reference the pid's associated
      * object, the object will not be deleted.
-     * 
+     *
      * @param pid Authority-based identifier
      * @see #deleteObject(String, String) for more details.
      */
     public void deleteObject(Identifier pid) throws IllegalArgumentException, IOException,
-            NoSuchAlgorithmException, InterruptedException;
+            NoSuchAlgorithmException, InterruptedException {
+        if (pid != null) {
+            hashStore.deleteObject(pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " deleteObject method.");
+        }
+    }
 
     /**
      * Deletes a metadata document (ex. `sysmeta`) permanently from HashStore using a given
      * persistent identifier and its respective metadata namespace.
-     * 
+     *
      * @param pid      Authority-based identifier
      * @param formatId Metadata namespace/format
      * @throws IllegalArgumentException When pid or formatId is null or empty
@@ -237,11 +406,18 @@ public interface Storage {
      * @throws InterruptedException     Issue with synchronization on metadata doc
      */
     public void deleteMetadata(Identifier pid, String formatId) throws IllegalArgumentException,
-            IOException, NoSuchAlgorithmException, InterruptedException;
+            IOException, NoSuchAlgorithmException, InterruptedException {
+        if (pid != null) {
+            hashStore.deleteMetadata(pid.getValue(), formatId);
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " deleteMetadata method.");
+        }
+    }
 
     /**
      * Deletes all metadata related for the given 'pid' from HashStore
-     * 
+     *
      * @param pid Authority-based identifier
      * @throws IllegalArgumentException If pid is invalid
      * @throws IOException              I/O error when deleting metadata or empty directories
@@ -250,12 +426,19 @@ public interface Storage {
      * @throws InterruptedException     Issue with synchronization on metadata doc
      */
     public void deleteMetadata(Identifier pid) throws IllegalArgumentException, IOException,
-            NoSuchAlgorithmException, InterruptedException;
+                                                NoSuchAlgorithmException, InterruptedException {
+        if (pid != null) {
+            hashStore.deleteMetadata(pid.getValue());
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " deleteMetadata method.");
+        }
+    }
 
     /**
      * Calculates the hex digest of an object that exists in HashStore using a given persistent
      * identifier and hash algorithm.
-     * 
+     *
      * @param pid       Authority-based identifier
      * @param algorithm Algorithm of desired hex digest
      * @return String hex digest of requested pid
@@ -266,7 +449,14 @@ public interface Storage {
      *                                  supported
      */
     public String getHexDigest(Identifier pid, String algorithm) throws IllegalArgumentException,
-            FileNotFoundException, IOException, NoSuchAlgorithmException;
+            FileNotFoundException, IOException, NoSuchAlgorithmException {
+        if (pid != null) {
+            return hashStore.getHexDigest(pid.getValue(), algorithm);
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                + " getHexDigest method.");
+        }
+    }
 
     /**
      * Find the file path of the given identifier. Null will be return if Metacat didn't find it.
@@ -278,11 +468,58 @@ public interface Storage {
      * @throws IOException                       Unable to read from a pid refs file or pid refs
      *                                           file does not exist
      */
-    public File findObject(Identifier pid) throws NoSuchAlgorithmException, IOException;
+    public File findObject(Identifier pid) throws NoSuchAlgorithmException,
+                                                            IllegalArgumentException, IOException {
+        File object = null;
+        if (pid != null) {
+             Map<String, String> map = hashStore.findObject(pid.getValue());
+             if (map != null) {
+                 String path = map.get("cid_object_path");
+                 if (path != null && !path.isBlank()) {
+                     object = new File(path);
+                    if (!object.exists()) {
+                        object = null;
+                    }
+                 }
+             }
+             if (object != null) {
+                 logMetacat.debug("The file path for object " + pid.getValue() + " is "
+                                                                     + object.getAbsolutePath());
+             } else {
+                 logMetacat.debug("The file path for object " + pid.getValue() + " is null.");
+             }
+        } else {
+            throw new IllegalArgumentException("The pid should not be null in the"
+                                                        + " findObject method.");
+        }
+
+        return object;
+    }
 
     /**
      * Get the default namespace in the storage system
      * @return the default namespace
      */
-    public String getDefaultNameSpace();
+    public String getDefaultNameSpace() {
+        return defaultNamespace;
+    }
+
+    private ObjectInfo convertToObjectInfo(ObjectMetadata objMeta) {
+        ObjectInfo info = null;
+        if (objMeta != null) {
+            info = new ObjectInfo(objMeta.getPid(), objMeta.getCid(),
+                                  objMeta.getSize(), objMeta.getHexDigests());
+        }
+        return info;
+    }
+
+    private ObjectMetadata convertToObjectMetadata(ObjectInfo objInfo) {
+        ObjectMetadata metadata = null;
+        if (objInfo != null) {
+            metadata = new ObjectMetadata(objInfo.getPid(), objInfo.getCid(),
+                                          objInfo.getSize(), objInfo.getHexDigests());
+        }
+        return metadata;
+    }
+
 }
