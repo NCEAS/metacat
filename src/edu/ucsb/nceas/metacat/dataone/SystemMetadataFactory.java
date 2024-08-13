@@ -158,11 +158,10 @@ public class SystemMetadataFactory {
             sysMeta.setChecksum(checksum);
         }
 
-        // set the size from file on disk, don't read bytes again
-        File fileOnDisk = MetacatInitializer.getStorage().findObject(identifier);
+        // set the size
         long fileSize = 0;
-        if ( fileOnDisk != null && fileOnDisk.exists()) {
-            fileSize = fileOnDisk.length();
+        try (InputStream inputStream = MetacatHandler.read(identifier)) {
+            fileSize = length(inputStream);
         }
         sysMeta.setSize(BigInteger.valueOf(fileSize));
 
@@ -510,5 +509,15 @@ public class SystemMetadataFactory {
         }
 
         return parser;
+    }
+
+    protected static long length(InputStream inputStream) throws IOException {
+        byte[] buffer = new byte[8192];
+        int chunkBytesRead = 0;
+        long length = 0;
+        while((chunkBytesRead = inputStream.read(buffer)) != -1) {
+            length += chunkBytesRead;
+        }
+        return length;
     }
 }

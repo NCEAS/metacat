@@ -1,6 +1,7 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Map;
@@ -91,5 +92,21 @@ public class SystemMetadataFactoryIT {
                         + sysmeta.getChecksum().getValue(),
                         sysmeta.getChecksum().getValue(),
                         generatedSysmeta.getChecksum().getValue());
+    }
+
+    /**
+     * Test the length method for an input stream
+     * @throws Exception
+     */
+    @Test
+    public void testLength() throws Exception {
+        try (FileInputStream inputStream = new FileInputStream(new File("test/eml-2.2.0.xml")) ) {
+            long size = SystemMetadataFactory.length(inputStream);
+            assertEquals(8724, size);
+        }
+        try (FileInputStream inputStream = new FileInputStream(new File("test/isoTestNodc1.xml")) ) {
+            long size = SystemMetadataFactory.length(inputStream);
+            assertEquals(47924, size);
+        }
     }
 }

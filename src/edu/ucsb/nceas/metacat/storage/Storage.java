@@ -89,12 +89,6 @@ public class Storage {
         hashStore = HashStoreFactory.getHashStore(className, storeProperties);
     }
 
-    /**
-     * Reset the hashStorage object to null. This should only be used in tests.
-     */
-    protected static void resetHashStorage() {
-        storage = null;
-    }
 
     /**
      * Get the instance of the class through the singleton pattern
@@ -456,44 +450,6 @@ public class Storage {
             throw new IllegalArgumentException("The pid should not be null in the"
                                                 + " getHexDigest method.");
         }
-    }
-
-    /**
-     * Find the file path of the given identifier. Null will be return if Metacat didn't find it.
-     *
-     * @param pid Authority-based identifier
-     * @return the file path of the given identifier
-     * @throws NoSuchAlgorithmException          When algorithm used to calculate pid refs
-     *                                           file's absolute address is not valid
-     * @throws IOException                       Unable to read from a pid refs file or pid refs
-     *                                           file does not exist
-     */
-    public File findObject(Identifier pid) throws NoSuchAlgorithmException,
-                                                            IllegalArgumentException, IOException {
-        File object = null;
-        if (pid != null) {
-             Map<String, String> map = hashStore.findObject(pid.getValue());
-             if (map != null) {
-                 String path = map.get("cid_object_path");
-                 if (path != null && !path.isBlank()) {
-                     object = new File(path);
-                    if (!object.exists()) {
-                        object = null;
-                    }
-                 }
-             }
-             if (object != null) {
-                 logMetacat.debug("The file path for object " + pid.getValue() + " is "
-                                                                     + object.getAbsolutePath());
-             } else {
-                 logMetacat.debug("The file path for object " + pid.getValue() + " is null.");
-             }
-        } else {
-            throw new IllegalArgumentException("The pid should not be null in the"
-                                                        + " findObject method.");
-        }
-
-        return object;
     }
 
     /**

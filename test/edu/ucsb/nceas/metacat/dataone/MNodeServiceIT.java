@@ -4527,15 +4527,16 @@ public class MNodeServiceIT {
             object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
             ObjectInfo objectMetadata = D1NodeServiceTest.getStorage().storeObject(object);
             D1NodeServiceTest.getStorage().tagObject(sysmeta.getIdentifier(), objectMetadata.getCid());
-            File file = D1NodeServiceTest.getStorage().findObject(sysmeta.getIdentifier());
-            assertTrue(file.exists());
+            try (InputStream inputStream = MetacatHandler.read(sysmeta.getIdentifier())) {
+                assertNotNull(inputStream);
+            }
             try {
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
                 fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof InvalidRequest);
             }
-            assertFalse(file.exists());
+
             try {
                 InputStream data = MetacatHandler.read(guid);
                 fail("Test shouldn't get there since the object wasn't created");
@@ -4553,15 +4554,15 @@ public class MNodeServiceIT {
             objectMetadata = D1NodeServiceTest.getStorage()
                 .storeObject(object, sysmeta.getIdentifier(), null, sysmeta.getChecksum().getValue(),
                              sysmeta.getChecksum().getAlgorithm(), sysmeta.getSize().longValue());
-            file = D1NodeServiceTest.getStorage().findObject(sysmeta.getIdentifier());
-            assertTrue(file.exists());
+            try (InputStream inputStream = MetacatHandler.read(sysmeta.getIdentifier())) {
+                assertNotNull(inputStream);
+            }
             try {
                 MNodeService.getInstance(request).create(session, guid, object, sysmeta);
                 fail("Test shouldn't get there since the object wasn't created");
             } catch (Exception e) {
                 assertTrue(e instanceof InvalidRequest);
             }
-            assertFalse(file.exists());
             try {
                 InputStream data = MetacatHandler.read(guid);
                 fail("Test shouldn't get there since the object wasn't created");

@@ -1392,8 +1392,9 @@ public class MetacatHandlerIT {
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
-        File savedFile = MetacatInitializer.getStorage().findObject(sysmeta.getIdentifier());
-        assertTrue(savedFile.exists());
+        try (InputStream inputStream = MetacatHandler.read(sysmeta.getIdentifier())) {
+            assertNotNull(inputStream);
+        }
 
         //save the DetaiedFileInputStream from the invalid json-ld object without a checksum
         data = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
@@ -1450,8 +1451,9 @@ public class MetacatHandlerIT {
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
-        File savedFile = MetacatInitializer.getStorage().findObject(sysmeta.getIdentifier());
-        assertTrue(savedFile.exists());
+        try (InputStream inputStream = MetacatHandler.read(sysmeta.getIdentifier())) {
+            assertNotNull(inputStream);
+        }
 
 
         //save the valid json-ld object with the wrong checksum
@@ -1533,8 +1535,9 @@ public class MetacatHandlerIT {
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
-        File savedFile = MetacatInitializer.getStorage().findObject(sysmeta.getIdentifier());
-        assertTrue(savedFile.exists());
+        try (InputStream inputStream = MetacatHandler.read(sysmeta.getIdentifier())) {
+            assertNotNull(inputStream);
+        }
         data.close();
 
 
