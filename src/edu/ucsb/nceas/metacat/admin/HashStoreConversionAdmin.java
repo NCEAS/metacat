@@ -87,7 +87,8 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     public static void convert() {
         try {
             HashStoreUpgrader upgrader = new HashStoreUpgrader();
-            String infoStr = upgrader.upgrade();
+            upgrader.upgrade();
+            String infoStr = upgrader.getInfo();
             if (infoStr != null && !infoStr.isBlank()) {
                 setInfo(infoStr);
             }
