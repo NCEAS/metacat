@@ -3,7 +3,6 @@ package edu.ucsb.nceas.metacat.storage;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.MetacatHandlerIT;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import edu.ucsb.nceas.metacat.shared.ServiceException;
 
 import org.dataone.hashstore.exceptions.NonMatchingChecksumException;
 import org.dataone.hashstore.exceptions.NonMatchingObjSizeException;
@@ -35,7 +34,7 @@ import static org.junit.Assert.fail;
  * Test the HashStorage class
  * @author Jing Tao
  */
-public class HashStorageTest {
+public class StorageTest {
     private static final String test_file_path = "test/clienttestfiles/tpc02-water-flow-base.xml";
     private static final String test_file_checksum = "19776e05bc62d92ab24e0597ab6f12c6";
     private static final String MD5 = "MD5";
