@@ -12,6 +12,8 @@ import org.apache.commons.logging.LogFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.Executors;
 
@@ -172,6 +174,40 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         info.add("The HashStore conversion was done. However, some objects may not succeed. You "
                      + "have to manually fix the issues.");
         info.add(infoStr);
+    }
+
+    /**
+     * Get the map between version and the update class name from the metacat.properties file
+     * @param propertyPrefix  the property prefix such as solr.upgradeUtility
+     * @return the map between version and the update class name;
+     * @throws PropertyNotFoundException
+     */
+    protected static Map<String, String> getCandidateUpdateClass(String propertyPrefix)
+        throws PropertyNotFoundException {
+        Map<String, String> versionClassNames = new HashMap<>();
+        Map<String, String> classNames = PropertyService.getPropertiesByGroup(propertyPrefix);
+        if (classNames != null) {
+            for (String propertyName : classNames.keySet()) {
+                String version = getVersionFromPropertyName(propertyName, propertyPrefix);
+                versionClassNames.put(version, classNames.get(propertyName));
+                logMetacat.debug(
+                    "Add version " + version + " and the upgrader class name" + classNames.get(
+                        propertyName) + " into " + "the candidate map");
+            }
+        }
+        return versionClassNames;
+    }
+
+    /**
+     * Get the version from the update class property name with the convention like:
+     * solr.upgradeUtility.3.0.0
+     *
+     * @param propertyName the property name like solr.upgradeUtility.3.0.0
+     * @param prefix the prefix before the version part such as solr.upgradeUtility
+     * @return the version part
+     */
+    protected static String getVersionFromPropertyName(String propertyName, String prefix) {
+        return propertyName.substring((prefix + ".").length());
     }
 
 }
