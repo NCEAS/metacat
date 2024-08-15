@@ -94,6 +94,8 @@ public class DBAdmin extends MetacatAdmin {
     private HashSet<String> sqlCommandSet = new HashSet<String>();
     private Map<String, String> scriptSuffixMap = new HashMap<String, String>();
     private static DBVersion databaseVersion = null;
+    // This variable holds the all db versions the upgrade process should go through
+    private static Vector<String> neededUpgradedVersions = new Vector<>();
 
     private static Vector<String> error = new Vector<>();
 
@@ -671,6 +673,7 @@ public class DBAdmin extends MetacatAdmin {
                     updateScriptList.add(sqlFileLocation + FileUtil.getFS()
                             + versionUpdateScript + sqlSuffix);
                 }
+                neededUpgradedVersions.add("0.0.0");
                 return updateScriptList;
             }
 
@@ -683,6 +686,7 @@ public class DBAdmin extends MetacatAdmin {
                     updateScriptList.add(sqlFileLocation + FileUtil.getFS()
                             + versionUpdateScript + sqlSuffix);
                 }
+                neededUpgradedVersions.add(nextVersion.getVersionString());
             }
         }
 
@@ -1035,5 +1039,13 @@ public class DBAdmin extends MetacatAdmin {
      */
     public static Vector<String> getError() {
         return error;
+    }
+
+    /**
+     * Get the all db versions the upgrade process should go through
+     * @return a vector of version list
+     */
+    public static Vector<String> getNeededUpgradedVersions() {
+        return neededUpgradedVersions;
     }
 }
