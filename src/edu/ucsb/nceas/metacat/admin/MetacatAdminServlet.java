@@ -27,7 +27,6 @@ import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
-import org.apache.solr.client.solrj.io.eval.ScalarSubtractEvaluator;
 import org.dataone.service.types.v1.Identifier;
 
 /**
