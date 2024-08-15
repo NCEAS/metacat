@@ -6,6 +6,7 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -14,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.Executors;
 
@@ -177,12 +179,40 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     }
 
     /**
+     * Get the ordered map which contains the versions and upgrade classes. This map removed the
+     * upgrade classes which are not in the db upgrade range from the candidate classes.
+     * @param propertyPrefix  it determines which process such solr or storage conversion
+     * @return the map which contains the versions and upgrade classes
+     * @throws PropertyNotFoundException
+     */
+    public static ListOrderedMap<String, String> getUpdateClasses(String propertyPrefix)
+        throws PropertyNotFoundException {
+        ListOrderedMap<String, String> versionsAndClasses = new ListOrderedMap<>();
+        Vector<String> neededupgradeVersions = DBAdmin.getNeededUpgradedVersions();
+        Map<String, String> candidates = getCandidateUpdateClasses(propertyPrefix);
+        Set<String> candidateVersions = candidates.keySet();
+        int index = 0;
+        if (candidateVersions != null) {
+            for (String version : neededupgradeVersions) {
+                if (candidateVersions.contains(version)) {
+                    versionsAndClasses.put(index, version, candidates.get(version));
+                    logMetacat.debug(
+                        "Add version " + version + " and class " + candidates.get(version)
+                            + " into the upgrade classes map with the index " + index
+                            + " for the prefix " + propertyPrefix);
+                    index++;
+                }
+            }
+        }
+        return versionsAndClasses;
+    }
+    /**
      * Get the map between version and the update class name from the metacat.properties file
      * @param propertyPrefix  the property prefix such as solr.upgradeUtility
      * @return the map between version and the update class name;
      * @throws PropertyNotFoundException
      */
-    protected static Map<String, String> getCandidateUpdateClass(String propertyPrefix)
+    protected static Map<String, String> getCandidateUpdateClasses(String propertyPrefix)
         throws PropertyNotFoundException {
         Map<String, String> versionClassNames = new HashMap<>();
         Map<String, String> classNames = PropertyService.getPropertiesByGroup(propertyPrefix);

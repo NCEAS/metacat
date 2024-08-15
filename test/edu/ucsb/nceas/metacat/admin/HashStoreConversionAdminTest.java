@@ -27,7 +27,7 @@ public class HashStoreConversionAdminTest {
     @Test
     public void testGetCandidateUpdateClass() throws Exception {
         Map<String, String> versionsAndClasses =
-            HashStoreConversionAdmin.getCandidateUpdateClass("storage.upgradeUtility");
+            HashStoreConversionAdmin.getCandidateUpdateClasses("storage.upgradeUtility");
         assertTrue(versionsAndClasses.keySet().contains("3.1.0"));
         assertEquals(
             "edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader",
