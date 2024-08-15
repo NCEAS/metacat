@@ -1,6 +1,7 @@
 package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader;
+import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -24,9 +25,13 @@ import java.util.concurrent.Executors;
  * @author Tao
  */
 public class HashStoreConversionAdmin extends MetacatAdmin {
+    private final static String PROPERTY_PREFIX = "storage.upgradeUtility";
     private static Log logMetacat = LogFactory.getLog(HashStoreConversionAdmin.class);
     private static HashStoreConversionAdmin hashStoreConverter = new HashStoreConversionAdmin();
-
+    // The current version it is working on. Please keep null as its initial value.
+    protected static String currentVersion = null;
+    // The classes will be run during the upgrade process. Please keep null as its initial value.
+    protected static ListOrderedMap<String, String> versionsAndClasses = null;
     private static Vector<String> error = new Vector<>();
     private static Vector<String> info = new Vector<>();
 
@@ -64,11 +69,6 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
                 // Do the job of conversion
                 RequestUtil.clearRequestMessages(request);
                 response.sendRedirect(SystemUtil.getContextURL() + "/admin");
-                if (getStatus().equals(MetacatAdmin.IN_PROGRESS)) {
-                    // Prevent doing upgrade again while another thread is doing the upgrade
-                    return;
-                }
-                setStatus(MetacatAdmin.IN_PROGRESS);
                 // Make the admin jsp page return by doing the upgrade in another thread
                 Executors.newSingleThreadExecutor().submit(() -> {
                     convert();
@@ -90,28 +90,52 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      */
     public static void convert() {
         try {
-            HashStoreUpgrader upgrader = new HashStoreUpgrader();
-            upgrader.upgrade();
-            String infoStr = upgrader.getInfo();
-            if (infoStr != null && !infoStr.isBlank()) {
-                setInfo(infoStr);
-            }
-            try {
-                setStatus(PropertyService.CONFIGURED);
-            } catch (AdminException ex) {
-                logMetacat.error("Can't change the Hashstore conversion status to "
-                                     + " done(true) since " + ex.getMessage());
+            getUpdateClasses(PROPERTY_PREFIX);
+            for (String version : versionsAndClasses.keyList()) {
+                currentVersion = version;
+                if (getStatus() == UpdateStatus.IN_PROGRESS
+                    || getStatus() == UpdateStatus.COMPLETE) {
+                    // Prevent doing upgrade again while another thread is doing the upgrade
+                    return;
+                }
+                setStatus(currentVersion, UpdateStatus.IN_PROGRESS);
+                String className = versionsAndClasses.get(version);
+                logMetacat.debug(
+                    "Metacat will run the class " + className + " for version " + version
+                        + " to upgrade the storage.");
+                UpgradeUtilityInterface utility;
+                try {
+                    utility = (UpgradeUtilityInterface) Class.forName(className)
+                        .getDeclaredConstructor().newInstance();
+                } catch (IllegalAccessException ee) {
+                    logMetacat.debug("SolrAdmin.updateSolrSchema - Metacat could not get a "
+                                         + "instance by the constructor. It will try to the "
+                                         + "method of getInstance.");
+                    utility = (UpgradeUtilityInterface) Class.forName(className)
+                        .getDeclaredMethod("getInstance").invoke(null);
+                }
+                utility.upgrade();
+                setStatus(currentVersion, UpdateStatus.COMPLETE);
+                if (utility instanceof HashStoreUpgrader) {
+                    HashStoreUpgrader upgrader = (HashStoreUpgrader) utility;
+                    String infoStr = upgrader.getInfo();
+                    if (infoStr != null && !infoStr.isBlank()) {
+                        addInfo(infoStr);
+                    }
+                }
             }
         } catch (Exception e) {
             addError("Some errors arose when Metacat converted its storage to HashStore. Please "
                          + "fix the issues and convert it again.");
             addError(e.getMessage());
             try {
-                setStatus(MetacatAdmin.FAILURE);
+                setStatus(currentVersion, UpdateStatus.FAILED);
             } catch (AdminException ex) {
                 logMetacat.error("Can't change the Hashstore conversion status to "
                                      + "failure since " + ex.getMessage());
             }
+        } finally {
+            currentVersion = null;
         }
     }
 
@@ -125,9 +149,10 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * @return the status. It can be converted, unconverted, in_progress and failed
      * @AdminException
      */
-    public static String getStatus() throws AdminException {
+    public static UpdateStatus getStatus() throws AdminException {
         try {
-            return PropertyService.getProperty("storage.hashstoreConverted");
+            String status = PropertyService.getProperty("storage.hashstoreConverted");
+            return UpdateStatus.getStatus(status);
         } catch (PropertyNotFoundException e) {
             throw new AdminException("Metacat cannot get the status of the hashstore conversion "
                                          + "since " + e.getMessage());
@@ -136,11 +161,11 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
 
     /**
      * Check if the hashstore was converted
-     * @return true if the status is true; otherwise false.
+     * @return true if the status is complete; otherwise false.
      * @AdminException
      */
     public static boolean isConverted() throws AdminException {
-        return getStatus().equals(PropertyService.CONFIGURED);
+        return (getStatus() == UpdateStatus.COMPLETE);
     }
 
     /**
@@ -159,9 +184,9 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         return info;
     }
 
-    private static void setStatus(String status) throws AdminException {
+    private static void setStatus(String version, UpdateStatus status) throws AdminException {
         try {
-            PropertyService.setProperty("storage.hashstoreConverted", status);
+            PropertyService.setProperty("storage.hashstoreConverted", status.getValue());
         } catch (GeneralPropertyException e) {
             throw new AdminException("Metacat cannot set the status " + status + " for Hashtore "
                                          + "conversion since " + e.getMessage());
@@ -172,7 +197,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         error.add(errorMessage);
     }
 
-    private static void setInfo(String infoStr) {
+    private static void addInfo(String infoStr) {
         info.add("The HashStore conversion was done. However, some objects may not succeed. You "
                      + "have to manually fix the issues.");
         info.add(infoStr);
@@ -184,27 +209,43 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * @param propertyPrefix  it determines which process such solr or storage conversion
      * @return the map which contains the versions and upgrade classes
      * @throws PropertyNotFoundException
+     * @throws AdminException
      */
-    public static ListOrderedMap<String, String> getUpdateClasses(String propertyPrefix)
-        throws PropertyNotFoundException {
-        ListOrderedMap<String, String> versionsAndClasses = new ListOrderedMap<>();
-        Vector<String> neededupgradeVersions = DBAdmin.getNeededUpgradedVersions();
-        Map<String, String> candidates = getCandidateUpdateClasses(propertyPrefix);
-        Set<String> candidateVersions = candidates.keySet();
-        int index = 0;
-        if (candidateVersions != null) {
-            for (String version : neededupgradeVersions) {
-                if (candidateVersions.contains(version)) {
-                    versionsAndClasses.put(index, version, candidates.get(version));
-                    logMetacat.debug(
-                        "Add version " + version + " and class " + candidates.get(version)
-                            + " into the upgrade classes map with the index " + index
-                            + " for the prefix " + propertyPrefix);
-                    index++;
+    protected static void getUpdateClasses(String propertyPrefix)
+        throws PropertyNotFoundException, AdminException {
+        //only run once
+        if (versionsAndClasses == null) {
+            versionsAndClasses = new ListOrderedMap<>();
+            Vector<String> neededupgradeVersions = DBAdmin.getNeededUpgradedVersions();
+            Map<String, String> candidates = getCandidateUpdateClasses(propertyPrefix);
+            Set<String> candidateVersions = candidates.keySet();
+            int index = 0;
+            if (candidateVersions != null) {
+                for (String version : neededupgradeVersions) {
+                    // handle a fresh installation case
+                    if (version.equals(DBAdmin.VERSION_000)) {
+                        logMetacat.debug(
+                            "The Metacat instance is a fresh installation of " + SystemUtil
+                                .getMetacatVersion().getVersionString()
+                                + " and it will set the storage conversion "
+                                + UpdateStatus.NOT_REQUIRED.getValue());
+                        setStatus(
+                            SystemUtil.getMetacatVersion().getVersionString(),
+                            UpdateStatus.NOT_REQUIRED);
+                        return;
+                    }
+                    if (candidateVersions.contains(version)) {
+                        versionsAndClasses.put(index, version, candidates.get(version));
+                        setStatus(version, UpdateStatus.PENDING);// Initialize to pending status
+                        logMetacat.debug(
+                            "Add version " + version + " and class " + candidates.get(version)
+                                + " into the upgrade classes map with the index " + index
+                                + " for the prefix " + propertyPrefix);
+                        index++;
+                    }
                 }
             }
         }
-        return versionsAndClasses;
     }
     /**
      * Get the map between version and the update class name from the metacat.properties file

@@ -19,7 +19,7 @@
     String quotaConfigured = (String) request.getAttribute("quotaConfigured");
     Boolean metacatConfigured = (Boolean) request.getAttribute("metacatConfigured");
     Boolean metacatServletInitialized = (Boolean) request.getAttribute("metacatServletInitialized");
-    String hashStoreConverted = (String) request.getAttribute("hashstoreConverted");
+    String hashStoreStatus = (String) request.getAttribute("hashStoreStatus");
     String contextURL = (String) request.getAttribute("contextURL");
 %>
 
@@ -133,29 +133,29 @@
         %>
 
         <%
-            if ((hashStoreConverted != null && hashStoreConverted.equals(PropertyService.CONFIGURED))) {
+            if (hashStoreStatus != null && (hashStoreStatus.equals(MetacatAdmin.COMPLETE)
+            || hashStoreStatus.equals(MetacatAdmin.NOT_REQUIRED))) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> converted</td>
+            <td class="configured-tag"><i class="icon-ok"></i> <%= hashStoreStatus %></td>
             <td class="property-title"> Hashtore Conversion</td>
             <td class="configure-link inactive"> </td>
         </tr>
         <%
-            } else if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin
+            } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin
             .IN_PROGRESS)) {
         %>
         <tr>
-                    <td class="configured-tag"><i class="icon-ok"></i> in progress</td>
+                    <td class="configured-tag"><i class="icon-ok"></i> <%= hashStoreStatus %></td>
                     <td class="property-title"> Hashtore Conversion</td>
-                    <td class="configure-link inactive"> Refresh page to update status</td>
+                    <td class="configure-link inactive"> <b>Refresh page to update status</b></td>
         </tr>
         <%
-            } else if (hashStoreConverted != null
-             && (hashStoreConverted.equals(MetacatAdmin.FAILURE) || hashStoreConverted.equals(PropertyService.UNCONFIGURED))
+            } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin.FAILED)
              && dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) {
         %>
         <tr>
-                      <td class="configured-tag"> failure</td>
+                      <td class="unconfigured-tag"> <%= hashStoreStatus %></td>
                       <td class="property-title"> Hashtore Conversion</td>
                       <td class="configure-link">
                           <a href="<%= request.getContextPath() %>/admin?configureType=hashstore&processForm=true">
@@ -165,7 +165,7 @@
             } else {
         %>
         <tr>
-            <td class="unconfigured-tag"> unconverted</td>
+            <td class="unconfigured-tag"> <%= hashStoreStatus %></td>
             <td class="property-title"> Hashtore Conversion</td>
             <td class="configure-link inactive"> </td>
         </tr>

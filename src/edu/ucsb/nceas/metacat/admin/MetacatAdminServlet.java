@@ -276,7 +276,6 @@ public class MetacatAdminServlet extends HttpServlet {
             request.setAttribute("metaCatVersion", SystemUtil.getMetacatVersion());
             request.setAttribute("propsConfigured", PropertyService.arePropertiesConfigured());
             request.setAttribute("dbConfigured", dbConfigured);
-            request.setAttribute("hashstoreConverted", HashStoreConversionAdmin.getStatus());
             request.setAttribute("authConfigured", AuthUtil.isAuthConfigured());
             request.setAttribute("metacatConfigured", ConfigurationUtil.isMetacatConfigured());
             request.setAttribute(
@@ -293,20 +292,20 @@ public class MetacatAdminServlet extends HttpServlet {
                 request.setAttribute("databaseVersion", DBAdmin.getInstance().getDBVersion());
                 request.setAttribute("contextURL", SystemUtil.getContextURL());
             }
-            String hashStoreConverted = HashStoreConversionAdmin.getStatus().getValue();
-            request.setAttribute("hashstoreConverted", hashStoreConverted);
+            String hashStoreStatus = HashStoreConversionAdmin.getStatus().getValue();
+            request.setAttribute("hashStoreStatus", hashStoreStatus  );
             // Add the db configure errors
             if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.FAILURE)
                 && DBAdmin.getError().size() > 0) {
                 request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
                 RequestUtil.setRequestErrors(request, DBAdmin.getError());
             }
-            if (hashStoreConverted != null && hashStoreConverted.equals(MetacatAdmin.FAILURE)
+            if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin.FAILED)
                 && HashStoreConversionAdmin.getError().size() > 0) {
                 request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
                 RequestUtil.setRequestErrors(request, HashStoreConversionAdmin.getError());
-            } else if (hashStoreConverted != null && hashStoreConverted.equals(
-                PropertyService.CONFIGURED) && HashStoreConversionAdmin.getInfo().size() > 0) {
+            } else if (hashStoreStatus != null && hashStoreStatus.equals(
+                MetacatAdmin.COMPLETE) && HashStoreConversionAdmin.getInfo().size() > 0) {
                 request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
                 RequestUtil.setRequestMessage(request, HashStoreConversionAdmin.getInfo());
             }
