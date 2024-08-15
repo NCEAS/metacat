@@ -78,6 +78,7 @@ public class DBAdmin extends MetacatAdmin {
     public static final int DB_DOES_NOT_EXIST = 0;
     public static final int TABLES_DO_NOT_EXIST = 1;
     public static final int TABLES_EXIST = 2;
+    public static final String VERSION_000 = "0.0.0"; // fresh installation
 
 
     // db version statuses. This allows us to keep version history
@@ -318,7 +319,7 @@ public class DBAdmin extends MetacatAdmin {
                 throw new AdminException("DBAdmin.discoverDBVersion - Database does not exist " +
                         "for connection" + PropertyService.getProperty("database.connectionURI"));
             } else if (dbStatus == TABLES_DO_NOT_EXIST) {
-                databaseVersion = new DBVersion("0.0.0");
+                databaseVersion = new DBVersion(VERSION_000);
                 return databaseVersion;
             }
 
@@ -667,13 +668,13 @@ public class DBAdmin extends MetacatAdmin {
             
             // if the database version is 0.0.0, it is new.
             // apply all scripts.
-            if (databaseVersion.getVersionString().equals("0.0.0")
-                    && nextVersion.getVersionString().equals("0.0.0")) {
+            if (databaseVersion.getVersionString().equals(VERSION_000)
+                    && nextVersion.getVersionString().equals(VERSION_000)) {
                 for (String versionUpdateScript : versionUpdateScripts) {
                     updateScriptList.add(sqlFileLocation + FileUtil.getFS()
                             + versionUpdateScript + sqlSuffix);
                 }
-                neededUpgradedVersions.add("0.0.0");
+                neededUpgradedVersions.add(VERSION_000);
                 return updateScriptList;
             }
 
@@ -723,7 +724,7 @@ public class DBAdmin extends MetacatAdmin {
         // if either of these is null, or the database version is 0.0.0 (a fresh installation),
         // we don't want to do anything.  Just return an empty list.
         if (metaCatVersion == null || databaseVersion == null ||
-                                             databaseVersion.getVersionString().equals("0.0.0")) {
+                                             databaseVersion.getVersionString().equals(VERSION_000)) {
             return updateClassList;
         }
 

@@ -293,7 +293,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 request.setAttribute("databaseVersion", DBAdmin.getInstance().getDBVersion());
                 request.setAttribute("contextURL", SystemUtil.getContextURL());
             }
-            String hashStoreConverted = HashStoreConversionAdmin.getStatus();
+            String hashStoreConverted = HashStoreConversionAdmin.getStatus().getValue();
             request.setAttribute("hashstoreConverted", hashStoreConverted);
             // Add the db configure errors
             if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.FAILURE)
