@@ -951,8 +951,8 @@ public class SolrAdmin extends MetacatAdmin {
          Vector<DBVersion> versions = new Vector<DBVersion>();
          DBConnection dbConn = null;
          int serialNumber = -1;
-         String query = "SELECT version FROM db_version WHERE solr_upgraded IS NOT true "
-                                                     + "ORDER BY db_version_id ASC";
+         String query = "SELECT version FROM version_history WHERE solr_upgraded IS NOT true "
+                                                     + "ORDER BY version_history_id ASC";
          try {
              dbConn = DBConnectionPool.getDBConnection("SolrAdmin.getNonUpgradedSolrVersions");
              serialNumber = dbConn.getCheckOutSerialNumber();
@@ -984,7 +984,7 @@ public class SolrAdmin extends MetacatAdmin {
          DBConnection dbConn = null;
          int serialNumber = -1;
          int count = 0;
-         String sql = "SELECT version FROM db_version";
+         String sql = "SELECT version FROM version_history";
          try {
              dbConn = DBConnectionPool.getDBConnection("SolrAdmin.isFreshInstall");
              serialNumber = dbConn.getCheckOutSerialNumber();
@@ -1016,7 +1016,7 @@ public class SolrAdmin extends MetacatAdmin {
      protected static void updateSolrStatus(String version, boolean status) throws SQLException {
          DBConnection dbConn = null;
          int serialNumber = -1;
-         String sql = "UPDATE db_version SET solr_upgraded = ? WHERE version = ?";
+         String sql = "UPDATE version_history SET solr_upgraded = ? WHERE version = ?";
          try {
              dbConn = DBConnectionPool.getDBConnection("SolrAdmin.updateSolrStatus");
              serialNumber = dbConn.getCheckOutSerialNumber();

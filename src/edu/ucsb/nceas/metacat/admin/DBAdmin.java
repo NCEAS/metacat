@@ -369,14 +369,20 @@ public class DBAdmin extends MetacatAdmin {
                         PropertyService.getProperty("database.connectionURI"),
                         PropertyService.getProperty("database.user"),
                         PropertyService.getProperty("database.password"));
+            boolean db_version_exists = DBUtil.tableExists(connection, "db_version");
+            boolean version_history_exists = DBUtil.tableExists(connection, "version_history");
 
-            if (!DBUtil.tableExists(connection, "db_version")) {
+            if (!db_version_exists && !version_history_exists) {
                 return null;
             }
-
-            pstmt = 
-                connection.prepareStatement("SELECT version FROM db_version WHERE status = ?");
-
+            if (db_version_exists) {
+                pstmt =
+                    connection.prepareStatement("SELECT version FROM db_version WHERE status = ?");
+            } else {
+                pstmt =
+                    connection.prepareStatement("SELECT version FROM version_history WHERE status "
+                                                    + "= ?");
+            }
             // Bind the values to the query
             pstmt.setInt(1, VERSION_ACTIVE);
             pstmt.execute();
@@ -492,9 +498,8 @@ public class DBAdmin extends MetacatAdmin {
      * that this table will not be removed in subsequent versions. You should
      * search for db versions from newest to oldest, only getting to this
      * function when newer versions have not been matched.
-     * @param dbMetaData
-     *            the meta data for this database.
-     * @returns boolean which is true if table is found, false otherwise
+     * @param connection  the connection to db
+     * @returns boolean which is true if the db_version table is found; false otherwise
      */
     private boolean is1_9_0(Connection connection) throws SQLException {
         return DBUtil.tableExists(connection, "db_version");
@@ -506,9 +511,8 @@ public class DBAdmin extends MetacatAdmin {
      * that this table will not be removed in subsequent versions. You should
      * search for db versions from newest to oldest, only getting to this
      * function when newer versions have not been matched.
-     * @param dbMetaData
-     *            the meta data for this database.
-     * @returns boolean which is true if table is found, false otherwise
+     * @param connection  the connection to db.
+     * @returns boolean which is true if the db_version table is found; false otherwise
      */
     private boolean is1_9_1(Connection connection) throws SQLException {
         return DBUtil.tableExists(connection, "db_version");

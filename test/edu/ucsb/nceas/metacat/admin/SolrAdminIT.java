@@ -78,7 +78,7 @@ public class SolrAdminIT {
         boolean upgraded = false;
         DBConnection dbConn = null;
         int serialNumber = -1;
-        String sql = "SELECT solr_upgraded FROM db_version WHERE version = ?";
+        String sql = "SELECT solr_upgraded FROM version_history WHERE version = ?";
         try {
             dbConn = DBConnectionPool.getDBConnection("SolrAdmin.isFreshInstall");
             serialNumber = dbConn.getCheckOutSerialNumber();
@@ -108,7 +108,7 @@ public class SolrAdminIT {
         DBConnection dbConn = null;
         int serialNumber = -1;
         int count = 0;
-        String sql = "SELECT * FROM db_version";
+        String sql = "SELECT * FROM version_history";
         try {
             dbConn = DBConnectionPool.getDBConnection("SolrAdmin.isFreshInstall");
             serialNumber = dbConn.getCheckOutSerialNumber();
