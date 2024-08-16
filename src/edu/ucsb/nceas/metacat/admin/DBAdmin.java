@@ -788,11 +788,7 @@ public class DBAdmin extends MetacatAdmin {
         try {
             // get a list of the script names that need to be run
             Vector<String> updateScriptList = getUpdateScripts();
-
-            // call runSQLFile on each
-            for (String updateScript : updateScriptList) {
-                runSQLFile(updateScript);
-            }
+            runSQLFiles(updateScriptList);
             try {
                 MetacatAdmin.updateUpgradeStatus("configutil.upgrade.database.status",
                                                         MetacatAdmin.SUCCESS, persist);
@@ -825,7 +821,6 @@ public class DBAdmin extends MetacatAdmin {
                // solrSchemaException = e;
                 logMetacat.warn("DBAdmin.upgradeDatabase - The schema or config file is changed: "
                                 + e.getMessage() + ". But Metacat will continue.");
-                continue;
             } catch (Exception e) {
                 try {
                     MetacatAdmin.updateUpgradeStatus("configutil.upgrade.java.status",
@@ -862,20 +857,12 @@ public class DBAdmin extends MetacatAdmin {
     }
 
     /**
-     * Runs the commands in a sql script. Individual commands are loaded into a
+     * Runs the list of commands in a sql script vector. Individual commands are loaded into a
      * string vector and run one at a time.
-     * @param sqlFileName
-     *            the name of the file holding the sql statements that need to
-     *            get run.
+     * @param updateScriptList
+     *            the list of the files holding the sql statements that need to get run.
      */
-    public void runSQLFile(String sqlFileName) throws AdminException, SQLException {
-
-        // if update file does not exist, do not do the update.
-        if (FileUtil.getFileStatus(sqlFileName) < FileUtil.EXISTS_READABLE) {
-            throw new AdminException("Could not read sql update file: "
-                    + sqlFileName);
-        }
-
+    private void runSQLFiles(Vector<String> updateScriptList) throws AdminException, SQLException {
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(PropertyService
@@ -883,34 +870,23 @@ public class DBAdmin extends MetacatAdmin {
                     .getProperty("database.user"), PropertyService
                     .getProperty("database.password"));
             connection.setAutoCommit(false);
-
-            // load the sql from the file into a vector of individual statements
-            // and execute them.
-            logMetacat.debug("DBAdmin.runSQLFile - processing File: " + sqlFileName);
-            Vector<String> sqlCommands = loadSQLFromFile(sqlFileName);
-            for (String sqlStatement : sqlCommands) {
-                Statement statement = connection.createStatement();
-                logMetacat.debug("executing sql: " + sqlStatement);
-                try {
+            for (String sqlFileName : updateScriptList) {
+                // if update file does not exist, do not do the update.
+                if (FileUtil.getFileStatus(sqlFileName) < FileUtil.EXISTS_READABLE) {
+                    throw new AdminException("Could not read sql update file: "
+                                                 + sqlFileName);
+                }
+                // load the sql from the file into a vector of individual statements
+                // and execute them.
+                logMetacat.debug("DBAdmin.runSQLFile - processing File: " + sqlFileName);
+                Vector<String> sqlCommands = loadSQLFromFile(sqlFileName);
+                for (String sqlStatement : sqlCommands) {
+                    Statement statement = connection.createStatement();
+                    logMetacat.debug("executing sql: " + sqlStatement);
                     statement.execute(sqlStatement);
-                } catch (SQLException sqle) {
-                    // Oracle complains if we try and drop a sequence (ORA-02289) or a
-                    // trigger (ORA-04098/ORA-04080) or a table/view (ORA-00942)
-                    //or and index (ORA-01418) that does not exist.  We don't care if this happens.
-                    if (sqlStatement.toUpperCase().startsWith("DROP") &&
-                            (sqle.getMessage().contains("ORA-02289") ||
-                             sqle.getMessage().contains("ORA-04098") ||
-                             sqle.getMessage().contains("ORA-04080") ||
-                             sqle.getMessage().contains("ORA-00942"))) {
-                        logMetacat.warn("DBAdmin.runSQLFile - did not process sql drop statement: "
-                                        + sqle.getMessage());
-                    } else {
-                        throw sqle;
-                    }
                 }
             }
             connection.commit();
-            
         } catch (IOException ioe) {
             throw new AdminException("DBAdmin.runSQLFile - Could not read SQL file"
                     + ioe.getMessage());
