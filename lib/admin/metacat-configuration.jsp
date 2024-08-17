@@ -104,7 +104,7 @@
         <tr>
                     <td class="unconfigured-tag"> in progress</td>
                     <td class="property-title"> Database Installation/Upgrade</td>
-                    <td class="configure-link inactive"> Refresh page to update status</td>
+                    <td class="configure-link inactive"> <b>Refresh page to update status</b></td>
         </tr>
         <%
         } else {
@@ -151,8 +151,9 @@
                     <td class="configure-link inactive"> <b>Refresh page to update status</b></td>
         </tr>
         <%
-            } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin.FAILED)
-             && dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) {
+            } else if (hashStoreStatus != null && (hashStoreStatus.equals(MetacatAdmin.FAILED)
+              || hashStoreStatus.equals(MetacatAdmin.PENDING))
+              && dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) {
         %>
         <tr>
                       <td class="unconfigured-tag"> <%= hashStoreStatus %></td>

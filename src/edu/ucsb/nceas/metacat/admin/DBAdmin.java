@@ -639,6 +639,7 @@ public class DBAdmin extends MetacatAdmin {
      *          run to get the database updated to this version of metacat
      */
     public Vector<String> getUpdateScripts() throws AdminException {
+        neededUpgradedVersions = new Vector<>();
         Vector<String> updateScriptList = new Vector<String>();
         String sqlFileLocation = null;
         String databaseType = null;

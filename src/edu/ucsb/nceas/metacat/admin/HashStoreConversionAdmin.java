@@ -2,6 +2,8 @@ package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader;
 import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -14,6 +16,10 @@ import org.apache.commons.logging.LogFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,8 +34,6 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     private final static String PROPERTY_PREFIX = "storage.upgradeUtility";
     private static Log logMetacat = LogFactory.getLog(HashStoreConversionAdmin.class);
     private static HashStoreConversionAdmin hashStoreConverter = new HashStoreConversionAdmin();
-    // The current version it is working on. Please keep null as its initial value.
-    protected static String currentVersion = null;
     // The classes will be run during the upgrade process. Please keep null as its initial value.
     protected static ListOrderedMap<String, String> versionsAndClasses = null;
     private static Vector<String> error = new Vector<>();
@@ -89,6 +93,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * The method do the conversion job
      */
     public static void convert() {
+        String currentVersion = null;
         try {
             getUpdateClasses(PROPERTY_PREFIX);
             for (String version : versionsAndClasses.keyList()) {
@@ -125,17 +130,19 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
                 }
             }
         } catch (Exception e) {
+            logMetacat.error(
+                "Metacat can't convert the storage to hashstore since " + e.getMessage(), e);
             addError("Some errors arose when Metacat converted its storage to HashStore. Please "
                          + "fix the issues and convert it again.");
             addError(e.getMessage());
-            try {
-                setStatus(currentVersion, UpdateStatus.FAILED);
-            } catch (AdminException ex) {
-                logMetacat.error("Can't change the Hashstore conversion status to "
-                                     + "failure since " + ex.getMessage());
+            if (currentVersion != null) {
+                try {
+                    setStatus(currentVersion, UpdateStatus.FAILED);
+                } catch (AdminException ex) {
+                    logMetacat.error("Can't change the Hashstore conversion status to "
+                                         + "failed since " + ex.getMessage());
+                }
             }
-        } finally {
-            currentVersion = null;
         }
     }
 
@@ -145,18 +152,88 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     }
 
     /**
-     * Get the status of conversion
-     * @return the status. It can be converted, unconverted, in_progress and failed
+     * Get the status of conversion. It is the combined status of different versions
+     * @return the status. It can be pending, not required, complete, in_progress and failed
      * @AdminException
      */
     public static UpdateStatus getStatus() throws AdminException {
-        try {
-            String status = PropertyService.getProperty("storage.hashstoreConverted");
-            return UpdateStatus.getStatus(status);
-        } catch (PropertyNotFoundException e) {
-            throw new AdminException("Metacat cannot get the status of the hashstore conversion "
-                                         + "since " + e.getMessage());
+        // The first admin page will show pending since we don't know anything about db
+        if (versionsAndClasses == null) {
+            return UpdateStatus.PENDING;
         }
+        UpdateStatus status = null;
+        for (String version : versionsAndClasses.keyList()) {
+            UpdateStatus versionStatus = getStatus(version);
+            switch (versionStatus) {
+                case FAILED -> {
+                    // If one failed, the whole process is failed
+                    return UpdateStatus.FAILED;
+                }
+                case PENDING -> {
+                    // If one is pending, the whole process is pending
+                    return UpdateStatus.PENDING;
+                }
+                case IN_PROGRESS -> {
+                    // If one is in progress, the whole process is in progress
+                    return UpdateStatus.IN_PROGRESS;
+                }
+                case COMPLETE -> {
+                    //complete will overwrite not required
+                    status = UpdateStatus.COMPLETE;
+                }
+                case NOT_REQUIRED -> {
+                    if (status == null || status == UpdateStatus.NOT_REQUIRED) {
+                        status = UpdateStatus.NOT_REQUIRED;
+                    } else {
+                        // This is the complete case. Complete will overwrite not required
+                        status = UpdateStatus.COMPLETE;
+                    }
+                }
+                default -> throw new AdminException(
+                    "Not recognized the upgrade status " + versionStatus.getValue());
+            }
+        }
+        if (status == null) {
+            status = UpdateStatus.PENDING;
+        }
+        return status;
+    }
+
+    /**
+     * Get the upgrade status for the given version
+     * @param version  the version will check
+     * @return the status. PENDING will be the default
+     * @throws AdminException
+     */
+    protected static UpdateStatus getStatus(String version) throws AdminException {
+        DBConnection conn = null;
+        int serialNumber = -1;
+        UpdateStatus status = UpdateStatus.PENDING;
+        try {
+            // check out DBConnection
+            conn = DBConnectionPool.getDBConnection("HashStoreConversionAdmin.getStatus");
+            serialNumber = conn.getCheckOutSerialNumber();
+            try (PreparedStatement pstmt = conn.prepareStatement(
+                "SELECT storage_upgrade_status FROM version_history WHERE version=?")) {
+                pstmt.setString(1, version);
+                try (ResultSet resultSet = pstmt.executeQuery()) {
+                    if (resultSet.next()) {
+                        String statusStr =resultSet.getString(1);
+                        if (statusStr != null && !statusStr.isBlank()) {
+                            logMetacat.debug("The status of storage_upgrade_status from the db is"
+                                                 + statusStr);
+                            status = UpdateStatus.getStatus(statusStr);
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new AdminException("Cannot get the status from the db for version " + version
+                                         + " since " + e.getMessage());
+        } finally {
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+        }
+        return status;
     }
 
     /**
@@ -165,7 +242,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * @AdminException
      */
     public static boolean isConverted() throws AdminException {
-        return (getStatus() == UpdateStatus.COMPLETE);
+        return (getStatus() == UpdateStatus.COMPLETE || getStatus() == UpdateStatus.NOT_REQUIRED);
     }
 
     /**
@@ -185,11 +262,24 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     }
 
     private static void setStatus(String version, UpdateStatus status) throws AdminException {
+        DBConnection conn = null;
+        int serialNumber = -1;
         try {
-            PropertyService.setProperty("storage.hashstoreConverted", status.getValue());
-        } catch (GeneralPropertyException e) {
-            throw new AdminException("Metacat cannot set the status " + status + " for Hashtore "
-                                         + "conversion since " + e.getMessage());
+            // check out DBConnection
+            conn = DBConnectionPool.getDBConnection("HashStoreConversionAdmin.setStatus");
+            serialNumber = conn.getCheckOutSerialNumber();
+            try (PreparedStatement pstmt = conn.prepareStatement("UPDATE version_history SET "
+                + "storage_upgrade_status=? " + "WHERE version=?")) {
+                pstmt.setObject(1, status.getValue(), Types.OTHER);
+                pstmt.setString(2, version);
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new AdminException(
+                "Cannot save the status " + status.getValue() + " into " + "database since "
+                    + e.getMessage());
+        } finally {
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
         }
     }
 
