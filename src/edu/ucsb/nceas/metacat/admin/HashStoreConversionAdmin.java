@@ -5,6 +5,8 @@ import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.util.DatabaseUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
@@ -20,7 +22,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -157,35 +158,71 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * @AdminException
      */
     public static UpdateStatus getStatus() throws AdminException {
-        // The first admin page will show pending since we don't know anything about db
-        if (versionsAndClasses == null) {
-            return UpdateStatus.PENDING;
+        // TODO: using a single status for all possible storage conversions for different versions
+        // is not a good idea. So the admin gui should have a item for each version. However, in
+        // near future, we will not have another. So it is a low priority.
+        ListOrderedMap<String, String> versionsClasses;
+        try {
+            // The first admin page will show pending since we don't know anything about db
+            if (!DatabaseUtil.isDatabaseConfigured()) {
+                return UpdateStatus.PENDING;
+            }
+            if (versionsAndClasses == null || versionsAndClasses.isEmpty()) {
+                // Fresh the updateAndCalsses map
+                getUpdateClasses(PROPERTY_PREFIX);
+            }
+            if (versionsAndClasses == null || versionsAndClasses.isEmpty()) {
+                // This means there is no database upgrade needed
+                // So we use the candidate storage update classes
+                logMetacat.debug("Metacat uses the storage candidate class map to determine the "
+                                     + "status.");
+                versionsClasses = getCandidateUpdateClasses(PROPERTY_PREFIX);
+            } else {
+                // This means there is a database upgrade needed
+                logMetacat.debug("Metacat uses the combination of the storage candidate class map "
+                                  + " and the database upgrade versions to determine the status.");
+                versionsClasses = versionsAndClasses;
+            }
+        } catch (MetacatUtilException | PropertyNotFoundException e) {
+            throw new AdminException("Metacat cannot get status of the storage update since it "
+                                         + e.getMessage());
         }
+
         UpdateStatus status = null;
-        for (String version : versionsAndClasses.keyList()) {
+        // We combine the status for all status of the different versions
+        for (String version : versionsClasses.keyList()) {
             UpdateStatus versionStatus = getStatus(version);
             switch (versionStatus) {
                 case FAILED -> {
-                    // If one failed, the whole process is failed
+                    // If one version failed, the status of whole versions is failed
                     return UpdateStatus.FAILED;
                 }
                 case PENDING -> {
-                    // If one is pending, the whole process is pending
+                    // If one version is pending, the status of whole versions is pending
                     return UpdateStatus.PENDING;
                 }
                 case IN_PROGRESS -> {
-                    // If one is in progress, the whole process is in progress
+                    // If one version is in progress, the status of whole versions is in progress
                     return UpdateStatus.IN_PROGRESS;
                 }
                 case COMPLETE -> {
-                    //complete will overwrite not required
+                    // When it gets here, this means this is first version, or the previous version
+                    // has the status of complete or not required (since the other status already
+                    // cause the return)
+                    // We think complete will overwrite not required, so we assign the complete
+                    // status
                     status = UpdateStatus.COMPLETE;
                 }
                 case NOT_REQUIRED -> {
+                    // When it gets here, this means this is first version, or the previous version
+                    // has the status of complete or not required (since the other status already
+                    // cause the return)
                     if (status == null || status == UpdateStatus.NOT_REQUIRED) {
+                        // handle the first version (status is null) or the previous version is not
+                        // required
                         status = UpdateStatus.NOT_REQUIRED;
                     } else {
-                        // This is the complete case. Complete will overwrite not required
+                        // The previous status is complete. Complete will overwrite not required
                         status = UpdateStatus.COMPLETE;
                     }
                 }
@@ -326,12 +363,18 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
                     }
                     if (candidateVersions.contains(version)) {
                         versionsAndClasses.put(index, version, candidates.get(version));
+                        index++;
                         setStatus(version, UpdateStatus.PENDING);// Initialize to pending status
                         logMetacat.debug(
                             "Add version " + version + " and class " + candidates.get(version)
                                 + " into the upgrade classes map with the index " + index
                                 + " for the prefix " + propertyPrefix);
-                        index++;
+                    } else {
+                        setStatus(version, UpdateStatus.NOT_REQUIRED);
+                        logMetacat.debug(
+                            "Add version " + version + " as the status "
+                                + UpdateStatus.NOT_REQUIRED.getValue()
+                                + " for the prefix " + propertyPrefix);
                     }
                 }
             }
@@ -343,14 +386,16 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * @return the map between version and the update class name;
      * @throws PropertyNotFoundException
      */
-    protected static Map<String, String> getCandidateUpdateClasses(String propertyPrefix)
+    protected static ListOrderedMap<String, String> getCandidateUpdateClasses(String propertyPrefix)
         throws PropertyNotFoundException {
-        Map<String, String> versionClassNames = new HashMap<>();
+        ListOrderedMap<String, String> versionClassNames = new ListOrderedMap<>();
         Map<String, String> classNames = PropertyService.getPropertiesByGroup(propertyPrefix);
+        int index = 0;
         if (classNames != null) {
             for (String propertyName : classNames.keySet()) {
                 String version = getVersionFromPropertyName(propertyName, propertyPrefix);
-                versionClassNames.put(version, classNames.get(propertyName));
+                versionClassNames.put(index, version, classNames.get(propertyName));
+                index++;
                 logMetacat.debug(
                     "Add version " + version + " and the upgrader class name" + classNames.get(
                         propertyName) + " into " + "the candidate map");
