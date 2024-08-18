@@ -4,8 +4,6 @@ import edu.ucsb.nceas.LeanTestUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -26,11 +24,12 @@ public class HashStoreConversionAdminTest {
      */
     @Test
     public void testGetCandidateUpdateClass() throws Exception {
-        Map<String, String> versionsAndClasses =
-            HashStoreConversionAdmin.getCandidateUpdateClasses("storage.upgradeUtility");
-        assertTrue(versionsAndClasses.keySet().contains("3.1.0"));
+        HashStoreConversionAdmin.initVersionAndClassFromProperty();
+        assertTrue(
+            HashStoreConversionAdmin.versionAndClassMapInProperty.keySet().contains("3.1.0"));
         assertEquals(
             "edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader",
-            versionsAndClasses.get("3.1.0"));
+            HashStoreConversionAdmin.versionAndClassMapInProperty.get("3.1.0"));
+        assertEquals(1, HashStoreConversionAdmin.versionAndClassMapInProperty.size());
     }
 }
