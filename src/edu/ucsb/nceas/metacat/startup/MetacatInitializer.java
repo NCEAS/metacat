@@ -18,6 +18,10 @@ import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebListener;
 
+import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin;
+import edu.ucsb.nceas.metacat.admin.UpdateStatus;
+import edu.ucsb.nceas.metacat.util.DatabaseUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -92,6 +96,7 @@ public class MetacatInitializer implements ServletContextListener{
                 fullInit = false;
                 return;
             }
+            convertStorage();
             initAfterMetacatConfig();
             fullInit = true;
         } catch (SQLException e) {
@@ -116,6 +121,10 @@ public class MetacatInitializer implements ServletContextListener{
         } catch (MetacatUtilException e) {
             String errorMessage = "Problem to check if the Metacat instance is configured : "
                     + e.getMessage();
+            checker.abort(errorMessage, e);
+        } catch (AdminException e) {
+            String errorMessage = "Problem to check the status of the storage conversion : "
+                + e.getMessage();
             checker.abort(errorMessage, e);
         }
     }
@@ -440,6 +449,25 @@ public class MetacatInitializer implements ServletContextListener{
                 if (storage == null) {
                     storage = Storage.getInstance();
                 }
+            }
+        }
+    }
+
+    /**
+     * Start to convert the storage if the db is configured and the storage conversion status is
+     * PENDING or FAILED
+     * @throws MetacatUtilException
+     * @throws AdminException
+     */
+    private void convertStorage() throws MetacatUtilException, AdminException {
+        if (DatabaseUtil.isDatabaseConfigured()) {
+            UpdateStatus status = HashStoreConversionAdmin.getStatus();
+            if (status == UpdateStatus.PENDING || status == UpdateStatus.FAILED) {
+                logMetacat.debug("Metacat starts an auto storage conversion when the database is "
+                                     + "configured: " + DatabaseUtil.isDatabaseConfigured()
+                    + "and the storage conversion status is PENDING or FAILED. Its status is "
+                    + status.getValue() + ". So the conversion will start.");
+                HashStoreConversionAdmin.convert();
             }
         }
     }
