@@ -103,9 +103,9 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
             for (String version : finalVersionAndClassMap.keyList()) {
                 logMetacat.debug("Convert storage for the Metacat version " + version);
                 currentVersion = version;
-                if (getStatus() == UpdateStatus.IN_PROGRESS || getStatus() == UpdateStatus.UNKNOWN
-                    || getStatus() == UpdateStatus.NOT_REQUIRED
-                    || getStatus() == UpdateStatus.COMPLETE) {
+                UpdateStatus status = getStatus();
+                if (status == UpdateStatus.IN_PROGRESS || status == UpdateStatus.UNKNOWN
+                    || status == UpdateStatus.NOT_REQUIRED || status == UpdateStatus.COMPLETE) {
                     logMetacat.debug("The current status is " + getStatus().getValue() + " and we"
                                          + " should NOT run the conversion.");
                     // Prevent doing upgrade again while another thread is doing the upgrade
@@ -453,8 +453,10 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
             if (status == UpdateStatus.UNKNOWN || status == UpdateStatus.PENDING
                 || status == UpdateStatus.FAILED) {
                 finalVersionAndClassMap.put(index, version, className);
-                // Initialize to the pending status
-                setStatus(version, UpdateStatus.PENDING);
+                // Initialize to the pending status for unknown
+                if (status == UpdateStatus.UNKNOWN) {
+                    setStatus(version, UpdateStatus.PENDING);
+                }
                 logMetacat.debug(
                     "Add version " + version + " and class " + className
                         + " into the upgrade classes map with the index " + index
