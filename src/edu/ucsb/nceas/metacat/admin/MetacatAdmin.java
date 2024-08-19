@@ -22,6 +22,7 @@ public abstract class MetacatAdmin {
     public final static String COMPLETE = "complete";
     public final static String NOT_REQUIRED = "not required";
     public final static String PENDING = "pending";
+    public final static String UNKNOWN = "unknown";
 
     /**
      * Require subclasses to implement a properties validator.

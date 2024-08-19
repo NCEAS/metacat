@@ -6,10 +6,11 @@ package edu.ucsb.nceas.metacat.admin;
  */
 public enum UpdateStatus {
 
-    PENDING(MetacatAdmin.PENDING),
+    PENDING(MetacatAdmin.PENDING), // Required, but hasn't started yet
     NOT_REQUIRED(MetacatAdmin.NOT_REQUIRED),
     IN_PROGRESS(MetacatAdmin.IN_PROGRESS),
     FAILED(MetacatAdmin.FAILED),
+    UNKNOWN(MetacatAdmin.UNKNOWN),
     COMPLETE(MetacatAdmin.COMPLETE);
 
     private String value;
@@ -47,6 +48,9 @@ public enum UpdateStatus {
             }
             case MetacatAdmin.IN_PROGRESS -> {
                 return IN_PROGRESS;
+            }
+            case MetacatAdmin.UNKNOWN -> {
+                return UNKNOWN;
             }
             default -> throw new IllegalArgumentException(
                 "UpdateStatus cannot recognize this status: " + status);
