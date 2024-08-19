@@ -151,16 +151,13 @@
                     <td class="configure-link inactive"> <b>Refresh page to update status</b></td>
         </tr>
         <%
-            } else if (hashStoreStatus != null && (hashStoreStatus.equals(MetacatAdmin.FAILED)
-              || hashStoreStatus.equals(MetacatAdmin.PENDING))
+            } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin.FAILED)
               && dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) {
         %>
         <tr>
                       <td class="unconfigured-tag"> <%= hashStoreStatus %></td>
                       <td class="property-title"> Hashtore Conversion</td>
-                      <td class="configure-link">
-                          <a href="<%= request.getContextPath() %>/admin?configureType=hashstore&processForm=true">
-                          <i class="icon-cogs"></i> Convert Now</a></td>
+                      <td class="configure-link inactive"> <b>Fix the issue and restart Tomcat</b></td>
         </tr>
         <%
             } else {

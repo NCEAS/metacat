@@ -103,8 +103,11 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
             for (String version : finalVersionAndClassMap.keyList()) {
                 logMetacat.debug("Convert storage for the Metacat version " + version);
                 currentVersion = version;
-                if (getStatus() == UpdateStatus.IN_PROGRESS
+                if (getStatus() == UpdateStatus.IN_PROGRESS || getStatus() == UpdateStatus.UNKNOWN
+                    || getStatus() == UpdateStatus.NOT_REQUIRED
                     || getStatus() == UpdateStatus.COMPLETE) {
+                    logMetacat.debug("The current status is " + getStatus().getValue() + " and we"
+                                         + " should NOT run the conversion.");
                     // Prevent doing upgrade again while another thread is doing the upgrade
                     return;
                 }
@@ -171,7 +174,9 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
             conn = DBConnectionPool.getDBConnection(
                 "HashStoreConversionAdmin.setStatusForPreviousVersions");
             serialNumber = conn.getCheckOutSerialNumber();
-            try (PreparedStatement pstmt = conn.prepareStatement("UPDATE version_history SET storage_upgrade_status=? WHERE storage_upgrade_status IS NULL AND version != '3.1.0'")) {
+            try (PreparedStatement pstmt = conn.prepareStatement(
+                "UPDATE version_history SET storage_upgrade_status=? WHERE storage_upgrade_status"
+                    + " IS NULL AND version != '3.1.0'")) {
                 pstmt.setObject(1, UpdateStatus.NOT_REQUIRED.getValue(), Types.OTHER);
                 pstmt.executeUpdate();
             }
@@ -184,7 +189,8 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     }
     /**
      * Get the status of conversion. It is the combined status of different versions
-     * @return the status. It can be pending, not required, complete, in_progress and failed
+     * @return the status. It can be pending, not required, complete, in_progress, unknown and
+     * failed. The UNKNOWN status will be default one.
      * @AdminException
      */
     public static UpdateStatus getStatus() throws AdminException {
@@ -194,7 +200,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         try {
             // The first admin page will show pending since we don't know anything about db
             if (!DatabaseUtil.isDatabaseConfigured()) {
-                return UpdateStatus.PENDING;
+                return UpdateStatus.UNKNOWN;
             }
             generateFinalVersionsAndClassesMap();
         } catch (MetacatUtilException | PropertyNotFoundException e) {
@@ -214,6 +220,10 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         for (String version : versionAndClassMap.keyList()) {
             UpdateStatus versionStatus = getStatus(version);
             switch (versionStatus) {
+                case UNKNOWN -> {
+                    // If one version is UNKNOWN, the status of whole versions is UNKNOWN
+                    return UpdateStatus.UNKNOWN;
+                }
                 case FAILED -> {
                     // If one version failed, the status of whole versions is failed
                     return UpdateStatus.FAILED;
@@ -252,7 +262,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
             }
         }
         if (status == null) {
-            status = UpdateStatus.PENDING;
+            status = UpdateStatus.UNKNOWN;
         }
         return status;
     }
@@ -260,13 +270,13 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     /**
      * Get the upgrade status for the given version
      * @param version  the version will check
-     * @return the status. PENDING will be the default
+     * @return the status. UNKNOWN will be the default
      * @throws AdminException
      */
     protected static UpdateStatus getStatus(String version) throws AdminException {
         DBConnection conn = null;
         int serialNumber = -1;
-        UpdateStatus status = UpdateStatus.PENDING;
+        UpdateStatus status = UpdateStatus.UNKNOWN;
         try {
             // check out DBConnection
             conn = DBConnectionPool.getDBConnection("HashStoreConversionAdmin.getStatus");
@@ -319,7 +329,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         return info;
     }
 
-    private static void setStatus(String version, UpdateStatus status) throws AdminException {
+    protected static void setStatus(String version, UpdateStatus status) throws AdminException {
         DBConnection conn = null;
         int serialNumber = -1;
         try {
@@ -356,7 +366,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * This map removed the upgrade classes which are not in the db upgrade range from the
      * candidate classes. If there is no db upgrade, it will use the versionAndClass map from the
      * property file and take a look the database - choose the one whose upgrade status is
-     * pending or failed
+     * pending, unknown and failed
      * @throws PropertyNotFoundException
      * @throws AdminException
      * @throws MetacatUtilException
@@ -393,13 +403,10 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
                         }
                         if (versionsInProperty.contains(version)) {
                             String className = versionAndClassMapInProperty.get(version);
-                            finalVersionAndClassMap.put(index, version, className);
-                            index++;
-                            setStatus(version, UpdateStatus.PENDING);// Initialize to pending status
-                            logMetacat.debug(
-                                "Add version " + version + " and class " + className
-                                    + " into the upgrade classes map with the index " + index
-                                    + " for the prefix " + propertyPrefix);
+                            boolean success = addVersionToFinalMap(version, index, className);
+                            if (success) {
+                                index++;
+                            }
                         } else {
                             setStatus(version, UpdateStatus.NOT_REQUIRED);
                             logMetacat.debug(
@@ -412,25 +419,55 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
             } else {
                 logMetacat.debug("There was NO Metacat DB version upgrade in the configuration. So"
                                      + " we will use the version and the storage class name from "
-                                     + "the property file, whose status is pending or failed");
+                                     + "the property file, whose status is pending, unknown or "
+                                     + "failed");
                 List<String> versionsInProperty = versionAndClassMapInProperty.keyList();
                 int index = 0;
                 if (versionsInProperty != null) {
                     for (String version : versionsInProperty) {
-                        if (getStatus(version) == UpdateStatus.PENDING
-                            || getStatus(version) == UpdateStatus.FAILED) {
-                            String className = versionAndClassMapInProperty.get(version);
-                            finalVersionAndClassMap.put(index, version, className);
+                        String className = versionAndClassMapInProperty.get(version);
+                        boolean success = addVersionToFinalMap(version, index, className);
+                        if (success) {
                             index++;
-                            logMetacat.debug(
-                                "Add version " + version + " and class " + className
-                                    + " into the upgrade classes map with the index " + index
-                                    + " for the prefix " + propertyPrefix);
                         }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Add the version and className to the finalVersionAndClassMap at the given index position if
+     * they are appropriate
+     * @param version  the version will be added
+     * @param index  the position in the finalVersionAndClassMap
+     * @param className  the class name will be added
+     * @return true if they were added; otherwise false
+     * @throws AdminException
+     */
+    private static boolean addVersionToFinalMap(String version, int index, String className)
+        throws AdminException {
+        if (version != null && !version.isBlank() && className != null && !className.isBlank()) {
+            // Only the status of unknown, pending and failure will be added.
+            UpdateStatus status = getStatus(version);
+            if (status == UpdateStatus.UNKNOWN || status == UpdateStatus.PENDING
+                || status == UpdateStatus.FAILED) {
+                finalVersionAndClassMap.put(index, version, className);
+                // Initialize to the pending status
+                setStatus(version, UpdateStatus.PENDING);
+                logMetacat.debug(
+                    "Add version " + version + " and class " + className
+                        + " into the upgrade classes map with the index " + index
+                        + " for the prefix " + propertyPrefix);
+                return true;
+            } else {
+                logMetacat.debug("The status of the version " + version + " is "
+                                     + status.getValue() + " so the " + className
+                                     + " will NOT be added into the upgrade "
+                                     + "classes map for the prefix " + propertyPrefix);
+            }
+        }
+        return false;
     }
 
     /**
