@@ -35,7 +35,8 @@
     <h2>Metacat Configuration</h2>
 
     <p><span class="red">Note:</span> The process of Database upgrade and HashStore conversion may
-    take several hours. Please do NOT stop Tomcat during the process.</p>
+    take several hours. Please do <span class="red">NOT</span> stop Tomcat when its status is <span class="red">in
+    progress</span>.</p>
     <p>All of the following sections must be in a configured state for Metacat to run properly:</p>
 
     <%@ include file="page-message-section.jsp" %>
