@@ -7,21 +7,29 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
+import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.exceptions.MarshallingException;
+import org.dataone.hashstore.ObjectMetadata;
+import org.dataone.hashstore.exceptions.NonMatchingChecksumException;
+import org.dataone.hashstore.hashstoreconverter.HashStoreConverter;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,11 +42,13 @@ import java.util.concurrent.Executors;
  * /var/metacat/data) into the HashStore storage.
  */
 public class HashStoreUpgrader implements UpgradeUtilityInterface {
-    private Log logMetacat = LogFactory.getLog(HashStoreUpgrader.class);
+    private static Log logMetacat = LogFactory.getLog(HashStoreUpgrader.class);
     private String dataPath;
     private String documentPath;
     private String info = null;
     private static ExecutorService executor;
+    private static HashStoreConverter converter;
+    private ChecksumsManager checksumsManager = new ChecksumsManager();
 
     static {
         // use a shared executor service with nThreads == one less than available processors or one
@@ -46,10 +56,17 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         int nThreads = availableProcessors;
         nThreads--;
         nThreads = Math.max(1, nThreads);
+        logMetacat.debug("The size of the thread pool to do the conversion job is " + nThreads);
         executor = Executors.newFixedThreadPool(nThreads);
     }
 
-    public HashStoreUpgrader() throws PropertyNotFoundException {
+    /**
+     * Constructor
+     * @throws PropertyNotFoundException
+     */
+    public HashStoreUpgrader()
+        throws PropertyNotFoundException, ServiceFailure, IOException, NoSuchAlgorithmException {
+        converter = new HashStoreConverter(MetacatInitializer.getStorage().getStoreProperties());
         documentPath = PropertyService.getProperty("application.documentfilepath");
         if (!documentPath.endsWith("/")) {
             documentPath = documentPath + "/";
@@ -66,45 +83,114 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     @Override
     public boolean upgrade() throws AdminException {
         StringBuffer infoBuffer = new StringBuffer();
-        // Iterate the systemmetadata table
-        String query = "SELECT guid FROM systemmetadata;";
-        DBConnection dbConn = null;
-        int serialNumber = -1;
         try {
-            // Get a database connection from the pool
-            dbConn = DBConnectionPool.getDBConnection("HashStoreUpgrader.upgrade");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-            String id = null;
-            try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
-                try (ResultSet rs = stmt.executeQuery()) {
-                    try {
-                        while (rs.next()) {
+            try (ResultSet rs = initCandidateList()) {
+                if (rs != null) {
+                    while (rs.next()) {
+                        String id = null;
+                        try {
                             id = rs.getString(1);
                             if (id != null && !id.isBlank()) {
+                                final String finalId = id;
                                 Identifier pid = new Identifier();
-                                pid.setValue(id);
+                                pid.setValue(finalId);
                                 SystemMetadata sysMeta =
                                     SystemMetadataManager.getInstance().get(pid);
                                 Path path = resolve(sysMeta); // it may be null
                                 InputStream sysMetaInput = convertSystemMetadata(sysMeta);
+                                if (sysMeta.getChecksum() != null) {
+                                    String checksum = sysMeta.getChecksum().getValue();
+                                    String algorithm =
+                                        sysMeta.getChecksum().getAlgorithm().toUpperCase();
+                                    logMetacat.debug("Trying to convert the storage to hashstore "
+                                                         + "for " + id + " with checksum: "
+                                                         + checksum + " algorithm: " + algorithm
+                                                         + " and file path(may be null): "
+                                                         + path.toString());
+                                    executor.submit(() -> {
+                                        ObjectMetadata metadata = null;
+                                        try {
+                                            metadata = converter.convert(path, finalId, sysMetaInput,
+                                                                  checksum, algorithm);
+                                        } catch (NonMatchingChecksumException e) {
+                                            logMetacat.warn("Cannot move the object " + finalId
+                                                                + "to hashstore since "
+                                                                + e.getMessage());
+                                        } catch (Exception e) {
+                                            logMetacat.warn("Cannot move the object " + finalId +
+                                                                " to hashstore since "
+                                                                + e.getMessage());
+                                        }
+                                        DBConnection dbConn = null;
+                                        int serialNumber = -1;
+                                        try {
+                                            // Get a database connection from the pool
+                                            dbConn = DBConnectionPool.getDBConnection(
+                                                "HashStoreUpgrader.upgrade");
+                                            serialNumber = dbConn.getCheckOutSerialNumber();
+                                            if (metadata != null) {
+                                                checksumsManager.save(
+                                                    pid, metadata.hexDigests(), dbConn);
+                                            }
+                                        } catch (Exception e) {
+                                            logMetacat.warn(
+                                                "Cannot save checksums for " + finalId + " since "
+                                                    + e.getMessage());
+                                        } finally {
+                                            DBConnectionPool.returnDBConnection(
+                                                dbConn, serialNumber);
+                                        }
+                                    });
+                                } else {
+                                    logMetacat.warn("There is not checksum info for id " + id +
+                                                        " in the systemmetadata and Metacat "
+                                                        + "cannot convert it to hashstore.");
+                                }
                             }
+                        } catch (Exception e) {
+                            logMetacat.warn("Cannot move the object " + id + " to hashstore since "
+                                                 + e.getMessage());
                         }
-                    } catch (Exception e) {
-                        logMetacat.error("Cannot move the object " + id + " to hashstore since "
-                                             + e.getMessage());
                     }
+
                 }
             }
         } catch (SQLException e) {
-            logMetacat.error("Error while going through the systemmetadata table: "
-                                 + e.getMessage());
-            throw new AdminException(e.getMessage());
+           logMetacat.error("Error while going through the systemmetadata table: "
+                                + e.getMessage());
+           throw new AdminException(e.getMessage());
+        }
+        this.info = infoBuffer.toString();
+        return true;
+    }
+
+    /**
+     * Run a query to select the list of candidate pid from the systemmetadata which will be
+     * converted. If the pid exists in the checksums table, we consider it is in the hashstore and
+     * wouldn't convert it. Both the checksums table and hashstore are introduced in 3.1.0.
+     * @return a ResultSet object which contains the list of identifiers:
+     * @throws SQLException
+     */
+    protected ResultSet initCandidateList() throws SQLException {
+        // Iterate the systemmetadata table
+        String query =
+            "SELECT s.guid FROM systemmetadata s LEFT JOIN checksums c ON s.guid = c.guid WHERE "
+                + "c.guid IS NULL;";
+        DBConnection dbConn = null;
+        ResultSet rs = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("HashStoreUpgrader.initCandidateList");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
+                rs = stmt.executeQuery();
+            }
         } finally {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
-        this.info = infoBuffer.toString();
-        return true;
+        return rs;
     }
 
     /**
@@ -121,7 +207,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
      * @return  the object path. Null will be returned if there is no object found.
      * @throws SQLException
      */
-    private Path resolve(SystemMetadata sysMeta ) throws SQLException {
+    protected Path resolve(SystemMetadata sysMeta ) throws SQLException {
         Identifier pid = sysMeta.getIdentifier();
         String localId;
         try {
@@ -137,6 +223,16 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         }
         logMetacat.debug("The object path for " + pid.getValue() + " is " + path.toString());
         return path;
+    }
+
+    protected void writeToFile(String message, File logFile) {
+        try {
+            if (!logFile.exists()) {
+                logFile.mkdirs();
+            }
+        } catch (Exception e) {
+
+        }
     }
 
     private InputStream convertSystemMetadata(SystemMetadata sysMeta)

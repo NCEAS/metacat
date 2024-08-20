@@ -723,7 +723,7 @@ public class XMLNodesToFilesChecker {
      * @param baseName  the name will be appended by current time
      * @return the file name concatenating the base name and current time.
      */
-    private String getFileName(String baseName) {
+    protected String getFileName(String baseName) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String dateTimeInfo = dateFormat.format(new Date());
         return baseName.concat(String.format("_%s.txt", dateTimeInfo));

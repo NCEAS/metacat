@@ -32,6 +32,7 @@ public class Storage {
     private static Log logMetacat = LogFactory.getLog(Storage.class);
     private static Storage storage;
     private static HashStore hashStore;
+    private static Properties storeProperties = null;
     private String defaultNamespace = "https://ns.dataone.org/service/types/v2.0#SystemMetadata";
     //private static HashStoreConvert convert;
     static {
@@ -49,8 +50,7 @@ public class Storage {
      * @throws IOException
      * @throws HashStoreFactoryException
      */
-    private Storage() throws PropertyNotFoundException,
-                                                           HashStoreFactoryException, IOException {
+    private Storage() throws PropertyNotFoundException, HashStoreFactoryException, IOException {
         String className = PropertyService.getProperty("storage.className");
         String rootPath = PropertyService.getProperty("storage.hashstore.rootDirectory");
         String directoryDepth = "3";
@@ -80,7 +80,7 @@ public class Storage {
             logMetacat.warn("Since " + e.getMessage() + ", Metacat uses the default value "
                             + defaultNamespace);
         }
-        Properties storeProperties = new Properties();
+        storeProperties = new Properties();
         storeProperties.setProperty("storePath", rootPath);
         storeProperties.setProperty("storeDepth", directoryDepth);
         storeProperties.setProperty("storeWidth", directoryNameWidth);
@@ -453,6 +453,14 @@ public class Storage {
      */
     public String getDefaultNameSpace() {
         return defaultNamespace;
+    }
+
+    /**
+     * Get the store properties which initializes the hashstore instance
+     * @return the store properties. It can be null
+     */
+    public static Properties getStoreProperties() {
+        return storeProperties;
     }
 
     private ObjectInfo convertToObjectInfo(ObjectMetadata objMeta) {
