@@ -146,7 +146,7 @@
             .IN_PROGRESS)) {
         %>
         <tr>
-                    <td class="configured-tag"><i class="icon-ok"></i> <%= hashStoreStatus %></td>
+                    <td class="unconfigured-tag"><i class="icon-ok"></i> <%= hashStoreStatus %></td>
                     <td class="property-title"> Hashtore Conversion</td>
                     <td class="configure-link inactive"> <b>Refresh page to update status</b></td>
         </tr>
@@ -157,7 +157,7 @@
         <tr>
                       <td class="unconfigured-tag"> <%= hashStoreStatus %></td>
                       <td class="property-title"> Hashtore Conversion</td>
-                      <td class="configure-link inactive"> <b>Fix the issue and restart Tomcat</b></td>
+                      <td class="configure-link inactive"> </td>
         </tr>
         <%
             } else {
