@@ -123,10 +123,10 @@ public class StorageTest {
      * @throws Exception
      */
     @Test
-    public void testVerifyAndTagObject() throws Exception {
+    public void testDeleteIfInvalidObject() throws Exception {
         FileInputStream object = new FileInputStream(test_file_path);
         ObjectInfo info = storage.storeObject(object);
-        storage.verifyObject(info, test_file_checksum, MD5, 242900);
+        storage.deleteIfInvalidObject(info, test_file_checksum, MD5, 242900);
         Identifier pid = new Identifier();
         pid.setValue("testVerifyAndTagObject" + System.nanoTime());
         storage.tagObject(pid, info.getCid());
@@ -245,30 +245,30 @@ public class StorageTest {
         try (InputStream object = new ByteArrayInputStream(content)) {
             ObjectInfo info = storage.storeObject(object);
             assertEquals(5, info.getHexDigests().size());
-            storage.verifyObject(info, checksum.getValue(), algorithm, size);
+            storage.deleteIfInvalidObject(info, checksum.getValue(), algorithm, size);
         }
         // Test the failure scenario with the wrong checksum
         try (InputStream object = new ByteArrayInputStream(content)) {
             try {
                 ObjectInfo info = storage.storeObject(object);
-                storage.verifyObject(info, "foo", algorithm, size);
+                storage.deleteIfInvalidObject(info, "foo", algorithm, size);
                 fail("Test can't get here since the checksum was wrong");
             } catch (Exception e) {
                 assertTrue(
                     "The exception class should be NonMatchingChecksumException rather than " + e
-                        .getClass().getName(), e instanceof NonMatchingChecksumException);
+                        .getClass().getName(), e instanceof InvalidSystemMetadata);
             }
         }
         // Test the failure scenario with the wrong size
         try (InputStream object = new ByteArrayInputStream(content)) {
             try {
                 ObjectInfo info = storage.storeObject(object);
-                storage.verifyObject(info, checksum.getValue(), algorithm, 10);
+                storage.deleteIfInvalidObject(info, checksum.getValue(), algorithm, 10);
                 fail("Test can't get here since the checksum was wrong");
             } catch (Exception e) {
                 assertTrue(
                     "The exception class should be NonMatchingObjSizeException rather than " + e
-                        .getClass().getName(), e instanceof NonMatchingObjSizeException);
+                        .getClass().getName(), e instanceof InvalidSystemMetadata);
             }
         }
     }

@@ -1,11 +1,9 @@
 package edu.ucsb.nceas.metacat.storage;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -16,8 +14,10 @@ import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.hashstore.exceptions.HashStoreFactoryException;
 import org.dataone.hashstore.exceptions.NonMatchingChecksumException;
 import org.dataone.hashstore.exceptions.NonMatchingObjSizeException;
+import org.dataone.hashstore.exceptions.UnsupportedHashAlgorithmException;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
@@ -33,7 +33,7 @@ public class Storage {
     private static Storage storage;
     private static HashStore hashStore;
     private String defaultNamespace = "https://ns.dataone.org/service/types/v2.0#SystemMetadata";
-
+    //private static HashStoreConvert convert;
     static {
         try {
             storage = new Storage();
@@ -213,22 +213,6 @@ public class Storage {
         }
     }
 
-    /**
-     * Confirms that an ObjectMetadata's content is equal to the given values. If it does not
-     * equal, it will throw an exception
-     *
-     * @param objectInfo        ObjectMetadata object with values
-     * @param checksum          Value of checksum to validate against
-     * @param checksumAlgorithm Algorithm of checksum submitted
-     * @param objSize           Expected size of object to validate after storing
-     * @throws IllegalArgumentException An expected value does not match
-     * @throws IOException Issue with recalculating supported algo for checksum not found
-     */
-    public void verifyObject( ObjectInfo objectInfo, String checksum,
-            String checksumAlgorithm, long objSize) throws IllegalArgumentException, IOException {
-        hashStore.verifyObject(convertToObjectMetadata(objectInfo), checksum,
-                                checksumAlgorithm, objSize);
-    }
 
     /**
      * Adds/updates metadata (ex. `sysmeta`) to the HashStore by using a given InputStream, a
@@ -345,29 +329,6 @@ public class Storage {
         }
     }
 
-    /**
-     * Deletes an object and its related data permanently from HashStore using a given
-     * persistent identifier. If the `idType` is 'pid', the object associated with the pid will
-     * be deleted if it is not referenced by any other pids, along with its reference files and
-     * all metadata documents found in its respective metadata directory. If the `idType` is
-     * 'cid', only the object will be deleted if it is not referenced by other pids.
-     *
-     * Notes: All objects are renamed at their existing path with a '_deleted' appended
-     * to their file name before they are deleted.
-     *
-     * @param idType 'pid' or 'cid'
-     * @param id     Authority-based identifier or content identifier
-     * @throws IllegalArgumentException When pid is null or empty
-     * @throws IOException              I/O error when deleting empty directories,
-     *                                  modifying/deleting reference files
-     * @throws NoSuchAlgorithmException When algorithm used to calculate an object or metadata's
-     *                                  address is not supported
-     * @throws InterruptedException     When deletion synchronization is interrupted
-     */
-    public void deleteObject(String idType, String id) throws IllegalArgumentException,
-            IOException, NoSuchAlgorithmException, InterruptedException {
-        hashStore.deleteObject(idType, id);
-    }
 
     /**
      * Deletes an object and all relevant associated files (ex. system metadata, reference
@@ -430,6 +391,40 @@ public class Storage {
     }
 
     /**
+     * Confirms that an ObjectMetadata's content is equal to the given values. This method throws an
+     * exception if there are any issues, and attempts to remove the data object if it is determined
+     * to be invalid.
+     *
+     * @param objectInfo        ObjectInfo object with values
+     * @param checksum          Value of checksum to validate against
+     * @param checksumAlgorithm Algorithm of checksum submitted
+     * @param objSize           Expected size of object to validate after storing
+     * @throws InvalidSystemMetadata       Given size =/= objMeta size value or checksum
+     *                                              =/= objMeta checksum value
+     * @throws ServiceFailure Given algo is not found or supported
+     * @throws NoSuchAlgorithmException          When 'deleteInvalidObject' is true and an algo used
+     *                                           to get a cid refs file is not supported
+     * @throws InterruptedException              When 'deleteInvalidObject' is true and an issue
+     *                                           with coordinating deleting objects occurs
+     * @throws IOException                       Issue with recalculating supported algo for
+     *                                           checksum not found
+     */
+    public void deleteIfInvalidObject(
+        ObjectInfo objectInfo, String checksum, String checksumAlgorithm, long objSize)
+        throws InvalidSystemMetadata, NoSuchAlgorithmException, InterruptedException,
+        ServiceFailure, IOException {
+        try {
+            hashStore.deleteIfInvalidObject(convertToObjectMetadata(objectInfo), checksum,
+                                            checksumAlgorithm, objSize);
+        } catch (NonMatchingObjSizeException | NonMatchingChecksumException e) {
+            throw new InvalidSystemMetadata("0000", e.getMessage());
+        } catch (UnsupportedHashAlgorithmException e) {
+            throw new ServiceFailure("0000", e.getMessage());
+        }
+
+    }
+
+    /**
      * Calculates the hex digest of an object that exists in HashStore using a given persistent
      * identifier and hash algorithm.
      *
@@ -463,8 +458,8 @@ public class Storage {
     private ObjectInfo convertToObjectInfo(ObjectMetadata objMeta) {
         ObjectInfo info = null;
         if (objMeta != null) {
-            info = new ObjectInfo(objMeta.getPid(), objMeta.getCid(),
-                                  objMeta.getSize(), objMeta.getHexDigests());
+            info = new ObjectInfo(objMeta.pid(), objMeta.cid(),
+                                  objMeta.size(), objMeta.hexDigests());
         }
         return info;
     }

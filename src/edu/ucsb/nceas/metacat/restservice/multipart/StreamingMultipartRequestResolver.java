@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -165,7 +166,8 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                     String algorithm = sysMeta.getChecksum().getAlgorithm();
                                     long size = sysMeta.getSize().longValue();
                                     MetacatInitializer.getStorage()
-                                               .verifyObject(objectMetadata, checksum, algorithm, size);
+                                        .deleteIfInvalidObject(objectMetadata, checksum, algorithm,
+                                                               size);
                                     Identifier id = new Identifier();
                                     id.setValue(pid);
                                     // Hashstore will throw an exception if the id already is used.
@@ -234,7 +236,22 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                         id.setValue(pid);
                         MetacatInitializer.getStorage().deleteObject(id);
                     } else {
-                        MetacatInitializer.getStorage().deleteObject("cid", objectMetadata.getCid());
+                        try {
+                            Map<String, String> hexDigests = objectMetadata.getHexDigests();
+                            Set<String> keys = hexDigests.keySet();
+                            String algorithm = "SHA-256";
+                            for (String key : keys) {
+                                algorithm = key;
+                                break;
+                            }
+                            String checksum = hexDigests.get(algorithm);
+                            MetacatInitializer.getStorage()
+                                .deleteIfInvalidObject(objectMetadata, checksum, algorithm,
+                                                       objectMetadata.getSize() + 1);
+                        } catch (InvalidSystemMetadata ee) {
+                            log.info("Metacat purpose used a wrong size to trigger the deleting "
+                                         + ee.getMessage());
+                        }
                     }
                 } catch (Exception ee) {
                     log.error("StreamingMultipartRequestResolver.resoloveMulitpart - failed to "
