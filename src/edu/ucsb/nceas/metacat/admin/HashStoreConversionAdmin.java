@@ -141,8 +141,10 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         } catch (Exception e) {
             logMetacat.error(
                 "Metacat can't convert the storage to hashstore since " + e.getMessage(), e);
-            addError("Some errors arose when Metacat converted its storage to HashStore. Please "
-                         + "fix the issues and convert it again.");
+            addError("Some errors arose when Metacat converted its storage to HashStore. </b> "
+                         + "Please fix the issues, restart Tomcat, which will start the conversion "
+                         + "automatically, then go to the admin page to "
+                         + "check the conversion status.</b>");
             addError(e.getMessage());
             if (currentVersion != null) {
                 try {
