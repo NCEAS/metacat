@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.Executors;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -85,6 +86,7 @@ public class MetacatInitializer implements ServletContextListener{
             ServiceService.registerService("SkinPropertyService",
                                                                 SkinPropertyService.getInstance());
             ServiceService.registerService("SessionService", SessionService.getInstance());
+            convertStorage();
             // Check to see if the user has requested to bypass configuration
             // (dev option) and check see if metacat has been configured.
             // If both are false then stop the initialization
@@ -96,7 +98,6 @@ public class MetacatInitializer implements ServletContextListener{
                 fullInit = false;
                 return;
             }
-            convertStorage();
             initAfterMetacatConfig();
             fullInit = true;
         } catch (SQLException e) {
@@ -459,7 +460,7 @@ public class MetacatInitializer implements ServletContextListener{
      * @throws MetacatUtilException
      * @throws AdminException
      */
-    private void convertStorage() throws MetacatUtilException, AdminException {
+    protected static void convertStorage() throws MetacatUtilException, AdminException {
         if (DatabaseUtil.isDatabaseConfigured()) {
             UpdateStatus status = HashStoreConversionAdmin.getStatus();
             if (status == UpdateStatus.PENDING || status == UpdateStatus.FAILED) {
@@ -467,7 +468,9 @@ public class MetacatInitializer implements ServletContextListener{
                                      + "configured: " + DatabaseUtil.isDatabaseConfigured()
                     + "and the storage conversion status is PENDING or FAILED. Its status is "
                     + status.getValue() + ". So the conversion will start.");
-                HashStoreConversionAdmin.convert();
+                Executors.newSingleThreadExecutor().submit(() -> {
+                    HashStoreConversionAdmin.convert();
+                });
             }
         }
     }
