@@ -51,6 +51,11 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static ExecutorService executor;
     private static HashStoreConverter converter;
     private ChecksumsManager checksumsManager = new ChecksumsManager();
+    private File nonMatchingChecksumFile;
+    private File noSuchAlgorithmFile;
+    private File generalFile;
+    private File noChecksumInSysmetaFile;
+    private File savingChecksumFile;
     private BufferedWriter nonMatchingChecksumWriter;
     private BufferedWriter noSuchAlgorithmWriter;
     private BufferedWriter generalWriter;
@@ -96,17 +101,23 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             if (!backup.exists()) {
                 backup.mkdirs();
             }
-            nonMatchingChecksumWriter = new BufferedWriter(new FileWriter(
-              new File(backup, XMLNodesToFilesChecker.getFileName("nonMatchingChecksum")), append));
-            noSuchAlgorithmWriter = new BufferedWriter(new FileWriter(
-                new File(backup, XMLNodesToFilesChecker.getFileName("noSuchAlgorithm")), append));
-            generalWriter = new BufferedWriter(new FileWriter(
-                new File(backup, XMLNodesToFilesChecker.getFileName("generalError")), append));
+            nonMatchingChecksumFile =
+                new File(backup, XMLNodesToFilesChecker.getFileName("nonMatchingChecksum"));
+            noSuchAlgorithmFile =
+                new File(backup, XMLNodesToFilesChecker.getFileName("noSuchAlgorithm"));
+            generalFile = new File(backup, XMLNodesToFilesChecker.getFileName("generalError"));
+            noChecksumInSysmetaFile =
+                new File(backup, XMLNodesToFilesChecker.getFileName("noChecksumInSysmeta"));
+            savingChecksumFile =
+                new File(backup, XMLNodesToFilesChecker.getFileName("savingChecksumTableError"));
+            nonMatchingChecksumWriter =
+                new BufferedWriter(new FileWriter(nonMatchingChecksumFile, append));
+            noSuchAlgorithmWriter = new BufferedWriter(new FileWriter(noSuchAlgorithmFile, append));
+            generalWriter = new BufferedWriter(new FileWriter(generalFile, append));
             noChecksumInSysmetaWriter = new BufferedWriter(new FileWriter(
-              new File(backup, XMLNodesToFilesChecker.getFileName("noChecksumInSysmeta")), append));
-            savingChecksumTableWriter = new BufferedWriter(new FileWriter(
-                new File(backup, XMLNodesToFilesChecker.getFileName("savingChecksumTableError")),
-                append));
+                noChecksumInSysmetaFile, append));
+            savingChecksumTableWriter =
+                new BufferedWriter(new FileWriter(savingChecksumFile, append));
         } catch (Exception e) {
             logMetacat.error(
                 "Cannot initialize the error writer for HashStoreUpgrader " + e.getMessage());
@@ -202,6 +213,31 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
            logMetacat.error("Error while going through the systemmetadata table: "
                                 + e.getMessage());
            throw new AdminException(e.getMessage());
+        }
+        try {
+            if (nonMatchingChecksumFile != null && nonMatchingChecksumFile.exists()) {
+                infoBuffer.append(nonMatchingChecksumFile.getCanonicalPath() + "\n");
+            }
+            if (noSuchAlgorithmFile != null && noSuchAlgorithmFile.exists()) {
+                infoBuffer.append(noSuchAlgorithmFile.getCanonicalPath() + "\n");
+            }
+            if (generalFile != null && generalFile.exists()) {
+                infoBuffer.append(generalFile.getCanonicalPath() + "\n");
+            }
+            if (noChecksumInSysmetaFile != null && noChecksumInSysmetaFile.exists()) {
+                infoBuffer.append(noChecksumInSysmetaFile.getCanonicalPath() + "\n");
+            }
+            if (savingChecksumFile != null && savingChecksumFile.exists()) {
+                infoBuffer.append(savingChecksumFile.getCanonicalPath() + "\n");
+            }
+        } catch (IOException e) {
+            logMetacat.error("Metacat can't get the list of the files which store the pid that "
+                                 + "the hashstore conversion failed.");
+        }
+        if (!infoBuffer.isEmpty()) {
+            infoBuffer.append("The conversion succeeded! However, some objects failed to be "
+                                  + "converted. The above files contain those identifiers. "
+                                  + "Please try to fix the issues.");
         }
         this.info = infoBuffer.toString();
         return true;
