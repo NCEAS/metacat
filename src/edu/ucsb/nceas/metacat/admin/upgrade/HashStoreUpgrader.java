@@ -51,7 +51,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static ExecutorService executor;
     private static HashStoreConverter converter;
     private ChecksumsManager checksumsManager = new ChecksumsManager();
-    private File nonMatchingChecksumFile;
+    /*private File nonMatchingChecksumFile;
     private File noSuchAlgorithmFile;
     private File generalFile;
     private File noChecksumInSysmetaFile;
@@ -60,7 +60,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private BufferedWriter noSuchAlgorithmWriter;
     private BufferedWriter generalWriter;
     private BufferedWriter noChecksumInSysmetaWriter;
-    private BufferedWriter savingChecksumTableWriter;
+    private BufferedWriter savingChecksumTableWriter;*/
+    private File backupDir;
 
     static {
         // use a shared executor service with nThreads == one less than available processors or one
@@ -89,157 +90,156 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             dataPath = dataPath + "/";
         }
         logMetacat.debug("The data directory path of Metacat is " + dataPath);
-        initErrorWriter();
-
-    }
-
-    private void initErrorWriter() {
-        boolean append = true;
-        try {
-            String backupDir = PropertyService.getProperty("application.backupDir");
-            File backup = new File(backupDir);
-            if (!backup.exists()) {
-                backup.mkdirs();
-            }
-            nonMatchingChecksumFile =
-                new File(backup, XMLNodesToFilesChecker.getFileName("nonMatchingChecksum"));
-            noSuchAlgorithmFile =
-                new File(backup, XMLNodesToFilesChecker.getFileName("noSuchAlgorithm"));
-            generalFile = new File(backup, XMLNodesToFilesChecker.getFileName("generalError"));
-            noChecksumInSysmetaFile =
-                new File(backup, XMLNodesToFilesChecker.getFileName("noChecksumInSysmeta"));
-            savingChecksumFile =
-                new File(backup, XMLNodesToFilesChecker.getFileName("savingChecksumTableError"));
-            nonMatchingChecksumWriter =
-                new BufferedWriter(new FileWriter(nonMatchingChecksumFile, append));
-            noSuchAlgorithmWriter = new BufferedWriter(new FileWriter(noSuchAlgorithmFile, append));
-            generalWriter = new BufferedWriter(new FileWriter(generalFile, append));
-            noChecksumInSysmetaWriter = new BufferedWriter(new FileWriter(
-                noChecksumInSysmetaFile, append));
-            savingChecksumTableWriter =
-                new BufferedWriter(new FileWriter(savingChecksumFile, append));
-        } catch (Exception e) {
-            logMetacat.error(
-                "Cannot initialize the error writer for HashStoreUpgrader " + e.getMessage());
+        String backup = PropertyService.getProperty("application.backupDir");
+        backupDir = new File(backup);
+        if (!backupDir.exists()) {
+            backupDir.mkdirs();
         }
     }
 
     @Override
     public boolean upgrade() throws AdminException {
         StringBuffer infoBuffer = new StringBuffer();
+        boolean append = true;
         try {
-            try (ResultSet rs = initCandidateList()) {
-                if (rs != null) {
-                    while (rs.next()) {
-                        String id = null;
-                        try {
-                            id = rs.getString(1);
-                            if (id != null && !id.isBlank()) {
-                                final String finalId = id;
-                                Identifier pid = new Identifier();
-                                pid.setValue(finalId);
-                                SystemMetadata sysMeta =
-                                    SystemMetadataManager.getInstance().get(pid);
-                                Path path = resolve(sysMeta); // it may be null
-                                InputStream sysMetaInput = convertSystemMetadata(sysMeta);
-                                if (sysMeta.getChecksum() != null) {
-                                    String checksum = sysMeta.getChecksum().getValue();
-                                    String algorithm =
-                                        sysMeta.getChecksum().getAlgorithm().toUpperCase();
-                                    logMetacat.debug("Trying to convert the storage to hashstore "
-                                                         + "for " + id + " with checksum: "
-                                                         + checksum + " algorithm: " + algorithm
-                                                         + " and file path(may be null): "
-                                                         + path.toString());
-                                    executor.submit(() -> {
-                                        ObjectMetadata metadata = null;
-                                        try {
-                                            metadata = converter.convert(path, finalId, sysMetaInput,
-                                                                  checksum, algorithm);
-                                        } catch (NonMatchingChecksumException e) {
-                                            logMetacat.warn("Cannot move the object " + finalId
-                                                                + "to hashstore since "
-                                                                + e.getMessage());
-                                            writeToFile(finalId, nonMatchingChecksumWriter);
-                                        } catch (NoSuchAlgorithmException e) {
-                                            logMetacat.warn("Cannot move the object " + finalId +
-                                                                " to hashstore since "
-                                                                + e.getMessage());
-                                            writeToFile(finalId, noSuchAlgorithmWriter);
-                                        } catch (Exception e) {
-                                            logMetacat.warn("Cannot move the object " + finalId +
-                                                                " to hashstore since "
-                                                                + e.getMessage());
-                                            writeToFile(finalId, generalWriter);
-                                        }
-                                        DBConnection dbConn = null;
-                                        int serialNumber = -1;
-                                        try {
-                                            // Get a database connection from the pool
-                                            dbConn = DBConnectionPool.getDBConnection(
-                                                "HashStoreUpgrader.upgrade");
-                                            serialNumber = dbConn.getCheckOutSerialNumber();
-                                            if (metadata != null) {
-                                                checksumsManager.save(
-                                                    pid, metadata.hexDigests(), dbConn);
+            File nonMatchingChecksumFile =
+                new File(backupDir, XMLNodesToFilesChecker.getFileName("nonMatchingChecksum"));
+            File noSuchAlgorithmFile =
+                new File(backupDir, XMLNodesToFilesChecker.getFileName("noSuchAlgorithm"));
+            File generalFile = new File(backupDir, XMLNodesToFilesChecker.getFileName(
+                "generalError"));
+            File noChecksumInSysmetaFile =
+                new File(backupDir, XMLNodesToFilesChecker.getFileName("noChecksumInSysmeta"));
+            File savingChecksumFile =
+                new File(backupDir, XMLNodesToFilesChecker.getFileName("savingChecksumTableError"));
+            try (BufferedWriter nonMatchingChecksumWriter =
+                        new BufferedWriter(new FileWriter(nonMatchingChecksumFile, append));
+                 BufferedWriter noSuchAlgorithmWriter =
+                     new BufferedWriter(new FileWriter(noSuchAlgorithmFile, append));
+                 BufferedWriter generalWriter = new BufferedWriter(new FileWriter(generalFile,
+                                                                                  append));
+                 BufferedWriter noChecksumInSysmetaWriter = new BufferedWriter(new FileWriter(
+                                    noChecksumInSysmetaFile, append));
+                 BufferedWriter savingChecksumTableWriter =
+                                new BufferedWriter(new FileWriter(savingChecksumFile, append))) {
+                try (ResultSet rs = initCandidateList()) {
+                    if (rs != null) {
+                        while (rs.next()) {
+                            String id = null;
+                            try {
+                                id = rs.getString(1);
+                                if (id != null && !id.isBlank()) {
+                                    final String finalId = id;
+                                    Identifier pid = new Identifier();
+                                    pid.setValue(finalId);
+                                    SystemMetadata sysMeta =
+                                        SystemMetadataManager.getInstance().get(pid);
+                                    Path path = resolve(sysMeta); // it may be null
+                                    InputStream sysMetaInput = convertSystemMetadata(sysMeta);
+                                    if (sysMeta.getChecksum() != null) {
+                                        String checksum = sysMeta.getChecksum().getValue();
+                                        String algorithm =
+                                            sysMeta.getChecksum().getAlgorithm().toUpperCase();
+                                        logMetacat.debug("Trying to convert the storage to hashstore"
+                                                             + " for " + id + " with checksum: "
+                                                             + checksum + " algorithm: " + algorithm
+                                                             + " and file path(may be null): "
+                                                             + path.toString());
+                                        executor.submit(() -> {
+                                            ObjectMetadata metadata = null;
+                                            try {
+                                                metadata =
+                                                    converter.convert(path, finalId, sysMetaInput,
+                                                                      checksum, algorithm);
+                                            } catch (NonMatchingChecksumException e) {
+                                                logMetacat.warn("Cannot move the object " + finalId
+                                                                    + "to hashstore since "
+                                                                    + e.getMessage());
+                                                writeToFile(finalId, nonMatchingChecksumWriter);
+                                            } catch (NoSuchAlgorithmException e) {
+                                                logMetacat.warn("Cannot move the object " + finalId
+                                                                    + " to hashstore since "
+                                                                    + e.getMessage());
+                                                writeToFile(finalId, noSuchAlgorithmWriter);
+                                            } catch (Exception e) {
+                                                logMetacat.warn("Cannot move the object " + finalId
+                                                                    + " to hashstore since "
+                                                                    + e.getMessage());
+                                                writeToFile(finalId, generalWriter);
                                             }
-                                        } catch (Exception e) {
-                                            logMetacat.warn(
-                                                "Cannot save checksums for " + finalId + " since "
-                                                    + e.getMessage());
-                                            writeToFile(finalId, savingChecksumTableWriter);
-                                        } finally {
-                                            DBConnectionPool.returnDBConnection(
-                                                dbConn, serialNumber);
-                                        }
-                                    });
-                                } else {
-                                    logMetacat.warn("There is no checksum info for id " + id +
-                                                        " in the systemmetadata and Metacat "
-                                                        + "cannot convert it to hashstore.");
-                                    writeToFile(id, noChecksumInSysmetaWriter);
+                                            // Save the checksums into checksum table
+                                            DBConnection dbConn = null;
+                                            int serialNumber = -1;
+                                            try {
+                                                // Get a database connection from the pool
+                                                dbConn = DBConnectionPool.getDBConnection(
+                                                    "HashStoreUpgrader.upgrade");
+                                                serialNumber = dbConn.getCheckOutSerialNumber();
+                                                if (metadata != null) {
+                                                    checksumsManager.save(
+                                                        pid, metadata.hexDigests(), dbConn);
+                                                }
+                                            } catch (Exception e) {
+                                                logMetacat.warn(
+                                                    "Cannot save checksums for " + finalId
+                                                        + " since " + e.getMessage());
+                                                writeToFile(finalId, savingChecksumTableWriter);
+                                            } finally {
+                                                DBConnectionPool.returnDBConnection(
+                                                    dbConn, serialNumber);
+                                            }
+                                        });
+                                    } else {
+                                        logMetacat.warn("There is no checksum info for id " + id +
+                                                            " in the systemmetadata and Metacat "
+                                                            + "cannot convert it to hashstore.");
+                                        writeToFile(id, noChecksumInSysmetaWriter);
+                                    }
                                 }
+                            } catch (Exception e) {
+                                logMetacat.warn("Cannot move the object " + id + " to hashstore since "
+                                                    + e.getMessage());
+                                writeToFile(id, generalWriter);
                             }
-                        } catch (Exception e) {
-                            logMetacat.warn("Cannot move the object " + id + " to hashstore since "
-                                                 + e.getMessage());
-                            writeToFile(id, generalWriter);
                         }
                     }
-
+                } catch (SQLException e) {
+                    logMetacat.error("Error while going through the systemmetadata table: "
+                                         + e.getMessage());
+                    throw new AdminException(e.getMessage());
                 }
             }
-        } catch (SQLException e) {
-           logMetacat.error("Error while going through the systemmetadata table: "
+            try {
+                if (nonMatchingChecksumFile != null && nonMatchingChecksumFile.exists()) {
+                    infoBuffer.append(nonMatchingChecksumFile.getCanonicalPath() + "\n");
+                }
+                if (noSuchAlgorithmFile != null && noSuchAlgorithmFile.exists()) {
+                    infoBuffer.append(noSuchAlgorithmFile.getCanonicalPath() + "\n");
+                }
+                if (generalFile != null && generalFile.exists()) {
+                    infoBuffer.append(generalFile.getCanonicalPath() + "\n");
+                }
+                if (noChecksumInSysmetaFile != null && noChecksumInSysmetaFile.exists()) {
+                    infoBuffer.append(noChecksumInSysmetaFile.getCanonicalPath() + "\n");
+                }
+                if (savingChecksumFile != null && savingChecksumFile.exists()) {
+                    infoBuffer.append(savingChecksumFile.getCanonicalPath() + "\n");
+                }
+            } catch (IOException e) {
+                logMetacat.error("Metacat can't get the list of the files which store the pid that "
+                                     + "the hashstore conversion failed.");
+            }
+            if (!infoBuffer.isEmpty()) {
+                infoBuffer.append("The conversion succeeded! However, some objects failed to be "
+                                      + "converted. The above files contain those identifiers. "
+                                      + "Please try to fix the issues.");
+            }
+            this.info = infoBuffer.toString();
+        } catch (IOException e) {
+           logMetacat.error("Can not create the files to log the failed ids: "
                                 + e.getMessage());
            throw new AdminException(e.getMessage());
         }
-        try {
-            if (nonMatchingChecksumFile != null && nonMatchingChecksumFile.exists()) {
-                infoBuffer.append(nonMatchingChecksumFile.getCanonicalPath() + "\n");
-            }
-            if (noSuchAlgorithmFile != null && noSuchAlgorithmFile.exists()) {
-                infoBuffer.append(noSuchAlgorithmFile.getCanonicalPath() + "\n");
-            }
-            if (generalFile != null && generalFile.exists()) {
-                infoBuffer.append(generalFile.getCanonicalPath() + "\n");
-            }
-            if (noChecksumInSysmetaFile != null && noChecksumInSysmetaFile.exists()) {
-                infoBuffer.append(noChecksumInSysmetaFile.getCanonicalPath() + "\n");
-            }
-            if (savingChecksumFile != null && savingChecksumFile.exists()) {
-                infoBuffer.append(savingChecksumFile.getCanonicalPath() + "\n");
-            }
-        } catch (IOException e) {
-            logMetacat.error("Metacat can't get the list of the files which store the pid that "
-                                 + "the hashstore conversion failed.");
-        }
-        if (!infoBuffer.isEmpty()) {
-            infoBuffer.append("The conversion succeeded! However, some objects failed to be "
-                                  + "converted. The above files contain those identifiers. "
-                                  + "Please try to fix the issues.");
-        }
-        this.info = infoBuffer.toString();
         return true;
     }
 
