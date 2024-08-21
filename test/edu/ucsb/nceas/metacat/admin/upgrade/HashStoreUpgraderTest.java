@@ -2,14 +2,18 @@ package edu.ucsb.nceas.metacat.admin.upgrade;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
+import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.TypeMarshaller;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -21,9 +25,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -66,6 +73,53 @@ public class HashStoreUpgraderTest {
             }
         }
         assertTrue(found);
+    }
+
+    /**
+     * Test the method initCandidateList which will omit the items which have records in the
+     * checksum table
+     * @throws Exception
+     */
+    @Test
+    public void testInitCandidateListNotFound() throws Exception {
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("testInitCandidateList-" + System.currentTimeMillis());
+        InputStream object =
+            new ByteArrayInputStream("testInitCandidateList".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        SystemMetadataManager.lock(pid);
+        SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(pid);
+        // save it to the checksum table
+        Map<String, String> checksums = new HashMap<>();
+        checksums.put(sysmeta.getChecksum().getAlgorithm(), sysmeta.getChecksum().getValue());
+        ChecksumsManager checksumsManager = new ChecksumsManager();
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection(
+                "HashStoreUpgrader.upgrade");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            checksumsManager.save(pid, checksums, dbConn);
+        } finally {
+            DBConnectionPool.returnDBConnection(
+                dbConn, serialNumber);
+        }
+        HashStoreUpgrader upgrader = new HashStoreUpgrader();
+        ResultSet resultSet = upgrader.initCandidateList();
+        boolean found = false;
+        while (resultSet.next()) {
+            String id = resultSet.getString(1);
+            if (id.equals(pid.getValue())) {
+                found = true;
+                break;
+            }
+        }
+        assertFalse(found);
     }
 
     /**
@@ -137,5 +191,33 @@ public class HashStoreUpgraderTest {
                 assertEquals(8724, Files.size(path));
             }
         }
+    }
+
+    /**
+     * Test the convertSystemMetadata memthod
+     * @throws Exception
+     */
+    @Test
+    public void testConvertSystemMetadata() throws Exception {
+        String dataId = "testResolveData" + System.currentTimeMillis();
+        String localId = "eml-2.2.0.xml";
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue(dataId);
+        InputStream object =
+            new ByteArrayInputStream("testInitCandidateList".getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        InputStream input = HashStoreUpgrader.convertSystemMetadata(sysmeta);
+        SystemMetadata read = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
+        assertEquals(sysmeta.getIdentifier(), read.getIdentifier());
+        assertEquals(sysmeta.getSize(), read.getSize());
+        assertEquals(sysmeta.getChecksum().getValue(), read.getChecksum().getValue());
+        assertEquals(sysmeta.getChecksum().getAlgorithm(), read.getChecksum().getAlgorithm());
+        assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
+                     read.getDateSysMetadataModified().getTime());
+        assertEquals(sysmeta.getDateUploaded().getTime(), read.getDateUploaded().getTime());
+        assertEquals(sysmeta.getFormatId().getValue(), read.getFormatId().getValue());
     }
 }

@@ -321,7 +321,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         }
     }
 
-    private InputStream convertSystemMetadata(SystemMetadata sysMeta)
+    protected static InputStream convertSystemMetadata(SystemMetadata sysMeta)
         throws IOException, MarshallingException {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             TypeMarshaller.marshalTypeToOutputStream(sysMeta, out);
