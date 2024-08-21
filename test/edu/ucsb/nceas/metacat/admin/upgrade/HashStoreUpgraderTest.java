@@ -14,12 +14,15 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -31,18 +34,37 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.withSettings;
 
 /**
  * @author Tao
  * The test class for HashStoreUpgrader
  */
 public class HashStoreUpgraderTest {
+    MockedStatic<PropertyService> closeableMock;
+    String backupPath = "build/temp." + System.currentTimeMillis();
+    String hashStorePath = "build/hashStore";
+    String documentPath = "test";
+    String dataPath = "test/resources";
 
     @Before
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
+        Properties withProperties = new Properties();
+        withProperties.setProperty("application.datafilepath", dataPath);
+        withProperties.setProperty("application.documentfilepath", documentPath);
+        withProperties.setProperty("application.backupDir", backupPath);
+        withProperties.setProperty("storage.hashstore.rootDirectory", hashStorePath);
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
         MetacatInitializer.initStorage();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        closeableMock.close();
     }
 
     /**
@@ -145,17 +167,11 @@ public class HashStoreUpgraderTest {
                  Mockito.mockStatic(IdentifierManager.class)) {
             IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
             Mockito.when(mockManager.getLocalId(metadataId)).thenReturn(localId);
-            Mockito.when(IdentifierManager.getInstance())
-                .thenReturn(mockManager);
-            Properties withProperties = new Properties();
-            withProperties.setProperty("application.documentfilepath", "test");
-            try (MockedStatic<PropertyService> ignored
-                     = LeanTestUtils.initializeMockPropertyService(withProperties)) {
-                HashStoreUpgrader upgrader = new HashStoreUpgrader();
-                Path path = upgrader.resolve(sysmeta);
-                assertTrue(Files.exists(path));
-                assertEquals(8724, Files.size(path));
-            }
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            HashStoreUpgrader upgrader = new HashStoreUpgrader();
+            Path path = upgrader.resolve(sysmeta);
+            assertTrue(Files.exists(path));
+            assertEquals(8724, Files.size(path));
         }
     }
 
@@ -166,7 +182,7 @@ public class HashStoreUpgraderTest {
     @Test
     public void testResolveData() throws Exception {
         String dataId = "testResolveData" + System.currentTimeMillis();
-        String localId = "eml-2.2.0.xml";
+        String localId = "eml-error-2.2.0.xml";
         String user = "http://orcid.org/1234/4567";
         Subject owner = new Subject();
         owner.setValue(user);
@@ -182,14 +198,11 @@ public class HashStoreUpgraderTest {
             Mockito.when(IdentifierManager.getInstance())
                 .thenReturn(mockManager);
             Properties withProperties = new Properties();
-            withProperties.setProperty("application.datafilepath", "test");
-            try (MockedStatic<PropertyService> ignored
-                     = LeanTestUtils.initializeMockPropertyService(withProperties)) {
-                HashStoreUpgrader upgrader = new HashStoreUpgrader();
-                Path path = upgrader.resolve(sysmeta);
-                assertTrue(Files.exists(path));
-                assertEquals(8724, Files.size(path));
-            }
+            HashStoreUpgrader upgrader = new HashStoreUpgrader();
+            Path path = upgrader.resolve(sysmeta);
+            assertTrue(Files.exists(path));
+            assertEquals(8718, Files.size(path));
+
         }
     }
 
@@ -219,5 +232,53 @@ public class HashStoreUpgraderTest {
                      read.getDateSysMetadataModified().getTime());
         assertEquals(sysmeta.getDateUploaded().getTime(), read.getDateUploaded().getTime());
         assertEquals(sysmeta.getFormatId().getValue(), read.getFormatId().getValue());
+    }
+
+    /**
+     * Test the upgrade method
+     * @throws Exception
+     */
+    @Test
+    public void testUpgradeData() throws Exception {
+        String dataId = "HashStoreUpgraderTestUpgrade" + System.currentTimeMillis();
+        String localId = "eml-error-2.2.0.xml";
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue(dataId);
+        InputStream object = new FileInputStream(new File(dataPath + "/" + localId));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        // mock IdentifierManager
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(dataId)).thenReturn(localId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            // mock ResultSet
+            ResultSet resultSetMock = Mockito.mock(ResultSet.class);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(dataId);
+            // mock only having one next
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
+            // mock getSystemMetadata
+            try (MockedStatic<SystemMetadataManager> ignoredSysmeta =
+                Mockito.mockStatic(SystemMetadataManager.class)) {
+                SystemMetadataManager manager = Mockito.mock(SystemMetadataManager.class);
+                Mockito.when(manager.get(pid)).thenReturn(sysmeta);
+                Mockito.when(SystemMetadataManager.getInstance()).thenReturn(manager);
+                // mock HashStoreUpgrader with the real methods
+                HashStoreUpgrader upgrader = Mockito.mock(
+                    HashStoreUpgrader.class,
+                    withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+                // mock the initCandidate method
+                Mockito.when(upgrader.initCandidateList())
+                    .thenAnswer(invocation -> resultSetMock);
+                upgrader.upgrade();
+                File hashStoreRoot = new File(hashStorePath);
+                assertTrue(hashStoreRoot.exists());
+                assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
+                assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid));
+            }
+        }
     }
 }
