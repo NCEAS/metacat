@@ -1,6 +1,7 @@
 package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,5 +32,27 @@ public class HashStoreConversionAdminTest {
             "edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader",
             HashStoreConversionAdmin.versionAndClassMapInProperty.get("3.1.0"));
         assertEquals(1, HashStoreConversionAdmin.versionAndClassMapInProperty.size());
+    }
+
+    @Test
+    public void testGetVersionFromPropertyName() {
+        String propertyName = "solr.upgradeUtility.3.0.0";
+        String propertyPrefix = "solr.upgradeUtility";
+        assertEquals("3.0.0", HashStoreConversionAdmin.getVersionFromPropertyName(propertyName,
+                                                                                  propertyPrefix));
+    }
+
+    @Test
+    public void testInitVersionAndClassFromProperty() throws Exception {
+        HashStoreConversionAdmin.initVersionAndClassFromProperty();
+        assertEquals(1, HashStoreConversionAdmin.versionAndClassMapInProperty.size());
+        assertEquals(
+            "edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader",
+            HashStoreConversionAdmin.versionAndClassMapInProperty.get("3.1.0"));
+    }
+
+    @Test
+    public void test() throws Exception {
+
     }
 }

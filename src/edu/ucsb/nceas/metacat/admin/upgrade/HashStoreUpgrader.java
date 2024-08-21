@@ -258,16 +258,23 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         DBConnection dbConn = null;
         ResultSet rs = null;
         int serialNumber = -1;
+        PreparedStatement stmt = null;
         try {
             // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("HashStoreUpgrader.initCandidateList");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
-                rs = stmt.executeQuery();
-            }
+            stmt = dbConn.prepareStatement(query); // can't use the try-resource statement
+            rs = stmt.executeQuery();
         } finally {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            if (stmt != null) {
+                try {
+                    stmt.closeOnCompletion();
+                } catch (SQLException e) {
+                    logMetacat.warn("Can't close the query statement: " + e.getMessage());
+                }
+            }
         }
         return rs;
     }
@@ -298,7 +305,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         if (D1NodeService.isScienceMetadata(sysMeta)) {
             path = Paths.get(documentPath + localId);
         } else {
-            path = Paths.get(documentPath + localId);
+            path = Paths.get(dataPath + localId);
         }
         logMetacat.debug("The object path for " + pid.getValue() + " is " + path.toString());
         return path;
