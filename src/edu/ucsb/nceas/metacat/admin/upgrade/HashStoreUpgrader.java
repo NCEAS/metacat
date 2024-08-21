@@ -199,26 +199,11 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                     throw new AdminException(e.getMessage());
                 }
             }
-            try {
-                if (nonMatchingChecksumFile != null && nonMatchingChecksumFile.exists()) {
-                    infoBuffer.append(nonMatchingChecksumFile.getCanonicalPath() + "\n");
-                }
-                if (noSuchAlgorithmFile != null && noSuchAlgorithmFile.exists()) {
-                    infoBuffer.append(noSuchAlgorithmFile.getCanonicalPath() + "\n");
-                }
-                if (generalFile != null && generalFile.exists()) {
-                    infoBuffer.append(generalFile.getCanonicalPath() + "\n");
-                }
-                if (noChecksumInSysmetaFile != null && noChecksumInSysmetaFile.exists()) {
-                    infoBuffer.append(noChecksumInSysmetaFile.getCanonicalPath() + "\n");
-                }
-                if (savingChecksumFile != null && savingChecksumFile.exists()) {
-                    infoBuffer.append(savingChecksumFile.getCanonicalPath() + "\n");
-                }
-            } catch (IOException e) {
-                logMetacat.error("Metacat can't get the list of the files which store the pid that "
-                                     + "the hashstore conversion failed.");
-            }
+            handleErrorFile(nonMatchingChecksumFile, infoBuffer);
+            handleErrorFile(noSuchAlgorithmFile, infoBuffer);
+            handleErrorFile(generalFile, infoBuffer);
+            handleErrorFile(noChecksumInSysmetaFile, infoBuffer);
+            handleErrorFile(savingChecksumFile, infoBuffer);
             if (!infoBuffer.isEmpty()) {
                 infoBuffer.append("The conversion succeeded! However, some objects failed to be "
                                       + "converted. The above files contain those identifiers. "
@@ -317,6 +302,20 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             TypeMarshaller.marshalTypeToOutputStream(sysMeta, out);
             byte[] content = out.toByteArray();
             return new ByteArrayInputStream(content);
+        }
+    }
+
+    private void handleErrorFile(File file, StringBuffer buffer) {
+        if (file != null && file.exists()) {
+            try {
+                if (file.length() > 0) {
+                    buffer.append(file.getCanonicalPath() + "\n");
+                } else {
+                    file.delete();
+                }
+            } catch (Exception e) {
+                logMetacat.warn("There is an error to handle the error file ");
+            }
         }
     }
 }

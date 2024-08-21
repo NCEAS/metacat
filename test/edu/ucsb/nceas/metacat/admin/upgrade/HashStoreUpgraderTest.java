@@ -44,6 +44,8 @@ import static org.mockito.Mockito.withSettings;
  * The test class for HashStoreUpgrader
  */
 public class HashStoreUpgraderTest {
+    private static final int MAX_TRY = 1000;
+    private static final int WAIT_MILLI = 100;
     MockedStatic<PropertyService> closeableMock;
     String backupPath = "build/temp." + System.currentTimeMillis();
     String hashStorePath = "build/hashStore";
@@ -271,11 +273,24 @@ public class HashStoreUpgraderTest {
                     HashStoreUpgrader.class,
                     withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
                 // mock the initCandidate method
-                Mockito.when(upgrader.initCandidateList())
-                    .thenAnswer(invocation -> resultSetMock);
+                Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
                 upgrader.upgrade();
                 File hashStoreRoot = new File(hashStorePath);
                 assertTrue(hashStoreRoot.exists());
+                int times = 0;
+                boolean hasException = true;
+                // conversion is in another thread, so we need to wait
+                while (hasException && times < MAX_TRY) {
+                    times++;
+                    try {
+                        MetacatInitializer.getStorage().retrieveObject(pid);
+                        hasException = false;
+                    } catch (Exception e) {
+
+                    }
+                    Thread.sleep(WAIT_MILLI);
+                }
+                assertEquals(0, upgrader.getInfo().length());
                 assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
                 assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid));
             }
