@@ -1,8 +1,13 @@
 package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+
+import java.util.Vector;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -15,7 +20,7 @@ public class HashStoreConversionAdminIT {
 
     @Before
     public void setUp() throws Exception {
-        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
     }
 
     /**
@@ -51,7 +56,52 @@ public class HashStoreConversionAdminIT {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testGenerateFinalMapForFreshInstallation() throws Exception {
+        String currentVersion = SystemUtil.getMetacatVersion().getVersionString();
+        UpdateStatus currentStatus = HashStoreConversionAdmin.getStatus(currentVersion);
+        try {
+            try (MockedStatic<DBAdmin> ingore = Mockito.mockStatic(DBAdmin.class)) {
+                Vector<String> versions = new Vector<>();
+                versions.add(DBAdmin.VERSION_000);
+                Mockito.when(DBAdmin.getNeededUpgradedVersions()).thenReturn(versions);
+                HashStoreConversionAdmin.generateFinalVersionsAndClassesMap();
+                assertEquals(0, HashStoreConversionAdmin.finalVersionAndClassMap.size());
+                assertEquals(
+                    UpdateStatus.NOT_REQUIRED, HashStoreConversionAdmin.getStatus(currentVersion));
+            }
+        } finally {
+            // Reset back the status
+            HashStoreConversionAdmin.setStatus(currentVersion, currentStatus);
+        }
+    }
 
+    @Test
+    public void testGenerateFinalMapForRestartTomcat() throws Exception {
+        String currentVersion = SystemUtil.getMetacatVersion().getVersionString();
+        UpdateStatus currentStatus = HashStoreConversionAdmin.getStatus(currentVersion);
+        try {
+            try (MockedStatic<DBAdmin> ingore = Mockito.mockStatic(DBAdmin.class)) {
+                Vector<String> versions = new Vector<>();
+                Mockito.when(DBAdmin.getNeededUpgradedVersions()).thenReturn(versions);
+                HashStoreConversionAdmin.generateFinalVersionsAndClassesMap();
+                if (currentStatus == UpdateStatus.UNKNOWN || currentStatus == UpdateStatus.PENDING) {
+                    assertEquals(1, HashStoreConversionAdmin.finalVersionAndClassMap.size());
+                    assertEquals(
+                        UpdateStatus.PENDING, HashStoreConversionAdmin.getStatus(currentVersion));
+                } else if (currentStatus == UpdateStatus.FAILED) {
+                    assertEquals(1, HashStoreConversionAdmin.finalVersionAndClassMap.size());
+                    assertEquals(
+                        currentStatus, HashStoreConversionAdmin.getStatus(currentVersion));
+                } else {
+                    assertEquals(0, HashStoreConversionAdmin.finalVersionAndClassMap.size());
+                    assertEquals(
+                        currentStatus, HashStoreConversionAdmin.getStatus(currentVersion));
+                }
+
+            }
+        } finally {
+            // Reset back the status
+            HashStoreConversionAdmin.setStatus(currentVersion, currentStatus);
+        }
     }
 }
