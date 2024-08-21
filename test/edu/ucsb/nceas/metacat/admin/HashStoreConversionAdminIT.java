@@ -1,7 +1,6 @@
 package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.LeanTestUtils;
-import edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,7 +11,7 @@ import static org.junit.Assert.assertTrue;
  * @author Tao
  * The Junit test class for HashStoreConversionAdmin
  */
-public class HashStoreConversionAdminTest {
+public class HashStoreConversionAdminIT {
 
     @Before
     public void setUp() throws Exception {
