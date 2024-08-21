@@ -22,9 +22,11 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -49,6 +51,11 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static ExecutorService executor;
     private static HashStoreConverter converter;
     private ChecksumsManager checksumsManager = new ChecksumsManager();
+    private BufferedWriter nonMatchingChecksumWriter;
+    private BufferedWriter noSuchAlgorithmWriter;
+    private BufferedWriter generalWriter;
+    private BufferedWriter noChecksumInSysmetaWriter;
+    private BufferedWriter savingChecksumTableWriter;
 
     static {
         // use a shared executor service with nThreads == one less than available processors or one
@@ -77,7 +84,33 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             dataPath = dataPath + "/";
         }
         logMetacat.debug("The data directory path of Metacat is " + dataPath);
+        initErrorWriter();
 
+    }
+
+    private void initErrorWriter() {
+        boolean append = true;
+        try {
+            String backupDir = PropertyService.getProperty("application.backupDir");
+            File backup = new File(backupDir);
+            if (!backup.exists()) {
+                backup.mkdirs();
+            }
+            nonMatchingChecksumWriter = new BufferedWriter(new FileWriter(
+              new File(backup, XMLNodesToFilesChecker.getFileName("nonMatchingChecksum")), append));
+            noSuchAlgorithmWriter = new BufferedWriter(new FileWriter(
+                new File(backup, XMLNodesToFilesChecker.getFileName("noSuchAlgorithm")), append));
+            generalWriter = new BufferedWriter(new FileWriter(
+                new File(backup, XMLNodesToFilesChecker.getFileName("generalError")), append));
+            noChecksumInSysmetaWriter = new BufferedWriter(new FileWriter(
+              new File(backup, XMLNodesToFilesChecker.getFileName("noChecksumInSysmeta")), append));
+            savingChecksumTableWriter = new BufferedWriter(new FileWriter(
+                new File(backup, XMLNodesToFilesChecker.getFileName("savingChecksumTableError")),
+                append));
+        } catch (Exception e) {
+            logMetacat.error(
+                "Cannot initialize the error writer for HashStoreUpgrader " + e.getMessage());
+        }
     }
 
     @Override
@@ -116,10 +149,17 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                             logMetacat.warn("Cannot move the object " + finalId
                                                                 + "to hashstore since "
                                                                 + e.getMessage());
+                                            writeToFile(finalId, nonMatchingChecksumWriter);
+                                        } catch (NoSuchAlgorithmException e) {
+                                            logMetacat.warn("Cannot move the object " + finalId +
+                                                                " to hashstore since "
+                                                                + e.getMessage());
+                                            writeToFile(finalId, noSuchAlgorithmWriter);
                                         } catch (Exception e) {
                                             logMetacat.warn("Cannot move the object " + finalId +
                                                                 " to hashstore since "
                                                                 + e.getMessage());
+                                            writeToFile(finalId, generalWriter);
                                         }
                                         DBConnection dbConn = null;
                                         int serialNumber = -1;
@@ -136,20 +176,23 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                             logMetacat.warn(
                                                 "Cannot save checksums for " + finalId + " since "
                                                     + e.getMessage());
+                                            writeToFile(finalId, savingChecksumTableWriter);
                                         } finally {
                                             DBConnectionPool.returnDBConnection(
                                                 dbConn, serialNumber);
                                         }
                                     });
                                 } else {
-                                    logMetacat.warn("There is not checksum info for id " + id +
+                                    logMetacat.warn("There is no checksum info for id " + id +
                                                         " in the systemmetadata and Metacat "
                                                         + "cannot convert it to hashstore.");
+                                    writeToFile(id, noChecksumInSysmetaWriter);
                                 }
                             }
                         } catch (Exception e) {
                             logMetacat.warn("Cannot move the object " + id + " to hashstore since "
                                                  + e.getMessage());
+                            writeToFile(id, generalWriter);
                         }
                     }
 
@@ -225,13 +268,13 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         return path;
     }
 
-    protected void writeToFile(String message, File logFile) {
+    protected void writeToFile(String message, BufferedWriter writer) {
         try {
-            if (!logFile.exists()) {
-                logFile.mkdirs();
-            }
+           if (writer != null) {
+               writer.write(message + "\n");
+           }
         } catch (Exception e) {
-
+            logMetacat.warn("Can not write the error message to a file since " + e.getMessage());
         }
     }
 
