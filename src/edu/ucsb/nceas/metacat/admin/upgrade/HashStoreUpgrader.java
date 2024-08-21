@@ -51,16 +51,6 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static ExecutorService executor;
     private static HashStoreConverter converter;
     private ChecksumsManager checksumsManager = new ChecksumsManager();
-    /*private File nonMatchingChecksumFile;
-    private File noSuchAlgorithmFile;
-    private File generalFile;
-    private File noChecksumInSysmetaFile;
-    private File savingChecksumFile;
-    private BufferedWriter nonMatchingChecksumWriter;
-    private BufferedWriter noSuchAlgorithmWriter;
-    private BufferedWriter generalWriter;
-    private BufferedWriter noChecksumInSysmetaWriter;
-    private BufferedWriter savingChecksumTableWriter;*/
     private File backupDir;
 
     static {
