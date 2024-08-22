@@ -86,7 +86,6 @@ public class MetacatInitializer implements ServletContextListener{
             ServiceService.registerService("SkinPropertyService",
                                                                 SkinPropertyService.getInstance());
             ServiceService.registerService("SessionService", SessionService.getInstance());
-            convertStorage();
             // Check to see if the user has requested to bypass configuration
             // (dev option) and check see if metacat has been configured.
             // If both are false then stop the initialization
@@ -95,6 +94,7 @@ public class MetacatInitializer implements ServletContextListener{
                 if (PropertyService.arePropertiesConfigured()) {
                     DBConnectionPool.getInstance();
                 }
+                convertStorage();
                 fullInit = false;
                 return;
             }
