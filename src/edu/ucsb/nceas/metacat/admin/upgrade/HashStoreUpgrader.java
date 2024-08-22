@@ -346,7 +346,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             try {
                 // Get a database connection from the pool
                 dbConn = DBConnectionPool.getDBConnection(
-                    "HashStoreUpgrader.upgrade");
+                    "HashStoreUpgrader.convert");
                 serialNumber = dbConn.getCheckOutSerialNumber();
                 if (metadata != null) {
                     Identifier identifier = new Identifier();

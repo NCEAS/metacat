@@ -9,6 +9,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Subject;
@@ -35,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
@@ -258,6 +260,15 @@ public class HashStoreUpgraderTest {
         pid.setValue(dataId);
         InputStream object = new FileInputStream(new File(dataPath + "/" + localId));
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        SystemMetadataManager.lock(pid);
+        // Storing systemmetadata will store it on both db and hashstore. This is a duplicated
+        // step to the conversion. So we only use it in this method to check the saving records to
+        // the checksum table (It needs the system metadata being in db)
+        SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(pid);
+        ChecksumsManager checksumsManager = new ChecksumsManager();
+        List<Checksum> checksums =  checksumsManager.get(pid);
+        assertTrue(checksums.isEmpty());
         // mock IdentifierManager
         try (MockedStatic<IdentifierManager> ignore =
                  Mockito.mockStatic(IdentifierManager.class)) {
@@ -287,6 +298,8 @@ public class HashStoreUpgraderTest {
                 assertEquals(0, upgrader.getInfo().length());
                 assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
                 assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid));
+                checksums =  checksumsManager.get(pid);
+                assertEquals(5, checksums.size());
             }
         }
     }
