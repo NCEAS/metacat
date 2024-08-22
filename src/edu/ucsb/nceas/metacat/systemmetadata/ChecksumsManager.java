@@ -53,7 +53,7 @@ public class ChecksumsManager {
                                         + " algorithm " + algorithm + " for " + pid + " into "
                                         + "db.");
                             } catch (Exception e) {
-                                logMetacat.warn(
+                                logMetacat.error(
                                     "Metacat cannot save the checksum " + checksums.get(
                                         algorithm) + " with" + " algorithm " + algorithm
                                         + " for " + pid + " into db " + "since "
