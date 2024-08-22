@@ -444,13 +444,9 @@ public class MetacatInitializer implements ServletContextListener{
      * @throws PropertyNotFoundException
      * @throws ServiceException
      */
-    public static void initStorage() throws PropertyNotFoundException, ServiceException {
+    public static synchronized void initStorage() throws PropertyNotFoundException, ServiceException {
         if (storage == null) {
-            synchronized (MetacatInitializer.class) {
-                if (storage == null) {
-                    storage = Storage.getInstance();
-                }
-            }
+            storage = Storage.getInstance();
         }
     }
 
