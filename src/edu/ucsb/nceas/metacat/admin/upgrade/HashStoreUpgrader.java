@@ -100,8 +100,6 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                 new File(backupDir, XMLNodesToFilesChecker.getFileName("nonMatchingChecksum"));
             File noSuchAlgorithmFile =
                 new File(backupDir, XMLNodesToFilesChecker.getFileName("noSuchAlgorithm"));
-            File generalConvertFile =
-                new File(backupDir, XMLNodesToFilesChecker.getFileName("generalConvertError"));
             File noChecksumInSysmetaFile =
                 new File(backupDir, XMLNodesToFilesChecker.getFileName("noChecksumInSysmeta"));
             File savingChecksumFile =
@@ -111,7 +109,13 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             try (BufferedWriter noChecksumInSysmetaWriter = new BufferedWriter(new FileWriter(
                                     noChecksumInSysmetaFile, append));
                  BufferedWriter generalWriter = new BufferedWriter(
-                     new FileWriter(generalFile, append))) {
+                     new FileWriter(generalFile, append));
+                 BufferedWriter nonMatchingChecksumWriter =
+                     new BufferedWriter(new FileWriter(nonMatchingChecksumFile, append));
+                BufferedWriter noSuchAlgorithmWriter =
+                    new BufferedWriter(new FileWriter(noSuchAlgorithmFile, append));
+                 BufferedWriter savingChecksumTableWriter =
+                     new BufferedWriter(new FileWriter(savingChecksumFile, append))) {
                 try (ResultSet rs = initCandidateList()) {
                     if (rs != null) {
                         while (rs.next()) {
@@ -137,9 +141,9 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                              + path.toString());
                                         Future<?> future = executor.submit(() -> {
                                             convert(path, finalId, sysMetaInput, checksum,
-                                                    algorithm, nonMatchingChecksumFile,
-                                                    noSuchAlgorithmFile, generalConvertFile,
-                                                    savingChecksumFile);
+                                                    algorithm, nonMatchingChecksumWriter,
+                                                    noSuchAlgorithmWriter, generalWriter,
+                                                    savingChecksumTableWriter);
                                         });
                                         futures.add(future);
                                     } else {
@@ -176,7 +180,6 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             handleErrorFile(generalFile, infoBuffer);
             handleErrorFile(noChecksumInSysmetaFile, infoBuffer);
             handleErrorFile(savingChecksumFile, infoBuffer);
-            handleErrorFile(generalConvertFile, infoBuffer);
             if (!infoBuffer.isEmpty()) {
                 infoBuffer.append("The conversion succeeded! However, some objects failed to be "
                                       + "converted. The above files contain those identifiers. "
@@ -303,69 +306,44 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     }
 
     private void convert(Path path, String finalId, InputStream sysMetaInput, String checksum,
-                         String algorithm, File nonMatchingChecksumFile, File noSuchAlgorithmFile,
-                         File generalConvertFile, File savingChecksumFile) {
-        boolean append = true;
+                         String algorithm, BufferedWriter nonMatchingChecksumWriter,
+                         BufferedWriter noSuchAlgorithmWriter,
+                         BufferedWriter generalWriter, BufferedWriter savingChecksumTableWriter) {
         ObjectMetadata metadata = null;
-        try (BufferedWriter nonMatchingChecksumWriter =
-                 new BufferedWriter(new FileWriter(nonMatchingChecksumFile, append));
-             BufferedWriter noSuchAlgorithmWriter =
-                 new BufferedWriter(new FileWriter(noSuchAlgorithmFile, append));
-             BufferedWriter generalWriter =
-                 new BufferedWriter(new FileWriter(generalConvertFile, append))) {
-            try {
-                metadata =
-                    converter.convert(path, finalId, sysMetaInput,
-                                      checksum, algorithm);
-            } catch (NonMatchingChecksumException e) {
-                logMetacat.warn("Cannot move the object " + finalId
-                                    + "to hashstore since "
-                                    + e.getMessage());
-                writeToFile(finalId, nonMatchingChecksumWriter);
-            } catch (NoSuchAlgorithmException e) {
-                logMetacat.warn("Cannot move the object " + finalId
-                                    + " to hashstore since "
-                                    + e.getMessage());
-                writeToFile(finalId, noSuchAlgorithmWriter);
-            } catch (Exception e) {
-                logMetacat.warn("Cannot move the object " + finalId
-                                    + " to hashstore since "
-                                    + e.getMessage());
-                writeToFile(finalId, e, generalWriter);
-            }
-        } catch (IOException io) {
-            logMetacat.error("Cannot open log file writer for " + finalId + " since "
-                                 + io.getMessage());
+        try {
+            metadata =
+                converter.convert(path, finalId, sysMetaInput, checksum, algorithm);
+        } catch (NonMatchingChecksumException e) {
+            logMetacat.warn("Cannot move the object " + finalId + "to hashstore since "
+                                + e.getMessage());
+            writeToFile(finalId, nonMatchingChecksumWriter);
+        } catch (NoSuchAlgorithmException e) {
+            logMetacat.warn("Cannot move the object " + finalId + " to hashstore since "
+                                + e.getMessage());
+            writeToFile(finalId, noSuchAlgorithmWriter);
+        } catch (Exception e) {
+            logMetacat.warn("Cannot move the object " + finalId + " to hashstore since "
+                                + e.getMessage());
+            writeToFile(finalId, e, generalWriter);
         }
-
         // Save the checksums into checksum table
         DBConnection dbConn = null;
         int serialNumber = -1;
-        try (BufferedWriter savingChecksumTableWriter =
-                 new BufferedWriter(new FileWriter(savingChecksumFile, append))) {
-            try {
-                // Get a database connection from the pool
-                dbConn = DBConnectionPool.getDBConnection(
-                    "HashStoreUpgrader.convert");
-                serialNumber = dbConn.getCheckOutSerialNumber();
-                if (metadata != null) {
-                    Identifier identifier = new Identifier();
-                    identifier.setValue(finalId);
-                    checksumsManager.save(
-                        identifier, metadata.hexDigests(), dbConn);
-                }
-            } catch (Exception e) {
-                logMetacat.warn(
-                    "Cannot save checksums for " + finalId
-                        + " since " + e.getMessage());
-                writeToFile(finalId, savingChecksumTableWriter);
-            } finally {
-                DBConnectionPool.returnDBConnection(
-                    dbConn, serialNumber);
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("HashStoreUpgrader.convert");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            if (metadata != null) {
+                Identifier identifier = new Identifier();
+                identifier.setValue(finalId);
+                checksumsManager.save(identifier, metadata.hexDigests(), dbConn);
             }
-        } catch (IOException io) {
-            logMetacat.error("Cannot open log file writer for " + finalId + " to save into "
-                                 + "the checksum table since " + io.getMessage());
+        } catch (Exception e) {
+            logMetacat.warn("Cannot save checksums for " + finalId
+                    + " since " + e.getMessage());
+            writeToFile(finalId, e, savingChecksumTableWriter);
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
     }
 
