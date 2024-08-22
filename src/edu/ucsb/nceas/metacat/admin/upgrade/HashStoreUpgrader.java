@@ -170,19 +170,19 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                         }
                     }
                 }
-                handleErrorFile(nonMatchingChecksumFile, infoBuffer);
-                handleErrorFile(noSuchAlgorithmFile, infoBuffer);
-                handleErrorFile(generalFile, infoBuffer);
-                handleErrorFile(noChecksumInSysmetaFile, infoBuffer);
-                handleErrorFile(savingChecksumFile, infoBuffer);
-                handleErrorFile(generalConvertFile, infoBuffer);
-                if (!infoBuffer.isEmpty()) {
-                    infoBuffer.append("The conversion succeeded! However, some objects failed to be "
-                                          + "converted. The above files contain those identifiers. "
-                                          + "Please try to fix the issues.");
-                }
-                this.info = infoBuffer.toString();
             }
+            handleErrorFile(nonMatchingChecksumFile, infoBuffer);
+            handleErrorFile(noSuchAlgorithmFile, infoBuffer);
+            handleErrorFile(generalFile, infoBuffer);
+            handleErrorFile(noChecksumInSysmetaFile, infoBuffer);
+            handleErrorFile(savingChecksumFile, infoBuffer);
+            handleErrorFile(generalConvertFile, infoBuffer);
+            if (!infoBuffer.isEmpty()) {
+                infoBuffer.append("The conversion succeeded! However, some objects failed to be "
+                                      + "converted. The above files contain those identifiers. "
+                                      + "Please try to fix the issues.");
+            }
+            this.info = infoBuffer.toString();
         } catch (IOException e) {
            logMetacat.error("Can not create the files to log the failed ids: "
                                 + e.getMessage());
@@ -259,7 +259,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         return path;
     }
 
-    protected void writeToFile(String message, BufferedWriter writer) {
+    protected static void writeToFile(String message, BufferedWriter writer) {
         try {
            if (writer != null) {
                writer.write(message + "\n");
@@ -269,7 +269,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         }
     }
 
-    protected void writeToFile(String message, Exception e,  BufferedWriter writer) {
+    protected static void writeToFile(String message, Exception e,  BufferedWriter writer) {
         try {
             if (writer != null) {
                 writer.write(message + " " + e.getMessage() + "\n");

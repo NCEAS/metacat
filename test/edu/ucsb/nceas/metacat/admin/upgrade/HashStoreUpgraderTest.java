@@ -22,11 +22,13 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -678,15 +680,6 @@ public class HashStoreUpgraderTest {
         pid.setValue(dataId);
         InputStream object = new FileInputStream(new File(dataPath + "/" + localId));
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
-        SystemMetadataManager.lock(pid);
-        // Storing systemmetadata will store it on both db and hashstore. This is a duplicated
-        // step to the conversion. So we only use it in this method to check the saving records to
-        // the checksum table (It needs the system metadata being in db)
-        SystemMetadataManager.getInstance().store(sysmeta);
-        SystemMetadataManager.unLock(pid);
-        ChecksumsManager checksumsManager = new ChecksumsManager();
-        List<Checksum> checksums =  checksumsManager.get(pid);
-        assertTrue(checksums.isEmpty());
         // mock IdentifierManager
         try (MockedStatic<IdentifierManager> ignore =
                  Mockito.mockStatic(IdentifierManager.class)) {
@@ -738,23 +731,78 @@ public class HashStoreUpgraderTest {
     }
 
     /**
+     * Test the writeToFile method
+     * @throws Exception
+     */
+    @Test
+    public void testWriteToFile() throws Exception {
+        String message = "hello";
+        String message1 = "hello1";
+        File temp = File.createTempFile("test", ".text");
+        try (BufferedWriter generalWriter = new BufferedWriter(
+                 new FileWriter(temp, true))) {
+            HashStoreUpgrader.writeToFile(message, generalWriter);
+            HashStoreUpgrader.writeToFile(message1, generalWriter);
+        }
+        Vector<String> content = readContentFromFile(temp);
+        assertEquals(2, content.size());
+        assertEquals(message, content.get(0));
+        assertEquals(message1, content.get(1));
+    }
+
+    /**
+     * Test the writeToFile method with exceptions
+     * @throws Exception
+     */
+    @Test
+    public void testWriteToFileWithException() throws Exception {
+        String message = "hello";
+        String exceptionStr = "This is an exception";
+        Exception exception = new Exception(exceptionStr);
+        String message1 = "hello1";
+        String exceptionStr1 = "This is an exception";
+        Exception exception1 = new Exception(exceptionStr1);
+        File temp = File.createTempFile("test", ".text");
+        try (BufferedWriter generalWriter = new BufferedWriter(
+            new FileWriter(temp, true))) {
+            HashStoreUpgrader.writeToFile(message, exception, generalWriter);
+            HashStoreUpgrader.writeToFile(message1, exception1, generalWriter);
+        }
+        Vector<String> content = readContentFromFile(temp);
+        assertEquals(2, content.size());
+        assertEquals(message + " " + exceptionStr, content.get(0));
+        assertEquals(message1 + " " +exceptionStr1, content.get(1));
+    }
+
+    /**
      * Read the content of the first file in the backup directory
      * @return a vector of String. Each line is an element in the vector.
      * @throws IOException
      */
     private Vector<String> readContentFromFileInDir() throws IOException {
-        Vector<String> content = new Vector<>();
+        Vector<String> content = null;
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(backupPath))) {
             for (Path path : stream) {
-                BufferedReader reader = new BufferedReader(new FileReader(path.toFile()));
-                String str = reader.readLine();
-                while (str != null) {
-                    content.add(str);
-                    str = reader.readLine();
-                }
+                content = readContentFromFile(path.toFile());
                 // we need only read one file
                 break;
             }
+        }
+        return content;
+    }
+
+    /**
+     * Read the content of the given file
+     * @return a vector of String. Each line is an element in the vector.
+     * @throws IOException
+     */
+    private Vector<String> readContentFromFile(File file) throws IOException {
+        Vector<String> content = new Vector<>();
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String str = reader.readLine();
+        while (str != null) {
+            content.add(str);
+            str = reader.readLine();
         }
         return content;
     }
