@@ -4,7 +4,7 @@ package edu.ucsb.nceas.metacat.admin;
  * @author Tao
  * enum represents the update status
  */
-public enum UpdateStatus {
+public enum UpgradeStatus {
 
     PENDING(MetacatAdmin.PENDING), // Required, but hasn't started yet
     NOT_REQUIRED(MetacatAdmin.NOT_REQUIRED),
@@ -14,7 +14,7 @@ public enum UpdateStatus {
     COMPLETE(MetacatAdmin.COMPLETE);
 
     private String value;
-    private UpdateStatus(String value) {
+    private UpgradeStatus(String value) {
         this.value = value;
     }
 
@@ -32,7 +32,7 @@ public enum UpdateStatus {
      * @return the UpgradeStatus object
      * @throws IllegalArgumentException
      */
-    public static UpdateStatus getStatus(String status) throws IllegalArgumentException {
+    public static UpgradeStatus getStatus(String status) throws IllegalArgumentException {
         switch (status) {
             case MetacatAdmin.COMPLETE -> {
                 return COMPLETE;

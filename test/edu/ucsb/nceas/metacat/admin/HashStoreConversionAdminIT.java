@@ -58,7 +58,7 @@ public class HashStoreConversionAdminIT {
     @Test
     public void testGenerateFinalMapForFreshInstallation() throws Exception {
         String currentVersion = SystemUtil.getMetacatVersion().getVersionString();
-        UpdateStatus currentStatus = HashStoreConversionAdmin.getStatus(currentVersion);
+        UpgradeStatus currentStatus = HashStoreConversionAdmin.getStatus(currentVersion);
         try {
             try (MockedStatic<DBAdmin> ingore = Mockito.mockStatic(DBAdmin.class)) {
                 Vector<String> versions = new Vector<>();
@@ -67,7 +67,7 @@ public class HashStoreConversionAdminIT {
                 HashStoreConversionAdmin.generateFinalVersionsAndClassesMap();
                 assertEquals(0, HashStoreConversionAdmin.finalVersionAndClassMap.size());
                 assertEquals(
-                    UpdateStatus.NOT_REQUIRED, HashStoreConversionAdmin.getStatus(currentVersion));
+                    UpgradeStatus.NOT_REQUIRED, HashStoreConversionAdmin.getStatus(currentVersion));
             }
         } finally {
             // Reset back the status
@@ -78,17 +78,17 @@ public class HashStoreConversionAdminIT {
     @Test
     public void testGenerateFinalMapForRestartTomcat() throws Exception {
         String currentVersion = SystemUtil.getMetacatVersion().getVersionString();
-        UpdateStatus currentStatus = HashStoreConversionAdmin.getStatus(currentVersion);
+        UpgradeStatus currentStatus = HashStoreConversionAdmin.getStatus(currentVersion);
         try {
             try (MockedStatic<DBAdmin> ingore = Mockito.mockStatic(DBAdmin.class)) {
                 Vector<String> versions = new Vector<>();
                 Mockito.when(DBAdmin.getNeededUpgradedVersions()).thenReturn(versions);
                 HashStoreConversionAdmin.generateFinalVersionsAndClassesMap();
-                if (currentStatus == UpdateStatus.UNKNOWN || currentStatus == UpdateStatus.PENDING) {
+                if (currentStatus == UpgradeStatus.UNKNOWN || currentStatus == UpgradeStatus.PENDING) {
                     assertEquals(1, HashStoreConversionAdmin.finalVersionAndClassMap.size());
                     assertEquals(
-                        UpdateStatus.PENDING, HashStoreConversionAdmin.getStatus(currentVersion));
-                } else if (currentStatus == UpdateStatus.FAILED) {
+                        UpgradeStatus.PENDING, HashStoreConversionAdmin.getStatus(currentVersion));
+                } else if (currentStatus == UpgradeStatus.FAILED) {
                     assertEquals(1, HashStoreConversionAdmin.finalVersionAndClassMap.size());
                     assertEquals(
                         currentStatus, HashStoreConversionAdmin.getStatus(currentVersion));

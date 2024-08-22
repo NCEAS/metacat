@@ -21,7 +21,7 @@ import javax.servlet.annotation.WebListener;
 
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin;
-import edu.ucsb.nceas.metacat.admin.UpdateStatus;
+import edu.ucsb.nceas.metacat.admin.UpgradeStatus;
 import edu.ucsb.nceas.metacat.util.DatabaseUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -462,8 +462,8 @@ public class MetacatInitializer implements ServletContextListener{
      */
     protected static void convertStorage() throws MetacatUtilException, AdminException {
         if (DatabaseUtil.isDatabaseConfigured()) {
-            UpdateStatus status = HashStoreConversionAdmin.getStatus();
-            if (status == UpdateStatus.PENDING || status == UpdateStatus.FAILED) {
+            UpgradeStatus status = HashStoreConversionAdmin.getStatus();
+            if (status == UpgradeStatus.PENDING || status == UpgradeStatus.FAILED) {
                 logMetacat.debug("Metacat starts an auto storage conversion when the database is "
                                      + "configured: " + DatabaseUtil.isDatabaseConfigured()
                     + "and the storage conversion status is PENDING or FAILED. Its status is "
