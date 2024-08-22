@@ -663,6 +663,81 @@ public class HashStoreUpgraderTest {
     }
 
     /**
+     * Test the upgrade method for the data objects with a general error
+     * @throws Exception
+     */
+    @Test
+    public void testUpgradeDataWithGeneralError() throws Exception {
+        String dataId =
+            "HashStoreUpgradertestUpgradeDataWithGeneralError" + System.currentTimeMillis();
+        String localId = "eml-error-2.2.0.xml";
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue(dataId);
+        InputStream object = new FileInputStream(new File(dataPath + "/" + localId));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        SystemMetadataManager.lock(pid);
+        // Storing systemmetadata will store it on both db and hashstore. This is a duplicated
+        // step to the conversion. So we only use it in this method to check the saving records to
+        // the checksum table (It needs the system metadata being in db)
+        SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(pid);
+        ChecksumsManager checksumsManager = new ChecksumsManager();
+        List<Checksum> checksums =  checksumsManager.get(pid);
+        assertTrue(checksums.isEmpty());
+        // mock IdentifierManager
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(dataId)).thenReturn(localId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            // mock ResultSet
+            ResultSet resultSetMock = Mockito.mock(ResultSet.class);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(dataId);
+            // mock only having one next
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
+            // mock getSystemMetadata
+            try (MockedStatic<SystemMetadataManager> ignoredSysmeta =
+                     Mockito.mockStatic(SystemMetadataManager.class)) {
+                SystemMetadataManager manager = Mockito.mock(SystemMetadataManager.class);
+                // No mock for the dataId, so it will cause a problem
+                Identifier foo = new Identifier();
+                foo.setValue("foo");
+                Mockito.when(manager.get(foo)).thenReturn(sysmeta);
+                Mockito.when(SystemMetadataManager.getInstance()).thenReturn(manager);
+                // mock HashStoreUpgrader with the real methods
+                HashStoreUpgrader upgrader = Mockito.mock(
+                    HashStoreUpgrader.class,
+                    withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+                // mock the initCandidate method
+                Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
+                upgrader.upgrade();
+                File hashStoreRoot = new File(hashStorePath);
+                assertTrue(hashStoreRoot.exists());
+                assertTrue(upgrader.getInfo().length() > 0);
+                assertFalse(upgrader.getInfo().contains("nonMatchingChecksum"));
+                assertTrue(upgrader.getInfo().contains("general"));
+                assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
+                assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
+                try {
+                    MetacatInitializer.getStorage().retrieveObject(pid);
+                    fail("Test can't get there since the pid " + pid + " was not converted.");
+                } catch(Exception e) {
+                    assertTrue(e instanceof FileNotFoundException);
+                }
+                try {
+                    MetacatInitializer.getStorage().retrieveMetadata(pid);
+                    fail("Test can't get there since the pid " + pid + " was not converted.");
+                } catch(Exception e) {
+                    assertTrue(e instanceof FileNotFoundException);
+                }
+            }
+        }
+    }
+
+    /**
      * Read the content of the first file in the backup directory
      * @return a vector of String. Each line is an element in the vector.
      * @throws IOException
