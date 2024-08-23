@@ -13,6 +13,7 @@ import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DatabaseUtil;
+import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -80,14 +81,15 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
      * @throws NoSuchAlgorithmException
      * @throws ServiceException
      * @throws MetacatUtilException
+     * @throws GeneralPropertyException
      */
     public HashStoreUpgrader()
-        throws PropertyNotFoundException, ServiceFailure, IOException, NoSuchAlgorithmException,
-        ServiceException, MetacatUtilException {
+        throws GeneralPropertyException, ServiceFailure, IOException, NoSuchAlgorithmException,
+        ServiceException, MetacatUtilException, PropertyNotFoundException {
         try {
             MetacatInitializer.getStorage();
         } catch (ServiceFailure e) {
-            if (DatabaseUtil.isDatabaseConfigured()) {
+            if (DatabaseUtil.isDatabaseConfigured() && PropertyService.arePropertiesConfigured()) {
                 MetacatInitializer.initStorage();
             } else {
                 throw e;
