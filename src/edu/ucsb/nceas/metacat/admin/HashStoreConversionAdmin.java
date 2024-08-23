@@ -312,7 +312,8 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * @AdminException
      */
     public static boolean isConverted() throws AdminException {
-        return (getStatus() == UpgradeStatus.COMPLETE || getStatus() == UpgradeStatus.NOT_REQUIRED);
+        UpgradeStatus status = getStatus();
+        return (status == UpgradeStatus.COMPLETE || status == UpgradeStatus.NOT_REQUIRED);
     }
 
     /**
