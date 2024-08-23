@@ -457,6 +457,8 @@ public class MetacatInitializer implements ServletContextListener{
      * @throws AdminException
      */
     protected static void convertStorage() throws MetacatUtilException, AdminException {
+        logMetacat.debug("Start of the convertStorage method in the MetacatInitializer class. "
+                             + "This statement is before checking the DB' status.");
         if (DatabaseUtil.isDatabaseConfigured()) {
             UpgradeStatus status = HashStoreConversionAdmin.getStatus();
             if (status == UpgradeStatus.PENDING || status == UpgradeStatus.FAILED) {
