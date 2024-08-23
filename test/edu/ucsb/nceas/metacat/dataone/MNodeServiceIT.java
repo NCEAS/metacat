@@ -892,7 +892,7 @@ public class MNodeServiceIT {
                         .getFormatId());
                 sysmeta2.setObsoletes(guid);
                 Checksum sum1 = sysmeta2.getChecksum();
-                sum1.setValue("foo checksum");
+                sum1.setValue("foochecksum");
                 sysmeta2.setChecksum(sum1);
                 object = new ByteArrayInputStream(st2.getBytes(StandardCharsets.UTF_8));
                 // do the update and it should fail
