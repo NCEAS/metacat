@@ -203,9 +203,8 @@ public class MetacatInitializerIT {
      *
      */
     @Test
-    public void testConvertStorageContextInitialized() {
+    public void testConvertStorageContextInitialized() throws Exception {
         long time = System.currentTimeMillis();
-        MetacatInitializer metacatInitializer;
 
         withProperties.setProperty("configutil.propertiesConfigured", PropertyService.CONFIGURED);
         withProperties.setProperty("configutil.authConfigured", PropertyService.CONFIGURED);
@@ -216,20 +215,17 @@ public class MetacatInitializerIT {
         withProperties.setProperty("configutil.quotaConfigured", PropertyService.BYPASSED);
         withProperties.setProperty("application.backupDir", "build");
         try (MockedStatic<HashStoreConversionAdmin> mockStoreAdmin = Mockito.mockStatic(
-            HashStoreConversionAdmin.class);
-             MockedStatic<MetacatInitializer> mockInitializer = Mockito.mockStatic(
-                 MetacatInitializer.class,
-                 withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS))) {
+            HashStoreConversionAdmin.class)) {
             // Since the conversion status is failed, the covertStorage will be kicked off (it
             // throws an exception by mocking) even though other configurations were done
             mockStoreAdmin.when(HashStoreConversionAdmin::getStatus)
                 .thenReturn(UpgradeStatus.FAILED);
-            mockInitializer.when(MetacatInitializer::convertStorage).thenThrow(
-                new AdminException("Can't convert storage at " + time + " does not exist"));
-
+            MetacatInitializer mockInitializer = Mockito.mock(MetacatInitializer.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.doThrow(new AdminException("Can't convert storage at " + time + " does not "
+                                                + "exist")).when(mockInitializer).convertStorage();
             try {
-                metacatInitializer = new MetacatInitializer();
-                metacatInitializer.contextInitialized(event);
+                mockInitializer.contextInitialized(event);
                 fail("The initialization should fail and the test cannot get here");
             } catch (Exception e) {
                 assertNotNull(
@@ -243,18 +239,18 @@ public class MetacatInitializerIT {
         }
 
         try (MockedStatic<HashStoreConversionAdmin> mockStoreAdmin = Mockito.mockStatic(
-            HashStoreConversionAdmin.class);
-             MockedStatic<MetacatInitializer> mockInitializer = Mockito.mockStatic(
-                 MetacatInitializer.class,
-                 withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS))) {
+            HashStoreConversionAdmin.class)) {
             // Since the conversion status is complete and other configuration were done, the
             // covertStorage will be NOT kicked off (it throws an exception by mocking)
             mockStoreAdmin.when(HashStoreConversionAdmin::getStatus)
                 .thenReturn(UpgradeStatus.COMPLETE);
-            mockInitializer.when(MetacatInitializer::convertStorage).thenThrow(
-                new AdminException("Can't convert storage at " + time + " does not exist"));
-            metacatInitializer = new MetacatInitializer();
-            metacatInitializer.contextInitialized(event);
+            MetacatInitializer mockInitializer = Mockito.mock(
+                MetacatInitializer.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.doThrow(
+                    new AdminException("Can't convert storage at " + time + " does not " + "exist"))
+                .when(mockInitializer).convertStorage();
+            mockInitializer.contextInitialized(event);
         }
     }
 

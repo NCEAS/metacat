@@ -93,7 +93,6 @@ public class MetacatInitializer implements ServletContextListener{
                                     !ConfigurationUtil.isMetacatConfigured()) {
                 if (PropertyService.arePropertiesConfigured()) {
                     // Those methods are for the admin pages
-                    initStorage();
                     DBConnectionPool.getInstance();
                     convertStorage();
                 }
@@ -458,7 +457,7 @@ public class MetacatInitializer implements ServletContextListener{
      * @throws MetacatUtilException
      * @throws AdminException
      */
-    protected static void convertStorage()
+    protected void convertStorage()
         throws MetacatUtilException, AdminException, GeneralPropertyException {
         logMetacat.debug("Start of the convertStorage method in the MetacatInitializer class. "
                              + "This statement is before checking the DB' status.");

@@ -7,9 +7,12 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
+import edu.ucsb.nceas.metacat.util.DatabaseUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,9 +78,21 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
      * @throws ServiceFailure
      * @throws IOException
      * @throws NoSuchAlgorithmException
+     * @throws ServiceException
+     * @throws MetacatUtilException
      */
     public HashStoreUpgrader()
-        throws PropertyNotFoundException, ServiceFailure, IOException, NoSuchAlgorithmException {
+        throws PropertyNotFoundException, ServiceFailure, IOException, NoSuchAlgorithmException,
+        ServiceException, MetacatUtilException {
+        try {
+            MetacatInitializer.getStorage();
+        } catch (ServiceFailure e) {
+            if (DatabaseUtil.isDatabaseConfigured()) {
+                MetacatInitializer.initStorage();
+            } else {
+                throw e;
+            }
+        }
         converter = new HashStoreConverter(MetacatInitializer.getStorage().getStoreProperties());
         documentPath = PropertyService.getProperty("application.documentfilepath");
         if (!documentPath.endsWith("/")) {
