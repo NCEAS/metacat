@@ -190,6 +190,7 @@ public class MetacatAdminServlet extends HttpServlet {
                     RequestUtil.forwardRequest(request, response,
                                                "/admin/metacat-configuration.jsp", null);
                 }
+                case "storageConversion" -> HashStoreConversionAdmin.convert();
                 default -> {
                     String errorMessage =
                         "MetacatAdminServlet - Invalid action in configuration request: " + action;

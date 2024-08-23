@@ -92,9 +92,11 @@ public class MetacatInitializer implements ServletContextListener{
             if (!ConfigurationUtil.bypassConfiguration() &&
                                     !ConfigurationUtil.isMetacatConfigured()) {
                 if (PropertyService.arePropertiesConfigured()) {
+                    // Those methods are for the admin pages
+                    initStorage();
                     DBConnectionPool.getInstance();
+                    convertStorage();
                 }
-                convertStorage();
                 fullInit = false;
                 return;
             }
@@ -456,10 +458,11 @@ public class MetacatInitializer implements ServletContextListener{
      * @throws MetacatUtilException
      * @throws AdminException
      */
-    protected static void convertStorage() throws MetacatUtilException, AdminException {
+    protected static void convertStorage()
+        throws MetacatUtilException, AdminException, GeneralPropertyException {
         logMetacat.debug("Start of the convertStorage method in the MetacatInitializer class. "
                              + "This statement is before checking the DB' status.");
-        if (DatabaseUtil.isDatabaseConfigured()) {
+        if (DatabaseUtil.isDatabaseConfigured() && PropertyService.arePropertiesConfigured()) {
             UpgradeStatus status = HashStoreConversionAdmin.getStatus();
             if (status == UpgradeStatus.PENDING || status == UpgradeStatus.FAILED) {
                 logMetacat.debug("Metacat starts an auto storage conversion when the database is "
