@@ -40,6 +40,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -50,6 +51,7 @@ import java.util.concurrent.Future;
  * /var/metacat/data) into the HashStore storage.
  */
 public class HashStoreUpgrader implements UpgradeUtilityInterface {
+    private final static int MAX_ARRAY_LENGTH = 10000;
     private static Log logMetacat = LogFactory.getLog(HashStoreUpgrader.class);
     private String dataPath;
     private String documentPath;
@@ -58,6 +60,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static HashStoreConverter converter;
     private ChecksumsManager checksumsManager = new ChecksumsManager();
     private File backupDir;
+    private int maxListLength = MAX_ARRAY_LENGTH;
 
     static {
         // use a shared executor service with nThreads == one less than available processors or one
@@ -106,10 +109,24 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         if (!backupDir.exists()) {
             backupDir.mkdirs();
         }
+        String lengthStr = null;
+        try {
+            lengthStr = PropertyService
+                            .getProperty("storage.hashstore.converterArrayLength");
+            maxListLength = Integer.parseInt(lengthStr);
+        } catch (PropertyNotFoundException e) {
+            logMetacat.debug("Metacat doesn't set the array length and it uses the default one - "
+                                 + MAX_ARRAY_LENGTH);
+        } catch (NumberFormatException e) {
+            logMetacat.debug(
+                "Metacat sets wrong array length " + lengthStr + " and it uses the default one - "
+                    + MAX_ARRAY_LENGTH);
+        }
     }
 
     @Override
     public boolean upgrade() throws AdminException {
+        logMetacat.debug("The max future list length is " + maxListLength);
         StringBuffer infoBuffer = new StringBuffer();
         ArrayList<Future> futures = new ArrayList<>();
         boolean append = true;
@@ -136,6 +153,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                      new BufferedWriter(new FileWriter(savingChecksumFile, append))) {
                 try (ResultSet rs = initCandidateList()) {
                     if (rs != null) {
+                        int index = 0;
                         while (rs.next()) {
                             String id = null;
                             try {
@@ -164,6 +182,15 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                     savingChecksumTableWriter);
                                         });
                                         futures.add(future);
+                                        index++;
+                                        if (index == maxListLength) {
+                                            //When it reaches the max length, we need to check
+                                            // the status in the list, then reset the list
+                                            checkFuturesStatus(futures);
+                                            futures = new ArrayList<>();
+                                            logMetacat.debug("Metacat reset the future list after"
+                                                                 + " checking futures' status");
+                                        }
                                     } else {
                                         logMetacat.warn("There is no checksum info for id " + id +
                                                             " in the systemmetadata and Metacat "
@@ -183,15 +210,9 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                          + e.getMessage());
                     throw new AdminException(e.getMessage());
                 }
-                for (Future future : futures) {
-                    while (!future.isDone()) {
-                        try {
-                            Thread.sleep(10000);
-                        } catch (InterruptedException e) {
-                            logMetacat.warn("Waiting future is interrupted " + e.getMessage());
-                        }
-                    }
-                }
+                // if there are still some futures in the list, we need check and block
+                checkFuturesStatus(futures);
+                logMetacat.debug("Metacat checked the futures' status which were the leftover");
             }
             handleErrorFile(nonMatchingChecksumFile, infoBuffer);
             handleErrorFile(noSuchAlgorithmFile, infoBuffer);
@@ -210,6 +231,25 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
            throw new AdminException(e.getMessage());
         }
         return true;
+    }
+
+    /**
+     * This method will go through the list of the Future objects to check their status.
+     * If one of them is not done, it will block the execution until it completes.
+     * @param futures
+     */
+    protected void checkFuturesStatus(List<Future> futures) {
+        if (futures != null) {
+            for (Future future : futures) {
+                while (!future.isDone()) {
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        logMetacat.warn("Waiting future is interrupted " + e.getMessage());
+                    }
+                }
+            }
+        }
     }
 
     /**
