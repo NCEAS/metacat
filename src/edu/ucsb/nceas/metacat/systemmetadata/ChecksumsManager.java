@@ -2,10 +2,10 @@ package edu.ucsb.nceas.metacat.systemmetadata;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.storage.ObjectInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 
@@ -29,8 +29,10 @@ public class ChecksumsManager {
      * @param checksums  the checksums map whose key is algorithm and value is the checksum value
      * @param dbConn  the connection used to connect database
      * @throws SQLException
+     * @throws ServiceFailure
      */
-    public void save(Identifier id, Map<String, String> checksums, DBConnection dbConn) throws SQLException {
+    public void save(Identifier id, Map<String, String> checksums, DBConnection dbConn)
+        throws SQLException, ServiceFailure {
         if (id != null && !id.getValue().isBlank()) {
             String pid = id.getValue();
             if (checksums != null) {
@@ -53,8 +55,8 @@ public class ChecksumsManager {
                                         + " algorithm " + algorithm + " for " + pid + " into "
                                         + "db.");
                             } catch (Exception e) {
-                                logMetacat.error(
-                                    "Metacat cannot save the checksum " + checksums.get(
+                                throw new ServiceFailure
+                                ("0000", "Metacat cannot save the checksum " + checksums.get(
                                         algorithm) + " with" + " algorithm " + algorithm
                                         + " for " + pid + " into db " + "since "
                                         + e.getMessage());
@@ -62,6 +64,9 @@ public class ChecksumsManager {
                         }
                     }
                 }
+            } else {
+                throw new ServiceFailure("0000", "The checksums from the storage system shouldn't be "
+                    + "null");
             }
         }
     }
@@ -79,7 +84,7 @@ public class ChecksumsManager {
             throw new InvalidRequest(
                 "0000", "ChecksumsManager.get - the pid should not be blank in the request");
         }
-        List<Checksum> list = new ArrayList<Checksum>();
+        List<Checksum> list = new ArrayList<>();
         String query = "SELECT checksum_algorithm, checksum from checksums where guid=?";
         DBConnection dbConn = null;
         int serialNumber = -1;
@@ -102,7 +107,7 @@ public class ChecksumsManager {
                             logMetacat.debug(
                                 "Metacat found the checksum " + checksum_value + " " + "with"
                                     + "checksum algorithm " + algorithm + " for the " + "object "
-                                    + pid);
+                                    + pid.getValue());
                         }
                     }
                 }
@@ -128,7 +133,7 @@ public class ChecksumsManager {
             throw new InvalidRequest("0000", "ChecksumsManager.query - the given checksum should "
                 + "not be null or the algorithm/value pair should not be blank");
         }
-        List<Identifier> list = new ArrayList<Identifier>();
+        List<Identifier> list = new ArrayList<>();
         String query = "SELECT guid from checksums where checksum_algorithm=? and checksum=?;";
         DBConnection dbConn = null;
         int serialNumber = -1;
