@@ -4119,6 +4119,9 @@ public class MNodeServiceIT {
             object = new FileInputStream("test/fgdc.xml");
             Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
             assertEquals(guid.getValue(), pid.getValue());
+            ChecksumsManager manager = new ChecksumsManager();
+            List<Checksum> list = manager.get(pid);
+            assertEquals(5, list.size());
             object.close();
 
             Thread.sleep(2000);
@@ -4130,6 +4133,8 @@ public class MNodeServiceIT {
             sysmeta2.setFormatId(format);
             object = new FileInputStream("test/fgdc.xml");
             d1NodeTest.mnUpdate(session, guid, object, guid2, sysmeta2);
+            list = manager.get(guid2);
+            assertEquals(5, list.size());
             object.close();
         }
 
