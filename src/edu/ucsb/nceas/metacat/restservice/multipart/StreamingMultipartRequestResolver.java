@@ -210,6 +210,8 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                 MCSystemMetadata.copy(mcSysMeta, sysMeta);
                                 mcSysMeta.setChecksums(objectMetadata.getHexDigests());
                                 sysMeta = mcSysMeta;
+                                // Reset system metadata with the list of checksums
+                                multipartRequest.setSystemMetadata(sysMeta);
                                 // The above storeObject method implicitly tagged the id with
                                 // the cid. So we set objTaggedWithPid true.
                                 objTaggedWithPid = true;

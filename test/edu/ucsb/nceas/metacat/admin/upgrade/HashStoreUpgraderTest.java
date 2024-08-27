@@ -349,7 +349,7 @@ public class HashStoreUpgraderTest {
                 upgrader.upgrade();
                 File hashStoreRoot = new File(hashStorePath);
                 assertTrue(hashStoreRoot.exists());
-                assertEquals(0, upgrader.getInfo().length());
+                assertTrue(upgrader.getInfo().length() > 0);
                 assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
                 assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid));
             }
@@ -421,7 +421,7 @@ public class HashStoreUpgraderTest {
                 upgrader.upgrade();
                 File hashStoreRoot = new File(hashStorePath);
                 assertTrue(hashStoreRoot.exists());
-                assertEquals(0, upgrader.getInfo().length());
+                assertTrue(upgrader.getInfo().length() > 0);
                 assertNotNull(MetacatInitializer.getStorage().retrieveObject(metaPid));
                 assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(metaPid));
                 assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));

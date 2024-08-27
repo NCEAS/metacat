@@ -34,9 +34,9 @@
 <div class="document">
     <h2>Metacat Configuration</h2>
 
-    <p><span class="red">Note:</span> The process of Database upgrade and HashStore conversion may
-    take several hours. Please do <span class="red">NOT</span> stop Tomcat when its status is <span class="red">in
-    progress</span>.</p>
+    <p><em>Note:</em> The process of Database upgrade and HashStore conversion may
+    take several hours. Please do <em>NOT</em> stop Tomcat when its status is <em>in
+    progress</em>.</p>
     <p>All of the following sections must be in a configured state for Metacat to run properly:</p>
 
     <%@ include file="page-message-section.jsp" %>
@@ -47,8 +47,8 @@
             if (propsConfigured != null && propsConfigured) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> configured</td>
-            <td class="property-title"> Metacat Global Properties</td>
+            <td class="configured-tag"><i class="icon-ok"></i>configured</td>
+            <td class="property-title">Metacat Global Properties</td>
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=properties">
                     <i class="icon-cogs"></i>Reconfigure Now</a></td>
@@ -58,10 +58,10 @@
         %>
         <tr>
             <td class="unconfigured-tag">unconfigured</td>
-            <td class="property-title"> Metacat Global Properties</td>
+            <td class="property-title">Metacat Global Properties</td>
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=properties">
-                    <i class="icon-cogs"></i> Configure Now</a></td>
+                    <i class="icon-cogs"></i>Configure Now</a></td>
         </tr>
         <%
             }
@@ -70,7 +70,7 @@
         %>
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i>configured</td>
-            <td class="property-title"> Authentication Configuration</td>
+            <td class="property-title">Authentication Configuration</td>
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=auth">
                     <i class="icon-cogs"></i>Reconfigure Now</a></td>
@@ -80,7 +80,7 @@
         %>
         <tr>
             <td class=unconfigured-tag>unconfigured</td>
-            <td class=property-title> Authentication Configuration</td>
+            <td class=property-title>Authentication Configuration</td>
             <td class=configure-link>
                 <a href="<%= request.getContextPath() %>/admin?configureType=auth">
                     <i class="icon-cogs"></i>Configure Now</a></td>
@@ -94,37 +94,37 @@
                     && databaseVersion != null && metacatVersion.compareTo(databaseVersion) == 0)) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> configured</td>
-            <td class="property-title"> Database Installation/Upgrade</td>
-            <td class="configure-link inactive"> Version: <%=databaseVersion.getVersionString()%>
+            <td class="configured-tag"><i class="icon-ok"></i>configured</td>
+            <td class="property-title">Database Installation/Upgrade</td>
+            <td class="configure-link inactive">Version: <%=databaseVersion.getVersionString()%>
             </td>
         </tr>
         <%
         } else if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.IN_PROGRESS)) {
         %>
         <tr>
-                    <td class="unconfigured-tag"> in progress</td>
-                    <td class="property-title"> Database Installation/Upgrade</td>
-                    <td class="configure-link inactive"> <b>Refresh page to update status</b></td>
+                    <td class="unconfigured-tag">in progress</td>
+                    <td class="property-title">Database Installation/Upgrade</td>
+                    <td class="configure-link inactive"><b>Refresh page to update status</b></td>
         </tr>
         <%
         } else {
         %>
         <tr>
             <td class="unconfigured-tag">unconfigured</td>
-            <td class="property-title"> Database Installation/Upgrade</td>
+            <td class="property-title">Database Installation/Upgrade</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
             %>
 
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=database">
-                    <i class="icon-cogs"></i> Configure Now</a></td>
+                    <i class="icon-cogs"></i>Configure Now</a></td>
 
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
+            <td class="configure-link inactive">Configure Global Properties First</td>
             <%
                 }
             %>
@@ -138,35 +138,35 @@
             || hashStoreStatus.equals(MetacatAdmin.NOT_REQUIRED))) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> <%= hashStoreStatus %></td>
-            <td class="property-title"> Hashtore Conversion</td>
-            <td class="configure-link inactive"> </td>
+            <td class="configured-tag"><i class="icon-ok"></i><%= hashStoreStatus %></td>
+            <td class="property-title">Hashtore Conversion</td>
+            <td class="configure-link inactive"></td>
         </tr>
         <%
             } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin
             .IN_PROGRESS)) {
         %>
         <tr>
-                    <td class="unconfigured-tag"><i class="icon-ok"></i> <%= hashStoreStatus %></td>
-                    <td class="property-title"> Hashtore Conversion</td>
-                    <td class="configure-link inactive"> <b>Refresh page to update status</b></td>
+                    <td class="unconfigured-tag"><i class="icon-ok"></i><%= hashStoreStatus %></td>
+                    <td class="property-title">Hashtore Conversion</td>
+                    <td class="configure-link inactive"><b>Refresh page to update status</b></td>
         </tr>
         <%
             } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin.FAILED)
               && dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) {
         %>
         <tr>
-                      <td class="unconfigured-tag"> <%= hashStoreStatus %></td>
-                      <td class="property-title"> Hashtore Conversion</td>
-                      <td class="configure-link inactive"> </td>
+                      <td class="unconfigured-tag"><%= hashStoreStatus %></td>
+                      <td class="property-title">Hashtore Conversion</td>
+                      <td class="configure-link inactive"></td>
         </tr>
         <%
             } else {
         %>
         <tr>
-            <td class="unconfigured-tag"> <%= hashStoreStatus %></td>
-            <td class="property-title"> Hashtore Conversion</td>
-            <td class="configure-link inactive"> </td>
+            <td class="unconfigured-tag"><%= hashStoreStatus %></td>
+            <td class="property-title">Hashtore Conversion</td>
+            <td class="configure-link inactive"></td>
         </tr>
         <%
             }
@@ -177,19 +177,19 @@
                     PropertyService.CONFIGURED)) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> configured</td>
-            <td class="property-title"> Solr Server Configuration</td>
+            <td class="configured-tag"><i class="icon-ok"></i>configured</td>
+            <td class="property-title">Solr Server Configuration</td>
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=solrserver">
-                    <i class="icon-cogs"></i> Reconfigure Now</a></td>
+                    <i class="icon-cogs"></i>Reconfigure Now</a></td>
         </tr>
         <%
         } else if (solrserverConfigured != null && solrserverConfigured.equals(
                 PropertyService.BYPASSED)) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> bypassed</td>
-            <td class="property-title"> Solr Server Configuration</td>
+            <td class="configured-tag"><i class="icon-ok"></i>bypassed</td>
+            <td class="property-title">Solr Server Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
             %>
@@ -200,7 +200,7 @@
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
+            <td class="configure-link inactive">Configure Global Properties First</td>
             <%
                 }
             %>
@@ -210,7 +210,7 @@
         %>
         <tr>
             <td class="unconfigured-tag">unconfigured</td>
-            <td class="property-title"> Solr Server Configuration</td>
+            <td class="property-title">Solr Server Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
                     if ((dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) || (metacatVersion != null
@@ -219,11 +219,11 @@
             %>
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=solrserver">
-                    <i class="icon-cogs"></i> Configure Now</a></td>
+                    <i class="icon-cogs"></i>Configure Now</a></td>
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Database Installation/Upgrade First</td>
+            <td class="configure-link inactive">Configure Database Installation/Upgrade First</td>
             <%
                 }
             %>
@@ -231,7 +231,7 @@
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
+            <td class="configure-link inactive">Configure Global Properties First</td>
             <%
                 }
             %>
@@ -245,8 +245,8 @@
             if (dataoneConfigured != null && dataoneConfigured.equals(PropertyService.CONFIGURED)) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> configured</td>
-            <td class="property-title"> Dataone Configuration</td>
+            <td class="configured-tag"><i class="icon-ok"></i>configured</td>
+            <td class="property-title">Dataone Configuration</td>
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=dataone">
                     <i class="icon-cogs"></i>Reconfigure Now</a></td>
@@ -256,19 +256,19 @@
                 PropertyService.BYPASSED)) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> bypassed</td>
-            <td class="property-title"> Dataone Configuration</td>
+            <td class="configured-tag"><i class="icon-ok"></i>bypassed</td>
+            <td class="property-title">Dataone Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
             %>
 
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=dataone">
-                    <i class="icon-cogs"></i> Reconfigure Now</a></td>
+                    <i class="icon-cogs"></i>Reconfigure Now</a></td>
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
+            <td class="configure-link inactive">Configure Global Properties First</td>
             <%
                 }
             %>
@@ -278,19 +278,19 @@
         %>
         <tr>
             <td class="unconfigured-tag">unconfigured</td>
-            <td class="property-title"> Dataone Configuration</td>
+            <td class="property-title">Dataone Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
             %>
 
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=dataone">
-                    <i class="icon-cogs"></i> Configure Now</a></td>
+                    <i class="icon-cogs"></i>Configure Now</a></td>
 
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
+            <td class="configure-link inactive">Configure Global Properties First</td>
             <%
                 }
             %>
@@ -306,8 +306,8 @@
             if (ezidConfigured != null && ezidConfigured.equals(PropertyService.CONFIGURED)) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> configured</td>
-            <td class="property-title"> DOI Service Configuration</td>
+            <td class="configured-tag"><i class="icon-ok"></i>configured</td>
+            <td class="property-title">DOI Service Configuration</td>
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=ezid">
                     <i class="icon-cogs"></i>Reconfigure Now</a></td>
@@ -316,19 +316,19 @@
         } else if (ezidConfigured != null && ezidConfigured.equals(PropertyService.BYPASSED)) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> bypassed</td>
-            <td class="property-title"> DOI Service Configuration</td>
+            <td class="configured-tag"><i class="icon-ok"></i>bypassed</td>
+            <td class="property-title">DOI Service Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
             %>
 
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=ezid">
-                    <i class="icon-cogs"></i> Reconfigure Now</a></td>
+                    <i class="icon-cogs"></i>Reconfigure Now</a></td>
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
+            <td class="configure-link inactive">Configure Global Properties First</td>
             <%
                 }
             %>
@@ -338,19 +338,19 @@
         %>
         <tr>
             <td class="unconfigured-tag">unconfigured</td>
-            <td class="property-title"> DOI Service Configuration</td>
+            <td class="property-title">DOI Service Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
             %>
 
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=ezid">
-                    <i class="icon-cogs"></i> Configure Now</a></td>
+                    <i class="icon-cogs"></i>Configure Now</a></td>
 
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
+            <td class="configure-link inactive">Configure Global Properties First</td>
             <%
                 }
             %>
@@ -365,8 +365,8 @@
             if (quotaConfigured != null && quotaConfigured.equals(PropertyService.CONFIGURED)) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> configured</td>
-            <td class="property-title"> Quota Service Configuration</td>
+            <td class="configured-tag"><i class="icon-ok"></i>configured</td>
+            <td class="property-title">Quota Service Configuration</td>
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=quota">
                     <i class="icon-cogs"></i>Reconfigure Now</a></td>
@@ -375,7 +375,7 @@
         } else if (quotaConfigured != null && quotaConfigured.equals(PropertyService.BYPASSED)) {
         %>
         <tr>
-            <td class="configured-tag"><i class="icon-ok"></i> bypassed</td>
+            <td class="configured-tag"><i class="icon-ok"></i>bypassed</td>
             <td class="property-title">Quota Service Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
@@ -383,11 +383,11 @@
 
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=quota">
-                    <i class="icon-cogs"></i> Reconfigure Now</a></td>
+                    <i class="icon-cogs"></i>Reconfigure Now</a></td>
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
+            <td class="configure-link inactive">Configure Global Properties First</td>
             <%
                 }
             %>
@@ -397,19 +397,19 @@
         %>
         <tr>
             <td class="unconfigured-tag">unconfigured</td>
-            <td class="property-title"> Quota Service Configuration</td>
+            <td class="property-title">Quota Service Configuration</td>
             <%
                 if (propsConfigured != null && propsConfigured) {
             %>
 
             <td class="configure-link">
                 <a href="<%= request.getContextPath() %>/admin?configureType=quota">
-                    <i class="icon-cogs"></i> Configure Now</a></td>
+                    <i class="icon-cogs"></i>Configure Now</a></td>
 
             <%
             } else {
             %>
-            <td class="configure-link inactive"> Configure Global Properties First</td>
+            <td class="configure-link inactive">Configure Global Properties First</td>
             <%
                 }
             %>
@@ -428,7 +428,7 @@
         if (metacatServletInitialized != null && metacatServletInitialized) {
     %>
     <h3>Restarting Metacat</h3>
-    <p> Since this is a reconfiguration, you will need to restart Metacat after any changes.</p>
+    <p>Since this is a reconfiguration, you will need to restart Metacat after any changes.</p>
     <p>The simplest way to restart metacat is to restart the entire servlet engine.
         For Tomcat, this would mean calling "sudo /etc/init.d/tomcat6 restart" or
         an equivalent command appropriate to your operating system. After restarting,

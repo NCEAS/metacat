@@ -73,6 +73,7 @@ public class StreamingMultipartRequestResolverTest {
 
     /**
      * Test the method resolveMultipart with the v2 system metadata
+     * The scenario is the system metadata comes first.
      * @throws Exception
      */
     @Test
@@ -111,15 +112,19 @@ public class StreamingMultipartRequestResolverTest {
         Mockito.when(request.getMethod()).thenReturn("post");
         Mockito.when(request.getContentType()).thenReturn(entity.getContentType().getValue());
         Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
-        StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver("build", 10000000);
+        StreamingMultipartRequestResolver resolver =
+            new StreamingMultipartRequestResolver("build", 10000000);
         MultipartRequest result = resolver.resolveMultipart(request);
-        org.dataone.service.types.v1.SystemMetadata parsedSys = resolver.getSystemMetadataPart();
-        
+        MultipartRequestWithSysmeta resultWithSysmeta = (MultipartRequestWithSysmeta) result;
+        org.dataone.service.types.v1.SystemMetadata parsedSys =
+            resultWithSysmeta.getSystemMetadata();
+
         //v2 system metadata object is both v1 and v2
         assertTrue(parsedSys instanceof org.dataone.service.types.v1.SystemMetadata);
         assertTrue(parsedSys instanceof SystemMetadata);
         assertTrue(parsedSys instanceof MCSystemMetadata);
         MCSystemMetadata parsedSysmeta = (MCSystemMetadata) parsedSys;
+        assertEquals(5, parsedSysmeta.getChecksums().size());
         assertEquals(guid.getValue(), parsedSysmeta.getIdentifier().getValue());
         assertEquals("https://eml.ecoinformatics.org/eml-2.2.0",
                                                         parsedSysmeta.getFormatId().getValue());
@@ -194,9 +199,12 @@ public class StreamingMultipartRequestResolverTest {
         Mockito.when(request.getMethod()).thenReturn("post");
         Mockito.when(request.getContentType()).thenReturn(entity.getContentType().getValue());
         Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
-        StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver("build", 10000000);
+        StreamingMultipartRequestResolver resolver =
+            new StreamingMultipartRequestResolver("build", 10000000);
         MultipartRequest result = resolver.resolveMultipart(request);
-        org.dataone.service.types.v1.SystemMetadata parsedSys = resolver.getSystemMetadataPart();
+        MultipartRequestWithSysmeta resultWithSysmeta = (MultipartRequestWithSysmeta) result;
+        org.dataone.service.types.v1.SystemMetadata parsedSys =
+            resultWithSysmeta.getSystemMetadata();
 
         //v2 system metadata object is both v1 and v2
         assertTrue(parsedSys instanceof org.dataone.service.types.v1.SystemMetadata);
@@ -204,6 +212,7 @@ public class StreamingMultipartRequestResolverTest {
         assertTrue(parsedSys instanceof MCSystemMetadata);
         MCSystemMetadata parsedSysmeta = (MCSystemMetadata) parsedSys;
         assertEquals(guid.getValue(), parsedSysmeta.getIdentifier().getValue());
+        assertEquals(5, parsedSysmeta.getChecksums().size());
         assertEquals("https://eml.ecoinformatics.org/eml-2.2.0",
                      parsedSysmeta.getFormatId().getValue());
         assertEquals(algorithm, parsedSysmeta.getChecksum().getAlgorithm());
@@ -237,6 +246,7 @@ public class StreamingMultipartRequestResolverTest {
 
     /**
      * Test the method resolveMultipart with the v1 system metadata
+     * The scenario is the system metadata comes first.
      * @throws Exception
      */
     @Test
@@ -275,15 +285,20 @@ public class StreamingMultipartRequestResolverTest {
         Mockito.when(request.getMethod()).thenReturn("post");
         Mockito.when(request.getContentType()).thenReturn(entity.getContentType().getValue());
         Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
-        StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver("build", 10000000);
+        StreamingMultipartRequestResolver resolver =
+            new StreamingMultipartRequestResolver("build", 10000000);
         MultipartRequest result = resolver.resolveMultipart(request);
-        org.dataone.service.types.v1.SystemMetadata parsedSysmeta = resolver.getSystemMetadataPart();
-        
+        MultipartRequestWithSysmeta resultWithSysmeta = (MultipartRequestWithSysmeta) result;
+        org.dataone.service.types.v1.SystemMetadata parsedSysmeta =
+            resultWithSysmeta.getSystemMetadata();
+
         //v1 system metadata object is only v1, not v2
         assertTrue(parsedSysmeta instanceof org.dataone.service.types.v1.SystemMetadata);
         assertTrue(parsedSysmeta instanceof SystemMetadata);
         assertTrue(parsedSysmeta instanceof MCSystemMetadata);
+        assertEquals(5, ((MCSystemMetadata) parsedSysmeta).getChecksums().size());
         assertEquals(guid, parsedSysmeta.getIdentifier());
+
         assertEquals("https://eml.ecoinformatics.org/eml-2.2.0",
                      parsedSysmeta.getFormatId().getValue());
         assertEquals(algorithm, parsedSysmeta.getChecksum().getAlgorithm());
