@@ -34,7 +34,7 @@
 <div class="document">
     <h2>Metacat Configuration</h2>
 
-    <p><em>Note:</em> The process of Database upgrade and HashStore conversion may
+    <p><em>Note:</em> The process of Database upgrade and Storage conversion may
     take several hours. Please do <em>NOT</em> stop Tomcat when its status is <em>in
     progress</em>.</p>
     <p>All of the following sections must be in a configured state for Metacat to run properly:</p>
@@ -139,7 +139,7 @@
         %>
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i><%= hashStoreStatus %></td>
-            <td class="property-title">Hashtore Conversion</td>
+            <td class="property-title">Storage Conversion</td>
             <td class="configure-link inactive"></td>
         </tr>
         <%
@@ -148,7 +148,7 @@
         %>
         <tr>
                     <td class="unconfigured-tag"><i class="icon-ok"></i><%= hashStoreStatus %></td>
-                    <td class="property-title">Hashtore Conversion</td>
+                    <td class="property-title">Storage Conversion</td>
                     <td class="configure-link inactive"><b>Refresh page to update status</b></td>
         </tr>
         <%
@@ -157,7 +157,7 @@
         %>
         <tr>
                       <td class="unconfigured-tag"><%= hashStoreStatus %></td>
-                      <td class="property-title">Hashtore Conversion</td>
+                      <td class="property-title">Storage Conversion</td>
                       <td class="configure-link inactive"></td>
         </tr>
         <%
@@ -165,7 +165,7 @@
         %>
         <tr>
             <td class="unconfigured-tag"><%= hashStoreStatus %></td>
-            <td class="property-title">Hashtore Conversion</td>
+            <td class="property-title">Storage Conversion</td>
             <td class="configure-link inactive"></td>
         </tr>
         <%
