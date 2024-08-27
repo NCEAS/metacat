@@ -103,7 +103,7 @@
         } else if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.IN_PROGRESS)) {
         %>
         <tr>
-                    <td class="unconfigured-tag">in progress</td>
+                    <td class="unconfigured-tag"><i class="icon-spinner"></i>in progress</td>
                     <td class="property-title">Database Installation/Upgrade</td>
                     <td class="configure-link inactive"><b>Refresh page to update status</b></td>
         </tr>
@@ -147,7 +147,7 @@
             .IN_PROGRESS)) {
         %>
         <tr>
-                    <td class="unconfigured-tag"><i class="icon-ok"></i><%= hashStoreStatus %></td>
+                    <td class="unconfigured-tag"><i class="icon-spinner"></i><%= hashStoreStatus %></td>
                     <td class="property-title">Storage Conversion</td>
                     <td class="configure-link inactive"><b>Refresh page to update status</b></td>
         </tr>
