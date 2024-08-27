@@ -67,8 +67,7 @@ public class SystemMetadataManager {
         } catch (Exception e) {
             logMetacat.warn(
                 "Metacat can't get the value from property systemMetadataManager.checkLock and it"
-                    + " will use its "
-                    + "default value " + checkLock);
+                    + " will use its default value " + checkLock);
         }
     }
     /**
@@ -215,9 +214,8 @@ public class SystemMetadataManager {
                     throw new ServiceFailure(
                         "0000",
                         "The pid " + pid.getValue() + " is not locked before " + "storing its "
-                            + "systemmetadata. There is a bug in the code. The "
-                            + "SystemMetadataManager"
-                            + ".lock" + " method must be called before call the store method");
+                            + "systemmetadata. There is a bug in the code. The SystemMetadataManager"
+                            + ".lock method must be called before call the store method");
                 }
                 try {
                     //Check if the system metadata is based on the latest version
@@ -258,51 +256,17 @@ public class SystemMetadataManager {
                     }
                     // store the system metadata into hashstore
                     storeToHashStore(pid, sysmeta);
-                } catch (McdbDocNotFoundException e) {
+                } catch (McdbDocNotFoundException | InvalidSystemMetadata | AccessException |
+                         MarshallingException e) {
                     throw new InvalidRequest("0000", "SystemMetadataManager.store - can't "
                                                 + "store the system metadata for pid "
                                                 + pid.getValue() + " since " + e.getMessage());
-                } catch (SQLException e) {
+                } catch (SQLException | RuntimeException | IOException | NoSuchAlgorithmException |
+                         InterruptedException | InvocationTargetException |
+                         IllegalAccessException e) {
                     throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
                                                 + "the system metadata for pid " + pid.getValue()
                                                 + " since " + e.getMessage());
-                } catch (InvalidSystemMetadata e) {
-                    throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store "
-                                            + "the system metadata for pid " + pid.getValue()
-                                            + " since " + e.getMessage());
-                } catch (AccessException e) {
-
-                    throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store "
-                                                + " the system metadata for pid " + pid.getValue()
-                                                + " since " + e.getMessage());
-                } catch (RuntimeException e) {
-                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                                                + "the system metadata for pid " + pid.getValue()
-                                                + " since " + e.getMessage());
-                } catch (IOException e) {
-                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                                                + "the system metadata for pid " + pid.getValue()
-                                                + " since IOException " + e.getMessage());
-                } catch (MarshallingException e) {
-                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                            + "the system metadata for pid " + pid.getValue()
-                            + " since a MarshallingException " + e.getMessage());
-                } catch (NoSuchAlgorithmException e) {
-                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                            + "the system metadata for pid " + pid.getValue()
-                            + " since " + e.getMessage());
-                } catch (InterruptedException e) {
-                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                            + "the system metadata for pid " + pid.getValue()
-                            + " since " + e.getMessage());
-                } catch (InvocationTargetException e) {
-                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                        + "the system metadata for pid " + pid.getValue()
-                        + " since " + e.getMessage());
-                } catch (IllegalAccessException e) {
-                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store "
-                        + "the system metadata for pid " + pid.getValue()
-                        + " since " + e.getMessage());
                 }
             } else {
                 throw new InvalidRequest("0000", "SystemMetadataManager.store - the identifier "
@@ -851,9 +815,8 @@ public class SystemMetadataManager {
                 throw new ServiceFailure(
                     "0000",
                     "The pid " + guid.getValue() + " is not locked before " + "deleting its "
-                        + "systemmetadata. There is a bug in the code. The "
-                        + "SystemMetadataManager"
-                        + ".lock" + " method must be called before call the delete method");
+                        + "systemmetadata. There is a bug in the code. The SystemMetadataManager"
+                        + ".lock method must be called before call the delete method");
             }
             logMetacat.debug("SystemMetadataManager.delete - delete the identifier"
                             + guid.getValue());
