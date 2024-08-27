@@ -90,8 +90,9 @@
         %>
 
         <%
-            if ((dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) || (metacatVersion != null
-                    && databaseVersion != null && metacatVersion.compareTo(databaseVersion) == 0)) {
+            if ((dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED))
+                    || (metacatVersion != null && databaseVersion != null
+                    && metacatVersion.compareTo(databaseVersion) == 0)) {
         %>
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i>configured</td>
@@ -105,7 +106,7 @@
         <tr>
                     <td class="unconfigured-tag"><i class="icon-spinner"></i>in progress</td>
                     <td class="property-title">Database Installation/Upgrade</td>
-                    <td class="configure-link inactive"><b>Refresh page to update status</b></td>
+                    <td><b>Refresh page to update status</b></td>
         </tr>
         <%
         } else {
@@ -140,7 +141,7 @@
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i><%= hashStoreStatus %></td>
             <td class="property-title">Storage Conversion</td>
-            <td class="configure-link inactive"></td>
+            <td></td>
         </tr>
         <%
             } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin
@@ -149,7 +150,7 @@
         <tr>
                     <td class="unconfigured-tag"><i class="icon-spinner"></i><%= hashStoreStatus %></td>
                     <td class="property-title">Storage Conversion</td>
-                    <td class="configure-link inactive"><b>Refresh page to update status</b></td>
+                    <td><b>Refresh page to update status</b></td>
         </tr>
         <%
             } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin.FAILED)
@@ -158,7 +159,7 @@
         <tr>
                       <td class="unconfigured-tag"><%= hashStoreStatus %></td>
                       <td class="property-title">Storage Conversion</td>
-                      <td class="configure-link inactive"></td>
+                      <td></td>
         </tr>
         <%
             } else {
@@ -166,7 +167,7 @@
         <tr>
             <td class="unconfigured-tag"><%= hashStoreStatus %></td>
             <td class="property-title">Storage Conversion</td>
-            <td class="configure-link inactive"></td>
+            <td></td>
         </tr>
         <%
             }
