@@ -942,7 +942,7 @@ public class DocumentImpl {
                                          + "metadata from Hashstore for object " + guid.getValue()
                                          + " since " + ee.getMessage() + ", even though we "
                                          + "successfully removed it from the Metacat database. You"
-                                         + " have to manually to remove them from Hashstore.");
+                                         + " have to manually remove them from Hashstore.");
                 }
             } catch (Exception e) {
                 // rollback the delete if there was an error
