@@ -43,56 +43,6 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
     protected static Vector<String> info = new Vector<>();
 
     /**
-     * Default private constructor
-     */
-    private HashStoreConversionAdmin() {
-
-    }
-
-    /**
-     * Get an instance of the converter
-     * @return the instance of the converter
-     */
-    public static HashStoreConversionAdmin getInstance() {
-        return hashStoreConverter;
-    }
-
-    /**
-     * Convert to hashstore
-     * @param request
-     *            the http request information
-     * @param response
-     *            the http response to be sent back to the client
-     */
-    public void convert(
-        HttpServletRequest request, HttpServletResponse response) throws AdminException {
-        logMetacat.debug("HashStoreConversionAdmin.convert - the start of the method");
-        String processForm = request.getParameter("processForm");
-
-        if (processForm != null && processForm.equals("true")) {
-            logMetacat.debug("HashStoreConversionAdmin.convert - in the else routine to do the "
-                                 + "conversion");
-            try {
-                // Do the job of conversion
-                RequestUtil.clearRequestMessages(request);
-                response.sendRedirect(SystemUtil.getContextURL() + "/admin");
-                // Make the admin jsp page return by doing the upgrade in another thread
-                Executors.newSingleThreadExecutor().submit(() -> {
-                    convert();
-                });
-            } catch (GeneralPropertyException gpe) {
-                throw new AdminException("QHashStoreConversionAdmin.convert - problem with "
-                                             + "properties: "
-                                             + gpe.getMessage());
-            } catch (IOException e) {
-                throw new AdminException("QHashStoreConversionAdmin.convert - problem with "
-                                             + "redirect url: "
-                                             + e.getMessage());
-            }
-        }
-    }
-
-    /**
      * The method do the conversion job
      */
     public static void convert() {
