@@ -183,7 +183,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 case "solrserver" -> SolrAdmin.getInstance().configureSolr(request, response);
                 case "refreshStylesheets" -> clearStylesheetCache(response);
                 case "removeSysmetaLock" -> removeSysmetaLock(request, response);
-                case "orcidFlow" -> {
+                case ACTION_ORCID_FLOW -> {
                     // A temporary fix for getting error to refresh browser after log-in
                     // forward to the main admin page
                     initialConfigurationParameters(request);
