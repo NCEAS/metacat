@@ -94,7 +94,9 @@ public class MetacatInitializer implements ServletContextListener{
                 if (PropertyService.arePropertiesConfigured()) {
                     // Those methods are for the admin pages
                     DBConnectionPool.getInstance();
-                    convertStorage();
+                    if (!Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"))) {
+                        convertStorage();
+                    }
                 }
                 fullInit = false;
                 return;
