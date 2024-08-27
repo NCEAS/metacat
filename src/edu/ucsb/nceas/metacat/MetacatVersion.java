@@ -60,8 +60,7 @@ public class MetacatVersion extends Version {
             // check out DBConnection
             conn = DBConnectionPool.getDBConnection("MetacatVersion.getVersionFromDB()");
             serialNumber = conn.getCheckOutSerialNumber();
-            pstmt = conn.prepareStatement("SELECT version FROM version_history WHERE status = "
-                                              + "?");
+            pstmt = conn.prepareStatement("SELECT version FROM version_history WHERE status = ?");
             pstmt.setInt(1, 1);
             rs = pstmt.executeQuery();
             if(rs.next()) {
