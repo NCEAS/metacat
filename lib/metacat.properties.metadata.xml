@@ -334,7 +334,7 @@
         <index>7</index>
         <description>
             Where to store data. This is an obsoleted field. If this is a new fresh installation,
-            you do not need to specify it. If this is an upgrade, you should put the value which
+            you do not need to specify it. If this is an upgrade, you should put the value that
             the previous Metacat instance used.
         </description>
         <helpFile>docs/metacat-properties.html#application-datafilepath</helpFile>
@@ -348,7 +348,7 @@
         <description>
             Where to store inline data. This is an obsoleted field. If this is a new fresh
             installation, you do not need to specify it. If this is an upgrade, you should put the
-            value which the previous Metacatinstance used.
+            value that the previous Metacatinstance used.
         </description>
         <helpFile>docs/metacat-properties.html#application-inlinedatafilepath</helpFile>
     </config>
@@ -361,7 +361,7 @@
         <description>
             Where to store metadata documents. This is an obsoleted field. If this is a new fresh
             installation, you do not need to specify it. If this is an upgrade, you should put the
-            value which the previous Metacat instance used.
+            value that the previous Metacat instance used.
         </description>
         <helpFile>docs/metacat-properties.html#application-documentfilepath</helpFile>
     </config>
