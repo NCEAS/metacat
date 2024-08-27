@@ -57,8 +57,8 @@ public class ChecksumsManager {
                             } catch (Exception e) {
                                 throw new ServiceFailure
                                 ("0000", "Metacat cannot save the checksum " + checksums.get(
-                                        algorithm) + " with" + " algorithm " + algorithm
-                                        + " for " + pid + " into db " + "since "
+                                        algorithm) + " with algorithm " + algorithm
+                                        + " for " + pid + " into db since "
                                         + e.getMessage());
                             }
                         }
