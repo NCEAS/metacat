@@ -129,7 +129,7 @@ public class StorageTest {
         storage.deleteIfInvalidObject(info, test_file_checksum, MD5, 242900);
         Identifier pid = new Identifier();
         pid.setValue("testVerifyAndTagObject" + System.nanoTime());
-        storage.tagObject(pid, info.getCid());
+        storage.tagObject(pid, info.cid());
         InputStream inputStream = storage.retrieveObject(pid);
         String readChecksum = MetacatHandlerIT.getChecksum(inputStream, MD5);
         assertEquals(test_file_checksum, readChecksum);
@@ -228,7 +228,7 @@ public class StorageTest {
         try (InputStream object = new ByteArrayInputStream(content)) {
             ObjectInfo info =
                 storage.storeObject(object, guid, null, checksum.getValue(), algorithm, size);
-            assertEquals(6, info.getHexDigests().size());
+            assertEquals(6, info.hexDigests().size());
         }
         // Test the failure scenario
         try (InputStream object = new ByteArrayInputStream(content)) {
@@ -244,7 +244,7 @@ public class StorageTest {
         // Test the successful scenario
         try (InputStream object = new ByteArrayInputStream(content)) {
             ObjectInfo info = storage.storeObject(object);
-            assertEquals(5, info.getHexDigests().size());
+            assertEquals(5, info.hexDigests().size());
             storage.deleteIfInvalidObject(info, checksum.getValue(), algorithm, size);
         }
         // Test the failure scenario with the wrong checksum

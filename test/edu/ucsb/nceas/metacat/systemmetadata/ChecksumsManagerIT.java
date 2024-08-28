@@ -76,7 +76,7 @@ public class ChecksumsManagerIT {
             // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("ChecksumsManagerIT.testSave");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            manager.save(pid, info.getHexDigests(), dbConn);
+            manager.save(pid, info.hexDigests(), dbConn);
             List<Checksum> checksums = manager.get(pid);
             boolean found = false;
             Checksum targetChecksum = null;

@@ -939,7 +939,7 @@ public class D1NodeServiceTest extends MCTestCase {
         ObjectInfo info = storeData(object, sysmeta);
         MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
         MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
-        mcSystemMetadata.setChecksums(info.getHexDigests());
+        mcSystemMetadata.setChecksums(info.hexDigests());
         return MNodeService.getInstance(request).create(session, id, object, mcSystemMetadata);
     }
 
@@ -978,7 +978,7 @@ public class D1NodeServiceTest extends MCTestCase {
         ObjectInfo info = storeData(object, sysmeta);
         MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
         MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
-        mcSystemMetadata.setChecksums(info.getHexDigests());
+        mcSystemMetadata.setChecksums(info.hexDigests());
         return MNodeService.getInstance(request)
             .update(session, pid, object, newPid, mcSystemMetadata);
     }
@@ -1015,7 +1015,7 @@ public class D1NodeServiceTest extends MCTestCase {
         ObjectInfo info = storeData(object, sysmeta);
         MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
         MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
-        mcSystemMetadata.setChecksums(info.getHexDigests());
+        mcSystemMetadata.setChecksums(info.hexDigests());
         return CNodeService.getInstance(request).create(session, id, object, mcSystemMetadata);
     }
 

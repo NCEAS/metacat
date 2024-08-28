@@ -475,8 +475,8 @@ public class Storage {
     private ObjectMetadata convertToObjectMetadata(ObjectInfo objInfo) {
         ObjectMetadata metadata = null;
         if (objInfo != null) {
-            metadata = new ObjectMetadata(objInfo.getPid(), objInfo.getCid(),
-                                          objInfo.getSize(), objInfo.getHexDigests());
+            metadata = new ObjectMetadata(objInfo.pid(), objInfo.cid(),
+                                          objInfo.size(), objInfo.hexDigests());
         }
         return metadata;
     }

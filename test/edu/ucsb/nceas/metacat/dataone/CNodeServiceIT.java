@@ -301,7 +301,7 @@ public class CNodeServiceIT {
 
         object = new ByteArrayInputStream(objValue.getBytes(StandardCharsets.UTF_8));
         ObjectInfo objectMetadata = D1NodeServiceTest.getStorage().storeObject(object);
-        D1NodeServiceTest.getStorage().tagObject(sysmeta.getIdentifier(), objectMetadata.getCid());
+        D1NodeServiceTest.getStorage().tagObject(sysmeta.getIdentifier(), objectMetadata.cid());
         try (InputStream inputStream = MetacatHandler.read(sysmeta.getIdentifier())) {
             assertNotNull(inputStream);
         }

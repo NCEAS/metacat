@@ -172,11 +172,11 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                     id.setValue(pid);
                                     // Hashstore will throw an exception if the id already is used.
                                     MetacatInitializer.getStorage()
-                                                                .tagObject(id, objectMetadata.getCid());
+                                                              .tagObject(id, objectMetadata.cid());
                                     // attach the multiple checksums into the system metadata object
                                     MCSystemMetadata mcSysMeta = new MCSystemMetadata();
                                     MCSystemMetadata.copy(mcSysMeta, sysMeta);
-                                    mcSysMeta.setChecksums(objectMetadata.getHexDigests());
+                                    mcSysMeta.setChecksums(objectMetadata.hexDigests());
                                     sysMeta = mcSysMeta;
                                     objTaggedWithPid = true;
                                 }
@@ -208,7 +208,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                                 // attach the multiple checksums into the system metadata object
                                 MCSystemMetadata mcSysMeta = new MCSystemMetadata();
                                 MCSystemMetadata.copy(mcSysMeta, sysMeta);
-                                mcSysMeta.setChecksums(objectMetadata.getHexDigests());
+                                mcSysMeta.setChecksums(objectMetadata.hexDigests());
                                 sysMeta = mcSysMeta;
                                 // Reset system metadata with the list of checksums
                                 multipartRequest.setSystemMetadata(sysMeta);
@@ -239,7 +239,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                         MetacatInitializer.getStorage().deleteObject(id);
                     } else {
                         try {
-                            Map<String, String> hexDigests = objectMetadata.getHexDigests();
+                            Map<String, String> hexDigests = objectMetadata.hexDigests();
                             Set<String> keys = hexDigests.keySet();
                             String algorithm = "SHA-256";
                             for (String key : keys) {
@@ -249,7 +249,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                             String checksum = hexDigests.get(algorithm);
                             MetacatInitializer.getStorage()
                                 .deleteIfInvalidObject(objectMetadata, checksum, algorithm,
-                                                       objectMetadata.getSize() + 1);
+                                                       objectMetadata.size() + 1);
                         } catch (InvalidSystemMetadata ee) {
                             log.info("Metacat purpose used a wrong size to trigger the deleting "
                                          + ee.getMessage());
@@ -258,7 +258,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                 } catch (Exception ee) {
                     log.error("StreamingMultipartRequestResolver.resoloveMulitpart - failed to "
                              + "delete the object with pid " + pid + " or the object with cid "
-                             + objectMetadata.getCid() + " since " + ee.getMessage());
+                             + objectMetadata.cid() + " since " + ee.getMessage());
                 }
             }
             throw e;

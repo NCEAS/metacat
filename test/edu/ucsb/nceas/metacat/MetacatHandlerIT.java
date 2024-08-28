@@ -693,7 +693,7 @@ public class MetacatHandlerIT {
         ObjectInfo info = D1NodeServiceTest.storeData(dataStream, sysmeta);
         MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
         MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
-        mcSystemMetadata.setChecksums(info.getHexDigests());
+        mcSystemMetadata.setChecksums(info.hexDigests());
         // null is the obsoleted system metadata. Inserting should succeed
         // False means not to change the modification date of system metadata
         handler.save(mcSystemMetadata, false, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
@@ -1284,7 +1284,7 @@ public class MetacatHandlerIT {
         ObjectInfo info = D1NodeServiceTest.storeData(dataStream, sysmeta1);
         MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
         MCSystemMetadata.copy(mcSystemMetadata, sysmeta1);
-        mcSystemMetadata.setChecksums(info.getHexDigests());
+        mcSystemMetadata.setChecksums(info.hexDigests());
         assertNull(mcSystemMetadata.getObsoletes());
         assertNull(mcSystemMetadata.getObsoletes());
         try (MockedStatic<DBConnectionPool> mockDbConnPool =

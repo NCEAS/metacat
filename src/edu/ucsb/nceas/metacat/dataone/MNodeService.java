@@ -1109,7 +1109,7 @@ public class MNodeService extends D1NodeService
                     ObjectInfo info = storeData(MetacatInitializer.getStorage(), object, sysmeta);
                     MCSystemMetadata mcSysMeta = new MCSystemMetadata();
                     MCSystemMetadata.copy(mcSysMeta, sysmeta);
-                    mcSysMeta.setChecksums(info.getHexDigests());
+                    mcSysMeta.setChecksums(info.hexDigests());
                     retPid = super.create(session, pid, object, mcSysMeta, changedModificationDate);
                     result = (retPid.getValue().equals(pid.getValue()));
                 }
@@ -2388,7 +2388,7 @@ public class MNodeService extends D1NodeService
         try {
             MCSystemMetadata.copy(mcSys, sysmeta);
             ObjectInfo doiInfo = storeData(MetacatInitializer.getStorage(), inputStream, sysmeta);
-            mcSys.setChecksums(doiInfo.getHexDigests());
+            mcSys.setChecksums(doiInfo.hexDigests());
         } catch (NoSuchAlgorithmException | RuntimeException | InterruptedException |
                  InvocationTargetException | IllegalAccessException eee) {
             // report as service failure
@@ -2497,7 +2497,7 @@ public class MNodeService extends D1NodeService
                     MCSystemMetadata.copy(oreMCsysMeta, oreSysMeta);
                     ObjectInfo oreInfo = storeData(MetacatInitializer.getStorage(),
                          new ByteArrayInputStream(resourceMapString.getBytes("UTF-8")), oreSysMeta);
-                    oreMCsysMeta.setChecksums(oreInfo.getHexDigests());
+                    oreMCsysMeta.setChecksums(oreInfo.hexDigests());
                 } catch (NoSuchAlgorithmException | RuntimeException | InterruptedException |
                          InvocationTargetException | IllegalAccessException eee) {
                     // report as service failure
