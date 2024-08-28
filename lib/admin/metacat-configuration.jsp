@@ -34,10 +34,20 @@
 <div class="document">
     <h2>Metacat Configuration</h2>
 
-    <p><em>Note:</em> The process of Database upgrade and Storage conversion may
-    take several hours. Please do <em>NOT</em> stop Tomcat when its status is <em>in
-    progress</em>.</p>
-    <p>All of the following sections must be in a configured state for Metacat to run properly:</p>
+    <%
+        if(dbConfigured == null || !dbConfigured.equals(PropertyService.CONFIGURED)
+          || hashStoreStatus == null || hashStoreStatus.equals(MetacatAdmin.UNKNOWN)
+          || hashStoreStatus.equals(MetacatAdmin.PENDING)
+          || hashStoreStatus.equals(MetacatAdmin.IN_PROGRESS)) {
+    %>
+        <p><em>Note:</em> The process of Database upgrade and Storage conversion may
+        take several hours. Please do <em>NOT</em> stop Tomcat when its status is <em>in
+        progress</em>.</p>
+        <p>All of the following sections must be in a configured state for Metacat to run
+      properly:</p>
+    <%
+        }
+    %>
 
     <%@ include file="page-message-section.jsp" %>
 
