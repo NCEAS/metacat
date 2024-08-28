@@ -191,15 +191,15 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                             removeCompleteFuture(futures);
                                         }
                                     } else {
-                                        logMetacat.warn("There is no checksum info for id " + id +
+                                        logMetacat.error("There is no checksum info for id " + id +
                                                             " in the systemmetadata and Metacat "
                                                             + "cannot convert it to hashstore.");
                                         writeToFile(id, noChecksumInSysmetaWriter);
                                     }
                                 }
                             } catch (Exception e) {
-                                logMetacat.warn("Cannot move the object " + id + " to hashstore since "
-                                                    + e.getMessage());
+                                logMetacat.error("Cannot move the object " + id + " to hashstore "
+                                                  + "since " + e.getMessage(), e);
                                 writeToFile(id, e, generalWriter);
                             }
                         }
@@ -396,16 +396,16 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             metadata =
                 converter.convert(path, finalId, sysMetaInput, checksum, algorithm);
         } catch (NonMatchingChecksumException e) {
-            logMetacat.warn("Cannot move the object " + finalId + "to hashstore since "
+            logMetacat.error("Cannot move the object " + finalId + "to hashstore since "
                                 + e.getMessage());
             writeToFile(finalId, nonMatchingChecksumWriter);
         } catch (NoSuchAlgorithmException e) {
-            logMetacat.warn("Cannot move the object " + finalId + " to hashstore since "
+            logMetacat.error("Cannot move the object " + finalId + " to hashstore since "
                                 + e.getMessage());
             writeToFile(finalId, noSuchAlgorithmWriter);
         } catch (Exception e) {
-            logMetacat.warn("Cannot move the object " + finalId + " to hashstore since "
-                                + e.getMessage());
+            logMetacat.error("Cannot move the object " + finalId + " to hashstore since "
+                                + e.getMessage(), e);
             writeToFile(finalId, e, generalWriter);
         }
         // Save the checksums into checksum table
@@ -421,8 +421,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                 checksumsManager.save(identifier, metadata.hexDigests(), dbConn);
             }
         } catch (Exception e) {
-            logMetacat.warn("Cannot save checksums for " + finalId
-                    + " since " + e.getMessage());
+            logMetacat.error("Cannot save checksums for " + finalId
+                    + " since " + e.getMessage(), e);
             writeToFile(finalId, e, savingChecksumTableWriter);
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
