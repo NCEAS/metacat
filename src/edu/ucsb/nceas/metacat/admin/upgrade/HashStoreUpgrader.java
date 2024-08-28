@@ -40,8 +40,8 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -131,7 +131,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         logMetacat.debug("It is ready for the conversion. The max future "
                                + "list length is " + maxListLength);
         StringBuffer infoBuffer = new StringBuffer();
-        ArrayList<Future> futures = new ArrayList<>();
+        HashSet<Future> futures = new HashSet<>();
         boolean append = true;
         try {
             File nonMatchingChecksumFile =
@@ -156,7 +156,6 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                      new BufferedWriter(new FileWriter(savingChecksumFile, append))) {
                 try (ResultSet rs = initCandidateList()) {
                     if (rs != null) {
-                        int index = 0;
                         while (rs.next()) {
                             String id = null;
                             try {
@@ -185,14 +184,11 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                     savingChecksumTableWriter);
                                         });
                                         futures.add(future);
-                                        index++;
-                                        if (index == maxListLength) {
-                                            //When it reaches the max length, we need to check
-                                            // the status in the list, then reset the list
-                                            checkFuturesStatus(futures);
-                                            futures = new ArrayList<>();
-                                            logMetacat.debug("Metacat reset the future list after"
-                                                                 + " checking futures' status");
+                                        if (futures.size() == maxListLength) {
+                                            //When it reaches the max length, we need to remove
+                                            // the complete futures from the set. So the set can
+                                            // be reused again.
+                                            removeCompleteFuture(futures);
                                         }
                                     } else {
                                         logMetacat.warn("There is no checksum info for id " + id +
@@ -213,9 +209,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                          + e.getMessage());
                     throw new AdminException(e.getMessage());
                 }
-                // if there are still some futures in the list, we need check and block
-                checkFuturesStatus(futures);
-                logMetacat.debug("Metacat checked the futures' status which were the leftover");
+                // if there are still some futures in the set, we need check and block
+                drainAllFutures(futures);
             }
             handleErrorFile(nonMatchingChecksumFile, infoBuffer);
             handleErrorFile(noSuchAlgorithmFile, infoBuffer);
@@ -232,16 +227,47 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     }
 
     /**
-     * This method will go through the list of the Future objects to check their status.
-     * If one of them is not done, it will block the execution until it completes.
-     * @param futures
+     * This method removes the Future objects from a set which have the done status.
+     * So the free space can be used again. If it cannot remove any one, it will wait and try
+     * again until some space was freed up.
+     * @param futures  the set which hold the futures to be checked
      */
-    protected void checkFuturesStatus(List<Future> futures) {
+    protected void removeCompleteFuture(Set<Future> futures) {
         if (futures != null) {
+            int originalSize = futures.size();
+            while (true) {
+                for (Future future : futures) {
+                    if (future.isDone()) {
+                        futures.remove(future);
+                    }
+                }
+                if (futures.size() == originalSize) {
+                    logMetacat.debug("Metacat could not remove any complete futures and will wait "
+                                         + "for a while and try again.");
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        logMetacat.warn("Waiting future is interrupted " + e.getMessage());
+                    }
+                } else {
+                    logMetacat.debug("Metacat removed some complete futures from the set.");
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Make sure that all futures in the given set is done.
+     * @param futures  the set of futures will be checked
+     */
+    protected void drainAllFutures(Set<Future> futures) {
+        if (futures != null && futures.size() > 0 ) {
+            logMetacat.debug("Metacat will make sure all of the leftover futures being done");
             for (Future future : futures) {
                 while (!future.isDone()) {
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         logMetacat.warn("Waiting future is interrupted " + e.getMessage());
                     }
