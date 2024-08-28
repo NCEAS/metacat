@@ -83,7 +83,11 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
                     HashStoreUpgrader upgrader = (HashStoreUpgrader) utility;
                     String infoStr = upgrader.getInfo();
                     if (infoStr != null && !infoStr.isBlank()) {
-                        addInfo(infoStr);
+                        info.add(
+                            "The conversion is complete! However, conversion failed for some "
+                                + "objects. The following files contain their identifiers. Please"
+                                + " try to fix the issues manually before restarting Tomcat. <br>");
+                        info.add(infoStr);
                     }
                 }
             }
@@ -306,12 +310,6 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
 
     private static void addError(String errorMessage) {
         error.add(errorMessage);
-    }
-
-    private static void addInfo(String infoStr) {
-        info.add("The HashStore conversion was done. However, some objects may not succeed. You "
-                     + "have to manually fix the issues.");
-        info.add(infoStr);
     }
 
     /**

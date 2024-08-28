@@ -222,11 +222,6 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             handleErrorFile(generalFile, infoBuffer);
             handleErrorFile(noChecksumInSysmetaFile, infoBuffer);
             handleErrorFile(savingChecksumFile, infoBuffer);
-            if (!infoBuffer.isEmpty()) {
-                infoBuffer.append("The conversion succeeded! However, some objects failed to be "
-                                      + "converted. The above files contain those identifiers. "
-                                      + "Please try to fix the issues.");
-            }
             this.info = infoBuffer.toString();
         } catch (IOException e) {
            logMetacat.error("Can not create the files to log the failed ids: "
@@ -356,7 +351,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         if (file != null && file.exists()) {
             try {
                 if (file.length() > 0) {
-                    buffer.append(file.getCanonicalPath() + "\n");
+                    buffer.append(file.getCanonicalPath() + "<br>");
                 } else {
                     file.delete();
                 }
