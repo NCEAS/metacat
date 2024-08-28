@@ -40,7 +40,9 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -131,7 +133,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         logMetacat.debug("It is ready for the conversion. The max future "
                                + "list length is " + maxListLength);
         StringBuffer infoBuffer = new StringBuffer();
-        HashSet<Future> futures = new HashSet<>();
+        Set<Future> futures = Collections.synchronizedSet(new HashSet<>());
         boolean append = true;
         try {
             File nonMatchingChecksumFile =
@@ -236,9 +238,11 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         if (futures != null) {
             int originalSize = futures.size();
             while (true) {
-                for (Future future : futures) {
+                Iterator<Future> iterator = futures.iterator();
+                while (iterator.hasNext()) {
+                    Future future = iterator.next();
                     if (future.isDone()) {
-                        futures.remove(future);
+                        iterator.remove();
                     }
                 }
                 if (futures.size() == originalSize) {
