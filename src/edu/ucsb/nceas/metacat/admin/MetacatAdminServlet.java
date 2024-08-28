@@ -307,7 +307,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
                 RequestUtil.setRequestErrors(request, DBAdmin.getError());
             }
-            if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin.FAILED)
+            if (hashStoreStatus != null && hashStoreStatus.equals(UpgradeStatus.FAILED.getValue())
                 && HashStoreConversionAdmin.getError().size() > 0) {
                 request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
                 RequestUtil.setRequestErrors(request, HashStoreConversionAdmin.getError());

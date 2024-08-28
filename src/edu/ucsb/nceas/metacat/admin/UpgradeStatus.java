@@ -9,11 +9,12 @@ public enum UpgradeStatus {
     PENDING(MetacatAdmin.PENDING), // Required, but hasn't started yet
     NOT_REQUIRED(MetacatAdmin.NOT_REQUIRED),
     IN_PROGRESS(MetacatAdmin.IN_PROGRESS),
-    FAILED(MetacatAdmin.FAILED),
+    FAILED("failed"),
     UNKNOWN(MetacatAdmin.UNKNOWN),
     COMPLETE(MetacatAdmin.COMPLETE);
 
     private String value;
+    private static final String FAILED_STR = "failed";
     private UpgradeStatus(String value) {
         this.value = value;
     }
@@ -37,7 +38,7 @@ public enum UpgradeStatus {
             case MetacatAdmin.COMPLETE -> {
                 return COMPLETE;
             }
-            case MetacatAdmin.FAILED -> {
+            case FAILED_STR -> {
                 return FAILED;
             }
             case MetacatAdmin.PENDING -> {

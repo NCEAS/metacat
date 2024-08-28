@@ -18,7 +18,6 @@ public abstract class MetacatAdmin {
     public final static String SUCCESS = "success";
     public final static String FAILURE = "failure";
     public final static String IN_PROGRESS = "in progress";
-    public final static String FAILED = "failed";
     public final static String COMPLETE = "complete";
     public final static String NOT_REQUIRED = "not required";
     public final static String PENDING = "pending";

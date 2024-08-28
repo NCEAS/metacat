@@ -4,6 +4,7 @@
 <%@ page import="edu.ucsb.nceas.metacat.admin.MetacatAdmin" %>
 <%@ page import="edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin" %>
 <%@ page import="edu.ucsb.nceas.metacat.admin.DBAdmin" %>
+<%@ page import="edu.ucsb.nceas.metacat.admin.UpgradeStatus" %>
 
 
 <%
@@ -36,9 +37,9 @@
 
     <%
         if(dbConfigured == null || !dbConfigured.equals(PropertyService.CONFIGURED)
-          || hashStoreStatus == null || hashStoreStatus.equals(MetacatAdmin.UNKNOWN)
-          || hashStoreStatus.equals(MetacatAdmin.PENDING)
-          || hashStoreStatus.equals(MetacatAdmin.IN_PROGRESS)) {
+          || hashStoreStatus == null || hashStoreStatus.equals(UpgradeStatus.UNKNOWN.getValue())
+          || hashStoreStatus.equals(UpgradeStatus.PENDING.getValue())
+          || hashStoreStatus.equals(UpgradeStatus.IN_PROGRESS.getValue())) {
     %>
         <p><em>Note:</em> The process of Database upgrade and Storage conversion may
         take several hours. Please do <em>NOT</em> stop Tomcat when its status is <em>in
@@ -145,8 +146,8 @@
         %>
 
         <%
-            if (hashStoreStatus != null && (hashStoreStatus.equals(MetacatAdmin.COMPLETE)
-            || hashStoreStatus.equals(MetacatAdmin.NOT_REQUIRED))) {
+            if (hashStoreStatus != null && (hashStoreStatus.equals(UpgradeStatus.COMPLETE.getValue())
+            || hashStoreStatus.equals(UpgradeStatus.NOT_REQUIRED.getValue()))) {
         %>
         <tr>
             <td class="configured-tag"><i class="icon-ok"></i><%= hashStoreStatus %></td>
@@ -154,8 +155,8 @@
             <td></td>
         </tr>
         <%
-            } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin
-            .IN_PROGRESS)) {
+            } else if (hashStoreStatus != null && hashStoreStatus.equals(UpgradeStatus
+            .IN_PROGRESS.getValue())) {
         %>
         <tr>
                     <td class="unconfigured-tag"><i class="icon-spinner"></i><%= hashStoreStatus %></td>
@@ -163,8 +164,9 @@
                     <td><b>Refresh page to update status</b></td>
         </tr>
         <%
-            } else if (hashStoreStatus != null && hashStoreStatus.equals(MetacatAdmin.FAILED)
-              && dbConfigured != null && dbConfigured.equals(PropertyService.CONFIGURED)) {
+            } else if (hashStoreStatus != null && hashStoreStatus.equals(UpgradeStatus.FAILED
+            .getValue()) && dbConfigured != null
+            && dbConfigured.equals(PropertyService.CONFIGURED)) {
         %>
         <tr>
                       <td class="unconfigured-tag"><%= hashStoreStatus %></td>
