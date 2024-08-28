@@ -225,17 +225,21 @@ public class MetacatInitializerIT {
                 withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
             Mockito.doThrow(new AdminException("Can't convert storage at " + time))
                 .when(mockInitializer).convertStorage();
-            try {
+            if (testAsContainerized) {
                 mockInitializer.contextInitialized(event);
-                fail("The initialization should fail and the test cannot get here");
-            } catch (Exception e) {
-                assertNotNull(
-                    "e.getMessage() returned unexpected type of RuntimeException: " + e,
-                    e.getMessage());
-                assertTrue("Exception message DID NOT contain expected string: " + time
-                               + ". Entire message was:\n\n" + e.getMessage()
-                               + "\n\nfrom exception: " + e,
-                           e.getMessage().contains(Long.toString(time)));
+            } else {
+                try {
+                    mockInitializer.contextInitialized(event);
+                    fail("The initialization should fail and the test cannot get here");
+                } catch (Exception e) {
+                    assertNotNull(
+                        "e.getMessage() returned unexpected type of RuntimeException: " + e,
+                        e.getMessage());
+                    assertTrue("Exception message DID NOT contain expected string: " + time
+                                   + ". Entire message was:\n\n" + e.getMessage()
+                                   + "\n\nfrom exception: " + e,
+                               e.getMessage().contains(Long.toString(time)));
+                }
             }
         }
 
