@@ -279,7 +279,7 @@
         <dependency>
             <groupId>org.apache.wicket</groupId>
             <artifactId>wicket-core</artifactId>
-            <version>7.18.0</version>
+            <version>10.1.0</version>
             <exclusions>
                 <exclusion>
                   <groupId>org.slf4j</groupId>
