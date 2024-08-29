@@ -208,9 +208,11 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                 // Shut down the executor service and wait the submitted jobs to be completed
                 executor.shutdown();
                 try {
-                    while (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                        logMetacat.debug("Waiting for the executor to complete its jobs.");
-                    }
+                    //Based on the java doc:
+                    //Blocks until all tasks have completed execution after a shutdown request,
+                    // or the timeout occurs, or the current thread is interrupted, whichever
+                    // happens first. So five days doesn't mean it will wait five days.
+                    executor.awaitTermination(5, TimeUnit.DAYS);
                 } catch (InterruptedException e) {
                     throw new RuntimeException("The waiting of completeness of the executor's "
                                                    + "jobs was interrupted: " + e.getMessage());
