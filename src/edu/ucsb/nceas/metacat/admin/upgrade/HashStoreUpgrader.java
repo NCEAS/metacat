@@ -47,6 +47,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Tao
@@ -59,20 +60,20 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private String dataPath;
     private String documentPath;
     private String info = null;
-    private static ExecutorService executor;
     private static HashStoreConverter converter;
     private ChecksumsManager checksumsManager = new ChecksumsManager();
     private File backupDir;
     private int maxListLength = MAX_ARRAY_LENGTH;
+    private static int nThreads = 1;
 
     static {
         // use a shared executor service with nThreads == one less than available processors or one
         int availableProcessors = Runtime.getRuntime().availableProcessors();
-        int nThreads = availableProcessors;
+        nThreads = availableProcessors;
         nThreads--;
         nThreads = Math.max(1, nThreads);
         logMetacat.debug("The size of the thread pool to do the conversion job is " + nThreads);
-        executor = Executors.newFixedThreadPool(nThreads);
+
     }
 
     /**
@@ -130,12 +131,13 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
 
     @Override
     public boolean upgrade() throws AdminException {
+        ExecutorService executor;
         logMetacat.debug("It is ready for the conversion. The max future "
                                + "list length is " + maxListLength);
         StringBuffer infoBuffer = new StringBuffer();
-        Set<Future> futures = Collections.synchronizedSet(new HashSet<>());
         boolean append = true;
         try {
+            executor = Executors.newFixedThreadPool(nThreads);
             File nonMatchingChecksumFile =
                 new File(backupDir, XMLNodesToFilesChecker.getFileName("nonMatchingChecksum"));
             File noSuchAlgorithmFile =
@@ -184,13 +186,6 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                     noSuchAlgorithmWriter, generalWriter,
                                                     savingChecksumTableWriter);
                                         });
-                                        futures.add(future);
-                                        if (futures.size() == maxListLength) {
-                                            //When it reaches the max length, we need to remove
-                                            // the complete futures from the set. So the set can
-                                            // be reused again.
-                                            removeCompleteFuture(futures);
-                                        }
                                     } else {
                                         logMetacat.error("There is no checksum info for id " + id +
                                                             " in the systemmetadata and Metacat "
@@ -210,8 +205,16 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                          + e.getMessage());
                     throw new AdminException(e.getMessage());
                 }
-                // if there are still some futures in the set, we need check and block
-                drainAllFutures(futures);
+                // Shut down the executor service and wait the submitted jobs to be completed
+                executor.shutdown();
+                try {
+                    while (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                        logMetacat.debug("Waiting for the executor to complete its jobs.");
+                    }
+                } catch (InterruptedException e) {
+                    throw new RuntimeException("The waiting of completeness of the executor's "
+                                                   + "jobs was interrupted: " + e.getMessage());
+                }
             }
             handleErrorFile(nonMatchingChecksumFile, infoBuffer);
             handleErrorFile(noSuchAlgorithmFile, infoBuffer);
@@ -223,60 +226,12 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
            logMetacat.error("Can not create the files to log the failed ids: "
                                 + e.getMessage());
            throw new AdminException(e.getMessage());
+        } catch (RuntimeException e) {
+            logMetacat.error("There was a runtime exception: "
+                                 + e.getMessage());
+            throw new AdminException(e.getMessage());
         }
         return true;
-    }
-
-    /**
-     * This method removes the Future objects from a set which have the done status.
-     * So the free space can be used again. If it cannot remove any one, it will wait and try
-     * again until some space was freed up.
-     * @param futures  the set which hold the futures to be checked
-     */
-    protected void removeCompleteFuture(Set<Future> futures) {
-        if (futures != null) {
-            int originalSize = futures.size();
-            while (true) {
-                Iterator<Future> iterator = futures.iterator();
-                while (iterator.hasNext()) {
-                    Future future = iterator.next();
-                    if (future.isDone()) {
-                        iterator.remove();
-                    }
-                }
-                if (futures.size() == originalSize) {
-                    logMetacat.debug("Metacat could not remove any complete futures and will wait "
-                                         + "for a while and try again.");
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        logMetacat.warn("Waiting future is interrupted " + e.getMessage());
-                    }
-                } else {
-                    logMetacat.debug("Metacat removed some complete futures from the set.");
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
-     * Make sure that all futures in the given set is done.
-     * @param futures  the set of futures will be checked
-     */
-    protected void drainAllFutures(Set<Future> futures) {
-        if (futures != null && futures.size() > 0 ) {
-            logMetacat.debug("Metacat will make sure all of the leftover futures being done");
-            for (Future future : futures) {
-                while (!future.isDone()) {
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        logMetacat.warn("Waiting future is interrupted " + e.getMessage());
-                    }
-                }
-            }
-        }
     }
 
     /**
