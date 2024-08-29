@@ -83,10 +83,10 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
                     HashStoreUpgrader upgrader = (HashStoreUpgrader) utility;
                     String infoStr = upgrader.getInfo();
                     if (infoStr != null && !infoStr.isBlank()) {
-                        info.add(
-                            "The conversion is complete! However, conversion failed for some "
-                                + "objects. The following files contain their identifiers. Please"
-                                + " try to fix the issues manually before restarting Tomcat. <br>");
+                        info.add("The conversion is complete! However, some of your data could "
+                                     + "not be converted, because it was in an inconsistent state "
+                                     + "before the process started. The following files contain "
+                                     + "the relevant identifiers and their associated errors.<br>");
                         info.add(infoStr);
                     }
                 }
