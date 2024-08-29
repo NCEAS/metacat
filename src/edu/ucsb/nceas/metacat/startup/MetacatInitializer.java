@@ -89,14 +89,13 @@ public class MetacatInitializer implements ServletContextListener{
             // Check to see if the user has requested to bypass configuration
             // (dev option) and check see if metacat has been configured.
             // If both are false then stop the initialization
-            if (!ConfigurationUtil.bypassConfiguration() &&
-                                    !ConfigurationUtil.isMetacatConfigured()) {
+            if (!Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"))
+                && !ConfigurationUtil.bypassConfiguration()
+                && !ConfigurationUtil.isMetacatConfigured()) {
                 if (PropertyService.arePropertiesConfigured()) {
                     // Those methods are for the admin pages
                     DBConnectionPool.getInstance();
-                    if (!Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"))) {
-                        convertStorage();
-                    }
+                    convertStorage();
                 }
                 fullInit = false;
                 return;
