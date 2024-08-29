@@ -169,7 +169,6 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                     SystemMetadata sysMeta =
                                         SystemMetadataManager.getInstance().get(pid);
                                     Path path = resolve(sysMeta); // it may be null
-                                    InputStream sysMetaInput = convertSystemMetadata(sysMeta);
                                     if (sysMeta.getChecksum() != null) {
                                         String checksum = sysMeta.getChecksum().getValue();
                                         String algorithm =
@@ -180,7 +179,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                              + " and file path(may be null): "
                                                              + path.toString());
                                         Future<?> future = executor.submit(() -> {
-                                            convert(path, finalId, sysMetaInput, checksum,
+                                            convert(path, finalId, sysMeta, checksum,
                                                     algorithm, nonMatchingChecksumWriter,
                                                     noSuchAlgorithmWriter, generalWriter,
                                                     savingChecksumTableWriter);
@@ -391,14 +390,16 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         }
     }
 
-    private void convert(Path path, String finalId, InputStream sysMetaInput, String checksum,
+    private void convert(Path path, String finalId, SystemMetadata sysMeta, String checksum,
                          String algorithm, BufferedWriter nonMatchingChecksumWriter,
                          BufferedWriter noSuchAlgorithmWriter,
                          BufferedWriter generalWriter, BufferedWriter savingChecksumTableWriter) {
         ObjectMetadata metadata = null;
         try {
-            metadata =
-                converter.convert(path, finalId, sysMetaInput, checksum, algorithm);
+            try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
+                metadata =
+                    converter.convert(path, finalId, sysMetaInput, checksum, algorithm);
+            }
         } catch (NonMatchingChecksumException e) {
             logMetacat.error("Cannot move the object " + finalId + "to hashstore since "
                                 + e.getMessage());
