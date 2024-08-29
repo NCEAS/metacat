@@ -40,10 +40,6 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -55,7 +51,7 @@ import java.util.concurrent.TimeUnit;
  * /var/metacat/data) into the HashStore storage.
  */
 public class HashStoreUpgrader implements UpgradeUtilityInterface {
-    private final static int MAX_ARRAY_LENGTH = 10000;
+    private final static int TIME_OUT = 5;
     private static Log logMetacat = LogFactory.getLog(HashStoreUpgrader.class);
     private String dataPath;
     private String documentPath;
@@ -63,7 +59,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static HashStoreConverter converter;
     private ChecksumsManager checksumsManager = new ChecksumsManager();
     private File backupDir;
-    private int maxListLength = MAX_ARRAY_LENGTH;
+    private static int timeout = TIME_OUT;
     private static int nThreads = 1;
 
     static {
@@ -114,26 +110,25 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         if (!backupDir.exists()) {
             backupDir.mkdirs();
         }
-        String lengthStr = null;
+        String timeoutStr = null;
         try {
-            lengthStr = PropertyService
-                            .getProperty("storage.hashstore.converterArrayLength");
-            maxListLength = Integer.parseInt(lengthStr);
+            timeoutStr = PropertyService.getProperty("storage.hashstore.converterTimeout");
+            timeout = Integer.parseInt(timeoutStr);
         } catch (PropertyNotFoundException e) {
-            logMetacat.debug("Metacat doesn't set the array length and it uses the default one - "
-                                 + MAX_ARRAY_LENGTH);
+            logMetacat.debug("Metacat doesn't set timeout and it uses the default one - "
+                                 + TIME_OUT);
         } catch (NumberFormatException e) {
-            logMetacat.debug(
-                "Metacat sets wrong array length " + lengthStr + " and it uses the default one - "
-                    + MAX_ARRAY_LENGTH);
+            logMetacat.warn(
+                "Metacat sets wrong timeout " + timeoutStr + ", so it uses the default one - "
+                    + TIME_OUT);
         }
     }
 
     @Override
     public boolean upgrade() throws AdminException {
         ExecutorService executor;
-        logMetacat.debug("It is ready for the conversion. The max future "
-                               + "list length is " + maxListLength);
+        logMetacat.debug("It is ready for the conversion. The timeout for the executor service is "
+                             + timeout);
         StringBuffer infoBuffer = new StringBuffer();
         boolean append = true;
         try {
@@ -212,7 +207,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                     //Blocks until all tasks have completed execution after a shutdown request,
                     // or the timeout occurs, or the current thread is interrupted, whichever
                     // happens first. So five days doesn't mean it will wait five days.
-                    executor.awaitTermination(5, TimeUnit.DAYS);
+                    executor.awaitTermination(timeout, TimeUnit.DAYS);
                 } catch (InterruptedException e) {
                     throw new RuntimeException("The waiting of completeness of the executor's "
                                                    + "jobs was interrupted: " + e.getMessage());
