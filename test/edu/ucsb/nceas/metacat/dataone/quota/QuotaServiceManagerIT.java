@@ -532,7 +532,9 @@ public class QuotaServiceManagerIT {
         sid.setValue(sidStr);
         sysmeta.setSeriesId(sid);
         object.close();
+        SystemMetadataManager.lock(guid);
         SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(guid);
         //Check if we have enough portal quota space in the remote server
         List<Quota> quotas = BookKeeperClient.getInstance()
             .listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
@@ -797,7 +799,9 @@ public class QuotaServiceManagerIT {
         sid.setValue(sidStr);
         sysmeta.setSeriesId(sid);
         object.close();
+        SystemMetadataManager.lock(guid);
         SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(guid);
         //Check if we have enough portal quota space in the remote server
         List<Quota> quotas = BookKeeperClient.getInstance()
             .listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
@@ -1641,7 +1645,9 @@ public class QuotaServiceManagerIT {
             sid.setValue(sidStr);
             sysmeta.setSeriesId(sid);
             object.close();
+            SystemMetadataManager.lock(guid);
             SystemMetadataManager.getInstance().store(sysmeta);
+            SystemMetadataManager.unLock(guid);
             QuotaServiceManager.getInstance()
                 .enforce(SUBSCRIBERWITHOUTENOUGHQUOTA, submitter, sysmeta,
                          QuotaServiceManager.CREATEMETHOD);
@@ -1677,7 +1683,9 @@ public class QuotaServiceManagerIT {
             sid.setValue(sidStr);
             sysmeta.setSeriesId(sid);
             object.close();
+            SystemMetadataManager.lock(guid);
             SystemMetadataManager.getInstance().store(sysmeta);
+            SystemMetadataManager.unLock(guid);
             QuotaServiceManager.getInstance()
                 .enforce(SUBSCRIBERWITHOUTENOUGHQUOTA, submitter, sysmeta,
                          QuotaServiceManager.CREATEMETHOD);
@@ -1713,7 +1721,9 @@ public class QuotaServiceManagerIT {
             sid.setValue(sidStr);
             sysmeta.setSeriesId(sid);
             object.close();
+            SystemMetadataManager.lock(guid);
             SystemMetadataManager.getInstance().store(sysmeta);
+            SystemMetadataManager.unLock(guid);
             QuotaServiceManager.getInstance()
                 .enforce(SUBSCRIBERWITHOUTENOUGHQUOTA, submitter, sysmeta,
                          QuotaServiceManager.CREATEMETHOD);

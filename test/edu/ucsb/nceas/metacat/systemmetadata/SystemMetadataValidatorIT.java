@@ -57,7 +57,9 @@ public class SystemMetadataValidatorIT {
         SystemMetadataValidator validator = new SystemMetadataValidator();
         boolean hasLatestVersion = validator.hasLatestVersion(sysmeta);
         assertTrue(hasLatestVersion == true);
+        SystemMetadataManager.lock(id);
         SystemMetadataManager.getInstance().store(sysmeta);
+        SystemMetadataManager.unLock(id);
 
         //The originalDate was set by the client. However, base on the definition,
         //the modification should be set by MN. So there is slight difference
@@ -119,7 +121,9 @@ public class SystemMetadataValidatorIT {
         }
 
         //remove the system metadata
+        SystemMetadataManager.lock(id);
         SystemMetadataManager.getInstance().delete(id);
+        SystemMetadataManager.unLock(id);
         //remove the mapping
         im.removeMapping(guid, docid);
     }

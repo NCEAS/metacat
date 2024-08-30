@@ -162,6 +162,10 @@
                     <groupId>org.jibx</groupId>
                     <artifactId>maven-jibx-plugin</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-bom</artifactId>
+                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -431,6 +435,18 @@
                     <groupId>org.hibernate.validator</groupId>
                     <artifactId>hibernate-validator</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.dataformat</groupId>
+                    <artifactId>jackson-dataformat-yaml</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                 </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                 </exclusion>
             </exclusions>
         </dependency>
     <dependency>
@@ -443,6 +459,20 @@
             <groupId>com.github.jsonld-java</groupId>
             <artifactId>jsonld-java</artifactId>
             <version>0.13.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.dataformat</groupId>
+                    <artifactId>jackson-dataformat-yaml</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                 </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                 </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>edu.ucsb.nceas</groupId>
@@ -476,6 +506,11 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dataone</groupId>
+            <artifactId>hashstore</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>

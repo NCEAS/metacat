@@ -315,14 +315,27 @@
         </description>
         <helpFile>docs/metacat-properties.html#application-sitepropertiesdir</helpFile>
     </config>
+    <config>
+        <key>storage.hashstore.rootDirectory</key>
+        <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Object Storage Root Path</label>
+        <group>4</group>
+        <index>6</index>
+        <description>
+            Where to store the Metacat objects (data and scientific metadata). This should be
+            somewhere outside the 'Deploy Location'.
+        </description>
+        <helpFile>docs/metacat-properties.html#application-sitepropertiesdir</helpFile>
+    </config>
 
     <config>
         <key>application.datafilepath</key>
         <label>Data File Path</label>
         <group>4</group>
-        <index>6</index>
+        <index>7</index>
         <description>
-            Where to store data. This should be somewhere outside the 'Deploy Location'
+            Where to store data. This is an obsoleted field. If this is a new fresh installation,
+            you do not need to specify it. If this is an upgrade, you should put the value that
+            the previous Metacat instance used.
         </description>
         <helpFile>docs/metacat-properties.html#application-datafilepath</helpFile>
     </config>
@@ -331,9 +344,11 @@
         <key>application.inlinedatafilepath</key>
         <label>Inline Data File Path</label>
         <group>4</group>
-        <index>7</index>
+        <index>8</index>
         <description>
-            Where to store inline data. This should be somewhere outside the 'Deploy Location'.
+            Where to store inline data. This is an obsoleted field. If this is a new fresh
+            installation, you do not need to specify it. If this is an upgrade, you should put the
+            value that the previous Metacatinstance used.
         </description>
         <helpFile>docs/metacat-properties.html#application-inlinedatafilepath</helpFile>
     </config>
@@ -342,10 +357,11 @@
         <key>application.documentfilepath</key>
         <label>Document File Path</label>
         <group>4</group>
-        <index>8</index>
+        <index>9</index>
         <description>
-            Where to store metadata documents. This should be somewhere outside
-            the 'Deploy Location'
+            Where to store metadata documents. This is an obsoleted field. If this is a new fresh
+            installation, you do not need to specify it. If this is an upgrade, you should put the
+            value that the previous Metacat instance used.
         </description>
         <helpFile>docs/metacat-properties.html#application-documentfilepath</helpFile>
     </config>
@@ -354,7 +370,7 @@
         <key>application.tempDir</key>
         <label>Temporary File Path</label>
         <group>4</group>
-        <index>9</index>
+        <index>10</index>
         <description>
             Where to store temporary documents. This is primarily used by
             the data registry code. &lt;em&gt; Note: this must be
@@ -368,7 +384,7 @@
         <key>replication.logdir</key>
         <label>Replication Log Directory</label>
         <group>4</group>
-        <index>10</index>
+        <index>11</index>
         <description>
             The directory where replication log should be located.
         </description>
@@ -379,7 +395,7 @@
         <key>index.context</key>
         <label>Index Context</label>
         <group>4</group>
-        <index>11</index>
+        <index>12</index>
         <description>
             The context name for the deployed Metacat index webapp.
         </description>
@@ -390,7 +406,7 @@
         <key>ui.context</key>
         <label>UI Context</label>
         <group>4</group>
-        <index>12</index>
+        <index>13</index>
         <description>
             The context name for the deployed Metacat UI webapp.
         </description>
@@ -401,7 +417,7 @@
         <key>cn.server.publiccert.filename</key>
         <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Token Verification Certificates</label>
         <group>4</group>
-        <index>13</index>
+        <index>14</index>
         <description>
             Semicolon-separated list of paths to certificate files, each containing a single public
             key (not a certificate chain). These will be used to verify incoming request jwt
@@ -414,7 +430,7 @@
         <key>dataone.nodeToken.file</key>
         <label>&lt;span class="new-badge"&gt;New&lt;/span&gt;Admin Token Path</label>
         <group>4</group>
-        <index>14</index>
+        <index>15</index>
         <description>
             The path to the admin jwt token that will be used in dataone-indexer to access the
             private objects' system metadata.

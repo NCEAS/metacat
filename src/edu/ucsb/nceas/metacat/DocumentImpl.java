@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,7 +23,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -30,6 +30,7 @@ import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -537,62 +538,20 @@ public class DocumentImpl {
 
     }
 
-
-
     /**
-     * Deletes a doc or data file from the filesystem using the accession number.
+     * Deletes a doc or data file from the filesystem using identifier.
      *
-     * @param accNumber
-     * @param isXml
-     * @throws McdbException
+     * @param id  the identifier of the object which will deleted
+     * @throws InterruptedException
+     * @throws IOException
+     * @throws ServiceFailure
+     * @throws NoSuchAlgorithmException
+     * @throws IllegalArgumentException
      */
-    public static void deleteFromFileSystem(String accNumber, boolean isXml) throws McdbException {
-
-        // must have an id
-        if (accNumber == null) {
-            throw new McdbException("Could not delete file.  Accession Number number is null");
-        }
-
-        // remove the document from disk
-        String documentPath = null;
-
-        // get the correct location on disk
-        documentPath = getFilePath(accNumber, isXml);
-        // delete it if it exists
-        if (accNumber != null && FileUtil.getFileStatus(documentPath) != FileUtil.DOES_NOT_EXIST) {
-            try {
-                FileUtil.deleteFile(documentPath);
-            } catch (IOException ioe) {
-                throw new McdbException(
-                    "Could not delete file: " + documentPath + " : " + ioe.getMessage());
-            }
-        }
-
-    }
-
-    private static String getFilePath(String accNumber, boolean isXml) throws McdbException {
-        if (accNumber == null || accNumber.trim().equals("")) {
-            throw new McdbException(
-                "Could not get the file path since the Accession Number number is null");
-        }
-        String documentPath = null;
-        try {
-            String documentDir = null;
-
-            // get the correct location on disk
-            if (isXml) {
-                documentDir = PropertyService.getProperty("application.documentfilepath");
-            } else {
-                documentDir = PropertyService.getProperty("application.datafilepath");
-            }
-            documentPath = documentDir + FileUtil.getFS() + accNumber;
-            return documentPath;
-
-        } catch (PropertyNotFoundException pnfe) {
-            throw new McdbException(
-                pnfe.getClass().getName() + ": Could not delete file because: " + documentPath
-                    + " : " + pnfe.getMessage());
-        }
+    protected static void deleteFromFileSystem(Identifier id) throws IllegalArgumentException,
+                                                    NoSuchAlgorithmException, ServiceFailure,
+                                                    IOException, InterruptedException {
+        MetacatInitializer.getStorage().deleteObject(id);
     }
 
     /**
@@ -879,7 +838,7 @@ public class DocumentImpl {
         }
         DBConnection conn = null;
         int serialNumber = -1;
-        boolean isXML = true;
+
         boolean inRevisionTable = false;
         double start = System.currentTimeMillis() / 1000;
         try {
@@ -936,9 +895,6 @@ public class DocumentImpl {
                 }
             }
             logMetacat.info("DocumentImpl.delete - the deleting doc type is " + type + "...");
-            if (type != null && type.trim().equals("BIN")) {
-                isXML = false;
-            }
             logMetacat.debug("DocumentImpl.delete - Start deleting doc " + docid + "...");
             try {
                 conn.setAutoCommit(false);
@@ -970,7 +926,6 @@ public class DocumentImpl {
                 if (sysMeta != null) {
                     SystemMetadataManager.getInstance().delete(guid, conn);
                 }
-                deleteFromFileSystem(accnum, isXML);
                 // only commit if all of this was successful
                 conn.commit();
                 try {
@@ -978,6 +933,16 @@ public class DocumentImpl {
                 } catch (Exception ee) {
                     logMetacat.error("DocumentImpl.delete - Metacat failed to submit index task: "
                                                                            + ee.getMessage());
+                }
+                // This line will delete system metadata in hastore as well
+                try {
+                    deleteFromFileSystem(guid);
+                } catch (Exception ee) {
+                    logMetacat.error("Can not delete the object or the associated system "
+                                         + "metadata from Hashstore for object " + guid.getValue()
+                                         + " since " + ee.getMessage() + ", even though we "
+                                         + "successfully removed it from the Metacat database. You"
+                                         + " have to manually remove them from Hashstore.");
                 }
             } catch (Exception e) {
                 // rollback the delete if there was an error
@@ -1016,6 +981,7 @@ public class DocumentImpl {
      * Archive an object. Set the archived flag true, also move the object from the xml_documents
      * table to the xml_revisions table if it exists in the xml_documents table.
      * This method will submit the reindex task as well.
+     * Note: this method doesn't lock identifiers for storing the system metadata
      * @param accnum  the local id (including the revision) will be applied.
      * @param guid  the dataone identifier associated with the given accnum
      * @param user  the identity of operator
@@ -1049,6 +1015,12 @@ public class DocumentImpl {
             // Check if the document exists.
             //this only archives a document from xml_documents to xml_revisions
             logMetacat.debug("DocumentImp.archive - archive the document " + accnum);
+            SystemMetadata backup = SystemMetadataManager.getInstance().get(guid);
+            if (backup == null) {
+                throw new InvalidRequest(
+                    "0000", "Can't archive this object " + guid.getValue()
+                    + " since the system metadata can't be found");
+            }
             try {
                 conn.setAutoCommit(false);
                 // Copy the record to the xml_revisions table if it exists in
@@ -1060,6 +1032,10 @@ public class DocumentImpl {
                     sysMeta.setArchived(true);
                     SystemMetadataManager.getInstance().store(sysMeta, changeDateModified,
                                                                 conn, sysMetaCheck);
+                } else {
+                    throw new InvalidRequest(
+                        "0000", "Can't archive this object " + guid.getValue()
+                        + " since the system metadata can't be found");
                 }
                 // only commit if all of this was successful
                 conn.commit();
@@ -1072,19 +1048,13 @@ public class DocumentImpl {
                 }
             } catch (Exception e) {
                 // rollback the archive action if there was an error
-                if (conn != null) {
-                    try {
-                        conn.rollback();
-                    } catch (SQLException sqe) {
-                        throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
-                                                        + guid.getValue() + " since "+ e.getMessage()
-                                                        + " Also the database cannot roll back since "
-                                                        + sqe.getMessage());
-                    }
-                }
-                logMetacat.error("DocumentImpl.archive -  Error: " + e.getMessage());
-                throw new ServiceFailure("0000", "DocumentImpl.archive - failed for "
-                                                + guid.getValue() + " since " + e.getMessage());
+                StringBuffer error = new StringBuffer();
+                error.append("DocumentImpl.archive - failed for ");
+                error.append(guid.getValue());
+                String errorString = SystemMetadataManager.storeRollBack(guid, e, conn, backup);
+                error.append(errorString);
+                logMetacat.error(error.toString());
+                throw new ServiceFailure("0000", errorString);
             }
         } finally {
             if (conn != null) {
@@ -1102,29 +1072,6 @@ public class DocumentImpl {
     }
 
 
-    /**
-     * Check for "WRITE" permission on @docid for @user and/or @groups from DB connection
-     */
-    public static boolean hasWritePermission(String user, String[] groups, String docid)
-        throws SQLException, Exception {
-        // Check for WRITE permission on @docid for @user and/or @groups
-        PermissionController controller = new PermissionController(docid);
-        return controller.hasPermission(user, groups, AccessControlInterface.WRITESTRING);
-    }
-
-
-    /**
-     * Check for "ALL" or "CHMOD" permission on @docid for @user and/or @groups from DB connection
-     */
-    public static boolean hasAllPermission(String user, String[] groups, String docid)
-        throws SQLException, Exception {
-        // Check for either ALL or CHMOD permission on @docid for @user and/or @groups
-        PermissionController controller = new PermissionController(docid);
-        boolean hasAll = controller.hasPermission(user, groups, AccessControlInterface.ALLSTRING);
-        boolean hasChmod =
-            controller.hasPermission(user, groups, AccessControlInterface.CHMODSTRING);
-        return hasAll || hasChmod;
-    }
 
     /**
      * Set up the parser handlers for writing the document to the database

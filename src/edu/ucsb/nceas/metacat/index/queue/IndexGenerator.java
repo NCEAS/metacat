@@ -53,8 +53,6 @@ public class IndexGenerator extends BaseService {
     public final static int LOW_PRIORITY = 1; 
     //The header name in the message to store the identifier
     private final static String HEADER_ID = "id"; 
-    //The header name in the message to store the path of the object 
-    private final static String HEADER_PATH = "path"; 
     //The header name in the message to store the index type
     private final static String HEADER_INDEX_TYPE = "index_type"; 
     private final static String EXCHANGE_NAME = "dataone-index";
@@ -253,15 +251,6 @@ public class IndexGenerator extends BaseService {
             Map<String, Object> headers = new HashMap<String, Object>();
             headers.put(HEADER_ID, id.getValue());
             headers.put(HEADER_INDEX_TYPE, index_type);
-            String filePath = null;
-            if (!index_type.equals(DELETE_INDEX_TYPE)) {
-                //we don't need the file path from the delete type since the 
-                //path was deleted.
-                filePath = getFilePath(id);
-            }
-            if (filePath != null) {
-                headers.put(HEADER_PATH, filePath);
-            }
             AMQP.BasicProperties basicProperties =
                      new AMQP.BasicProperties.Builder()
                     .contentType("text/plain")
@@ -274,7 +263,6 @@ public class IndexGenerator extends BaseService {
             logMetacat.info("IndexGenerator.publish - The index task with the "
                             + "object identifier " + id.getValue()
                             + ", the index type " + index_type
-                            + ", the file path " + filePath
                             + " (null means Metacat doesn't have the object), "
                             + " the priority " + priority
                             + " was push into RabbitMQ with the exchange name "
@@ -313,47 +301,7 @@ public class IndexGenerator extends BaseService {
         event.setIdentifier(id);
         IndexEventDAO.getInstance().add(event);
     }
-    
-    /**
-     * Get the relative file path for the identifier. 
-     * This relative path is based on application.datafilepath (for data files) 
-     * or application.documentfilepath (for document files)
-     * For example, autogen.1.1 is the docid for guid foo.1 and it is a metadata 
-     * object. The metadata objects are stored in the path 
-     * /var/metacat/document/autogen.1.1. 
-     * Since the application.documentfilepath is "/var/metacat/document", 
-     * the relative file path will be autogen.1.1.
-     * Note, the value can be null since cn doesn't store data objects.
-     * @param id  the guid of object
-     * @return  the relative file path
-     * @throws ServiceException
-     */
-    protected static String getFilePath(Identifier id) throws ServiceException {
-        String path = null;
-        if (id == null || id.getValue() == null 
-                || id.getValue().trim().equals("")) {
-            throw new ServiceException("IndexGenerator.getFilePath - the " 
-                                       + "identifier can't be null or blank.");
-        }
-        String docid = null;
-        try {
-            docid = IdentifierManager.getInstance().getLocalId(id.getValue());
-        } catch (McdbDocNotFoundException e) {
-            logMetacat.info("IndexGenerator.getFilePath - Metacat can't find " 
-                            + "the docid for the identifier " + id.getValue() 
-                            + ". This is possible since CN doesn't harvest data" 
-                            + " objects at all.");
-        } catch (SQLException e) {
-           throw new ServiceException(e.getMessage());
-        }
-        if (docid != null) {
-            path = docid;
-        }
-        logMetacat.debug("IndexGenerator.getFilePath - The relative file path " 
-                      + "for the identifier " + id.getValue() + " is " + path);
-        return path;
-    }
-    
+
     /**
      * This service is not refreshable
      */
