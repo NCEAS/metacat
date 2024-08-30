@@ -42,7 +42,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  * /var/metacat/data) into the HashStore storage.
  */
 public class HashStoreUpgrader implements UpgradeUtilityInterface {
-    private final static int TIME_OUT = 5;
+    private final static int TIME_OUT_DAYS = 5;
     private static Log logMetacat = LogFactory.getLog(HashStoreUpgrader.class);
     private String dataPath;
     private String documentPath;
@@ -59,7 +58,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static HashStoreConverter converter;
     private ChecksumsManager checksumsManager = new ChecksumsManager();
     private File backupDir;
-    private static int timeout = TIME_OUT;
+    private static int timeout = TIME_OUT_DAYS;
     private static int nThreads = 1;
 
     static {
@@ -112,15 +111,15 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         }
         String timeoutStr = null;
         try {
-            timeoutStr = PropertyService.getProperty("storage.hashstore.converterTimeout");
+            timeoutStr = PropertyService.getProperty("storage.hashstore.converterTimeoutDays");
             timeout = Integer.parseInt(timeoutStr);
         } catch (PropertyNotFoundException e) {
             logMetacat.debug("Metacat doesn't set timeout and it uses the default one - "
-                                 + TIME_OUT);
+                                 + TIME_OUT_DAYS);
         } catch (NumberFormatException e) {
             logMetacat.warn(
                 "Metacat sets wrong timeout " + timeoutStr + ", so it uses the default one - "
-                    + TIME_OUT);
+                    + TIME_OUT_DAYS);
         }
     }
 
@@ -175,7 +174,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                              + checksum + " algorithm: " + algorithm
                                                              + " and file path(may be null): "
                                                              + path.toString());
-                                        Future<?> future = executor.submit(() -> {
+                                        executor.submit(() -> {
                                             convert(path, finalId, sysMeta, checksum,
                                                     algorithm, nonMatchingChecksumWriter,
                                                     noSuchAlgorithmWriter, generalWriter,
@@ -347,11 +346,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                          BufferedWriter noSuchAlgorithmWriter,
                          BufferedWriter generalWriter, BufferedWriter savingChecksumTableWriter) {
         ObjectMetadata metadata = null;
-        try {
-            try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
-                metadata =
-                    converter.convert(path, finalId, sysMetaInput, checksum, algorithm);
-            }
+        try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
+            metadata = converter.convert(path, finalId, sysMetaInput, checksum, algorithm);
         } catch (NonMatchingChecksumException e) {
             logMetacat.error("Cannot move the object " + finalId + "to hashstore since "
                                 + e.getMessage());
