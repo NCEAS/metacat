@@ -426,7 +426,7 @@ metacat:
   ##
   ##   https://<server.name>/<application.context>/sitemaps/sitemap_index.xml
   ##
-  ## ...and creates a robotx.txt file that points to it (see .Values.robots).
+  ## ...and creates a robots.txt file that points to it (see .Values.robots).
   ##
   ## The index file contains a list of sitemap.xml files. Each listing is of the form:
   ##
