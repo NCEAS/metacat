@@ -40,8 +40,13 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,6 +56,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private final static int TIME_OUT_DAYS = 5;
+    private final static int MAX_SET_SIZE = 10000;
     private static Log logMetacat = LogFactory.getLog(HashStoreUpgrader.class);
     private String dataPath;
     private String documentPath;
@@ -59,6 +65,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private ChecksumsManager checksumsManager = new ChecksumsManager();
     private File backupDir;
     private static int timeout = TIME_OUT_DAYS;
+    private int maxSetSize = MAX_SET_SIZE;
     private static int nThreads = 1;
 
     static {
@@ -121,15 +128,28 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                 "Metacat sets wrong timeout " + timeoutStr + ", so it uses the default one - "
                     + TIME_OUT_DAYS);
         }
+        String sizeStr = null;
+        try {
+            sizeStr = PropertyService.getProperty("storage.hashstore.converterSetSize");
+            maxSetSize = Integer.parseInt(sizeStr);
+        } catch (PropertyNotFoundException e) {
+            logMetacat.debug("Metacat doesn't set the set size and it uses the default one - "
+                                 + MAX_SET_SIZE);
+        } catch (NumberFormatException e) {
+            logMetacat.debug(
+                "Metacat sets a wrong set size " + sizeStr + " and it uses the default one - "
+                    + MAX_SET_SIZE);
+        }
     }
 
     @Override
     public boolean upgrade() throws AdminException {
         ExecutorService executor;
         logMetacat.debug("It is ready for the conversion. The timeout for the executor service is "
-                             + timeout);
+                             + timeout +" and the max size of the future set is " + maxSetSize);
         StringBuffer infoBuffer = new StringBuffer();
         boolean append = true;
+        Set<Future> futures = Collections.synchronizedSet(new HashSet<>());
         try {
             executor = Executors.newFixedThreadPool(nThreads);
             File nonMatchingChecksumFile =
@@ -174,12 +194,20 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                              + checksum + " algorithm: " + algorithm
                                                              + " and file path(may be null): "
                                                              + path.toString());
-                                        executor.submit(() -> {
+                                        Future<?> future = executor.submit(() -> {
                                             convert(path, finalId, sysMeta, checksum,
                                                     algorithm, nonMatchingChecksumWriter,
                                                     noSuchAlgorithmWriter, generalWriter,
                                                     savingChecksumTableWriter);
                                         });
+                                        futures.add(future);
+                                        if (futures.size() >= maxSetSize) {
+                                            //When it reaches the max size, we need to remove
+                                            // the complete futures from the set. So the set can
+                                            // be reused again. So we can avoid the issue of out of
+                                            // memory.
+                                            removeCompleteFuture(futures);
+                                        }
                                     } else {
                                         logMetacat.error("There is no checksum info for id " + id +
                                                             " in the systemmetadata and Metacat "
@@ -229,6 +257,42 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         }
         return true;
     }
+
+    /**
+     * This method removes the Future objects from a set which have the done status.
+     * So the free space can be used again. If it cannot remove any one, it will wait and try
+     * again until some space was freed up.
+     * @param futures  the set which hold the futures to be checked
+     */
+    protected void removeCompleteFuture(Set<Future> futures) {
+        if (futures != null) {
+            int originalSize = futures.size();
+            if (originalSize > 0) {
+                while (true) {
+                    Iterator<Future> iterator = futures.iterator();
+                    while (iterator.hasNext()) {
+                        Future future = iterator.next();
+                        if (future.isDone()) {
+                            iterator.remove();
+                        }
+                    }
+                    if (futures.size() >= originalSize) {
+                        logMetacat.debug("Metacat could not remove any complete futures and will "
+                                             + "wait for a while and try again.");
+                        try {
+                            Thread.sleep(800);
+                        } catch (InterruptedException e) {
+                            logMetacat.warn("Waiting future is interrupted " + e.getMessage());
+                        }
+                    } else {
+                        logMetacat.debug("Metacat removed some complete futures from the set.");
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * Run a query to select the list of candidate pid from the systemmetadata which will be
