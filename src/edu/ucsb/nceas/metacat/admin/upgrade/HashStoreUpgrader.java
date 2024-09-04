@@ -42,7 +42,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -269,13 +268,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             int originalSize = futures.size();
             if (originalSize > 0) {
                 while (true) {
-                    Iterator<Future> iterator = futures.iterator();
-                    while (iterator.hasNext()) {
-                        Future future = iterator.next();
-                        if (future.isDone()) {
-                            iterator.remove();
-                        }
-                    }
+                    futures.removeIf(Future::isDone);
                     if (futures.size() >= originalSize) {
                         logMetacat.debug("Metacat could not remove any complete futures and will "
                                              + "wait for a while and try again.");
