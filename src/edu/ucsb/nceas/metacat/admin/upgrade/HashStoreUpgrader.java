@@ -146,6 +146,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         ExecutorService executor;
         logMetacat.debug("It is ready for the conversion. The timeout for the executor service is "
                              + timeout +" and the max size of the future set is " + maxSetSize);
+        long start = System.currentTimeMillis();
         StringBuffer infoBuffer = new StringBuffer();
         boolean append = true;
         Set<Future> futures = Collections.synchronizedSet(new HashSet<>());
@@ -245,6 +246,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             handleErrorFile(noChecksumInSysmetaFile, infoBuffer);
             handleErrorFile(savingChecksumFile, infoBuffer);
             this.info = infoBuffer.toString();
+            long end = System.currentTimeMillis();
+            logMetacat.info("The conversion took " + (end - start)/60000 + " minutes.");
         } catch (IOException e) {
            logMetacat.error("Can not create the files to log the failed ids: "
                                 + e.getMessage());
@@ -267,13 +270,17 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         if (futures != null) {
             int originalSize = futures.size();
             if (originalSize > 0) {
-                while (true) {
+                // A 100G file takes about 16 minutes to be converted. 7200 X 1 = 7200 seconds =
+                // 2 hours can handle a 800G file. Even though the method doesn't remove any
+                // futures after the max tries, it only allows to submit a task every 2 hours.
+                // This is not a big deal.
+                for (int i =0; i < 7200; i++) {
                     futures.removeIf(Future::isDone);
                     if (futures.size() >= originalSize) {
                         logMetacat.debug("Metacat could not remove any complete futures and will "
                                              + "wait for a while and try again.");
                         try {
-                            Thread.sleep(800);
+                            Thread.sleep(1000);
                         } catch (InterruptedException e) {
                             logMetacat.warn("Waiting future is interrupted " + e.getMessage());
                         }
