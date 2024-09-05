@@ -270,11 +270,11 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         if (futures != null) {
             int originalSize = futures.size();
             if (originalSize > 0) {
-                // A 100G file takes about 16 minutes to be converted. 7200 X 1 = 7200 seconds =
-                // 2 hours can handle a 800G file. Even though the method doesn't remove any
-                // futures after the max tries, it only allows to submit a task every 2 hours.
-                // This is not a big deal.
-                for (int i =0; i < 7200; i++) {
+                //A 100GB file takes 15 minutes to convert, and 800GB takes 2 hours. Although the
+                // method cannot remove futures after 2 hours tries, new tasks can only be
+                // submitted every 2 hours when the set limit is reached, which slows the
+                // addition of futures and prevents out-of-memory issues.
+                for (int i = 0; i < 7200; i++) {
                     futures.removeIf(Future::isDone);
                     if (futures.size() >= originalSize) {
                         logMetacat.debug("Metacat could not remove any complete futures and will "
