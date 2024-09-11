@@ -134,7 +134,7 @@ public class MultipleDOIShouldersIT {
             object.close();
             object = new FileInputStream(RegisterDOIIT.EMLFILEPATH);
             sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
-            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
             assertEquals(guid.getValue(), pid.getValue());
             // check for the metadata for title element
             count = 0;
@@ -188,7 +188,7 @@ public class MultipleDOIShouldersIT {
         object.close();
         object = new FileInputStream(RegisterDOIIT.EMLFILEPATH);
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         assertEquals(guid.getValue(), pid.getValue());
         // check for the metadata for title element
         int count = 0;
@@ -244,7 +244,7 @@ public class MultipleDOIShouldersIT {
         object.close();
         object = new FileInputStream(RegisterDOIIT.EMLFILEPATH);
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Identifier pid = d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
         assertEquals(guid.getValue(), pid.getValue());
         // check for the metadata for title element
         int count = 0;
