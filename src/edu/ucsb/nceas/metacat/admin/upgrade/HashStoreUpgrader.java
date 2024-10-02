@@ -6,6 +6,7 @@ import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
+import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -184,19 +185,34 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                     pid.setValue(finalId);
                                     SystemMetadata sysMeta =
                                         SystemMetadataManager.getInstance().get(pid);
+                                    if (sysMeta == null) {
+                                        // This is for the case that the object somehow hasn't been
+                                        // transformed to the DataONE object: no system metadata
+                                        sysMeta =
+                                            SystemMetadataFactory.createSystemMetadata(finalId);
+                                        try {
+                                            SystemMetadataManager.lock(pid);
+                                            SystemMetadataManager.getInstance().store(sysMeta);
+                                        } finally {
+                                            SystemMetadataManager.unLock(pid);
+                                        }
+                                    }
                                     if (sysMeta != null) {
-                                        Path path = resolve(sysMeta); // it may be null
-                                        if (sysMeta.getChecksum() != null) {
-                                            String checksum = sysMeta.getChecksum().getValue();
+                                        SystemMetadata finalSysMeta = sysMeta;
+                                        Path path = resolve(finalSysMeta); // it may be null
+                                        if (finalSysMeta.getChecksum() != null) {
+                                            String checksum = finalSysMeta.getChecksum().getValue();
                                             String algorithm =
-                                                sysMeta.getChecksum().getAlgorithm().toUpperCase();
-                                            logMetacat.debug("Trying to convert the storage to hashstore"
-                                                                 + " for " + id + " with checksum: "
-                                                                 + checksum + " algorithm: " + algorithm
-                                                                 + " and file path(may be null): "
-                                                                 + path.toString());
+                                                finalSysMeta.getChecksum().getAlgorithm()
+                                                    .toUpperCase();
+                                            logMetacat.debug(
+                                                "Trying to convert the storage to hashstore"
+                                                    + " for " + id + " with checksum: " + checksum
+                                                    + " algorithm: " + algorithm
+                                                    + " and file path(may be null): "
+                                                    + path.toString());
                                             Future<?> future = executor.submit(() -> {
-                                                convert(path, finalId, sysMeta, checksum,
+                                                convert(path, finalId, finalSysMeta, checksum,
                                                         algorithm, nonMatchingChecksumWriter,
                                                         noSuchAlgorithmWriter, generalWriter,
                                                         savingChecksumTableWriter);
@@ -205,19 +221,23 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                             if (futures.size() >= maxSetSize) {
                                                 //When it reaches the max size, we need to remove
                                                 // the complete futures from the set. So the set can
-                                                // be reused again. So we can avoid the issue of out of
-                                                // memory.
+                                                // be reused again. So we can avoid the issue of
+                                                // out of memory.
                                                 removeCompleteFuture(futures);
                                             }
                                         } else {
-                                            logMetacat.error("There is no checksum info for id " + id +
-                                                                 " in the systemmetadata and Metacat "
-                                                                 + "cannot convert it to hashstore.");
+                                            logMetacat.error(
+                                                "There is no checksum info for id " + id
+                                                    + " in the systemmetadata and Metacat "
+                                                    + "cannot convert it to hashstore.");
                                             writeToFile(id, noChecksumInSysmetaWriter);
                                         }
                                     } else {
-                                        logMetacat.debug("The id " + id + " hasn't been converted"
-                                                             + " to the DataONE identifier");
+                                        String error = "The id " + id + " can't be converted"
+                                            + " to the hashstore since its system metadata is null";
+                                        logMetacat.error(error);
+                                        Exception e = new Exception(error);
+                                        writeToFile(id, e, generalWriter);
                                     }
                                 }
                             } catch (Exception e) {
@@ -391,12 +411,24 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         }
     }
 
+    /**
+     * Transform the SystemMetadata object to an InputStream object
+     * @param sysMeta  the object will be transformed
+     * @return the InputStream object which represents the SystemMetadata object. Return null if
+     * the given SystemMetadata object is null.
+     * @throws IOException
+     * @throws MarshallingException
+     */
     protected static InputStream convertSystemMetadata(SystemMetadata sysMeta)
         throws IOException, MarshallingException {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            TypeMarshaller.marshalTypeToOutputStream(sysMeta, out);
-            byte[] content = out.toByteArray();
-            return new ByteArrayInputStream(content);
+        if (sysMeta != null) {
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                TypeMarshaller.marshalTypeToOutputStream(sysMeta, out);
+                byte[] content = out.toByteArray();
+                return new ByteArrayInputStream(content);
+            }
+        } else {
+            return null;
         }
     }
 
