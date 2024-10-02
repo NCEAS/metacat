@@ -1,7 +1,10 @@
 package edu.ucsb.nceas.metacat.admin.upgrade;
 
+import edu.ucsb.nceas.IntegrationTestUtils;
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
@@ -46,6 +49,7 @@ import java.util.Vector;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
@@ -160,6 +164,83 @@ public class HashStoreUpgraderTest {
             }
         }
         assertFalse(found);
+    }
+
+    /**
+     * Test the method initCandidateList which will capture the non-dataone objects - no records
+     * in the identifier table, no system metadata.
+     * @throws Exception
+     */
+    @Test
+    public void testInitCandidateListWithNonDataONEObject() throws Exception {
+        String prefix = "testInitCandidateListWithNonDataONEObject" + "."
+                        + System.currentTimeMillis();
+        System.out.print("the prefix is " + prefix);
+        String id1 = prefix + "." + 1;
+        String id2 = prefix + "." + 2;
+        String user = "http://orcid.org/1234/4567";
+        String docName = "eml";
+        String docType = "eml://ecoinformatics.org/eml-2.0.1";
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection(
+                "HashStoreUpgraderTest.testInitCandidateListWithNonDataONEObject");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            // register two docids in the xml_documents and xml_revisions tables.
+            // But there are no system metadata and identifier records for them
+            DocumentImpl.registerDocument(docName, docType, dbConn, id1, user);
+            DocumentImpl.registerDocument(docName, docType, dbConn, id2, user);
+            assertTrue("The xml_documents table should have the record " + id2,
+                IntegrationTestUtils.hasRecord("xml_documents", dbConn, " rev=? and docid like ?"
+                    , 2, prefix));
+            assertTrue("The xml_revisions table should have the record " + id1,
+                IntegrationTestUtils.hasRecord("xml_revisions", dbConn, " rev=? and docid like ?"
+                    , 1, prefix));
+            try {
+                IdentifierManager.getInstance().getGUID(prefix, 1);
+                fail("Test shouldn't reach here since " + id1 + " shouldn't exist in the "
+                         + "identifer table");
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbDocNotFoundException);
+            }
+            try {
+                IdentifierManager.getInstance().getGUID(prefix, 2);
+                fail("Test shouldn't reach here since " + id1 + " shouldn't exist in the "
+                         + "identifer table");
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbDocNotFoundException);
+            }
+            Identifier pid = new Identifier();
+            pid.setValue(id1);
+            SystemMetadata systemMetadata = SystemMetadataManager.getInstance().get(pid);
+            assertNull(systemMetadata);
+            pid.setValue(id2);
+            systemMetadata = SystemMetadataManager.getInstance().get(pid);
+            assertNull(systemMetadata);
+        } finally {
+            DBConnectionPool.returnDBConnection(
+                dbConn, serialNumber);
+        }
+        HashStoreUpgrader upgrader = new HashStoreUpgrader();
+        ResultSet resultSet = upgrader.initCandidateList();
+        boolean found1 = false;
+        boolean found2 = false;
+        while (resultSet.next()) {
+            String id = resultSet.getString(1);
+            if (id.equals(id1)) {
+                found1 = true;
+            }
+            if (id.equals(id2)) {
+                found2 = true;
+            }
+            if (found2 && found1) {
+                break;
+            }
+        }
+        assertTrue("The id " + id2 + " should be found in the result set", found2);
+        assertTrue("The id " + id1 + " should be found in the result set", found1);
     }
 
     /**
@@ -823,5 +904,13 @@ public class HashStoreUpgraderTest {
         return content;
     }
 
+    /**
+     * Test the scenario that the object hasn't been converted to the dataone object (no system
+     * metadata, no record in the identifier table)
+     * @throws Exception
+     */
+    public void testWithoutSysteMetadata() throws Exception {
+
+    }
 
 }
