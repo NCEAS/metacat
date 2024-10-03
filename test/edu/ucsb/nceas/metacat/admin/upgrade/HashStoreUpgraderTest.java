@@ -12,6 +12,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
+import org.apache.commons.io.FileUtils;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -84,7 +85,9 @@ public class HashStoreUpgraderTest {
 
     @After
     public void tearDown() throws Exception {
-        closeableMock.close();
+        if (!closeableMock.isClosed()) {
+            closeableMock.close();
+        }
         File backupDir = new File(backupPath);
         backupDir.delete();
     }
@@ -909,7 +912,101 @@ public class HashStoreUpgraderTest {
      * metadata, no record in the identifier table)
      * @throws Exception
      */
-    public void testWithoutSysteMetadata() throws Exception {
+    @Test
+    public void testUpgradeWithoutSystemMetadata() throws Exception {
+        String fileName = "test/eml-2.2.0.xml";
+        String prefix = "testUpgradeWithoutSysteMetadata" + "."
+            + System.currentTimeMillis();
+        System.out.print("the prefix is " + prefix);
+        String id1 = prefix + "." + 1;
+        String id2 = prefix + "." + 2;
+        Identifier pid1 = new Identifier();
+        pid1.setValue(id1);
+        Identifier pid2 = new Identifier();
+        pid2.setValue(id2);
+        String user = "http://orcid.org/1234/4567";
+        String docName = "eml";
+        String docType = "https://eml.ecoinformatics.org/eml-2.2.0";
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection(
+                "HashStoreUpgraderTest.testInitCandidateListWithNonDataONEObject");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            // register two docids in the xml_documents and xml_revisions tables.
+            // But there are no system metadata and identifier records for them
+            DocumentImpl.registerDocument(docName, docType, dbConn, id1, user);
+            DocumentImpl.registerDocument(docName, docType, dbConn, id2, user);
+            assertTrue("The xml_documents table should have the record " + id2,
+                       IntegrationTestUtils.hasRecord("xml_documents", dbConn, " rev=? and docid like ?"
+                           , 2, prefix));
+            assertTrue("The xml_revisions table should have the record " + id1,
+                       IntegrationTestUtils.hasRecord("xml_revisions", dbConn, " rev=? and docid like ?"
+                           , 1, prefix));
+            try {
+                IdentifierManager.getInstance().getGUID(prefix, 1);
+                fail("Test shouldn't reach here since " + id1 + " shouldn't exist in the "
+                         + "identifer table");
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbDocNotFoundException);
+            }
+            try {
+                IdentifierManager.getInstance().getGUID(prefix, 2);
+                fail("Test shouldn't reach here since " + id1 + " shouldn't exist in the "
+                         + "identifer table");
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbDocNotFoundException);
+            }
+            SystemMetadata systemMetadata = SystemMetadataManager.getInstance().get(pid1);
+            assertNull(systemMetadata);
+            systemMetadata = SystemMetadataManager.getInstance().get(pid2);
+            assertNull(systemMetadata);
+        } finally {
+            DBConnectionPool.returnDBConnection(
+                dbConn, serialNumber);
+        }
+        // Write files to the document directory
+        File file = new File(fileName);
+        File dest1 = new File(documentPath + "/" + id1);
+        File dest2 = new File(documentPath + "/" + id2);
+        try {
+            FileUtils.copyFile(file, dest1);
+            FileUtils.copyFile(file, dest2);
+            ResultSet resultSetMock = Mockito.mock(ResultSet.class);
+            // mock only having two next
+            Mockito.when(resultSetMock.getString(1)).thenReturn(id1).thenReturn(id2);
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(true).thenReturn(false);
+            // mock HashStoreUpgrader with the real methods
+            HashStoreUpgrader upgrader = Mockito.mock(HashStoreUpgrader.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            // mock the initCandidate method
+            Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
+            upgrader.upgrade();
+            File hashStoreRoot = new File(hashStorePath);
+            assertTrue(hashStoreRoot.exists());
+            SystemMetadata systemMetadata1 = SystemMetadataManager.getInstance().get(pid1);
+            assertNotNull(systemMetadata1);
+            SystemMetadata systemMetadata2 = SystemMetadataManager.getInstance().get(pid2);
+            assertNotNull(systemMetadata2);
+            assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid1));
+            assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid1));
+            assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid2));
+            assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid2));
+        } finally {
+            try {
+                if (dest1.exists()) {
+                    dest1.delete();
+                }
+            } catch (Exception e) {
+            }
+            try {
+                if (dest2.exists()) {
+                    dest2.delete();
+                }
+            } catch (Exception e) {
+            }
+        }
 
     }
 
