@@ -2,6 +2,8 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -54,7 +56,6 @@ import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
-import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
@@ -70,6 +71,26 @@ public class SystemMetadataFactory {
      * content
      */
     private static boolean updateExisting = true;
+    private static String legacyDataDir = null;
+    private static String legacyDocDir = null;
+    static {
+        try {
+            legacyDataDir = PropertyService.getProperty("application.datafilepath");
+            if (!legacyDataDir.endsWith("/")) {
+                legacyDataDir = legacyDataDir + "/";
+            }
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("Metacat can't find the property value of application.datafilepath");
+        }
+        try {
+            legacyDocDir = PropertyService.getProperty("application.documentfilepath");
+            if (!legacyDocDir.endsWith("/")) {
+                legacyDocDir = legacyDocDir + "/";
+            }
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("Metacat can't find the property value of application.documentfilepath");
+        }
+    }
 
 
     /**
@@ -151,17 +172,31 @@ public class SystemMetadataFactory {
 
         // for retrieving the actual object
         try (InputStream inputStream = MetacatHandler.read(identifier)) {
-         // create the checksum
+            // create the checksum
             String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
             Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
             logMetacat.debug("The checksum for " + localId + " is " + checksum.getValue());
             sysMeta.setChecksum(checksum);
+        } catch (McdbDocNotFoundException e) {
+            // try to read it from the legacy store
+            try (InputStream inputStream = readFileFromLegacyStore(identifier)) {
+                // create the checksum
+                String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
+                Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
+                logMetacat.debug("The checksum for " + localId + " is " + checksum.getValue());
+                sysMeta.setChecksum(checksum);
+            }
         }
 
         // set the size
         long fileSize = 0;
         try (InputStream inputStream = MetacatHandler.read(identifier)) {
             fileSize = length(inputStream);
+        } catch (McdbDocNotFoundException e) {
+            // Try to read from the legacy store
+            try (InputStream inputStream = readFileFromLegacyStore(identifier)) {
+                fileSize = length(inputStream);
+            }
         }
         sysMeta.setSize(BigInteger.valueOf(fileSize));
 
@@ -519,5 +554,45 @@ public class SystemMetadataFactory {
             length += chunkBytesRead;
         }
         return length;
+    }
+
+    /**
+     * This method is used for the HashStoreUpgrader class to read the object from the Metacat
+     * legacy store since the Hashtore hasn't been successfully converted.
+     * @param pid  the identifier the object
+     * @return the InputStream presentation of the object
+     */
+    protected static InputStream readFileFromLegacyStore(Identifier pid)
+        throws FileNotFoundException {
+        String localId = pid.getValue();
+        if (legacyDocDir != null) {
+            File file = new File(legacyDocDir + localId);
+            if (file.exists()) {
+                return new FileInputStream(file);
+            } else if (legacyDataDir != null) {
+                file = new File(legacyDataDir + localId);
+                if (file.exists()) {
+                    return new FileInputStream(file);
+                } else {
+                    throw new FileNotFoundException("Can't find the object " + localId + " in the"
+                                                        + " Metacat legacy store.");
+                }
+            } else {
+                throw new FileNotFoundException("Can't find the object " + localId + " in the"
+                                                    + " Metacat legacy store.");
+            }
+        } else if (legacyDataDir != null) {
+            File file = new File(legacyDataDir + localId);
+            if (file.exists()) {
+                return new FileInputStream(file);
+            } else {
+                throw new FileNotFoundException("Can't find the object " + localId + " in the"
+                                                    + " Metacat legacy store.");
+            }
+        } else {
+            throw new FileNotFoundException("Can't find the object " + localId + " in the"
+                                                + " Metacat legacy store since the its data and"
+                                                + " document root directories are null.");
+        }
     }
 }
