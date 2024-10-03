@@ -574,8 +574,9 @@ public class SystemMetadataFactory {
                 if (file.exists()) {
                     return new FileInputStream(file);
                 } else {
-                    throw new FileNotFoundException("Can't find the object " + localId + " in the"
-                                                        + " Metacat legacy store.");
+                    throw new FileNotFoundException(
+                        "Can't find the object " + file.getAbsolutePath() + " in the"
+                            + " Metacat legacy store.");
                 }
             } else {
                 throw new FileNotFoundException("Can't find the object " + localId + " in the"
@@ -586,8 +587,8 @@ public class SystemMetadataFactory {
             if (file.exists()) {
                 return new FileInputStream(file);
             } else {
-                throw new FileNotFoundException("Can't find the object " + localId + " in the"
-                                                    + " Metacat legacy store.");
+                throw new FileNotFoundException("Can't find the object " + file.getAbsolutePath()
+                                                    + " in the Metacat legacy store.");
             }
         } else {
             throw new FileNotFoundException("Can't find the object " + localId + " in the"
