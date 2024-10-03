@@ -19,13 +19,16 @@ import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.exceptions.BaseException;
+import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -169,6 +172,29 @@ public class SystemMetadataFactory {
 
         // get additional docinfo
         Hashtable<String, String> docInfo = getDocumentInfoMap(localId);
+        // set the default object format
+        String docType = docInfo.get("doctype");
+        logMetacat.debug("The docType is " + docType);
+        ObjectFormatIdentifier fmtid = null;
+        // set the object format, fall back to defaults
+        if (docType.trim().equals("BIN")) {
+            // we don't know much about this file (yet)
+            fmtid = ObjectFormatCache.getInstance().getFormat("application/octet-stream").getFormatId();
+        } else if (docType.trim().equals("metadata")) {
+            // special ESRI FGDC format
+            fmtid = ObjectFormatCache.getInstance().getFormat("FGDC-STD-001-1998").getFormatId();
+        } else {
+            try {
+                // do we know the given format?
+                fmtid = ObjectFormatCache.getInstance().getFormat(docType).getFormatId();
+            } catch (NotFound nfe) {
+                // format is not registered, use default
+                fmtid = ObjectFormatCache.getInstance().getFormat("text/plain").getFormatId();
+            }
+        }
+        sysMeta.setFormatId(fmtid);
+        logMetacat.debug("The ObjectFormat for " + localId + " is " + fmtid.getValue());
+
 
         // for retrieving the actual object
         try (InputStream inputStream = MetacatHandler.read(identifier)) {

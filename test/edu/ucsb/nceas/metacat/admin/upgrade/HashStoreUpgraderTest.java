@@ -920,10 +920,13 @@ public class HashStoreUpgraderTest {
         System.out.print("the prefix is " + prefix);
         String id1 = prefix + "." + 1;
         String id2 = prefix + "." + 2;
+        String id3 = prefix + "." + 3;
         Identifier pid1 = new Identifier();
         pid1.setValue(id1);
         Identifier pid2 = new Identifier();
         pid2.setValue(id2);
+        Identifier pid3 = new Identifier();
+        pid3.setValue(id3);
         String user = "http://orcid.org/1234/4567";
         String docName = "eml";
         String docType = "https://eml.ecoinformatics.org/eml-2.2.0";
@@ -938,8 +941,12 @@ public class HashStoreUpgraderTest {
             // But there are no system metadata and identifier records for them
             DocumentImpl.registerDocument(docName, docType, dbConn, id1, user);
             DocumentImpl.registerDocument(docName, docType, dbConn, id2, user);
-            assertTrue("The xml_documents table should have the record " + id2,
+            DocumentImpl.registerDocument(docName, docType, dbConn, id3, user);
+            assertTrue("The xml_documents table should have the record " + id3,
                        IntegrationTestUtils.hasRecord("xml_documents", dbConn, " rev=? and docid like ?"
+                           , 3, prefix));
+            assertTrue("The xml_revisions table should have the record " + id2,
+                       IntegrationTestUtils.hasRecord("xml_revisions", dbConn, " rev=? and docid like ?"
                            , 2, prefix));
             assertTrue("The xml_revisions table should have the record " + id1,
                        IntegrationTestUtils.hasRecord("xml_revisions", dbConn, " rev=? and docid like ?"
@@ -951,6 +958,7 @@ public class HashStoreUpgraderTest {
             } catch (Exception e) {
                 assertTrue(e instanceof McdbDocNotFoundException);
             }
+            assertFalse(IdentifierManager.getInstance().mappingExists(id1));
             try {
                 IdentifierManager.getInstance().getGUID(prefix, 2);
                 fail("Test shouldn't reach here since " + id1 + " shouldn't exist in the "
@@ -958,9 +966,20 @@ public class HashStoreUpgraderTest {
             } catch (Exception e) {
                 assertTrue(e instanceof McdbDocNotFoundException);
             }
+            assertFalse(IdentifierManager.getInstance().mappingExists(id2));
+            try {
+                IdentifierManager.getInstance().getGUID(prefix, 3);
+                fail("Test shouldn't reach here since " + id1 + " shouldn't exist in the "
+                         + "identifer table");
+            } catch (Exception e) {
+                assertTrue(e instanceof McdbDocNotFoundException);
+            }
+            assertFalse(IdentifierManager.getInstance().mappingExists(id3));
             SystemMetadata systemMetadata = SystemMetadataManager.getInstance().get(pid1);
             assertNull(systemMetadata);
             systemMetadata = SystemMetadataManager.getInstance().get(pid2);
+            assertNull(systemMetadata);
+            systemMetadata = SystemMetadataManager.getInstance().get(pid3);
             assertNull(systemMetadata);
         } finally {
             DBConnectionPool.returnDBConnection(
@@ -970,29 +989,109 @@ public class HashStoreUpgraderTest {
         File file = new File(fileName);
         File dest1 = new File(documentPath + "/" + id1);
         File dest2 = new File(documentPath + "/" + id2);
+        File dest3 = new File(documentPath + "/" + id3);
         try {
             FileUtils.copyFile(file, dest1);
             FileUtils.copyFile(file, dest2);
+            FileUtils.copyFile(file, dest3);
             ResultSet resultSetMock = Mockito.mock(ResultSet.class);
-            // mock only having two next
-            Mockito.when(resultSetMock.getString(1)).thenReturn(id1).thenReturn(id2);
-            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(true).thenReturn(false);
+            // mock only having three next
+            Mockito.when(resultSetMock.getString(1)).thenReturn(id1).thenReturn(id2).thenReturn(id3);
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(true).thenReturn(true)
+                .thenReturn(false);
             // mock HashStoreUpgrader with the real methods
             HashStoreUpgrader upgrader = Mockito.mock(HashStoreUpgrader.class,
                 withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
             // mock the initCandidate method
             Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
             upgrader.upgrade();
+
+            // Check the results.
             File hashStoreRoot = new File(hashStorePath);
             assertTrue(hashStoreRoot.exists());
+            assertEquals(id1, IdentifierManager.getInstance().getGUID(prefix, 1));
+            assertTrue(IdentifierManager.getInstance().mappingExists(id1));
             SystemMetadata systemMetadata1 = SystemMetadataManager.getInstance().get(pid1);
             assertNotNull(systemMetadata1);
+            assertEquals(id1, systemMetadata1.getIdentifier().getValue());
+            assertEquals(
+                PropertyService.getProperty("dataone.nodeId"),
+                systemMetadata1.getOriginMemberNode().getValue());
+            assertEquals(
+                PropertyService.getProperty("dataone.nodeId"),
+                systemMetadata1.getAuthoritativeMemberNode().getValue());
+            assertEquals(id2, systemMetadata1.getObsoletedBy().getValue());
+            assertNull(systemMetadata1.getObsoletes());
+            assertEquals("MD5", systemMetadata1.getChecksum().getAlgorithm());
+            assertEquals(
+                "f4ea2d07db950873462a064937197b0f", systemMetadata1.getChecksum().getValue());
+            assertEquals(8724, systemMetadata1.getSize().intValue());
+            assertEquals(user, systemMetadata1.getRightsHolder().getValue());
+            assertEquals(user, systemMetadata1.getSubmitter().getValue());
+            assertEquals(docType, systemMetadata1.getFormatId().getValue());
+
+            assertEquals(id2, IdentifierManager.getInstance().getGUID(prefix, 2));
+            assertTrue(IdentifierManager.getInstance().mappingExists(id2));
             SystemMetadata systemMetadata2 = SystemMetadataManager.getInstance().get(pid2);
             assertNotNull(systemMetadata2);
+            assertEquals(id2, systemMetadata2.getIdentifier().getValue());
+            assertEquals(
+                PropertyService.getProperty("dataone.nodeId"),
+                systemMetadata2.getOriginMemberNode().getValue());
+            assertEquals(
+                PropertyService.getProperty("dataone.nodeId"),
+                systemMetadata2.getAuthoritativeMemberNode().getValue());
+            assertEquals(id1, systemMetadata2.getObsoletes().getValue());
+            assertEquals(id3, systemMetadata2.getObsoletedBy().getValue());
+            assertEquals("MD5", systemMetadata2.getChecksum().getAlgorithm());
+            assertEquals(
+                "f4ea2d07db950873462a064937197b0f", systemMetadata2.getChecksum().getValue());
+            assertEquals(8724, systemMetadata2.getSize().intValue());
+            assertEquals(user, systemMetadata2.getRightsHolder().getValue());
+            assertEquals(user, systemMetadata2.getSubmitter().getValue());
+            assertEquals(docType, systemMetadata2.getFormatId().getValue());
+
+            assertEquals(id3, IdentifierManager.getInstance().getGUID(prefix, 3));
+            assertTrue(IdentifierManager.getInstance().mappingExists(id3));
+            SystemMetadata systemMetadata3 = SystemMetadataManager.getInstance().get(pid3);
+            assertNotNull(systemMetadata3);
+            assertEquals(id3, systemMetadata3.getIdentifier().getValue());
+            assertEquals(
+                PropertyService.getProperty("dataone.nodeId"),
+                systemMetadata3.getOriginMemberNode().getValue());
+            assertEquals(
+                PropertyService.getProperty("dataone.nodeId"),
+                systemMetadata3.getAuthoritativeMemberNode().getValue());
+            assertEquals(id2, systemMetadata3.getObsoletes().getValue());
+            assertNull(systemMetadata3.getObsoletedBy());
+            assertEquals("MD5", systemMetadata3.getChecksum().getAlgorithm());
+            assertEquals(
+                "f4ea2d07db950873462a064937197b0f", systemMetadata3.getChecksum().getValue());
+            assertEquals(8724, systemMetadata3.getSize().intValue());
+            assertEquals(user, systemMetadata3.getRightsHolder().getValue());
+            assertEquals(user, systemMetadata3.getSubmitter().getValue());
+            assertEquals(docType, systemMetadata3.getFormatId().getValue());
+
             assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid1));
             assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid1));
             assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid2));
             assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid2));
+            assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid3));
+            assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid3));
+
+            SystemMetadata sysmetaFromHash =
+                TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                                     MetacatInitializer.getStorage()
+                                                                         .retrieveMetadata(pid1));
+            compareValues(systemMetadata1, sysmetaFromHash);
+            sysmetaFromHash = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                                     MetacatInitializer.getStorage()
+                                                                         .retrieveMetadata(pid2));
+            compareValues(systemMetadata2, sysmetaFromHash);
+            sysmetaFromHash = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                       MetacatInitializer.getStorage()
+                                                           .retrieveMetadata(pid3));
+            compareValues(systemMetadata3, sysmetaFromHash);
         } finally {
             try {
                 if (dest1.exists()) {
@@ -1006,8 +1105,34 @@ public class HashStoreUpgraderTest {
                 }
             } catch (Exception e) {
             }
+            try {
+                if (dest3.exists()) {
+                    dest3.delete();
+                }
+            } catch (Exception e) {
+            }
         }
 
+    }
+
+    private void compareValues(SystemMetadata mcSysmeta, SystemMetadata sysmeta)
+        throws Exception {
+        assertEquals(sysmeta.getIdentifier().getValue(), mcSysmeta.getIdentifier().getValue());
+        assertEquals(sysmeta.getFormatId().getValue(), mcSysmeta.getFormatId().getValue());
+        assertEquals(sysmeta.getSerialVersion().longValue(),
+                     mcSysmeta.getSerialVersion().longValue());
+        assertEquals(sysmeta.getSize().longValue(), mcSysmeta.getSize().longValue());
+        assertEquals(sysmeta.getChecksum().getValue(), mcSysmeta.getChecksum().getValue());
+        assertEquals(sysmeta.getChecksum().getAlgorithm(), mcSysmeta.getChecksum().getAlgorithm());
+        assertEquals(sysmeta.getSubmitter().getValue(), mcSysmeta.getSubmitter().getValue());
+        assertEquals(sysmeta.getRightsHolder().getValue(), mcSysmeta.getRightsHolder().getValue());
+        assertEquals(sysmeta.getDateUploaded().getTime(), mcSysmeta.getDateUploaded().getTime());
+        assertEquals(sysmeta.getDateSysMetadataModified().getTime(),
+                     mcSysmeta.getDateSysMetadataModified().getTime());
+        assertEquals(
+            sysmeta.getOriginMemberNode().getValue(), mcSysmeta.getOriginMemberNode().getValue());
+        assertEquals(sysmeta.getAuthoritativeMemberNode().getValue(),
+                     mcSysmeta.getAuthoritativeMemberNode().getValue());
     }
 
 }
