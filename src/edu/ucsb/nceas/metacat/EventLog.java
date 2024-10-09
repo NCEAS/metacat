@@ -539,7 +539,7 @@ public class EventLog {
         String pagedQuery = fieldSelect + " ( " + pagedSubquery + " )";
         logMetacat.debug("The selection query is " + pagedQuery);
         logMetacat.debug("The startDate in the query is " + startDate);
-        logMetacat.debug("The endDate in the query is " + startDate);
+        logMetacat.debug("The endDate in the query is " + endDate);
 
         DBConnection dbConn = null;
         int serialNumber = -1;
