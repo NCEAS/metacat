@@ -28,9 +28,9 @@ import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
- * EventLog is used to intialize and store a log of events that occur in an
+ * EventLog is used to initialize and store a log of events that occur in an
  * application. The events are registered with the logger as they occur, but
- * EventLog writes them to permenant storage when it is most convenient or
+ * EventLog writes them to permanent storage when it is most convenient or
  * efficient. EventLog is a Singleton as there should always be only one object
  * for these logging events.
  * 
@@ -362,7 +362,7 @@ public class EventLog {
      */
     public boolean isDeleted(String docid) {
         boolean deleted =false;
-        if(docid != null && !docid.trim().equals("")) {
+        if(docid != null && !docid.isBlank()) {
             String[] docids = new String[1];
             docids[0] = docid;
             String[] events = new String[1];
@@ -394,8 +394,7 @@ public class EventLog {
         try {
             nodeId = PropertyService.getProperty("dataone.nodeId");
         } catch (PropertyNotFoundException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+            logMetacat.error("Can't find the property " + e1.getMessage());
         }
         memberNode.setValue(nodeId);
 
@@ -458,7 +457,7 @@ public class EventLog {
             clauseAdded = true;
         }
 
-       //please make sure the handling of event is just before the the startDate clause!!!
+       //please make sure the handling of event is just before the startDate clause!!!
         if (event != null) {
             if (clauseAdded) {
                 subQueryFrom.append(" and ");
@@ -529,7 +528,7 @@ public class EventLog {
                 "and al.entryid in ";
 
         // order by
-        String orderByClause = " order by entryid ";
+        String orderByClause = " order by date_logged ";
 
         // select the count
         String countQuery = countSelect + subQueryFrom.toString();
@@ -537,7 +536,7 @@ public class EventLog {
         // select the fields using paged subquery and fields join query
         String pagedSubquery = DatabaseService.getInstance().getDBAdapter().
               getPagedQuery(subquerySelect + subQueryFrom.toString() + orderByClause, start, count);
-        String pagedQuery = fieldSelect + " ( " + pagedSubquery + " ) " + orderByClause; 
+        String pagedQuery = fieldSelect + " ( " + pagedSubquery + " )";
         logMetacat.debug("The selection query is " + pagedQuery);
         logMetacat.debug("The startDate in the query is " + startDate);
         logMetacat.debug("The endDate in the query is " + startDate);
@@ -594,7 +593,7 @@ public class EventLog {
 
 
             // for the return Log list
-            List<LogEntry> logs = new Vector<LogEntry>();
+            List<LogEntry> logs = new Vector<>();
 
             // get the fields form the query
             if (count != 0) {
@@ -608,21 +607,21 @@ public class EventLog {
                 while (rs.next()) {
                     LogEntry logEntry = new LogEntry();
                     String logId = rs.getString(1);
-                    if (logId == null || logId.trim().equals("")) {
+                    if (logId == null || logId.isBlank()) {
                         logId = "N/A";
                     }
                     logEntry.setEntryId(logId);
 
                     Identifier identifier = new Identifier();
                     String id = rs.getString(2);
-                    if (id == null || id.trim().equals("")) {
+                    if (id == null || id.isBlank()) {
                         id = "N/A";
                     }
                     identifier.setValue(id);
                     logEntry.setIdentifier(identifier);
 
                 String ip = rs.getString(3);
-                if (ip == null || ip.trim().equals("")) {
+                if (ip == null || ip.isBlank()) {
                     ip = "N/A";
                 }
                     logEntry.setIpAddress(anonymous ? "N/A" : ip);
@@ -635,7 +634,7 @@ public class EventLog {
 
                     Subject subject = new Subject();
                     String subjectStr = rs.getString(5);
-                    if (subjectStr == null || subjectStr.trim().equals("")) {
+                    if (subjectStr == null || subjectStr.isBlank()) {
                         subjectStr = "N/A";
                     }
                     subject.setValue(anonymous ? "N/A" : subjectStr);
