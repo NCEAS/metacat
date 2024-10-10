@@ -603,6 +603,7 @@ public class EventLog {
                 long endTime = System.currentTimeMillis();
                 logMetacat.debug("Time to run the selection query is "+(endTime-startTime)/1000+" seconds.");
                 ResultSet rs = fieldsStmt.getResultSet();
+                logMetacat.debug("The real selection query is " + fieldsStmt);
                 //process the result and return it
                 while (rs.next()) {
                     LogEntry logEntry = new LogEntry();
