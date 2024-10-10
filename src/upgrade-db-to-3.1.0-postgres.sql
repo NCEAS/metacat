@@ -34,6 +34,11 @@ ALTER TABLE IF EXISTS version_history ADD COLUMN IF NOT EXISTS storage_upgrade_s
 ALTER TABLE version_history RENAME COLUMN db_version_id TO version_history_id;
 
 /*
+ * Create an index to improve the performance of the access_log query
+ */
+ CREATE INDEX IF NOT EXISTS access_log_date_logged ON access_log (date_logged);
+
+/*
  * update the database version
  */
 UPDATE version_history SET status=0;
