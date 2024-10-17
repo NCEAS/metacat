@@ -1,0 +1,38 @@
+## override values.yaml with values to use for running on local machine (eg within Rancher Desktop)
+##
+## example:
+##    helm install my-release ./helm -f ./helm/values-dev-local.yaml
+##
+
+debug: &debug false
+
+global:
+  storageClass: &storageClassName standard
+  ephemeralVolumeStorageClass: standard
+  metacatExternalBaseUrl: "https://mydataone.com/"
+  metacatAppContext: &metacatAppContext metacat
+  metacatUiThemeName: default
+
+metacat:
+  auth.administrators: http://orcid.org/0000-0002-2661-8912
+  server.name: mydataone.com
+
+image:
+  debug: true
+
+ingress:
+  tls:
+    - hosts: []
+      secretName: tls-secret
+
+# probes will kill remote debugger
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
+persistence:
+  storageClass: *storageClassName
+  accessModes:
+    - ReadWriteOnce
+    - ReadOnlyMany

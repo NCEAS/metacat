@@ -977,6 +977,6 @@ dataone-indexer:
           ## IMPORTANT NOTE: make sure you edit this, since IT INCLUDES THE RELEASE NAME! For
           ## example, if the release name is 'myrelease', the value of name: would be
           ## 'myrelease-indexer-configfiles'.
-          name: ${RELEASE_NAME}-indexer-configfiles
+          name: my-release-indexer-configfiles
           ## @param dataone-indexer.solr.extraVolumes[0].configMap.defaultMode DO NOT EDIT
           defaultMode: 0777

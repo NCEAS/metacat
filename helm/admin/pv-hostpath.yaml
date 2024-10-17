@@ -54,4 +54,4 @@ spec:
   #  within /Users/yourname/... if you need access outside of k8s. It may be necessary to chmod 777
   # so the metacat user can write to it - so be careful! Again, this is for testing/dev only!
   hostPath:
-    path: /Users/yourname/your-pv-directory
+    path: /home/robert/data/metacat
