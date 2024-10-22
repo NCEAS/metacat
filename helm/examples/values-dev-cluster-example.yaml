@@ -10,28 +10,22 @@
 debug: &debug true
 
 global:
-  metacatUiThemeName: "cerp"
+  metacatUiThemeName: "default"
   metacatUiWebRoot: "/"
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
 #  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
 
-
-metacatui:
-  ## TODO: DELETE THIS WHEN RELEASE HAS RELPATH IN INDEX/HTML!
-  source:
-    from: "git"
-    git:
-      revision: "feature-2454-relative-appConfigPath"
-  ## END TODO
-
-  customTheme:
-    enabled: true
-    claimName: metacatbrooke-metacatui-customtheme
-    subPath: metacatui-themes/src/cerp/js/themes/cerp
-  appConfig:
-    enabled: false
+## example for a custom theme (also need to set global.metacatUiThemeName: "cerp", above)
+##
+#metacatui:
+#  customTheme:
+#    enabled: true
+#    claimName: metacatbrooke-metacatui-customtheme
+#    subPath: metacatui-themes/src/cerp/js/themes/cerp
+#  appConfig:
+#    enabled: false
     ## disabled because SFWMD uses cerp theme, overlaid with
     ## SFWMD config.js at /config/config.js (created as configMap)
 
