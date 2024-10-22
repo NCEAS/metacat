@@ -37,7 +37,6 @@ dependencies:
   - name: metacatui
     repository: oci://ghcr.io/nceas/charts
     version: 0.6.0
-    ## NOT YET PUBLIC IN CHARTS REPO
     condition: global.includeMetacatUi
 
   - name: postgresql
