@@ -7,10 +7,13 @@ import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.util.Properties;
 import java.util.Vector;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.never;
 
 /**
  * @author Tao
@@ -102,6 +105,19 @@ public class HashStoreConversionAdminIT {
         } finally {
             // Reset back the status
             HashStoreConversionAdmin.setStatus(currentVersion, currentStatus);
+        }
+    }
+
+    @Test
+    public void testDisableHashStoreConversion() throws Exception {
+        Properties withProperties = new Properties();
+        withProperties.setProperty("storage.hashstore.disableConversion", "true");
+        LeanTestUtils.initializeMockPropertyService(withProperties);
+        try (MockedStatic<HashStoreConversionAdmin> mocked =
+                 Mockito.mockStatic(HashStoreConversionAdmin.class, CALLS_REAL_METHODS)) {
+            HashStoreConversionAdmin.convert();
+            mocked.verify(() -> HashStoreConversionAdmin.generateFinalVersionsAndClassesMap(),
+                          never());
         }
     }
 }
