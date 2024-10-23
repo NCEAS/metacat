@@ -30,14 +30,13 @@ icon: https://camo.githubusercontent.com/a41e704e6cbd198afed0a892f2dccfc43aef29f
 # It is recommended to use it with quotes.
 # NOTE that the chart will pull the docker image whose tag matches this value, if 'image.tag' is
 # not set in values.yaml
-appVersion: "3.0.0-no-mcui" ## metacat 3.0.0 code, but metacatui no longer bundled in docker image
+appVersion: "3.1.0-SNAPSHOT"
 
 # Chart dependencies - also see https://github.com/bitnami/charts/tree/main/bitnami
 dependencies:
   - name: metacatui
     repository: oci://ghcr.io/nceas/charts
     version: 0.6.0
-    ## NOT YET PUBLIC IN CHARTS REPO
     condition: global.includeMetacatUi
 
   - name: postgresql
