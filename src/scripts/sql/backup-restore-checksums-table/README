@@ -1,0 +1,12 @@
+This directory has two script files to backup/restore the checksums table from a Metacat instance
+database.
+
+To backup the table, you need to run this command:
+./backup-checksums-table.sh  <databaseName> <<backupDirectory>
+It will copy the records in the checksums table to a file named checksums-backup.txt in the backup
+directory. The backup directory should exist and the backup file will be overwritten if it exists.
+
+To restore the table, you need to run this command:
+./restore-checksums-table.sh <databaseName> <backupFilePath>
+Before run this command, make sure the checksums table is empty. Otherwise, the records will be
+duplicated.
