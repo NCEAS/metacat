@@ -46,6 +46,19 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
      * The method do the conversion job
      */
     public static void convert() {
+        try {
+            String disableConversion =
+                PropertyService.getProperty("storage.hashstore.disableConversion");
+            if (disableConversion != null && disableConversion.equalsIgnoreCase("true")) {
+                logMetacat.debug("Metacat disabled the hashstore conversion and will stop there.");
+                return;
+            }
+        } catch (PropertyNotFoundException e) {
+            // do nothing
+            logMetacat.debug(
+                "Metacat doesn't define the property of storage.hashstore.disableConversion. So it "
+                    + "will convert it.");
+        }
         logMetacat.debug("Start of the convert method...");
         String currentVersion = null;
         try {
