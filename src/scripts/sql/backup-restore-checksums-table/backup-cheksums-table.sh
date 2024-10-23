@@ -7,5 +7,5 @@ databaseName=$1
 targetDir=$2
 fileName="checksums-backup.txt"
 path="$targetDir/$fileName"
-echo $path
 psql  -d $databaseName -c "\COPY (SELECT * FROM checksums) TO $path"
+echo "The checksums table was backuped to the file ${path} successfully"
