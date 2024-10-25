@@ -1,15 +1,15 @@
-<?xml version="1.0"
-        encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:output encoding="UTF-8" indent="yes" method="xml"/>
     <xsl:strip-space elements="*"/>
     <xsl:param name="data_type" select="'SM'"/>
     <xsl:param name="country" select="'US'"/>
     <xsl:param name="lang" select="'English'"/>
-    <xsl:param name="site_code"/>
-    <xsl:param name="site_url"/>   
+    <xsl:param name="site_code" select="'ESS-DIVE'"/>
+    <xsl:param name="site_url"/>
     <xsl:param name="subject" select="'54 ENVIRONMENTAL SCIENCES'"/>
     <xsl:param name="osti_id"/>
+    <xsl:param name="default_doe_contract" select="'AC02-05CH11231'"/>
     <xsl:template match="dataset">
         <records>
             <record>
@@ -47,7 +47,8 @@
                         <xsl:value-of select="$AltIDListTMP"/>
                     </product_nos>
                 </xsl:if>
-
+                <!-- Submit ESS-DIVE Contract number as default contract number -->
+                <contract_nos><xsl:value-of select="$default_doe_contract"/></contract_nos>
                 <xsl:variable name="FundingListTMP">
                     <xsl:for-each select="project/funding/para">
                         <xsl:variable name="fundingID" select="."/>
@@ -79,21 +80,19 @@
                     </xsl:for-each>
                 </xsl:variable>
                 <!-- I need a for loop here which will concat project funding values with ";" and remove "DOE:" & "DOE:DE" prefixes-->
-                <xsl:variable name="DefaultContractNone" select="'NONE'"/>
-                <contract_nos>
-                    <xsl:choose>
-                        <xsl:when test="$FundingListTMP !=''">
+                <xsl:choose>
+                    <xsl:when test="$FundingListTMP !=''">
+                        <non-doe_contract_nos>
                             <xsl:value-of select="$FundingListTMP"/>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="$DefaultContractNone"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </contract_nos>
+                        </non-doe_contract_nos>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <non-doe_contract_nos/>
+                    </xsl:otherwise>
+                </xsl:choose>
 
-                <non-doe_contract_nos/>
                 <originating_research_org>
-                    <xsl:value-of select="publisher/organizationName"/>
+                    <xsl:value-of select="project/title"/>
                 </originating_research_org>
 
                 <description>
@@ -178,9 +177,7 @@
                         <xsl:value-of select="contact/organizationName"/>
                     </contact_org>
                 </xsl:if>
-                <xsl:if test="$site_code">
-                    <site_input_code><xsl:value-of select="$site_code"/></site_input_code>
-                </xsl:if>
+                <site_input_code><xsl:value-of select="$site_code"/></site_input_code>
                 <doi_infix></doi_infix>
                 <subject_categories_code><xsl:value-of select="$subject"/></subject_categories_code>
                 <language><xsl:value-of select="$lang"/></language>
@@ -331,7 +328,7 @@
                 <keywords>
                     <xsl:value-of select="$KeywordList"/>
                 </keywords>
-                
+
                 <xsl:if test="additionalInfo/section[title='Related References']/para">
                 <xsl:variable name="RelatedReferences">
                     <xsl:for-each select="additionalInfo/section[title='Related References']/para">
