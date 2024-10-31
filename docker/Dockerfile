@@ -2,10 +2,10 @@
 ARG ENVIRONMENT="prod"
 
 # The first stage is used to select the base image for production, based on the JRE
-FROM tomcat:9.0.82-jre17-temurin-jammy AS prod-base
+FROM tomcat:9.0.96-jre17-temurin-jammy AS prod-base
 
 # The second stage is used for testing, if needed, based on the JDK
-FROM tomcat:9.0.82-jdk17-temurin-jammy AS test-base
+FROM tomcat:9.0.96-jdk17-temurin-jammy AS test-base
 
 RUN    printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
     && printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
@@ -36,9 +36,9 @@ ENV USRBINDIR=/usr/local/bin
 ENV PATH=${USRBINDIR}:$PATH
 ENV DEVTOOLS=${DEVTOOLS}
 
-# Add a user with name 'metacat'
-RUN groupadd -g 1000 metacat
-RUN useradd -u 1000 -g 1000 metacat
+# Add a user with name 'tomcat'
+RUN groupadd -g 59997 tomcat
+RUN useradd -u 59997 -g 59997 tomcat
 
 ## ADD auto-inflates the .tar.gz
 ADD "$DISTBIN" /tmp/
@@ -70,16 +70,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
                                       >> ${TC_HOME}/conf/catalina.properties
 
 ## Redirect file-based logging to stdout for access logs
-COPY --chown=metacat:metacat tomcat.k8s.server.xml ${TC_HOME}/conf/server.xml
+COPY --chown=tomcat:tomcat tomcat.k8s.server.xml ${TC_HOME}/conf/server.xml
 
 ## Redirect file-based logging for all other logs
-COPY --chown=metacat:metacat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging.properties
+COPY --chown=tomcat:tomcat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging.properties
 
-COPY --chown=metacat:metacat apply_context.py     ${USRBINDIR}/
-COPY --chown=metacat:metacat docker-entrypoint.sh ${USRBINDIR}/
+COPY --chown=tomcat:tomcat apply_context.py     ${USRBINDIR}/
+COPY --chown=tomcat:tomcat docker-entrypoint.sh ${USRBINDIR}/
 
 #Run Container as 'metacat'
-USER 1000
+USER 59997
 
 #Set working directory to tomcat's bin dir, to match legacy metacat relative paths
 WORKDIR "$TC_HOME"/bin
