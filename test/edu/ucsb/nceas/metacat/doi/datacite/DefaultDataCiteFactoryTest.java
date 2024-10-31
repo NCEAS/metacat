@@ -19,7 +19,7 @@ public class DefaultDataCiteFactoryTest {
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?><resource xmlns=\"http://datacite"
             + ".org/schema/kernel-4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
             + "xsi:schemaLocation=\"http://datacite.org/schema/kernel-4 https://schema.datacite"
-            + ".org/meta/kernel-4.3/metadata.xsd\"><identifier identifierType=\"DOI\">10"
+            + ".org/meta/kernel-4.5/metadata.xsd\"><identifier identifierType=\"DOI\">10"
             + ".5063/F1X34VQ5</identifier><creators><creator><creatorName>CN=Monica Ihli A139616,"
             + "O=Google,C=US,DC=cilogon,DC=org</creatorName></creator></creators><titles><title "
             + "xml:lang=\"en\">(:unkn)</title></titles><publisher>PUBLISHER_PLACEHOLDER"
