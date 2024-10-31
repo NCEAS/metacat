@@ -75,7 +75,8 @@ spec:
                 port:
                   number: 8080
           {{- if .Values.global.includeMetacatUi }}
-          - path: {{ .Values.global.metacatUiWebRoot | default "/" }}
+          {{- $webroot := regexReplaceAll "/$" .Values.global.metacatUiWebRoot "" }}
+          - path: {{ $webroot }}/
             pathType: Prefix
             backend:
               service:
