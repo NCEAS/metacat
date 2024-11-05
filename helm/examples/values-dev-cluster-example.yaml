@@ -103,23 +103,6 @@ postgresql:
 
   auth:
     existingSecret: *passwordSecretName
-#metacatui:
-#  ## PodSecurityContext - define common securityContext settings at the pod level for all containers
-#  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-#  ## @param podSecurityContext.enabled Enable security context
-#  ## @param podSecurityContext.fsGroup numerical Group ID for the pod
-#  ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
-#  ## the group that owns the existing data on that filesystem!
-#  ##
-#  podSecurityContext:
-#    fsGroup: 1000
-#
-#  ## securityContext holds container-level security attributes that override those at pod level
-#  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-#  ## @param securityContext.runAsNonRoot ensure containers run as a non-root user.
-#  ##                                 Note users must be defined by numerical user id for this to work
-##  securityContext:
-##    runAsNonRoot: true
 
 dataone-indexer:
   # increase minReplicas from default 3
