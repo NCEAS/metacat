@@ -42,7 +42,7 @@ RUN useradd -u 59997 -g 59997 tomcat
 
 ## ADD auto-inflates the .tar.gz
 ADD "$DISTBIN" /tmp/
-ADD "$DISTSRC" /home/metacat/metacat-source/
+ADD "$DISTSRC" /home/tomcat/metacat-source/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-bcrypt    \
@@ -60,7 +60,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     &&  mv /tmp/metacat.war ${TC_HOME}/webapps                            \
     &&  chown -R tomcat ${TC_HOME}                                       \
     &&  mkdir -p /var/metacat  && chown tomcat:tomcat /var/metacat      \
-    &&  mkdir -p /home/metacat && chown -R tomcat:tomcat /home/metacat  \
+    &&  mkdir -p /home/tomcat && chown -R tomcat:tomcat /home/tomcat  \
     ## Tomcat Mods to Extend Allowed Character Set
         ## - Encoded forward slashes (%2f):
     &&  echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true"     \
@@ -81,7 +81,7 @@ COPY --chown=tomcat:tomcat docker-entrypoint.sh ${USRBINDIR}/
 #Run Container as 'tomcat'
 USER 59997:59997
 
-#Set working directory to tomcat's bin dir, to match legacy metacat relative paths
+#Set working directory to tomcat's bin dir, to match legacy relative paths
 WORKDIR "$TC_HOME"/bin
 
 EXPOSE 8080
