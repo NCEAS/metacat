@@ -583,7 +583,7 @@ podSecurityContext:
   runAsUser: 59997
   runAsGroup: 59997
   fsGroup: 59997
-  supplementalGroups: [ 1000, 1004, 9997 ]
+  supplementalGroups: [ 997, 1000 ]
 
 ## securityContext holds container-level security attributes that override those at pod level
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
