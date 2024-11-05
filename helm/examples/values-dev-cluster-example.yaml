@@ -1,7 +1,13 @@
 ## override values.yaml with values to use for running on the NCEAS dev cluster
 ##
-## example:
-##    helm install my-release ./helm -f ./helm/examples/values-dev-cluster-example.yaml
+## examples:
+## from local helm chart:
+##  helm install myrelease -n mynamespace ./helm -f ./helm/examples/values-dev-cluster-example.yaml
+##
+## or from pre-packaged chart:
+##  helm install myrelease -n mynamespace oci://ghcr.io/nceas/charts/metacat --version 1.1.1 \
+##       -f ./helm/examples/values-dev-cluster-example.yaml \
+##       --debug --render-subchart-notes
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
@@ -13,9 +19,11 @@ global:
   metacatUiThemeName: "default"
   metacatUiWebRoot: "/"
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
-#  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
+  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
+  passwordsSecret: &passwordSecretName metacatbrooke-metacat-secrets
+
 
 ## example for a custom theme (also need to set global.metacatUiThemeName: "cerp", above)
 ##
@@ -30,11 +38,13 @@ global:
     ## SFWMD config.js at /config/config.js (created as configMap)
 
 metacat:
-  server.name: &extHostname metacat-dev.test.dataone.org
+  server.name: metacat-dev.test.dataone.org
   ## Matthew Brooke; Jing Tao; Matt Jones; Jeanette Clark
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268;https://orcid.org/0000-0003-0077-4738;http://orcid.org/0000-0003-4703-1974
 
   cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
+
+#  storage.hashstore.disableConversion: true
 
   ## DataONE Member Node (MN) Parameters
   dataone.certificate.fromHttpHeader.enabled: true
@@ -67,6 +77,50 @@ ingress:
     - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
 
+postgresql:
+  ## @param postgresqlDataDir PostgreSQL data dir folder
+  ##
+  postgresqlDataDir: /bitnami/postgresql/14/main
+
+  primary:
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1004 # from original filesystem
+    podSecurityContext:
+      fsGroup: 1001 # from original filesystem
+
+    extendedConfiguration: |
+      max_connections = 250
+      max_wal_size=16384
+      min_wal_size=4096
+      shared_buffers = 1280MB
+
+    persistence:
+      size: 10Gi
+      selector:
+        matchLabels:
+          metacatVolumeName: cephfs-metacatbrooke-metacat-postgresdata
+
+  auth:
+    existingSecret: *passwordSecretName
+#metacatui:
+#  ## PodSecurityContext - define common securityContext settings at the pod level for all containers
+#  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+#  ## @param podSecurityContext.enabled Enable security context
+#  ## @param podSecurityContext.fsGroup numerical Group ID for the pod
+#  ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
+#  ## the group that owns the existing data on that filesystem!
+#  ##
+#  podSecurityContext:
+#    fsGroup: 1000
+#
+#  ## securityContext holds container-level security attributes that override those at pod level
+#  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+#  ## @param securityContext.runAsNonRoot ensure containers run as a non-root user.
+#  ##                                 Note users must be defined by numerical user id for this to work
+##  securityContext:
+##    runAsNonRoot: true
+
 dataone-indexer:
   # increase minReplicas from default 3
   autoscaling:
@@ -89,6 +143,16 @@ dataone-indexer:
     # this actually puts container in debug loop mode - no indexer running
     debug: false
 
+  rabbitmq:
+    auth:
+      existingPasswordSecret: *passwordSecretName
+
+  solr:
+    extraVolumes:
+      - name: solr-config
+        configMap:
+          name: metacatbrooke-indexer-configfiles
+          defaultMode: 0777
 
 ####################################################################################################
 ## FOR DEBUGGING ONLY
@@ -96,10 +160,10 @@ dataone-indexer:
 ##
 ## probes will kill remote debugger
 
-#livenessProbe:
-#  enabled: false
-#readinessProbe:
-#  enabled: false
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
 
 #service:
 #  enabled: true
