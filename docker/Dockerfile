@@ -78,8 +78,8 @@ COPY --chown=tomcat:tomcat tomcat.k8s.logging.properties ${TC_HOME}/conf/logging
 COPY --chown=tomcat:tomcat apply_context.py     ${USRBINDIR}/
 COPY --chown=tomcat:tomcat docker-entrypoint.sh ${USRBINDIR}/
 
-#Run Container as 'metacat'
-USER 59997
+#Run Container as 'tomcat'
+USER 59997:59997
 
 #Set working directory to tomcat's bin dir, to match legacy metacat relative paths
 WORKDIR "$TC_HOME"/bin
