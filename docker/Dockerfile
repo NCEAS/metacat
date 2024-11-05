@@ -58,9 +58,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         vim               \
     &&  rm -rf /var/lib/apt/lists/                                        \
     &&  mv /tmp/metacat.war ${TC_HOME}/webapps                            \
-    &&  chown -R metacat ${TC_HOME}                                       \
-    &&  mkdir -p /var/metacat  && chown metacat:metacat /var/metacat      \
-    &&  mkdir -p /home/metacat && chown -R metacat:metacat /home/metacat  \
+    &&  chown -R tomcat ${TC_HOME}                                       \
+    &&  mkdir -p /var/metacat  && chown tomcat:tomcat /var/metacat      \
+    &&  mkdir -p /home/metacat && chown -R tomcat:tomcat /home/metacat  \
     ## Tomcat Mods to Extend Allowed Character Set
         ## - Encoded forward slashes (%2f):
     &&  echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true"     \
