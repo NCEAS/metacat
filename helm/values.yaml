@@ -877,6 +877,19 @@ postgresql:
   ## @param postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
   ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
   primary:
+    containerSecurityContext:
+      ## @param postgresql.primary.containerSecurityContext.enabled enable containerSecurityContext
+      ##
+      enabled: true
+      ## @param postgresql.primary.containerSecurityContext.runAsUser uid for container to run as
+      ##
+      runAsUser: 59996
+
+    podSecurityContext:
+      ## @param postgresql.primary.podSecurityContext.runAsNonRoot default pod to run as non-root?
+      ##
+      runAsNonRoot: true
+
     ## override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
     ## TYPE       DATABASE      USER          ADDRESS         METHOD

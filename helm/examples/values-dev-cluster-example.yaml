@@ -83,12 +83,6 @@ postgresql:
   postgresqlDataDir: /bitnami/postgresql/14/main
 
   primary:
-    containerSecurityContext:
-      enabled: true
-      runAsUser: 1004 # from original filesystem
-    podSecurityContext:
-      fsGroup: 1001 # from original filesystem
-
     extendedConfiguration: |
       max_connections = 250
       max_wal_size=16384
