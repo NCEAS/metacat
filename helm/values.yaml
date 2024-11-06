@@ -944,10 +944,20 @@ dataone-indexer:
     subPath: *sharedVolumeSubPath
 
   rabbitmq:
+    ## @param dataone-indexer.rabbitmq.extraConfiguration extra config, to be appended to rmq config
+    ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid timeouts
+    ## with large resource maps
+    ##
+    ## 144000000 = 4 hours
+    ##
+    extraConfiguration: |-
+      consumer_timeout = 144000000
+
     auth:
       ## @param dataone-indexer.rabbitmq.auth.username set the username that rabbitmq will use
       ##
       username: *rmqUsername
+
       ## @param dataone-indexer.rabbitmq.auth.existingPasswordSecret location of rabbitmq password
       ## (must contain a value for `rabbitmq-password` key)
       ##
@@ -975,6 +985,13 @@ dataone-indexer:
     coreNames:
       - metacat-core
 
+    ## solr Persistence parameters
+    ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    ## @param solr.persistence.size Persistent Volume size
+    ##
+    persistence:
+      size: 100Gi
+
     extraVolumes:
       ## @param dataone-indexer.solr.extraVolumes[0].name DO NOT EDIT - referenced by sub-chart
       - name: solr-config
@@ -989,3 +1006,11 @@ dataone-indexer:
           name: ${RELEASE_NAME}-indexer-configfiles
           ## @param dataone-indexer.solr.extraVolumes[0].configMap.defaultMode DO NOT EDIT
           defaultMode: 0777
+
+    ## ZooKeeper Persistence parameters
+    ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    ## @param zookeeper.persistence.size Persistent Volume size
+    ##
+    zookeeper:
+      persistence:
+        size: 100Gi
