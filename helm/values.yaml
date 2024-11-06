@@ -571,20 +571,26 @@ podAnnotations: {}
 ## PodSecurityContext - define common securityContext settings at the pod level for all containers
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ## @param podSecurityContext.enabled Enable security context
-## @param podSecurityContext.fsGroup numerical Group ID for the pod
+## @param podSecurityContext.runAsUser numerical User ID for the pod
+## @param podSecurityContext.runAsGroup numerical Group ID for the pod
+## @param podSecurityContext.fsGroup numerical Group ID used to access mounted volumes
+## @param podSecurityContext.supplementalGroups additional Group IDs used to access mounted volumes
+## @param podSecurityContext.runAsNonRoot ensure all containers run as a non-root user.
+##                                 Note users must be defined by numerical user id for this to work
 ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
 ## the group that owns the existing data on that filesystem!
 ##
 podSecurityContext:
   enabled: true
-  fsGroup: 1000
+  runAsUser: 59997
+  runAsGroup: 59997
+  fsGroup: &mcFsGroup 59997
+  supplementalGroups: &mcSupplementalGroups [ 997, 1000 ]
+  runAsNonRoot: true
 
 ## securityContext holds container-level security attributes that override those at pod level
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-## @param securityContext.runAsNonRoot ensure containers run as a non-root user.
-##                                 Note users must be defined by numerical user id for this to work
-securityContext:
-  runAsNonRoot: true
+securityContext: {}
 
 ## @param resources Resource limits for the deployment
 ##  We usually recommend not to specify default resources and to leave this as a conscious
@@ -872,6 +878,23 @@ postgresql:
   ## @param postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
   ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
   primary:
+    containerSecurityContext:
+      ## @param postgresql.primary.containerSecurityContext.enabled enable containerSecurityContext
+      ##
+      enabled: true
+      ## @param postgresql.primary.containerSecurityContext.runAsUser uid for container to run as
+      ##
+      runAsUser: 59996
+
+    ## postgresql.primary.PodSecurityContext - define common securityContext settings at the pod
+    ## level for all containers
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    ##
+    podSecurityContext:
+      ## @param postgresql.primary.podSecurityContext.runAsNonRoot pod defaults to run as non-root?
+      ##
+      runAsNonRoot: true
+
     ## override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
     ## TYPE       DATABASE      USER          ADDRESS         METHOD
@@ -927,6 +950,16 @@ tomcat:
 ## section are ignored
 ##
 dataone-indexer:
+
+  ## postgresql.primary.PodSecurityContext - define common securityContext settings at the pod
+  ## level for all containers
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ## @param dataone-indexer.podSecurityContext.fsGroup gid used to access mounted volumes
+  ## @param dataone-indexer.podSecurityContext.supplementalGroups additional gids to access volumes
+  podSecurityContext:
+    fsGroup: *mcFsGroup
+    supplementalGroups: *mcSupplementalGroups
+
   persistence:
     ## @param dataone-indexer.persistence.subPath The subdirectory of the volume to mount
     ## (see persistence.volumeName)
@@ -935,10 +968,20 @@ dataone-indexer:
     subPath: *sharedVolumeSubPath
 
   rabbitmq:
+    ## @param dataone-indexer.rabbitmq.extraConfiguration extra config, to be appended to rmq config
+    ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid timeouts
+    ## with large resource maps
+    ##
+    ## 144000000 = 4 hours
+    ##
+    extraConfiguration: |-
+      consumer_timeout = 144000000
+
     auth:
       ## @param dataone-indexer.rabbitmq.auth.username set the username that rabbitmq will use
       ##
       username: *rmqUsername
+
       ## @param dataone-indexer.rabbitmq.auth.existingPasswordSecret location of rabbitmq password
       ## (must contain a value for `rabbitmq-password` key)
       ##
@@ -966,6 +1009,13 @@ dataone-indexer:
     coreNames:
       - metacat-core
 
+    ## solr Persistence parameters
+    ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    ## @param solr.persistence.size Persistent Volume size
+    ##
+    persistence:
+      size: 100Gi
+
     extraVolumes:
       ## @param dataone-indexer.solr.extraVolumes[0].name DO NOT EDIT - referenced by sub-chart
       - name: solr-config
@@ -980,3 +1030,11 @@ dataone-indexer:
           name: ${RELEASE_NAME}-indexer-configfiles
           ## @param dataone-indexer.solr.extraVolumes[0].configMap.defaultMode DO NOT EDIT
           defaultMode: 0777
+
+    ## ZooKeeper Persistence parameters
+    ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    ## @param zookeeper.persistence.size Persistent Volume size
+    ##
+    zookeeper:
+      persistence:
+        size: 100Gi
