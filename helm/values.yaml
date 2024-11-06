@@ -573,9 +573,10 @@ podAnnotations: {}
 ## @param podSecurityContext.enabled Enable security context
 ## @param podSecurityContext.runAsUser numerical User ID for the pod
 ## @param podSecurityContext.runAsGroup numerical Group ID for the pod
-## @param podSecurityContext.fsGroup numerical Group ID used to r/w to mounted volumes
+## @param podSecurityContext.fsGroup numerical Group ID used to access mounted volumes
 ## @param podSecurityContext.supplementalGroups additional Group IDs used to access mounted volumes
-## @param postgresql.primary.podSecurityContext.runAsNonRoot default pod to run as non-root?
+## @param podSecurityContext.runAsNonRoot ensure all containers run as a non-root user.
+##                                 Note users must be defined by numerical user id for this to work
 ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
 ## the group that owns the existing data on that filesystem!
 ##
@@ -589,8 +590,6 @@ podSecurityContext:
 
 ## securityContext holds container-level security attributes that override those at pod level
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-## @param securityContext.runAsNonRoot ensure containers run as a non-root user.
-##                                 Note users must be defined by numerical user id for this to work
 securityContext: {}
 
 ## @param resources Resource limits for the deployment
@@ -887,8 +886,12 @@ postgresql:
       ##
       runAsUser: 59996
 
+    ## postgresql.primary.PodSecurityContext - define common securityContext settings at the pod
+    ## level for all containers
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    ##
     podSecurityContext:
-      ## @param postgresql.primary.podSecurityContext.runAsNonRoot default pod to run as non-root?
+      ## @param postgresql.primary.podSecurityContext.runAsNonRoot pod defaults to run as non-root?
       ##
       runAsNonRoot: true
 
@@ -947,6 +950,12 @@ tomcat:
 ## section are ignored
 ##
 dataone-indexer:
+
+  ## postgresql.primary.PodSecurityContext - define common securityContext settings at the pod
+  ## level for all containers
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ## @param dataone-indexer.podSecurityContext.fsGroup gid used to access mounted volumes
+  ## @param dataone-indexer.podSecurityContext.supplementalGroups additional gids to access volumes
   podSecurityContext:
     fsGroup: *mcFsGroup
     supplementalGroups: *mcSupplementalGroups
