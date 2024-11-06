@@ -575,6 +575,7 @@ podAnnotations: {}
 ## @param podSecurityContext.runAsGroup numerical Group ID for the pod
 ## @param podSecurityContext.fsGroup numerical Group ID used to r/w to mounted volumes
 ## @param podSecurityContext.supplementalGroups additional Group IDs used to access mounted volumes
+## @param postgresql.primary.podSecurityContext.runAsNonRoot default pod to run as non-root?
 ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
 ## the group that owns the existing data on that filesystem!
 ##
@@ -584,6 +585,7 @@ podSecurityContext:
   runAsGroup: 59997
   fsGroup: &mcFsGroup 59997
   supplementalGroups: &mcSupplementalGroups [ 997, 1000 ]
+  runAsNonRoot: true
 
 ## securityContext holds container-level security attributes that override those at pod level
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/

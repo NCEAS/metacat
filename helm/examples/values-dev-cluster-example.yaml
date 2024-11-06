@@ -77,6 +77,9 @@ ingress:
     - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
 
+podSecurityContext:
+  runAsNonRoot: true
+
 postgresql:
   ## @param postgresqlDataDir PostgreSQL data dir folder
   ##
@@ -136,12 +139,12 @@ dataone-indexer:
 ####################################################################################################
 ##
 ## probes will kill remote debugger
-
-livenessProbe:
-  enabled: false
-readinessProbe:
-  enabled: false
-
+#
+#livenessProbe:
+#  enabled: false
+#readinessProbe:
+#  enabled: false
+#
 #service:
 #  enabled: true
 #  type: LoadBalancer
