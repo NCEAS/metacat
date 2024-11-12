@@ -204,9 +204,13 @@ public class MetacatInitializerIT {
                              String.valueOf(MetacatInitializer.isFullyInitialized()));
             } catch (RuntimeException e) {
                 // Non-configured k8s metacat should throw an exception from k8s initializer:
-                if (!e.getMessage().contains("Cannot connect to the RabbitMQ queue")) {
-                    fail("Unexpected Exception: " + e.getMessage());
-                }
+                assertTrue("Exception not expected, when NOT running in K8s",
+                           Boolean.parseBoolean(System.getenv("METACAT_IN_K8S")));
+                final String expected = "Cannot connect to the RabbitMQ queue";
+                assertTrue("Exception message DID NOT contain expected string: " + expected
+                               + ". Entire message was:\n\n" + e.getMessage()
+                               + "\n\nfrom exception: " + e,
+                           e.getMessage().contains(expected));
             }
         }
         IndexGenerator.refreshInstance();
