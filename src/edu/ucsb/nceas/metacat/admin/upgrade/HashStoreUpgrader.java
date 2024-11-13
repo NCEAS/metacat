@@ -5,7 +5,6 @@ import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -22,7 +21,9 @@ import org.dataone.exceptions.MarshallingException;
 import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.hashstore.exceptions.NonMatchingChecksumException;
 import org.dataone.hashstore.hashstoreconverter.HashStoreConverter;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
@@ -37,13 +38,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -469,17 +470,27 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
             metadata = converter.convert(path, finalId, sysMetaInput, checksum, algorithm);
         } catch (NonMatchingChecksumException e) {
-            logMetacat.error("Cannot move the object " + finalId + "to hashstore since "
-                                + e.getMessage());
-            writeToFile(finalId, nonMatchingChecksumWriter);
+            logMetacat.info("Continue to move the object " + finalId + "to hashstore even though "
+                                + "its checksum in the system metadata didn't match Hashstore's "
+                                + "calculation: " + e.getMessage());
+            try {
+                metadata =
+                    reConvertUnMatchedChecksumObject(path, finalId, sysMeta, e.getHexDigests(),
+                                                     nonMatchingChecksumWriter);
+            } catch (Exception ee) {
+                writeToFile(finalId, e, generalWriter);
+                return;
+            }
         } catch (NoSuchAlgorithmException e) {
             logMetacat.error("Cannot move the object " + finalId + " to hashstore since "
                                 + e.getMessage());
             writeToFile(finalId, noSuchAlgorithmWriter);
+            return;
         } catch (Exception e) {
             logMetacat.error("Cannot move the object " + finalId + " to hashstore since "
                                 + e.getMessage(), e);
             writeToFile(finalId, e, generalWriter);
+            return;
         }
         // Save the checksums into checksum table
         DBConnection dbConn = null;
@@ -500,6 +511,54 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
+    }
+
+    private ObjectMetadata reConvertUnMatchedChecksumObject(
+        Path path, String finalId, SystemMetadata sysMeta, Map<String, String> checksums,
+        BufferedWriter nonMatchingChecksumWriter)
+        throws MarshallingException, IOException, NoSuchAlgorithmException, InterruptedException,
+        ServiceFailure, InvalidRequest {
+        ObjectMetadata metadata = null;
+        String originalChecksum = sysMeta.getChecksum().getValue();
+        String algorithm = sysMeta.getChecksum().getAlgorithm().toUpperCase();
+        // Modify the System Metadata with the new checksum from hashstore
+        String newChecksum = checksums.get(algorithm);
+        if (newChecksum == null || newChecksum.isBlank()) {
+            throw new NoSuchAlgorithmException("HashStore doesn't have the checksum with the "
+                                                   + "algorithm " + algorithm);
+        }
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm(algorithm);
+        checksum.setValue(newChecksum);
+        sysMeta.setChecksum(checksum);
+        //Save the new system metadata with correct the checksum to database and hashstore
+        //false means no modification date change
+        SystemMetadataManager.getInstance().store(sysMeta, false,
+                                                  SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
+            metadata = converter.convert(path, finalId, sysMetaInput, newChecksum, algorithm);
+        }
+        String info =
+            "Object: " + finalId + " was converted successfully, but original " + algorithm + " "
+                + "checksum (" + originalChecksum
+                + ") was incorrect. System metadata was updated with new checksum (" + newChecksum
+                + "). Old object for reference: " + path;
+        // Check if the user just put a wrong algorithm. If there is a match, Metacat gives the
+        // users more info.
+        for (String key : checksums.keySet()) {
+            String value = checksums.get(key);
+            if (value != null && value.equals(originalChecksum)) {
+                logMetacat.debug(
+                    "find the algorithm " + key + " with the original checksum " + originalChecksum
+                        + " in the checksum maps from the hashstore. The users just may put a "
+                        + "wrong algorithm in the system metadata.");
+                info = info + " Note: the original checksum would have been correct if the " + key
+                        + " algorithm was used. Was the wrong algorithm recorded?";
+                break;
+            }
+        }
+        writeToFile(info, nonMatchingChecksumWriter);
+        return metadata;
     }
 
 }
