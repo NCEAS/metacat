@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -103,7 +103,10 @@ public class MetacatInitializerIT {
             //reset the fully-initialized flag to be false by creating a new instance
             metacatInitializer = new MetacatInitializer();
             metacatInitializer.contextInitialized(event);
-            assertFalse(MetacatInitializer.isFullyInitialized());
+            //k8s doesn't care whether configutil.authConfigured - it relies on values.yaml
+            assertEquals("Should always be true if running in k8s, and false otherwise",
+                         System.getenv("METACAT_IN_K8S"),
+                         String.valueOf(MetacatInitializer.isFullyInitialized()));
         }
     }
 
@@ -150,8 +153,10 @@ public class MetacatInitializerIT {
                 .thenReturn(Mockito.mock(PropertyService.class));
             metacatInitializer = new MetacatInitializer();
             metacatInitializer.contextInitialized(event);
-            assertFalse(MetacatInitializer.isFullyInitialized());
-        }
+            //k8s doesn't care whether configutil.databaseConfigured - it relies on values.yaml
+            assertEquals("Should always be true if running in k8s, and false otherwise",
+                         System.getenv("METACAT_IN_K8S"),
+                         String.valueOf(MetacatInitializer.isFullyInitialized()));        }
     }
 
     /**
@@ -184,7 +189,8 @@ public class MetacatInitializerIT {
             }
 
             // set Metacat non-configured temporarily.
-            // Non-configured Metacat wouldn't throw an exception.
+            // Non-configured legacy Metacat wouldn't throw an exception. Non-configured k8s metacat
+            // should throw an exception, though
             withProperties.setProperty("configutil.skinsConfigured", PropertyService.UNCONFIGURED);
             try (MockedStatic<PropertyService> psMock = LeanTestUtils.initializeMockPropertyService(
                 withProperties)) {
@@ -192,7 +198,19 @@ public class MetacatInitializerIT {
                     .thenReturn(Mockito.mock(PropertyService.class));
                 metacatInitializer = new MetacatInitializer();
                 metacatInitializer.contextInitialized(event);
-                assertFalse(MetacatInitializer.isFullyInitialized());
+                //k8s doesn't care whether configutil.skinsConfigured - it relies on values.yaml
+                assertEquals("Should always be true if running in k8s, and false otherwise",
+                             System.getenv("METACAT_IN_K8S"),
+                             String.valueOf(MetacatInitializer.isFullyInitialized()));
+            } catch (RuntimeException e) {
+                // Non-configured k8s metacat should throw an exception from k8s initializer:
+                assertTrue("Exception not expected, when NOT running in K8s",
+                           Boolean.parseBoolean(System.getenv("METACAT_IN_K8S")));
+                final String expected = "Cannot connect to the RabbitMQ queue";
+                assertTrue("Exception message DID NOT contain expected string: " + expected
+                               + ". Entire message was:\n\n" + e.getMessage()
+                               + "\n\nfrom exception: " + e,
+                           e.getMessage().contains(expected));
             }
         }
         IndexGenerator.refreshInstance();
