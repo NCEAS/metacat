@@ -205,7 +205,7 @@ public class SystemMetadataFactory {
             sysMeta.setChecksum(checksum);
         } catch (McdbDocNotFoundException e) {
             // try to read it from the legacy store
-            try (InputStream inputStream = readFileFromLegacyStore(identifier)) {
+            try (InputStream inputStream = readInputStreamFromLegacyStore(identifier)) {
                 // create the checksum
                 String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
                 Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
@@ -220,7 +220,7 @@ public class SystemMetadataFactory {
             fileSize = length(inputStream);
         } catch (McdbDocNotFoundException e) {
             // Try to read from the legacy store
-            try (InputStream inputStream = readFileFromLegacyStore(identifier)) {
+            try (InputStream inputStream = readInputStreamFromLegacyStore(identifier)) {
                 fileSize = length(inputStream);
             }
         }
@@ -585,20 +585,32 @@ public class SystemMetadataFactory {
     /**
      * This method is used for the HashStoreUpgrader class to read the object from the Metacat
      * legacy store since the Hashtore hasn't been successfully converted.
-     * @param pid  the identifier the object
+     * @param pid  the identifier the object. Note: We assume the pid's value equals the docid
      * @return the InputStream presentation of the object
      */
-    protected static InputStream readFileFromLegacyStore(Identifier pid)
+    protected static InputStream readInputStreamFromLegacyStore(Identifier pid)
         throws FileNotFoundException {
         String localId = pid.getValue();
+       return new FileInputStream(getFileFromLegacyStore(localId));
+    }
+
+    /**
+     * Get a file object for the given localId from the legacyStore. It will try both the document
+     * and data directories.
+     * @param localId  the local id (doc id) will be look.
+     * @return the file which have the content of the local id
+     * @throws FileNotFoundException
+     */
+    public static File getFileFromLegacyStore(String localId)
+        throws FileNotFoundException {
         if (legacyDocDir != null) {
             File file = new File(legacyDocDir + localId);
             if (file.exists()) {
-                return new FileInputStream(file);
+                return file;
             } else if (legacyDataDir != null) {
                 file = new File(legacyDataDir + localId);
                 if (file.exists()) {
-                    return new FileInputStream(file);
+                    return file;
                 } else {
                     throw new FileNotFoundException(
                         "Can't find the object " + file.getAbsolutePath() + " in the"
@@ -611,7 +623,7 @@ public class SystemMetadataFactory {
         } else if (legacyDataDir != null) {
             File file = new File(legacyDataDir + localId);
             if (file.exists()) {
-                return new FileInputStream(file);
+                return file;
             } else {
                 throw new FileNotFoundException("Can't find the object " + file.getAbsolutePath()
                                                     + " in the Metacat legacy store.");

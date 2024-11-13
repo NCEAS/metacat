@@ -135,22 +135,38 @@ public class SystemMetadataFactoryIT {
 
 
     /**
-     * Test the method of ReadFileFromLegacyStore
+     * Test the method of readInputStreamFromLegacyStore
      * @throws Exception
      */
     @Test
     public void testReadFileFromLegacyStore() throws Exception {
         Identifier identifier = new Identifier();
         identifier.setValue("eml-error-2.2.0.xml");
-        assertNotNull(SystemMetadataFactory.readFileFromLegacyStore(identifier));
+        assertNotNull(SystemMetadataFactory.readInputStreamFromLegacyStore(identifier));
         identifier.setValue("foo");
         try {
-            SystemMetadataFactory.readFileFromLegacyStore(identifier);
+            SystemMetadataFactory.readInputStreamFromLegacyStore(identifier);
             fail("Test shouldn't get here since the foo file doesn't exist");
         } catch (Exception e) {
             assertTrue(e instanceof FileNotFoundException);
         }
         identifier.setValue("onlineDataFile1");
-        assertNotNull(SystemMetadataFactory.readFileFromLegacyStore(identifier));
+        assertNotNull(SystemMetadataFactory.readInputStreamFromLegacyStore(identifier));
+    }
+
+    /**
+     * Test the method of getFileFromLegacyStore
+     * @throws Exception
+     */
+    @Test
+    public void testGetFileFromLegacyStore() throws Exception {
+        assertTrue(SystemMetadataFactory.getFileFromLegacyStore("eml-error-2.2.0.xml").exists());
+        try {
+            SystemMetadataFactory.getFileFromLegacyStore("foo1");
+            fail("Test shouldn't get here since the foo file doesn't exist");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        assertTrue(SystemMetadataFactory.getFileFromLegacyStore("onlineDataFile1").exists());
     }
 }
