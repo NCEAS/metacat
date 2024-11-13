@@ -87,6 +87,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         nThreads = Math.max(1, nThreads);           // In case only 1 processor is available
         nThreads = Math.min(availDbConn, nThreads); // Limit to available DB pool connections
         logMetacat.debug("The size of the thread pool to do the conversion job is " + nThreads);
+        logMetacat.debug("Available DB Connections were (tot - 5): " + availDbConn);
     }
 
     /**
