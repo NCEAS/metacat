@@ -32,6 +32,7 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -382,10 +383,11 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             return null;
         }
         Path path;
-        if (D1NodeService.isScienceMetadata(sysMeta)) {
-            path = Paths.get(documentPath + localId);
-        } else {
-            path = Paths.get(dataPath + localId);
+        try {
+            File file = SystemMetadataFactory.getFileFromLegacyStore(localId);
+            path = file.toPath();
+        } catch (FileNotFoundException e) {
+            return null;
         }
         logMetacat.debug("The object path for " + pid.getValue() + " is " + path.toString());
         return path;
