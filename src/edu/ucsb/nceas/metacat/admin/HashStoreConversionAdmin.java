@@ -7,17 +7,13 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.DatabaseUtil;
-import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
-import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
-import java.util.concurrent.Executors;
 
 /**
  * An admin class to convert the old style file store to a HashStore
@@ -184,7 +179,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
             //No upgrade need, we determine the version from the map from the property file
             versionAndClassMap = versionAndClassMapInProperty;
         } else {
-            // There is a upgrade, we determine the version from the finalVersionAndClassMap
+            // There is an upgrade. We determine the version from the finalVersionAndClassMap
             versionAndClassMap = finalVersionAndClassMap;
         }
         // We combine the status for all status of the different versions
@@ -259,7 +254,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
                     if (resultSet.next()) {
                         String statusStr =resultSet.getString(1);
                         if (statusStr != null && !statusStr.isBlank()) {
-                            logMetacat.debug("The status of storage_upgrade_status from the db is"
+                            logMetacat.debug("The status of storage_upgrade_status from the db is: "
                                                  + statusStr);
                             status = UpgradeStatus.getStatus(statusStr);
                         }
