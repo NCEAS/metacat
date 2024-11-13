@@ -66,16 +66,27 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private File backupDir;
     private static int timeout = TIME_OUT_DAYS;
     private int maxSetSize = MAX_SET_SIZE;
-    private static int nThreads = 1;
+    protected static int nThreads;
 
     static {
-        // use a shared executor service with nThreads == one less than available processors or one
-        int availableProcessors = Runtime.getRuntime().availableProcessors();
-        nThreads = availableProcessors;
-        nThreads--;
-        nThreads = Math.max(1, nThreads);
+        // use a shared executor service with nThreads == one less than available processors (or one
+        // if there's only 1 processor), and limited by the max number of database connections.
+        int availDbConn;
+        try {
+            // Limit to DB conn pool size minus 5 for other processes
+            availDbConn =
+                Integer.parseInt(PropertyService.getProperty("database.maximumConnections")) - 5;
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn(
+                "unable to find database.maximumConnections property!"
+                + "Defaulting available DN connections to 195", e);
+            availDbConn = 195;
+        }
+        nThreads = Runtime.getRuntime().availableProcessors();
+        nThreads--;                                 // Leave 1 main thread for execution
+        nThreads = Math.max(1, nThreads);           // In case only 1 processor is available
+        nThreads = Math.min(availDbConn, nThreads); // Limit to available DB pool connections
         logMetacat.debug("The size of the thread pool to do the conversion job is " + nThreads);
-
     }
 
     /**
@@ -387,7 +398,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         } else {
             path = Paths.get(dataPath + localId);
         }
-        logMetacat.debug("The object path for " + pid.getValue() + " is " + path.toString());
+        logMetacat.debug("The object path for " + pid.getValue() + " is " + path);
         return path;
     }
 
