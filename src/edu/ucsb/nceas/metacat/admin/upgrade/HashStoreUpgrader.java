@@ -76,6 +76,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             // Limit to DB conn pool size minus 5 for other processes
             availDbConn =
                 Integer.parseInt(PropertyService.getProperty("database.maximumConnections")) - 5;
+            availDbConn = Math.max(1, availDbConn); // In case "database.maximumConnections" < 6
         } catch (PropertyNotFoundException e) {
             logMetacat.warn(
                 "unable to find database.maximumConnections property!"
