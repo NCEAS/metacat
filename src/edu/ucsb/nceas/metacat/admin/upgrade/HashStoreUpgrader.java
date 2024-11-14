@@ -237,8 +237,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                 "Trying to convert the storage to hashstore"
                                                     + " for " + id + " with checksum: " + checksum
                                                     + " algorithm: " + algorithm
-                                                    + " and file path(may be null): "
-                                                    + path.toString());
+                                                    + " and file path(may be null): " + path);
                                             Future<?> future = executor.submit(() -> {
                                                 convert(path, finalId, finalSysMeta, checksum,
                                                         algorithm, nonMatchingChecksumWriter,
