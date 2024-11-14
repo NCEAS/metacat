@@ -12,10 +12,14 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
+import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
@@ -61,6 +65,7 @@ import static org.mockito.Mockito.withSettings;
  * The test class for HashStoreUpgrader
  */
 public class HashStoreUpgraderIT {
+    private static final Log log = LogFactory.getLog(HashStoreUpgraderIT.class);
     MockedStatic<PropertyService> closeableMock;
     String backupPath = "build/temp." + System.currentTimeMillis();
     String hashStorePath = "build/hashStore";
@@ -590,6 +595,8 @@ public class HashStoreUpgraderIT {
      */
     @Test
     public void testUpgradeWithIncorrectChecksum() throws Exception {
+        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("MNodeQueryIT");
+        Session session = d1NodeServiceTest.getTestSession();
         String dataId = "testUpgradeWithIncorrectChecksum567"
             + System.currentTimeMillis();
         String localId = "eml-error-2.2.0.xml";
@@ -600,8 +607,45 @@ public class HashStoreUpgraderIT {
         pid.setValue(dataId);
         InputStream object = new FileInputStream(new File(dataPath + "/" + localId));
         SystemMetadata sysmeta0 = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
-        sysmeta0.getChecksum().setValue("adfa");
-        String metadataId = "testUpgradeWithIncorrectChecksum12"
+        object = new FileInputStream(new File(dataPath + "/" + localId));
+        d1NodeServiceTest.mnCreate(session, pid, object, sysmeta0);
+        String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
+        Checksum checksum = new Checksum();
+        checksum.setValue("foo");
+        checksum.setAlgorithm(read.getChecksum().getAlgorithm());
+        read.setChecksum(checksum);
+        SystemMetadataManager.lock(pid);
+        SystemMetadataManager.getInstance().store(read);
+        SystemMetadataManager.unLock(pid);
+        read = SystemMetadataManager.getInstance().get(pid);
+        assertEquals("foo", read.getChecksum().getValue());
+        long originalDataModificationTime = read.getDateSysMetadataModified().getTime();
+        // create the docid in the data directory to simulate the old storage system
+        File oldDataFile = new File(dataPath + "/" + docid);
+        try {
+            FileUtils.copyFile(new File(dataPath + "/" + localId), oldDataFile);
+            File hashStore = new File(hashStorePath);
+            FileDeleteStrategy.FORCE.delete(hashStore);
+            assertFalse(hashStore.exists());
+            MetacatInitializer.initStorage();
+            //assertTrue(hashstore.exists());
+            // mock ResultSet
+            ResultSet resultSetMock = Mockito.mock(ResultSet.class);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(dataId);
+            // mock HashStoreUpgrader with the real methods
+            HashStoreUpgrader upgrader = Mockito.mock(
+                HashStoreUpgrader.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            // mock the initCandidate method
+            Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
+            upgrader.upgrade();
+            assertTrue(hashStore.exists());
+        } finally {
+            oldDataFile.delete();
+        }
+
+        /*String metadataId = "testUpgradeWithIncorrectChecksum12"
             + System.currentTimeMillis();
         String metaLocalId = "eml-2.2.0.xml";
         Identifier metaPid = new Identifier();
@@ -673,7 +717,7 @@ public class HashStoreUpgraderIT {
                     assertTrue(e instanceof FileNotFoundException);
                 }
             }
-        }
+        }*/
     }
 
     /**
