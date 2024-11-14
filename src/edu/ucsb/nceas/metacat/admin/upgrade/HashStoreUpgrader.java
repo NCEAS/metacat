@@ -28,7 +28,6 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 
-
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -69,6 +68,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static int timeout = TIME_OUT_DAYS;
     private int maxSetSize = MAX_SET_SIZE;
     protected static int nThreads;
+    private static boolean isCN = false;
 
     static {
         // use a shared executor service with nThreads == one less than available processors (or one
@@ -154,6 +154,16 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             logMetacat.debug(
                 "Metacat sets a wrong set size " + sizeStr + " and it uses the default one - "
                     + MAX_SET_SIZE);
+        }
+        try {
+            String nodeType = PropertyService.getProperty("dataone.nodeType");
+            if (nodeType != null && nodeType.equalsIgnoreCase("cn")) {
+                logMetacat.debug("The node type is " + nodeType + ". So it is a CN");
+                isCN = true;
+            }
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("The dataone.nodeType property can't be found, so we assume it is "
+                                 + "not a cn");
         }
     }
 
@@ -394,25 +404,38 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     }
 
     /**
-     * Get the object path for the given pid
+     * Get the object path for the given pid. When a not-found exception arises, it will throw
+     * the exception if it is not cn; otherwise returns null. The reason is that cn doesn't harvest
+     * the data objects so the data objects don't have the bytes in cn.
      * @param sysMeta  the system metadata associated with the object
      * @return  the object path. Null will be returned if there is no object found.
      * @throws SQLException
+     * @throws McdbDocNotFoundException
+     * @throws FileNotFoundException
      */
-    protected Path resolve(SystemMetadata sysMeta ) throws SQLException {
+    protected Path resolve(SystemMetadata sysMeta )
+        throws SQLException, McdbDocNotFoundException, FileNotFoundException {
         Identifier pid = sysMeta.getIdentifier();
         String localId;
         try {
             localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
         } catch (McdbDocNotFoundException e) {
-            return null;
+            if (isCN) {
+                return null;
+            } else {
+                throw e;
+            }
         }
         Path path;
         try {
             File file = SystemMetadataFactory.getFileFromLegacyStore(localId);
             path = file.toPath();
         } catch (FileNotFoundException e) {
-            return null;
+            if (isCN) {
+                return null;
+            } else {
+                throw e;
+            }
         }
         logMetacat.debug("The object path for " + pid.getValue() + " is " + path);
         return path;
