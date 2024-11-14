@@ -215,6 +215,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                         // transformed to the DataONE object: no system metadata
                                         // This method does not only create the system metadata,
                                         // but also create the map in the identifier table.
+                                        System.out.println("we need to create systemetadata");
                                         sysMeta =
                                             SystemMetadataFactory.createSystemMetadata(finalId);
                                         try {
@@ -593,8 +594,6 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         } finally {
             SystemMetadataManager.unLock(sysMeta.getIdentifier());
         }
-        SystemMetadataManager.getInstance().store(sysMeta, false,
-                                                  SystemMetadataManager.SysMetaVersion.UNCHECKED);
         logMetacat.debug("After saving to the db, the checksum from the new system metadata is "
                              + sysMeta.getChecksum().getValue());
         try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
