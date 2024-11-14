@@ -585,6 +585,11 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             SystemMetadataManager.lock(sysMeta.getIdentifier());
             SystemMetadataManager.getInstance()
                 .store(sysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        } catch (Exception ee) {
+            logMetacat.error("Metacat couldn't save the system metadata with the correct checksum"
+                                 + " during the process to reconvert unmatched checksum object "
+                                 + finalId);
+            throw ee;
         } finally {
             SystemMetadataManager.unLock(sysMeta.getIdentifier());
         }
