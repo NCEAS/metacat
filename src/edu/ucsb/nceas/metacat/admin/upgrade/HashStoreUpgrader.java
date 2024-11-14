@@ -280,6 +280,17 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                    + "jobs was interrupted: " + e.getMessage());
                 }
             }
+            // Add a comment at the end of the non-matching checksum file
+            if (nonMatchingChecksumFile != null && nonMatchingChecksumFile.exists()
+                && nonMatchingChecksumFile.length() > 0) {
+                String message = "If this instance is a registered member node of the DataONE "
+                    + "network, please submit the file to knb-help@nceas.ucsb.edu so can we make "
+                    + "changes on the CN part as well.";
+                try (BufferedWriter noChecksumInSysmetaWriter2 = new BufferedWriter(new FileWriter(
+                    noChecksumInSysmetaFile, append))) {
+                    writeToFile(message, noChecksumInSysmetaWriter2);
+                }
+            }
             handleErrorFile(nonMatchingChecksumFile, infoBuffer);
             handleErrorFile(noSuchAlgorithmFile, infoBuffer);
             handleErrorFile(generalFile, infoBuffer);
