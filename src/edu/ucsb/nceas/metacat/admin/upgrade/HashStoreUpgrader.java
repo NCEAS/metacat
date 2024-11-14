@@ -561,7 +561,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         BufferedWriter nonMatchingChecksumWriter)
         throws MarshallingException, IOException, NoSuchAlgorithmException, InterruptedException,
         ServiceFailure, InvalidRequest {
-        ObjectMetadata metadata = null;
+        logMetacat.debug("The checksum map from hashstore is " + checksums);
+        ObjectMetadata metadata;
         String originalChecksum = sysMeta.getChecksum().getValue();
         String algorithm = sysMeta.getChecksum().getAlgorithm().toUpperCase();
         // Modify the System Metadata with the new checksum from hashstore
@@ -580,11 +581,19 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         //false means no modification date change
         logMetacat.debug("Before saving to the db, the checksum from the new system metadata is "
                              + sysMeta.getChecksum().getValue());
+        try {
+            SystemMetadataManager.lock(sysMeta.getIdentifier());
+            SystemMetadataManager.getInstance()
+                .store(sysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        } finally {
+            SystemMetadataManager.unLock(sysMeta.getIdentifier());
+        }
         SystemMetadataManager.getInstance().store(sysMeta, false,
                                                   SystemMetadataManager.SysMetaVersion.UNCHECKED);
         logMetacat.debug("After saving to the db, the checksum from the new system metadata is "
                              + sysMeta.getChecksum().getValue());
         try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
+            logMetacat.debug("The new checksum just before reconvert is " + newChecksum);
             metadata = converter.convert(path, finalId, sysMetaInput, newChecksum, algorithm);
         }
         String info =
