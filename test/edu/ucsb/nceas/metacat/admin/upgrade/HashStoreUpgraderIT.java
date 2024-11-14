@@ -60,7 +60,7 @@ import static org.mockito.Mockito.withSettings;
  * @author Tao
  * The test class for HashStoreUpgrader
  */
-public class HashStoreUpgraderTest {
+public class HashStoreUpgraderIT {
     MockedStatic<PropertyService> closeableMock;
     String backupPath = "build/temp." + System.currentTimeMillis();
     String hashStorePath = "build/hashStore";
