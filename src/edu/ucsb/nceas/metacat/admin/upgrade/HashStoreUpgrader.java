@@ -213,6 +213,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                     if (sysMeta == null) {
                                         // This is for the case that the object somehow hasn't been
                                         // transformed to the DataONE object: no system metadata
+                                        // This method does not only create the system metadata,
+                                        // but also create the map in the identifier table.
                                         sysMeta =
                                             SystemMetadataFactory.createSystemMetadata(finalId);
                                         try {
@@ -224,7 +226,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                     }
                                     if (sysMeta != null) {
                                         SystemMetadata finalSysMeta = sysMeta;
-                                        Path path = resolve(finalSysMeta); // it may be null
+                                        Path path = resolve(finalSysMeta); // it may be null for cn
                                         if (finalSysMeta.getChecksum() != null) {
                                             String checksum = finalSysMeta.getChecksum().getValue();
                                             String algorithm =
@@ -420,6 +422,10 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         try {
             localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
         } catch (McdbDocNotFoundException e) {
+            // If we can't find them in the identifier table, throw an exception for the mns.
+            // Note: those old metacat docid originally without system data already created the
+            // records in the systemmetadata and identifier tables during the call of the
+            // SystemMetadataFactory. createSystemMetadata method.
             if (isCN) {
                 return null;
             } else {
@@ -428,6 +434,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         }
         Path path;
         try {
+            // This method will look both the data and documents directories.
             File file = SystemMetadataFactory.getFileFromLegacyStore(localId);
             path = file.toPath();
         } catch (FileNotFoundException e) {
