@@ -632,6 +632,7 @@ public class HashStoreUpgraderIT {
             //assertTrue(hashstore.exists());
             // mock ResultSet
             ResultSet resultSetMock = Mockito.mock(ResultSet.class);
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
             Mockito.when(resultSetMock.getString(1)).thenReturn(dataId);
             // mock HashStoreUpgrader with the real methods
             HashStoreUpgrader upgrader = Mockito.mock(
