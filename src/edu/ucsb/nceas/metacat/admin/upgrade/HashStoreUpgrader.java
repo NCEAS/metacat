@@ -519,6 +519,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                     reConvertUnMatchedChecksumObject(path, finalId, sysMeta, e.getHexDigests(),
                                                      nonMatchingChecksumWriter);
             } catch (Exception ee) {
+                logMetacat.error("Cannot reconvert unMatchedChecksum object " + finalId + " since "
+                                     + e.getMessage());
                 writeToFile(finalId, e, generalWriter);
                 return;
             }
@@ -564,6 +566,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         String algorithm = sysMeta.getChecksum().getAlgorithm().toUpperCase();
         // Modify the System Metadata with the new checksum from hashstore
         String newChecksum = checksums.get(algorithm);
+        logMetacat.debug("the calculated checksum with algorithm " + algorithm + " from hashstore "
+                             + "is " + newChecksum);
         if (newChecksum == null || newChecksum.isBlank()) {
             throw new NoSuchAlgorithmException("HashStore doesn't have the checksum with the "
                                                    + "algorithm " + algorithm);
@@ -574,8 +578,12 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         sysMeta.setChecksum(checksum);
         //Save the new system metadata with correct the checksum to database and hashstore
         //false means no modification date change
+        logMetacat.debug("Before saving to the db, the checksum from the new system metadata is "
+                             + sysMeta.getChecksum().getValue());
         SystemMetadataManager.getInstance().store(sysMeta, false,
                                                   SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        logMetacat.debug("After saving to the db, the checksum from the new system metadata is "
+                             + sysMeta.getChecksum().getValue());
         try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
             metadata = converter.convert(path, finalId, sysMetaInput, newChecksum, algorithm);
         }
