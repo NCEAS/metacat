@@ -12,7 +12,6 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
-import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -599,16 +598,14 @@ public class HashStoreUpgraderIT {
         Session session = d1NodeServiceTest.getTestSession();
         String dataId = "testUpgradeWithIncorrectChecksum567"
             + System.currentTimeMillis();
-        String localId = "eml-error-2.2.0.xml";
-        String user = "http://orcid.org/1234/4567";
-        Subject owner = new Subject();
-        owner.setValue(user);
         Identifier pid = new Identifier();
         pid.setValue(dataId);
-        InputStream object = new FileInputStream(new File(dataPath + "/" + localId));
-        SystemMetadata sysmeta0 = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
-        object = new FileInputStream(new File(dataPath + "/" + localId));
+        InputStream object = new ByteArrayInputStream(dataId.getBytes());
+        SystemMetadata sysmeta0 =
+            D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
         d1NodeServiceTest.mnCreate(session, pid, object, sysmeta0);
+        // delete the object from hash store to mock the old storage
+        MetacatInitializer.getStorage().deleteObject(pid);
         String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
         SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
         Checksum checksum = new Checksum();
@@ -618,18 +615,15 @@ public class HashStoreUpgraderIT {
         SystemMetadataManager.lock(pid);
         SystemMetadataManager.getInstance().store(read);
         SystemMetadataManager.unLock(pid);
+        MetacatInitializer.getStorage().deleteMetadata(pid);
         read = SystemMetadataManager.getInstance().get(pid);
         assertEquals("foo", read.getChecksum().getValue());
         long originalDataModificationTime = read.getDateSysMetadataModified().getTime();
         // create the docid in the data directory to simulate the old storage system
         File oldDataFile = new File(dataPath + "/" + docid);
         try {
-            FileUtils.copyFile(new File(dataPath + "/" + localId), oldDataFile);
+            FileUtils.copyToFile(object, oldDataFile);
             File hashStore = new File(hashStorePath);
-            FileDeleteStrategy.FORCE.delete(hashStore);
-            assertFalse(hashStore.exists());
-            MetacatInitializer.initStorage();
-            //assertTrue(hashstore.exists());
             // mock ResultSet
             ResultSet resultSetMock = Mockito.mock(ResultSet.class);
             Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
@@ -642,6 +636,7 @@ public class HashStoreUpgraderIT {
             Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
             upgrader.upgrade();
             assertTrue(hashStore.exists());
+            assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
         } finally {
             oldDataFile.delete();
         }
