@@ -299,7 +299,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                     + "network, please submit the file to knb-help@nceas.ucsb.edu so can we make "
                     + "changes on the CN part as well.";
                 try (BufferedWriter noChecksumInSysmetaWriter2 = new BufferedWriter(new FileWriter(
-                    noChecksumInSysmetaFile, append))) {
+                    nonMatchingChecksumFile, append))) {
                     writeToFile(message, noChecksumInSysmetaWriter2);
                 }
             }
