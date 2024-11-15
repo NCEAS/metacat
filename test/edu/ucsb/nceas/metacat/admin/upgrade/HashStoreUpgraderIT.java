@@ -594,7 +594,7 @@ public class HashStoreUpgraderIT {
      */
     @Test
     public void testUpgradeWithIncorrectChecksum() throws Exception {
-        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("MNodeQueryIT");
+        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("HashStoreUpgraderIT");
         Session session = d1NodeServiceTest.getTestSession();
         String dataId = "testUpgradeWithIncorrectChecksum567"
             + System.currentTimeMillis();
@@ -603,11 +603,13 @@ public class HashStoreUpgraderIT {
         InputStream object = new ByteArrayInputStream(dataId.getBytes());
         SystemMetadata sysmeta0 =
             D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+        object = new ByteArrayInputStream(dataId.getBytes());
         d1NodeServiceTest.mnCreate(session, pid, object, sysmeta0);
+        SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
+        String originDataChecksum = read.getChecksum().getValue();
         // delete the object from hash store to mock the old storage
         MetacatInitializer.getStorage().deleteObject(pid);
         String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
         Checksum checksum = new Checksum();
         checksum.setValue("foo");
         checksum.setAlgorithm(read.getChecksum().getAlgorithm());
@@ -617,11 +619,12 @@ public class HashStoreUpgraderIT {
         SystemMetadataManager.unLock(pid);
         MetacatInitializer.getStorage().deleteMetadata(pid);
         read = SystemMetadataManager.getInstance().get(pid);
-        assertEquals("foo", read.getChecksum().getValue());
         long originalDataModificationTime = read.getDateSysMetadataModified().getTime();
+        assertEquals("foo", read.getChecksum().getValue());
         // create the docid in the data directory to simulate the old storage system
         File oldDataFile = new File(dataPath + "/" + docid);
         try {
+            object = new ByteArrayInputStream(dataId.getBytes());
             FileUtils.copyToFile(object, oldDataFile);
             File hashStore = new File(hashStorePath);
             // mock ResultSet
@@ -636,7 +639,30 @@ public class HashStoreUpgraderIT {
             Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
             upgrader.upgrade();
             assertTrue(hashStore.exists());
+            assertTrue(upgrader.getInfo().length() > 0);
+            assertTrue(upgrader.getInfo().contains("nonMatchingChecksum"));
+            assertFalse(upgrader.getInfo().contains("general"));
+            assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
+            assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
+            assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
+            Vector<String> content = readContentFromFileInDir();
+            assertEquals(2, content.size());
+            //assertTrue(content.contains(dataId));
+            //assertTrue(content.contains(metadataId));
             assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
+            assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid));
+            SystemMetadata newRead = SystemMetadataManager.getInstance().get(pid);
+            SystemMetadata sysFromHash =
+                TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                       MetacatInitializer.getStorage()
+                                                           .retrieveMetadata(pid));
+            assertEquals(
+                originalDataModificationTime, newRead.getDateSysMetadataModified().getTime());
+            assertEquals(
+                originalDataModificationTime, sysFromHash.getDateSysMetadataModified().getTime());
+            assertEquals(originDataChecksum, newRead.getChecksum().getValue());
+            assertEquals(originDataChecksum, sysFromHash.getChecksum().getValue());
+
         } finally {
             oldDataFile.delete();
         }
