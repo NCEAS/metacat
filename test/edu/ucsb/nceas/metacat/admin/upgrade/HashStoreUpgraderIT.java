@@ -647,8 +647,8 @@ public class HashStoreUpgraderIT {
             assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
             Vector<String> content = readContentFromFileInDir();
             assertEquals(2, content.size());
-            //assertTrue(content.contains(dataId));
-            //assertTrue(content.contains(metadataId));
+            assertTrue(content.elementAt(0).contains(dataId));
+            assertTrue(content.elementAt(1).contains("@"));
             assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
             assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid));
             SystemMetadata newRead = SystemMetadataManager.getInstance().get(pid);
@@ -662,84 +662,100 @@ public class HashStoreUpgraderIT {
                 originalDataModificationTime, sysFromHash.getDateSysMetadataModified().getTime());
             assertEquals(originDataChecksum, newRead.getChecksum().getValue());
             assertEquals(originDataChecksum, sysFromHash.getChecksum().getValue());
-
         } finally {
             oldDataFile.delete();
         }
+    }
 
-        /*String metadataId = "testUpgradeWithIncorrectChecksum12"
+    /**
+     * Test the scenario that a metadata object with incorrect checksum
+     * @throws Exception
+     */
+    @Test
+    public void testUpgradeWithIncorrectChecksumForMetadata() throws Exception {
+        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("HashStoreUpgraderIT");
+        Session session = d1NodeServiceTest.getTestSession();
+        String dataId = "testUpgradeWithIncorrectChecksumForMetadata123"
             + System.currentTimeMillis();
-        String metaLocalId = "eml-2.2.0.xml";
-        Identifier metaPid = new Identifier();
-        metaPid.setValue(metadataId);
-        object = new FileInputStream(new File(documentPath + "/" + metaLocalId));
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(metaPid, owner, object);
-        sysmeta.setFormatId(eml220_format_id);
-        sysmeta.getChecksum().setValue("edsf");
-        // mock IdentifierManager
-        try (MockedStatic<IdentifierManager> ignore =
-                 Mockito.mockStatic(IdentifierManager.class)) {
-            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
-            Mockito.when(mockManager.getLocalId(metadataId)).thenReturn(metaLocalId);
-            Mockito.when(mockManager.getLocalId(dataId)).thenReturn(localId);
-            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+        Identifier pid = new Identifier();
+        pid.setValue(dataId);
+        InputStream object = new FileInputStream("test/eml-2.2.0.xml");
+        SystemMetadata sysmeta0 =
+            D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+        sysmeta0.setFormatId(eml220_format_id);
+        object = new FileInputStream("test/eml-2.2.0.xml");
+        d1NodeServiceTest.mnCreate(session, pid, object, sysmeta0);
+        SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
+        String originDataChecksum = read.getChecksum().getValue();
+        // delete the object from hash store to mock the old storage
+        MetacatInitializer.getStorage().deleteObject(pid);
+        try  {
+            MetacatInitializer.getStorage().retrieveObject(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        Checksum checksum = new Checksum();
+        checksum.setValue("foo");
+        checksum.setAlgorithm(read.getChecksum().getAlgorithm());
+        read.setChecksum(checksum);
+        SystemMetadataManager.lock(pid);
+        SystemMetadataManager.getInstance().store(read);
+        SystemMetadataManager.unLock(pid);
+        MetacatInitializer.getStorage().deleteMetadata(pid);
+        read = SystemMetadataManager.getInstance().get(pid);
+        long originalDataModificationTime = read.getDateSysMetadataModified().getTime();
+        assertEquals("foo", read.getChecksum().getValue());
+        // create the docid in the data directory to simulate the old storage system
+        // note: this is an eml document, but is purposely stored in the dataPath. The convert
+        // sould find it.
+        File oldDataFile = new File(dataPath + "/" + docid);
+        try {
+            object = new FileInputStream("test/eml-2.2.0.xml");
+            FileUtils.copyToFile(object, oldDataFile);
+            File hashStore = new File(hashStorePath);
             // mock ResultSet
             ResultSet resultSetMock = Mockito.mock(ResultSet.class);
-            Mockito.when(resultSetMock.getString(1)).thenReturn(metadataId).thenReturn(dataId);
-            // mock only having one next
-            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(true).thenReturn(false);
-            // mock getSystemMetadata
-            try (MockedStatic<SystemMetadataManager> ignoredSysmeta =
-                     Mockito.mockStatic(SystemMetadataManager.class)) {
-                SystemMetadataManager manager = Mockito.mock(SystemMetadataManager.class);
-                Mockito.when(manager.get(metaPid)).thenReturn(sysmeta);
-                Mockito.when(manager.get(pid)).thenReturn(sysmeta0);
-                Mockito.when(SystemMetadataManager.getInstance()).thenReturn(manager);
-                // mock HashStoreUpgrader with the real methods
-                HashStoreUpgrader upgrader = Mockito.mock(
-                    HashStoreUpgrader.class,
-                    withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
-                // mock the initCandidate method
-                Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
-                upgrader.upgrade();
-                File hashStoreRoot = new File(hashStorePath);
-                assertTrue(hashStoreRoot.exists());
-                assertTrue(upgrader.getInfo().length() > 0);
-                assertTrue(upgrader.getInfo().contains("nonMatchingChecksum"));
-                assertFalse(upgrader.getInfo().contains("general"));
-                assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
-                assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
-                assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
-                Vector<String> content = readContentFromFileInDir();
-                assertEquals(2, content.size());
-                assertTrue(content.contains(dataId));
-                assertTrue(content.contains(metadataId));
-                try {
-                    MetacatInitializer.getStorage().retrieveObject(pid);
-                    fail("Test can't get there since the pid " + pid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-                try {
-                    MetacatInitializer.getStorage().retrieveMetadata(pid);
-                    fail("Test can't get there since the pid " + pid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-                try {
-                    MetacatInitializer.getStorage().retrieveObject(metaPid);
-                    fail("Test can't get there since the pid " + metaPid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-                try {
-                    MetacatInitializer.getStorage().retrieveMetadata(metaPid);
-                    fail("Test can't get there since the pid " + metaPid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-            }
-        }*/
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(dataId);
+            // mock HashStoreUpgrader with the real methods
+            HashStoreUpgrader upgrader = Mockito.mock(
+                HashStoreUpgrader.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            // mock the initCandidate method
+            Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
+            upgrader.upgrade();
+            assertTrue(hashStore.exists());
+            assertTrue(upgrader.getInfo().length() > 0);
+            assertTrue(upgrader.getInfo().contains("nonMatchingChecksum"));
+            assertFalse(upgrader.getInfo().contains("general"));
+            assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
+            assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
+            assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
+            Vector<String> content = readContentFromFileInDir();
+            assertEquals(2, content.size());
+            assertTrue(content.elementAt(0).contains(dataId));
+            assertTrue(content.elementAt(1).contains("@"));
+            assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
+            assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid));
+            SystemMetadata newRead = SystemMetadataManager.getInstance().get(pid);
+            SystemMetadata sysFromHash =
+                TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                       MetacatInitializer.getStorage()
+                                                           .retrieveMetadata(pid));
+            assertEquals(
+                originalDataModificationTime, newRead.getDateSysMetadataModified().getTime());
+            assertEquals(
+                originalDataModificationTime, sysFromHash.getDateSysMetadataModified().getTime());
+            assertEquals(originDataChecksum, newRead.getChecksum().getValue());
+            assertEquals(eml220_format_id.getValue(), newRead.getFormatId().getValue());
+            assertEquals(originDataChecksum, sysFromHash.getChecksum().getValue());
+            assertEquals(eml220_format_id.getValue(), sysFromHash.getFormatId().getValue());
+        } finally {
+            oldDataFile.delete();
+        }
     }
 
     /**
