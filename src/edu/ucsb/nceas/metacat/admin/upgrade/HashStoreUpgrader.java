@@ -5,6 +5,7 @@ import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -427,7 +428,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             // Note: those old metacat docid originally without system data already created the
             // records in the systemmetadata and identifier tables during the call of the
             // SystemMetadataFactory. createSystemMetadata method.
-            if (isCN) {
+            if (isCN && !D1NodeService.isScienceMetadata(sysMeta)) {
                 return null;
             } else {
                 throw e;

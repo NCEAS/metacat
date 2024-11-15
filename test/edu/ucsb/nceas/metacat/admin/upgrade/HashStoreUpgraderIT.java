@@ -320,8 +320,13 @@ public class HashStoreUpgraderIT {
         SystemMetadata sysmeta2 =
             D1NodeServiceTest.createSystemMetadata(metadataPid, owner, object);
         sysmeta2.setFormatId(eml220_format_id);
-        path = upgrader.resolve(sysmeta2);
-        assertNull(path);
+        try {
+            path = upgrader.resolve(sysmeta2);
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbDocNotFoundException);
+            assertTrue(e.getMessage().contains("identifier"));
+            assertTrue(e.getMessage().contains(metadataId));
+        }
 
         try (MockedStatic<IdentifierManager> ignore =
                  Mockito.mockStatic(IdentifierManager.class)) {
