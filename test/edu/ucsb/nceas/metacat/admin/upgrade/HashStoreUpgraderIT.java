@@ -251,6 +251,119 @@ public class HashStoreUpgraderIT {
     }
 
     /**
+     * Test the resolve method in an MN
+     * @throws Exception
+     */
+    @Test
+    public void testResolveInMN() throws Exception {
+        String localDataId = "eml-error.xml";
+        String localMetadataId = "eml-2.2.0.xml";
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        // There is no record in the identifier table
+        String id = "testResolveInMN" + System.currentTimeMillis();
+        Identifier pid = new Identifier();
+        InputStream object =
+            new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        HashStoreUpgrader upgrader = new HashStoreUpgrader();
+        pid.setValue(id);
+        try {
+            Path path = upgrader.resolve(sysmeta);
+            fail("Test can't get here since there is no map in the identifier table.");
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbDocNotFoundException);
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is a data object, but the path is in documents directory. It
+            // should work as well
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(pid.getValue())).thenReturn(localMetadataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            Path path = upgrader.resolve(sysmeta);
+            assertTrue(Files.exists(path));
+            assertEquals(8724, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is a data object, the path is in data directory. It
+            // should work
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(pid.getValue())).thenReturn(localDataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            Path path = upgrader.resolve(sysmeta);
+            assertTrue(Files.exists(path));
+            assertEquals(103649, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // Mock the identifier table returning a non-existing id
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(pid.getValue())).thenReturn("foo");
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            try {
+                Path path = upgrader.resolve(sysmeta);
+                fail("The test shouldn't get there since the docid doesn't exist");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+        }
+
+        // For the metadata system metadata
+        String metadataId = "testResolveMetadataInMN" + System.currentTimeMillis();
+        Identifier metadataPid = new Identifier();
+        metadataPid.setValue(metadataId);
+        object =
+            new ByteArrayInputStream(metadataId.getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta2 =
+            D1NodeServiceTest.createSystemMetadata(metadataPid, owner, object);
+        sysmeta2.setFormatId(eml220_format_id);
+        try {
+            Path path = upgrader.resolve(sysmeta2);
+            fail("Test can't get here since there is no map in the identifier table.");
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbDocNotFoundException);
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is a metadata object, and the path is in documents directory. It
+            // should work.
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(metadataPid.getValue())).thenReturn(localMetadataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            Path path = upgrader.resolve(sysmeta2);
+            assertTrue(Files.exists(path));
+            assertEquals(8724, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is for a metadata object, but the path is in data directory. It
+            // should work as well.
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(metadataPid.getValue())).thenReturn(localDataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            Path path = upgrader.resolve(sysmeta2);
+            assertTrue(Files.exists(path));
+            assertEquals(103649, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // Mock to return a non-existing docid
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(metadataPid.getValue())).thenReturn("food");
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            try {
+                Path path = upgrader.resolve(sysmeta2);
+                fail("The test shouldn't get there since the docid doesn't exist");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+        }
+    }
+
+    /**
      * Test the resolve method for the metadata object
      * @throws Exception
      */
