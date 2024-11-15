@@ -212,6 +212,20 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                     SystemMetadata sysMeta =
                                         SystemMetadataManager.getInstance().get(pid);
                                     if (sysMeta == null) {
+                                        if (finalId.startsWith("autogen.")) {
+                                            // This is not a normal scenario. The
+                                            // autogen. is reserved docid for the Dataone objects
+                                            // . It always means there is no mapping between the
+                                            // autogen docid and the pid in the identifier table
+                                            throw new AdminException(
+                                                "Pid " + finalId + " is missing system "
+                                                    + "metadata. Since the pid starts with "
+                                                    + "autogen and looks like to be created by"
+                                                    + " DataONE api, it should have the "
+                                                    + "systemmetadata. Please look at the "
+                                                    + "systemmetadata and identifier table to "
+                                                    + "figure out the real pid.");
+                                        }
                                         // This is for the case that the object somehow hasn't been
                                         // transformed to the DataONE object: no system metadata
                                         // This method does not only create the system metadata,

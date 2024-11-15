@@ -839,6 +839,20 @@ public class HashStoreUpgraderIT {
         String originDataChecksum = read.getChecksum().getValue();
         // delete the object from hash store to mock the old storage
         MetacatInitializer.getStorage().deleteObject(pid);
+        try  {
+            MetacatInitializer.getStorage().retrieveObject(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try  {
+            MetacatInitializer.getStorage().retrieveMetadata(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
         String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
         Checksum checksum = new Checksum();
         checksum.setValue("foo");
@@ -847,6 +861,7 @@ public class HashStoreUpgraderIT {
         SystemMetadataManager.lock(pid);
         SystemMetadataManager.getInstance().store(read);
         SystemMetadataManager.unLock(pid);
+        //Only delete the metadata from hashstore
         MetacatInitializer.getStorage().deleteMetadata(pid);
         read = SystemMetadataManager.getInstance().get(pid);
         long originalDataModificationTime = read.getDateSysMetadataModified().getTime();
@@ -1425,4 +1440,133 @@ public class HashStoreUpgraderIT {
                      mcSysmeta.getAuthoritativeMemberNode().getValue());
     }
 
+    /**
+     * Test an object created by DataONE api. Somehow the system does exist while the map in the
+     * identifier table is missing
+     * @throws Exception
+     */
+    @Test
+    public void testMissingIdentifierMappingForDataONEobj() throws Exception {
+        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("HashStoreUpgraderIT");
+        Session session = d1NodeServiceTest.getTestSession();
+        String dataId = "testMissingIdentifierMapping1234"
+            + System.currentTimeMillis();
+        Identifier pid = new Identifier();
+        pid.setValue(dataId);
+        InputStream object = new ByteArrayInputStream(dataId.getBytes());
+        SystemMetadata sysmeta0 =
+            D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+        object = new ByteArrayInputStream(dataId.getBytes());
+        d1NodeServiceTest.mnCreate(session, pid, object, sysmeta0);
+        SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
+        // delete the object from hash store to mock the old storage
+        MetacatInitializer.getStorage().deleteObject(pid);
+        try  {
+            MetacatInitializer.getStorage().retrieveObject(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try  {
+            MetacatInitializer.getStorage().retrieveMetadata(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        // Deleting the records from checksums
+        ChecksumsManager manager = new ChecksumsManager();
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("testMissingIdentifierMappingForDataONEobj");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            manager.delete(pid, dbConn);
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        // Deleting the mapping records in the identifier table
+        IdentifierManager.getInstance().removeMapping(pid.getValue(), docid);
+
+        // Make sure the docid is in the candidate list
+        HashStoreUpgrader upgrader1 = new HashStoreUpgrader();
+        ResultSet resultSet = upgrader1.initCandidateList();
+        boolean found = false;
+        while (resultSet.next()) {
+            String id = resultSet.getString(1);
+            if (id.equals(docid)) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue(found);
+        // Now we will have a fake pid with the value of docid
+        Identifier fakeId = new Identifier();
+        fakeId.setValue(docid);
+        File oldDataFile = new File(dataPath + "/" + docid);
+        try {
+            // Create a docid in the old data file path to mock the object in the legacy storage
+            object = new ByteArrayInputStream(dataId.getBytes());
+            FileUtils.copyToFile(object, oldDataFile);
+            File hashStore = new File(hashStorePath);
+            // mock ResultSet
+            ResultSet resultSetMock = Mockito.mock(ResultSet.class);
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(fakeId.getValue());
+            // mock HashStoreUpgrader with the real methods
+            HashStoreUpgrader upgrader = Mockito.mock(
+                HashStoreUpgrader.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            // mock the initCandidate method
+            Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
+            upgrader.upgrade();
+            assertTrue(hashStore.exists());
+            assertTrue(upgrader.getInfo().length() > 0);
+            assertFalse(upgrader.getInfo().contains("nonMatchingChecksum"));
+            assertTrue(upgrader.getInfo().contains("general"));
+            assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
+            assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
+            assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
+            Vector<String> content = readContentFromFileInDir();
+            assertEquals(1, content.size());
+            assertTrue(content.elementAt(0).contains(fakeId.getValue()));
+            try  {
+                MetacatInitializer.getStorage().retrieveObject(pid);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            try  {
+                MetacatInitializer.getStorage().retrieveMetadata(pid);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            try  {
+                MetacatInitializer.getStorage().retrieveObject(fakeId);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            try  {
+                MetacatInitializer.getStorage().retrieveMetadata(fakeId);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            assertNull(SystemMetadataManager.getInstance().get(fakeId));
+            assertEquals(dataId,
+                         SystemMetadataManager.getInstance().get(pid).getIdentifier().getValue());
+        } finally {
+            oldDataFile.delete();
+        }
+    }
 }
