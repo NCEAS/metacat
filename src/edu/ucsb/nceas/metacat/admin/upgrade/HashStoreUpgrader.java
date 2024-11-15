@@ -215,7 +215,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                         // transformed to the DataONE object: no system metadata
                                         // This method does not only create the system metadata,
                                         // but also create the map in the identifier table.
-                                        System.out.println("we need to create systemetadata");
+                                        logMetacat.debug("We need to create the systemetadata for "
+                                                             + finalId);
                                         sysMeta =
                                             SystemMetadataFactory.createSystemMetadata(finalId);
                                         try {
