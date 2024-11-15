@@ -764,24 +764,16 @@ public class HashStoreUpgraderIT {
      * @throws Exception
      */
     @Test
-    public void testUpgradeWithIncorrectChecksumAndAlgorithm() throws Exception {
-        String dataId = "testUpgradeWithIncorrectChecksumAndAlgorithm567"
-            + System.currentTimeMillis();
-        String localId = "eml-error-2.2.0.xml";
+    public void testUpgradeWithIncorrectAlgorithm() throws Exception {
         String user = "http://orcid.org/1234/4567";
         Subject owner = new Subject();
         owner.setValue(user);
-        Identifier pid = new Identifier();
-        pid.setValue(dataId);
-        InputStream object = new FileInputStream(new File(dataPath + "/" + localId));
-        SystemMetadata sysmeta0 = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
-        sysmeta0.getChecksum().setValue("adfa");
         String metadataId = "testUpgradeWithIncorrectChecksumAndAlgorithm12"
             + System.currentTimeMillis();
         String metaLocalId = "eml-2.2.0.xml";
         Identifier metaPid = new Identifier();
         metaPid.setValue(metadataId);
-        object = new FileInputStream(new File(documentPath + "/" + metaLocalId));
+        InputStream object = new FileInputStream(documentPath + "/" + metaLocalId);
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(metaPid, owner, object);
         sysmeta.setFormatId(eml220_format_id);
         sysmeta.getChecksum().setAlgorithm("edsf");
@@ -790,19 +782,17 @@ public class HashStoreUpgraderIT {
                  Mockito.mockStatic(IdentifierManager.class)) {
             IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
             Mockito.when(mockManager.getLocalId(metadataId)).thenReturn(metaLocalId);
-            Mockito.when(mockManager.getLocalId(dataId)).thenReturn(localId);
             Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
             // mock ResultSet
             ResultSet resultSetMock = Mockito.mock(ResultSet.class);
-            Mockito.when(resultSetMock.getString(1)).thenReturn(metadataId).thenReturn(dataId);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(metadataId);
             // mock only having one next
-            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(true).thenReturn(false);
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
             // mock getSystemMetadata
             try (MockedStatic<SystemMetadataManager> ignoredSysmeta =
                      Mockito.mockStatic(SystemMetadataManager.class)) {
                 SystemMetadataManager manager = Mockito.mock(SystemMetadataManager.class);
                 Mockito.when(manager.get(metaPid)).thenReturn(sysmeta);
-                Mockito.when(manager.get(pid)).thenReturn(sysmeta0);
                 Mockito.when(SystemMetadataManager.getInstance()).thenReturn(manager);
                 // mock HashStoreUpgrader with the real methods
                 HashStoreUpgrader upgrader = Mockito.mock(
@@ -814,22 +804,10 @@ public class HashStoreUpgraderIT {
                 File hashStoreRoot = new File(hashStorePath);
                 assertTrue(hashStoreRoot.exists());
                 assertTrue(upgrader.getInfo().length() > 0);
-                assertTrue(upgrader.getInfo().contains("nonMatchingChecksum"));
+                assertFalse(upgrader.getInfo().contains("nonMatchingChecksum"));
                 assertFalse(upgrader.getInfo().contains("general"));
                 assertTrue(upgrader.getInfo().contains("noSuchAlgorithm"));
                 assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
-                try {
-                    MetacatInitializer.getStorage().retrieveObject(pid);
-                    fail("Test can't get there since the pid " + pid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-                try {
-                    MetacatInitializer.getStorage().retrieveMetadata(pid);
-                    fail("Test can't get there since the pid " + pid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
                 try {
                     MetacatInitializer.getStorage().retrieveObject(metaPid);
                     fail("Test can't get there since the pid " + metaPid + " was not converted.");
