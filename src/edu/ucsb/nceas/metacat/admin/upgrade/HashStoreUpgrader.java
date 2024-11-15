@@ -68,7 +68,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static int timeout = TIME_OUT_DAYS;
     private int maxSetSize = MAX_SET_SIZE;
     protected static int nThreads;
-    private static boolean isCN = false;
+    private boolean isCN = false;
 
     static {
         // use a shared executor service with nThreads == one less than available processors (or one
@@ -434,17 +434,9 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             }
         }
         Path path;
-        try {
-            // This method will look both the data and documents directories.
-            File file = SystemMetadataFactory.getFileFromLegacyStore(localId);
-            path = file.toPath();
-        } catch (FileNotFoundException e) {
-            if (isCN) {
-                return null;
-            } else {
-                throw e;
-            }
-        }
+        // This method will look both the data and documents directories.
+        File file = SystemMetadataFactory.getFileFromLegacyStore(localId);
+        path = file.toPath();
         logMetacat.debug("The object path for " + pid.getValue() + " is " + path);
         return path;
     }
