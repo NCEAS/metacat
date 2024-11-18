@@ -22,27 +22,29 @@ import org.dataone.exceptions.MarshallingException;
 import org.dataone.hashstore.ObjectMetadata;
 import org.dataone.hashstore.exceptions.NonMatchingChecksumException;
 import org.dataone.hashstore.hashstoreconverter.HashStoreConverter;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
-
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,6 +69,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     private static int timeout = TIME_OUT_DAYS;
     private int maxSetSize = MAX_SET_SIZE;
     protected static int nThreads;
+    private boolean isCN = false;
 
     static {
         // use a shared executor service with nThreads == one less than available processors (or one
@@ -153,6 +156,16 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                 "Metacat sets a wrong set size " + sizeStr + " and it uses the default one - "
                     + MAX_SET_SIZE);
         }
+        try {
+            String nodeType = PropertyService.getProperty("dataone.nodeType");
+            if (nodeType != null && nodeType.equalsIgnoreCase("cn")) {
+                logMetacat.debug("The node type is " + nodeType + ". So it is a CN");
+                isCN = true;
+            }
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("The dataone.nodeType property can't be found, so we assume it is "
+                                 + "not a cn");
+        }
     }
 
     @Override
@@ -199,8 +212,26 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                     SystemMetadata sysMeta =
                                         SystemMetadataManager.getInstance().get(pid);
                                     if (sysMeta == null) {
+                                        if (finalId.startsWith("autogen.")) {
+                                            // This is not a normal scenario. The
+                                            // autogen. is reserved docid for the Dataone objects
+                                            // . It always means there is no mapping between the
+                                            // autogen docid and the pid in the identifier table
+                                            throw new AdminException(
+                                                "Pid " + finalId + " is missing system "
+                                                    + "metadata. Since the pid starts with "
+                                                    + "autogen and looks like to be created by"
+                                                    + " DataONE api, it should have the "
+                                                    + "systemmetadata. Please look at the "
+                                                    + "systemmetadata and identifier table to "
+                                                    + "figure out the real pid.");
+                                        }
                                         // This is for the case that the object somehow hasn't been
                                         // transformed to the DataONE object: no system metadata
+                                        // This method does not only create the system metadata,
+                                        // but also create the map in the identifier table.
+                                        logMetacat.debug("We need to create the systemetadata for "
+                                                             + finalId);
                                         sysMeta =
                                             SystemMetadataFactory.createSystemMetadata(finalId);
                                         try {
@@ -212,7 +243,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                     }
                                     if (sysMeta != null) {
                                         SystemMetadata finalSysMeta = sysMeta;
-                                        Path path = resolve(finalSysMeta); // it may be null
+                                        Path path = resolve(finalSysMeta); // it may be null for cn
                                         if (finalSysMeta.getChecksum() != null) {
                                             String checksum = finalSysMeta.getChecksum().getValue();
                                             String algorithm =
@@ -222,8 +253,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                 "Trying to convert the storage to hashstore"
                                                     + " for " + id + " with checksum: " + checksum
                                                     + " algorithm: " + algorithm
-                                                    + " and file path(may be null): "
-                                                    + path.toString());
+                                                    + " and file path(may be null for cn): " + path);
                                             Future<?> future = executor.submit(() -> {
                                                 convert(path, finalId, finalSysMeta, checksum,
                                                         algorithm, nonMatchingChecksumWriter,
@@ -276,6 +306,17 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                 } catch (InterruptedException e) {
                     throw new RuntimeException("The waiting of completeness of the executor's "
                                                    + "jobs was interrupted: " + e.getMessage());
+                }
+            }
+            // Add a comment at the end of the non-matching checksum file
+            if (nonMatchingChecksumFile != null && nonMatchingChecksumFile.exists()
+                && nonMatchingChecksumFile.length() > 0) {
+                String message = "If this instance is a registered member node of the DataONE "
+                    + "network, please submit this file to knb-help@nceas.ucsb.edu so we can also "
+                    + "update the CN to reflect the above changes.";
+                try (BufferedWriter noChecksumInSysmetaWriter2 = new BufferedWriter(new FileWriter(
+                    nonMatchingChecksumFile, append))) {
+                    writeToFile(message, noChecksumInSysmetaWriter2);
                 }
             }
             handleErrorFile(nonMatchingChecksumFile, infoBuffer);
@@ -381,25 +422,36 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     }
 
     /**
-     * Get the object path for the given pid
+     * Get the object path for the given pid. When a not-found exception arises, it will throw
+     * the exception if it is not cn; otherwise returns null. The reason is that cn doesn't harvest
+     * the data objects so the data objects don't have the bytes in cn.
      * @param sysMeta  the system metadata associated with the object
      * @return  the object path. Null will be returned if there is no object found.
      * @throws SQLException
+     * @throws McdbDocNotFoundException
+     * @throws FileNotFoundException
      */
-    protected Path resolve(SystemMetadata sysMeta ) throws SQLException {
+    protected Path resolve(SystemMetadata sysMeta )
+        throws SQLException, McdbDocNotFoundException, FileNotFoundException {
         Identifier pid = sysMeta.getIdentifier();
         String localId;
         try {
             localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
         } catch (McdbDocNotFoundException e) {
-            return null;
+            // If we can't find them in the identifier table, throw an exception for the mns.
+            // Note: those old metacat docid originally without system data already created the
+            // records in the systemmetadata and identifier tables during the call of the
+            // SystemMetadataFactory. createSystemMetadata method.
+            if (isCN && !D1NodeService.isScienceMetadata(sysMeta)) {
+                return null;
+            } else {
+                throw e;
+            }
         }
         Path path;
-        if (D1NodeService.isScienceMetadata(sysMeta)) {
-            path = Paths.get(documentPath + localId);
-        } else {
-            path = Paths.get(dataPath + localId);
-        }
+        // This method will look both the data and documents directories.
+        File file = SystemMetadataFactory.getFileFromLegacyStore(localId);
+        path = file.toPath();
         logMetacat.debug("The object path for " + pid.getValue() + " is " + path);
         return path;
     }
@@ -467,17 +519,29 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
             metadata = converter.convert(path, finalId, sysMetaInput, checksum, algorithm);
         } catch (NonMatchingChecksumException e) {
-            logMetacat.error("Cannot move the object " + finalId + "to hashstore since "
-                                + e.getMessage());
-            writeToFile(finalId, nonMatchingChecksumWriter);
+            logMetacat.info("Continue to move the object " + finalId + "to hashstore even though "
+                                + "its checksum in the system metadata didn't match Hashstore's "
+                                + "calculation: " + e.getMessage());
+            try {
+                metadata =
+                    reConvertUnMatchedChecksumObject(path, finalId, sysMeta, e.getHexDigests(),
+                                                     nonMatchingChecksumWriter);
+            } catch (Exception ee) {
+                logMetacat.error("Cannot reconvert unMatchedChecksum object " + finalId + " since "
+                                     + e.getMessage());
+                writeToFile(finalId, e, generalWriter);
+                return;
+            }
         } catch (NoSuchAlgorithmException e) {
             logMetacat.error("Cannot move the object " + finalId + " to hashstore since "
                                 + e.getMessage());
             writeToFile(finalId, noSuchAlgorithmWriter);
+            return;
         } catch (Exception e) {
             logMetacat.error("Cannot move the object " + finalId + " to hashstore since "
                                 + e.getMessage(), e);
             writeToFile(finalId, e, generalWriter);
+            return;
         }
         // Save the checksums into checksum table
         DBConnection dbConn = null;
@@ -498,6 +562,73 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
+    }
+
+    private ObjectMetadata reConvertUnMatchedChecksumObject(
+        Path path, String finalId, SystemMetadata sysMeta, Map<String, String> checksums,
+        BufferedWriter nonMatchingChecksumWriter)
+        throws MarshallingException, IOException, NoSuchAlgorithmException, InterruptedException,
+        ServiceFailure, InvalidRequest {
+        logMetacat.debug("The checksum map from hashstore is " + checksums);
+        ObjectMetadata metadata;
+        String originalChecksum = sysMeta.getChecksum().getValue();
+        String algorithm = sysMeta.getChecksum().getAlgorithm().toUpperCase();
+        // Modify the System Metadata with the new checksum from hashstore
+        String newChecksum = checksums.get(algorithm);
+        logMetacat.debug("the calculated checksum with algorithm " + algorithm + " from hashstore "
+                             + "is " + newChecksum);
+        if (newChecksum == null || newChecksum.isBlank()) {
+            throw new NoSuchAlgorithmException("HashStore doesn't have the checksum with the "
+                                                   + "algorithm " + algorithm);
+        }
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm(algorithm);
+        checksum.setValue(newChecksum);
+        sysMeta.setChecksum(checksum);
+        //Save the new system metadata with correct the checksum to database and hashstore
+        //false means no modification date change
+        logMetacat.debug("Before saving to the db, the checksum from the new system metadata is "
+                             + sysMeta.getChecksum().getValue());
+        try {
+            SystemMetadataManager.lock(sysMeta.getIdentifier());
+            SystemMetadataManager.getInstance()
+                .store(sysMeta, false, SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        } catch (Exception ee) {
+            logMetacat.error("Metacat couldn't save the system metadata with the correct checksum"
+                                 + " during the process to reconvert unmatched checksum object "
+                                 + finalId);
+            throw ee;
+        } finally {
+            SystemMetadataManager.unLock(sysMeta.getIdentifier());
+        }
+        logMetacat.debug("After saving to the db, the checksum from the new system metadata is "
+                             + sysMeta.getChecksum().getValue());
+        try (InputStream sysMetaInput = convertSystemMetadata(sysMeta)) {
+            logMetacat.debug("The new checksum just before reconvert is " + newChecksum);
+            metadata = converter.convert(path, finalId, sysMetaInput, newChecksum, algorithm);
+        }
+        String info =
+            "Object: " + finalId + " was converted successfully, but original " + algorithm + " "
+                + "checksum (" + originalChecksum
+                + ") was incorrect. System metadata was updated with new checksum (" + newChecksum
+                + "). Old object for reference: " + path;
+        // Check if the user just put a wrong algorithm. If there is a match, Metacat gives the
+        // users more info.
+        for (String key : checksums.keySet()) {
+            String value = checksums.get(key);
+            if (value != null && value.equals(originalChecksum)) {
+                logMetacat.debug(
+                    "find the algorithm " + key + " with the original checksum " + originalChecksum
+                        + " in the checksum maps from the hashstore. The users just may put a "
+                        + "wrong algorithm in the system metadata.");
+                info = info + " Note: the original checksum would have been correct if the " + key
+                        + " algorithm was used. Was the wrong algorithm recorded?";
+                break;
+            }
+        }
+        logMetacat.error(info);
+        writeToFile(info, nonMatchingChecksumWriter);
+        return metadata;
     }
 
 }

@@ -1402,7 +1402,8 @@ public class IdentifierManager {
               rev = rs.getInt(3);
               assert(db_guid.equals(guid));
           } else {
-              throw new McdbDocNotFoundException("Document not found:" + guid);
+              throw new McdbDocNotFoundException("Docid not found in the " + TYPE_IDENTIFIER
+                  + " table: " + guid);
           }
           stmt.close();
       } catch (SQLException e) {

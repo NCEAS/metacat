@@ -2,6 +2,7 @@ package edu.ucsb.nceas.metacat.admin.upgrade;
 
 import edu.ucsb.nceas.IntegrationTestUtils;
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.AccessionNumber;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
@@ -13,9 +14,12 @@ import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
@@ -40,6 +44,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.List;
@@ -60,7 +65,9 @@ import static org.mockito.Mockito.withSettings;
  * @author Tao
  * The test class for HashStoreUpgrader
  */
-public class HashStoreUpgraderTest {
+public class HashStoreUpgraderIT {
+    private static final Log log = LogFactory.getLog(HashStoreUpgraderIT.class);
+    private Properties withProperties;
     MockedStatic<PropertyService> closeableMock;
     String backupPath = "build/temp." + System.currentTimeMillis();
     String hashStorePath = "build/hashStore";
@@ -73,7 +80,7 @@ public class HashStoreUpgraderTest {
     public void setUp() throws Exception {
         eml220_format_id.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
-        Properties withProperties = new Properties();
+        withProperties = new Properties();
         withProperties.setProperty("application.datafilepath", dataPath);
         withProperties.setProperty("application.documentfilepath", documentPath);
         withProperties.setProperty("application.backupDir", backupPath);
@@ -244,6 +251,235 @@ public class HashStoreUpgraderTest {
         }
         assertTrue("The id " + id2 + " should be found in the result set", found2);
         assertTrue("The id " + id1 + " should be found in the result set", found1);
+    }
+
+    /**
+     * Test the resolve method in an CN
+     * @throws Exception
+     */
+    @Test
+    public void testResolveInCN() throws Exception {
+        closeableMock.close();
+        withProperties.setProperty("dataone.nodeType", "cn");
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+        String localDataId = "eml-error.xml";
+        String localMetadataId = "eml-2.2.0.xml";
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        // There is no record in the identifier table
+        String id = "testResolveInMN" + System.currentTimeMillis();
+        Identifier pid = new Identifier();
+        InputStream object =
+            new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        HashStoreUpgrader upgrader = new HashStoreUpgrader();
+        pid.setValue(id);
+        Path path = upgrader.resolve(sysmeta);
+        assertNull(path);
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is a data object, but the path is in documents directory. It
+            // should work as well
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(pid.getValue())).thenReturn(localMetadataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            path = upgrader.resolve(sysmeta);
+            assertTrue(Files.exists(path));
+            assertEquals(8724, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is a data object, the path is in data directory. It
+            // should work
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(pid.getValue())).thenReturn(localDataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            path = upgrader.resolve(sysmeta);
+            assertTrue(Files.exists(path));
+            assertEquals(103649, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // Mock the identifier table returning a non-existing id
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(pid.getValue())).thenReturn("foo");
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            try {
+                path = upgrader.resolve(sysmeta);
+                fail("The test shouldn't get there since the docid doesn't exist");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+        }
+
+        // For the metadata system metadata
+        String metadataId = "testResolveMetadataInMN" + System.currentTimeMillis();
+        Identifier metadataPid = new Identifier();
+        metadataPid.setValue(metadataId);
+        object =
+            new ByteArrayInputStream(metadataId.getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta2 =
+            D1NodeServiceTest.createSystemMetadata(metadataPid, owner, object);
+        sysmeta2.setFormatId(eml220_format_id);
+        try {
+            path = upgrader.resolve(sysmeta2);
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbDocNotFoundException);
+            assertTrue(e.getMessage().contains("identifier"));
+            assertTrue(e.getMessage().contains(metadataId));
+        }
+
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is a metadata object, and the path is in documents directory. It
+            // should work.
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(metadataPid.getValue())).thenReturn(localMetadataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            path = upgrader.resolve(sysmeta2);
+            assertTrue(Files.exists(path));
+            assertEquals(8724, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is for a metadata object, but the path is in data directory. It
+            // should work as well.
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(metadataPid.getValue())).thenReturn(localDataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            path = upgrader.resolve(sysmeta2);
+            assertTrue(Files.exists(path));
+            assertEquals(103649, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // Mock to return a non-existing docid
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(metadataPid.getValue())).thenReturn("food");
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            try {
+                path = upgrader.resolve(sysmeta2);
+                fail("The test shouldn't get there since the docid doesn't exist");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+        }
+    }
+
+    /**
+     * Test the resolve method in an MN
+     * @throws Exception
+     */
+    @Test
+    public void testResolveInMN() throws Exception {
+        String localDataId = "eml-error.xml";
+        String localMetadataId = "eml-2.2.0.xml";
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        // There is no record in the identifier table
+        String id = "testResolveInMN" + System.currentTimeMillis();
+        Identifier pid = new Identifier();
+        InputStream object =
+            new ByteArrayInputStream(id.getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
+        HashStoreUpgrader upgrader = new HashStoreUpgrader();
+        pid.setValue(id);
+        try {
+            Path path = upgrader.resolve(sysmeta);
+            fail("Test can't get here since there is no map in the identifier table.");
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbDocNotFoundException);
+            assertTrue(e.getMessage().contains("identifier"));
+            assertTrue(e.getMessage().contains(id));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is a data object, but the path is in documents directory. It
+            // should work as well
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(pid.getValue())).thenReturn(localMetadataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            Path path = upgrader.resolve(sysmeta);
+            assertTrue(Files.exists(path));
+            assertEquals(8724, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is a data object, the path is in data directory. It
+            // should work
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(pid.getValue())).thenReturn(localDataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            Path path = upgrader.resolve(sysmeta);
+            assertTrue(Files.exists(path));
+            assertEquals(103649, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // Mock the identifier table returning a non-existing id
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(pid.getValue())).thenReturn("foo");
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            try {
+                Path path = upgrader.resolve(sysmeta);
+                fail("The test shouldn't get there since the docid doesn't exist");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+        }
+
+        // For the metadata system metadata
+        String metadataId = "testResolveMetadataInMN" + System.currentTimeMillis();
+        Identifier metadataPid = new Identifier();
+        metadataPid.setValue(metadataId);
+        object =
+            new ByteArrayInputStream(metadataId.getBytes(StandardCharsets.UTF_8));
+        SystemMetadata sysmeta2 =
+            D1NodeServiceTest.createSystemMetadata(metadataPid, owner, object);
+        sysmeta2.setFormatId(eml220_format_id);
+        try {
+            Path path = upgrader.resolve(sysmeta2);
+            fail("Test can't get here since there is no map in the identifier table.");
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbDocNotFoundException);
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is a metadata object, and the path is in documents directory. It
+            // should work.
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(metadataPid.getValue())).thenReturn(localMetadataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            Path path = upgrader.resolve(sysmeta2);
+            assertTrue(Files.exists(path));
+            assertEquals(8724, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // The system metadata is for a metadata object, but the path is in data directory. It
+            // should work as well.
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(metadataPid.getValue())).thenReturn(localDataId);
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            Path path = upgrader.resolve(sysmeta2);
+            assertTrue(Files.exists(path));
+            assertEquals(103649, Files.size(path));
+        }
+        try (MockedStatic<IdentifierManager> ignore =
+                 Mockito.mockStatic(IdentifierManager.class)) {
+            // Mock to return a non-existing docid
+            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
+            Mockito.when(mockManager.getLocalId(metadataPid.getValue())).thenReturn("food");
+            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+            try {
+                Path path = upgrader.resolve(sysmeta2);
+                fail("The test shouldn't get there since the docid doesn't exist");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+        }
     }
 
     /**
@@ -590,89 +826,182 @@ public class HashStoreUpgraderTest {
      */
     @Test
     public void testUpgradeWithIncorrectChecksum() throws Exception {
+        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("HashStoreUpgraderIT");
+        Session session = d1NodeServiceTest.getTestSession();
         String dataId = "testUpgradeWithIncorrectChecksum567"
             + System.currentTimeMillis();
-        String localId = "eml-error-2.2.0.xml";
-        String user = "http://orcid.org/1234/4567";
-        Subject owner = new Subject();
-        owner.setValue(user);
         Identifier pid = new Identifier();
         pid.setValue(dataId);
-        InputStream object = new FileInputStream(new File(dataPath + "/" + localId));
-        SystemMetadata sysmeta0 = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
-        sysmeta0.getChecksum().setValue("adfa");
-        String metadataId = "testUpgradeWithIncorrectChecksum12"
-            + System.currentTimeMillis();
-        String metaLocalId = "eml-2.2.0.xml";
-        Identifier metaPid = new Identifier();
-        metaPid.setValue(metadataId);
-        object = new FileInputStream(new File(documentPath + "/" + metaLocalId));
-        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(metaPid, owner, object);
-        sysmeta.setFormatId(eml220_format_id);
-        sysmeta.getChecksum().setValue("edsf");
-        // mock IdentifierManager
-        try (MockedStatic<IdentifierManager> ignore =
-                 Mockito.mockStatic(IdentifierManager.class)) {
-            IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
-            Mockito.when(mockManager.getLocalId(metadataId)).thenReturn(metaLocalId);
-            Mockito.when(mockManager.getLocalId(dataId)).thenReturn(localId);
-            Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
+        InputStream object = new ByteArrayInputStream(dataId.getBytes());
+        SystemMetadata sysmeta0 =
+            D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+        object = new ByteArrayInputStream(dataId.getBytes());
+        d1NodeServiceTest.mnCreate(session, pid, object, sysmeta0);
+        SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
+        String originDataChecksum = read.getChecksum().getValue();
+        // delete the object from hash store to mock the old storage
+        MetacatInitializer.getStorage().deleteObject(pid);
+        try  {
+            MetacatInitializer.getStorage().retrieveObject(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try  {
+            MetacatInitializer.getStorage().retrieveMetadata(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        Checksum checksum = new Checksum();
+        checksum.setValue("foo");
+        checksum.setAlgorithm(read.getChecksum().getAlgorithm());
+        read.setChecksum(checksum);
+        SystemMetadataManager.lock(pid);
+        SystemMetadataManager.getInstance().store(read);
+        SystemMetadataManager.unLock(pid);
+        //Only delete the metadata from hashstore
+        MetacatInitializer.getStorage().deleteMetadata(pid);
+        read = SystemMetadataManager.getInstance().get(pid);
+        long originalDataModificationTime = read.getDateSysMetadataModified().getTime();
+        assertEquals("foo", read.getChecksum().getValue());
+        // create the docid in the data directory to simulate the old storage system
+        File oldDataFile = new File(dataPath + "/" + docid);
+        try {
+            object = new ByteArrayInputStream(dataId.getBytes());
+            FileUtils.copyToFile(object, oldDataFile);
+            File hashStore = new File(hashStorePath);
             // mock ResultSet
             ResultSet resultSetMock = Mockito.mock(ResultSet.class);
-            Mockito.when(resultSetMock.getString(1)).thenReturn(metadataId).thenReturn(dataId);
-            // mock only having one next
-            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(true).thenReturn(false);
-            // mock getSystemMetadata
-            try (MockedStatic<SystemMetadataManager> ignoredSysmeta =
-                     Mockito.mockStatic(SystemMetadataManager.class)) {
-                SystemMetadataManager manager = Mockito.mock(SystemMetadataManager.class);
-                Mockito.when(manager.get(metaPid)).thenReturn(sysmeta);
-                Mockito.when(manager.get(pid)).thenReturn(sysmeta0);
-                Mockito.when(SystemMetadataManager.getInstance()).thenReturn(manager);
-                // mock HashStoreUpgrader with the real methods
-                HashStoreUpgrader upgrader = Mockito.mock(
-                    HashStoreUpgrader.class,
-                    withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
-                // mock the initCandidate method
-                Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
-                upgrader.upgrade();
-                File hashStoreRoot = new File(hashStorePath);
-                assertTrue(hashStoreRoot.exists());
-                assertTrue(upgrader.getInfo().length() > 0);
-                assertTrue(upgrader.getInfo().contains("nonMatchingChecksum"));
-                assertFalse(upgrader.getInfo().contains("general"));
-                assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
-                assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
-                assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
-                Vector<String> content = readContentFromFileInDir();
-                assertEquals(2, content.size());
-                assertTrue(content.contains(dataId));
-                assertTrue(content.contains(metadataId));
-                try {
-                    MetacatInitializer.getStorage().retrieveObject(pid);
-                    fail("Test can't get there since the pid " + pid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-                try {
-                    MetacatInitializer.getStorage().retrieveMetadata(pid);
-                    fail("Test can't get there since the pid " + pid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-                try {
-                    MetacatInitializer.getStorage().retrieveObject(metaPid);
-                    fail("Test can't get there since the pid " + metaPid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-                try {
-                    MetacatInitializer.getStorage().retrieveMetadata(metaPid);
-                    fail("Test can't get there since the pid " + metaPid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-            }
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(dataId);
+            // mock HashStoreUpgrader with the real methods
+            HashStoreUpgrader upgrader = Mockito.mock(
+                HashStoreUpgrader.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            // mock the initCandidate method
+            Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
+            upgrader.upgrade();
+            assertTrue(hashStore.exists());
+            assertTrue(upgrader.getInfo().length() > 0);
+            assertTrue(upgrader.getInfo().contains("nonMatchingChecksum"));
+            assertFalse(upgrader.getInfo().contains("general"));
+            assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
+            assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
+            assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
+            Vector<String> content = readContentFromFileInDir();
+            assertEquals(2, content.size());
+            assertTrue(content.elementAt(0).contains(dataId));
+            assertTrue(content.elementAt(1).contains("@"));
+            assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
+            assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid));
+            SystemMetadata newRead = SystemMetadataManager.getInstance().get(pid);
+            SystemMetadata sysFromHash =
+                TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                       MetacatInitializer.getStorage()
+                                                           .retrieveMetadata(pid));
+            assertEquals(
+                originalDataModificationTime, newRead.getDateSysMetadataModified().getTime());
+            assertEquals(
+                originalDataModificationTime, sysFromHash.getDateSysMetadataModified().getTime());
+            assertEquals(originDataChecksum, newRead.getChecksum().getValue());
+            assertEquals(originDataChecksum, sysFromHash.getChecksum().getValue());
+        } finally {
+            oldDataFile.delete();
+        }
+    }
+
+    /**
+     * Test the scenario that a metadata object with incorrect checksum
+     * @throws Exception
+     */
+    @Test
+    public void testUpgradeWithIncorrectChecksumForMetadata() throws Exception {
+        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("HashStoreUpgraderIT");
+        Session session = d1NodeServiceTest.getTestSession();
+        String dataId = "testUpgradeWithIncorrectChecksumForMetadata123"
+            + System.currentTimeMillis();
+        Identifier pid = new Identifier();
+        pid.setValue(dataId);
+        InputStream object = new FileInputStream("test/eml-2.2.0.xml");
+        SystemMetadata sysmeta0 =
+            D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+        sysmeta0.setFormatId(eml220_format_id);
+        object = new FileInputStream("test/eml-2.2.0.xml");
+        d1NodeServiceTest.mnCreate(session, pid, object, sysmeta0);
+        SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
+        String originDataChecksum = read.getChecksum().getValue();
+        // delete the object from hash store to mock the old storage
+        MetacatInitializer.getStorage().deleteObject(pid);
+        try  {
+            MetacatInitializer.getStorage().retrieveObject(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        Checksum checksum = new Checksum();
+        checksum.setValue("foo");
+        checksum.setAlgorithm(read.getChecksum().getAlgorithm());
+        read.setChecksum(checksum);
+        SystemMetadataManager.lock(pid);
+        SystemMetadataManager.getInstance().store(read);
+        SystemMetadataManager.unLock(pid);
+        MetacatInitializer.getStorage().deleteMetadata(pid);
+        read = SystemMetadataManager.getInstance().get(pid);
+        long originalDataModificationTime = read.getDateSysMetadataModified().getTime();
+        assertEquals("foo", read.getChecksum().getValue());
+        // create the docid in the data directory to simulate the old storage system
+        // note: this is an eml document, but is purposely stored in the dataPath. The convert
+        // sould find it.
+        File oldDataFile = new File(dataPath + "/" + docid);
+        try {
+            object = new FileInputStream("test/eml-2.2.0.xml");
+            FileUtils.copyToFile(object, oldDataFile);
+            File hashStore = new File(hashStorePath);
+            // mock ResultSet
+            ResultSet resultSetMock = Mockito.mock(ResultSet.class);
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(dataId);
+            // mock HashStoreUpgrader with the real methods
+            HashStoreUpgrader upgrader = Mockito.mock(
+                HashStoreUpgrader.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            // mock the initCandidate method
+            Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
+            upgrader.upgrade();
+            assertTrue(hashStore.exists());
+            assertTrue(upgrader.getInfo().length() > 0);
+            assertTrue(upgrader.getInfo().contains("nonMatchingChecksum"));
+            assertFalse(upgrader.getInfo().contains("general"));
+            assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
+            assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
+            assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
+            Vector<String> content = readContentFromFileInDir();
+            assertEquals(2, content.size());
+            assertTrue(content.elementAt(0).contains(dataId));
+            assertTrue(content.elementAt(1).contains("@"));
+            assertNotNull(MetacatInitializer.getStorage().retrieveObject(pid));
+            assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(pid));
+            SystemMetadata newRead = SystemMetadataManager.getInstance().get(pid);
+            SystemMetadata sysFromHash =
+                TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
+                                                       MetacatInitializer.getStorage()
+                                                           .retrieveMetadata(pid));
+            assertEquals(
+                originalDataModificationTime, newRead.getDateSysMetadataModified().getTime());
+            assertEquals(
+                originalDataModificationTime, sysFromHash.getDateSysMetadataModified().getTime());
+            assertEquals(originDataChecksum, newRead.getChecksum().getValue());
+            assertEquals(eml220_format_id.getValue(), newRead.getFormatId().getValue());
+            assertEquals(originDataChecksum, sysFromHash.getChecksum().getValue());
+            assertEquals(eml220_format_id.getValue(), sysFromHash.getFormatId().getValue());
+        } finally {
+            oldDataFile.delete();
         }
     }
 
@@ -682,24 +1011,16 @@ public class HashStoreUpgraderTest {
      * @throws Exception
      */
     @Test
-    public void testUpgradeWithIncorrectChecksumAndAlgorithm() throws Exception {
-        String dataId = "testUpgradeWithIncorrectChecksumAndAlgorithm567"
-            + System.currentTimeMillis();
-        String localId = "eml-error-2.2.0.xml";
+    public void testUpgradeWithIncorrectAlgorithm() throws Exception {
         String user = "http://orcid.org/1234/4567";
         Subject owner = new Subject();
         owner.setValue(user);
-        Identifier pid = new Identifier();
-        pid.setValue(dataId);
-        InputStream object = new FileInputStream(new File(dataPath + "/" + localId));
-        SystemMetadata sysmeta0 = D1NodeServiceTest.createSystemMetadata(pid, owner, object);
-        sysmeta0.getChecksum().setValue("adfa");
         String metadataId = "testUpgradeWithIncorrectChecksumAndAlgorithm12"
             + System.currentTimeMillis();
         String metaLocalId = "eml-2.2.0.xml";
         Identifier metaPid = new Identifier();
         metaPid.setValue(metadataId);
-        object = new FileInputStream(new File(documentPath + "/" + metaLocalId));
+        InputStream object = new FileInputStream(documentPath + "/" + metaLocalId);
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(metaPid, owner, object);
         sysmeta.setFormatId(eml220_format_id);
         sysmeta.getChecksum().setAlgorithm("edsf");
@@ -708,19 +1029,17 @@ public class HashStoreUpgraderTest {
                  Mockito.mockStatic(IdentifierManager.class)) {
             IdentifierManager mockManager = Mockito.mock(IdentifierManager.class);
             Mockito.when(mockManager.getLocalId(metadataId)).thenReturn(metaLocalId);
-            Mockito.when(mockManager.getLocalId(dataId)).thenReturn(localId);
             Mockito.when(IdentifierManager.getInstance()).thenReturn(mockManager);
             // mock ResultSet
             ResultSet resultSetMock = Mockito.mock(ResultSet.class);
-            Mockito.when(resultSetMock.getString(1)).thenReturn(metadataId).thenReturn(dataId);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(metadataId);
             // mock only having one next
-            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(true).thenReturn(false);
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
             // mock getSystemMetadata
             try (MockedStatic<SystemMetadataManager> ignoredSysmeta =
                      Mockito.mockStatic(SystemMetadataManager.class)) {
                 SystemMetadataManager manager = Mockito.mock(SystemMetadataManager.class);
                 Mockito.when(manager.get(metaPid)).thenReturn(sysmeta);
-                Mockito.when(manager.get(pid)).thenReturn(sysmeta0);
                 Mockito.when(SystemMetadataManager.getInstance()).thenReturn(manager);
                 // mock HashStoreUpgrader with the real methods
                 HashStoreUpgrader upgrader = Mockito.mock(
@@ -732,22 +1051,10 @@ public class HashStoreUpgraderTest {
                 File hashStoreRoot = new File(hashStorePath);
                 assertTrue(hashStoreRoot.exists());
                 assertTrue(upgrader.getInfo().length() > 0);
-                assertTrue(upgrader.getInfo().contains("nonMatchingChecksum"));
+                assertFalse(upgrader.getInfo().contains("nonMatchingChecksum"));
                 assertFalse(upgrader.getInfo().contains("general"));
                 assertTrue(upgrader.getInfo().contains("noSuchAlgorithm"));
                 assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
-                try {
-                    MetacatInitializer.getStorage().retrieveObject(pid);
-                    fail("Test can't get there since the pid " + pid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
-                try {
-                    MetacatInitializer.getStorage().retrieveMetadata(pid);
-                    fail("Test can't get there since the pid " + pid + " was not converted.");
-                } catch(Exception e) {
-                    assertTrue(e instanceof FileNotFoundException);
-                }
                 try {
                     MetacatInitializer.getStorage().retrieveObject(metaPid);
                     fail("Test can't get there since the pid " + metaPid + " was not converted.");
@@ -1135,4 +1442,274 @@ public class HashStoreUpgraderTest {
                      mcSysmeta.getAuthoritativeMemberNode().getValue());
     }
 
+    /**
+     * Test an object created by DataONE api. Somehow the system does exist while the map in the
+     * identifier table is missing. The conversion will fail since there is no map between pid
+     * and docid. So it is hard to find the object's file path.
+     * @throws Exception
+     */
+    @Test
+    public void testMissingIdentifierMappingForDataONEobj() throws Exception {
+        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("HashStoreUpgraderIT");
+        Session session = d1NodeServiceTest.getTestSession();
+        String dataId = "testMissingIdentifierMapping1234"
+            + System.currentTimeMillis();
+        Identifier pid = new Identifier();
+        pid.setValue(dataId);
+        InputStream object = new ByteArrayInputStream(dataId.getBytes());
+        SystemMetadata sysmeta0 =
+            D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+        object = new ByteArrayInputStream(dataId.getBytes());
+        d1NodeServiceTest.mnCreate(session, pid, object, sysmeta0);
+        SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
+        // delete the object from hash store to mock the old storage
+        MetacatInitializer.getStorage().deleteObject(pid);
+        try  {
+            MetacatInitializer.getStorage().retrieveObject(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try  {
+            MetacatInitializer.getStorage().retrieveMetadata(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        // Deleting the records from checksums
+        ChecksumsManager manager = new ChecksumsManager();
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("testMissingIdentifierMappingForDataONEobj");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            manager.delete(pid, dbConn);
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        // Deleting the mapping records in the identifier table
+        IdentifierManager.getInstance().removeMapping(pid.getValue(), docid);
+
+        // Make sure the docid is in the candidate list
+        HashStoreUpgrader upgrader1 = new HashStoreUpgrader();
+        ResultSet resultSet = upgrader1.initCandidateList();
+        boolean found = false;
+        while (resultSet.next()) {
+            String id = resultSet.getString(1);
+            if (id.equals(docid)) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue(found);
+        // Now we will have a fake pid with the value of docid
+        Identifier fakeId = new Identifier();
+        fakeId.setValue(docid);
+        File oldDataFile = new File(dataPath + "/" + docid);
+        try {
+            // Create a docid in the old data file path to mock the object in the legacy storage
+            object = new ByteArrayInputStream(dataId.getBytes());
+            FileUtils.copyToFile(object, oldDataFile);
+            File hashStore = new File(hashStorePath);
+            // mock ResultSet
+            ResultSet resultSetMock = Mockito.mock(ResultSet.class);
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(fakeId.getValue());
+            // mock HashStoreUpgrader with the real methods
+            HashStoreUpgrader upgrader = Mockito.mock(
+                HashStoreUpgrader.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            // mock the initCandidate method
+            Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
+            upgrader.upgrade();
+            assertTrue(hashStore.exists());
+            assertTrue(upgrader.getInfo().length() > 0);
+            assertFalse(upgrader.getInfo().contains("nonMatchingChecksum"));
+            assertTrue(upgrader.getInfo().contains("general"));
+            assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
+            assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
+            assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
+            Vector<String> content = readContentFromFileInDir();
+            assertEquals(1, content.size());
+            assertTrue(content.elementAt(0).contains(fakeId.getValue()));
+            try  {
+                MetacatInitializer.getStorage().retrieveObject(pid);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            try  {
+                MetacatInitializer.getStorage().retrieveMetadata(pid);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            try  {
+                MetacatInitializer.getStorage().retrieveObject(fakeId);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            try  {
+                MetacatInitializer.getStorage().retrieveMetadata(fakeId);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            assertNull(SystemMetadataManager.getInstance().get(fakeId));
+            assertEquals(dataId,
+                         SystemMetadataManager.getInstance().get(pid).getIdentifier().getValue());
+        } finally {
+            oldDataFile.delete();
+        }
+    }
+
+    /**
+     * Test an object created by the old Metacat API. Somehow it wasn't converted to the dataone
+     * object successfully in the previous upgrade. So it doesn't have records in the
+     * systemmetadata and identifier table. Also, it doesn't start with autogen. The conversion
+     * will succeed to create hashstore object with the identifier being the docid+rev. Also the
+     * basic system metadata will be generated
+     * @throws Exception
+     */
+    @Test
+    public void testOldMetacatAPIobject() throws Exception {
+        String nonAutoGenDocid = "foo." + System.currentTimeMillis();
+        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("HashStoreUpgraderIT");
+        Session session = d1NodeServiceTest.getTestSession();
+        String dataId = "testOldMetacatAPIobject"
+            + System.currentTimeMillis();
+        Identifier pid = new Identifier();
+        pid.setValue(dataId);
+        InputStream object = new ByteArrayInputStream(dataId.getBytes());
+        SystemMetadata sysmeta0 =
+            D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+        object = new ByteArrayInputStream(dataId.getBytes());
+        d1NodeServiceTest.mnCreate(session, pid, object, sysmeta0);
+        SystemMetadata read = SystemMetadataManager.getInstance().get(pid);
+        assertEquals(pid.getValue(), read.getIdentifier().getValue());
+        // delete the object from hash store to mock the old storage
+        MetacatInitializer.getStorage().deleteObject(pid);
+        try  {
+            MetacatInitializer.getStorage().retrieveObject(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try  {
+            MetacatInitializer.getStorage().retrieveMetadata(pid);
+            fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                     + "from the hashstore.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        // Deleting the mapping records in the identifier table
+        IdentifierManager.getInstance().removeMapping(pid.getValue(), docid);
+
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("testMissingIdentifierMappingForDataONEobj");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            // Deleting the records from checksums
+            ChecksumsManager manager = new ChecksumsManager();
+            manager.delete(pid, dbConn);
+            // Replace the docid from autogen. to the nonAutoGenDocid
+            // Parse the localId into scope and rev parts
+            AccessionNumber acc = new AccessionNumber(docid, "NOACTION");
+            String docidWithoutRev = acc.getDocid();
+            String sql = "update xml_documents set docid=? where docid=?;";
+            PreparedStatement preparedStatement = dbConn.prepareStatement(sql);
+            preparedStatement.setString(1, nonAutoGenDocid);
+            preparedStatement.setString(2, docidWithoutRev);
+            int size = preparedStatement.executeUpdate();
+            assertEquals(1, size);
+            // Append the revision 1 to the nonAutoGenDocid
+            nonAutoGenDocid = nonAutoGenDocid + ".1";
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        // Deleting the systemmetadata
+        SystemMetadataManager.lock(pid);
+        SystemMetadataManager.getInstance().delete(pid);
+        SystemMetadataManager.unLock(pid);
+
+        // Make sure the docid is in the candidate list
+        HashStoreUpgrader upgrader1 = new HashStoreUpgrader();
+        ResultSet resultSet = upgrader1.initCandidateList();
+        boolean found = false;
+        while (resultSet.next()) {
+            String id = resultSet.getString(1);
+            if (id.equals(nonAutoGenDocid)) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue(found);
+        assertFalse(IdentifierManager.getInstance().mappingExists(nonAutoGenDocid));
+        // Now we will have a fake pid with the value of nonAutoGenDocid
+        Identifier fakeId = new Identifier();
+        fakeId.setValue(nonAutoGenDocid);
+        File oldDataFile = new File(dataPath + "/" + nonAutoGenDocid);
+        try {
+            // Create a docid in the old data file path to mock the object in the legacy storage
+            object = new ByteArrayInputStream(dataId.getBytes());
+            FileUtils.copyToFile(object, oldDataFile);
+            File hashStore = new File(hashStorePath);
+            // mock ResultSet
+            ResultSet resultSetMock = Mockito.mock(ResultSet.class);
+            Mockito.when(resultSetMock.next()).thenReturn(true).thenReturn(false);
+            Mockito.when(resultSetMock.getString(1)).thenReturn(fakeId.getValue());
+            // mock HashStoreUpgrader with the real methods
+            HashStoreUpgrader upgrader = Mockito.mock(
+                HashStoreUpgrader.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            // mock the initCandidate method
+            Mockito.doReturn(resultSetMock).when(upgrader).initCandidateList();
+            upgrader.upgrade();
+            assertTrue(hashStore.exists());
+            assertEquals(0, upgrader.getInfo().length());
+            assertFalse(upgrader.getInfo().contains("nonMatchingChecksum"));
+            assertFalse(upgrader.getInfo().contains("general"));
+            assertFalse(upgrader.getInfo().contains("noSuchAlgorithm"));
+            assertFalse(upgrader.getInfo().contains("noChecksumInSysmeta"));
+            assertFalse(upgrader.getInfo().contains("savingChecksumTableError"));
+            try  {
+                MetacatInitializer.getStorage().retrieveObject(pid);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            try  {
+                MetacatInitializer.getStorage().retrieveMetadata(pid);
+                fail("test should not get there since the pid " + pid.getValue()  + " was deleted "
+                         + "from the hashstore.");
+            } catch (Exception e) {
+                assertTrue(e instanceof FileNotFoundException);
+            }
+            assertNotNull(MetacatInitializer.getStorage().retrieveObject(fakeId));
+            assertNotNull(MetacatInitializer.getStorage().retrieveMetadata(fakeId));
+            assertNull(SystemMetadataManager.getInstance().get(pid));
+            assertEquals(nonAutoGenDocid,
+                         SystemMetadataManager.getInstance().get(fakeId).getIdentifier()
+                             .getValue());
+            assertTrue(IdentifierManager.getInstance().mappingExists(fakeId.getValue()));
+        } finally {
+            oldDataFile.delete();
+        }
+    }
 }
