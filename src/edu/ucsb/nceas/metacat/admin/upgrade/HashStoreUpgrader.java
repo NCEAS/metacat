@@ -253,7 +253,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                 "Trying to convert the storage to hashstore"
                                                     + " for " + id + " with checksum: " + checksum
                                                     + " algorithm: " + algorithm
-                                                    + " and file path(may be null): " + path);
+                                                    + " and file path(may be null for cn): " + path);
                                             Future<?> future = executor.submit(() -> {
                                                 convert(path, finalId, finalSysMeta, checksum,
                                                         algorithm, nonMatchingChecksumWriter,
@@ -312,8 +312,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             if (nonMatchingChecksumFile != null && nonMatchingChecksumFile.exists()
                 && nonMatchingChecksumFile.length() > 0) {
                 String message = "If this instance is a registered member node of the DataONE "
-                    + "network, please submit the file to knb-help@nceas.ucsb.edu so can we make "
-                    + "changes on the CN part as well.";
+                    + "network, please submit this file to knb-help@nceas.ucsb.edu so we can also "
+                    + "update the CN to reflect the above changes.";
                 try (BufferedWriter noChecksumInSysmetaWriter2 = new BufferedWriter(new FileWriter(
                     nonMatchingChecksumFile, append))) {
                     writeToFile(message, noChecksumInSysmetaWriter2);
