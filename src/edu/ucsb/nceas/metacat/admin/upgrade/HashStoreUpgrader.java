@@ -626,6 +626,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                 break;
             }
         }
+        logMetacat.error(info);
         writeToFile(info, nonMatchingChecksumWriter);
         return metadata;
     }
