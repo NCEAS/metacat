@@ -427,6 +427,7 @@ CREATE TABLE access_log (
   CONSTRAINT access_log_pk PRIMARY KEY (entryid)
 );
 CREATE INDEX access_log_docid ON access_log(docid);
+CREATE INDEX access_log_date_logged ON access_log (date_logged);
 
 
 /*
