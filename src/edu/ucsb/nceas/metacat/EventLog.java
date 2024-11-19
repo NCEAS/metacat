@@ -397,7 +397,7 @@ public class EventLog
      */
     public boolean isDeleted(String docid) {
         boolean deleted =false;
-        if(docid != null || !docid.trim().equals("")) {
+        if(docid != null && !docid.trim().equals("")) {
             String[] docids = new String[1];
             docids[0] = docid;
             String[] events = new String[1];
@@ -565,17 +565,17 @@ public class EventLog
         		"and al.entryid in ";
         
         // order by
-        String orderByClause = " order by entryid ";
+        String orderByClause = " order by date_logged ";
         
         // select the count
         String countQuery = countSelect + subQueryFrom.toString();
         logMetacat.debug("The count query is " + countQuery);
 		// select the fields using paged subquery and fields join query
         String pagedSubquery = DatabaseService.getInstance().getDBAdapter().getPagedQuery(subquerySelect + subQueryFrom.toString() + orderByClause, start, count);
-        String pagedQuery = fieldSelect + " ( " + pagedSubquery + " ) " + orderByClause; 
+        String pagedQuery = fieldSelect + " ( " + pagedSubquery + " )";
         logMetacat.debug("The selection query is " + pagedQuery);
         logMetacat.debug("The startDate in the query is " + startDate);
-        logMetacat.debug("The endDate in the query is " + startDate);
+        logMetacat.debug("The endDate in the query is " + endDate);
 
         DBConnection dbConn = null;
         int serialNumber = -1;
