@@ -36,6 +36,7 @@ if [ "${rls_count}" -ne "1" ]; then
 fi
 
 cert_file="_DELETEME_$(date +%Y-%m-%d)_node.crt"
+rm -f "${cert_file}"
 kubectl get secret ${release_name}-d1-client-cert -o jsonpath="{.data.d1client\.crt}" | base64 -d \
     > $cert_file
 chmod 600 $cert_file
@@ -44,6 +45,9 @@ host=$(kubectl get ingress | grep "${release_name}" | awk '{print $3}')
 api_url="https://${host}/metacat/d1/mn/v2/index"
 
 result_file="modified-since-$(echo -n ${start_time} | sed -e 's/ /-/g').txt"
+rm -f "${result_file}"
+errors_file="errors-from-attempted-index-since-$(echo -n ${start_time} | sed -e 's/ /-/g').txt"
+rm -f "${errors_file}"
 
 
 # Get the pids of the objects modified since the start time
@@ -95,11 +99,18 @@ while read -r pid1 pid2 pid3 pid4 pid5; do
     echo
     if [ "$(echo "${curl_result}" | grep -cz "<scheduled>\s*true\s*</scheduled>")" -lt 1 ]; then
         echo
-        echo "Error: indexing failed -- exiting..."
+        echo "* * * Error: indexing failed. * * *"
+        echo "Adding PIDs to errors file and continuing..."
+        for pid in "$pid1" "$pid2" "$pid3" "$pid4" "$pid5"; do
+            [[ -n "$pid" ]] && {
+                echo "${pid}" >> ${errors_file}
+            }
+        done
         echo
-        cleanup
-        exit 2
     fi
 done < <(paste -d ' ' - - - - - < ${result_file})
 
 cleanup
+if [ -f ${errors_file} ] && (( $(cat ${errors_file} | wc -l) > 0 )); then
+    echo "Errors occurred during indexing. Please check the errors file (./${errors_file})."
+fi
