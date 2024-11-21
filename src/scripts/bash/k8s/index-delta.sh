@@ -12,7 +12,6 @@
 cleanup() {
     rm -f "${cert_file}"
     rm -f "${result_file}"
-
 }
 
 # Initialize vars
@@ -38,8 +37,8 @@ fi
 cert_file="_DELETEME_$(date +%Y-%m-%d)_node.crt"
 rm -f "${cert_file}"
 kubectl get secret ${release_name}-d1-client-cert -o jsonpath="{.data.d1client\.crt}" | base64 -d \
-    > $cert_file
-chmod 600 $cert_file
+    > ${cert_file}
+chmod 600 ${cert_file}
 
 host=$(kubectl get ingress | grep "${release_name}" | awk '{print $3}')
 api_url="https://${host}/metacat/d1/mn/v2/index"
@@ -84,7 +83,7 @@ while read -r pid1 pid2 pid3 pid4 pid5; do
     idx=$((idx + 1))
     first_idx=$idx
     # Process non-blank PIDs
-    params=?pid=${pid1}
+    params="?pid=${pid1}"
     for pid in "$pid2" "$pid3" "$pid4" "$pid5"; do
         [[ -n "$pid" ]] && {
             params="${params}&pid=${pid}"
