@@ -76,12 +76,21 @@ echo "Calling ${api_url} to index each. Enter to continue or Ctrl+C to abort..."
 read
 
 idx=0
-for pid in $(cat ${result_file}); do
+while read -r pid1 pid2 pid3 pid4 pid5; do
     idx=$((idx + 1))
-    echo "--------- ${idx} of ${result_count} ---------"
+    first_idx=$idx
+    # Process non-blank PIDs
+    params=?pid=${pid1}
+    for pid in "$pid2" "$pid3" "$pid4" "$pid5"; do
+        [[ -n "$pid" ]] && {
+            params="${params}&pid=${pid}"
+            idx=$((idx + 1))
+        }
+    done
+    echo "--------- ${first_idx} to ${idx} of ${result_count} ---------"
     echo "PID:      ${pid}"
     echo "Response:"
-    curl_result=$(curl  -s  -X  PUT  --cert ${cert_file}  "${api_url}?pid=${pid}")
+    curl_result=$(curl  -s  -X  PUT  --cert ${cert_file}  "${api_url}${params}")
     echo "${curl_result}"
     echo
     if [ "$(echo "${curl_result}" | grep -cz "<scheduled>\s*true\s*</scheduled>")" -lt 1 ]; then
@@ -91,6 +100,6 @@ for pid in $(cat ${result_file}); do
         cleanup
         exit 2
     fi
-done
+done < <(paste -d ' ' - - - - - < ${result_file})
 
 cleanup
