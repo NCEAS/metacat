@@ -84,8 +84,7 @@ for pid in $(cat ${result_file}); do
     curl_result=$(curl  -s  -X  PUT  --cert ${cert_file}  "${api_url}?pid=${pid}")
     echo "${curl_result}"
     echo
-    if [ "$(echo "${curl_result}" | grep -c "error")" -ne "0" ] \
-        || [ "$(echo ${curl_result} | grep -c "Bad Gateway")" -ne "0" ]; then
+    if [ "$(echo "${curl_result}" | grep -cz "<scheduled>\s*true\s*</scheduled>")" -lt 1 ]; then
         echo
         echo "Error: indexing failed -- exiting..."
         echo
