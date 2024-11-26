@@ -521,8 +521,7 @@ ingress:
 ### Setting up Certificates for DataONE Replication
 
 For full details on becoming part of the DataONE network, see the [Metacat Administrator's Guide
-](https://knb.ecoinformatics.org/knb/docs/dataone.html) and
-[Authentication and Authorization in DataONE
+](https://knb.ecoinformatics.org/knb/docs/dataone.html) and [Authentication and Authorization in DataONE
 ](https://releases.dataone.org/online/api-documentation-v2.0.1/design/AuthorizationAndAuthentication.html)
 .
 
@@ -544,37 +543,33 @@ configure certificates and settings for both these roles.
       [DataONEProdCAChain.crt](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONEProdCAChain.crt)
    2. DataONE **Test** CA Chain:
       [DataONETestCAChain.crt](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestCAChain.crt)
-4. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain a **Client Certificate**,
-   that uniquely identifies your Metacat instance. This allows another node (acting as server)
-   to verify your node's identity (acting as "client") during mutual authentication. The client
-   certificate contains sensitive information, and should be kept private.
+4. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain a **Client Certificate**
+   (also known as a **DataONE Node Certificate**), that uniquely identifies your Metacat instance.
+   This allows another node (acting as server) to verify your node's identity (acting as "client")
+   during mutual authentication. The client certificate contains sensitive information, and must be
+   kept private and secure.
 
 #### Install the CA Chain
 
-1. Create the Kubernetes Secret (named `d1-ca-chain`) to hold the ca chain
-   (e.g. assuming it's in a file named `DataONEProdCAChain.crt`):
+* Create the Kubernetes Secret (named `d1-ca-chain`) to hold the ca chain
+  (e.g. assuming it's in a file named `DataONEProdCAChain.crt`):
 
-    ```shell
-    kubectl create secret generic d1-ca-chain --from-file=ca.crt=DataONEProdCAChain.crt
-    # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
-    ```
-
-2. Run the [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh).
-  This will configure your nginx ingress controller to add a shared secret header that Metacat
-  requires for added security. Ensure you have already defined a value for this shared secret,
-  named `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY`, [in metacat Secrets](#secrets).
+  ```shell
+  kubectl create secret generic d1-ca-chain --from-file=ca.crt=DataONEProdCAChain.crt
+  # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
+  ```
 
 #### Install the Client Certificate
 
-   1. Create the Kubernetes Secret (named `<yourReleaseName>-d1-client-cert`) to hold the Client
-      Certificate, identified by the key `d1client.crt` (e.g. assuming the cert is in a file
-      named `urn_node_TestNAME.pem`):
+* Create the Kubernetes Secret (named `<yourReleaseName>-d1-client-cert`) to hold the Client
+  Certificate, identified by the key `d1client.crt` (e.g. assuming the cert is in a file
+  named `urn_node_TestNAME.pem`):
 
-      ```shell
-      kubectl create secret generic <yourReleaseName>-d1-client-cert \
-                                    --from-file=d1client.crt=urn_node_TestNAME.pem
-      # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
-      ```
+  ```shell
+  kubectl create secret generic <yourReleaseName>-d1-client-cert \
+                                --from-file=d1client.crt=urn_node_TestNAME.pem
+  # (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
+  ```
 
 #### Set the correct parameters in `values.yaml`
 
@@ -593,7 +588,10 @@ configure certificates and settings for both these roles.
       d1CaCertSecretName: d1-ca-chain
     ```
 
-3. Finally, re-install or upgrade to apply the changes
+3. Ensure you have already defined a value for the shared secret that will enable metacat to verify
+   the validity of incoming requests. The secret should be defined [in metacat Secrets](#secrets),
+   identified by the key: `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY`.
+4. Finally, re-install or upgrade to apply the changes
 
 See [Appendix 3](#appendix-3-troubleshooting-mutual-authentication) for help with troubleshooting
 
@@ -689,75 +687,39 @@ You can check the configuration as follows:
     ```yaml
       metadata:
         annotations:
-          # more lines above
+        # NOTE: more lines above, omitted for clarity
           nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
           nginx.ingress.kubernetes.io/auth-tls-secret: default/d1-ca-chain
-          ## above may differ for you. Format is: <namespace>/<ingress.d1CaCertSecretName>
+        ## NOTE: above may differ for you. Format is: <namespace>/<ingress.d1CaCertSecretName>
           nginx.ingress.kubernetes.io/auth-tls-verify-client: optional_no_ca
           nginx.ingress.kubernetes.io/auth-tls-verify-depth: "10"
+          nginx.ingress.kubernetes.io/configuration-snippet: |
+            more_set_input_headers "X-Proxy-Key: <your-secret-here>";
     ```
+    > NOTE: `<your-secret-here>` is the plaintext value associated with the key
+    > `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` in your secret
+    > `<releaseName>-metacat-secrets` -- ensure it has been set correctly!
 
     If you don't see these, or they are incorrect, check values.yaml for:
 
     ```yaml
       metacat:
-        dataone.certificate.fromHttpHeader.enabled: #true for mutual auth
+        dataone.certificate.fromHttpHeader.enabled: # should be true for mutual auth
 
       ingress:
-        tls: # needs to have been set up properly [ref 1]
+        tls: # needs to have been set up properly [see ref 1]
 
-        d1CaCertSecretName: # needs to match secret name holding your ca cert chain [ref 2]
+        d1CaCertSecretName: # needs to match secret name holding your ca cert chain [see ref 2]
     ```
     - *[[ref 1]](#setting-up-a-tls-certificate-for-https-traffic)*
     - *[[ref 2]](#install-the-ca-chain)*
 
-2. then check the configmaps for the ingress controller:
-
-    ```shell
-    kc get -n ingress-nginx configmap ingress-nginx-controller -o yaml
-    # this is the ingress controller's namespace. Typically ingress-nginx
-    ```
-
-    and look for:
-
-    ```yaml
-      data:
-        allow-snippet-annotations: "true"
-        proxy-set-headers: default/ingress-nginx-custom-headers
-        ## above may differ for you: <namespace>/ingress-nginx-custom-headers
-    ```
-
-    If you don't see these, or they are incorrect, make sure you have run the
-    [`configure-nginx-mutual-auth.sh` script](./admin/configure-nginx-mutual-auth.sh) script
-    successfully, and you have provided it with the correct namespaces. (Run it with no additional
-    parameters to see usage notes)
-
-3. verifying the `ingress-nginx-custom-headers`:
-
-    ```shell
-    kc get configmaps ingress-nginx-custom-headers -n myNameSpace -o yaml
-    # this one's in your own namespace
-    ```
-
-    and look for:
-
-    ```yaml
-      data:
-        X-Proxy-Key: yourSecretProxyKey
-    ```
-
-    ...where yourSecretProxyKey is populated from the secret with the key
-    `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` - make sure you defined this in your Secrets
-    and applied them using [admin/secrets.yaml](./admin/secrets.yaml)
-
-4. You can also view the nginx ingress logs using:
+4. If you have access to the correct namespace, you can also view the nginx ingress logs using:
 
     ```shell
       NS=ingress-nginx    # this is the ingress controller's namespace. Typically ingress-nginx
-      kubectl logs -n ${NS} -f $(kc get pods -n ${NS} | grep -v "NAME" | sed -e 's/\ [0-9].*//g')
+      kubectl logs -n ${NS} -f $(kc get pods -n ${NS} | grep "nginx" | awk '{print $1}')
     ```
-
-    ...and look for entries like: `Error reading ConfigMap`
 
 ## Appendix 4: Debugging and Logging
 

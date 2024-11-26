@@ -6,7 +6,8 @@
   {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
   {{- end }}
 {{- end }}
-apiVersion: networking.k8s.io/v1
+{{- $apiVer := "v1" }}
+apiVersion: networking.k8s.io/{{ $apiVer }}
 kind: Ingress
 metadata:
   name: {{ $fullName }}
@@ -22,15 +23,24 @@ metadata:
       {{- include "dataone.mutual.auth.annotations" . | nindent 4 }}
     {{- end }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      {{- if $siteMapEnabled }}
+    {{- if $mutualAuth -}}
+      {{- $xProxyKeyKey := "METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY" -}}
+      {{- $secrets := (printf "%s-metacat-secrets" .Release.Name) -}}
+      {{- $secretData := (lookup $apiVer "Secret" .Release.Namespace $secrets).data
+          | default dict -}}
+      {{- $xProxyKeyVal := ((get $secretData $xProxyKeyKey) | b64dec)
+          | default (printf "\"SECRETS: '%s'; KEY NOT FOUND: '%s'\"" $secrets $xProxyKeyKey)}}
+      more_set_input_headers "X-Proxy-Key: {{ $xProxyKeyVal }}";
+    {{- end }}
+    {{- if $siteMapEnabled }}
       rewrite ^/(sitemap.+) /{{- index .Values.metacat "application.context" -}}
       /sitemaps/$1 redirect;
-      {{- end }}
+    {{- end }}
       rewrite ^/robots.txt /{{- index .Values.metacat "application.context" -}}
       /robots.txt redirect;
-      {{- range .Values.ingress.rewriteRules -}}
-        {{ . | nindent 6 }}
-      {{- end }}
+    {{- range .Values.ingress.rewriteRules -}}
+      {{ . | nindent 6 }}
+    {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls }}
