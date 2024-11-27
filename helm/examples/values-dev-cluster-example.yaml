@@ -5,14 +5,15 @@
 ##  helm install myrelease -n mynamespace ./helm -f ./helm/examples/values-dev-cluster-example.yaml
 ##
 ## or from pre-packaged chart:
-##  helm install myrelease -n mynamespace oci://ghcr.io/nceas/charts/metacat --version 1.1.1 \
+##  helm install myrelease -n mynamespace oci://ghcr.io/nceas/charts/metacat --version 1.2.0 \
 ##       -f ./helm/examples/values-dev-cluster-example.yaml \
 ##       --debug --render-subchart-notes
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
 
-# set once here, for both metacat and indexer:
+## set once here, for both metacat and indexer:
+## Omit for production - otherwise logging is too verbose
 debug: &debug true
 
 global:
@@ -22,6 +23,7 @@ global:
   d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
+  ## Use your own release name instead of metacatbrooke
   passwordsSecret: &passwordSecretName metacatbrooke-metacat-secrets
 
 
@@ -30,6 +32,7 @@ global:
 #metacatui:
 #  customTheme:
 #    enabled: true
+#    ## Use your own release name instead of metacatbrooke
 #    claimName: metacatbrooke-metacatui-customtheme
 #    subPath: metacatui-themes/src/cerp/js/themes/cerp
 #  appConfig:
@@ -39,8 +42,7 @@ global:
 
 metacat:
   server.name: metacat-dev.test.dataone.org
-  ## Matthew Brooke; Jing Tao; Matt Jones; Jeanette Clark
-  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268;https://orcid.org/0000-0003-0077-4738;http://orcid.org/0000-0003-4703-1974
+  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
 
   cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
 
@@ -63,6 +65,7 @@ persistence:
   size: 100Gi
   accessModes:
     - ReadWriteMany
+  ## Use your own release name instead of metacatbrooke
   volumeName: cephfs-metacatbrooke-metacat
 
 image:
@@ -96,6 +99,7 @@ postgresql:
       size: 10Gi
       selector:
         matchLabels:
+          ## Use your own release name instead of metacatbrooke
           metacatVolumeName: cephfs-metacatbrooke-metacat-postgresdata
 
   auth:
@@ -131,6 +135,7 @@ dataone-indexer:
     extraVolumes:
       - name: solr-config
         configMap:
+          ## Use your own release name instead of metacatbrooke
           name: metacatbrooke-indexer-configfiles
           defaultMode: 0777
 

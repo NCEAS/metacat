@@ -1,8 +1,14 @@
+# Creates a persistent volume for use by postgresql
+#
+# This should be done only one time, separately from the helm install/upgrade cycle
+#
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   # See https://github.com/DataONEorg/k8s-cluster/blob/main/storage/storage.md#dataone-volume-naming-conventions
   # cephs-{release}-{function}-{instance}, where {release} usually = {namespace}
+  #
+  ## Use your own release name
   name: &pv-name cephfs-releasename-metacat-postgresdata
   labels:
     metacatVolumeName: *pv-name
@@ -14,16 +20,18 @@ spec:
   csi:
     driver: cephfs.csi.ceph.com
     nodeStageSecretRef:
-      # node stage secret name
+      # Use your own secret name
       name: csi-cephfs-releasename-secret
-      # node stage secret namespace where above secret is created
+      # Use your own namespace where above secret is created
       namespace: ceph-csi-cephfs
     volumeAttributes:
+      # Use your own clusterID, fsName, rootPath etc. here
       clusterID: 8aa4d4a0-a209-11ea-baf5-ffc787bfc812
       fsName: cephfs
       rootPath: /volumes/k8ssubvolgroup/k8ssubvol/58cda964-ce10-4ff9-8242-983da0fd0da3/repos/name/postgresql
       staticVolume: "true"
     volumeHandle: *pv-name
   persistentVolumeReclaimPolicy: Retain
+  ## Use your own storage class
   storageClassName: csi-cephfs-sc
   volumeMode: Filesystem
