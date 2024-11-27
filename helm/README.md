@@ -8,19 +8,19 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 > 1. **This Metacat Helm chart is a beta feature**. It has been tested, and we believe it to be
 >    working well, but it has not yet been used in production - so we recommend caution with this
 >    early release. If you try it, [we'd love to hear your
->    feedback](https://www.dataone.org/contact/)!
+>    feedback](https://www.dataone.org/contact/)! After you have read the details below, [this
+>    checklist](./helm/admin/MetacatQuickRef.md) may be helpful in guiding you through the necessary
+>    installation steps.
 >
 >
-> 2. If you are considering **migrating an existing Metacat installation to Kubernetes**, see
->    [Appendix 5](#appendix-5-migrating-to-kubernetes-from-an-existing-metacat-219-installation)
->    for important information
+> 2. If you are considering **migrating an existing Metacat installation to Kubernetes**, note that
+>    ***before starting a migration, you must have a fully-functioning installation of Metacat
+>    version 2.19, running with PostgreSQL version 14. Migrating from other versions of Metacat
+>    and/or PostgreSQL is not supported.*** See [this checklist](./helm/admin/MetacatQuickRef.md)
+>    for the necessary migration steps.
 >
 >
-> 3. For non-public dataset support, see: [Setting up a Token and Optional CA certificate for
->    Indexer Access](#setting-up-a-token-and-optional-ca-certificate-for-indexer-access)
->
->
-> 4. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop),
+> 3. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop),
 >    because the official Docker image for at least one of the dependencies (RabbitMQ) doesn't yet
 >    work in that environment.
 
@@ -37,15 +37,13 @@ created by others. For more details, see https://github.com/NCEAS/metacat
         + [Metacat Application-Specific Properties](#metacat-application-specific-properties-1)
         + [Secrets](#secrets)
     * [Persistence](#persistence)
-    * [Networking, Certificates, and Auth Tokens](#networking-certificates-and-auth-tokens)
-    * [Setting up a Token and Optional CA certificate for Indexer Access](#setting-up-a-token-and-optional-ca-certificate-for-indexer-access)
+    * [Networking and Certificates](#networking-and-certificates)
     * [Setting up a TLS Certificate for HTTPS Traffic](#setting-up-a-tls-certificate-for-https-traffic)
     * [Setting up Certificates for DataONE Replication](#setting-up-certificates-for-dataone-replication)
     * [Appendix 1: Self-Signing TLS Certificates for HTTPS Traffic](#appendix-1-self-signing-tls-certificates-for-https-traffic)
     * [Appendix 2: Self-Signing Certificates for Testing Mutual Authentication](#appendix-2-self-signing-certificates-for-testing-mutual-authentication)
     * [Appendix 3: Troubleshooting Mutual Authentication](#appendix-3-troubleshooting-mutual-authentication)
     * [Appendix 4: Debugging and Logging](#appendix-4-debugging-and-logging)
-    * [Appendix 5: Migrating to Kubernetes from an Existing Metacat 2.19 Installation](#appendix-5-migrating-to-kubernetes-from-an-existing-metacat-219-installation)
 
 ---
 
@@ -71,7 +69,7 @@ Starting in the root directory of the `metacat` repo:
 
     ```shell
     $ ./helm-upstall.sh  myreleasename  mynamespace oci://ghcr.io/nceas/charts/metacat  \
-                                            --version 1.0.0  -f  /your/values-overrides.yaml
+                                            --version 2.1.0  -f  /your/values-overrides.yaml
     ```
 
 To access Metacat, you'll need to create a mapping between your ingress IP address (found by:
@@ -90,8 +88,8 @@ using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
-- Kubernetes 1.23.4+
-- Helm 3.14.0+
+- Kubernetes 1.23.3+
+- Helm 3.16.1+
 - PV provisioner support in the underlying infrastructure
 
 ## Installing the Chart
@@ -99,23 +97,34 @@ using the [Helm](https://helm.sh) package manager.
 To install the chart with the release name `my-release`:
 
 ```shell
-helm install my-release oci://ghcr.io/nceas/charts/metacat --version 1.0.0
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version 2.1.0
 ```
 
-This command deploys Metacat on the Kubernetes cluster in the default configuration. The
-[Parameters](#parameters) section lists the parameters that can be configured during
-installation.
+This command deploys Metacat on the Kubernetes cluster in the default configuration that is defined
+by the parameters in the [values.yaml file](./values.yaml). The [Parameters](#parameters) section,
+below, lists the parameters that can be configured during installation.
+
+It is likely that you will need to override some of these default parameters. This can be achieved
+by creating a YAML file that specifies only those values that need to be overridden, and providing
+that file as part of the helm install command. For example:
+
+```shell
+helm install my-release  -f myValues.yaml  oci://ghcr.io/nceas/charts/metacat --version 2.1.0
+```
+(where `myValues.yaml` contains only the values you wish to override.)
+
+Parameters may also be provided on the command line to override those in
+[values.yaml](./values.yaml); e.g.
+
+```shell
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version 2.1.0  \
+                        --set postgres.auth.existingSecret=my-release-secrets
+```
 
 > **Note**: Some settings need to be edited to include release name that you choose. See the
 > [values.yaml](./values.yaml) file for settings that include `${RELEASE_NAME}`. The instructions
 > at the beginning of [values.yaml](./values.yaml) suggest simple ways to achieve this.
 
-Parameters may be provided on the command line to override those in values.yaml; e.g.
-
-```shell
-helm install my-release oci://ghcr.io/nceas/charts/metacat --version 1.0.0  \
-                                              --set postgres.auth.existingSecret=my-release-secrets
-```
 
 ## Uninstalling the Chart
 
@@ -137,7 +146,8 @@ or:
 kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associated with the release
 ```
 
-> **NOTE**: DELETING THE PVCs MAY DELETE ALL YOUR DATA AS WELL! Please be cautious!
+> **NOTE**: DELETING THE PVCs MAY ALSO DELETE ALL YOUR DATA. depending upon your setup! Please be
+> cautious!
 
 
 ## Parameters
@@ -312,37 +322,6 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `dataone-indexer.solr.extraVolumes[0].configMap.name`        | see notes in values.yaml                          | `${RELEASE_NAME}-indexer-configfiles` |
 | `dataone-indexer.solr.extraVolumes[0].configMap.defaultMode` | DO NOT EDIT                                       | `777`                                 |
 
-Specify non-secret parameters in the default [values.yaml](./values.yaml), which will be used
-automatically each time you deploy.
-
-> **NOTE**: Once the chart is deployed, it is not possible to change the postgreSQL access
-> credentials, such as usernames or passwords, nor is it possible to change the
-> Metacat primary administrator password, using Helm. To change these application
-> credentials after deployment, delete any persistent volumes (PVs) used by the relevant
-> application (Metacat or PostgreSQL) and re-deploy.
->
-> **Warning**: Setting a password will be ignored on new installations in cases when a previous
-> PostgreSQL release was deleted through the helm command. In that case, the old PVC will have an
-> old password, and setting it through helm won't take effect. Deleting persistent volumes (PVs)
-> will solve the issue. Refer to [issue 2061](https://github.com/bitnami/charts/issues/2061) for
-> more details
-
-Parameters may be provided on the command line to override those in [values.yaml](./values.yaml);
-for example:
-
-```shell
-helm install my-release oci://ghcr.io/nceas/charts/metacat --version 1.0.0  \
-                                              --set metacat.solr.baseURL=http://mysolrhost:8983/solr
-```
-
-Alternatively, a YAML file that specifies the override values for the parameters can be provided
-while installing the chart. For example:
-
-```shell
-helm install my-release  -f myValues.yaml  oci://ghcr.io/nceas/charts/metacat --version 1.0.0
-```
-
-> **Tip**: You can also edit and use the default [values.yaml](./values.yaml)
 
 ## Configuration and installation details
 
@@ -358,8 +337,8 @@ of the [Metacat Administrators' Guide](https://knb.ecoinformatics.org/knb/docs/)
 
 Secret parameters (such as login credentials, auth tokens, private keys etc.) should be installed as
 kubernetes Secrets in the cluster. The file [admin/secrets.yaml](./admin/secrets.yaml) provides a
-template that you can complete and apply using `kubectl` - see file comments for details. Please
-remember to NEVER ADD SECRETS TO GITHUB!
+template that you can complete and apply using `kubectl` -- for details, see the instructions in the
+comments inside that file. Please remember to NEVER ADD UNENCRYPTED SECRETS TO GITHUB!
 
 > **Important**:
 > 1. The deployed Secrets name includes the release name as a prefix,
@@ -368,17 +347,28 @@ remember to NEVER ADD SECRETS TO GITHUB!
 > 2. The parameter `postgresql.auth.existingSecret` in [values.yaml](./values.yaml) must be set to
 > match the name of these installed secrets (which will change if the release name is changed).
 
-### User Interface
+> **Warning**:
+>
+> Setting a password will be ignored on new installations in cases when a previous
+> PostgreSQL release was deleted through the helm command. In that case, the old PVC will have an
+> old password, and setting it through helm won't take effect. Deleting persistent volumes (PVs)
+> and redeploying will solve the issue (BUT TAKE CARE not to delete your data, and make sure you
+> have backups, first!). Refer to [issue 2061](https://github.com/bitnami/charts/issues/2061) for
+> more details
+
+
+## User Interface
 
 The Metacat helm chart also installs [MetacatUI](https://nceas.github.io/metacatui/), which is
 included as a sub-chart. The MetacatUI sub-chart is highly configurable, and can be used with
-included themes, or you can provide your own custom theme, mounted on a PVC. More information
+included themes, or you can provide your own custom theme, mounted on a PVC. At a minimum, you
+should provide values for [the `global`
+properties](#global-properties-shared-across-sub-charts-within-this-deployment). More information
 can be found in the [MetacatUI README](https://github.com/NCEAS/metacatui/tree/develop/helm#readme).
 
-At a minimum, you should provide values for the ['global'
-properties](#global-properties-shared-across-sub-charts-within-this-deployment), and can also choose
-to set `global.includeMetacatUi: false` if you wish to disable the subchart altogether, and instead
-provide your own MetacatUI installation.
+If you wish to disable the subchart altogether, set `global.includeMetacatUi: false` and provide
+your own MetacatUI installation. deployed separately.
+
 
 ## Persistence
 
@@ -391,22 +381,25 @@ path in the metacat container.
 
 The PostgreSQL image stores the database data at the `/bitbami/pgdata` path in its own container.
 
-Details of the sub-chart PV/PVC requirements can be found in the [dataone-indexer
-repository](https://github.com/DataONEorg/dataone-indexer)
+Details of the `dataone-indexer` sub-chart PV/PVC requirements can be found in the [dataone-indexer
+repository](https://github.com/DataONEorg/dataone-indexer). DataONE Indexer also needs read access
+to the same PVC used by Metacat for its file-storage.
 
-## Networking, Certificates, and Auth Tokens
+Details of the `MetacatUI` sub-chart (optional) PV/PVC requirements can be found in the [MetacatUI
+README](https://github.com/NCEAS/metacatui/tree/develop/helm#readme).
+
+
+## Networking and Certificates
 
 By default, the chart will install an
 [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) (see the `ingress.*`
-parameters under [Networking & Monitoring](#networking--monitoring)), which will expose HTTP
-and HTTPS routes from outside the cluster to the Metacat application within the cluster. Note that
+parameters under [Networking & Monitoring](#networking--monitoring)), which will expose HTTP and/or
+HTTPS routes from outside the cluster to the Metacat application within the cluster. Note that
 your cluster must have an Ingress controller in order for this to work.
 
-> **Tip**: You can inspect available Ingress classes in your cluster using:
-> `$ kubectl get ingressclasses`
-
-We recommend using the Kubernetes open source community version of
-[the nginx ingress](https://kubernetes.github.io/ingress-nginx/). You can install it as follows:
+**Note:** We strongly recommend that you use the Kubernetes open source community version of [the
+nginx ingress controller](https://kubernetes.github.io/ingress-nginx/). (Full functionality may not
+be available if you choose an alternative). You can install it as follows:
 
 ```shell
 $  helm upgrade --install ingress-nginx ingress-nginx \
@@ -414,78 +407,13 @@ $  helm upgrade --install ingress-nginx ingress-nginx \
                 --namespace ingress-nginx --create-namespace
 ```
 
-...and don't forget to set the `ingress.className` to `nginx` in your `values.yaml`.
-
-### Setting up a Token and Optional CA certificate for Indexer Access
-
-**IMPORTANT:** In order for Metacat 3.0.0 to function correctly, the
-[dataone-indexer](#dataone-indexer-sub-chart) needs a valid authentication token, to enable
-indexing for private datasets, via calls to metacat's DataONE API.
-
-> Note that this is only an interim requirement; a future release of Metacat will remove the need
-> for this auth token.
+> **Tip**: You can inspect available Ingress classes in your cluster using:
+> `$ kubectl get ingressclasses`
 >
-> If you are only evaluating metacat, you can do so without using a token, but
-> note that only public datasets can be uploaded and searched; private datasets will not be
-> supported without the token setup.
+> Note that there are significant differences between the community version of [the
+> nginx ingress controller](https://kubernetes.github.io/ingress-nginx/) and the one provided by the
+> NGINX company. This helm chart relies on the functionality of the community version.
 
-#### Prerequisites
-
-1. [Contact DataONE administrators](https://www.dataone.org/contact/) for an authentication token, issued against the DataONE
-   Certificate Authority (CA), that will be valid for one year.
-
-   - if your Metacat site is already a DataONE member node, we will issue a token linked to your
-     DataONE Node identity.
-
-   - if your site is not a DataONE member node, we [encourage you to
-     join](https://www.dataone.org/jointhenetwork/). Otherwise, we can issue a token linked to your administrator's ORCID iD.
-
-        > **Tip:**  if you want a temporary auth token in order to evaluate Metacat's private
-          dataset functionality, you can get a short-term auth token (valid for only 24 hours!),
-          by logging into [the KNB
-          website](https://knb.ecoinformatics.org), and navigating to "My Profile" -> "Settings" ->
-          "Authentication Token".
-
-2. Download a copy of the DataONE Intermediate CA certificate,
-either for the Production or the Test environment, depending upon your needs:
-
-   - [DataONE Production Intermediate CA
-     Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONEProdIntCA/certs/DataONEProdIntCA.pem)
-   - [DataONE Test Intermediate CA
-     Certificate](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestIntCA/certs/DataONETestIntCA.pem)
-
-       > **Note:** the DataONE Intermediate CA certificate is a single certificate, NOT a
-         certificate chain!
-
-#### Install the Token
-
-- Install the token in a Kubernetes Secret named `<yourReleaseName>-indexer-token`,
-  identified by the key: `DataONEauthToken`.
-- For example, assuming the token is in a file `urn_node_TestNAME.jwt`:
-
-      ```shell
-      kubectl create secret generic <yourReleaseName>-indexer-token \
-                                    --from-file=DataONEauthToken=urn_node_TestNAME.jwt
-      ```
-
-#### Install the CA Intermediate Certificate
-
-- Install the cert in a Kubernetes ConfigMap named `<yourReleaseName>-d1-certs-public`,
-  identified by the key: `DataONEProdIntCA.pem`.
-- For example, assuming the token is in a file `DataONEProdIntCA.pem`:
-
-      ```shell
-      kubectl create configmap  <yourReleaseName>-d1-certs-public \
-                                    --from-file=DataONEProdIntCA.pem=DataONEProdIntCA.pem
-      ```
-    > **Tip:**
-      If you change the ConfigMap key from `DataONEProdIntCA.pem` to a different value, make
-      sure that
-      `metacat.cn.server.publiccert.filename` in values.yaml has a filename that matches the new
-       key!
-    >
-    >  Also note that you may include more than one cert, if you need to authenticate requests from
-       tokens issued by different CAs. See the documentation in values.yaml
 
 ### Setting up a TLS Certificate for HTTPS Traffic
 
@@ -502,7 +430,6 @@ certificate and private key are named `server.crt` and `server.key`):
 
 ```shell
 kubectl create secret tls tls-secret --key server.key --cert server.crt
-# (don't forget to define a non-default namespace if necessary, using `-n myNameSpace`)
 ```
 
 Then simply tell the ingress which secret to use:
@@ -518,6 +445,28 @@ ingress:
       secretName: tls-secret
 ```
 
+> **Tip:** You can save time and reduce complexity by using a certificate manager service. For
+> example, our NCEAS k8s clusters include [a cert-manager
+> service](https://github.com/DataONEorg/k8s-cluster/blob/main/authentication/LetsEncrypt.md) that
+> constantly watches for Ingress modifications, and updates letsEncrypt certificates automatically,
+> so this step is as simple as ensuring the ingress includes:
+>
+> ```yaml
+> ingress:
+>   annotations:
+>     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+>   className: "nginx"
+>   tls:
+>     - hosts:
+>         - knb-dev.test.dataone.org
+>       secretName: ingress-nginx-tls-cert
+> ```
+>
+> ...and a tls cert will be created and applied automatically, matching the hostname defined in the
+> `tls:` section. It will be created in a new secret: `ingress-nginx-tls-cert`, in the ingress'
+> namespace
+
+
 ### Setting up Certificates for DataONE Replication
 
 For full details on becoming part of the DataONE network, see the [Metacat Administrator's Guide
@@ -532,7 +481,7 @@ configure certificates and settings for both these roles.
 
 #### Prerequisites
 1. First make sure you have the Kubernetes version of the
-   [nginx ingress installed](#networking-certificates-and-auth-tokens)
+   [nginx ingress installed](#networking-and-certificates)
 2. Ensure [HTTPS access is set up](#setting-up-a-tls-certificate-for-https-traffic) and
    working correctly. This allows other nodes, acting as "clients" to verify your server's identity
    during mutual authentication.
@@ -543,11 +492,11 @@ configure certificates and settings for both these roles.
       [DataONEProdCAChain.crt](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONEProdCAChain.crt)
    2. DataONE **Test** CA Chain:
       [DataONETestCAChain.crt](https://raw.githubusercontent.com/DataONEorg/ca/main/DataONETestCAChain.crt)
-4. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain a **Client Certificate**
-   (also known as a **DataONE Node Certificate**), that uniquely identifies your Metacat instance.
-   This allows another node (acting as server) to verify your node's identity (acting as "client")
-   during mutual authentication. The client certificate contains sensitive information, and must be
-   kept private and secure.
+4. From the DataONE administrators ([support@dataone.org](mailto:support@dataone.org)), obtain a
+   **Client Certificate** (sometimes referred to as a **DataONE Node Certificate**) that uniquely
+   identifies your Metacat instance. This allows another node (acting as server) to verify your
+   node's identity (acting as "client") during mutual authentication. The client certificate
+   contains sensitive information, and must be kept private and secure.
 
 #### Install the CA Chain
 
@@ -573,19 +522,18 @@ configure certificates and settings for both these roles.
 
 #### Set the correct parameters in `values.yaml`
 
-1. Enable the shared secret header
-
-    ```yaml
-    metacat:
-      dataone.certificate.fromHttpHeader.enabled: true
-    ```
-
-2. set the CA secret name
+1. set the CA secret name
 
     ```yaml
     ingress:
       className: "nginx"
       d1CaCertSecretName: d1-ca-chain
+    ```
+2. Enable the shared secret header
+
+    ```yaml
+    metacat:
+      dataone.certificate.fromHttpHeader.enabled: true
     ```
 
 3. Ensure you have already defined a value for the shared secret that will enable metacat to verify
@@ -603,8 +551,8 @@ See [Appendix 3](#appendix-3-troubleshooting-mutual-authentication) for help wit
 
 > **NOTE: For development and testing purposes only!**
 >
-> Also see the [Kubernetes nginx documentation](<https://kubernetes.github>.
-> io/ingress-nginx/user-guide/tls)
+> Also see the [Kubernetes nginx
+> documentation](https://kubernetes.github.io/ingress-nginx/user-guide/tls)
 
 You can create your own self-signed certificate as follows:
 
@@ -704,17 +652,17 @@ You can check the configuration as follows:
 
     ```yaml
       metacat:
-        dataone.certificate.fromHttpHeader.enabled: # should be true for mutual auth
+        dataone.certificate.fromHttpHeader.enabled: true    # must be true for mutual auth to work!
 
       ingress:
-        tls: # needs to have been set up properly [see ref 1]
+        tls:    # needs to have been set up properly [see ref 1]
 
-        d1CaCertSecretName: # needs to match secret name holding your ca cert chain [see ref 2]
+        d1CaCertSecretName:  # needs to match the secret name holding your ca cert chain [see ref 2]
     ```
     - *[[ref 1]](#setting-up-a-tls-certificate-for-https-traffic)*
     - *[[ref 2]](#install-the-ca-chain)*
 
-4. If you have access to the correct namespace, you can also view the nginx ingress logs using:
+2. If you have access to the correct namespace, you can also view the nginx ingress logs using:
 
     ```shell
       NS=ingress-nginx    # this is the ingress controller's namespace. Typically ingress-nginx
@@ -785,7 +733,7 @@ Application logs from one specific pod:
   $ kubectl logs -f metacatknb-0
 
   # example: previous Metacat logs from (now exited) pod
-  $ kubectl logs -p -f metacatknb-0
+  $ kubectl logs -p metacatknb-0
 ```
 
 Logs from an `initContainer`:
@@ -796,332 +744,3 @@ Logs from an `initContainer`:
   # example: Metacat's `init-solr-metacat-dep` initContainer logs
   $ kubectl logs -f metacatknb-0 -c init-solr-metacat-dep
 ```
-
-## Appendix 5: Migrating to Kubernetes from an Existing Metacat 2.19 Installation
-
-The following additional information may be helpful if you wish to migrate your data from an
-existing Metacat installation, so that it can be deployed in Kubernetes. The steps below were
-required to migrate the existing Metacat 2.19 deployment (data and files) at
-https://knb.ecoinformatics.org, to run on our development Kubernetes cluster, here at NCEAS.
-
-### Important Notes - Before You Start
-
-> 1. By default, the Metacat helm chart installs the latest version of MetacatUI, which is included
->    as a sub-chart. The MetacatUI sub-chart is highly configurable - see the [User
->    Interface](#user-interface) section, above.  If you would rather deploy your own custom
->    front-end for metacat, you can disable the MetacatUI subchart by setting
->    `global.includeMetacatUi: false` in values.yaml
->
-> 2. Before starting the migration, you must have a fully-functioning installation of **Metacat
->    version 2.19**, running with **PostgreSQL version 14**. Migrating from other versions of
->    Metacat and/or PostgreSQL is not supported
-
-### Assumptions
-* You have a working knowledge of Kubernetes deployment, including working with yaml files, helm
-  and kubectl commands
-* You have `envsubst` installed
-* You have your kubectl context set for the target deployment location
-
-### Steps
-
-1. Edit the metacat secrets file and add to your cluster
-
-   Add your credentials to [./admin/secrets.yaml](./admin/secrets.yaml), and add to the cluster
-    ```shell
-    # knb example
-     RELEASE_NAME=metacatknb envsubst <  secrets_KNB_NOCOMMIT.yaml | kubectl apply -n knb -f -
-    ```
-
-2. Copy the existing data to a ceph subvolume
-
-   * See the [DataONEOrg/k8s-cluster
-     repo](https://github.com/DataONEorg/k8s-cluster/blob/main/storage/storage.md) for more
-     detail and examples.
-
-   1. Create a cephfs subvolume, and rsync the existing data there from the knb host. Our subvolume
-      has the following directory structure:
-
-       ```shell
-       /mnt/ceph/
-       └── repos
-           └── knb
-               ├── metacat
-               └── postgresql
-                   └── 14
-                      └── main
-       ```
-
-    2. Get information about volumes, for use in values.yaml
-       ```shell
-       # Get sizes for volumes
-       $ du -sh metacat postgresql
-       5.6T metacat
-       255.4G postgresql
-
-       # Get group ids for volumes
-       $ stat -c %g  /mnt/ceph/repos/knb/metacat/
-       997
-       $ stat -c %g  /mnt/ceph/repos/knb/postgresql/
-       114
-       ```
-
-   3. Create the secret needed to mount the volume:
-
-      1. Create a yaml file containing your credentials
-         ```yaml
-           # cephSecretFile.yaml - credentials needed to mount ceph subvolume
-           apiVersion: v1
-           kind: Secret
-           metadata:
-             name: csi-cephfs-metacatknb-pdg-subvol
-             namespace: ceph-csi-cephfs
-           type: Opaque
-           data:
-             userID: <your base64-encoded value here>
-             userKey: <your base64-encoded value here>
-         ```
-
-         * **VERY IMPORTANT:**
-             * for the userID, omit the “client.” from the beginning of the user before base64
-               encoding - eg: if your user is `client.k8s-dev-metacatknb-subvol-user`, use only
-               `k8s-dev-metacatknb-subvol-user`
-             * use echo -n when encoding; i.e:
-               ```shell
-               echo -n userID      |  base64
-               echo -n mypassword  |  base64
-               ```
-      2. Create the secret (`kubectl apply -f cephSecretFile.yaml`)
-
-3. Create a Persistent Volume (PV) for the metacat data directory at `/mnt/ceph/repos/knb/metacat`
-
-   ```yaml
-    ## Create a PV pointing to the metacat data directory at /mnt/ceph/repos/knb/metacat
-    apiVersion: v1
-    kind: PersistentVolume
-    metadata:
-      name: &pv-name cephfs-metacatknb-metacat-varmetacat
-    spec:
-      accessModes:
-      - ReadWriteMany
-      capacity:
-        storage: 10Ti
-      csi:
-        driver: cephfs.csi.ceph.com
-        nodeStageSecretRef:
-          # node stage secret name
-          name: csi-cephfs-metacatknb-pdg-subvol
-          # node stage secret namespace where above secret is created
-          namespace: ceph-csi-cephfs
-        volumeAttributes:
-          clusterID: 8aa4d4a0-a209-11ea-baf5-ffc787bfc812
-          fsName: cephfs
-          rootPath: /volumes/pdg-subvol-group/pdg-subvol/a5c90f20-f824-4ce9-b175-6685d7846520/repos/knb/metacat
-          staticVolume: "true"
-        volumeHandle: *pv-name
-      persistentVolumeReclaimPolicy: Retain
-      storageClassName: csi-cephfs-sc
-      volumeMode: Filesystem
-   ```
-
-4. Create a Persistent Volume (PV) for the PostgreSQL data directory at
-   `/mnt/ceph/repos/knb/postgresql`
-
-   ```yaml
-   ## Create a PV pointing to the PostgreSQL data directory at /mnt/ceph/repos/knb/postgresql
-   ## For the postgres PV, include a label, so the Bitnami postgres chart can match to this.
-   ## See metacat values.yaml: postgresql.primary.persistence.selector.matchLabels
-   ##
-    apiVersion: v1
-    kind: PersistentVolume
-    metadata:
-      name: &pv-name cephfs-metacatknb-metacat-postgresdata
-    labels:
-      metacatVolumeName: *pv-name
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      capacity:
-        storage: 500Gi
-      csi:
-        driver: cephfs.csi.ceph.com
-        nodeStageSecretRef:
-          # node stage secret name
-          name: csi-cephfs-metacatknb-pdg-subvol
-          # node stage secret namespace where above secret is created
-          namespace: ceph-csi-cephfs
-        volumeAttributes:
-          clusterID: 8aa4d4a0-a209-11ea-baf5-ffc787bfc812
-          fsName: cephfs
-          rootPath: /volumes/pdg-subvol-group/pdg-subvol/a5c90f20-f824-4ce9-b175-6685d7846520/repos/knb/postgresql
-          staticVolume: "true"
-        volumeHandle: *pv-name
-      persistentVolumeReclaimPolicy: Retain
-      storageClassName: csi-cephfs-sc
-      volumeMode: Filesystem
-   ```
-
-5. Verify:
-   ```shell
-    $ kc get pv -o wide | grep knb
-    cephfs-metacatknb-metacat-varmetacat    10Ti   RWX    Retain     Available    17m    Filesystem
-    cephfs-metacatknb-metacat-postgresdata  100Gi  RWX    Retain     Available    25s    Filesystem
-   ```
-
-   > IMPORTANT NOTE: Kubernetes sometimes has trouble changing a PV mount, even if you delete
-   > and re-create it, so if you create a PV and then decide you need to change the `rootPath`, the
-   > old version may still be 'cached' on any nodes where it has previously been accessed by a pod.
-   > This can lead to confusing behavior that is inconsistent across nodes. To work around this,
-   > first delete the PV (after deleting any PVC that reference it), and then create it with a
-   > different name.
-
-6. Spend some time familiarizing yourself with the [parameters](#parameters) in the README file, and
-   reading through [values.yaml](./values.yaml), to determine which configuration parameters
-   need to be overridden for your specific installation requirements.
-
-   > **NOTE:** In the kubernetes Metacat installation, you will no longer be able to customize
-   > settings via Metacat's administrator interface. Instead, these must be included in the
-   > helm chart values. In addition to overriding those values, the chart defaults may be needed
-   > to be overridden for memory requirements, disk sizes etc. on a production system.
-
-   Create a new file that contains the values you wish to override. As an example, for the values
-   that were overridden for the KNB installation, see the [values-dev-cluster-knb-example.yaml
-   file](./examples/values-dev-cluster-knb-example.yaml).
-
-7. At this point, you should be able to `helm install` and debug any startup and configuration
-   issues.
-
-    > ### Important Note: BEFORE starting Metacat for the first time!
-    >
-    > The first time you start Metacat successfully, it will automatically upgrade the Metacat
-    > database version from 2.19 to 3.0.0. This can take a few minutes, or in some cases, a few
-    > hours, depending on your cluster node resources and how much data you have!
-    >
-    > Metacat may become unresponsive during the upgrade, causing the Kubernetes liveness probe to
-    > fail, and the pod to be continuously restarted. In order to avoid this, you must disable the
-    > liveness and readiness probes, until the database upgrade has completed successfully. (Verify
-    > by logging into the administrator interface at yourhost.org/metacat/admin (You cannot edit
-    > any values here, but you can see  the status of the database upgrade)
-
-   * Disable Probes Until Database Upgrade is Finished
-
-     ```yaml
-       livenessProbe:
-         enabled: false
-       readinessProbe:
-         enabled: false
-     ```
-
-   **When the database upgrade has finished, you can re-enable the probes (remove the above
-   `enabled: false` probe values) and continue with the remaining items:**
-
-8. TLS ("SSL") setup.
-
-   See the README section on [Setting up a TLS Certificate for HTTPS
-   Traffic](#setting-up-a-tls-certificate-for-https-traffic)
-
-   Our NCEAS dev cluster includes [a cert-manager
-   service](https://github.com/DataONEorg/k8s-cluster/blob/main/authentication/LetsEncrypt.md) that
-   automatically watches for Ingresses and updates letsEncrypt certificates automatically, so
-   this step is as simple as ensuring the ingress includes:
-
-   ```yaml
-   ingress:
-     annotations:
-       cert-manager.io/cluster-issuer: "letsencrypt-prod"
-     className: "nginx"
-     tls:
-       - hosts:
-           - knb-dev.test.dataone.org
-         secretName: ingress-nginx-tls-cert
-   ```
-
-   ...and a tls cert will be applied automatically, matching the hostname defined in the `tls:`
-   section. It will be created in a new secret: `ingress-nginx-tls-cert`, in the ingress' namespace
-
-9. Create a DNS entry, to map your chosen domain name onto the ingress IP, found via:
-
-   ```shell
-   $ kubectl get ingress -o yaml | egrep "(\- ip:)|(\- host:)"
-    - host: knb-dev.test.dataone.org
-    - ip: 128.111.85.190
-   ```
-
-10. Install the DataONE jwt auth token Secret and public cert configmap for the indexer to use - see
-   the README section [Setting up a Token and Optional CA certificate for Indexer
-   Access](#setting-up-a-token-and-optional-ca-certificate-for-indexer-access).
-
-11. Finally, you can now re-index all your datasets, so they will show up in Metacat search:
-
-    > **Caution:** If you deploy large numbers of index workers, they can overwhelm Metacat with API
-      requests when doing a large re-index. This can lead to errors and indexing failures. A future
-      release will fix this, but in the meantime, we recommend starting with a low number of
-      indexers (3 - 5), and finding the optimal number for your own installation.
-
-    1. (*Beta workaround*) After deploying Metacat, but before starting the re-index, check that
-       all the deployed indexer pods have started up cleanly. This can only be determined by
-       inspecting the logs for each indexer pod (e.g.
-       `kubectl logs -f -l app.kubernetes.io/name=d1index`), to ensure there are no exceptions.
-       If any indexers did not start correctly, use `kubectl delete pod <podname>` to delete
-       them, and k8s will then recreate them.
-
-    2. Re-indexing can take anywhere from seconds to hours or even days, depending on how much
-       data you have, and how many index workers you choose to deploy. You can override the
-       number of index workers in the dataone-indexer sub-chart by adding the following to your
-       metacat values.yaml:
-
-        ```yaml
-        dataone-indexer:
-          # increase minReplicas from default 3
-          autoscaling:
-            minReplicas: 5
-            # set max to the same value, so we don't
-            # overwhelm Metacat (see "Caution" note, above):
-            maxReplicas: 5
-        ```
-
-    3. When you are ready to reindex, issue the following command (`$TOKEN` should contain your
-       administrator auth token -- [see this
-       section](#setting-up-a-token-and-optional-ca-certificate-for-indexer-access)). Replace
-       `myHostName.org` and `myContext` with your own:
-
-        ```shell
-        $  curl -X PUT -H "Authorization: Bearer $TOKEN" \
-                       "https://myHostName.org/myContext/d1/mn/v2/index?all=true
-
-               # expected output:
-               # <?xml version="1.0" encoding="UTF-8"?>
-               #     <scheduled>true</scheduled>
-        ```
-
-    4. You can monitor indexing progress via the RabbitMQ dashboard. Enable port forwarding:
-
-       ```shell
-       $  kubectl port-forward service/<yourReleaseName>-rabbitmq-headless 15672:15672
-       ```
-
-       ...and then point your browser at http://localhost:15672, and log in with the username
-       `metacat-rmq-guest` and the RabbitMQ password you set in your metacat Secrets, or obtain by:
-
-        ```shell
-        secret_name=$(kubectl get secrets | egrep ".*\-metacat-secrets" | awk '{print $1}')
-        rmq_pwd=$(kubectl get secret "$secret_name" \
-                -o jsonpath="{.data.rabbitmq-password}" | base64 -d)
-        echo "rmq_pwd: $rmq_pwd"
-        ```
-
----
-
-> ### Tips:
->
-> 1. If you need to change the database user's password for your existing database, `kubectl exec`
->    into the postgres pod and do:
->    ```shell
->       /opt/bitnami/postgresql/bin/psql -U postgres <your-db-name>
->
->           ALTER USER metacat WITH PASSWORD 'new-password-here'
->    ```
->
-> 2. If a PV can't be unmounted -- if the PV name is cephfs-metacatknb-metacat-varmetacat:
->    ```shell
->    kubectl patch pv cephfs-metacatknb-metacat-varmetacat -p '{"metadata":{"finalizers":null}}'
->    ```
