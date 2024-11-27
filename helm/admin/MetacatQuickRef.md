@@ -3,7 +3,6 @@
 > **= = = THIS IS A TEMPLATE - MAKE YOUR OWN COPY BEFORE CHECKING BOXES! = = =**
 
 > ## IMPORTANT NOTES - before you begin...
->
 > 1. **PURPOSE:** This ordered checklist is for either:
 >    * Creating a new, empty Metacat v3.1.0+ installation on a Kubernetes (K8s) cluster, or
 >    * Migrating and upgrading an existing, non-K8s Metacat v2.19.x instance to become a Metacat
@@ -82,10 +81,13 @@
 
 ## 3. Create Persistent Volumes
 
-(Assumes **cephfs volume credentials** already installed as a k8s Secret - see
-[DataONEorg/k8s-cluster
-example](https://github.com/DataONEorg/k8s-cluster/blob/main/storage/Ceph/CephFS/helm/secret.yaml)).
+> Assumes **cephfs volume credentials** already installed as a k8s Secret - see [this tip on
+> creating your own secret](#creating-volume-credentials-secret-for-the-pvs), and [this
+> DataONEorg/k8s-cluster example
+> ](https://github.com/DataONEorg/k8s-cluster/blob/main/storage/Ceph/CephFS/helm/secret.yaml).
 
+- [ ] Get the current volume sizes from the legacy installation, to help with sizing the PVs -
+      [example](#get-sizing-information-for-pvs)
 - [ ] Create PV for metacat data directory - [example](./pv--releasename-metacat-cephfs.yaml)
 - [ ] Create PV for PostgreSQL data directory - [example](./pv--releasename-postgres-cephfs.yaml)
 - [ ] Create PVC for PostgreSQL - [example](./pvc--releasename-postgres.yaml)
@@ -528,12 +530,43 @@ Steps to resolve:
    echo "rmq_pwd: $rmq_pwd"
    ```
 
+
+### Creating Volume Credentials Secret for the PVs
+
+**VERY IMPORTANT when creating volume credentials secret:**
+1. For the userID, omit the “client.” from the beginning of the username before base64 encoding
+   it; e.g.: if your username is `client.k8s-dev-metacatknb-subvol-user`, use only
+   `k8s-dev-metacatknb-subvol-user`
+2. Use `echo -n` when encoding; i.e:
+    ```shell
+    echo -n myUserID    |  base64
+    echo -n mypassword  |  base64
+    ```
+
+### Get sizing information for PVs
+
+  ```shell
+  $ du -sh /var/metacat /var/lib/postgresql/14
+  5.6T /var/metacat
+  255.4G /var/lib/postgresql/14
+  ```
+
+
 ### If a PV can't be unmounted
 * e.g. if the PV name is `cephfs-releasename-metacat-varmetacat`:
 
     ```shell
     kubectl patch pv cephfs-releasename-metacat-varmetacat -p '{"metadata":{"finalizers":null}}'
     ```
+
+### If a PV Mount is Doing Strange Things... (e.g. you're unable to change the `rootPath`)
+
+* Kubernetes sometimes has trouble changing a PV mount, even if you delete and re-create it
+* If you create a PV and then decide you need to change the `rootPath`, the old version may still be
+  'cached' on any nodes where it has previously been accessed by a pod. This can lead to confusing
+* behavior that is inconsistent across nodes.
+* To work around this, first delete the PV (after deleting any PVC that reference it), and then
+  **create it with a different name.**
 
 ### If the metacat pod keeps restarting
 * Look for this in the logs:
