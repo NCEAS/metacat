@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  # See https://github.com/DataONEorg/k8s-cluster/blob/main/storage/storage.md#dataone-volume-naming-conventions
+  # cephs-{release}-{function}-{instance}, where {release} usually = {namespace}
+  name: &pv-name cephfs-releasename-metacatui
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 1Gi
+  csi:
+    driver: cephfs.csi.ceph.com
+    nodeStageSecretRef:
+      # node stage secret name
+      name: csi-cephfs-releasename-secret
+      # node stage secret namespace where above secret is created
+      namespace: ceph-csi-cephfs
+    volumeAttributes:
+      clusterID: 8aa4d4a0-a209-11ea-baf5-ffc787bfc812
+      fsName: cephfs
+      rootPath: /volumes/k8ssubvolgroup/k8ssubvol/58cda964-ce10-4ff9-8242-983da0fd0da3/repos/name/metacatui
+      staticVolume: "true"
+    volumeHandle: *pv-name
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: csi-cephfs-sc
+  volumeMode: Filesystem
