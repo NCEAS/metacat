@@ -18,8 +18,11 @@
 > 4. Unmarked sections are required for both types of installation
 > 5. For more in-depth explanation and details of configuration steps, see the [Metacat Helm
 >    README](https://github.com/NCEAS/metacat/tree/main/helm#readme).
-> 6Some references below are specific to NCEAS infrastructure (e.g. CephFS storage); adjust as
+> 6. Some references below are specific to NCEAS infrastructure (e.g. CephFS storage); adjust as
 >    needed for your own installation.
+> 7. Assumptions: you have a working knowledge of Kubernetes deployment, including working with yaml
+>    files, helm and kubectl commands, and your kubectl context is set for the target deployment
+>    location
 
 ## 1. `(MIGRATION ONLY)` Copy Data and Set Ownership & Permissions
 
