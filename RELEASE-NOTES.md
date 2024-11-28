@@ -1,6 +1,53 @@
 # Metacat Release Notes
 
+
+## Release Notes for Metacat version 3.1.0
+
+* Release date: 2024-                               * * * * * * * * * * * * * * * * * * * * **TODO**
+
+* Integrate with the new Dataone hash-based storage library
+  [`hashstore-java`](https://github.com/DataONEorg/hashstore-java).
+  * Performance improvements when handling large datasets
+  * Setup no longer requires an auth token in order to index private datasets
+* TODO ADD MORE                                 * * * * * * * * * * * * * * * * * * * * * **TODO**
+* Update Docker base image to tomcat:9.0.96-jre17-temurin-jammy
+
+
+## Release Notes for helm chart version 2.1.0
+
+* Release date: 2024-                               * * * * * * * * * * * * * * * * * * * * **TODO**
+
+* Increase Application version to 3.1.0
+* Increase dataone-indexer subchart version to 3.1.0
+  * Setup no longer requires an auth token in order to index private datasets
+* DataONE Member Node setup no longer requires admin access to the nginx controller; all
+  [X-Proxy-Header setup now takes place in the current release
+  namespace](https://github.com/NCEAS/metacat/pull/2027/files)
+* Add new [checklist for Metacat K8s Installation and Migration/Upgrade
+  Steps](https://github.com/NCEAS/metacat/blob/main/helm/admin/MetacatQuickRef.md), along with
+  example PV and PVC creation files in the [`helm/admin` directory](./helm/admin).
+* Changes to UID & GID defaults:
+  * Metacat `podSecurityContext` defaults updated to `runAsUser: 59997`,
+    `runAsGroup: 59997` and `fsGroup: 59997`.
+  * Dataone-indexer subchart `podSecurityContext` defaults updated to `fsGroup: 59997`.
+  * Postgresql subchart `containerSecurityContext` defaults updated to `runAsUser: 59996`, and
+    `podSecurityContext` defaults updated to `runAsNonRoot: true`
+  * (NOTE you will need to chmod any existing `metacat` directory to `59997:59997`
+    and chmod any existing `postgresql` directory to `59996:59996`)
+* RabbitMQ subchart `consumer_timeout` set to `144000000`, to prevent the indexer from timing out
+  when indexing large datasets
+* Solr and Zookeeper subchart default Persistent Volume size increased to 100Gi.
+
+
 ## Release Notes for Helm Chart 1.1.1
+
+Setting up a Token and Optional CA certificate for Indexer Access
+
+**IMPORTANT:** In order for Metacat 3.0.0 to function correctly, the
+[dataone-indexer](#dataone-indexer-sub-chart) needs a valid authentication token, to enable
+indexing for private datasets, via calls to metacat's DataONE API.
+
+
 
 Release date: 2024-07-25
 
