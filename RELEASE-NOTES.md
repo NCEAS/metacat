@@ -3,19 +3,23 @@
 
 ## Release Notes for Metacat version 3.1.0
 
-* Release date: 2024-                               * * * * * * * * * * * * * * * * * * * * **TODO**
+* Release date: 2024- * * * * * * * * * * * * * * * * * * * * **TODO** * * * * * *
 
 * Integrate with the new Dataone hash-based storage library
   [`hashstore-java`](https://github.com/DataONEorg/hashstore-java).
   * Performance improvements when handling large datasets
   * Setup no longer requires an auth token in order to index private datasets
-* TODO ADD MORE                                 * * * * * * * * * * * * * * * * * * * * * **TODO**
-* Update Docker base image to tomcat:9.0.96-jre17-temurin-jammy
+
+* ADD METACAT CODE CHANGES HERE * * * *  * * **TODO** * * * * * *
+
+* Docker changes:
+  * Update base image to `tomcat:9.0.96-jre17-temurin-jammy` (from `9.0.82`)
+  * Run container as tomcat user & group, with uid 59997 and gid 59997
 
 
 ## Release Notes for helm chart version 2.1.0
 
-* Release date: 2024-                               * * * * * * * * * * * * * * * * * * * * **TODO**
+* Release date: 2024- * * * * * * * * * * * * * * * * * * * * **TODO** * * * * * *
 
 * Increase Application version to 3.1.0
 * Increase dataone-indexer subchart version to 3.1.0
