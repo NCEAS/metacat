@@ -42,6 +42,10 @@ metadata:
       {{ . | nindent 6 }}
     {{- end }}
 spec:
+  {{- if .Values.ingress.defaultBackend.enabled }}
+  defaultBackend:
+  {{- omit .Values.ingress.defaultBackend "enabled" | toYaml | nindent 4 }}
+  {{- end }}
   ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls }}
   tls:
