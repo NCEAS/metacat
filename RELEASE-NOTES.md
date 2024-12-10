@@ -5,6 +5,9 @@
 
 * Release date: 2024-12-11
 
+> **IMPORTANT** If you are upgrading from veersion 2.19, please see the [Upgrade
+> Notes](#upgrade-notes-2190-to-300-or-above) below.
+
 The Metacat version 3.1.0 release introduces significant performance enhancements for managing large
 datasets. This was achieved by integrating with the new Dataone hash-based storage library,
 [`hashstore-java`](https://github.com/DataONEorg/hashstore-java), which necessitated substantial
@@ -137,10 +140,10 @@ Also in this release:
   we recommend caution with this early release. If you try it, [we'd love to hear your
   feedback](https://www.dataone.org/contact/)!
 
-### Upgrade Notes (2.19.0 to 3.0.0):
+### Upgrade Notes (2.19.0 to 3.0.0 or above):
 
 - Starting Requirements:
-  - Your existing Metacat installation must already have been successfully upgraded to [version v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to version 3.0.0.
+  - Your existing Metacat installation must already have been successfully upgraded to [version v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to version 3.0.0 or above.
     - If not, please upgrade to v2.19.0 first, before proceeding.
   - You must have Java 17 installed
     - If it is not installed, please install it and set it as the default version
@@ -155,15 +158,11 @@ Also in this release:
     - Stop Tomcat - ex. `sudo systemctl stop tomcat9`
     - Stop solr - ex. `sudo systemctl stop solr`
 - Download/upgrade your solr version to 9.5.0
-  - Solr upgrade is not supported for 3.0.0 with old cores, you must start with a new core (new solr-home)
-    - Please use a new Solr home and reindex all objects due to incompatibility between old data and the new Solr schema.
-    - Example below to reindex all objects
-      ```sh
-      # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
-      # where $TOKEN is an environment variable containing your indexer token (see overview of major changes above).
-      # example:
-      curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
-      ```
+  > NOTE: Solr upgrade from older cores is not supported. Instead, you must choose a new value for
+  > `solr-home` in the property configuration page, pointing to a new, empty directory. Metacat will
+  > then create the new solr core without any data. Finally, you will need to reindex all objects
+  > ***after the upgrade process is done***, due to incompatibility between old data and the new Solr
+  > schema. ([Instructions below](#you-are-now-ready-to-install-metacat-300-additional-notes).)
   - Ensure that `/etc/default/solr.in.sh` is group writable
     - ex. `sudo chmod g+w /etc/default/solr.in.sh`
   - In `solr.in.sh`, be sure to delete the old solr home add a new solr path:
@@ -176,12 +175,28 @@ Also in this release:
    sudo apt install rabbitmq-server
    sudo systemctl restart rabbitmq-server
    ```
-- You are now ready to install Metacat 3.0.0
-  - Additional notes:
-    - `metacat.properties` no longer contains custom settings, and should not be edited.
-      - Please first re-configure Metacat through the Metacat Admin UI after upgrading.
-      - If you have custom properties that are not available for configuration in the Metacat Admin UI, these can be added to `metacat-site.properties`.
-    - The database upgrade process may require several minutes or longer to complete.
+
+#### You are now ready to install Metacat 3.0.0!
+Additional notes:
+- `metacat.properties` no longer contains custom settings, and should not be edited.
+  - Please first re-configure Metacat through the Metacat Admin UI after upgrading.
+  - If you have custom properties that are not available for configuration in the Metacat Admin UI, these can be added to `metacat-site.properties`.
+- The database upgrade process may require several minutes or longer to complete.
+- **Solr Re-Index:** as mentioned above, Solr upgrade of old cores is not supported. You should have a new, empty
+  solr core available, and can now reindex all objects:
+  - first, a metacat administrator should obtain a temporary auth token by [logging into the KNB
+    website with their ORCID]](https://knb.ecoinformatics.org), and navigating to "My Profile" ->
+    "Settings" -> "Authentication Token".
+    > Note - each token is only valid for 24 hours!
+  - then issue the command to reindex all:
+    ```sh
+    $ curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
+    # where $TOKEN is an environment variable containing your auth token (see overview of major changes above).
+    #
+    # example:
+    # curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
+    ```
+
 
 ### New Features & Enhancements:
 
