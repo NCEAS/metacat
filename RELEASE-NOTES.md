@@ -1,35 +1,48 @@
 # Metacat Release Notes
 
 
-## Release Notes for Metacat version 3.1.0
+## Release Notes for Metacat 3.1.0
 
-* Release date: 2024- * * * * * * * * * * * * * * * * * * * * **TODO** * * * * * *
+* Release date: 2024-12-11
 
-* Integrate with the new Dataone hash-based storage library
-  [`hashstore-java`](https://github.com/DataONEorg/hashstore-java).
-  * Performance improvements when handling large datasets
-  * Setup no longer requires an auth token in order to index private datasets
+The Metacat version 3.1.0 release introduces significant performance enhancements for managing large
+datasets. This was achieved by integrating with the new Dataone hash-based storage library,
+[`hashstore-java`](https://github.com/DataONEorg/hashstore-java), which necessitated substantial
+changes to disk-based file-storage methods.
 
-* ADD METACAT CODE CHANGES HERE * * * *  * * **TODO** * * * * * *
-
+### New Features & Enhancements:
+* Metacat uses the DataONE [`hashstore-java`](https://github.com/DataONEorg/hashstore-java)
+  hash-based storage library.
+* Existing stored files are seamlessly migrated to the new storage system.
+* **Setup no longer requires an auth token in order to index private datasets**, thus simplifying
+  installation.
+* Upgraded datacite version to 4.5 from 4.3 for EZID DOI service ([Issue
+  #2005](https://github.com/NCEAS/metacat/issues/2005))
 * Docker changes:
-  * Update base image to `tomcat:9.0.96-jre17-temurin-jammy` (from `9.0.82`)
+  * Updated base image to `tomcat:9.0.96-jre17-temurin-jammy` (from `9.0.82`)
   * Run container as tomcat user & group, with uid 59997 and gid 59997
 
+### Upgrades and Bug Fixes:
+* Bump com.rabbitmq:amqp-client from 5.14.2 to 5.21.0
+  ([Issue #1922](https://github.com/NCEAS/metacat/issues/1922))
+* Add indexes to the access_log table ([Issue #1965](https://github.com/NCEAS/metacat/issues/1965))
+* Optimize the query to get log record ([Issue #1976](https://github.com/NCEAS/metacat/issues/1976))
 
-## Release Notes for helm chart version 2.1.0
+## Release Notes for helm chart 2.1.0
 
-* Release date: 2024- * * * * * * * * * * * * * * * * * * * * **TODO** * * * * * *
+* Release date: 2024-12-11
 
 * Increase Application version to 3.1.0
+* Increase MetacatUI subchart version to 1.0.1 (MetacatUI app version 2.31.0)
 * Increase dataone-indexer subchart version to 3.1.0
   * Setup no longer requires an auth token in order to index private datasets
-* DataONE Member Node setup no longer requires admin access to the nginx controller; all
-  [X-Proxy-Header setup now takes place in the current release
+* DataONE Member Node setup simplified, and no longer requires admin access to the nginx controller;
+  all [X-Proxy-Header setup now takes place in the current release
   namespace](https://github.com/NCEAS/metacat/pull/2027/files)
-* Add new [checklist for Metacat K8s Installation and Migration/Upgrade
-  Steps](https://github.com/NCEAS/metacat/blob/main/helm/admin/MetacatQuickRef.md), along with
-  example PV and PVC creation files in the [`helm/admin` directory](./helm/admin).
+* Helm chart README updated with new setup for v3.1.0, and new [checklist added, for Metacat K8s
+  Installation and Migration/Upgrade
+  Steps](https://github.com/NCEAS/metacat/blob/main/helm/admin/MetacatQuickRef.md)
+* Example PV and PVC creation files added in the [`helm/admin` directory](./helm/admin).
 * Changes to UID & GID defaults:
   * Metacat `podSecurityContext` defaults updated to `runAsUser: 59997`,
     `runAsGroup: 59997` and `fsGroup: 59997`.
@@ -50,8 +63,6 @@ Setting up a Token and Optional CA certificate for Indexer Access
 **IMPORTANT:** In order for Metacat 3.0.0 to function correctly, the
 [dataone-indexer](#dataone-indexer-sub-chart) needs a valid authentication token, to enable
 indexing for private datasets, via calls to metacat's DataONE API.
-
-
 
 Release date: 2024-07-25
 
