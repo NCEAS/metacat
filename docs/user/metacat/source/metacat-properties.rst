@@ -146,7 +146,10 @@ others are managed with the properties configuration utility.
 |                                      |                                                                             |                               |
 | application.inlinedatafilepath       | The directory where inline data files will be stored in the obsoleted way.  | /var/metacat/inline-data      |
 |                                      | It can be ignored if this is a new fresh installation. If it is a update,   |                               |
-|                                      | you should put the value that the previous Metacat instance used. Inline    |                               |       |                                      | data files are created from data that is embedded in EML metadata. The      |                               |       |                                      | directory must be writable by the user that starts Tomcat (and thus Metacat)|                               |
+|                                      | you should put the value that the previous Metacat instance used. Inline    |                               |
+|                                      | data files are created from data that is embedded in EML metadata.          |                               |
+|                                      | The directory must be writable must be writable by the user that starts     |                               |
+|                                      | Tomcat (and thus Metacat).                                                  |                               |
 |                                      |                                                                             |                               |
 |                                      | Default Value: /var/metacat/inline-data                                     |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
