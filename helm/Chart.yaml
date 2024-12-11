@@ -36,7 +36,7 @@ appVersion: "3.1.0"
 dependencies:
   - name: metacatui
     repository: oci://ghcr.io/nceas/charts
-    version: 1.0.1
+    version: 1.0.2
     condition: global.includeMetacatUi
 
   - name: postgresql
