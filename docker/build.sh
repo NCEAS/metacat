@@ -6,13 +6,17 @@ set -e
 TAG=""
 DEFAULT_TAG="DEVELOP"
 TEST_TAG="TEST"
-MC_VERSION=""
-DEFAULT_MC_VERSION="3.0.0"
 DEVTOOLS=false
 ENVIRONMENT='prod'
 DEV_BUILD_OPTS=""
 DISTBIN=""
 DISTSRC="./README.md"
+DEFAULT_MC_VERSION=$(xmllint --xpath \
+        "string(/*[local-name()='project']/*[local-name()='version'])" ../pom.xml)
+if [ -z $DEFAULT_MC_VERSION ]; then
+    echo "Failed to populate \$DEFAULT_MC_VERSION from ../pom.xml. Exiting..."
+    exit 1
+fi
 
 # Function to display usage
 usage() {
@@ -53,15 +57,15 @@ testmode-info() {
 # Parse command-line arguments
 while getopts ":t:v:-:" opt; do
     case "$opt" in
-        t) TAG="$OPTARG" ;;
-        v) MC_VERSION="$OPTARG" ;;
-        -)
-            case "${OPTARG}" in
-                devtools) DEVTOOLS=true ;;
-                *) usage ;;
-            esac
-            ;;
-        ?) usage ;;
+    t) TAG="$OPTARG" ;;
+    v) MC_VERSION="$OPTARG" ;;
+    -)
+        case "${OPTARG}" in
+        devtools) DEVTOOLS=true ;;
+        *) usage ;;
+        esac
+        ;;
+    ?) usage ;;
     esac
 done
 
@@ -136,10 +140,10 @@ if [[ -n $DEV_BUILD_OPTS ]]; then
     echo "  BUILDING OPTIONS:  $DEV_BUILD_OPTS"
 fi
 
-docker image build $DEV_BUILD_OPTS       \
-    --tag ghcr.io/nceas/metacat:"$TAG"   \
+docker image build $DEV_BUILD_OPTS \
+    --tag ghcr.io/nceas/metacat:"$TAG" \
     --build-arg MC_VERSION="$MC_VERSION" \
     --build-arg ENVIRONMENT="$ENVIRONMENT" \
-    --build-arg DISTBIN="$DISTBIN"       \
-    --build-arg DISTSRC="$DISTSRC"       \
-    --build-arg DEVTOOLS="$DEVTOOLS"  .
+    --build-arg DISTBIN="$DISTBIN" \
+    --build-arg DISTSRC="$DISTSRC" \
+    --build-arg DEVTOOLS="$DEVTOOLS" .

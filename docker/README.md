@@ -22,7 +22,7 @@ If you wish to build your own version locally, this can be accomplished by first
 metacat distribution associated with a given version, and then building the docker image based on
 that. Starting in the root directory of the "metacat" repo:
 
-```console
+```shell
 $ ant clean distbinmc
 
 # ... a very long build process ensues, resulting in a tar.gz file
@@ -35,14 +35,14 @@ $ ./build.sh  -t 3.0.0-no-mcui  -v 3.0.0
 
 $ docker image ls
 
-REPOSITORY               TAG              IMAGE ID        CREATED           SIZE
-ghcr.io/nceas/metacat    3.0.0-no-mcui    8da92210dfc4    1 minute ago      1.09GB
+REPOSITORY               TAG             IMAGE ID        CREATED           SIZE
+ghcr.io/nceas/metacat    3.0.0-no-mcui   8da92210dfc4    1 minute ago      1.09GB
 ```
 
 You can then [publish the image to GitHub Container Repository (GHCR)](#publish-the-image-to-ghcr).
 
 Finally, the image can then be deployed in a Kubernetes environment - [see the helm chart](..
-/helm/README.md). Don't forget to change the image tag in your values.yaml file, to match the one 
+/helm/README.md). Don't forget to change the image tag in your values.yaml file, to match the one
 you used when building the image. In the above example, it would be `3.0.0-no-mcui`; e.g:
 
 ```yaml
@@ -58,7 +58,7 @@ inside the container.
 
 To build the image, starting in the root directory of the "metacat" repo: 
 
-```console
+```shell
 $ ant fulldist
 
 # ... a very long build process ensues, resulting in two tar.gz files
@@ -99,9 +99,9 @@ available via the GitHub Container Registry (ghcr.io) so that it can be pulled b
 image can be pushed to the registry after logging in with a GitHub Personal Access Token (PAT).
 
 Commands for pushing the built image are shown below (note this example assumes the tag is `TEST`, 
-although it could also be `DEVELOP`, or a version number, such as `3.0.0`):
+although it could also be `DEVELOP`, or a version number, such as `3.0.0` or `3.0.0-no-mcui`):
 
-```console
+```shell
 # first log in:
 GITHUB_PAT="your-own-secret-GitHub-Personal-Access-Token-goes-here"
 echo $GITHUB_PAT | docker login ghcr.io -u <your-username> --password-stdin
