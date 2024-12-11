@@ -58,7 +58,7 @@ inside the container.
 
 To build the image, starting in the root directory of the "metacat" repo: 
 
-```console
+```shell
 $ ant fulldist
 
 # ... a very long build process ensues, resulting in two tar.gz files
@@ -101,7 +101,7 @@ image can be pushed to the registry after logging in with a GitHub Personal Acce
 Commands for pushing the built image are shown below (note this example assumes the tag is `TEST`, 
 although it could also be `DEVELOP`, or a version number, such as `3.0.0` or `3.0.0-no-mcui`):
 
-```console
+```shell
 # first log in:
 GITHUB_PAT="your-own-secret-GitHub-Personal-Access-Token-goes-here"
 echo $GITHUB_PAT | docker login ghcr.io -u <your-username> --password-stdin
