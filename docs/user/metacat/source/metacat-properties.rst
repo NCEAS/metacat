@@ -123,7 +123,7 @@ others are managed with the properties configuration utility.
 |                                      |                                                                             |                               |
 |                                      | Default Value: /var/metacat/config                                          |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.objectStorageRootDir:|                                                                             |                               |
+| .. _storage.hashstore.rootDirectory: |                                                                             |                               |
 |                                      |                                                                             |                               |
 | storage.hashstore.rootDirectory      | The directory is introduced on 3.1.0 and is the root of the new object      | /var/metacat/hashstore        |
 |                                      | storage to replace the obsoleted data and documents directories. This       |                               |
