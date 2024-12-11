@@ -324,7 +324,7 @@
             Where to store the Metacat objects (data and scientific metadata). This should be
             somewhere outside the 'Deploy Location'.
         </description>
-        <helpFile>docs/metacat-properties.html#application-sitepropertiesdir</helpFile>
+        <helpFile>docs/metacat-properties.html#storage-hashstore-rootdirectory</helpFile>
     </config>
 
     <config>
