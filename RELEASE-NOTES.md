@@ -3,9 +3,9 @@
 
 ## Release Notes for Metacat 3.1.0
 
-* Release date: 2024-12-11
+**Release date: 2024-12-16**
 
-> **IMPORTANT** If you are upgrading from veersion 2.19, please see the [Upgrade
+> **IMPORTANT** If you are upgrading from version 2.19, please see the [Upgrade
 > Notes](#upgrade-notes-2190-to-300-or-above) below.
 
 The Metacat version 3.1.0 release introduces significant performance enhancements for managing large
@@ -33,8 +33,9 @@ changes to disk-based file-storage methods.
 
 ## Release Notes for helm chart 2.1.0
 
-* Release date: 2024-12-11
+**Release date: 2024-12-16**
 
+### New Features & Enhancements:
 * Increase Application version to 3.1.0
 * Increase MetacatUI subchart version to 1.0.1 (MetacatUI app version 2.31.0)
 * Increase dataone-indexer subchart version to 3.1.0
@@ -64,7 +65,7 @@ changes to disk-based file-storage methods.
 Setting up a Token and Optional CA certificate for Indexer Access
 
 **IMPORTANT:** In order for Metacat 3.0.0 to function correctly, the
-[dataone-indexer](#dataone-indexer-sub-chart) needs a valid authentication token, to enable
+dataone-indexer needs a valid authentication token, to enable
 indexing for private datasets, via calls to metacat's DataONE API.
 
 Release date: 2024-07-25
@@ -162,7 +163,7 @@ Also in this release:
   > `solr-home` in the property configuration page, pointing to a new, empty directory. Metacat will
   > then create the new solr core without any data. Finally, you will need to reindex all objects
   > ***after the upgrade process is done***, due to incompatibility between old data and the new Solr
-  > schema. ([Instructions below](#you-are-now-ready-to-install-metacat-300-additional-notes).)
+  > schema. ([Instructions below](#you-are-now-ready-to-install-metacat-300).)
   - Ensure that `/etc/default/solr.in.sh` is group writable
     - ex. `sudo chmod g+w /etc/default/solr.in.sh`
   - In `solr.in.sh`, be sure to delete the old solr home add a new solr path:
@@ -185,7 +186,7 @@ Additional notes:
 - **Solr Re-Index:** as mentioned above, Solr upgrade of old cores is not supported. You should have a new, empty
   solr core available, and can now reindex all objects:
   - first, a metacat administrator should obtain a temporary auth token by [logging into the KNB
-    website with their ORCID]](https://knb.ecoinformatics.org), and navigating to "My Profile" ->
+    website with their ORCID](https://knb.ecoinformatics.org), and navigating to "My Profile" ->
     "Settings" -> "Authentication Token".
     > Note - each token is only valid for 24 hours!
   - then issue the command to reindex all:
