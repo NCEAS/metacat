@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,13 +17,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
@@ -54,7 +55,6 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
-import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.Node;
@@ -76,10 +76,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.doi.DOIException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
-import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
-import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
-import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -144,7 +141,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_PUBLISH_IDENTIFIER = "publishIdentifier";
     protected static final String RESOURCE_INDEX = "index";
     protected static final String RESOURCE_IDENTIFIERS = "identifiers";
-
+    private static Log logMetacat = LogFactory.getLog(MNResourceHandler.class);
 
 
 
@@ -162,11 +159,11 @@ public class MNResourceHandler extends D1ResourceHandler {
 
     /**
      * Initializes new instance by setting servlet context,request and response
-     * */
-    public MNResourceHandler(ServletContext servletContext,
-            HttpServletRequest request, HttpServletResponse response) {
-        super(servletContext, request, response);
-        logMetacat = LogFactory.getLog(MNResourceHandler.class);
+     * @param request  the request that the handler will handle
+     * @param response  the response that the handler will send back
+     */
+    public MNResourceHandler(HttpServletRequest request, HttpServletResponse response) {
+        super(request, response);
     }
 
     @Override
@@ -203,6 +200,9 @@ public class MNResourceHandler extends D1ResourceHandler {
 
             // get the resource
             String resource = request.getPathInfo();
+            if (resource == null) {
+                throw new InvalidRequest("0000", "The resource should not be null.");
+            }
             resource = resource.substring(resource.indexOf("/") + 1);
 
             // default to node info
@@ -217,338 +217,332 @@ public class MNResourceHandler extends D1ResourceHandler {
                                 + " request with resource '" + resource + "'");
             logMetacat.debug("resource: '" + resource + "'");
             boolean status = false;
-
-            if (resource != null) {
-
-                if (resource.startsWith(RESOURCE_NODE)) {
-                    // node response
-                    node();
+            if (resource.startsWith(RESOURCE_NODE)) {
+                // node response
+                node();
+                status = true;
+            } else if (resource.startsWith(RESOURCE_TOKEN)) {
+                logMetacat.debug("Using resource 'token'");
+                // get
+                if (httpVerb == GET) {
+                    // after the command
+                    getToken();
                     status = true;
-                } else if (resource.startsWith(RESOURCE_TOKEN)) {
-                    logMetacat.debug("Using resource 'token'");
-                    // get
-                    if (httpVerb == GET) {
-                        // after the command
-                        getToken();
-                        status = true;
-                    }
-
-                } else if (resource.startsWith(RESOURCE_WHOAMI)) {
-                    logMetacat.debug("Using resource 'whoami'");
-                    // get
-                    if (httpVerb == GET) {
-                        // after the command
-                        whoami();
-                        status = true;
-                    }
-
-                } else if (resource.startsWith(RESOURCE_IS_AUTHORIZED)) {
-                    if (httpVerb == GET) {
-                        // after the command
-                        extra = parseTrailing(resource, RESOURCE_IS_AUTHORIZED);
-                        extra = decode(extra);
-                        // check the access rules
-                        isAuthorized(extra);
-                        status = true;
-                        logMetacat.debug("done getting access");
-                    }
-                } else if (resource.startsWith(RESOURCE_META)) {
-                    logMetacat.debug("Using resource 'meta'");
-                    // get
-                    if (httpVerb == GET) {
-                        logMetacat.debug("Using resource 'meta' for GET");
-                        // after the command
-                        extra = parseTrailing(resource, RESOURCE_META);
-                        extra = decode(extra);
-                        getSystemMetadataObject(extra);
-                        status = true;
-                    } else if (httpVerb == PUT) {
-                        logMetacat.debug("Using resource 'meta' for PUT");
-                        updateSystemMetadata();
-                        status = true;
-                    }
-
-                } else if (resource.startsWith(RESOURCE_OBJECTS)) {
-                    logMetacat.debug("Using resource 'object'");
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_OBJECTS);
-                    extra = decode(extra);
-                    logMetacat.debug("objectId: " + extra);
-                    logMetacat.debug("verb:" + httpVerb);
-
-                    if (httpVerb == GET) {
-                        getObject(extra);
-                        status = true;
-                    } else if (httpVerb == POST) {
-                        // part of the params, not the URL
-                        putObject(null, FUNCTION_NAME_INSERT);
-                        status = true;
-                    } else if (httpVerb == PUT) {
-                        putObject(extra, FUNCTION_NAME_UPDATE);
-                        status = true;
-                    } else if (httpVerb == DELETE) {
-                        deleteObject(extra);
-                        status = true;
-                    } else if (httpVerb == HEAD) {
-                        describeObject(extra);
-                        status = true;
-                    }
-
-                } else if (resource.startsWith(RESOURCE_LOG)) {
-                    logMetacat.debug("Using resource 'log'");
-                    // handle log events
-                    if (httpVerb == GET) {
-                        getLog();
-                        status = true;
-                    }
-                } else if (resource.startsWith(Constants.RESOURCE_ARCHIVE)) {
-                    logMetacat.debug("Using resource " + Constants.RESOURCE_ARCHIVE);
-                    // handle archive events
-                    if (httpVerb == PUT) {
-                        extra = parseTrailing(resource, Constants.RESOURCE_ARCHIVE);
-                        extra = decode(extra);
-                        archive(extra);
-                        status = true;
-                    }
-                } else if (resource.startsWith(Constants.RESOURCE_CHECKSUM)) {
-                    logMetacat.debug("Using resource 'checksum'");
-                    // handle checksum requests
-                    if (httpVerb == GET) {
-                        // after the command
-                        extra = parseTrailing(resource, Constants.RESOURCE_CHECKSUM);
-                        extra = decode(extra);
-                        checksum(extra);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_MONITOR)) {
-                    // there are various parts to monitoring
-                    if (httpVerb == GET) {
-                        // after the command
-                        extra = parseTrailing(resource, RESOURCE_MONITOR);
-                        extra = decode(extra);
-                        // ping
-                        if (extra.toLowerCase().equals("ping")) {
-                            logMetacat.debug("processing ping request");
-                            Date result = MNodeService.getInstance(request).ping();
-                            // TODO: send to output
-                            status = true;
-
-                        } else if (extra.toLowerCase().equals("status")) {
-                            logMetacat.debug("processing status request");
-                            getStatus();
-                            status = true;
-                        }
-
-                    }
-                } else if (resource.startsWith(RESOURCE_REPLICATE)) {
-                    if (httpVerb == POST) {
-                        logMetacat.debug("processing replicate request");
-                        replicate();
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_ERROR)) {
-                    // sync error
-                    if (httpVerb == POST) {
-                        syncError();
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_META_CHANGED)) {
-                    // system metadata changed
-                    if (httpVerb == POST) {
-                        systemMetadataChanged();
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_REPLICAS)) {
-                    // get replica
-                    if (httpVerb == GET) {
-                        extra = parseTrailing(resource, RESOURCE_REPLICAS);
-                        extra = decode(extra);
-                        getReplica(extra);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_QUERY)) {
-                    logMetacat.debug("Using resource " + RESOURCE_QUERY);
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_QUERY);
-                    logMetacat.debug("query extra: " + extra);
-
-                    String engine = null;
-                    String query = null;
-
-                    if (extra != null) {
-                        // get the engine
-                        int engineIndex = extra.length();
-                        if (extra.indexOf("/") > -1) {
-                            engineIndex = extra.indexOf("/");
-                        }
-                        engine = extra.substring(0, engineIndex);
-                        engine = decode(engine);
-                        logMetacat.debug("query engine: " + engine);
-
-                        // check the query string first
-                        query = request.getQueryString();
-
-                        // if null, look at the whole endpoint
-                        if (query == null) {
-                            // get the query if it is there
-                            query = extra.substring(engineIndex, extra.length());
-                            if (query != null && query.length() == 0) {
-                                query = null;
-                            } else {
-                                if (query.startsWith("/")) {
-                                    query = query.substring(1);
-                                }
-                            }
-                        }
-                        query = decode(query);
-                        logMetacat.debug("query: " + query);
-
-                    }
-                    logMetacat.debug("verb:" + httpVerb);
-                    if (httpVerb == GET) {
-                        doQuery(engine, query);
-                        status = true;
-                    } else if (httpVerb == POST) {
-                        doPostQuery(engine);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_GENERATE_ID)) {
-                    // generate an id
-                    if (httpVerb == POST) {
-                        generateIdentifier();
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_PUBLISH) &&
-                                            !resource.startsWith(RESOURCE_PUBLISH_IDENTIFIER)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_PUBLISH);
-                    // PUT
-                    if (httpVerb == PUT) {
-                        // after the command
-                        extra = parseTrailing(resource, RESOURCE_PUBLISH);
-                        extra = decode(extra);
-                        publish(extra);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_PACKAGE)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_PACKAGE);
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_PACKAGE);
-
-                    String format = null;
-                    String pid = null;
-
-                    if (extra != null) {
-                        // get the format
-                        int formatIndex = extra.length();
-                        if (extra.indexOf("/") > -1) {
-                            formatIndex = extra.indexOf("/");
-                        }
-                        format = extra.substring(0, formatIndex);
-                        format = decode(format);
-                        logMetacat.debug("package format: " + format);
-
-                        // get the pid if it is there
-                        pid = extra.substring(formatIndex, extra.length());
-                        if (pid != null && pid.length() == 0) {
-                            pid = null;
-                        } else {
-                            if (pid.startsWith("/")) {
-                                pid = pid.substring(1);
-                            }
-                        }
-                        pid = decode(pid);
-                        logMetacat.debug("pid: " + pid);
-
-                    }
-
-                    // get
-                    if (httpVerb == GET) {
-
-                        getPackage(format, pid);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_VIEWS)) {
-                    logMetacat.debug("Using resource " + RESOURCE_VIEWS);
-                    // after the command
-                    extra = parseTrailing(resource, RESOURCE_VIEWS);
-                    logMetacat.debug("view extra: " + extra);
-
-                    String format = null;
-                    String pid = null;
-
-                    if (extra != null) {
-                        // get the format
-                        int formatIndex = extra.length();
-                        if (extra.indexOf("/") > -1) {
-                            formatIndex = extra.indexOf("/");
-                        }
-                        format = extra.substring(0, formatIndex);
-                        format = decode(format);
-                        logMetacat.debug("view format: " + format);
-
-                        // get the pid if it is there
-                        pid = extra.substring(formatIndex, extra.length());
-                        if (pid != null && pid.length() == 0) {
-                            pid = null;
-                        } else {
-                            if (pid.startsWith("/")) {
-                                pid = pid.substring(1);
-                            }
-                        }
-                        pid = decode(pid);
-                        logMetacat.debug("pid: " + pid);
-
-                    }
-                    logMetacat.debug("verb:" + httpVerb);
-                    if (httpVerb == GET) {
-                        doViews(format, pid);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_PUBLISH_IDENTIFIER)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_PUBLISH_IDENTIFIER);
-                    // PUT
-                    if (httpVerb == PUT) {
-                        // after the command
-                        extra = parseTrailing(resource, RESOURCE_PUBLISH_IDENTIFIER);
-                        extra = decode(extra);
-                        publishIdentifier(extra);
-                        status = true;
-                    }
-                } else if (resource.startsWith(RESOURCE_INDEX)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_INDEX);
-                    // PUT
-                    if (httpVerb == PUT) {
-                        extra = parseTrailing(resource, RESOURCE_INDEX);
-                        extra = decode(extra);
-                        logMetacat.debug("The objectId(extra) in index is: " + extra);
-                        reindex(extra);
-                        status = true;
-                    } else {
-                        throw new InvalidRequest("0000", "Metacat only supports the HTTP PUT method"
-                                + " to index objects.");
-                    }
-                } else if (resource.startsWith(RESOURCE_IDENTIFIERS)) {
-                    logMetacat.debug("Using resource: " + RESOURCE_IDENTIFIERS);
-                    // PUT
-                    if (httpVerb == PUT) {
-                        extra = parseTrailing(resource, RESOURCE_IDENTIFIERS);
-                        extra = decode(extra);
-                        logMetacat.debug("The objectId(extra) in updateIdMetadata is: " + extra);
-                        updateIdMetadata(extra);
-                        status = true;
-                    } else {
-                        throw new InvalidRequest("0000", "Metacat only supports the HTTP PUT method"
-                                + " to update identifiers' metadata.");
-                    }
-                } else {
-                    throw new InvalidRequest("0000", "No resource matched for " + resource);
                 }
 
-                if (!status) {
-                    throw new ServiceFailure("0000", "Unknown error, status = " + status);
+            } else if (resource.startsWith(RESOURCE_WHOAMI)) {
+                logMetacat.debug("Using resource 'whoami'");
+                // get
+                if (httpVerb == GET) {
+                    // after the command
+                    whoami();
+                    status = true;
+                }
+
+            } else if (resource.startsWith(RESOURCE_IS_AUTHORIZED)) {
+                if (httpVerb == GET) {
+                    // after the command
+                    extra = parseTrailing(resource, RESOURCE_IS_AUTHORIZED);
+                    extra = decode(extra);
+                    // check the access rules
+                    isAuthorized(extra);
+                    status = true;
+                    logMetacat.debug("done getting access");
+                }
+            } else if (resource.startsWith(RESOURCE_META)) {
+                logMetacat.debug("Using resource 'meta'");
+                // get
+                if (httpVerb == GET) {
+                    logMetacat.debug("Using resource 'meta' for GET");
+                    // after the command
+                    extra = parseTrailing(resource, RESOURCE_META);
+                    extra = decode(extra);
+                    getSystemMetadataObject(extra);
+                    status = true;
+                } else if (httpVerb == PUT) {
+                    logMetacat.debug("Using resource 'meta' for PUT");
+                    updateSystemMetadata();
+                    status = true;
+                }
+
+            } else if (resource.startsWith(RESOURCE_OBJECTS)) {
+                logMetacat.debug("Using resource 'object'");
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_OBJECTS);
+                extra = decode(extra);
+                logMetacat.debug("objectId: " + extra);
+                logMetacat.debug("verb:" + httpVerb);
+
+                if (httpVerb == GET) {
+                    getObject(extra);
+                    status = true;
+                } else if (httpVerb == POST) {
+                    // part of the params, not the URL
+                    putObject(null, FUNCTION_NAME_INSERT);
+                    status = true;
+                } else if (httpVerb == PUT) {
+                    putObject(extra, FUNCTION_NAME_UPDATE);
+                    status = true;
+                } else if (httpVerb == DELETE) {
+                    deleteObject(extra);
+                    status = true;
+                } else if (httpVerb == HEAD) {
+                    describeObject(extra);
+                    status = true;
+                }
+
+            } else if (resource.startsWith(RESOURCE_LOG)) {
+                logMetacat.debug("Using resource 'log'");
+                // handle log events
+                if (httpVerb == GET) {
+                    getLog();
+                    status = true;
+                }
+            } else if (resource.startsWith(Constants.RESOURCE_ARCHIVE)) {
+                logMetacat.debug("Using resource " + Constants.RESOURCE_ARCHIVE);
+                // handle archive events
+                if (httpVerb == PUT) {
+                    extra = parseTrailing(resource, Constants.RESOURCE_ARCHIVE);
+                    extra = decode(extra);
+                    archive(extra);
+                    status = true;
+                }
+            } else if (resource.startsWith(Constants.RESOURCE_CHECKSUM)) {
+                logMetacat.debug("Using resource 'checksum'");
+                // handle checksum requests
+                if (httpVerb == GET) {
+                    // after the command
+                    extra = parseTrailing(resource, Constants.RESOURCE_CHECKSUM);
+                    extra = decode(extra);
+                    checksum(extra);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_MONITOR)) {
+                // there are various parts to monitoring
+                if (httpVerb == GET) {
+                    // after the command
+                    extra = parseTrailing(resource, RESOURCE_MONITOR);
+                    extra = decode(extra);
+                    // ping
+                    if (extra.toLowerCase().equals("ping")) {
+                        logMetacat.debug("processing ping request");
+                        Date result = MNodeService.getInstance(request).ping();
+                        // TODO: send to output
+                        status = true;
+
+                    } else if (extra.toLowerCase().equals("status")) {
+                        logMetacat.debug("processing status request");
+                        getStatus();
+                        status = true;
+                    }
+
+                }
+            } else if (resource.startsWith(RESOURCE_REPLICATE)) {
+                if (httpVerb == POST) {
+                    logMetacat.debug("processing replicate request");
+                    replicate();
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_ERROR)) {
+                // sync error
+                if (httpVerb == POST) {
+                    syncError();
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_META_CHANGED)) {
+                // system metadata changed
+                if (httpVerb == POST) {
+                    systemMetadataChanged();
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_REPLICAS)) {
+                // get replica
+                if (httpVerb == GET) {
+                    extra = parseTrailing(resource, RESOURCE_REPLICAS);
+                    extra = decode(extra);
+                    getReplica(extra);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_QUERY)) {
+                logMetacat.debug("Using resource " + RESOURCE_QUERY);
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_QUERY);
+                logMetacat.debug("query extra: " + extra);
+
+                String engine = null;
+                String query = null;
+
+                if (extra != null) {
+                    // get the engine
+                    int engineIndex = extra.length();
+                    if (extra.indexOf("/") > -1) {
+                        engineIndex = extra.indexOf("/");
+                    }
+                    engine = extra.substring(0, engineIndex);
+                    engine = decode(engine);
+                    logMetacat.debug("query engine: " + engine);
+
+                    // check the query string first
+                    query = request.getQueryString();
+
+                    // if null, look at the whole endpoint
+                    if (query == null) {
+                        // get the query if it is there
+                        query = extra.substring(engineIndex, extra.length());
+                        if (query != null && query.length() == 0) {
+                            query = null;
+                        } else {
+                            if (query.startsWith("/")) {
+                                query = query.substring(1);
+                            }
+                        }
+                    }
+                    query = decode(query);
+                    logMetacat.debug("query: " + query);
+
+                }
+                logMetacat.debug("verb:" + httpVerb);
+                if (httpVerb == GET) {
+                    doQuery(engine, query);
+                    status = true;
+                } else if (httpVerb == POST) {
+                    doPostQuery(engine);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_GENERATE_ID)) {
+                // generate an id
+                if (httpVerb == POST) {
+                    generateIdentifier();
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_PUBLISH) &&
+                                        !resource.startsWith(RESOURCE_PUBLISH_IDENTIFIER)) {
+                logMetacat.debug("Using resource: " + RESOURCE_PUBLISH);
+                // PUT
+                if (httpVerb == PUT) {
+                    // after the command
+                    extra = parseTrailing(resource, RESOURCE_PUBLISH);
+                    extra = decode(extra);
+                    publish(extra);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_PACKAGE)) {
+                logMetacat.debug("Using resource: " + RESOURCE_PACKAGE);
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_PACKAGE);
+
+                String format = null;
+                String pid = null;
+
+                if (extra != null) {
+                    // get the format
+                    int formatIndex = extra.length();
+                    if (extra.indexOf("/") > -1) {
+                        formatIndex = extra.indexOf("/");
+                    }
+                    format = extra.substring(0, formatIndex);
+                    format = decode(format);
+                    logMetacat.debug("package format: " + format);
+
+                    // get the pid if it is there
+                    pid = extra.substring(formatIndex, extra.length());
+                    if (pid != null && pid.length() == 0) {
+                        pid = null;
+                    } else {
+                        if (pid.startsWith("/")) {
+                            pid = pid.substring(1);
+                        }
+                    }
+                    pid = decode(pid);
+                    logMetacat.debug("pid: " + pid);
+
+                }
+
+                // get
+                if (httpVerb == GET) {
+
+                    getPackage(format, pid);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_VIEWS)) {
+                logMetacat.debug("Using resource " + RESOURCE_VIEWS);
+                // after the command
+                extra = parseTrailing(resource, RESOURCE_VIEWS);
+                logMetacat.debug("view extra: " + extra);
+
+                String format = null;
+                String pid = null;
+
+                if (extra != null) {
+                    // get the format
+                    int formatIndex = extra.length();
+                    if (extra.indexOf("/") > -1) {
+                        formatIndex = extra.indexOf("/");
+                    }
+                    format = extra.substring(0, formatIndex);
+                    format = decode(format);
+                    logMetacat.debug("view format: " + format);
+
+                    // get the pid if it is there
+                    pid = extra.substring(formatIndex, extra.length());
+                    if (pid != null && pid.length() == 0) {
+                        pid = null;
+                    } else {
+                        if (pid.startsWith("/")) {
+                            pid = pid.substring(1);
+                        }
+                    }
+                    pid = decode(pid);
+                    logMetacat.debug("pid: " + pid);
+
+                }
+                logMetacat.debug("verb:" + httpVerb);
+                if (httpVerb == GET) {
+                    doViews(format, pid);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_PUBLISH_IDENTIFIER)) {
+                logMetacat.debug("Using resource: " + RESOURCE_PUBLISH_IDENTIFIER);
+                // PUT
+                if (httpVerb == PUT) {
+                    // after the command
+                    extra = parseTrailing(resource, RESOURCE_PUBLISH_IDENTIFIER);
+                    extra = decode(extra);
+                    publishIdentifier(extra);
+                    status = true;
+                }
+            } else if (resource.startsWith(RESOURCE_INDEX)) {
+                logMetacat.debug("Using resource: " + RESOURCE_INDEX);
+                // PUT
+                if (httpVerb == PUT) {
+                    extra = parseTrailing(resource, RESOURCE_INDEX);
+                    extra = decode(extra);
+                    logMetacat.debug("The objectId(extra) in index is: " + extra);
+                    reindex(extra);
+                    status = true;
+                } else {
+                    throw new InvalidRequest("0000", "Metacat only supports the HTTP PUT method"
+                            + " to index objects.");
+                }
+            } else if (resource.startsWith(RESOURCE_IDENTIFIERS)) {
+                logMetacat.debug("Using resource: " + RESOURCE_IDENTIFIERS);
+                // PUT
+                if (httpVerb == PUT) {
+                    extra = parseTrailing(resource, RESOURCE_IDENTIFIERS);
+                    extra = decode(extra);
+                    logMetacat.debug("The objectId(extra) in updateIdMetadata is: " + extra);
+                    updateIdMetadata(extra);
+                    status = true;
+                } else {
+                    throw new InvalidRequest("0000", "Metacat only supports the HTTP PUT method"
+                            + " to update identifiers' metadata.");
                 }
             } else {
                 throw new InvalidRequest("0000", "No resource matched for " + resource);
+            }
+
+            if (!status) {
+                throw new ServiceFailure("0000", "Unknown error, status = " + status);
             }
         } catch (BaseException be) {
             // report Exceptions as clearly as possible
@@ -1319,7 +1313,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         }
 
         logMetacat.debug("calling getLogRecords");
-        Log log = MNodeService.getInstance(request)
+        org.dataone.service.types.v2.Log log = MNodeService.getInstance(request)
                         .getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
 
         OutputStream out = response.getOutputStream();
@@ -1343,9 +1337,11 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken
      * @throws IOException
      * @throws MarshallingException
+     * @throws InterruptedException
      */
     protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized,
-                    NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException {
+                                                InterruptedException, NotFound, InvalidRequest,
+                                                NotImplemented, IOException, MarshallingException {
         OutputStream out = null;
 
         if (pid != null) { //get a specific document
@@ -1633,8 +1629,8 @@ public class MNResourceHandler extends D1ResourceHandler {
     /**
      * Inserts or updates the object
      *
-     * @param pid - ID of data object to be inserted or updated.  If action is update, the pid
-     *               is the existing pid.  If insert, the pid is the new one
+     * @param trailingPid  the pid part of in the url
+     * @param action  indicate that it is insert or update
      * @throws InvalidRequest
      * @throws ServiceFailure
      * @throws MarshallingException
@@ -1651,26 +1647,19 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InstantiationException
      * @throws FileUploadException
      * @throws NoSuchAlgorithmException
+     * @throws InterruptedException
+     * @throws InvocationTargetException
      */
-    protected void putObject(String trailingPid, String action) throws ServiceFailure,
-                            InvalidRequest, MarshallingException, InvalidToken, NotAuthorized,
-                            IdentifierNotUnique, UnsupportedType, InsufficientResources,
-                            InvalidSystemMetadata, NotImplemented, NotFound, IOException,
-                                            InstantiationException, IllegalAccessException,
-                                                NoSuchAlgorithmException, FileUploadException {
-        CheckedFile objFile = null;
+    protected void putObject(String trailingPid, String action)
+        throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized,
+        IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata,
+        NotImplemented, NotFound, IOException, InterruptedException, InstantiationException,
+        IllegalAccessException, NoSuchAlgorithmException, FileUploadException,
+        InvocationTargetException {
         try {
             long start = System.currentTimeMillis();
             // Read the incoming data from its Mime Multipart encoding
             MultipartRequestWithSysmeta multiparts = collectObjectFiles();
-            Map<String, File> files = multiparts.getMultipartFiles();
-            objFile = (CheckedFile) files.get("object");
-            // ensure we have the object bytes
-            if (objFile == null) {
-                throw new InvalidRequest("1102", "The object param must contain the object bytes.");
-            }
-            DetailedFileInputStream object = new DetailedFileInputStream(objFile, objFile.getChecksum());
-
                 Identifier pid = new Identifier();
                 if (trailingPid == null) {
                     // get the pid string from the body and set the value
@@ -1705,7 +1694,8 @@ public class MNResourceHandler extends D1ResourceHandler {
                     logMetacat.debug("Commence creation...");
 
                     logMetacat.debug("creating object with pid " + pid.getValue());
-                    Identifier rId = MNodeService.getInstance(request).create(session, pid, object, smd);
+                    // Set the input stream object null
+                    Identifier rId = MNodeService.getInstance(request).create(session, pid, null, smd);
                     TypeMarshaller.marshalTypeToOutputStream(rId, out);
 
                 } else if (action.equals(FUNCTION_NAME_UPDATE)) {
@@ -1721,8 +1711,9 @@ public class MNResourceHandler extends D1ResourceHandler {
                         logMetacat.error("Could not get newPid from request");
                     }
                     logMetacat.debug("Commence update...");
+                    // Set the input stream object null
                     Identifier rId = MNodeService.getInstance(request)
-                                                .update(session, pid, object, newPid, smd);
+                                                .update(session, pid, null, newPid, smd);
                     TypeMarshaller.marshalTypeToOutputStream(rId, out);
                 } else {
                     throw new InvalidRequest("1000", "Operation must be create or update.");
@@ -1734,9 +1725,6 @@ public class MNResourceHandler extends D1ResourceHandler {
                         + " Total create/update method" + Settings.PERFORMANCELOG_DURATION
                             + (end-start)/1000);
         } catch (Exception e) {
-            if(objFile != null) {
-                StreamingMultipartRequestResolver.deleteTempFile(objFile);
-            }
             throw e;
         }
     }

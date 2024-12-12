@@ -26,7 +26,7 @@
 ## @section Global Properties Shared Across Sub-Charts Within This Deployment
 ##
 global:
-  ## global.metacatExternalBaseUrl Metacat base url accessible from outside cluster.
+  ## @param global.metacatExternalBaseUrl Metacat base url accessible from outside cluster.
   ## Include protocol and trailing slash, but not the context; e.g.: "https://test.arcticdata.io/"
   ## NOTE: Must match metacat.server.name setting.
   ##
@@ -109,7 +109,7 @@ global:
   ##
   dataone-indexer.enabled: true
 
-  ## @param global.includeMetacatUI  Enable or disable the metacatui sub-chart.
+  ## @param global.includeMetacatUi  Enable or disable the metacatui sub-chart.
   ## Set to false if you want to connect to your own existing metacatui deployment.
   ##
   includeMetacatUi: true
@@ -196,7 +196,7 @@ metacat:
 
   ## @param metacat.server.name The hostname for the server, as exposed by the ingress
   ## and seen by end users outside the cluster
-  server.name: &external-hostname localhost
+  server.name: localhost
 
   ## @param metacat.solr.baseURL The url to access solr, or leave blank to use sub-chart
   ##
@@ -297,8 +297,7 @@ metacat:
 #  dataone.autoRegisterMemberNode: 2023-02-28
 
   ## metacat.D1Client.CN_URL the url of the CN - DO NOT SET HERE
-  ##
-  # D1Client.CN_URL: This is set in the global value 'global.d1ClientCnUrl', above
+  ## D1Client.CN_URL: This is set in the global value 'global.d1ClientCnUrl', above
 
   ## @param metacat.dataone.nodeId The unique ID of your DataONE MN - must match client cert subject
   ## The Node Identifier field is a unique identifier assigned by DataONE to identify this node even
@@ -426,7 +425,7 @@ metacat:
   ##
   ##   https://<server.name>/<application.context>/sitemaps/sitemap_index.xml
   ##
-  ## ...and creates a robotx.txt file that points to it (see .Values.robots).
+  ## ...and creates a robots.txt file that points to it (see .Values.robots).
   ##
   ## The index file contains a list of sitemap.xml files. Each listing is of the form:
   ##
@@ -571,20 +570,26 @@ podAnnotations: {}
 ## PodSecurityContext - define common securityContext settings at the pod level for all containers
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ## @param podSecurityContext.enabled Enable security context
-## @param podSecurityContext.fsGroup numerical Group ID for the pod
+## @param podSecurityContext.runAsUser numerical User ID for the pod
+## @param podSecurityContext.runAsGroup numerical Group ID for the pod
+## @param podSecurityContext.fsGroup numerical Group ID used to access mounted volumes
+## @param podSecurityContext.supplementalGroups [array] additional GIDs used to access vol. mounts
+## @param podSecurityContext.runAsNonRoot ensure all containers run as a non-root user.
+##                                 Note users must be defined by numerical user id for this to work
 ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
 ## the group that owns the existing data on that filesystem!
 ##
 podSecurityContext:
   enabled: true
-  fsGroup: 1000
-
-## securityContext holds container-level security attributes that override those at pod level
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-## @param securityContext.runAsNonRoot ensure containers run as a non-root user.
-##                                 Note users must be defined by numerical user id for this to work
-securityContext:
+  runAsUser: 59997
+  runAsGroup: 59997
+  fsGroup: &mcFsGroup 59997
+  supplementalGroups: &mcSupplementalGroups [ 997, 1000 ]
   runAsNonRoot: true
+
+## @param securityContext holds container-level security attributes that override those at pod level
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+securityContext: {}
 
 ## @param resources Resource limits for the deployment
 ##  We usually recommend not to specify default resources and to leave this as a conscious
@@ -692,7 +697,7 @@ ingress:
   ##
   className: "nginx"
 
-  ## @param ingress.annotations Annotations for the ingress
+  ## Annotations for the ingress
   ##
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
@@ -707,10 +712,31 @@ ingress:
   ## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
   ##
   annotations:
-    # https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
+    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size - see docs:
+    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
     nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
-    # https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
+    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size - see docs:
+    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
     nginx.ingress.kubernetes.io/client_max_body_size: "10m"
+
+  ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
+  ## ingress.defaultBackend (optional) default for any requests not matching defined paths
+  ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
+  ## If none of the hosts or paths match the HTTP request in the Ingress objects, the traffic is
+  ## routed to your default backend. Not typically required, unless metacatui
+  ## Content included here under `defaultBackend` will be added to the ingress definition under
+  ## `spec.defaultBackend'; for example:
+  ##
+  ##   spec:
+  ##     defaultBackend:
+  ##       enabled: true
+  ##       service:
+  ##         name: myrelease-wordpress
+  ##         port:
+  ##           number: 80
+  ##
+  defaultBackend:
+    enabled: false
 
   ## @param ingress.rewriteRules rewrite rules for the nginx ingress
   ## These rules will be added to the section
@@ -872,6 +898,23 @@ postgresql:
   ## @param postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
   ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
   primary:
+    containerSecurityContext:
+      ## @param postgresql.primary.containerSecurityContext.enabled enable containerSecurityContext
+      ##
+      enabled: true
+      ## @param postgresql.primary.containerSecurityContext.runAsUser uid for container to run as
+      ##
+      runAsUser: 59996
+
+    ## postgresql.primary.PodSecurityContext - common securityContext settings at pod level
+    ## for all containers
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    ##
+    podSecurityContext:
+      ## @param postgresql.primary.podSecurityContext.runAsNonRoot pod defaults to run as non-root?
+      ##
+      runAsNonRoot: true
+
     ## override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
     ## TYPE       DATABASE      USER          ADDRESS         METHOD
@@ -927,6 +970,16 @@ tomcat:
 ## section are ignored
 ##
 dataone-indexer:
+
+  ## dataone-indexer.PodSecurityContext - define common securityContext settings at the pod
+  ## level for all containers
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ## @param dataone-indexer.podSecurityContext.fsGroup gid used to access mounted volumes
+  ## @param dataone-indexer.podSecurityContext.supplementalGroups [array] additional vol access gids
+  podSecurityContext:
+    fsGroup: *mcFsGroup
+    supplementalGroups: *mcSupplementalGroups
+
   persistence:
     ## @param dataone-indexer.persistence.subPath The subdirectory of the volume to mount
     ## (see persistence.volumeName)
@@ -935,10 +988,20 @@ dataone-indexer:
     subPath: *sharedVolumeSubPath
 
   rabbitmq:
+    ## @param dataone-indexer.rabbitmq.extraConfiguration extra config, to be appended to rmq config
+    ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid timeouts
+    ## with large resource maps
+    ##
+    ## 144000000 = 4 hours
+    ##
+    extraConfiguration: |-
+      consumer_timeout = 144000000
+
     auth:
       ## @param dataone-indexer.rabbitmq.auth.username set the username that rabbitmq will use
       ##
       username: *rmqUsername
+
       ## @param dataone-indexer.rabbitmq.auth.existingPasswordSecret location of rabbitmq password
       ## (must contain a value for `rabbitmq-password` key)
       ##
@@ -966,6 +1029,12 @@ dataone-indexer:
     coreNames:
       - metacat-core
 
+    ## @param dataone-indexer.solr.persistence.size solr Persistent Volume size
+    ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    ##
+    persistence:
+      size: 100Gi
+
     extraVolumes:
       ## @param dataone-indexer.solr.extraVolumes[0].name DO NOT EDIT - referenced by sub-chart
       - name: solr-config
@@ -980,3 +1049,11 @@ dataone-indexer:
           name: ${RELEASE_NAME}-indexer-configfiles
           ## @param dataone-indexer.solr.extraVolumes[0].configMap.defaultMode DO NOT EDIT
           defaultMode: 0777
+
+
+    ## @param dataone-indexer.solr.zookeeper.persistence.size Persistent Volume size
+    ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    ##
+    zookeeper:
+      persistence:
+        size: 100Gi

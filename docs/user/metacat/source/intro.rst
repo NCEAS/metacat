@@ -67,10 +67,10 @@ Metacat for Ubuntu and other Linux variants, alongside instructions for using Me
 authentication, logging, and creating a site map for improved web search visibility. Metacat can run
 on MacOS but it requires users' customized installation.
 
-For detailed information, refer to the table of contents. Additionally, Metacat's `Java API`_ is
+For detailed information, refer to the table of contents. Additionally, the `DataONE REST API`_ is
 available for developers.
 
-.. _Java API: ./api/index.html
+.. _DataONE REST API: https://knb.ecoinformatics.org/api
 
 Metacat Features
 ----------------
@@ -92,6 +92,3 @@ that have been created by others. Specifically,
 .. figure:: images/screenshots/image007_metacatuihome.png
 
    Metacat's default home page. Users can customize the appearance using themes.
-
-
-

@@ -134,7 +134,7 @@ public class OstiDOIServiceIT {
         eml.close();
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
         eml = new FileInputStream(emlFile);
-        Identifier pid = MNodeService.getInstance(request).create(session, doi, eml, sysmeta);
+        Identifier pid = d1NodeTest.mnCreate(session, doi, eml, sysmeta);
         eml.close();
         assertEquals(doi.getValue(), pid.getValue());
         count = 0;
@@ -188,7 +188,7 @@ public class OstiDOIServiceIT {
         eml.close();
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
         eml = new FileInputStream(emlFile);
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, eml, sysmeta);
+        Identifier pid = d1NodeTest.mnCreate(session, guid, eml, sysmeta);
         SystemMetadata readSys = MNodeService.getInstance(request).getSystemMetadata(session, guid);
         eml.close();
         assertEquals(guid.getValue(), pid.getValue());
@@ -246,7 +246,7 @@ public class OstiDOIServiceIT {
         eml.close();
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
         eml = new FileInputStream(emlFile);
-        Identifier newPid = MNodeService.getInstance(request).update(session, guid, eml, guid2, sysmeta);
+        Identifier newPid = d1NodeTest.mnUpdate(session, guid, eml, guid2, sysmeta);
         assertEquals(newPid.getValue(), guid2.getValue());
         Thread.sleep(3);
         meta = service.getMetadata(doi);
@@ -291,7 +291,7 @@ public class OstiDOIServiceIT {
         eml.close();
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
         eml = new FileInputStream(emlFile);
-        Identifier pid = MNodeService.getInstance(request).create(session, doi, eml, sysmeta);
+        Identifier pid = d1NodeTest.mnCreate(session, doi, eml, sysmeta);
         eml.close();
         assertEquals(doi.getValue(), pid.getValue());
         count = 0;
@@ -347,7 +347,7 @@ public class OstiDOIServiceIT {
         eml.close();
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
         eml = new FileInputStream(emlFile);
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, eml, sysmeta);
+        Identifier pid = d1NodeTest.mnCreate(session, guid, eml, sysmeta);
         SystemMetadata readSys = MNodeService.getInstance(request).getSystemMetadata(session, guid);
         eml.close();
         assertEquals(guid.getValue(), pid.getValue());
@@ -405,7 +405,7 @@ public class OstiDOIServiceIT {
         eml.close();
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
         eml = new FileInputStream(emlFile);
-        Identifier newPid = MNodeService.getInstance(request).update(session, guid, eml, guid2, sysmeta);
+        Identifier newPid = d1NodeTest.mnUpdate(session, guid, eml, guid2, sysmeta);
         assertEquals(newPid.getValue(), guid2.getValue());
         Thread.sleep(3);
         meta = service.getMetadata(doi);
@@ -438,7 +438,7 @@ public class OstiDOIServiceIT {
         eml.close();
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
         eml = new FileInputStream(emlFile);
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, eml, sysmeta);
+        Identifier pid = d1NodeTest.mnCreate(session, guid, eml, sysmeta);
         eml.close();
         assertEquals(guid.getValue(), pid.getValue());
         Thread.sleep(5000);
@@ -484,7 +484,7 @@ public class OstiDOIServiceIT {
         AccessPolicy access = new AccessPolicy();
         access.addAllow(rule);
         sysmeta.setAccessPolicy(access);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeTest.mnCreate(session, guid, object, sysmeta);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
             fail("we can't get here since the object is not public readable");
@@ -510,7 +510,7 @@ public class OstiDOIServiceIT {
         access2.addAllow(rule2);
         sysmeta2.setAccessPolicy(access2);
         object2 = new FileInputStream(new File(emlFile));
-        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        d1NodeTest.mnCreate(session, guid2, object2, sysmeta2);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
             fail("we can't get here since the object is not public readable");
@@ -562,7 +562,7 @@ public class OstiDOIServiceIT {
         AccessPolicy access3 = new AccessPolicy();
         access3.addAllow(rule3);
         sysmeta3.setAccessPolicy(access3);
-        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        d1NodeTest.mnCreate(session, resourceMapId, object3, sysmeta3);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, resourceMapId);
             fail("we can't get here since the object is not public readable");
@@ -669,7 +669,7 @@ public class OstiDOIServiceIT {
         AccessPolicy access = new AccessPolicy();
         access.addAllow(rule);
         sysmeta.setAccessPolicy(access);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeTest.mnCreate(session, guid, object, sysmeta);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
             fail("we can't get here since the object is not public readable");
@@ -695,7 +695,7 @@ public class OstiDOIServiceIT {
         access2.addAllow(rule2);
         sysmeta2.setAccessPolicy(access2);
         object2 = new FileInputStream(new File(emlFile));
-        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        d1NodeTest.mnCreate(session, guid2, object2, sysmeta2);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
             fail("we can't get here since the object is not public readable");
@@ -747,7 +747,7 @@ public class OstiDOIServiceIT {
         AccessPolicy access3 = new AccessPolicy();
         access3.addAllow(rule3);
         sysmeta3.setAccessPolicy(access3);
-        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        d1NodeTest.mnCreate(session, resourceMapId, object3, sysmeta3);
         try {
             MNodeService.getInstance(request).getSystemMetadata(publicSession, resourceMapId);
             fail("we can't get here since the object is not public readable");

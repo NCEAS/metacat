@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,6 +27,7 @@ import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
+import org.dataone.service.types.v1.Identifier;
 
 /**
  * Entry servlet for the metadata configuration utility
@@ -180,6 +182,15 @@ public class MetacatAdminServlet extends HttpServlet {
                 case "quota" -> QuotaAdmin.getInstance().configureQuota(request, response);
                 case "solrserver" -> SolrAdmin.getInstance().configureSolr(request, response);
                 case "refreshStylesheets" -> clearStylesheetCache(response);
+                case "removeSysmetaLock" -> removeSysmetaLock(request, response);
+                case ACTION_ORCID_FLOW -> {
+                    // A temporary fix for getting error to refresh browser after log-in
+                    // forward to the main admin page
+                    initialConfigurationParameters(request);
+                    RequestUtil.forwardRequest(request, response,
+                                               "/admin/metacat-configuration.jsp", null);
+                }
+                case "storageConversion" -> HashStoreConversionAdmin.convert();
                 default -> {
                     String errorMessage =
                         "MetacatAdminServlet - Invalid action in configuration request: " + action;
@@ -268,8 +279,10 @@ public class MetacatAdminServlet extends HttpServlet {
     private void initialConfigurationParameters(HttpServletRequest request)
         throws GeneralPropertyException, AdminException, MetacatUtilException {
         if (request != null) {
+            String dbConfigured = PropertyService.getProperty("configutil.databaseConfigured");
             request.setAttribute("metaCatVersion", SystemUtil.getMetacatVersion());
             request.setAttribute("propsConfigured", PropertyService.arePropertiesConfigured());
+            request.setAttribute("dbConfigured", dbConfigured);
             request.setAttribute("authConfigured", AuthUtil.isAuthConfigured());
             request.setAttribute("metacatConfigured", ConfigurationUtil.isMetacatConfigured());
             request.setAttribute(
@@ -286,6 +299,51 @@ public class MetacatAdminServlet extends HttpServlet {
                 request.setAttribute("databaseVersion", DBAdmin.getInstance().getDBVersion());
                 request.setAttribute("contextURL", SystemUtil.getContextURL());
             }
+            String hashStoreStatus = HashStoreConversionAdmin.getStatus().getValue();
+            request.setAttribute("hashStoreStatus", hashStoreStatus  );
+            // Add the db configure errors
+            if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.FAILURE)
+                && DBAdmin.getError().size() > 0) {
+                request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
+                RequestUtil.setRequestErrors(request, DBAdmin.getError());
+            }
+            if (hashStoreStatus != null && hashStoreStatus.equals(UpgradeStatus.FAILED.getValue())
+                && HashStoreConversionAdmin.getError().size() > 0) {
+                request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
+                RequestUtil.setRequestErrors(request, HashStoreConversionAdmin.getError());
+            } else if (hashStoreStatus != null && hashStoreStatus.equals(
+                MetacatAdmin.COMPLETE) && HashStoreConversionAdmin.getInfo().size() > 0) {
+                request.setAttribute("supportEmail", PropertyService.getProperty("email.recipient"));
+                RequestUtil.setRequestMessage(request, HashStoreConversionAdmin.getInfo());
+            }
         }
+    }
+
+    /**
+     * Remove only ONE pid from the system metadata lock queue. This is an admin method to
+     * fix a deadlock in the system metadata modification lock.
+     * @param response
+     * @throws IOException
+     */
+    private void removeSysmetaLock(HttpServletRequest request, HttpServletResponse response)
+        throws IOException {
+            String pid = request.getParameter("pid");
+            logMetacat.debug("Remove the pid " + pid + " from the system metadata lock");
+            if (pid != null && !pid.isBlank()) {
+                Identifier id = new Identifier();
+                id.setValue(pid);
+                SystemMetadataManager.unLock(id);
+                try (PrintWriter out = response.getWriter()) {
+                    out.print("<success>");
+                    out.print("Metacat has removed the pid " + pid + " from the system metadata lock.");
+                    out.print("</success>");
+                }
+            } else {
+                try (PrintWriter out = response.getWriter()) {
+                    out.print("<error>");
+                    out.print("The pid should not be blank.");
+                    out.print("</error>");
+                }
+            }
     }
 }

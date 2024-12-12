@@ -123,36 +123,45 @@ others are managed with the properties configuration utility.
 |                                      |                                                                             |                               |
 |                                      | Default Value: /var/metacat/config                                          |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _storage.hashstore.rootDirectory: |                                                                             |                               |
+|                                      |                                                                             |                               |
+| storage.hashstore.rootDirectory      | This directory was introduced in version 3.1.0, to replace the obsoleted    | /var/metacat/hashstore        |
+|                                      | data and documents directories. It should be set to the full path of the    |                               |
+|                                      | root directory for the new object storage location. This directory should   |                               |
+|                                      | be outside the Metacat installation directories so the objects will not be  |                               |
+|                                      | lost when Metacat is upgraded. This directory must be writable by the user  |                               |
+|                                      | that starts Tomcat (and thus Metacat).                                      |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: /var/metacat/hashstore                                       |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _application.datafilepath:        |                                                                             |                               |
 |                                      |                                                                             |                               |
-| application.datafilepath             | The directory in which to store data files. The directory should            | /var/metacat/data             |
-|                                      | be outside the Metacat installation directories so data files will not      |                               |
-|                                      | be lost when Metacat is upgraded. The data file directory must be           |                               |
-|                                      | writable by the user that starts Tomcat (and thus Metacat).                 |                               |
+| application.datafilepath             | The directory where data files were stored in Metacat versions prior        | /var/metacat/data             |
+|                                      | to v3.1.0 (now obsolete).                                                   |                               |
+|                                      | It can be ignored if this is a new fresh installation. If it is an update,  |                               |
+|                                      | you should use the value that the previous Metacat instance used. The data  |                               |
+|                                      | directory must be writable by the user that starts Tomcat (and thus Metacat)|                               |
 |                                      |                                                                             |                               |
 |                                      | Default Value: /var/metacat/data                                            |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _application.inlinedatafilepath:  |                                                                             |                               |
 |                                      |                                                                             |                               |
-| application.inlinedatafilepath       | The directory where inline data files will be stored. Inline                | /var/metacat/inline-data      |
-|                                      | data files are created from data that is embedded in EML                    |                               |
-|                                      | metadata. The directory should be outside the Metacat installation          |                               |
-|                                      | directories so data files will not be lost when Metacat is upgraded.        |                               |
-|                                      | For clarity of data, this should probably not be the same as                |                               |
-|                                      | ``application.datafilepath``. The data file directory must be               |                               |
-|                                      | writable by the user that starts Tomcat (and thus Metacat).                 |                               |
+| application.inlinedatafilepath       | The directory where inline data files were stored in Metacat versions prior | /var/metacat/inline-data      |
+|                                      | to v3.1.0 (now obsolete).                                                   |                               |
+|                                      | It can be ignored if this is a new fresh installation. If it is an update,  |                               |
+|                                      | you should use the value that the previous Metacat instance used. Inline    |                               |
+|                                      | data files are created from data that is embedded in EML metadata. The      |                               |
+|                                      | directory must be writable by the user that starts Tomcat (and thus Metacat)|                               |
 |                                      |                                                                             |                               |
 |                                      | Default Value: /var/metacat/inline-data                                     |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 | .. _application.documentfilepath:    |                                                                             |                               |
 |                                      |                                                                             |                               |
-| application.documentfilepath         | The directory where metadata files will be stored.                          | /var/metacat/documents        |
-|                                      | The directory should be outside the Metacat installation directories        |                               |
-|                                      | so document files will not be lost when Metacat is upgraded. For            |                               |
-|                                      | clarity of organization, this should probably not be the same as            |                               |
-|                                      | ``application.datafilepath`` or ``application.inlinedatafilepath``.         |                               |
-|                                      | The data file directory must be writable by the user that                   |                               |
-|                                      | starts Tomcat (and thus Metacat).                                           |                               |
+| application.documentfilepath         | The directory where metadata files were stored in Metacat versions prior    | /var/metacat/documents        |
+|                                      | to v3.1.0 (now obsolete).                                                   |                               |
+|                                      | It can be ignored if this is a new fresh installation. If it is an update,  |                               |
+|                                      | you should use the value that the previous Metacat instance used. The       |                               |
+|                                      | directory must be writable by the user that starts Tomcat (and thus Metacat)|                               |
 |                                      |                                                                             |                               |
 |                                      | Default Value: /var/metacat/documents                                       |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+

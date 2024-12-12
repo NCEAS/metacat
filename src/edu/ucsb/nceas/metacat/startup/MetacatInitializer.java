@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.Executors;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -18,8 +19,13 @@ import javax.servlet.ServletContextListener;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebListener;
 
+import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin;
+import edu.ucsb.nceas.metacat.admin.UpgradeStatus;
+import edu.ucsb.nceas.metacat.util.DatabaseUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.service.exceptions.ServiceFailure;
 
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.Sitemap;
@@ -36,6 +42,7 @@ import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.storage.Storage;
 import edu.ucsb.nceas.metacat.util.ConfigurationUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
@@ -56,6 +63,7 @@ public class MetacatInitializer implements ServletContextListener{
     private static boolean fullInit = false;
     private static Log logMetacat = LogFactory.getLog(MetacatInitializer.class);
     private static Timer timer = new Timer();
+    private static Storage storage;
 
     /**
      * An implementation of ServletContextListener that is called automatically by the servlet
@@ -81,10 +89,13 @@ public class MetacatInitializer implements ServletContextListener{
             // Check to see if the user has requested to bypass configuration
             // (dev option) and check see if metacat has been configured.
             // If both are false then stop the initialization
-            if (!ConfigurationUtil.bypassConfiguration() &&
-                                    !ConfigurationUtil.isMetacatConfigured()) {
+            if (!Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"))
+                && !ConfigurationUtil.bypassConfiguration()
+                && !ConfigurationUtil.isMetacatConfigured()) {
                 if (PropertyService.arePropertiesConfigured()) {
+                    // Those methods are for the admin pages
                     DBConnectionPool.getInstance();
+                    convertStorage();
                 }
                 fullInit = false;
                 return;
@@ -113,6 +124,10 @@ public class MetacatInitializer implements ServletContextListener{
         } catch (MetacatUtilException e) {
             String errorMessage = "Problem to check if the Metacat instance is configured : "
                     + e.getMessage();
+            checker.abort(errorMessage, e);
+        } catch (AdminException e) {
+            String errorMessage = "Problem to check the status of the storage conversion : "
+                + e.getMessage();
             checker.abort(errorMessage, e);
         }
     }
@@ -146,6 +161,8 @@ public class MetacatInitializer implements ServletContextListener{
             if (Boolean.parseBoolean(System.getenv("METACAT_IN_K8S"))) {
                 K8sAdminInitializer.initializeK8sInstance();
             }
+
+            initStorage();
 
             // register the XML schema service
             ServiceService.registerService("XMLSchemaService", XMLSchemaService.getInstance());
@@ -410,5 +427,52 @@ public class MetacatInitializer implements ServletContextListener{
      */
     public static boolean isFullyInitialized() {
         return fullInit;
+    }
+
+    /**
+     * Get the storage instance
+     * @return the instance of storage
+     * @throws ServiceFailure
+     */
+    public static Storage getStorage() throws ServiceFailure {
+        if (storage == null) {
+            throw new ServiceFailure("", "The storage system hasn't been initialized.");
+        }
+        return storage;
+    }
+
+    /**
+     * Initialize the storage system.
+     * @throws PropertyNotFoundException
+     * @throws ServiceException
+     */
+    public static synchronized void initStorage() throws PropertyNotFoundException, ServiceException {
+        if (storage == null) {
+            storage = Storage.getInstance();
+        }
+    }
+
+    /**
+     * Start to convert the storage if the db is configured and the storage conversion status is
+     * PENDING or FAILED
+     * @throws MetacatUtilException
+     * @throws AdminException
+     */
+    protected void convertStorage()
+        throws MetacatUtilException, AdminException, GeneralPropertyException {
+        logMetacat.debug("Start of the convertStorage method in the MetacatInitializer class. "
+                             + "This statement is before checking the DB' status.");
+        if (DatabaseUtil.isDatabaseConfigured() && PropertyService.arePropertiesConfigured()) {
+            UpgradeStatus status = HashStoreConversionAdmin.getStatus();
+            if (status == UpgradeStatus.PENDING || status == UpgradeStatus.FAILED) {
+                logMetacat.debug("Metacat starts an auto storage conversion when the database is "
+                                     + "configured: " + DatabaseUtil.isDatabaseConfigured()
+                    + "and the storage conversion status is PENDING or FAILED. Its status is "
+                    + status.getValue() + ". So the conversion will start.");
+                Executors.newSingleThreadExecutor().submit(() -> {
+                    HashStoreConversionAdmin.convert();
+                });
+            }
+        }
     }
 }

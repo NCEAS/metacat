@@ -4,33 +4,40 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Path;
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.List;
 
 import javax.xml.bind.DatatypeConverter;
 
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.storage.ObjectInfo;
+import edu.ucsb.nceas.metacat.systemmetadata.ChecksumsManager;
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadataTest;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.TypeMarshaller;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.withSettings;
@@ -48,8 +55,7 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 
@@ -71,8 +77,7 @@ public class MetacatHandlerIT {
     private static final String eml_format = "https://eml.ecoinformatics.org/eml-2.2.0";
     private static final String MD5 = "MD5";
     private MetacatHandler handler;
-    private String dataDir;
-    private String documentDir;
+    private D1NodeServiceTest d1NodeServiceTest;
 
     /**
      * Setup
@@ -82,14 +87,8 @@ public class MetacatHandlerIT {
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         handler = new MetacatHandler();
-        documentDir = PropertyService.getProperty("application.documentfilepath");
-        if (!documentDir.endsWith("/")) {
-            documentDir = documentDir + "/";
-        }
-        dataDir = PropertyService.getProperty("application.datafilepath");
-        if (!dataDir.endsWith("/")) {
-            dataDir = dataDir + "/";
-        }
+        // Initialize the storage system
+        d1NodeServiceTest = new D1NodeServiceTest("initialize");
     }
 
     /**
@@ -100,55 +99,136 @@ public class MetacatHandlerIT {
     public void testValidateSciMeta() throws Exception {
         // Test a valid eml2.2.0 object
         File eml = new File("test/eml-2.2.0.xml");
-        byte[] xmlBytes = IOUtils.toByteArray(new FileInputStream(eml));
-        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
-        formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
-        handler.validateSciMeta(xmlBytes, formatId);
+        try (MockedStatic<MetacatHandler> dummy = Mockito.mockStatic(MetacatHandler.class)) {
+            Identifier id = new Identifier();
+            id.setValue("testValidateSciMeta" + System.currentTimeMillis());
+            dummy.when(() -> MetacatHandler.read(id)).thenReturn(new FileInputStream(eml));
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+            handler.validateSciMeta(id, formatId);
+        }
+
         // Test an invalid eml2.2.0 object - duplicated ids
         eml = new File("test/resources/eml-error-2.2.0.xml");
-        xmlBytes = IOUtils.toByteArray(new FileInputStream(eml));
-        try {
-            handler.validateSciMeta(xmlBytes, formatId);
-            fail("Test can reach here since the eml object is invalid");
-        } catch (Exception e) {
-            assertTrue("The message should say the id must be unique",
-                        e.getMessage().contains("unique"));
+        try (MockedStatic<MetacatHandler> dummy = Mockito.mockStatic(MetacatHandler.class)) {
+            Identifier id = new Identifier();
+            id.setValue("testValidateSciMeta" + System.currentTimeMillis());
+            dummy.when(() -> MetacatHandler.read(id)).thenReturn(new FileInputStream(eml));
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+            try {
+                handler.validateSciMeta(id, formatId);
+                fail("Test can reach here since the eml object is invalid");
+            } catch (Exception e) {
+                assertTrue("The message should say the id must be unique",
+                            e.getMessage().contains("unique"));
+            }
         }
+
         // Test an invalid eml 2.1.1 object
-        formatId.setValue("eml://ecoinformatics.org/eml-2.1.1");
         eml = new File("test/resources/eml-error.xml");
-        xmlBytes = IOUtils.toByteArray(new FileInputStream(eml));
-        try {
-            handler.validateSciMeta(xmlBytes, formatId);
-            fail("Test can reach here since the eml object is invalid");
-        } catch (Exception e) {
-            assertTrue("The exception should be InvalidRequest", e instanceof InvalidRequest);
-            assertTrue("The message should say the element principal1 is incorrect",
-                        e.getMessage().contains("principal1"));
+        try (MockedStatic<MetacatHandler> dummy = Mockito.mockStatic(MetacatHandler.class)) {
+            Identifier id = new Identifier();
+            id.setValue("testValidateSciMeta" + System.currentTimeMillis());
+            dummy.when(() -> MetacatHandler.read(id)).thenReturn(new FileInputStream(eml));
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("eml://ecoinformatics.org/eml-2.1.1");
+            try {
+                handler.validateSciMeta(id, formatId);
+                fail("Test can reach here since the eml object is invalid");
+            } catch (Exception e) {
+                assertTrue("The exception should be InvalidRequest", e instanceof InvalidRequest);
+                assertTrue("The message should say the element principal1 is incorrect",
+                            e.getMessage().contains("principal1"));
+            }
         }
+
         // Test a valid eml 2.1.0 object
-        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         eml = new File("test/eml-sample.xml");
-        xmlBytes = IOUtils.toByteArray(new FileInputStream(eml));
-        handler.validateSciMeta(xmlBytes, formatId);
+        try (MockedStatic<MetacatHandler> dummy = Mockito.mockStatic(MetacatHandler.class)) {
+            Identifier id = new Identifier();
+            id.setValue("testValidateSciMeta" + System.currentTimeMillis());
+            dummy.when(() -> MetacatHandler.read(id)).thenReturn(new FileInputStream(eml));
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+            handler.validateSciMeta(id, formatId);
+        }
+
         // Test a valid eml-beta 6
-        formatId.setValue("-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN");
         eml = new File("./test/jones.204.22.xml");
-        xmlBytes = IOUtils.toByteArray(new FileInputStream(eml));
-        handler.validateSciMeta(xmlBytes, formatId);
+        try (MockedStatic<MetacatHandler> dummy = Mockito.mockStatic(MetacatHandler.class)) {
+            Identifier id = new Identifier();
+            id.setValue("testValidateSciMeta" + System.currentTimeMillis());
+            dummy.when(() -> MetacatHandler.read(id)).thenReturn(new FileInputStream(eml));
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN");
+            handler.validateSciMeta(id, formatId);
+        }
+
         // Test a valid json object
         File json = new File("test/json-ld.json");
-        byte[] object = IOUtils.toByteArray(new FileInputStream(json));
-        formatId.setValue(NonXMLMetadataHandlers.JSON_LD);
-        handler.validateSciMeta(object, formatId);
+        try (MockedStatic<MetacatHandler> dummy = Mockito.mockStatic(MetacatHandler.class)) {
+            Identifier id = new Identifier();
+            id.setValue("testValidateSciMeta" + System.currentTimeMillis());
+            dummy.when(() -> MetacatHandler.read(id)).thenReturn(new FileInputStream(json));
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue(NonXMLMetadataHandlers.JSON_LD);
+            handler.validateSciMeta(id, formatId);
+        }
+
         // Test a invalid json object
         json = new File("test/invalid-json-ld.json");
-        object = IOUtils.toByteArray(new FileInputStream(json));
-        try {
-            handler.validateSciMeta(object, formatId);
-            fail("Test can reach here since the json-ld object is invalid");
+        try (MockedStatic<MetacatHandler> dummy = Mockito.mockStatic(MetacatHandler.class)) {
+            Identifier id = new Identifier();
+            id.setValue("testValidateSciMeta" + System.currentTimeMillis());
+            dummy.when(() -> MetacatHandler.read(id)).thenReturn(new FileInputStream(json));
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue(NonXMLMetadataHandlers.JSON_LD);
+            try {
+                handler.validateSciMeta(id, formatId);
+                fail("Test can reach here since the json-ld object is invalid");
+            } catch (Exception e) {
+                assertTrue("The exception should be InvalidRequest",e instanceof InvalidRequest);
+            }
+        }
+    }
+
+    /**
+     * Test the read method
+     * @throws Exception
+     */
+    @Test
+    public void testRead() throws Exception {
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testRead-" + System.currentTimeMillis());
+        FileInputStream dataStream = new FileInputStream(test_file_path);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
+        dataStream = new FileInputStream(test_file_path);
+        d1NodeServiceTest.mnCreate(d1NodeServiceTest.getTestSession(), pid, dataStream, sysmeta);
+        InputStream readObj = MetacatHandler.read(pid);
+        String readChecksum = getChecksum(readObj, MD5);
+        assertEquals("The read object should have the checksum " + test_file_checksum + " rather "
+                       + "than " + readChecksum, test_file_checksum, readChecksum);
+        String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        readObj = MetacatHandler.read(localId, null);
+        readChecksum = getChecksum(readObj, MD5);
+        assertEquals("The read object should have the checksum " + test_file_checksum + " rather "
+                         + "than " + readChecksum, test_file_checksum, readChecksum);
+        pid.setValue("MetacatHandler.testRead.foo-" + System.currentTimeMillis());
+        try  {
+            MetacatHandler.read(pid);
+            fail("Test can't get there since MetacatHandler read a non-existed pid");
         } catch (Exception e) {
-            assertTrue("The exception should be InvalidRequest",e instanceof InvalidRequest);
+            assertTrue(e instanceof McdbException);
+        }
+        try  {
+            MetacatHandler.read("metacatHandlerRead123." + System.currentTimeMillis() + ".1", null);
+            fail("Test can't get there since MetacatHandler read a non-existed pid");
+        } catch (Exception e) {
+            assertTrue(e instanceof McdbException);
         }
     }
 
@@ -330,242 +410,10 @@ public class MetacatHandlerIT {
         }
     }
 
-    /**
-     * Test the saveBytes method
-     * @throws Exception
-     */
-    @Test
-    public void testSaveBytesAndReadWithDetailedInputStream() throws Exception {
-        // Save a data file
-        String localId = "autogen." + System.currentTimeMillis() +".1";
-        Identifier pid = new Identifier();
-        pid.setValue("foo");//Just for the log purpose
-        Checksum checksum = new Checksum();
-        checksum.setAlgorithm(MD5);
-        checksum.setValue(test_file_checksum);
-        // check
-        try {
-            //inputstream is null
-            handler.saveBytes(null, localId, checksum, DocumentImpl.BIN, pid);
-            fail("The test should not get here since the input stream is null");
-        } catch (Exception e ) {
-            assertTrue("Should be an InvalidRequest exception, rather " + e.getClass().getName(),
-                      e instanceof InvalidRequest);
-        }
-        DetailedFileInputStream dataStream = generateDetailedInputStream(test_file_path, checksum);
-        try {
-            //locaId is null
-            handler.saveBytes(dataStream, null, checksum, DocumentImpl.BIN, pid);
-            fail("The test should not get here since the local id is null");
-        } catch (Exception e ) {
-            assertTrue("Should be an InvalidRequest exception, rather than "
-                        + e.getClass().getName(), e instanceof InvalidRequest);
-        }
-        try {
-            //doc type is null
-            handler.saveBytes(dataStream, localId, checksum, null, pid);
-            fail("The test should not get here since the local id is null");
-        } catch (Exception e ) {
-            assertTrue("Should be an InvalidRequest exception, rather than "
-                        + e.getClass().getName(), e instanceof InvalidRequest);
-        }
-        try {
-            //checksum is null
-            handler.saveBytes(dataStream, localId, null, DocumentImpl.BIN, pid);
-            fail("The test should not get here since the local id is null");
-        } catch (Exception e ) {
-            assertTrue("Should be InvalidSystemMetadata, rather than " + e.getClass().getName(),
-                      e instanceof InvalidSystemMetadata);
-        }
-        handler.saveBytes(dataStream, localId, checksum, DocumentImpl.BIN, pid);
-        File result = new File(dataDir + localId);
-        assertTrue("File " + result + " should exist.", result.exists());
-        InputStream in = MetacatHandler.read(localId, DocumentImpl.BIN);
-        String readChecksum = getChecksum(in, MD5);
-        in.close();
-        assertEquals("Read object has wrong checksum ", test_file_checksum , readChecksum);
-        // Running the saveBytes method again with the same local id should fail
-        // since the target file does exist
-        DetailedFileInputStream dataStream2 = generateDetailedInputStream(another_test_file);
-        Checksum anotherChecksum = dataStream2.getExpectedChecksum();
-        try {
-            handler.saveBytes(dataStream2, localId, anotherChecksum, DocumentImpl.BIN, pid);
-            fail("Test should get here since the target file does exist");
-        } catch (Exception e) {
-            assertTrue("Should be ServiceFailure rather than " + e.getClass().getName(),
-                       e instanceof ServiceFailure);
-        }
-        // Running the saveBytes method again with the same local id should fail
-        // since the target file does exist. This time it tests a different code route.
-        DetailedFileInputStream dataStream3 = generateDetailedInputStream(another_test_file, null);
-        try {
-            handler.saveBytes(dataStream3, localId, anotherChecksum, DocumentImpl.BIN, pid);
-            fail("Test should get here since the target file does exist");
-        } catch (Exception e) {
-            assertTrue("Should be ServiceFailure rather than " + e.getClass().getName(),
-                       e instanceof ServiceFailure);
-        }
-        // Test checksum doesn't match
-        dataStream3 = generateDetailedInputStream(another_test_file);
-        // A new localId
-        localId = "autogen." + System.currentTimeMillis() +".1";
-        Checksum fakeChecksum = new Checksum();
-        try {
-            handler.saveBytes(dataStream3, localId, fakeChecksum, "eml", pid);
-            fail("Test shouldn't get there since the declared checksum is incorrect.");
-        } catch (Exception e) {
-            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
-                       e instanceof InvalidSystemMetadata);
-        }
-        localId = "autogen." + System.currentTimeMillis() +".2";
-        fakeChecksum.setAlgorithm(MD5);
-        try {
-            handler.saveBytes(dataStream3, localId, fakeChecksum, "eml", pid);
-            fail("Test shouldn't get there since the declared checksum is incorrect.");
-        } catch (Exception e) {
-            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
-                       e instanceof InvalidSystemMetadata);
-        }
-        localId = "autogen." + System.currentTimeMillis() +".3";
-        fakeChecksum.setAlgorithm("");
-        fakeChecksum.setValue(anotherChecksum.getValue());
-        try {
-            handler.saveBytes(dataStream3, localId, fakeChecksum, "eml", pid);
-            fail("Test shouldn't get there since the declared checksum is incorrect.");
-        } catch (Exception e) {
-            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
-                       e instanceof InvalidSystemMetadata);
-        }
-        localId = "autogen." + System.currentTimeMillis() +".4";
-        fakeChecksum.setAlgorithm(MD5);
-        fakeChecksum.setValue("56453F");
-        try {
-            handler.saveBytes(dataStream3, localId, fakeChecksum, "eml", pid);
-            fail("Test shouldn't get there since the declared checksum is incorrect.");
-        } catch (Exception e) {
-            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
-                       e instanceof InvalidSystemMetadata);
-        }
-        // Success if the checksum value is the upper case letters.
-        String str = "ef4b3d26ad713ecc9aa5988bbdfeded7";
-        Checksum upper = new Checksum();
-        upper.setAlgorithm(MD5);
-        upper.setValue(str.toUpperCase());
-        handler.saveBytes(dataStream3, localId, upper, "eml", pid);
-        result = new File(documentDir + localId);
-        assertTrue("File " + result + " should exist.", result.exists());
-        in = MetacatHandler.read(localId, DocumentImpl.BIN);
-        String readFrom = getChecksum(in, MD5);
-        assertEquals("Handler.read has a wrong checksum ", str , readFrom);
-        in.close();
-    }
-
-    /**
-     * Test the saveBytes method
-     * @throws Exception
-     */
-    @Test
-    public void testSaveBytesAndReadWithInputStream() throws Exception {
-        // Save a document file
-        String localId = "autogen." + System.currentTimeMillis() +".1";
-        Identifier pid = new Identifier();
-        pid.setValue("foo21");//Just for the log purpose
-        Checksum checksum = new Checksum();
-        checksum.setAlgorithm(MD5);
-        checksum.setValue(test_file_checksum);
-        InputStream dataStream = new FileInputStream(test_file_path);
-        try {
-            //checksum is null
-            handler.saveBytes(dataStream, localId, null, "eml", pid);
-            fail("The test should not get here since the local id is null");
-        } catch (Exception e ) {
-            assertTrue("Should be InvalidSystemMetadata, rather than " + e.getClass().getName(),
-                      e instanceof InvalidSystemMetadata);
-        }
-        handler.saveBytes(dataStream, localId, checksum, "eml", pid);
-        dataStream.close();
-        File result = new File(documentDir + localId);
-        assertTrue("File " + result + " should exist.", result.exists());
-        InputStream in = MetacatHandler.read(localId, "eml");
-        String readChecksum = getChecksum(in, MD5);
-        in.close();
-        assertEquals("The checksum from handler.read is wrong ", test_file_checksum , readChecksum);
-        // Running the saveBytes method again with the same local id should fail
-        // since the target file does exist
-        InputStream dataStream2 = new FileInputStream(another_test_file);
-        Checksum anotherChecksum = new Checksum();
-        anotherChecksum.setAlgorithm(MD5);
-        String str = "ef4b3d26ad713ecc9aa5988bbdfeded7";
-        anotherChecksum.setValue(str);
-        try {
-            handler.saveBytes(dataStream2, localId, anotherChecksum, "eml", pid);
-            fail("Test should get here since the target file does exist");
-        } catch (Exception e) {
-            assertTrue("Should be ServiceFailure rather than " + e.getClass().getName(),
-                       e instanceof ServiceFailure);
-        }
-        dataStream2.close();
-        // Test checksum doesn't match
-        InputStream dataStream3 = new FileInputStream(another_test_file);
-        localId = "autogen." + System.currentTimeMillis() +".1";
-        Checksum fakeChecksum = new Checksum();
-        try {
-            handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
-            fail("Test shouldn't get there since the declared checksum is incorrect.");
-        } catch (Exception e) {
-            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
-                       e instanceof InvalidSystemMetadata);
-        }
-        fakeChecksum.setAlgorithm(MD5);
-        dataStream3 = new FileInputStream(another_test_file);
-        localId = "autogen." + System.currentTimeMillis() +".2";
-        try {
-            handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
-            fail("Test shouldn't get there since the declared checksum is incorrect.");
-        } catch (Exception e) {
-            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
-                       e instanceof InvalidSystemMetadata);
-        }
-        fakeChecksum.setAlgorithm("");
-        fakeChecksum.setValue(anotherChecksum.getValue());
-        dataStream3 = new FileInputStream(another_test_file);
-        localId = "autogen." + System.currentTimeMillis() +".3";
-        try {
-            handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
-            fail("Test shouldn't get there since the declared checksum is incorrect.");
-        } catch (Exception e) {
-            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
-                       e instanceof InvalidSystemMetadata);
-        }
-        fakeChecksum.setAlgorithm(MD5);
-        fakeChecksum.setValue("5645334567F");
-        dataStream3 = new FileInputStream(another_test_file);
-        localId = "autogen." + System.currentTimeMillis() +".4";
-        try {
-            handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
-            fail("Test shouldn't get there since the declared checksum is incorrect.");
-        } catch (Exception e) {
-            assertTrue("Should be InvalidSystemMetadata rather than " + e.getClass().getName(),
-                       e instanceof InvalidSystemMetadata);
-        }
-        // Success if the checksum value is the upper case letters.
-        fakeChecksum.setAlgorithm(MD5);
-        fakeChecksum.setValue(str.toUpperCase());
-        dataStream3 = new FileInputStream(another_test_file);
-        localId = "autogen." + System.currentTimeMillis() +".5";
-        handler.saveBytes(dataStream3, localId, fakeChecksum, DocumentImpl.BIN, pid);
-        dataStream3.close();
-        result = new File(dataDir + localId);
-        assertTrue("File " + result + " should exist.", result.exists());
-        in = MetacatHandler.read(localId, "eml");
-        String readFrom = getChecksum(in, MD5);
-        assertEquals("The checksum from handler.read is wrong ", str, readFrom);
-        in.close();
-    }
 
     /**
      * Test the save method
-     * @throws Excetpion
+     * @throws Exception
      */
     @Test
     public void testSaveDetailedInputStreamData() throws Exception {
@@ -577,11 +425,12 @@ public class MetacatHandlerIT {
         owner.setValue(user);
         Identifier pid = new Identifier();
         pid.setValue("MetacatHandler.testsave-" + System.currentTimeMillis());
-        DetailedFileInputStream dataStream = generateDetailedInputStream(test_file_path, checksum);
+        FileInputStream dataStream = new FileInputStream(test_file_path);
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
-        dataStream = generateDetailedInputStream(test_file_path, checksum);
+        dataStream = new FileInputStream(test_file_path);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         // null is the obsoleted system metadata. Inserting should succeed
         // True means changing the modification date in the system metadata
         handler.save(sysmeta, true, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
@@ -608,7 +457,7 @@ public class MetacatHandlerIT {
         anotherChecksum.setAlgorithm(MD5);
         String anotherChecksumStr = "ef4b3d26ad713ecc9aa5988bbdfeded7";
         anotherChecksum.setValue(anotherChecksumStr);
-        dataStream = generateDetailedInputStream(another_test_file, null);
+        dataStream = new FileInputStream(another_test_file);
         SystemMetadata newSys = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
         newSys.setObsoletes(pid);
         sysmeta.setObsoletedBy(newPid);
@@ -618,6 +467,8 @@ public class MetacatHandlerIT {
         newSys.setChecksum(incorrectChecksum);
         try {
             // True means changing the modification date in the system metadata
+            dataStream = new FileInputStream(another_test_file);
+            D1NodeServiceTest.storeData(dataStream, newSys);
             handler.save(newSys, true, MetacatHandler.Action.UPDATE,
                         DocumentImpl.BIN, dataStream, sysmeta, user);
             fail("Test cannot get here since the checksum is wrong in the system metadata");
@@ -652,10 +503,13 @@ public class MetacatHandlerIT {
         long originUploadDateOfSecondObj = newSys.getDateUploaded().getTime();
         sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
         // Recreate the stream since it was closed in the previous failure
-        dataStream = generateDetailedInputStream(another_test_file, null);
+        dataStream = new FileInputStream(another_test_file);
         // True means changing the modification date in the system metadata
+        D1NodeServiceTest.storeData(dataStream, newSys);
+        SystemMetadataManager.lock(pid);
         handler.save(newSys, true, MetacatHandler.Action.UPDATE,
                      DocumentImpl.BIN, dataStream, sysmeta, user);
+        SystemMetadataManager.unLock(pid);
         // Check the old object
         readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
@@ -692,7 +546,7 @@ public class MetacatHandlerIT {
 
     /**
      * Test the save method
-     * @throws Excetpion
+     * @throws Exception
      */
     @Test
     public void testSaveDetailedInputStreamMetadata() throws Exception {
@@ -706,16 +560,17 @@ public class MetacatHandlerIT {
         owner.setValue(user);
         Identifier pid = new Identifier();
         pid.setValue("MetacatHandler.testsave-" + System.currentTimeMillis());
-        DetailedFileInputStream dataStream = generateDetailedInputStream(test_eml_file, checksum);
+        FileInputStream dataStream = new FileInputStream(test_eml_file);
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
         Checksum incorrectChecksum = new Checksum();
         incorrectChecksum.setAlgorithm(MD5);
         incorrectChecksum.setValue("234dfa343af");
         sysmeta.setChecksum(incorrectChecksum);
         sysmeta.setFormatId(formatId);
-        dataStream = generateDetailedInputStream(test_eml_file, checksum);
+        dataStream = new FileInputStream(test_eml_file);
         try {
             // null is the obsoleted system metadata. Inserting should succeed
+            D1NodeServiceTest.storeData(dataStream, sysmeta);
             handler.save(sysmeta, false, MetacatHandler.Action.INSERT, eml_format,
                         dataStream, null, user);
             fail("Test cannot get here since the checksum is wrong in the system metadata");
@@ -738,7 +593,8 @@ public class MetacatHandlerIT {
         sysmeta.setChecksum(checksum);
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
-        dataStream = generateDetailedInputStream(test_eml_file, checksum);
+        dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         // null is the obsoleted system metadata. Inserting should succeed
         // false means not to change the modification date of the system metadata
         handler.save(sysmeta, false, MetacatHandler.Action.INSERT, eml_format,
@@ -765,7 +621,7 @@ public class MetacatHandlerIT {
         anotherChecksum.setAlgorithm(MD5);
         String anotherChecksumStr = "24aafe49284350445bb1ff9281e3c3c5";
         anotherChecksum.setValue(anotherChecksumStr);
-        dataStream = generateDetailedInputStream(test_eml_essdive_file, null);
+        dataStream = new FileInputStream(test_eml_essdive_file);
         SystemMetadata newSys = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
         newSys.setObsoletes(pid);
         long originModificationDateOfSecondObj = newSys.getDateSysMetadataModified().getTime();
@@ -773,10 +629,13 @@ public class MetacatHandlerIT {
         sysmeta.setObsoletedBy(newPid);
         sysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
         // Recreate the stream since it was closed in the generating sysmeta method
-        dataStream = generateDetailedInputStream(test_eml_essdive_file, null);
+        dataStream = new FileInputStream(test_eml_essdive_file);
+        D1NodeServiceTest.storeData(dataStream, newSys);
         // False means not change the modification date in the system metadata
+        SystemMetadataManager.lock(pid);
         handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                      eml_format, dataStream, sysmeta, user);
+        SystemMetadataManager.unLock(pid);
         // Check the objects
         readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
@@ -814,7 +673,7 @@ public class MetacatHandlerIT {
 
     /**
      * Test the save method
-     * @throws Excetpion
+     * @throws Exception
      */
     @Test
     public void testSaveInputStreamData() throws Exception {
@@ -831,10 +690,25 @@ public class MetacatHandlerIT {
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
         dataStream = new FileInputStream(test_file_path);
+        ObjectInfo info = D1NodeServiceTest.storeData(dataStream, sysmeta);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        mcSystemMetadata.setChecksums(info.hexDigests());
         // null is the obsoleted system metadata. Inserting should succeed
         // False means not to change the modification date of system metadata
-        handler.save(sysmeta, false, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
+        handler.save(mcSystemMetadata, false, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
                     dataStream, null, user);
+        ChecksumsManager manager = new ChecksumsManager();
+        List<Checksum> checksums = manager.get(sysmeta.getIdentifier());
+        assertEquals(5, checksums.size());
+        boolean found = false;
+        for (Checksum checksum1 : checksums) {
+            if(checksum1.getAlgorithm().equals(MD5)) {
+                assertEquals(sysmeta.getChecksum().getValue(), checksum1.getValue());
+                found = true;
+            }
+        }
+        assertTrue("Test should find a checksum with algorithm MD5", found);
         SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
                               + readSys.getIdentifier().getValue(),
@@ -866,6 +740,8 @@ public class MetacatHandlerIT {
         incorrectChecksum.setValue("234dfa343af");
         newSys.setChecksum(incorrectChecksum);
         try {
+            dataStream = new FileInputStream(another_test_file);
+            D1NodeServiceTest.storeData(dataStream, newSys);
             // False means not to change the modification date
             handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                         DocumentImpl.BIN, dataStream, sysmeta, user);
@@ -902,9 +778,18 @@ public class MetacatHandlerIT {
         long originUploadDateOfSecondObj = newSys.getDateUploaded().getTime();
         // Recreate the stream since it was closed in the previous failure
         dataStream = new FileInputStream(another_test_file);
+        D1NodeServiceTest.storeData(dataStream, newSys);
         // False means not changing the modification date in system metadata
+        SystemMetadataManager.lock(pid);
         handler.save(newSys, false, MetacatHandler.Action.UPDATE,
                      DocumentImpl.BIN, dataStream, sysmeta, user);
+        SystemMetadataManager.unLock(pid);
+        // Since newSys is not an MCSystemMetadata object, the checksum is not stored
+        checksums = manager.get(newSys.getIdentifier());
+        assertEquals(0, checksums.size());
+        // The previous saved checksums for sysmeta should be still there
+        checksums = manager.get(sysmeta.getIdentifier());
+        assertEquals(5, checksums.size());
         // Check the objects
         readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
@@ -940,7 +825,7 @@ public class MetacatHandlerIT {
 
     /**
      * Test the save method
-     * @throws Excetpion
+     * @throws Exception
      */
     @Test
     public void testSaveInputStreamMetadata() throws Exception {
@@ -963,7 +848,8 @@ public class MetacatHandlerIT {
         sysmeta.setFormatId(formatId);
         dataStream = new FileInputStream(test_eml_file);
         try {
-         // null is the obsoleted system metadata. Inserting should succeed
+            D1NodeServiceTest.storeData(dataStream, sysmeta);
+            // null is the obsoleted system metadata. Inserting should succeed
             handler.save(sysmeta, true, MetacatHandler.Action.INSERT, eml_format,
                         dataStream, null, user);
             fail("Test cannot get here since the checksum is wrong in the system metadata");
@@ -987,6 +873,7 @@ public class MetacatHandlerIT {
         long originModificationDate = sysmeta.getDateSysMetadataModified().getTime();
         long originUploadDate = sysmeta.getDateUploaded().getTime();
         dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         // null is the obsoleted system metadata. Inserting should succeed
         // True means changing the modification date in system metadata
         handler.save(sysmeta, true, MetacatHandler.Action.INSERT, eml_format,
@@ -1021,8 +908,11 @@ public class MetacatHandlerIT {
         long originUploadDateOfSecondObj = newSys.getDateUploaded().getTime();
         // Recreate the stream since it was closed in the generating sysmeta method
         dataStream = new FileInputStream(test_eml_essdive_file);
+        D1NodeServiceTest.storeData(dataStream, newSys);
+        SystemMetadataManager.lock(pid);
         handler.save(newSys, true, MetacatHandler.Action.UPDATE,
                      eml_format, dataStream, sysmeta, user);
+        SystemMetadataManager.unLock(pid);
         // Check the objects
         readSys = SystemMetadataManager.getInstance().get(pid);
         assertTrue("The pid of systemmeta from db should be " + pid.getValue() + " rather than "
@@ -1078,6 +968,7 @@ public class MetacatHandlerIT {
         InputStream dataStream = new FileInputStream(test_eml_file);
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
         dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         // null is the obsoleted system metadata. Inserting should succeed
         String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT, eml_format,
                         dataStream, null, user);
@@ -1090,13 +981,6 @@ public class MetacatHandlerIT {
         String readChecksum = getChecksum(readObj, MD5);
         assertTrue("The read object should have the checksum " + test_eml_file_checksum
                     + " rather than " + readChecksum, test_eml_file_checksum.equals(readChecksum));
-        // Check file directly
-        File originalFile = new File(handler.getMetadataDir(), localId);
-        assertTrue("The file should exist " + originalFile.getAbsoluteFile(),
-                                                                       originalFile.exists());
-        String fileChecksum = getChecksum(new FileInputStream(originalFile), MD5);
-        assertTrue("The read object should have the checksum " + test_eml_file_checksum
-                    + " rather than " + fileChecksum, test_eml_file_checksum.equals(fileChecksum));
         // Mock that registerToDB always return the localId, which mean the file path will always
         // be same.
 
@@ -1123,8 +1007,8 @@ public class MetacatHandlerIT {
                                                eml_format, dataStream, sysmeta, user);
             fail("Test can't get here since the save method should throw an exception.");
         } catch (Exception e) {
-            assertTrue("The exception should be ServiceFailure rather than "
-                                            + e.getClass().getName(), e instanceof ServiceFailure);
+            assertTrue("The exception should be McdbException rather than "
+                                            + e.getClass().getName(), e instanceof McdbException);
         }
         // The first object doesn't change
         readSys = SystemMetadataManager.getInstance().get(pid);
@@ -1143,13 +1027,6 @@ public class MetacatHandlerIT {
         assertTrue("The read object should have the checksum "
                     + test_eml_file_checksum + " rather than "
                     + readChecksum, test_eml_file_checksum.equals(readChecksum));
-        originalFile = new File(handler.getMetadataDir(), localId);
-        assertTrue("The file should exist " + originalFile.getAbsoluteFile(),
-                                                                       originalFile.exists());
-        String fileChecksum2 = getChecksum(new FileInputStream(originalFile), MD5);
-        assertTrue("The read object should have the checksum "
-                + test_eml_file_checksum + " rather than "
-                + fileChecksum2, test_eml_file_checksum.equals(fileChecksum2));
         // The second object doesn't exist
         SystemMetadata secondSys = SystemMetadataManager.getInstance().get(newPid);
         assertNull("The system metadata for "  + newPid.getValue() + " should be null", secondSys);
@@ -1158,15 +1035,15 @@ public class MetacatHandlerIT {
         newPid = new Identifier();
         newPid.setValue("MetacatHandler.testsave.new2-" + System.currentTimeMillis());
         newSys.setIdentifier(newPid);
-        DetailedFileInputStream dataStream3 =
-                                generateDetailedInputStream(test_eml_essdive_file, anotherChecksum);
+        FileInputStream dataStream3 =
+                                new FileInputStream(test_eml_essdive_file);
         try {
             mockHandler.save(newSys, true, MetacatHandler.Action.UPDATE,
                                             eml_format, dataStream3, sysmeta, user);
             fail("Test can't get here since the save method should throw an exception.");
         } catch (Exception e) {
-            assertTrue("The exception should be ServiceFailure rather than "
-                                            + e.getClass().getName(), e instanceof ServiceFailure);
+            assertTrue("The exception should be McdbException rather than "
+                                            + e.getClass().getName(), e instanceof McdbException);
         }
         // The first object doesn't change
         readSys = SystemMetadataManager.getInstance().get(pid);
@@ -1185,13 +1062,6 @@ public class MetacatHandlerIT {
         assertTrue("The read object should have the checksum "
                     + test_eml_file_checksum + " rather than "
                     + readChecksum, test_eml_file_checksum.equals(readChecksum));
-        originalFile = new File(handler.getMetadataDir(), localId);
-        assertTrue("The file should exist " + originalFile.getAbsoluteFile(),
-                                                                       originalFile.exists());
-        fileChecksum = getChecksum(new FileInputStream(originalFile), MD5);
-        assertTrue("The read object should have the checksum "
-                + test_eml_file_checksum + " rather than "
-                + fileChecksum, test_eml_file_checksum.equals(fileChecksum));
         // The third object doesn't exist
         SystemMetadata thirdSys = SystemMetadataManager.getInstance().get(newPid);
         assertNull("The system metadata for "  + newPid.getValue() + " should be null", thirdSys);
@@ -1200,8 +1070,8 @@ public class MetacatHandlerIT {
         Checksum fakeChecksum = new Checksum();
         fakeChecksum.setAlgorithm(MD5);
         fakeChecksum.setValue("12234");
-        DetailedFileInputStream dataStream4 =
-                            generateDetailedInputStream(test_eml_essdive_file, fakeChecksum);
+        FileInputStream dataStream4 =
+                            new FileInputStream(test_eml_essdive_file);
         newPid = new Identifier();
         newPid.setValue("MetacatHandler.testsave.new3-" + System.currentTimeMillis());
         newSys.setIdentifier(newPid);
@@ -1210,8 +1080,8 @@ public class MetacatHandlerIT {
                                 eml_format, dataStream4, sysmeta, user);
             fail("Test can't get here since the save method should throw an exception.");
         } catch (Exception e) {
-            assertTrue("The exception should be ServiceFailure rather than "
-                            + e.getClass().getName(), e instanceof ServiceFailure);
+            assertTrue("The exception should be McdbException rather than "
+                            + e.getClass().getName(), e instanceof McdbException);
         }
         // The first object doesn't change
         readSys = SystemMetadataManager.getInstance().get(pid);
@@ -1232,13 +1102,6 @@ public class MetacatHandlerIT {
         assertTrue("The read object should have the checksum "
                     + test_eml_file_checksum + " rather than "
                     + readChecksum, test_eml_file_checksum.equals(readChecksum));
-        originalFile = new File(handler.getMetadataDir(), localId);
-        assertTrue("The file should exist " + originalFile.getAbsoluteFile(),
-                                                                       originalFile.exists());
-        fileChecksum = getChecksum(new FileInputStream(originalFile), MD5);
-        assertTrue("The read object should have the checksum "
-                + test_eml_file_checksum + " rather than "
-                + fileChecksum, test_eml_file_checksum.equals(fileChecksum));
         // The fourth object doesn't exist
         SystemMetadata fourSys = SystemMetadataManager.getInstance().get(newPid);
         assertNull("The system metadata for "  + newPid.getValue() + " should be null", fourSys);
@@ -1255,8 +1118,6 @@ public class MetacatHandlerIT {
         long originSysCount = getRecordCount("systemmetadata");
         long originIdCount = getRecordCount("identifier");
         long originDocCount = getRecordCount("xml_documents");
-        int originDocumentDirSize = (new File(handler.getMetadataDir()).list()).length;
-        int originDataDirSize = (new File(handler.getDataDir()).list()).length;
         String user = "http://orcid.org/1234/4567";
         Subject owner = new Subject();
         owner.setValue(user);
@@ -1267,9 +1128,10 @@ public class MetacatHandlerIT {
         checksum.setValue(test_eml_file_checksum);
         Identifier pid = new Identifier();
         pid.setValue("MetacatHandler.testsave-" + System.currentTimeMillis());
-        DetailedFileInputStream dataStream = generateDetailedInputStream(test_eml_file, checksum);
+        FileInputStream dataStream = new FileInputStream(test_eml_file);
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
-        dataStream = generateDetailedInputStream(test_eml_file, checksum);
+        dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
         //Mock
         try (MockedStatic<DBConnectionPool> mockDbConnPool =
                                                 Mockito.mockStatic(DBConnectionPool.class)) {
@@ -1294,64 +1156,209 @@ public class MetacatHandlerIT {
         assertEquals("The identifier count should be " + originIdCount, originIdCount, idCount);
         long docCount = getRecordCount("xml_documents");
         assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
-        int documentDirSize = (new File(handler.getMetadataDir()).list()).length;
-        assertEquals("The document file count in the dir is " + originDocumentDirSize,
-                                    originDocumentDirSize, documentDirSize);
-        int dataDirSize = (new File(handler.getDataDir()).list()).length;
-        assertEquals("The data file count in the dir is " + originDataDirSize,
-                                                                originDataDirSize, dataDirSize);
         SystemMetadata readSys = SystemMetadataManager.getInstance().get(pid);
         assertNull("The systemmetadata for pid " + pid.getValue() + " should be null", readSys);
+        try (InputStream inputStream = D1NodeServiceTest.getStorage().retrieveObject(pid)) {
+            assertNotNull(inputStream);
+        }
+        try {
+            D1NodeServiceTest.getStorage().retrieveMetadata(pid);
+            fail("Test can't reach here since the pid should be removed.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .get(d1NodeServiceTest.getTestSession(), pid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .getSystemMetadata(d1NodeServiceTest.getTestSession(), pid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
 
-            // Insert a data object
-            Identifier newPid = new Identifier();
-            newPid.setValue("MetacatHandler.testsave2-" + System.currentTimeMillis());
-            InputStream dataStream2 = new FileInputStream(test_file_path);
-            SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream2);
-            dataStream2 = new FileInputStream(test_file_path);
-            try (MockedStatic<DBConnectionPool> mockDbConnPool =
-                    Mockito.mockStatic(DBConnectionPool.class)) {
-                DBConnection mockConnection = Mockito.mock(DBConnection.class,
-                        withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
-                Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
-                                                                    .thenReturn(mockConnection);
-                Mockito.doThrow(SQLException.class).when(mockConnection).commit();
-                try {
-                    handler.save(sysmeta2, true, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
-                            dataStream2, null, user);
-                    fail("Test shouldn't get there since the above method should throw an exception");
-                } catch (Exception e) {
-                    assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
-                }
+        // Insert a data object
+        Identifier newPid = new Identifier();
+        newPid.setValue("MetacatHandler.testsave2-" + System.currentTimeMillis());
+        InputStream dataStream2 = new FileInputStream(test_file_path);
+        SystemMetadata sysmeta2 = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream2);
+        dataStream2 = new FileInputStream(test_file_path);
+        D1NodeServiceTest.storeData(dataStream2, sysmeta2);
+        try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                Mockito.mockStatic(DBConnectionPool.class)) {
+            DBConnection mockConnection = Mockito.mock(DBConnection.class,
+                    withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                                                                .thenReturn(mockConnection);
+            Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+            try {
+                handler.save(sysmeta2, true, MetacatHandler.Action.INSERT, DocumentImpl.BIN,
+                        dataStream2, null, user);
+                fail("Test shouldn't get there since the above method should throw an exception");
+            } catch (Exception e) {
+                assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
             }
-            // After a failed saving, nothing should change
-            sysCount = getRecordCount("systemmetadata");
-            assertEquals("The records in systemmetadata should be " + originSysCount,
-                                                                originSysCount, sysCount);
-            idCount = getRecordCount("identifier");
-            assertEquals("The identifier count should be " + originIdCount, originIdCount, idCount);
-            docCount = getRecordCount("xml_documents");
-            assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
-            documentDirSize = (new File(handler.getMetadataDir()).list()).length;
-            assertEquals("The document file count in the dir is " + originDocumentDirSize,
-                                        originDocumentDirSize, documentDirSize);
-            dataDirSize = (new File(handler.getDataDir()).list()).length;
-            assertEquals("The data file count in the dir is " + originDataDirSize,
-                                                                    originDataDirSize, dataDirSize);
-            readSys = SystemMetadataManager.getInstance().get(newPid);
-            assertNull("The systemmetadata for pid " + newPid.getValue() + " should be null", readSys);
-
+        }
+        // After a failed saving, nothing should change
+        sysCount = getRecordCount("systemmetadata");
+        assertEquals("The records in systemmetadata should be " + originSysCount,
+                                                            originSysCount, sysCount);
+        idCount = getRecordCount("identifier");
+        assertEquals("The identifier count should be " + originIdCount, originIdCount, idCount);
+        docCount = getRecordCount("xml_documents");
+        assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
+        readSys = SystemMetadataManager.getInstance().get(newPid);
+        assertNull("The systemmetadata for pid " + newPid.getValue() + " should be null", readSys);
+        // Since our rollback code only delete metadata on both database and hashtore,
+        // We can still get the object by the hashstore api
+        // Deleting object happens in MN.create.
+        try (InputStream inputStream = D1NodeServiceTest.getStorage().retrieveObject(newPid)) {
+            assertNotNull(inputStream);
+        }
+        try {
+            D1NodeServiceTest.getStorage().retrieveMetadata(newPid);
+            fail("Test can't reach here since the pid should be removed.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .get(d1NodeServiceTest.getTestSession(), newPid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .getSystemMetadata(d1NodeServiceTest.getTestSession(), newPid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
     }
 
     /**
-     * Test the intializeDir method
-     * @throws Exception
+     * Test a failure of save process can roll back clearly when the action is update.
+     * @throws Exception IOUtils.closeQuietly(dataStream);
      */
     @Test
-    public void testIntializeDir() throws Exception {
-        Path dir = handler.initializeDir("pom.xml");
-        assertNull("The dir should be null since the path pom.xml is not directory.", dir);
+    public void testUpdateRollBack() throws Exception {
+        String user = "http://orcid.org/1234/4567";
+        Subject owner = new Subject();
+        owner.setValue(user);
+
+        // Save a metadata inpustream in Metacat
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm(MD5);
+        checksum.setValue(test_eml_file_checksum);
+        Identifier pid = new Identifier();
+        pid.setValue("MetacatHandler.testUpdate-" + System.currentTimeMillis());
+        FileInputStream dataStream = new FileInputStream(test_eml_file);
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, owner, dataStream);
+        dataStream = new FileInputStream(test_eml_file);
+        D1NodeServiceTest.storeData(dataStream, sysmeta);
+        handler.save(sysmeta, true, MetacatHandler.Action.INSERT, eml_format,
+                     dataStream, null, user);
+        // Preserve the pid's system metadata
+        SystemMetadata originalPidMeta = SystemMetadataManager.getInstance().get(pid);
+        Date dateUploaded = originalPidMeta.getDateUploaded();
+        Date dateModified = originalPidMeta.getDateSysMetadataModified();
+        BigInteger version = originalPidMeta.getSerialVersion();
+
+        // original database counts:
+        long originSysCount = getRecordCount("systemmetadata");
+        long originIdCount = getRecordCount("identifier");
+        long originDocCount = getRecordCount("xml_documents");
+        SystemMetadata obsoletedMeta = SystemMetadataManager.getInstance().get(pid);
+        //Mock the update
+        Identifier newPid = new Identifier();
+        newPid.setValue("MetacatHandler.testUpdate2-" + System.currentTimeMillis());
+        dataStream = new FileInputStream(test_eml_file);
+        SystemMetadata sysmeta1 = D1NodeServiceTest.createSystemMetadata(newPid, owner, dataStream);
+        dataStream = new FileInputStream(test_eml_file);
+        ObjectInfo info = D1NodeServiceTest.storeData(dataStream, sysmeta1);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta1);
+        mcSystemMetadata.setChecksums(info.hexDigests());
+        assertNull(mcSystemMetadata.getObsoletes());
+        assertNull(mcSystemMetadata.getObsoletes());
+        try (MockedStatic<DBConnectionPool> mockDbConnPool =
+                 Mockito.mockStatic(DBConnectionPool.class)) {
+            DBConnection mockConnection = Mockito.mock(DBConnection.class,
+                                                       withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.when(DBConnectionPool.getDBConnection(any(String.class)))
+                .thenReturn(mockConnection);
+            Mockito.doThrow(SQLException.class).when(mockConnection).commit();
+            try {
+                handler.save(mcSystemMetadata, true, Action.UPDATE, eml_format,
+                             dataStream, obsoletedMeta, user);
+                fail("Test shouldn't get there since the above method should throw an exception");
+            } catch (Exception e) {
+                assertTrue("It should be a ServiceFailure exception.", e instanceof ServiceFailure);
+            }
+        }
+        // The failure change nothing.
+        long sysCount = getRecordCount("systemmetadata");
+        assertEquals("The records in systemmetadata should be " + originSysCount,
+                     originSysCount, sysCount);
+        long idCount = getRecordCount("identifier");
+        assertEquals("The identifier count should be " + originIdCount, originIdCount, idCount);
+        long docCount = getRecordCount("xml_documents");
+        assertEquals("The xml_document count is " + originDocCount, originDocCount, docCount);
+        SystemMetadata readSys = SystemMetadataManager.getInstance().get(newPid);
+        assertNull("The systemmetadata for pid " + newPid.getValue() + " should be null", readSys);
+        try (InputStream inputStream = D1NodeServiceTest.getStorage().retrieveObject(newPid)) {
+            assertNotNull(inputStream);
+        }
+        try {
+            D1NodeServiceTest.getStorage().retrieveMetadata(newPid);
+            fail("Test can't reach here since the pid should be removed.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FileNotFoundException);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .get(d1NodeServiceTest.getTestSession(), newPid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        try {
+            MNodeService.getInstance(d1NodeServiceTest.getServletRequest())
+                .getSystemMetadata(d1NodeServiceTest.getTestSession(), newPid);
+            fail("Test can't get since the system metadata was deleted");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotFound);
+        }
+        // Make sure there are no changes on the system metadata of pid from db
+        assertNull(originalPidMeta.getObsoletedBy());
+        assertNull(originalPidMeta.getObsoletes());
+        assertEquals(dateUploaded.getTime(), originalPidMeta.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), originalPidMeta.getDateSysMetadataModified().getTime());
+        assertEquals(version.longValue(), originalPidMeta.getSerialVersion().longValue());
+        SystemMetadata readAgain = SystemMetadataManager.getInstance().get(pid);
+        assertNull(readAgain.getObsoletedBy());
+        assertNull(readAgain.getObsoletes());
+        assertEquals(dateUploaded.getTime(), readAgain.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), readAgain.getDateSysMetadataModified().getTime());
+        assertEquals(version.longValue(), readAgain.getSerialVersion().longValue());
+        MCSystemMetadataTest.compareValues(originalPidMeta, readAgain);
+        // Make sure there are no changes on the system metadata of pid from hashstore
+        InputStream metaInput = D1NodeServiceTest.getStorage().retrieveMetadata(pid);
+        SystemMetadata sysmetaFromHash =
+            TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, metaInput);
+        assertNull(sysmetaFromHash.getObsoletedBy());
+        assertEquals(dateUploaded.getTime(), sysmetaFromHash.getDateUploaded().getTime());
+        assertEquals(dateModified.getTime(), sysmetaFromHash.getDateSysMetadataModified().getTime());
+        assertEquals(version.longValue(), sysmetaFromHash.getSerialVersion().longValue());
+        MCSystemMetadataTest.compareValues(originalPidMeta, sysmetaFromHash);
     }
+
 
     /**
      * Test the save method for JsonLD
@@ -1370,80 +1377,34 @@ public class MetacatHandlerIT {
         SystemMetadata sysmeta = new SystemMetadata();
 
         //save the DetailedFileInputStream from the valid json-ld object without a checksum
-        File temp1 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
-        InputStream input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
-        OutputStream out = new FileOutputStream(temp1);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        Checksum checksum = null;
-        DetailedFileInputStream data = new DetailedFileInputStream(temp1, checksum);
+        InputStream data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
         MetacatHandler handler = new MetacatHandler();
         Identifier pid = new Identifier();
         pid.setValue("test-id1-" + System.currentTimeMillis());
-        assertTrue(temp1.exists());
         sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
-        data = new DetailedFileInputStream(temp1, checksum);
+        data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        D1NodeServiceTest.storeData(data, sysmeta);
         // True means changing the modification date in the system metadata
         String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                                        NonXMLMetadataHandlers.JSON_LD, data, null, user);
 
-        assertFalse(temp1.exists());
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
-        File savedFile = new File(documentDir, localId);
-        assertTrue(savedFile.exists());
-        DocumentImpl.deleteFromFileSystem(localId, true);
-        assertFalse(savedFile.exists());
-
-        //save the DetaiedFileInputStream from the valid json-ld object with the expected checksum
-        File temp2 = JsonLDHandlerTest.generateTmpFile("temp2-json-ld-valid");
-        input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
-        out = new FileOutputStream(temp2);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        data = new DetailedFileInputStream(temp2, expectedChecksum);
-        pid = new Identifier();
-        pid.setValue("test-id2-" + System.currentTimeMillis());
-        assertTrue(temp2.exists());
-        sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
-        sysmeta.setFormatId(format);
-        data = new DetailedFileInputStream(temp2, expectedChecksum);
-        // True means changing the modification date in the system metadata
-        localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
-                NonXMLMetadataHandlers.JSON_LD, data, null, user);
-        assertTrue(!temp2.exists());
-        assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
-        deleteXMLDocuments(localId);
-        File savedFile2 = new File(documentDir, localId);
-        assertTrue(savedFile2.exists());
-        DocumentImpl.deleteFromFileSystem(localId, true);
-        assertTrue(!savedFile2.exists());
-
-        Checksum expectedChecksumForInvalidJson = new Checksum();
-        expectedChecksumForInvalidJson.setAlgorithm("MD5");
-        expectedChecksumForInvalidJson.setValue(JsonLDHandlerTest.CHECKSUM_INVALID_JSON_FILE);
+        try (InputStream inputStream = MetacatHandler.read(sysmeta.getIdentifier())) {
+            assertNotNull(inputStream);
+        }
 
         //save the DetaiedFileInputStream from the invalid json-ld object without a checksum
-        File temp3 = JsonLDHandlerTest.generateTmpFile("temp3-json-ld-valid");
-        input = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
-        out = new FileOutputStream(temp3);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        checksum = null;
-        data = new DetailedFileInputStream(temp3, checksum);
+        data = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
         pid = new Identifier();
         pid.setValue("test-id3-" + System.currentTimeMillis());
-        assertTrue(temp3.exists());
         try {
             sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
             sysmeta.setFormatId(format);
-            data = new DetailedFileInputStream(temp3, checksum);
+            data = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                               NonXMLMetadataHandlers.JSON_LD, data, null, user);
@@ -1452,60 +1413,6 @@ public class MetacatHandlerIT {
             assertTrue(e instanceof InvalidRequest);
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        temp3.delete();
-
-        //save the DetaiedFileInputStream from the invalid json-ld object with the expected checksum
-        File temp4 = JsonLDHandlerTest.generateTmpFile("temp4-json-ld-valid");
-        input = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
-        out = new FileOutputStream(temp4);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        data = new DetailedFileInputStream(temp4, expectedChecksumForInvalidJson);
-        pid = new Identifier();
-        pid.setValue("test-id4-" + System.currentTimeMillis());
-        assertTrue(temp4.exists());
-        try {
-            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
-            sysmeta.setFormatId(format);
-            data = new DetailedFileInputStream(temp4, expectedChecksumForInvalidJson);
-            // True means changing the modification date in the system metadata
-            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
-                            NonXMLMetadataHandlers.JSON_LD, data, null, user);
-            fail("We can't reach here since it should throw an exception");
-        } catch (Exception e) {
-            assertTrue(e instanceof InvalidRequest);
-        }
-        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        temp4.delete();
-
-        //save the DetaiedFileInputStream from the valid json-ld object with a wrong checksum
-        File temp5 = JsonLDHandlerTest.generateTmpFile("temp5-json-ld-valid");
-        input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
-        out = new FileOutputStream(temp5);
-        IOUtils.copy(input, out);
-        out.close();
-        input.close();
-        data = new DetailedFileInputStream(temp5, expectedChecksum);
-        pid = new Identifier();
-        pid.setValue("test-id5-" + System.currentTimeMillis());
-        assertTrue(temp5.exists());
-        try {
-            checksum = new Checksum();
-            checksum.setAlgorithm("MD5");
-            checksum.setValue(JsonLDHandlerTest.CHECKSUM_INVALID_JSON_FILE);
-            sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
-            sysmeta.setFormatId(format);
-            data = new DetailedFileInputStream(temp5, checksum);
-            // True means changing the modification date in the system metadata
-            localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
-                            NonXMLMetadataHandlers.JSON_LD, data, null, user);
-            fail("We can't reach here since it should throw an exception");
-        } catch (Exception e) {
-            assertTrue(e instanceof InvalidSystemMetadata);
-        }
-        assertFalse(IdentifierManager.getInstance().mappingExists(pid.getValue()));
-        temp5.delete();
     }
 
     /**
@@ -1537,16 +1444,17 @@ public class MetacatHandlerIT {
         SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(pid, subject, data);
         sysmeta.setFormatId(format);
         data = new ByteArrayInputStream(content.getBytes());
+        D1NodeServiceTest.storeData(data, sysmeta);
         // True means changing the modification date in the system metadata
         String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
-        File savedFile = new File(documentDir, localId);
-        assertTrue(savedFile.exists());
-        DocumentImpl.deleteFromFileSystem(localId, true);
-        assertTrue(!savedFile.exists());
+        try (InputStream inputStream = MetacatHandler.read(sysmeta.getIdentifier())) {
+            assertNotNull(inputStream);
+        }
+
 
         //save the valid json-ld object with the wrong checksum
         data = new ByteArrayInputStream(content.getBytes());
@@ -1558,6 +1466,7 @@ public class MetacatHandlerIT {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new ByteArrayInputStream(content.getBytes());
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
@@ -1579,6 +1488,7 @@ public class MetacatHandlerIT {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new ByteArrayInputStream(content.getBytes());
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
@@ -1618,17 +1528,18 @@ public class MetacatHandlerIT {
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
         data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        D1NodeServiceTest.storeData(data, sysmeta);
         // True means changing the modification date in the system metadata
         String localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                             NonXMLMetadataHandlers.JSON_LD, data, null, user);
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
-        File savedFile = new File(documentDir, localId);
-        assertTrue(savedFile.exists());
+        try (InputStream inputStream = MetacatHandler.read(sysmeta.getIdentifier())) {
+            assertNotNull(inputStream);
+        }
         data.close();
-        DocumentImpl.deleteFromFileSystem(localId, true);
-        assertTrue(!savedFile.exists());
+
 
         //save the  valid json-ld object with the wrong checksum
         data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
@@ -1640,6 +1551,7 @@ public class MetacatHandlerIT {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                         NonXMLMetadataHandlers.JSON_LD, data, null, user);
@@ -1660,6 +1572,7 @@ public class MetacatHandlerIT {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             data = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
+            D1NodeServiceTest.storeData(data, sysmeta);
             // True means changing the modification date in the system metadata
             localId = handler.save(sysmeta, true, MetacatHandler.Action.INSERT,
                     NonXMLMetadataHandlers.JSON_LD, data, null, user);
@@ -1702,25 +1615,11 @@ public class MetacatHandlerIT {
         }
     }
 
-    private DetailedFileInputStream generateDetailedInputStream(String path, Checksum checksum)
-                                                                                throws Exception{
-        byte[] buffer = new byte[1024];
-        File tmpFile = File.createTempFile("MetacatHandler-test", null);
-        try (FileInputStream dataStream = new FileInputStream(path)) {
-            try (FileOutputStream os = new FileOutputStream(tmpFile)) {
-                int bytesRead;
-                while ((bytesRead = dataStream.read(buffer)) != -1) {
-                    os.write(buffer, 0, bytesRead);
-                }
-            }
-        }
-        return new DetailedFileInputStream(tmpFile, checksum);
-    }
 
     /*
      * Note: this method write input stream into memory. So it can only handle the small files.
      */
-    private String getChecksum(InputStream input, String checkAlgor) throws Exception {
+    public static String getChecksum(InputStream input, String checkAlgor) throws Exception {
         byte[] buffer = new byte[1024];
         ByteArrayOutputStream out = new ByteArrayOutputStream(2000000);
         MessageDigest md5 = MessageDigest.getInstance(checkAlgor);
@@ -1754,29 +1653,4 @@ public class MetacatHandlerIT {
         return count;
     }
 
-    /**
-     * Generated a DetailedFileInputStream object with checksum and a temp file from the source file
-     * @param filePath  the source file paht
-     * @return a DetailedFileInputStream object
-     * @throws Exception
-     */
-    private DetailedFileInputStream generateDetailedInputStream(String filePath) throws Exception{
-        byte[] buffer = new byte[1024];
-        MessageDigest md5 = MessageDigest.getInstance(MD5);
-        File tmpFile = File.createTempFile("MetacatHandler-test", null);
-        try (FileInputStream dataStream = new FileInputStream(filePath)) {
-            try (FileOutputStream os = new FileOutputStream(tmpFile)) {
-                int bytesRead;
-                while ((bytesRead = dataStream.read(buffer)) != -1) {
-                    os.write(buffer, 0, bytesRead);
-                    md5.update(buffer, 0, bytesRead);
-                }
-            }
-        }
-        String md5Digest = DatatypeConverter.printHexBinary(md5.digest()).toLowerCase();
-        Checksum checksum = new Checksum();
-        checksum.setValue(md5Digest);
-        checksum.setAlgorithm(MD5);
-        return new DetailedFileInputStream(tmpFile, checksum);
-    }
 }

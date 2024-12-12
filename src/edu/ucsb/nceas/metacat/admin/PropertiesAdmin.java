@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Vector;
@@ -476,6 +477,25 @@ public class PropertiesAdmin extends MetacatAdmin {
         } catch (AdminException ae) {
             errorVector.add("Could not instantiate database admin: "
                     + ae.getMessage());
+        }
+
+        String sitePropsDir = request.getParameter("application.sitePropertiesDir");
+        Path sitePropsDirPath = Paths.get(sitePropsDir).toAbsolutePath();
+        Path deployDirPath = Paths.get(SystemUtil.discoverDeployDir(request)).toAbsolutePath();
+        Path sitePropsDirCanonical = null;
+        try {
+            sitePropsDirCanonical = sitePropsDirPath.toRealPath().normalize();
+            Path deployDirCanonical = deployDirPath.toRealPath().normalize();
+            if (sitePropsDirCanonical.startsWith(deployDirCanonical)) {
+                errorVector.add(
+                    "Site Properties location (" + sitePropsDirCanonical
+                        + ") must not be inside the application directory ("
+                        + deployDirCanonical + ")");
+            }
+        } catch (IOException e) {
+            errorVector.add(
+                "Error checking Site Properties location; perhaps the path does not exist?: "
+                    + e.getMessage());
         }
 
         return errorVector;

@@ -435,9 +435,6 @@ public class PackageDownloaderV2 {
         try {
             resMapString = ResourceMapFactory.getInstance().serializeResourceMap(this.resourceMap);
             targetStream = IOUtils.toInputStream(resMapString, "UTF-8");
-        } catch (IOException e) {
-            // Log that there was an error, but don't interrupt the download
-            logMetacat.error("There was an I/O error while serializing the resource map.", e);
         } catch (ORESerialiserException e) {
             // Log that there was an error, but don't interrupt the download
             logMetacat.error("Problem serializing the resource map.", e);

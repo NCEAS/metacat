@@ -135,21 +135,21 @@ public class MockCNode extends MultipartCNode {
     public SubjectInfo getSubjectInfo(Session session, Subject subject)
     throws ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken {
         SubjectInfo info = null;
-        if (subject != null && subject.getValue().equals(MNodeAccessControlTest.KNBAMDINMEMBERSUBJECT)) {
+        if (subject != null && subject.getValue().equals(MNodeAccessControlIT.KNBAMDINMEMBERSUBJECT)) {
             try {
                 info = TypeMarshaller.unmarshalTypeFromFile(SubjectInfo.class, MEMBEROFKNBADMINSUBJECTINFOPATH);
             } catch (Exception e) {
                 
             }
             return info;
-        } else if (subject != null && subject.getValue().equals(MNodeAccessControlTest.PISCOMANAGERMEMBERSUBJECT)) {
+        } else if (subject != null && subject.getValue().equals(MNodeAccessControlIT.PISCOMANAGERMEMBERSUBJECT)) {
             try {
                 info = TypeMarshaller.unmarshalTypeFromFile(SubjectInfo.class, MEMBEROFPISCOMANAGERSUBJECTINFOPATH);
             } catch (Exception e) {
                 
             }
             return info;
-        } else if (subject != null && subject.getValue().equals(MNodeAccessControlTest.ESSDIVEUSERSUBJECT)) {
+        } else if (subject != null && subject.getValue().equals(MNodeAccessControlIT.ESSDIVEUSERSUBJECT)) {
             try {
                 info = TypeMarshaller.unmarshalTypeFromFile(SubjectInfo.class, MEMBEROFESSDIVEUSERSUBJECTINFOPATH);
             } catch (Exception e) {

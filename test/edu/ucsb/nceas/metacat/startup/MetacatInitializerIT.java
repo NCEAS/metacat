@@ -1,6 +1,9 @@
 package edu.ucsb.nceas.metacat.startup;
 
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin;
+import edu.ucsb.nceas.metacat.admin.UpgradeStatus;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -25,7 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -33,7 +36,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 /**
  * The IT test class for the MetacatInitializer class
@@ -98,7 +103,10 @@ public class MetacatInitializerIT {
             //reset the fully-initialized flag to be false by creating a new instance
             metacatInitializer = new MetacatInitializer();
             metacatInitializer.contextInitialized(event);
-            assertFalse(MetacatInitializer.isFullyInitialized());
+            //k8s doesn't care whether configutil.authConfigured - it relies on values.yaml
+            assertEquals("Should always be true if running in k8s, and false otherwise",
+                         System.getenv("METACAT_IN_K8S"),
+                         String.valueOf(MetacatInitializer.isFullyInitialized()));
         }
     }
 
@@ -145,8 +153,10 @@ public class MetacatInitializerIT {
                 .thenReturn(Mockito.mock(PropertyService.class));
             metacatInitializer = new MetacatInitializer();
             metacatInitializer.contextInitialized(event);
-            assertFalse(MetacatInitializer.isFullyInitialized());
-        }
+            //k8s doesn't care whether configutil.databaseConfigured - it relies on values.yaml
+            assertEquals("Should always be true if running in k8s, and false otherwise",
+                         System.getenv("METACAT_IN_K8S"),
+                         String.valueOf(MetacatInitializer.isFullyInitialized()));        }
     }
 
     /**
@@ -179,7 +189,8 @@ public class MetacatInitializerIT {
             }
 
             // set Metacat non-configured temporarily.
-            // Non-configured Metacat wouldn't throw an exception.
+            // Non-configured legacy Metacat wouldn't throw an exception. Non-configured k8s metacat
+            // should throw an exception, though
             withProperties.setProperty("configutil.skinsConfigured", PropertyService.UNCONFIGURED);
             try (MockedStatic<PropertyService> psMock = LeanTestUtils.initializeMockPropertyService(
                 withProperties)) {
@@ -187,10 +198,100 @@ public class MetacatInitializerIT {
                     .thenReturn(Mockito.mock(PropertyService.class));
                 metacatInitializer = new MetacatInitializer();
                 metacatInitializer.contextInitialized(event);
-                assertFalse(MetacatInitializer.isFullyInitialized());
+                //k8s doesn't care whether configutil.skinsConfigured - it relies on values.yaml
+                assertEquals("Should always be true if running in k8s, and false otherwise",
+                             System.getenv("METACAT_IN_K8S"),
+                             String.valueOf(MetacatInitializer.isFullyInitialized()));
+            } catch (RuntimeException e) {
+                // Non-configured k8s metacat should throw an exception from k8s initializer:
+                assertTrue("Exception not expected, when NOT running in K8s",
+                           Boolean.parseBoolean(System.getenv("METACAT_IN_K8S")));
+                final String expected = "Cannot connect to the RabbitMQ queue";
+                assertTrue("Exception message DID NOT contain expected string: " + expected
+                               + ". Entire message was:\n\n" + e.getMessage()
+                               + "\n\nfrom exception: " + e,
+                           e.getMessage().contains(expected));
             }
         }
         IndexGenerator.refreshInstance();
+    }
+
+    /**
+     * Test if the convertStorage method is called in the contextInitialized method
+     *
+     */
+    @Test
+    public void testConvertStorageInContextInitialized() throws Exception {
+        long time = System.currentTimeMillis();
+
+        withProperties.setProperty("configutil.propertiesConfigured", PropertyService.CONFIGURED);
+        withProperties.setProperty("configutil.authConfigured", PropertyService.CONFIGURED);
+        withProperties.setProperty("configutil.databaseConfigured", PropertyService.CONFIGURED);
+        withProperties.setProperty("configutil.solrserverConfigured", PropertyService.CONFIGURED);
+        withProperties.setProperty("configutil.dataoneConfigured", PropertyService.CONFIGURED);
+        withProperties.setProperty("configutil.ezidConfigured", PropertyService.CONFIGURED);
+        withProperties.setProperty("configutil.quotaConfigured", PropertyService.BYPASSED);
+        withProperties.setProperty("application.backupDir", "build");
+        try (MockedStatic<HashStoreConversionAdmin> mockStoreAdmin = Mockito.mockStatic(
+            HashStoreConversionAdmin.class,
+            withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS))) {
+            // Since the conversion status is failed, the covertStorage will be kicked off (it
+            // throws an exception by mocking) even though other configurations were done
+            mockStoreAdmin.when(HashStoreConversionAdmin::getStatus)
+                .thenReturn(UpgradeStatus.FAILED);
+            MetacatInitializer mockInitializer = Mockito.mock(MetacatInitializer.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.doThrow(new AdminException("Can't convert storage at " + time))
+                .when(mockInitializer).convertStorage();
+            if (testAsContainerized) {
+                mockInitializer.contextInitialized(event);
+            } else {
+                try {
+                    mockInitializer.contextInitialized(event);
+                    fail("The initialization should fail and the test cannot get here");
+                } catch (Exception e) {
+                    assertNotNull(
+                        "e.getMessage() returned unexpected type of RuntimeException: " + e,
+                        e.getMessage());
+                    assertTrue("Exception message DID NOT contain expected string: " + time
+                                   + ". Entire message was:\n\n" + e.getMessage()
+                                   + "\n\nfrom exception: " + e,
+                               e.getMessage().contains(Long.toString(time)));
+                }
+            }
+        }
+
+        try (MockedStatic<HashStoreConversionAdmin> mockStoreAdmin = Mockito.mockStatic(
+            HashStoreConversionAdmin.class,
+            withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS))) {
+            // Since the conversion status is not_required and other configuration were done, the
+            // covertStorage will be NOT kicked off (it throws an exception by mocking)
+            mockStoreAdmin.when(HashStoreConversionAdmin::getStatus)
+                .thenReturn(UpgradeStatus.NOT_REQUIRED);
+            MetacatInitializer mockInitializer = Mockito.mock(
+                MetacatInitializer.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.doThrow(
+                    new AdminException("Can't convert storage at " + time + " does not " + "exist"))
+                .when(mockInitializer).convertStorage();
+            mockInitializer.contextInitialized(event);
+        }
+
+        try (MockedStatic<HashStoreConversionAdmin> mockStoreAdmin = Mockito.mockStatic(
+            HashStoreConversionAdmin.class,
+            withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS))) {
+            // Since the conversion status is complete and other configuration were done, the
+            // covertStorage will be NOT kicked off (it throws an exception by mocking)
+            mockStoreAdmin.when(HashStoreConversionAdmin::getStatus)
+                .thenReturn(UpgradeStatus.COMPLETE);
+            MetacatInitializer mockInitializer = Mockito.mock(
+                MetacatInitializer.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            Mockito.doThrow(
+                    new AdminException("Can't convert storage at " + time + " does not " + "exist"))
+                .when(mockInitializer).convertStorage();
+            mockInitializer.contextInitialized(event);
+        }
     }
 
     private static Configuration createMockConfig(String newHost) {
