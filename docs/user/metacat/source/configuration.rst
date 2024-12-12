@@ -2,22 +2,22 @@ Configuring Metacat
 ===================
 
 .. contents::
-  
-When Metacat (Tomcat) is started, the Metacat servlet checks to see if it is 
-configured. If not, Metacat will automatically send you to the configuration 
+
+When Metacat (Tomcat) is started, the Metacat servlet checks to see if it is
+configured. If not, Metacat will automatically send you to the configuration
 pages. You will first be asked to set up the ORCID authentication.
 
-If the installation is new, or the previous version is before 1.9.0, pay close 
-attention to the configuration values. If you have upgraded Metacat, and the 
-previous version is 1.9.0 or later, Metacat will pull existing configuration 
-settings from a backup location. You should still verify that the values are 
+If the installation is new, or the previous version is before 1.9.0, pay close
+attention to the configuration values. If you have upgraded Metacat, and the
+previous version is 1.9.0 or later, Metacat will pull existing configuration
+settings from a backup location. You should still verify that the values are
 correct.
 
 To access your Metacat, open a Web browser and type::
 
   http://<your_context_url>
 
-Where <your_context_url> is the URL of the server hosting the Metacat followed 
+Where <your_context_url> is the URL of the server hosting the Metacat followed
 by the name of the WAR file (i.e., the application context) that you installed.
 For instance, the context URL for the KNB Metacat is: http://knb.ecoinformatics.org/knb
 
@@ -57,12 +57,12 @@ and so is not overwritten by deploying a new Metacat war file.
 
 Authentication Configuration
 ----------------------------
-Whether you are installing or upgrading the Metacat servlet, you will 
-automatically be sent to the Authentication Configuration page. You can also 
+Whether you are installing or upgrading the Metacat servlet, you will
+automatically be sent to the Authentication Configuration page. You can also
 reach the Authentication Configuration page from a running Metacat by typing
 
 ::
-  
+
   http://<your_context_url>/admin
 
 Starting from Metacat v3.0.0, only `ORCID authentication`_ is supported. In Metacat v2.19.0 and
@@ -95,11 +95,11 @@ with a semi-colon (;) character.
 
 Changing Authentication Configuration without Authentication
 ------------------------------------------------------------
-If you need to change or add authentication information and cannot authenticate 
-using the existing authentication settings (e.g., the existing Metacat 
-administrator is no longer available or you forgot the administrator password), 
-you must edit the Metacat configuration file by hand. This ensures that only a 
-person who has access to the Metacat server and the configuration files on that 
+If you need to change or add authentication information and cannot authenticate
+using the existing authentication settings (e.g., the existing Metacat
+administrator is no longer available or you forgot the administrator password),
+you must edit the Metacat configuration file by hand. This ensures that only a
+person who has access to the Metacat server and the configuration files on that
 server will be able to change the administrator accounts.
 
 To edit the authentication configuration file:
@@ -149,58 +149,84 @@ back to Metacat after successfully signing in with the correct administrative ac
    :align: center
 
    Sign into ORCID with the adminstrative account set during the auth configuration process.
-   
+
 Required Configuration
 ----------------------
-All required Metacat settings can be accessed from the Metacat Configuration 
-utility, which becomes available after the initial configurations 
-have been specified and an authorized administrator logs in. 
+All required Metacat settings can be accessed from the Metacat Configuration
+utility, which becomes available after the initial configurations
+have been specified and an authorized administrator logs in.
 
 .. figure:: images/screenshots/image017_configupdated.png
    :align: center
 
-   Metacat configuration menu, showing each configuration section.  Once all
-   sections are marked as green ``configured`` (or ``bypassed`` where relevant), Metacat can be accessed.
+   Metacat configuration menu, showing each configuration section.  Once all sections are marked as
+   green ``configured`` (or ``complete`` or ``bypassed`` where relevant), Metacat can be accessed.
 
-Each configuration section has three statuses:
+Configuration sections may have the following statuses (although not every status will be available
+for all sections):
 
-==============  =============================================================
+==============  ==========================================================================
 Status          Description
-==============  =============================================================
-unconfigured    The section has yet to be configured 
-configured      The section has been configured. 
-bypassed        The administrator 
-                can choose not to configure or skip the section.
-==============  =============================================================
- 
-To the right of each configuration section is one of the following options: 
-Configure Now, Reconfigure Now, Configure Global Properties First, or 
-Version:X.X.X. If the option is linked (e.g., Configure Now or Reconfigure Now), 
-you can select the link to open the associated configuration settings and edit them. 
-If the option is not linked (e.g., Configure Global Properties First), the settings
-cannot be specified until the global properties are set. Once the global properties
-are configured, the option to configure this section becomes available.
-The Version:X.X.X option is used only for the Database Installation/Upgrade section.
-If the database schema version detected by Metacat matches the application version (e.g., 3.0.0),
-then no further database configuration is required.
+==============  ==========================================================================
+unknown         The section's status is unknown, pending configuration of earlier sections
+unconfigured    The section has yet to be configured
+in progress     The section is in the process of being configured
+configured      The section has been configured successfully
+complete        The section has performed an upgrade that is now complete
+bypassed        The administrator has chosen not to configure the section
+==============  ==========================================================================
 
-All settings must be in a ``configured`` or ``bypassed state`` in order to run Metacat.
+To the right of each configuration section is one of the following options:
+**Configure Now**, **Reconfigure Now**, **Configure Global Properties First**, **Version: X.X.X**,
+or **Refresh page to update status**.
 
- **Reminder:** Metacat indexes at start-up time, so the initial start-up may take some time depending
- on the amount of data in your database and whether or not you have opted to regenerate the spatial
- cache. If you are reconfiguring a running version of Metacat, you must restart the Tomcat server
- for the changes to take effect.
+If the option is a clickable link (e.g., **Configure Now** or **Reconfigure Now**),
+you can use the link to open the associated configuration settings and edit them.
+If the option is not linked, the settings cannot be specified until the global properties are set.
+Once the global properties are configured, the option to configure this section becomes available.
+
+The **Version: X.X.X** option is used only for the Database Installation/Upgrade section. If the
+database schema version detected by Metacat matches the application version (e.g., 3.1.0),
+then no further database configuration is required. Otherwise, the database upgrade should
+be initiated by clicking the upgrade button on the database configuration page.
+
+Since the database upgrade and the storage upgrade may take a long time to complete, you may see the
+**Refresh page to update status** option:
+
+.. figure:: images/screenshots/image018a_database_in_progress.png
+   :align: center
+
+   The Metacat settings as they appear when the database upgrade is in progress.
+
+As indicated, you may refresh the page in your browser to see updates.
+
+The Storage Conversion will start automatically, immediately after the database upgrade is
+finished. The Storage Conversion converts the existing file storage format to the new DataONE
+hashstore format, which introduces significant performance enhancements for managing large
+datasets. The Storage Conversion may take a long time to complete, depending on the number and
+size of the files in your repository. Again, you may refresh the page to see updates:
+
+.. figure:: images/screenshots/image018b_storage_in_progress.png
+   :align: center
+
+   The Metacat settings as they appear when the storage upgrade is in progress.
+
+All settings must be in a ``configured``, ``complete`` or ``bypassed`` state in order to run
+Metacat.
+
+ **Reminder:** If you are reconfiguring a running version of Metacat, you must restart the Tomcat
+ server for the changes to take effect.
 
 .. figure:: images/screenshots/image019_configured.png
    :align: center
 
    The Metacat settings as they appear after having been configured.
-   
+
 Global Properties
 -----------------
-The Metacat configurations included under Global Properties represent the bulk 
-of the settings required to run Metacat. Click a blue question-mark 
-icon beside any setting for detailed instructions. More information about each 
+The Metacat configurations included under Global Properties represent the bulk
+of the settings required to run Metacat. Click a blue question-mark
+icon beside any setting for detailed instructions. More information about each
 property is also included in the :doc:`metacat-properties`.
 
 .. figure:: images/screenshots/image021_globalprops.png
@@ -211,7 +237,7 @@ property is also included in the :doc:`metacat-properties`.
 Metacat Initial Global Property Values
 ......................................
 The first time you install Metacat, the system attempts to automatically detect
-the values for a number of settings (see table). It is important to ensure that 
+the values for a number of settings (see table). It is important to ensure that
 the following values are the properties below are correct.
 
  **Note:** When you save global properties, Metacat also saves a back-up file that is
@@ -230,6 +256,7 @@ HTTP Port                  The non-secure port where Metacat will be available.
 HTTP SSL Port              The secure port where Metacat will be available.
 Deploy Location            The directory where the application is deployed.
 Site Properties Directory  Directory in which to store the metacat-site.properties file.
+Object Storage Root Path   The path to the root directory used for object storage.
 =========================  =============================================================
 
 Solr Global Property Values
@@ -253,30 +280,31 @@ Environment Override File  The path of the script file to overwrite the default 
 
 .. _Solr installation page: ./install.html#solr-server
 
-Token Configuration
-..............................................
-A valid admin (auth) token and DataONE CA certificate are required for a Metacat v3.0.0 installation
-to function correctly (i.e. to handle private datasets). Please `contact DataONE`_ to obtain a
-long-term auth token (valid for 1 year). **This is only an interim requirement**; a future release
-of Metacat will remove the need for this token.
+Token Configuration (for Metacat v3.0.0 only; SKIP for other versions!)
+.......................................................................
 
-  * If you are already part of the DataONE network and have a member node, we will issue you an auth token
-  linked to your DataONE Node identity.
+ **Note for Metacat v3.0.0 only:**
 
-  * If you're not a DataONE member node, we `encourage you to join`_ (it's free!) so that your data
-  can partake in DataONE's goal of the preservation of scientific data for future use.
+ A valid admin (auth) token and DataONE CA certificate are required for a Metacat v3.0.0
+ installation to handle private datasets correctly. Later versions (i.e. Metacat v.3.1.0 and above)
+ **do NOT** require this special setup.
 
-  * Otherwise, we can issue an auth token linked to your Metacat administrator's ORCID iD.
+ **IMPORTANT**: This should not be confused with configuring Metacat to act as a DataONE Member
+ Node, which does still require a certificate. Details of that setup can be found in :doc:`dataone`.
 
-If you are checking out Metacat for the first time, you can obtain a temporary auth token to continue
-evaluating Metacat by logging into the KNB website, and navigating to "My Profile" -> "Settings" -> "Authentication Token".
+**We strongly recommend using the latest Matacat version**, which will not require a token.**
+  However, if you need to run v3.0.0 for any reason, you can either:
 
- **Note:** This temporary auth token is only valid for 24 hours, but you can continue manually retrieving short-term tokens
+- obtain a **temporary** auth token (each one is valid for only 24 hours) by logging into the
+   `KNB website`_, and navigating to "My Profile" -> "Settings" -> "Authentication Token", or
 
-.. _contact DataONE: https://www.dataone.org/contact/
+- obtain a long-term auth token (valid for 1 year), by `contacting DataONE`_.
 
-.. _encourage you to join: https://www.dataone.org/jointhenetwork/
+.. _contacting DataONE: https://www.dataone.org/contact/
 
+.. _KNB website: https://knb.ecoinformatics.org/
+
+Related properties, needed only for Metacat v3.0.0, are shown below:
 
 ===============================  =============================================================
 Property                         Description
@@ -289,7 +317,7 @@ Admin Token Path                 The path to the admin jwt token that will be us
                                  dataone-indexer to access the private objects' system metadata.
 ===============================  =============================================================
 
-The Admin Token
+The Admin Token (for Metacat v3.0.0 only; SKIP for other versions!)
 ~~~~~~~~~~~~~~~
 After obtaining an admin (auth) token, save it to the default path (below). If you wish to save it
 elsewhere, be sure to update the global properties' ``Admin Token Path`` value with your custom path.
@@ -300,7 +328,7 @@ elsewhere, be sure to update the global properties' ``Admin Token Path`` value w
 
    /var/metacat/certs/token
 
-Token Verification Certificate
+Token Verification Certificate (for Metacat v3.0.0 only; SKIP for other versions!)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Next, you will need to obtain a DataONE Intermediate Certificate.
 Depending on your needs, there are two available:
@@ -319,10 +347,10 @@ the following global property ``Token Verification Certificates`` with the path 
 
 Database Configuration
 ----------------------
-Because the Database Configuration is dependent on values specified in the 
-Global Properties section, the link to these settings does not become active 
-until after the global settings have been saved. Once the global settings have 
-been saved, Metacat automatically detects the database schema version and 
+Because the Database Configuration is dependent on values specified in the
+Global Properties section, the link to these settings does not become active
+until after the global settings have been saved. Once the global settings have
+been saved, Metacat automatically detects the database schema version and
 upgrades it if necessary (and with your permission). There are two expected
 database configuration statuses:
 
@@ -332,29 +360,29 @@ database configuration statuses:
 
 New Installation
 ................
-If Metacat determines that your database is new, the Database Install/Upgrade 
-utility lists the SQL scripts that will run in order to create a database 
+If Metacat determines that your database is new, the Database Install/Upgrade
+utility lists the SQL scripts that will run in order to create a database
 schema for the new version of Metacat.
 
 .. figure:: images/screenshots/image027_newdbinstall.png
    :align: center
 
    Database installation creates tables needed for Metacat.
-   
-If the database is not new, or if you have any questions about whether it is 
-new or not, choose Cancel and contact support at knb-help@nceas.ucsb.edu. 
 
-When you choose Continue, Metacat runs the listed scripts and creates the 
+If the database is not new, or if you have any questions about whether it is
+new or not, choose Cancel and contact support at knb-help@nceas.ucsb.edu.
+
+When you choose Continue, Metacat runs the listed scripts and creates the
 database schema.
 
 Upgrade
 .......
-If Metacat identifies a previous database schema, the Database Install/Upgrade 
-utility notes the existing version and lists the SQL scripts that will run in 
+If Metacat identifies a previous database schema, the Database Install/Upgrade
+utility notes the existing version and lists the SQL scripts that will run in
 order to update the schema for the new version of Metacat.
 
-If the detected schema version is incorrect, or if you have any questions about 
-whether it is correct or not, click the Cancel button and contact support at 
+If the detected schema version is incorrect, or if you have any questions about
+whether it is correct or not, click the Cancel button and contact support at
 knb-help@nceas.ucsb.edu. When you choose to continue, Metacat runs the listed
 scripts and updates the database schema.
 
@@ -365,25 +393,25 @@ It is important to let the process complete before using Metacat otherwise your 
 
 Solr Server Configuration
 -------------------------
-Because the Solr Server Configuration is dependent on values specified in the 
-Global Properties section, the link to these settings does not become active 
-until after the global settings have been saved. Once the global settings have 
-been saved, Metacat automatically detects the status of the Solr Core and creates 
+Because the Solr Server Configuration is dependent on values specified in the
+Global Properties section, the link to these settings does not become active
+until after the global settings have been saved. Once the global settings have
+been saved, Metacat automatically detects the status of the Solr Core and creates
 or upgrades it if necessary (and with your permission).
 
  **Note:** Your Solr server should be running when you configure Metacat. If it is not, please see the `Solr installation page`_.
 
 .. figure:: images/screenshots/image073_solrupdate.png
    :align: center
-   
+
 Solr Troubleshooting
 ....................
-If you click the Solr Configuration button and get the error message like 
+If you click the Solr Configuration button and get the error message like
 ``Server refused connection at: http://localhost:8983/solr``, this means the
 Solr server is not running and you need to start it.
 
-If you click the Create button to create the Solr core and get an error message 
-like ``Couldn't persist core properties to /var/metacat/solr-home2/``, this means 
+If you click the Create button to create the Solr core and get an error message
+like ``Couldn't persist core properties to /var/metacat/solr-home2/``, this means
 the solr user doesn't have the write permission to the Solr Home directory. You need
 to add the solr user to the tomcat group, restart Solr server and Tomcat, log in again
 and continue to configure Metacat. The instructions for adding users to groups can be found in the
