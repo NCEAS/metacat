@@ -159,37 +159,63 @@ have been specified and an authorized administrator logs in.
 .. figure:: images/screenshots/image017_configupdated.png
    :align: center
 
-   Metacat configuration menu, showing each configuration section.  Once all
-   sections are marked as green ``configured`` (or ``bypassed`` where relevant), Metacat can be accessed.
+   Metacat configuration menu, showing each configuration section.  Once all sections are marked as
+   green ``configured`` (or ``complete`` or ``bypassed`` where relevant), Metacat can be accessed.
 
-Each configuration section has three statuses:
+Configuration sections may have the following statuses (although not every status will be available
+for all sections):
 
-==============  =============================================================
+==============  ==========================================================================
 Status          Description
-==============  =============================================================
-unconfigured    The section has yet to be configured 
-configured      The section has been configured. 
-bypassed        The administrator 
-                can choose not to configure or skip the section.
-==============  =============================================================
+==============  ==========================================================================
+unknown         The section's status is unknown, pending configuration of earlier sections
+unconfigured    The section has yet to be configured
+in progress     The section is in the process of being configured
+configured      The section has been configured successfully
+complete        The section has performed an upgrade that is now complete
+bypassed        The administrator has chosen not to configure the section
+==============  ==========================================================================
  
 To the right of each configuration section is one of the following options: 
-Configure Now, Reconfigure Now, Configure Global Properties First, or 
-Version:X.X.X. If the option is linked (e.g., Configure Now or Reconfigure Now), 
-you can select the link to open the associated configuration settings and edit them. 
-If the option is not linked (e.g., Configure Global Properties First), the settings
-cannot be specified until the global properties are set. Once the global properties
-are configured, the option to configure this section becomes available.
-The Version:X.X.X option is used only for the Database Installation/Upgrade section.
-If the database schema version detected by Metacat matches the application version (e.g., 3.0.0),
-then no further database configuration is required.
+**Configure Now**, **Reconfigure Now**, **Configure Global Properties First**, **Version: X.X.X**,
+or **Refresh page to update status**.
 
-All settings must be in a ``configured`` or ``bypassed state`` in order to run Metacat.
+If the option is a clickable link (e.g., **Configure Now** or **Reconfigure Now**),
+you can use the link to open the associated configuration settings and edit them.
+If the option is not linked, the settings cannot be specified until the global properties are set.
+Once the global properties are configured, the option to configure this section becomes available.
 
- **Reminder:** Metacat indexes at start-up time, so the initial start-up may take some time depending
- on the amount of data in your database and whether or not you have opted to regenerate the spatial
- cache. If you are reconfiguring a running version of Metacat, you must restart the Tomcat server
- for the changes to take effect.
+The **Version: X.X.X** option is used only for the Database Installation/Upgrade section. If the
+database schema version detected by Metacat matches the application version (e.g., 3.1.0),
+then no further database configuration is required. Otherwise, the database upgrade should
+be initiated by clicking the upgrade button on the database configuration page.
+
+Since the database upgrade and the storage upgrade may take a long time to complete, you may see the
+**Refresh page to update status** option:
+
+.. figure:: images/screenshots/image018a_database_in_progress.png
+   :align: center
+
+   The Metacat settings as they appear when the database upgrade is in progress.
+
+As indicated, you may refresh the page in your browser to see updates.
+
+The Storage Conversion will start automatically, immediately after the database upgrade is
+finished. The Storage Conversion converts the existing file storage format to the new DataONE
+hashstore format, which introduces significant performance enhancements for managing large
+datasets. The Storage Conversion may take a long time to complete, depending on the number and
+size of the files in your repository. Again, you may refresh the page to see updates:
+
+.. figure:: images/screenshots/image018b_storage_in_progress.png
+   :align: center
+
+   The Metacat settings as they appear when the storage upgrade is in progress.
+
+All settings must be in a ``configured``, ``complete`` or ``bypassed`` state in order to run
+Metacat.
+
+ **Reminder:** If you are reconfiguring a running version of Metacat, you must restart the Tomcat
+ server for the changes to take effect.
 
 .. figure:: images/screenshots/image019_configured.png
    :align: center

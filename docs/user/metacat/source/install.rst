@@ -21,7 +21,7 @@ the latest version of Metacat must have the following software installed and run
 
     * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
-  * `Java 17`_ (Note: Java 8 is deprecated since v3.0.0)
+  * `Java 17`_ (Note: Java 8 is deprecated since Metacat v3.0.0)
 
   * `RabbitMQ`_
 
@@ -714,7 +714,7 @@ To upgrade an existing binary Metacat installation follow the steps in this
 section. The steps for upgrading Metacat from source are the same as the
 instructions for installing from source:
 
- **Note: Please first upgrade to Metacat v2.19.0 before proceeding to Metacat v3.0.0**
+ **Note: Please first upgrade to Metacat v2.19.0 before proceeding to Metacat v3.0.0 or above**
 
 1. Download and extract the new version of Metacat. For more information about downloading and extracting Metacat, please see Downloading Metacat.
 
@@ -766,12 +766,13 @@ with Metacat's Authorization Configuration screen. Note that if you do not have
 Tomcat integrated with Apache you will probably have to type
 http://yourserver.yourdomain.com:8080/yourcontext/
 
-Upgrading to Metacat v3.0.0
-...........................
+Upgrading to Metacat v3.0.0 or above
+....................................
 
 Starting Requirements:
 
-  * Your existing Metacat installation must already have been successfully upgraded to `Metacat v2.19.0`_ before you can begin upgrading to v3.0.0.
+  * Your existing Metacat installation must already have been successfully upgraded to
+    `Metacat v2.19.0`_ before you can begin upgrading to v3.0.0 or above.
 
     * If not, please upgrade to `Metacat v2.19.0`_ first, before proceeding.
 
@@ -809,7 +810,7 @@ Starting Requirements:
 
 1. Download/upgrade your solr version to 9.5.0
 
-  * In Metacat v3.0.0, the solr schema and configuration have changed.
+  * The solr schema and configuration changed significantly between Metacat v2.19.x and v3.0.0.
 
     * Please back up your current solr-home (directory) and then remove all of its contents.
 
@@ -849,7 +850,7 @@ Starting Requirements:
     sudo apt install rabbitmq-server
     sudo systemctl restart rabbitmq-server
 
-4. You are now ready to install Metacat v3.0.0
+4. You are now ready to install Metacat v3.0.0 or above
 
   * Additional notes:
 
@@ -863,9 +864,12 @@ Starting Requirements:
 
   * **Reminder**:
 
-    * Data from existing or previous solr installations are incompatible with the new 3.0.0 schema and configuration.
-    * During the Metacat configuration process, confirm the path to your solr-home directory and ensure that the directory is empty.
-    * **After configuring Metacat, re-index all objects (an example is below for your quick reference, or see the `Metacat Admin Api`_).**
+    * Data from existing or previous solr installations are incompatible with the  new schema and
+      configuration for Metacat v3.0.0 and above.
+    * During the Metacat configuration process, confirm the path to your solr-home directory and
+      **ensure that the directory is empty**.
+    * **After upgrading and configuring Metacat, re-index all objects (an example is below for your
+      quick reference, or see the `Metacat Admin Api`_).**
 
       ::
 
