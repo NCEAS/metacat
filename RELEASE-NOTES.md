@@ -31,14 +31,14 @@ changes to disk-based file-storage methods.
 * Add indexes to the access_log table ([Issue #1965](https://github.com/NCEAS/metacat/issues/1965))
 * Optimize the query to get log record ([Issue #1976](https://github.com/NCEAS/metacat/issues/1976))
 
-## Release Notes for helm chart 2.1.0
+## Release Notes for helm chart 1.2.0
 
 **Release date: 2024-12-16**
 
 ### New Features & Enhancements:
-* Increase Application version to 3.1.0
-* Increase MetacatUI subchart version to 1.0.1 (MetacatUI app version 2.31.0)
-* Increase dataone-indexer subchart version to 3.1.0
+* Increase Metacat Application version to 3.1.0
+* Increase MetacatUI subchart version to 1.0.2 (MetacatUI app version 2.31.0)
+* Increase dataone-indexer subchart version to 1.1.1 (dataone-indexer app version 3.1.1)
   * Setup no longer requires an auth token in order to index private datasets
 * DataONE Member Node setup simplified, and no longer requires admin access to the nginx controller;
   all [X-Proxy-Header setup now takes place in the current release
