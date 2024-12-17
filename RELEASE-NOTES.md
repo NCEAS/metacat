@@ -3,7 +3,7 @@
 
 ## Release Notes for Metacat 3.1.0
 
-**Release date: 2024-12-16**
+**Release date: 2024-12-18**
 
 > **IMPORTANT** If you are upgrading from version 2.19, please see the [Upgrade
 > Notes](#upgrade-notes-2190-to-300-or-above) below.
@@ -33,7 +33,7 @@ changes to disk-based file-storage methods.
 
 ## Release Notes for helm chart 1.2.0
 
-**Release date: 2024-12-16**
+**Release date: 2024-12-18**
 
 ### New Features & Enhancements:
 * Increase Metacat Application version to 3.1.0
