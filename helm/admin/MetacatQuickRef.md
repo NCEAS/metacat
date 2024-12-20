@@ -218,7 +218,12 @@ happen...**
   > how to detect when hashstore conversion finishes
 
 - [ ] When database upgrade and hashstore conversion have both finished, re-enable probes
-- [ ] Re-index all datasets (Did with 25 indexers for test.adc on dev; 50 on prod)
+- [ ] Re-index all datasets (Did with 25 indexers for test.adc on dev; 50 on prod).
+
+  > NOTE: if you will need to determine **exactly** when indexing is complete (e.g. for
+  > benchmarking purposes), ensure the indexer log level has been set to INFO before you start
+  > indexing (`kc edit configmaps ${RELEASE_NAME}-indexer-configfiles` and restart all indexer pods)
+
     ```shell
     kubectl get secret ${RELEASE_NAME}-d1-client-cert -o jsonpath="{.data.d1client\.crt}" | \
         base64 -d > DELETEME_NODE_CERT.pem
@@ -229,8 +234,7 @@ happen...**
     # don't forget to delete the cert file:
     rm DELETEME_NODE_CERT.pem
     ```
-  > [See Tips, below](#monitor-indexing-progress-via-rabbitmq-dashboard) for monitoring indexing
-  > progress via RabbitMQ dashboard.
+  > [See Tips, below](#monitor-indexing-progress) for monitoring indexing progress.
 
 
 ## 6. `(MIGRATION ONLY)` FINAL SWITCH-OVER FROM LEGACY TO K8S
@@ -514,8 +518,9 @@ Steps to resolve:
    ...and restart the metacat pod to re-run the hashstore conversion and generate the correct
    sysmeta file in hashstore
 
-### Monitor Indexing Progress via RabbitMQ Dashboard:
+### Monitor Indexing Progress:
 
+#### Using the RabbitMQ Dashboard:
 * Enable port forwarding:
    ```shell
    kubectl port-forward service/${RELEASE_NAME}-rabbitmq-headless 15672:15672
@@ -529,7 +534,20 @@ Steps to resolve:
            -o jsonpath="{.data.rabbitmq-password}" | base64 -d)
    echo "rmq_pwd: $rmq_pwd"
    ```
+  > **NOTE**: queue activity is not a reliable indicator of indexing progress, since the index
+  > workers continue to process tasks even after the queue has been emptied. The best way to
+  > determine when indexing is complete is to monitor the logs, as follows...
 
+#### Determining when indexing is complete
+
+* Ensure the indexer log level has been set to INFO
+* grep the logs for the last occurrence of `Completed the index task from the index queue`:
+   ```shell
+   kubectl logs --max-log-requests 100 -f --tail=100 -l app.kubernetes.io/name=d1index \
+        | grep "Completed the index task"
+   ```
+* You must be sure indexing has finished before trying to find the last occurrence. Note that some
+    indexing tasks can take more than an hour.
 
 ### Creating Volume Credentials Secret for the PVs
 
