@@ -68,6 +68,7 @@ import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -145,6 +146,7 @@ public class CNodeService extends D1NodeService
 
         SystemMetadata systemMetadata = null;
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
                     systemMetadata = SystemMetadataManager.getInstance().get(pid);
@@ -210,6 +212,8 @@ public class CNodeService extends D1NodeService
         } catch (RuntimeException e) {
             throw new ServiceFailure("4882", e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
@@ -253,6 +257,7 @@ public class CNodeService extends D1NodeService
 
         SystemMetadata systemMetadata = null;
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
                     systemMetadata = SystemMetadataManager.getInstance().get(pid);
@@ -304,6 +309,8 @@ public class CNodeService extends D1NodeService
 
         } catch (RuntimeException e) {
             throw new ServiceFailure("4882", e.getMessage());
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
@@ -344,65 +351,71 @@ public class CNodeService extends D1NodeService
         String serviceFailureCode = "4962";
         String invalidTokenCode = "4963";
         boolean needDeleteInfo = false;
-
-        //SystemMetadata sysmeta = getSeriesHead(pid, notFoundCode, serviceFailureCode);
-        Identifier HeadOfSid = getPIDForSID(pid, serviceFailureCode);
-        if (HeadOfSid != null) {
-            pid = HeadOfSid;
-        }
-        SystemMetadata sysmeta = null;
         try {
-            sysmeta =
-                getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode,
-                                        needDeleteInfo);
-        } catch (InvalidRequest e) {
-            throw new InvalidToken(invalidTokenCode, e.getMessage());
-        }
+            Identifier HeadOfSid = getPIDForSID(pid, serviceFailureCode);
+            if (HeadOfSid != null) {
+                pid = HeadOfSid;
+            }
+            SystemMetadataManager.lock(pid);
+            SystemMetadata sysmeta = null;
+            try {
+                sysmeta =
+                    getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode,
+                                            needDeleteInfo);
+            } catch (InvalidRequest e) {
+                throw new InvalidToken(invalidTokenCode, e.getMessage());
+            }
 
-        D1AuthHelper authDel =
-            new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
-        authDel.doCNOnlyAuthorization(session);
+            D1AuthHelper authDel =
+                new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
+            authDel.doCNOnlyAuthorization(session);
 
-        super.delete(session.getSubject().getValue(), pid);
-        // get the node list
-        try {
-            nodeList = getCNNodeList().getNodeList();
+            super.delete(session.getSubject().getValue(), pid);
+            // get the node list
+            try {
+                nodeList = getCNNodeList().getNodeList();
 
-        } catch (Exception e) { // handle BaseException and other I/O issues
+            } catch (Exception e) { // handle BaseException and other I/O issues
 
-            // swallow errors since the call is not critical
-            logMetacat.error("Can't inform MNs of the deletion of " + pid.getValue()
-                                 + " due to communication issues with the CN: " + e.getMessage());
+                // swallow errors since the call is not critical
+                logMetacat.error("Can't inform MNs of the deletion of " + pid.getValue()
+                                     + " due to communication issues with the CN: "
+                                     + e.getMessage());
 
-        }
+            }
 
-        // notify the replicas
-        if (sysmeta.getReplicaList() != null) {
-            for (Replica replica : sysmeta.getReplicaList()) {
-                NodeReference replicaNode = replica.getReplicaMemberNode();
-                try {
-                    if (nodeList != null) {
-                        // find the node type
-                        for (Node node : nodeList) {
-                            if (node.getIdentifier().getValue().equals(replicaNode.getValue())) {
-                                nodeType = node.getType();
-                                break;
+            // notify the replicas
+            if (sysmeta.getReplicaList() != null) {
+                for (Replica replica : sysmeta.getReplicaList()) {
+                    NodeReference replicaNode = replica.getReplicaMemberNode();
+                    try {
+                        if (nodeList != null) {
+                            // find the node type
+                            for (Node node : nodeList) {
+                                if (node.getIdentifier().getValue()
+                                    .equals(replicaNode.getValue())) {
+                                    nodeType = node.getType();
+                                    break;
 
+                                }
                             }
                         }
-                    }
 
-                    // only send call MN.delete() to avoid an infinite loop with the CN
-                    if (nodeType != null && nodeType == NodeType.MN) {
-                        Identifier mnRetId = D1Client.getMN(replicaNode).delete(null, pid);
-                    }
+                        // only send call MN.delete() to avoid an infinite loop with the CN
+                        if (nodeType != null && nodeType == NodeType.MN) {
+                            Identifier mnRetId = D1Client.getMN(replicaNode).delete(null, pid);
+                        }
 
-                } catch (Exception e) {
-                    // all we can really do is log errors and carry on with life
-                    logMetacat.error("Error deleting pid: " + pid.getValue() + " from replica MN: "
-                                         + replicaNode.getValue(), e);
+                    } catch (Exception e) {
+                        // all we can really do is log errors and carry on with life
+                        logMetacat.error(
+                            "Error deleting pid: " + pid.getValue() + " from replica MN: "
+                                + replicaNode.getValue(), e);
+                    }
                 }
             }
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return pid;
@@ -449,37 +462,41 @@ public class CNodeService extends D1NodeService
         }
         SystemMetadata sysmeta = null;
         try {
-            sysmeta =
-                getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode,
-                                        needDeleteInfo);
-        } catch (InvalidRequest e) {
-            throw new InvalidToken(invalidTokenCode, e.getMessage());
-        }
-        D1AuthHelper authDel =
-            new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
-        authDel.doIsAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION);
+            SystemMetadataManager.lock(pid);
+            try {
+                sysmeta =
+                    getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode,
+                                            needDeleteInfo);
+            } catch (InvalidRequest e) {
+                throw new InvalidToken(invalidTokenCode, e.getMessage());
+            }
+            D1AuthHelper authDel =
+                new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
+            authDel.doIsAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION);
 
-        D1NodeVersionChecker checker =
-            new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
-        String version = checker.getVersion("MNRead");
-        if (version == null) {
-            throw new ServiceFailure(
-                "4972",
-                "Couldn't determine the MNRead version of the authoritative member node for the "
-                    + "pid "
-                    + pid.getValue());
-        } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
-            //we don't apply this method to an object whose authoritative node is v2
-            throw new NotAuthorized("4970", V2V1MISSMATCH);
-        } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
-            //we don't understand this version (it is not v1 or v2)
-            throw new NotImplemented(
-                "4974", "The version of the MNRead is " + version
-                + " for the authoritative member node of the object " + pid.getValue()
-                + ". We don't support it.");
+            D1NodeVersionChecker checker =
+                new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
+            String version = checker.getVersion("MNRead");
+            if (version == null) {
+                throw new ServiceFailure(
+                    "4972",
+                    "Couldn't determine the MNRead version of the authoritative member node for the "
+                        + "pid " + pid.getValue());
+            } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
+                //we don't apply this method to an object whose authoritative node is v2
+                throw new NotAuthorized("4970", V2V1MISSMATCH);
+            } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+                //we don't understand this version (it is not v1 or v2)
+                throw new NotImplemented(
+                    "4974", "The version of the MNRead is " + version
+                    + " for the authoritative member node of the object " + pid.getValue()
+                    + ". We don't support it.");
+            }
+            boolean needModifyDate = true;
+            archiveCNObjectWithNotificationReplica(session, pid, sysmeta, needModifyDate);
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
-        boolean needModifyDate = true;
-        archiveCNObjectWithNotificationReplica(session, pid, sysmeta, needModifyDate);
 
 
         return pid;
@@ -562,9 +579,6 @@ public class CNodeService extends D1NodeService
         }
 
 
-        // The lock to be used for this identifier
-        //Lock lock = null;
-
         // get the subject
         Subject subject = session.getSubject();
 
@@ -579,6 +593,7 @@ public class CNodeService extends D1NodeService
 
         SystemMetadata systemMetadata = null;
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 if (IdentifierManager.getInstance().systemMetadataPIDExists(pid)) {
                     systemMetadata = SystemMetadataManager.getInstance().get(pid);
@@ -642,6 +657,8 @@ public class CNodeService extends D1NodeService
 
         } catch (RuntimeException e) {
             throw new ServiceFailure("4882", e.getMessage());
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
@@ -680,8 +697,6 @@ public class CNodeService extends D1NodeService
 
         }
 
-        // The lock to be used for this identifier
-        //Lock lock = null;
 
         boolean allowed = false;
         int replicaEntryIndex = -1;
@@ -694,6 +709,7 @@ public class CNodeService extends D1NodeService
         SystemMetadata systemMetadata = null;
 
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 systemMetadata = SystemMetadataManager.getInstance().get(pid);
                 // did we get it correctly?
@@ -875,6 +891,8 @@ public class CNodeService extends D1NodeService
             String msg = "There was a RuntimeException getting the lock for " + pid.getValue();
             logMetacat.info(msg);
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
@@ -1191,8 +1209,7 @@ public class CNodeService extends D1NodeService
         throws NotImplemented, NotAuthorized, ServiceFailure, InvalidRequest,
         InvalidSystemMetadata {
 
-        // The lock to be used for this identifier
-        //Lock lock = null;
+
 
         // TODO: control who can call this?
         if (session == null) {
@@ -1240,6 +1257,7 @@ public class CNodeService extends D1NodeService
         }
 
         try {
+            SystemMetadataManager.lock(pid);
             logMetacat.debug("Checking if identifier exists...");
             // Check that the identifier does not already exist
             try {
@@ -1279,6 +1297,8 @@ public class CNodeService extends D1NodeService
             throw new ServiceFailure(
                 "4862", "Error inserting system metadata: " + e.getClass() + ": " + e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
 
@@ -1385,16 +1405,11 @@ public class CNodeService extends D1NodeService
         throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, NotImplemented,
         InvalidRequest, VersionMismatch {
 
-        // The lock to be used for this identifier
-        //Lock lock = null;
 
         // do we have a valid pid?
         if (pid == null || pid.getValue().trim().equals("")) {
             throw new InvalidRequest("4442", "The provided identifier was invalid.");
         }
-
-        // get the subject
-        Subject subject = session.getSubject();
 
         String serviceFailureCode = "4490";
         String notFoundCode = "4460";
@@ -1405,17 +1420,18 @@ public class CNodeService extends D1NodeService
         if (HeadOfSid != null) {
             pid = HeadOfSid;
         }
-        SystemMetadata systemMetadata =
-            getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode,
-                                    needDeleteInfo);
-        //SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,
-        // invalidRequestCode);
 
-        D1AuthHelper authDel =
-            new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
-        authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
 
         try {
+            SystemMetadataManager.lock(pid);
+            SystemMetadata systemMetadata =
+                getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode,
+                                        needDeleteInfo);
+
+
+            D1AuthHelper authDel =
+                new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
+            authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
             try {
                 // does the request have the most current system metadata?
                 if (systemMetadata.getSerialVersion().longValue() != serialVersion) {
@@ -1470,6 +1486,8 @@ public class CNodeService extends D1NodeService
         } catch (RuntimeException e) {
             throw new ServiceFailure("4490", e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return pid;
@@ -1636,6 +1654,9 @@ public class CNodeService extends D1NodeService
             if (!isValidIdentifier(pid)) {
                 throw new InvalidRequest("4891", "The provided identifier is invalid.");
             }
+            if (sysmeta == null) {
+                throw new InvalidRequest("4891", "The system metadata is null.");
+            }
             if (session == null) {
                 throw new InvalidToken("4894", "Session is required to WRITE to the Node.");
             }
@@ -1655,10 +1676,8 @@ public class CNodeService extends D1NodeService
                 // proceed if we're called by a CN
                 if (isAllowed) {
                     objectExists(pid);
-
                     //check if the series id is legitimate. It uses the same rules of the method
                     // registerSystemMetadata
-                    //checkSidInModifyingSystemMetadata(sysmeta, "4896", "4893");
                     Identifier sid = sysmeta.getSeriesId();
                     if (sid != null) {
                         if (!isValidIdentifier(sid)) {
@@ -1682,11 +1701,8 @@ public class CNodeService extends D1NodeService
                     String version = checker.getVersion("MNRead");
                     boolean changeModificationDate = false;
                     if (version != null && version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
-                        //sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                         changeModificationDate = true;
                     }
-                    //sysmeta.setArchived(false); // this is a create op, not update
-
                     // the CN should have set the origin and authoritative member node fields
                     try {
                         sysmeta.getOriginMemberNode().getValue();
@@ -1697,10 +1713,8 @@ public class CNodeService extends D1NodeService
                             "4896",
                             "Both the origin and authoritative member node identifiers need to be"
                                 + " set.");
-
                     }
                     pid = super.create(session, pid, object, sysmeta, changeModificationDate);
-
                 } else {
                     String msg = "The subject listed as " + session.getSubject().getValue()
                         + " isn't allowed to call create() on a Coordinating Node for pid "
@@ -1708,7 +1722,6 @@ public class CNodeService extends D1NodeService
                     logMetacat.error(msg);
                     throw new NotAuthorized("1100", msg);
                 }
-
             } catch (RuntimeException e) {
                 // Convert Hazelcast runtime exceptions to service failures
                 String msg =
@@ -1717,6 +1730,19 @@ public class CNodeService extends D1NodeService
                 throw new ServiceFailure("4893", msg);
 
             }
+        } catch(Exception e) {
+            // Metacat needs to delete object from hashstore
+            try {
+                // Metacat stores the object based on the pid in the system metadata,
+                // so it deletes from there.
+                if (sysmeta != null && sysmeta.getIdentifier() != null) {
+                    MetacatInitializer.getStorage().deleteObject(sysmeta.getIdentifier());
+                }
+            } catch (Exception ee) {
+                logMetacat.error("Metacat couldn't delete the object "
+                                + sysmeta.getIdentifier().getValue() + " since " + ee.getMessage());
+            }
+            throw e;
         } finally {
             IOUtils.closeQuietly(object);
         }
@@ -1768,6 +1794,7 @@ public class CNodeService extends D1NodeService
         authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
 
         try {
+            SystemMetadataManager.lock(pid);
             try {
                 systemMetadata = SystemMetadataManager.getInstance().get(pid);
                 if (systemMetadata == null) {
@@ -1830,6 +1857,8 @@ public class CNodeService extends D1NodeService
         } catch (RuntimeException e) {
             throw new ServiceFailure("4430", e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         // TODO: how do we know if the map was persisted?
@@ -1857,9 +1886,6 @@ public class CNodeService extends D1NodeService
         throws NotImplemented, NotAuthorized, ServiceFailure, InvalidRequest, NotFound,
         VersionMismatch {
 
-        // get the subject
-        Subject subject = session.getSubject();
-
         // are we allowed to do this?
         if (session == null) {
             throw new NotAuthorized(
@@ -1874,7 +1900,7 @@ public class CNodeService extends D1NodeService
 
         SystemMetadata systemMetadata = null;
         try {
-
+            SystemMetadataManager.lock(pid);
             try {
                 systemMetadata = SystemMetadataManager.getInstance().get(pid);
                 // does the request have the most current system metadata?
@@ -1949,6 +1975,8 @@ public class CNodeService extends D1NodeService
             logMetacat.info("Unknown RuntimeException thrown: " + e.getCause().getMessage());
             throw new ServiceFailure("4852", e.getMessage());
 
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
 
         return true;
@@ -2099,26 +2127,30 @@ public class CNodeService extends D1NodeService
 
         //update the system metadata locally
         boolean success = false;
+        try {
+            SystemMetadataManager.lock(pid);
+            SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
 
-        SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
-
-        if (currentSysmeta == null) {
-            throw new InvalidRequest(
-                "4863", "We can't find the current system metadata on the member node for the id "
-                + pid.getValue());
+            if (currentSysmeta == null) {
+                throw new InvalidRequest(
+                    "4863",
+                    "We can't find the current system metadata on the member node for the id "
+                        + pid.getValue());
+            }
+            // CN will ignore the coming serial version and replica list fields from the mn node.
+            BigInteger currentSerialVersion = currentSysmeta.getSerialVersion();
+            sysmeta.setSerialVersion(currentSerialVersion);
+            List<Replica> replicas = currentSysmeta.getReplicaList();
+            sysmeta.setReplicaList(replicas);
+            boolean needUpdateModificationDate =
+                false;//cn doesn't need to change the modification date.
+            boolean fromCN = true;
+            success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate,
+                                           currentSysmeta, fromCN,
+                                           SystemMetadataManager.SysMetaVersion.UNCHECKED);
+        } finally {
+            SystemMetadataManager.unLock(pid);
         }
-        // CN will ignore the coming serial version and replica list fields from the mn node.
-        BigInteger currentSerialVersion = currentSysmeta.getSerialVersion();
-        sysmeta.setSerialVersion(currentSerialVersion);
-        List<Replica> replicas = currentSysmeta.getReplicaList();
-        sysmeta.setReplicaList(replicas);
-        boolean needUpdateModificationDate =
-            false;//cn doesn't need to change the modification date.
-        boolean fromCN = true;
-        success =
-            updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta,
-                                 fromCN, SystemMetadataManager.SysMetaVersion.UNCHECKED);
-
         return success;
     }
 

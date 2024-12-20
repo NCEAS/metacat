@@ -1,5 +1,7 @@
 package edu.ucsb.nceas.metacat.util;
 
+import edu.ucsb.nceas.metacat.admin.AdminException;
+import edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -36,13 +38,17 @@ public class ConfigurationUtil {
                     && DatabaseUtil.isDatabaseConfigured()
                     && isBackupDirConfigured()
                     && DataONEConfigUtil.isDataOneConfigured()
-                    && isEZIDConfigured();
+                    && isEZIDConfigured()
+                    && HashStoreConversionAdmin.isConverted();
         } catch (MetacatUtilException ue) {
             logMetacat.error("Could not determine if metacat is configured due to utility exception: "
                     + ue.getMessage());
         } catch (GeneralPropertyException gpe) {
             logMetacat.error("Could not determine if metacat is configured due to property exception: "
                     + gpe.getMessage());
+        } catch (AdminException e) {
+            logMetacat.error("Could not determine if metacat is configured due to the admin "
+                                 + "exception: " + e.getMessage());
         }
 
         return metacatConfigured;

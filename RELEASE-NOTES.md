@@ -1,12 +1,88 @@
 # Metacat Release Notes
 
+
+## Release Notes for Metacat 3.1.0
+
+**Release date: 2024-12-18**
+
+> **IMPORTANT** If you are upgrading from version 2.19, please see the [Upgrade
+> Notes](#upgrade-notes-2190-to-300-or-above) below.
+
+The Metacat version 3.1.0 release introduces significant performance enhancements for managing large
+datasets. This was achieved by integrating with the new Dataone hash-based storage library,
+[`hashstore-java`](https://github.com/DataONEorg/hashstore-java), which necessitated substantial
+changes to disk-based file-storage methods.
+
+### New Features & Enhancements:
+* Metacat uses the DataONE [`hashstore-java`](https://github.com/DataONEorg/hashstore-java)
+  hash-based storage library.
+* Existing stored files are seamlessly migrated to the new storage system.
+* **Setup no longer requires an auth token in order to index private datasets**, thus simplifying
+  installation.
+* Upgraded datacite version to 4.5 from 4.3 for EZID DOI service ([Issue
+  #2005](https://github.com/NCEAS/metacat/issues/2005))
+* Docker changes:
+  * Updated base image to `tomcat:9.0.96-jre17-temurin-jammy` (from `9.0.82`)
+  * Run container as tomcat user & group, with uid 59997 and gid 59997
+
+### Upgrades and Bug Fixes:
+* Bump com.rabbitmq:amqp-client from 5.14.2 to 5.21.0
+  ([Issue #1922](https://github.com/NCEAS/metacat/issues/1922))
+* Add indexes to the access_log table ([Issue #1965](https://github.com/NCEAS/metacat/issues/1965))
+* Optimize the query to get log record ([Issue #1976](https://github.com/NCEAS/metacat/issues/1976))
+
+## Release Notes for helm chart 1.2.0
+
+**Release date: 2024-12-18**
+
+### New Features & Enhancements:
+* Increase Metacat Application version to 3.1.0
+* Increase MetacatUI subchart version to 1.0.2 (MetacatUI app version 2.31.0)
+* Increase dataone-indexer subchart version to 1.1.1 (dataone-indexer app version 3.1.1)
+  * Setup no longer requires an auth token in order to index private datasets
+* DataONE Member Node setup simplified, and no longer requires admin access to the nginx controller;
+  all [X-Proxy-Header setup now takes place in the current release
+  namespace](https://github.com/NCEAS/metacat/pull/2027/files)
+* Helm chart README updated with new setup for v3.1.0, and new [checklist added, for Metacat K8s
+  Installation and Migration/Upgrade
+  Steps](https://github.com/NCEAS/metacat/blob/main/helm/admin/MetacatQuickRef.md)
+* Example PV and PVC creation files added in the [`helm/admin` directory](./helm/admin).
+* Changes to UID & GID defaults:
+  * Metacat `podSecurityContext` defaults updated to `runAsUser: 59997`,
+    `runAsGroup: 59997` and `fsGroup: 59997`.
+  * Dataone-indexer subchart `podSecurityContext` defaults updated to `fsGroup: 59997`.
+  * Postgresql subchart `containerSecurityContext` defaults updated to `runAsUser: 59996`, and
+    `podSecurityContext` defaults updated to `runAsNonRoot: true`
+  * (NOTE you will need to chmod any existing `metacat` directory to `59997:59997`
+    and chmod any existing `postgresql` directory to `59996:59996`)
+* RabbitMQ subchart `consumer_timeout` set to `144000000`, to prevent the indexer from timing out
+  when indexing large datasets
+* Solr and Zookeeper subchart default Persistent Volume size increased to 100Gi.
+
+
+## Release Notes for Helm Chart 1.1.1
+
+Setting up a Token and Optional CA certificate for Indexer Access
+
+**IMPORTANT:** In order for Metacat 3.0.0 to function correctly, the
+dataone-indexer needs a valid authentication token, to enable
+indexing for private datasets, via calls to metacat's DataONE API.
+
+Release date: 2024-07-25
+
+> Note the helm chart is a beta feature. It has been tested, and we believe it to be working well,
+but it has not yet been used in production - so we recommend caution with this early release. If
+you try it, [we'd love to hear your feedback](https://www.dataone.org/contact/)!
+
+- Change version of `dataone-indexer` sub-chart from 1.0.1 to 1.0.2
+- See [`dataone-indexer` release
+  notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md) for details
+- No changes to Metacat code - still uses `Metacat:3.0.0-no-mcui` docker image, which is identical
+  to the Metacat 3.0.0 release
+
 ## Release Notes for Helm Chart 1.1.0
 
 Release date: 2024-07-11
-
-> Note the helm chart is a beta feature. It has been tested, and we believe it to be working well,
-  but it has not yet been used in production - so we recommend caution with this early release. If
-  you try it, [we'd love to hear your feedback](https://www.dataone.org/contact/)!
 
 - The helm chart now includes an optional sub-chart for
   [MetacatUI](https://nceas.github.io/metacatui/). The MetacatUI sub-chart is highly configurable,
@@ -65,10 +141,10 @@ Also in this release:
   we recommend caution with this early release. If you try it, [we'd love to hear your
   feedback](https://www.dataone.org/contact/)!
 
-### Upgrade Notes (2.19.0 to 3.0.0):
+### Upgrade Notes (2.19.0 to 3.0.0 or above):
 
 - Starting Requirements:
-  - Your existing Metacat installation must already have been successfully upgraded to [version v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to version 3.0.0.
+  - Your existing Metacat installation must already have been successfully upgraded to [version v2.19.0](https://github.com/NCEAS/metacat/releases/tag/2.19.0) before you can begin upgrading to version 3.0.0 or above.
     - If not, please upgrade to v2.19.0 first, before proceeding.
   - You must have Java 17 installed
     - If it is not installed, please install it and set it as the default version
@@ -83,15 +159,11 @@ Also in this release:
     - Stop Tomcat - ex. `sudo systemctl stop tomcat9`
     - Stop solr - ex. `sudo systemctl stop solr`
 - Download/upgrade your solr version to 9.5.0
-  - Solr upgrade is not supported for 3.0.0 with old cores, you must start with a new core (new solr-home)
-    - Please use a new Solr home and reindex all objects due to incompatibility between old data and the new Solr schema.
-    - Example below to reindex all objects
-      ```sh
-      # curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
-      # where $TOKEN is an environment variable containing your indexer token (see overview of major changes above).
-      # example:
-      curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
-      ```
+  > NOTE: Solr upgrade from older cores is not supported. Instead, you must choose a new value for
+  > `solr-home` in the property configuration page, pointing to a new, empty directory. Metacat will
+  > then create the new solr core without any data. Finally, you will need to reindex all objects
+  > ***after the upgrade process is done***, due to incompatibility between old data and the new Solr
+  > schema. ([Instructions below](#you-are-now-ready-to-install-metacat-300).)
   - Ensure that `/etc/default/solr.in.sh` is group writable
     - ex. `sudo chmod g+w /etc/default/solr.in.sh`
   - In `solr.in.sh`, be sure to delete the old solr home add a new solr path:
@@ -104,12 +176,28 @@ Also in this release:
    sudo apt install rabbitmq-server
    sudo systemctl restart rabbitmq-server
    ```
-- You are now ready to install Metacat 3.0.0
-  - Additional notes:
-    - `metacat.properties` no longer contains custom settings, and should not be edited.
-      - Please first re-configure Metacat through the Metacat Admin UI after upgrading.
-      - If you have custom properties that are not available for configuration in the Metacat Admin UI, these can be added to `metacat-site.properties`.
-    - The database upgrade process may require several minutes or longer to complete.
+
+#### You are now ready to install Metacat 3.0.0!
+Additional notes:
+- `metacat.properties` no longer contains custom settings, and should not be edited.
+  - Please first re-configure Metacat through the Metacat Admin UI after upgrading.
+  - If you have custom properties that are not available for configuration in the Metacat Admin UI, these can be added to `metacat-site.properties`.
+- The database upgrade process may require several minutes or longer to complete.
+- **Solr Re-Index:** as mentioned above, Solr upgrade of old cores is not supported. You should have a new, empty
+  solr core available, and can now reindex all objects:
+  - first, a metacat administrator should obtain a temporary auth token by [logging into the KNB
+    website with their ORCID](https://knb.ecoinformatics.org), and navigating to "My Profile" ->
+    "Settings" -> "Authentication Token".
+    > Note - each token is only valid for 24 hours!
+  - then issue the command to reindex all:
+    ```sh
+    $ curl -X PUT -H "Authorization: Bearer $TOKEN" https://<your-host>/<your-context>/d1/mn/v2/index?all=true
+    # where $TOKEN is an environment variable containing your auth token (see overview of major changes above).
+    #
+    # example:
+    # curl -X PUT -H "Authorization: Bearer $TOKEN" https://knb.ecoinformatics.org/knb/d1/mn/v2/index?all=true
+    ```
+
 
 ### New Features & Enhancements:
 

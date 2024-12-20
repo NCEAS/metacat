@@ -1,26 +1,3 @@
-/**
- *  '$RCSfile$'
- *  Copyright: 2004 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
- *
- * This program is free software, you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY, without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program, if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 
 /*
  * this is sql script does the same as the sql script named
@@ -260,6 +237,7 @@ CREATE TABLE access_log (
   CONSTRAINT access_log_pk PRIMARY KEY (entryid)
 );
 CREATE INDEX access_log_docid ON access_log(docid);
+CREATE INDEX access_log_date_logged ON access_log (date_logged);
 
 
 /*
@@ -323,14 +301,16 @@ CREATE TABLE harvest_detail_log (
 /*
  * db_version -- table to store the version history of this database
  */
-CREATE SEQUENCE db_version_id_seq;
-CREATE TABLE db_version (
-  db_version_id   INT8 default nextval ('db_version_id_seq'), -- the identifier for the version
+CREATE SEQUENCE version_history_id_seq;
+CREATE TYPE version_history_upgrade_status AS ENUM ('in progress', 'failed', 'complete', 'not required', 'pending');
+CREATE TABLE version_history (
+  version_history_id   INT8 default nextval ('version_history_id_seq'), -- the identifier for the version_history
   version         VARCHAR(250),     -- the version number
   status          INT8,             -- status of the version
   date_created    TIMESTAMP,        -- the datetime on which the version was created
   solr_upgraded   boolean,          -- specifies whether the solr server was upgraded
-  CONSTRAINT db_version_pk PRIMARY KEY (db_version_id)
+  storage_upgrade_status version_history_upgrade_status, -- status of the storage conversion
+  CONSTRAINT version_history_pk PRIMARY KEY (version_history_id)
 );
 
 /*
@@ -413,3 +393,19 @@ CREATE TABLE node_id_revisions (
   date_created      TIMESTAMP NOT NULL, -- the datetime on which this node_id_revision was created
   CONSTRAINT node_id_revisions_pk PRIMARY KEY (node_id_revision_id)
 );
+
+/*
+ * Create the checksums table
+ */
+ CREATE SEQUENCE checksums_id_seq;
+ CREATE TABLE checksums (
+  checksum_id INT8 default nextval('checksums_id_seq'),
+  guid TEXT NOT NULL,  -- the globally unique string identifier of the object that the system metadata describes
+  checksum VARCHAR(512) NOT NULL, -- the checksum of the doc using the given algorithm (see below)
+  checksum_algorithm VARCHAR(250) NOT NULL, -- the algorithm used to calculate the checksum
+  CONSTRAINT checksums_fk
+    FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
+ );
+ CREATE INDEX checksums_guid on checksums(guid);
+ CREATE INDEX checksums_checksum on checksums(checksum);
+ CREATE INDEX checksums_checksum_algorithm on checksums(checksum_algorithm);

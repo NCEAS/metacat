@@ -2,6 +2,8 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -72,6 +74,26 @@ public class SystemMetadataFactory {
      * content
      */
     private static boolean updateExisting = true;
+    private static String legacyDataDir = null;
+    private static String legacyDocDir = null;
+    static {
+        try {
+            legacyDataDir = PropertyService.getProperty("application.datafilepath");
+            if (!legacyDataDir.endsWith("/")) {
+                legacyDataDir = legacyDataDir + "/";
+            }
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("Metacat can't find the property value of application.datafilepath");
+        }
+        try {
+            legacyDocDir = PropertyService.getProperty("application.documentfilepath");
+            if (!legacyDocDir.endsWith("/")) {
+                legacyDocDir = legacyDocDir + "/";
+            }
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("Metacat can't find the property value of application.documentfilepath");
+        }
+    }
 
 
     /**
@@ -151,45 +173,56 @@ public class SystemMetadataFactory {
         // get additional docinfo
         Hashtable<String, String> docInfo = getDocumentInfoMap(localId);
         // set the default object format
-        String doctype = docInfo.get("doctype");
-        ObjectFormatIdentifier fmtid = new ObjectFormatIdentifier();
-
+        String docType = docInfo.get("doctype");
+        logMetacat.debug("The docType is " + docType);
+        ObjectFormatIdentifier fmtid = null;
         // set the object format, fall back to defaults
-        if (doctype.trim().equals("BIN")) {
+        if (docType.trim().equals("BIN")) {
             // we don't know much about this file (yet)
-            fmtid.setValue("application/octet-stream");
-        } else if (doctype.trim().equals("metadata")) {
+            fmtid = ObjectFormatCache.getInstance().getFormat("application/octet-stream").getFormatId();
+        } else if (docType.trim().equals("metadata")) {
             // special ESRI FGDC format
-            fmtid.setValue("FGDC-STD-001-1998");
+            fmtid = ObjectFormatCache.getInstance().getFormat("FGDC-STD-001-1998").getFormatId();
         } else {
-            // do we know the given format?
-            fmtid.setValue(doctype);
             try {
-                ObjectFormatCache.getInstance().getFormat(fmtid);
+                // do we know the given format?
+                fmtid = ObjectFormatCache.getInstance().getFormat(docType).getFormatId();
             } catch (NotFound nfe) {
-                fmtid.setValue("text/plain");
+                // format is not registered, use default
+                fmtid = ObjectFormatCache.getInstance().getFormat("text/plain").getFormatId();
             }
         }
-
         sysMeta.setFormatId(fmtid);
         logMetacat.debug("The ObjectFormat for " + localId + " is " + fmtid.getValue());
 
+
         // for retrieving the actual object
-        InputStream inputStream = null;
-        inputStream = MetacatHandler.read(localId,
-                                ObjectFormatCache.getInstance().getFormat(fmtid).getFormatType());
+        try (InputStream inputStream = MetacatHandler.read(identifier)) {
+            // create the checksum
+            String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
+            Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
+            logMetacat.debug("The checksum for " + localId + " is " + checksum.getValue());
+            sysMeta.setChecksum(checksum);
+        } catch (McdbDocNotFoundException e) {
+            // try to read it from the legacy store
+            try (InputStream inputStream = readInputStreamFromLegacyStore(identifier)) {
+                // create the checksum
+                String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
+                Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
+                logMetacat.debug("The checksum for " + localId + " is " + checksum.getValue());
+                sysMeta.setChecksum(checksum);
+            }
+        }
 
-        // create the checksum
-        String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
-        Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
-        logMetacat.debug("The checksum for " + localId + " is " + checksum.getValue());
-        sysMeta.setChecksum(checksum);
-
-        // set the size from file on disk, don't read bytes again
-        File fileOnDisk = getFileOnDisk(localId);
+        // set the size
         long fileSize = 0;
-        if (fileOnDisk.exists()) {
-            fileSize = fileOnDisk.length();
+        try (InputStream inputStream = MetacatHandler.read(identifier)) {
+            fileSize = length(inputStream);
+        } catch (McdbDocNotFoundException e) {
+            // Try to read from the legacy store
+            try (InputStream inputStream = readInputStreamFromLegacyStore(identifier)) {
+                fileSize = length(inputStream);
+            }
         }
         sysMeta.setSize(BigInteger.valueOf(fileSize));
 
@@ -250,31 +283,41 @@ public class SystemMetadataFactory {
 
         // update the system metadata for the object[s] we are revising
         if (obsoletedBy != null) {
-            SystemMetadata obsoletedBySysMeta = null;
             try {
-                obsoletedBySysMeta =
-                    IdentifierManager.getInstance().getSystemMetadata(obsoletedBy.getValue());
-            } catch (McdbDocNotFoundException e) {
-                // ignore
-            }
-            if (obsoletedBySysMeta != null) {
-                obsoletedBySysMeta.setObsoletes(identifier);
-                SystemMetadataManager.getInstance().store(obsoletedBySysMeta);
+                SystemMetadataManager.lock(obsoletedBy);
+                SystemMetadata obsoletedBySysMeta = null;
+                try {
+                    obsoletedBySysMeta =
+                        IdentifierManager.getInstance().getSystemMetadata(obsoletedBy.getValue());
+                } catch (McdbDocNotFoundException e) {
+                    // ignore
+                }
+                if (obsoletedBySysMeta != null) {
+                    obsoletedBySysMeta.setObsoletes(identifier);
+                    SystemMetadataManager.getInstance().store(obsoletedBySysMeta);
+                }
+            } finally {
+                SystemMetadataManager.unLock(obsoletedBy);
             }
         }
         if (obsoletes != null) {
-            SystemMetadata obsoletesSysMeta = null;
             try {
-                obsoletesSysMeta =
-                    IdentifierManager.getInstance().getSystemMetadata(obsoletes.getValue());
-            } catch (McdbDocNotFoundException e) {
-                // ignore
-            }
-            if (obsoletesSysMeta != null) {
-                obsoletesSysMeta.setObsoletedBy(identifier);
-                // DO NOT set archived to true -- it will have unintended consequences if the CN
-                // sees this.
-                SystemMetadataManager.getInstance().store(obsoletesSysMeta);
+                SystemMetadataManager.lock(obsoletes);
+                SystemMetadata obsoletesSysMeta = null;
+                try {
+                    obsoletesSysMeta =
+                        IdentifierManager.getInstance().getSystemMetadata(obsoletes.getValue());
+                } catch (McdbDocNotFoundException e) {
+                    // ignore
+                }
+                if (obsoletesSysMeta != null) {
+                    obsoletesSysMeta.setObsoletedBy(identifier);
+                    // DO NOT set archived to true -- it will have unintended consequences if the CN
+                    // sees this.
+                    SystemMetadataManager.getInstance().store(obsoletesSysMeta);
+                }
+            } finally {
+                SystemMetadataManager.unLock(obsoletes);
             }
         }
 
@@ -329,30 +372,6 @@ public class SystemMetadataFactory {
         }
         return size;
 
-    }
-
-    private static File getFileOnDisk(String docid)
-        throws McdbException, PropertyNotFoundException {
-
-        DocumentImpl doc = new DocumentImpl(docid, false);
-        String filepath = null;
-        String filename = null;
-
-        // deal with data or metadata cases
-        if (doc.getRootNodeID() == 0) {
-            // this is a data file
-            filepath = PropertyService.getProperty("application.datafilepath");
-        } else {
-            filepath = PropertyService.getProperty("application.documentfilepath");
-        }
-        // ensure it is a directory path
-        if (!(filepath.endsWith("/"))) {
-            filepath += "/";
-        }
-        filename = filepath + docid;
-        File documentFile = new File(filename);
-
-        return documentFile;
     }
 
     /**
@@ -551,5 +570,68 @@ public class SystemMetadataFactory {
         }
 
         return parser;
+    }
+
+    protected static long length(InputStream inputStream) throws IOException {
+        byte[] buffer = new byte[8192];
+        int chunkBytesRead = 0;
+        long length = 0;
+        while((chunkBytesRead = inputStream.read(buffer)) != -1) {
+            length += chunkBytesRead;
+        }
+        return length;
+    }
+
+    /**
+     * This method is used for the HashStoreUpgrader class to read the object from the Metacat
+     * legacy store since the Hashtore hasn't been successfully converted.
+     * @param pid  the identifier the object. Note: We assume the pid's value equals the docid
+     * @return the InputStream presentation of the object
+     */
+    protected static InputStream readInputStreamFromLegacyStore(Identifier pid)
+        throws FileNotFoundException {
+        String localId = pid.getValue();
+       return new FileInputStream(getFileFromLegacyStore(localId));
+    }
+
+    /**
+     * Get a file object for the given localId from the legacyStore. It will try both the document
+     * and data directories.
+     * @param localId  the local id (doc id) will be look.
+     * @return the file which have the content of the local id
+     * @throws FileNotFoundException
+     */
+    public static File getFileFromLegacyStore(String localId)
+        throws FileNotFoundException {
+        if (legacyDocDir != null) {
+            File file = new File(legacyDocDir + localId);
+            if (file.exists()) {
+                return file;
+            } else if (legacyDataDir != null) {
+                file = new File(legacyDataDir + localId);
+                if (file.exists()) {
+                    return file;
+                } else {
+                    throw new FileNotFoundException(
+                        "Can't find the object " + file.getAbsolutePath() + " in the"
+                            + " Metacat legacy store.");
+                }
+            } else {
+                throw new FileNotFoundException("Can't find the object " + localId + " in the"
+                                                    + " Metacat legacy store.");
+            }
+        } else if (legacyDataDir != null) {
+            File file = new File(legacyDataDir + localId);
+            if (file.exists()) {
+                return file;
+            } else {
+                throw new FileNotFoundException("Can't find the object " + file.getAbsolutePath()
+                                                    + " in the Metacat legacy store.");
+            }
+        } else {
+            throw new FileNotFoundException("Can't find the object " + localId + " in the"
+                                                + " Metacat legacy store since the its data and"
+                                                + " document root directories are null.");
+        }
     }
 }

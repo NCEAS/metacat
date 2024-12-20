@@ -75,6 +75,10 @@
         <sequential>
             <git command="clone">
                 <args>
+                    <arg value="-b"/>
+                    <arg value="@{refname}"/>
+                    <arg value="--depth"/>
+                    <arg value="1"/>
                     <arg value="@{repository}"/>
                     <arg value="@{dest}"/>
                 </args>

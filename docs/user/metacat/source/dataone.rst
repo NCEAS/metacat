@@ -318,8 +318,8 @@ Generating DataONE System Metadata
 
  **Note:**
 
- - The following feature is not available in Metacat 3.0.0. If you've installed Metacat v3.0.0, or
-   have upgraded to Metacat v3.0.0, please ignore this section.
+ - The following feature is not available in Metacat 3.0.0 or above. If you've installed or upgraded
+   to Metacat v3.0.0 or above, please ignore this section.
 
  - Reminder, if your current Metacat version is v1.*, please first upgrade to v2.19.0 before
    proceeding with generating DataONE System Metadata.

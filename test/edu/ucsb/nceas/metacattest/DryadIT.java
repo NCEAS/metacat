@@ -60,7 +60,7 @@ public class DryadIT {
             formatId.setValue("http://datadryad.org/profile/v3.1");
             sysmeta.setFormatId(formatId);
             sysmeta.setSize(BigInteger.valueOf(documentContents.getBytes().length));
-            MNodeService.getInstance(request).create(session, pid,
+            d1NodeTest.mnCreate(session, pid,
                                     IOUtils.toInputStream(documentContents, "UTF-8"), sysmeta);
             InputStream results = MNodeService.getInstance(request).get(session, pid);
             String resultString = IOUtils.toString(results, "UTF-8");
@@ -88,7 +88,7 @@ public class DryadIT {
             sysmeta.setFormatId(formatId);
             sysmeta.setSize(BigInteger.valueOf(documentContents.getBytes().length));
             try {
-                MNodeService.getInstance(request).create(session, pid,
+                d1NodeTest.mnCreate(session, pid,
                                         IOUtils.toInputStream(documentContents, "UTF-8"), sysmeta);
             } catch (Exception expectedException) {
                 assertTrue(expectedException instanceof InvalidRequest);

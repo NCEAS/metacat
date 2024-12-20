@@ -3,6 +3,10 @@ package edu.ucsb.nceas.metacat.dataone;
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
+import edu.ucsb.nceas.metacat.startup.MetacatInitializer;
+import edu.ucsb.nceas.metacat.storage.ObjectInfo;
+import edu.ucsb.nceas.metacat.storage.Storage;
+import edu.ucsb.nceas.metacat.systemmetadata.MCSystemMetadata;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -17,6 +21,7 @@ import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -54,8 +59,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -72,6 +79,7 @@ public class D1NodeServiceTest extends MCTestCase {
     public static final ObjectFormatIdentifier eml_2_0_1_format = new ObjectFormatIdentifier();
     public static final ObjectFormatIdentifier eml_2_1_0_format = new ObjectFormatIdentifier();
     public static final ObjectFormatIdentifier eml_dataset_beta_6_format = new ObjectFormatIdentifier();
+    private static Storage storage = null;
     private MockedStatic<Settings> mockStaticSettings;
 
     static {
@@ -82,16 +90,27 @@ public class D1NodeServiceTest extends MCTestCase {
     }
 
     /**
-    * constructor for the test
-    */
+     * constructor for the test
+     */
     public D1NodeServiceTest(String name) {
         super(name);
+        if (storage == null) {
+            synchronized(D1NodeServiceTest.class) {
+                if (storage == null) {
+                    try {
+                        MetacatInitializer.initStorage();
+                        storage = MetacatInitializer.getStorage();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage());
+                    }
+                }
+            }
+        }
         // set up the fake request (for logging)
         request = new MockHttpServletRequest(null, null, null);
     }
 
-    public static Test suite()
-    {
+    public static Test suite() {
         TestSuite suite = new TestSuite();
         suite.addTest(new D1NodeServiceTest("initialize"));
         suite.addTest(new D1NodeServiceTest("testExpandRightsHolder"));
@@ -329,7 +348,7 @@ public class D1NodeServiceTest extends MCTestCase {
         return session;
     }
 
-    public Session getCNSession() throws Exception {
+    public static Session getCNSession() throws Exception {
         Session session = new Session();
         Subject subject = null;
         CNode cn = D1Client.getCN();
@@ -348,7 +367,7 @@ public class D1NodeServiceTest extends MCTestCase {
 
     }
 
-    public Session getAnotherSession() throws Exception {
+    public static Session getAnotherSession() throws Exception {
         Session session = new Session();
         Subject subject = new Subject();
         subject.setValue("cn=test2,dc=dataone,dc=org");
@@ -357,7 +376,7 @@ public class D1NodeServiceTest extends MCTestCase {
 
     }
 
-    public Session getThirdSession() throws Exception {
+    public static Session getThirdSession() throws Exception {
         Session session = new Session();
         Subject subject = new Subject();
         subject.setValue("cn=test34,dc=dataone,dc=org");
@@ -498,7 +517,7 @@ public class D1NodeServiceTest extends MCTestCase {
      * we insert the default version from d1_common.jar
      * @throws Exception 
      */
-    protected void setUpFormats() throws Exception {
+    public void setUpFormats() throws Exception {
         int rev = 1;
         Identifier guid = new Identifier();
         guid.setValue(ObjectFormatService.OBJECT_FORMAT_PID_PREFIX + rev);
@@ -508,7 +527,7 @@ public class D1NodeServiceTest extends MCTestCase {
         try {
             is = CNodeService.getInstance(request).get(session, guid);
         } catch (Exception e) {
-            // probably missing the doc
+            System.out.println("the message is " + e.getMessage());
         }
         if (is == null) {
             // get the default from d1_common
@@ -520,7 +539,7 @@ public class D1NodeServiceTest extends MCTestCase {
             sysmeta.setFormatId(format);
             //sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("text/xml").getFormatId());
             object = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
-            CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            cnCreate(session, guid, object, sysmeta);
         }
     }
 
@@ -903,15 +922,27 @@ public class D1NodeServiceTest extends MCTestCase {
      * @throws InvalidSystemMetadata
      * @throws NotImplemented
      * @throws InvalidRequest
+     * @throws MarshallingException
+     * @throws InterruptedException
+     * @throws RuntimeException
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws NoSuchAlgorithmException
      */
-    public Identifier mnCreate(Session session, Identifier id, InputStream object, 
-                                    SystemMetadata sysmeta) 
-                                        throws InvalidToken, ServiceFailure, NotAuthorized, 
-                                IdentifierNotUnique, UnsupportedType, InsufficientResources, 
-                                InvalidSystemMetadata, NotImplemented, InvalidRequest {
-        return MNodeService.getInstance(request).create(session, id, object, sysmeta);
+    public Identifier mnCreate(Session session, Identifier id, InputStream object,
+                                    SystemMetadata sysmeta)
+        throws InvalidToken, ServiceFailure, NotAuthorized, IdentifierNotUnique, UnsupportedType,
+        InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest,
+        NoSuchAlgorithmException, InstantiationException, IllegalAccessException, IOException,
+        RuntimeException, InterruptedException, MarshallingException, InvocationTargetException {
+        ObjectInfo info = storeData(object, sysmeta);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        mcSystemMetadata.setChecksums(info.hexDigests());
+        return MNodeService.getInstance(request).create(session, id, object, mcSystemMetadata);
     }
-    
+
     /**
      * A wrapper method of MN.update
      * @param session  the subject which will create the object
@@ -930,15 +961,28 @@ public class D1NodeServiceTest extends MCTestCase {
      * @throws ServiceFailure
      * @throws UnsupportedType
      * @throws NotFound
+     * @throws MarshallingException
+     * @throws InterruptedException
+     * @throws RuntimeException
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws NoSuchAlgorithmException
      */
-    public Identifier mnUpdate(Session session, Identifier pid, InputStream object, 
-                                           Identifier newPid, SystemMetadata sysmeta) 
-                              throws IdentifierNotUnique, InsufficientResources, 
-                            InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, 
-                            NotImplemented, ServiceFailure, UnsupportedType, NotFound {
-        return MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
+    public Identifier mnUpdate(Session session, Identifier pid, InputStream object,
+                                           Identifier newPid, SystemMetadata sysmeta)
+        throws IdentifierNotUnique, InsufficientResources, InvalidRequest, InvalidSystemMetadata,
+        InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, UnsupportedType, NotFound,
+        NoSuchAlgorithmException, InstantiationException, IllegalAccessException, IOException,
+        RuntimeException, InterruptedException, MarshallingException, InvocationTargetException {
+        ObjectInfo info = storeData(object, sysmeta);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        mcSystemMetadata.setChecksums(info.hexDigests());
+        return MNodeService.getInstance(request)
+            .update(session, pid, object, newPid, mcSystemMetadata);
     }
-    
+
     /**
      * A wrapper method of CN.create.
      * @param session  the subject which will create the object
@@ -955,12 +999,57 @@ public class D1NodeServiceTest extends MCTestCase {
      * @throws InvalidSystemMetadata
      * @throws NotImplemented
      * @throws InvalidRequest
+     * @throws MarshallingException
+     * @throws InterruptedException
+     * @throws RuntimeException
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws NoSuchAlgorithmException
      */
-    public Identifier cnCreate(Session session, Identifier id, InputStream object, SystemMetadata sysmeta) 
-                                throws InvalidToken, ServiceFailure, NotAuthorized, 
-                                IdentifierNotUnique, UnsupportedType, InsufficientResources, 
-                                InvalidSystemMetadata, NotImplemented, InvalidRequest {
-        return CNodeService.getInstance(request).create(session, id, object, sysmeta);
+    public Identifier cnCreate(Session session, Identifier id, InputStream object, SystemMetadata sysmeta)
+        throws InvalidToken, ServiceFailure, NotAuthorized, IdentifierNotUnique, UnsupportedType,
+        InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest,
+        NoSuchAlgorithmException, InstantiationException, IllegalAccessException, IOException,
+        RuntimeException, InterruptedException, MarshallingException, InvocationTargetException {
+        ObjectInfo info = storeData(object, sysmeta);
+        MCSystemMetadata mcSystemMetadata = new MCSystemMetadata();
+        MCSystemMetadata.copy(mcSystemMetadata, sysmeta);
+        mcSystemMetadata.setChecksums(info.hexDigests());
+        return CNodeService.getInstance(request).create(session, id, object, mcSystemMetadata);
+    }
+
+    /**
+     * Store the input stream into hash store
+     * @param object  the input stream represents the content of the object
+     * @param sysmeta  the system metadata of the object
+     * @return the ObjectInfo object which holds some checksum information
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidRequest
+     * @throws IOException
+     * @throws RuntimeException
+     * @throws InterruptedException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws MarshallingException
+     * @throws ServiceFailure
+     * @throws InvalidSystemMetadata
+     */
+    public static ObjectInfo storeData(InputStream object,
+                                       org.dataone.service.types.v1.SystemMetadata sysmeta)
+                                     throws NoSuchAlgorithmException, InvalidRequest, IOException,
+                                     RuntimeException, InterruptedException, InstantiationException,
+                                     IllegalAccessException, MarshallingException,
+                                     ServiceFailure, InvalidSystemMetadata {
+        return MNodeService.storeData(storage, object, sysmeta);
+    }
+
+    /**
+     * Get the storage object
+     * @return the storage object initialized from the class
+     */
+    public static Storage getStorage() {
+        return storage;
     }
 
     /**

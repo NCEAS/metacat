@@ -1,7 +1,7 @@
 package edu.ucsb.nceas.metacat.dataone;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.formats.ObjectFormatCache;
@@ -18,11 +18,18 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -42,8 +49,10 @@ import java.util.List;
  *
  * @author tao
  */
-public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
+public class SolrQueryAccessFilterIT {
 
+    private D1NodeServiceTest d1NodeServiceTest;
+    private MockHttpServletRequest request;
     private static final String SOLR = "solr";
     private static final String EML201NAMESPACE = "eml://ecoinformatics.org/eml-2.0.1";
     private static final String CREATEUSER =
@@ -62,33 +71,8 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
             + "epifaunal mollusc abundance based on collections from GCE marsh, monitoring sites "
             + "1-10";
 
-    /**
-     * Constructor for the tests
-     *
-     * @param name - the name of the test
-     */
-    public SolrQueryAccessFilterTest(String name) {
-        super(name);
 
-    }
 
-    /**
-     * Build the test suite
-     *
-     * @return
-     */
-    public static Test suite() {
-
-        TestSuite suite = new TestSuite();
-        suite.addTest(new SolrQueryAccessFilterTest("testPublicReadable"));
-        suite.addTest(new SolrQueryAccessFilterTest("testOnlyUserReadable"));
-        suite.addTest(new SolrQueryAccessFilterTest("testGroupReadable"));
-        suite.addTest(new SolrQueryAccessFilterTest("testOnlyRightHolderReadable"));
-        suite.addTest(new SolrQueryAccessFilterTest("testDistrustCertificate"));
-
-        return suite;
-
-    }
 
     /**
      * Set up the test fixtures
@@ -97,14 +81,26 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
      */
     @Before
     public void setUp() throws Exception {
-        super.setUp();
+        d1NodeServiceTest = new D1NodeServiceTest("initialize");
+        request = d1NodeServiceTest.request;
+        d1NodeServiceTest.setUp();
         // set up the configuration for d1client
         Settings.getConfiguration().setProperty("D1Client.cnClassName", MockCNode.class.getName());
     }
 
     /**
+     * Release any objects after tests are complete
+     */
+    @After
+    public void tearDown() {
+        // set back to force it to use defaults
+        d1NodeServiceTest.tearDown();
+    }
+
+    /**
      * Test to query a public readable document
      */
+    @Test
     public void testPublicReadable() throws Exception {
         Session session = getSession(CREATEUSER, null);
         Identifier id = generateIdentifier();
@@ -136,7 +132,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         doc = generateDoc(input);
         String resultId3 = extractElementValue(doc, IDXPATH);
         int count = 0;
-        while (resultId3 != null && count++ < MAX_TRIES) {
+        while (resultId3 != null && count++ < D1NodeServiceTest.MAX_TRIES) {
             Thread.sleep(1000);
             input = query(querySession2, id);
             doc = generateDoc(input);
@@ -151,6 +147,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
     /**
      * Test to query a document which can only be read by a specified user
      */
+    @Test
     public void testOnlyUserReadable() throws Exception {
         Thread.sleep(15000);
         Session session = getSession(CREATEUSER, null);
@@ -182,6 +179,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
     /**
      * Test to query a document which can be read by a specified group
      */
+    @Test
     public void testGroupReadable() throws Exception {
         Thread.sleep(15000);
         Session session = getSession(CREATEUSER, null);
@@ -222,6 +220,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
     /**
      * Test to query a document which only can be read by the rightHolder
      */
+    @Test
     public void testOnlyRightHolderReadable() throws Exception {
         Thread.sleep(15000);
         Session session = getSession(CREATEUSER, null);
@@ -270,6 +269,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
      *
      * @throws Exception
      */
+    @Test
     public void testDistrustCertificate() throws Exception {
         //create an object only be readable by the USERWITHCERT
         Session session = getSession(CREATEUSER, null);
@@ -353,7 +353,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
      */
     private void createObject(Session session, Identifier id, File object, SystemMetadata sysmeta)
         throws Exception {
-        MNodeService.getInstance(request).create(session, id, new FileInputStream(object), sysmeta);
+        d1NodeServiceTest.mnCreate(session, id, new FileInputStream(object), sysmeta);
 
     }
 
@@ -377,7 +377,8 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
      */
     private SystemMetadata generateSystemMetadata(
         Identifier id, Subject owner, File objectFile, String[] allowedSubjects) throws Exception {
-        SystemMetadata sysmeta = createSystemMetadata(id, owner, new FileInputStream(objectFile));
+        SystemMetadata sysmeta = D1NodeServiceTest.createSystemMetadata(id, owner,
+                                                                  new FileInputStream(objectFile));
         AccessPolicy accessPolicy = null;
         if (allowedSubjects != null && allowedSubjects.length > 0) {
             accessPolicy = new AccessPolicy();

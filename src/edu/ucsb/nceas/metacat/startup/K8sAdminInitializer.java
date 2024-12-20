@@ -4,6 +4,7 @@ import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.admin.D1Admin;
 import edu.ucsb.nceas.metacat.admin.DBAdmin;
+import edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin;
 import edu.ucsb.nceas.metacat.database.DBVersion;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
@@ -50,6 +51,9 @@ public class K8sAdminInitializer {
 
         // check D1 Admin settings and update if necessary
         initK8sD1Admin();
+
+        // convert storage to hashstore if necessary
+        initK8sStorageUpgrade();
     }
 
     /**
@@ -129,5 +133,14 @@ public class K8sAdminInitializer {
             se.fillInStackTrace();
             throw se;
         }
+    }
+
+    /**
+     * Call the HashStoreConversionAdmin.convert() method to convert the storage to HashStore
+     * when it is necessary. The convert method is self-contained, and it can figure out if it
+     * needs to run the conversion.
+     */
+    static void initK8sStorageUpgrade() {
+        HashStoreConversionAdmin.convert();
     }
 }

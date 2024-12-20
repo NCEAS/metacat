@@ -62,7 +62,6 @@ public class FailedIndexResubmitTimerTaskIT {
         //insert metadata
         session = d1NodeTest.getTestSession();
         guid = new Identifier();
-        //guid.setValue("testCreateFailure.1698383743829");
         guid.setValue("testCreateFailure." + System.currentTimeMillis());
         InputStream object = 
                         new FileInputStream(MNodeReplicationTest.replicationSourceFile);
@@ -73,7 +72,7 @@ public class FailedIndexResubmitTimerTaskIT {
         formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
         sysmeta.setFormatId(formatId);
         object = new FileInputStream(MNodeReplicationTest.replicationSourceFile);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        d1NodeTest.mnCreate(session, guid, object, sysmeta);
         //Make sure the metadata objects have been indexed
         query = "q=id:" + guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -93,8 +92,7 @@ public class FailedIndexResubmitTimerTaskIT {
                 + "). resultStr does not contain `checksum`",
             resultStr.contains("checksum"));
     }
-    
-    
+
     /**
      * Test the scenario that a create index task can't be put into the index queue
      * @throws Exception
@@ -109,19 +107,19 @@ public class FailedIndexResubmitTimerTaskIT {
         event.setDescription("Testing DAO");
         event.setIdentifier(guid);
         IndexEventDAO.getInstance().add(event);
-        
+
         // check
         IndexEvent savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
         assertEquals(event.getIdentifier(), savedEvent.getIdentifier());
         assertEquals(event.getAction(), savedEvent.getAction());
         assertEquals(event.getDate(), savedEvent.getDate());
         assertEquals(event.getDescription(), savedEvent.getDescription());
-        
+
         // create timer to resubmit the failed index task
         Timer indexTimer = new Timer();
         long delay = 0;
         indexTimer.schedule(new FailedIndexResubmitTimerTask(), delay);
-        
+
         // check if a reindex happened (the solr doc version changed)
         boolean versionChanged = false;
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -137,7 +135,7 @@ public class FailedIndexResubmitTimerTaskIT {
             versionChanged = !newVersion.equals(originVersion);
         }
         assertTrue(versionChanged);
-        
+
         // the saved event should be deleted
         savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
         assertNull(savedEvent);
@@ -189,7 +187,7 @@ public class FailedIndexResubmitTimerTaskIT {
             versionChanged = !newVersion.equals(originVersion);
         }
         assertFalse(versionChanged);
-        
+
         // the saved event should NOT be deleted
         savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
         assertNotNull(savedEvent);
@@ -198,8 +196,7 @@ public class FailedIndexResubmitTimerTaskIT {
         savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
         assertNull(savedEvent);
     }
-    
-    
+
     /**
      * Test the scenario that a delete index task can't be put into the index queue
      * @throws Exception
@@ -220,12 +217,12 @@ public class FailedIndexResubmitTimerTaskIT {
         assertEquals(event.getAction(), savedEvent.getAction());
         assertEquals(event.getDate(), savedEvent.getDate());
         assertEquals(event.getDescription(), savedEvent.getDescription());
-        
+
         // create timer to resubmit the failed index task
         Timer indexTimer = new Timer();
         long delay = 0;
         indexTimer.schedule(new FailedIndexResubmitTimerTask(), delay);
-        
+
         // wait until the solr doc is deleted
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, StandardCharsets.UTF_8);
@@ -239,13 +236,13 @@ public class FailedIndexResubmitTimerTaskIT {
         }
         assertNotNull(resultStr);
         assertFalse(resultStr.contains("checksum"));
-        
+
         // the saved event should be deleted
         Thread.sleep(500);
         savedEvent = IndexEventDAO.getInstance().get(event.getIdentifier());
         assertNull(savedEvent);
     }
-    
+
     /**
      * Parse the solr doc to get the version number string
      * @param xml  the solr doc in the xml format

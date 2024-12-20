@@ -1,5 +1,6 @@
 /* Import the Metacat documentation stylesheet */
 @import url(../docs/_static/metacatui.css);
+@import url(../docs/_static/font-awesome/css/font-awesome-ie7.css);
 
 /* overrides */
 .document {
@@ -498,3 +499,4 @@ i {
     border: 1px solid #888;
     width: 40%;
 }
+

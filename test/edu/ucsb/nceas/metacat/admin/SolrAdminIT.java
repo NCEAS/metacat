@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Vector;
 
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +32,7 @@ import static org.mockito.Mockito.CALLS_REAL_METHODS;
  */
 public class SolrAdminIT {
 
-    private static final String version = "3.0.0";
+    private static String version;
     private static boolean originStatus;
     /**
      * Setup
@@ -41,6 +42,7 @@ public class SolrAdminIT {
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.LIVE_TEST);
         originStatus = getSolrUpgradedStatus(version);
+        version = PropertyService.getProperty("application.metacatVersion");
     }
 
     @After
@@ -76,7 +78,7 @@ public class SolrAdminIT {
         boolean upgraded = false;
         DBConnection dbConn = null;
         int serialNumber = -1;
-        String sql = "SELECT solr_upgraded FROM db_version WHERE version = ?";
+        String sql = "SELECT solr_upgraded FROM version_history WHERE version = ?";
         try {
             dbConn = DBConnectionPool.getDBConnection("SolrAdmin.isFreshInstall");
             serialNumber = dbConn.getCheckOutSerialNumber();
@@ -106,7 +108,7 @@ public class SolrAdminIT {
         DBConnection dbConn = null;
         int serialNumber = -1;
         int count = 0;
-        String sql = "SELECT * FROM db_version";
+        String sql = "SELECT * FROM version_history";
         try {
             dbConn = DBConnectionPool.getDBConnection("SolrAdmin.isFreshInstall");
             serialNumber = dbConn.getCheckOutSerialNumber();
@@ -141,11 +143,11 @@ public class SolrAdminIT {
         Vector<DBVersion> list;
         if (originStatus) {
             list = SolrAdmin.getNonUpgradedSolrVersions();
-            assertFalse("Since version 3.0.0 is upgraded, it shouldn't be in the needed "
+            assertFalse("Since version " + version + " is upgraded, it shouldn't be in the needed "
                                                  + "upgrade versions", contained(list, dbVersion));
         } else {
             list = SolrAdmin.getNonUpgradedSolrVersions();
-            assertTrue("Since version 3.0.0 is not upgraded, it should be in the needed "
+            assertTrue("Since version " + version + " is not upgraded, it should be in the needed "
                                                  + "upgrade versions", contained(list, dbVersion));
         }
         //set a new status
@@ -153,11 +155,11 @@ public class SolrAdminIT {
         SolrAdmin.updateSolrStatus(version, newStatus);
         if (newStatus) {
             list = SolrAdmin.getNonUpgradedSolrVersions();
-            assertFalse("Since version 3.0.0 is upgraded, it shouldn't be in the needed "
+            assertFalse("Since version " + version + " is upgraded, it shouldn't be in the needed "
                                                 + "upgrade versions", contained(list, dbVersion));
         } else {
             list = SolrAdmin.getNonUpgradedSolrVersions();
-            assertTrue("Since version 3.0.0 is not upgraded, it should be in the needed "
+            assertTrue("Since version " + version + " is not upgraded, it should be in the needed "
                                                 + "upgrade versions", contained(list, dbVersion));
         }
     }
@@ -202,24 +204,24 @@ public class SolrAdminIT {
             Mockito.when(SolrAdmin.isFreshInstall()).thenReturn(false);
             if (originStatus) {
                 updateClasses = SolrAdmin.getSolrUpdateClasses();
-                assertFalse("Version 3.0.0 has been upgraded, it should not be in the upgrade list",
-                                                        updateClasses.keySet().contains(version));
+                assertFalse("Version " + version + " has been upgraded, it should not be in the "
+                                + "upgrade list", updateClasses.keySet().contains(version));
             } else {
                 updateClasses = SolrAdmin.getSolrUpdateClasses();
-                assertTrue("Version 3.0.0 has not been upgraded, it should be in the upgrade list",
-                                                    updateClasses.keySet().contains(version));
             }
             //set a new status
             boolean newStatus = !originStatus;
             SolrAdmin.updateSolrStatus(version, newStatus);
             if (newStatus) {
                 updateClasses = SolrAdmin.getSolrUpdateClasses();
-                assertFalse("Version 3.0.0 has been upgraded, it should not be in the upgrade list",
-                                                        updateClasses.keySet().contains(version));
+                assertFalse("Version " + version + " has been upgraded, it should not be in the "
+                                + "upgrade list", updateClasses.keySet().contains(version));
             } else {
                 updateClasses = SolrAdmin.getSolrUpdateClasses();
-                assertTrue("Version 3.0.0 has not been upgraded, it should be in the upgrade list",
-                                                    updateClasses.keySet().contains(version));
+                assertTrue(
+                    "Version " + version
+                        + " has not been upgraded, it should be in the upgrade list",
+                    updateClasses.keySet().contains(version));
             }
         }
     }

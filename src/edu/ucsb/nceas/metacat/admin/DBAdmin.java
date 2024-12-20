@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.concurrent.Executors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -77,6 +78,8 @@ public class DBAdmin extends MetacatAdmin {
     public static final int DB_DOES_NOT_EXIST = 0;
     public static final int TABLES_DO_NOT_EXIST = 1;
     public static final int TABLES_EXIST = 2;
+    public static final String VERSION_000 = "0.0.0"; // fresh installation
+
 
     // db version statuses. This allows us to keep version history
     // in the db. Only the latest version record should be active.
@@ -92,7 +95,10 @@ public class DBAdmin extends MetacatAdmin {
     private HashSet<String> sqlCommandSet = new HashSet<String>();
     private Map<String, String> scriptSuffixMap = new HashMap<String, String>();
     private static DBVersion databaseVersion = null;
+    // This variable holds the all db versions the upgrade process should go through
+    private static Vector<String> neededUpgradedVersions = new Vector<>();
 
+    private static Vector<String> error = new Vector<>();
 
     /**
      * private constructor since this is a singleton
@@ -151,11 +157,10 @@ public class DBAdmin extends MetacatAdmin {
             HttpServletResponse response) throws AdminException {
 
         String processForm = request.getParameter("processForm");
-        String formErrors = (String) request.getAttribute("formErrors");
         HttpSession session = request.getSession();
         String supportEmail = null;
 
-        if (processForm == null || !processForm.equals("true") || formErrors != null) {
+        if (processForm == null || !processForm.equals("true")) {
             // The servlet configuration parameters have not been set, or there
             // were form errors on the last attempt to configure, so redirect to
             // the web form for configuring metacat
@@ -200,49 +205,50 @@ public class DBAdmin extends MetacatAdmin {
             } 
         } else {
             // The configuration form is being submitted and needs to be
-            // processed, setting the properties in the configuration file
-            // then restart metacat
-
-            // The configuration form is being submitted and needs to be
             // processed.
-            Vector<String> validationErrors = new Vector<String>();
-            Vector<String> processingSuccess = new Vector<String>();
-
             try {
-                // Validate that the options provided are legitimate. Note that
-                // we've allowed them to persist their entries. As of this point
-                // there is no other easy way to go back to the configure form
-                // and
-                // preserve their entries.
-                supportEmail = PropertyService.getProperty("email.recipient");
-                validationErrors.addAll(validateOptions(request));
-                
-                
-                upgradeDatabase();
-                
-                
+                // Reload the main metacat configuration page
+                RequestUtil.clearRequestMessages(request);
+                response.sendRedirect(SystemUtil.getContextURL() + "/admin");
+                if (PropertyService.getProperty("configutil.databaseConfigured")
+                    .equals(MetacatAdmin.IN_PROGRESS)) {
+                    // Prevent doing upgrade again while another thread is doing the upgrade
+                    return;
+                }
 
-                // Now that the options have been set, change the
-                // 'databaseConfigured' option to 'true' so that normal metacat
-                // requests will go through
-                PropertyService.setProperty("configutil.databaseConfigured",
-                        PropertyService.CONFIGURED);
-                PropertyService.persistMainBackupProperties();
-               
-                    // Reload the main metacat configuration page
-                    processingSuccess.add("Database successfully upgraded");
-                    RequestUtil.clearRequestMessages(request);
-                    RequestUtil.setRequestSuccess(request, processingSuccess);
-                    RequestUtil.forwardRequest(request, response,
-                            "/admin?configureType=configure&processForm=false", null);
-                 
-            
+                PropertyService.setPropertyNoPersist("configutil.databaseConfigured",
+                                            MetacatAdmin.IN_PROGRESS);
+                // Make the database jsp page return by doing the upgrade in another thread
+                Executors.newSingleThreadExecutor().submit(() -> {
+                    try {
+                        upgradeDatabase();
+                        // Now that the options have been set, change the
+                        // 'databaseConfigured' option to 'true' so that normal metacat
+                        // requests will go through
+                        PropertyService.setProperty("configutil.databaseConfigured",
+                                                    PropertyService.CONFIGURED);
+                        PropertyService.persistMainBackupProperties();
+                        // Automatically to convert Metacat to use hashstore
+                        HashStoreConversionAdmin.convert();
+                    } catch (Exception e) {
+                        error.add("Some errors arose when Metacat upgraded its database. Please "
+                                      + "fix the issues and configure again.");
+                        error.add(e.getMessage());
+                        try {
+                            PropertyService.setProperty("configutil.databaseConfigured",
+                                                        MetacatAdmin.FAILURE);
+                        } catch (GeneralPropertyException ex) {
+                            logMetacat.error("Can't change the database configuration status to "
+                                                 + "failure since " + ex.getMessage());
+                        }
+                    }
+                });
             } catch (GeneralPropertyException gpe) {
                 throw new AdminException("DBAdmin.configureDatabase - Problem getting or setting " 
                                     + "property while upgrading database: " + gpe.getMessage());
-            }  catch (MetacatUtilException mue) {
-                throw new AdminException("DBAdmin.configureDatabase - utility problem while"
-                                            + " upgrading database: " + mue.getMessage());
+            }  catch (IOException ie) {
+                throw new AdminException("DBAdmin.configureDatabase - redirect url problem while"
+                                            + " upgrading database: " + ie.getMessage());
             } 
         }
     }
@@ -313,7 +319,7 @@ public class DBAdmin extends MetacatAdmin {
                 throw new AdminException("DBAdmin.discoverDBVersion - Database does not exist " +
                         "for connection" + PropertyService.getProperty("database.connectionURI"));
             } else if (dbStatus == TABLES_DO_NOT_EXIST) {
-                databaseVersion = new DBVersion("0.0.0");
+                databaseVersion = new DBVersion(VERSION_000);
                 return databaseVersion;
             }
 
@@ -363,14 +369,20 @@ public class DBAdmin extends MetacatAdmin {
                         PropertyService.getProperty("database.connectionURI"),
                         PropertyService.getProperty("database.user"),
                         PropertyService.getProperty("database.password"));
+            boolean db_version_exists = DBUtil.tableExists(connection, "db_version");
+            boolean version_history_exists = DBUtil.tableExists(connection, "version_history");
 
-            if (!DBUtil.tableExists(connection, "db_version")) {
+            if (!db_version_exists && !version_history_exists) {
                 return null;
             }
-
-            pstmt = 
-                connection.prepareStatement("SELECT version FROM db_version WHERE status = ?");
-
+            if (db_version_exists) {
+                pstmt =
+                    connection.prepareStatement("SELECT version FROM db_version WHERE status = ?");
+            } else {
+                pstmt =
+                    connection.prepareStatement("SELECT version FROM version_history WHERE status "
+                                                    + "= ?");
+            }
             // Bind the values to the query
             pstmt.setInt(1, VERSION_ACTIVE);
             pstmt.execute();
@@ -486,9 +498,8 @@ public class DBAdmin extends MetacatAdmin {
      * that this table will not be removed in subsequent versions. You should
      * search for db versions from newest to oldest, only getting to this
      * function when newer versions have not been matched.
-     * @param dbMetaData
-     *            the meta data for this database.
-     * @returns boolean which is true if table is found, false otherwise
+     * @param connection  the connection to db
+     * @returns boolean which is true if the db_version table is found; false otherwise
      */
     private boolean is1_9_0(Connection connection) throws SQLException {
         return DBUtil.tableExists(connection, "db_version");
@@ -500,9 +511,8 @@ public class DBAdmin extends MetacatAdmin {
      * that this table will not be removed in subsequent versions. You should
      * search for db versions from newest to oldest, only getting to this
      * function when newer versions have not been matched.
-     * @param dbMetaData
-     *            the meta data for this database.
-     * @returns boolean which is true if table is found, false otherwise
+     * @param connection  the connection to db.
+     * @returns boolean which is true if the db_version table is found; false otherwise
      */
     private boolean is1_9_1(Connection connection) throws SQLException {
         return DBUtil.tableExists(connection, "db_version");
@@ -629,6 +639,7 @@ public class DBAdmin extends MetacatAdmin {
      *          run to get the database updated to this version of metacat
      */
     public Vector<String> getUpdateScripts() throws AdminException {
+        neededUpgradedVersions = new Vector<>();
         Vector<String> updateScriptList = new Vector<String>();
         String sqlFileLocation = null;
         String databaseType = null;
@@ -662,12 +673,13 @@ public class DBAdmin extends MetacatAdmin {
             
             // if the database version is 0.0.0, it is new.
             // apply all scripts.
-            if (databaseVersion.getVersionString().equals("0.0.0")
-                    && nextVersion.getVersionString().equals("0.0.0")) {
+            if (databaseVersion.getVersionString().equals(VERSION_000)
+                    && nextVersion.getVersionString().equals(VERSION_000)) {
                 for (String versionUpdateScript : versionUpdateScripts) {
                     updateScriptList.add(sqlFileLocation + FileUtil.getFS()
                             + versionUpdateScript + sqlSuffix);
                 }
+                neededUpgradedVersions.add(VERSION_000);
                 return updateScriptList;
             }
 
@@ -680,6 +692,7 @@ public class DBAdmin extends MetacatAdmin {
                     updateScriptList.add(sqlFileLocation + FileUtil.getFS()
                             + versionUpdateScript + sqlSuffix);
                 }
+                neededUpgradedVersions.add(nextVersion.getVersionString());
             }
         }
 
@@ -716,7 +729,7 @@ public class DBAdmin extends MetacatAdmin {
         // if either of these is null, or the database version is 0.0.0 (a fresh installation),
         // we don't want to do anything.  Just return an empty list.
         if (metaCatVersion == null || databaseVersion == null ||
-                                             databaseVersion.getVersionString().equals("0.0.0")) {
+                                             databaseVersion.getVersionString().equals(VERSION_000)) {
             return updateClassList;
         }
 
@@ -780,11 +793,7 @@ public class DBAdmin extends MetacatAdmin {
         try {
             // get a list of the script names that need to be run
             Vector<String> updateScriptList = getUpdateScripts();
-
-            // call runSQLFile on each
-            for (String updateScript : updateScriptList) {
-                runSQLFile(updateScript);
-            }
+            runSQLFiles(updateScriptList);
             try {
                 MetacatAdmin.updateUpgradeStatus("configutil.upgrade.database.status",
                                                         MetacatAdmin.SUCCESS, persist);
@@ -817,7 +826,6 @@ public class DBAdmin extends MetacatAdmin {
                // solrSchemaException = e;
                 logMetacat.warn("DBAdmin.upgradeDatabase - The schema or config file is changed: "
                                 + e.getMessage() + ". But Metacat will continue.");
-                continue;
             } catch (Exception e) {
                 try {
                     MetacatAdmin.updateUpgradeStatus("configutil.upgrade.java.status",
@@ -854,20 +862,12 @@ public class DBAdmin extends MetacatAdmin {
     }
 
     /**
-     * Runs the commands in a sql script. Individual commands are loaded into a
+     * Runs the list of commands in a sql script vector. Individual commands are loaded into a
      * string vector and run one at a time.
-     * @param sqlFileName
-     *            the name of the file holding the sql statements that need to
-     *            get run.
+     * @param updateScriptList
+     *            the list of the files holding the sql statements that need to get run.
      */
-    public void runSQLFile(String sqlFileName) throws AdminException, SQLException {
-
-        // if update file does not exist, do not do the update.
-        if (FileUtil.getFileStatus(sqlFileName) < FileUtil.EXISTS_READABLE) {
-            throw new AdminException("Could not read sql update file: "
-                    + sqlFileName);
-        }
-
+    private void runSQLFiles(Vector<String> updateScriptList) throws AdminException, SQLException {
         Connection connection = null;
         try {
             connection = DBUtil.getConnection(PropertyService
@@ -875,34 +875,23 @@ public class DBAdmin extends MetacatAdmin {
                     .getProperty("database.user"), PropertyService
                     .getProperty("database.password"));
             connection.setAutoCommit(false);
-
-            // load the sql from the file into a vector of individual statements
-            // and execute them.
-            logMetacat.debug("DBAdmin.runSQLFile - processing File: " + sqlFileName);
-            Vector<String> sqlCommands = loadSQLFromFile(sqlFileName);
-            for (String sqlStatement : sqlCommands) {
-                Statement statement = connection.createStatement();
-                logMetacat.debug("executing sql: " + sqlStatement);
-                try {
+            for (String sqlFileName : updateScriptList) {
+                // if update file does not exist, do not do the update.
+                if (FileUtil.getFileStatus(sqlFileName) < FileUtil.EXISTS_READABLE) {
+                    throw new AdminException("Could not read sql update file: "
+                                                 + sqlFileName);
+                }
+                // load the sql from the file into a vector of individual statements
+                // and execute them.
+                logMetacat.debug("DBAdmin.runSQLFile - processing File: " + sqlFileName);
+                Vector<String> sqlCommands = loadSQLFromFile(sqlFileName);
+                for (String sqlStatement : sqlCommands) {
+                    Statement statement = connection.createStatement();
+                    logMetacat.debug("executing sql: " + sqlStatement);
                     statement.execute(sqlStatement);
-                } catch (SQLException sqle) {
-                    // Oracle complains if we try and drop a sequence (ORA-02289) or a
-                    // trigger (ORA-04098/ORA-04080) or a table/view (ORA-00942)
-                    //or and index (ORA-01418) that does not exist.  We don't care if this happens.
-                    if (sqlStatement.toUpperCase().startsWith("DROP") &&
-                            (sqle.getMessage().contains("ORA-02289") ||
-                             sqle.getMessage().contains("ORA-04098") ||
-                             sqle.getMessage().contains("ORA-04080") ||
-                             sqle.getMessage().contains("ORA-00942"))) {
-                        logMetacat.warn("DBAdmin.runSQLFile - did not process sql drop statement: "
-                                        + sqle.getMessage());
-                    } else {
-                        throw sqle;
-                    }
                 }
             }
             connection.commit();
-            
         } catch (IOException ioe) {
             throw new AdminException("DBAdmin.runSQLFile - Could not read SQL file"
                     + ioe.getMessage());
@@ -1024,5 +1013,21 @@ public class DBAdmin extends MetacatAdmin {
         // TODO MCD validate options.
 
         return errorVector;
+    }
+
+    /**
+     * Get the error message during the process
+     * @return the error
+     */
+    public static Vector<String> getError() {
+        return error;
+    }
+
+    /**
+     * Get the all db versions the upgrade process should go through
+     * @return a vector of version list
+     */
+    public static Vector<String> getNeededUpgradedVersions() {
+        return neededUpgradedVersions;
     }
 }
