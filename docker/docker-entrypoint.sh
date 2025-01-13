@@ -38,6 +38,10 @@ setTomcatEnv() {
     ################################
     ## MEMORY MANAGEMENT
     ################################
+    ## Garbage-First garbage collector is the default (Java17+), so don't need to set -XX:+UseG1GC
+    ## see:
+    ## https://docs.oracle.com/en/java/javase/17/gctuning/garbage-first-g1-garbage-collector1.html
+    ##
     MEMORY=""
     if [[ -z ${TOMCAT_MEM_MIN} ]] || [[ -z ${TOMCAT_MEM_MAX} ]]; then
         echo "tomcat max or min memory size not found; skipping memory settings"
