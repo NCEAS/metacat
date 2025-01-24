@@ -20,7 +20,7 @@ global:
   metacatUiThemeName: "default"
   metacatUiWebRoot: "/"
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
-  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
+  d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
   ## Use your own release name instead of metacatbrooke
@@ -50,11 +50,12 @@ metacat:
 
   ## DataONE Member Node (MN) Parameters
   dataone.certificate.fromHttpHeader.enabled: true
-  dataone.autoRegisterMemberNode: 2024-01-25
+  dataone.autoRegisterMemberNode: 2025-01-23
   dataone.nodeId: "urn:node:TestBROOKELT"
   dataone.subject: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org"
-  dataone.nodeName: Test BROOKE LT Metacat Node
-  dataone.nodeDescription: Dev cluster Test BROOKE LT Metacat Node
+  dataone.nodeName: TestBROOKELT Metacat Node
+  dataone.nodeDescription: |
+    Dev cluster Test BROOKE LT Metacat Node. Last registered with CN on 1/23/2025
   dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
   dataone.nodeSynchronize: true
   dataone.nodeReplicate: true
