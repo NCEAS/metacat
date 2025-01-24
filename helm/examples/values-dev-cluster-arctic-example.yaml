@@ -59,8 +59,14 @@ metacat:
   dataone.autoRegisterMemberNode: 2024-01-25
   dataone.nodeId: "urn:node:TestBROOKELT"
   dataone.subject: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org"
-  dataone.nodeName: Test BROOKE LT Metacat Node
-  dataone.nodeDescription: Dev cluster Test BROOKE LT Metacat Node
+  dataone.nodeName: Dev Deployment of Arctic Data Center
+  dataone.nodeDescription: |
+    The US National Science Foundation Arctic Data Center operates as the primary repository
+    supporting the NSF Arctic community for data preservation and access. The Center helps the
+    research community reproducibly preserve and discover all products of NSF-funded science
+    in the Arctic, including data, metadata, software, documents, and provenance that link
+    these in an open and reproducible way.
+
   dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
   dataone.nodeSynchronize: true
   dataone.nodeReplicate: true
