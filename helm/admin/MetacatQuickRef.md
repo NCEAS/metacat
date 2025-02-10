@@ -119,15 +119,21 @@ file.**
     - for TEST, override at least `global.metacatExternalBaseUrl` and
       `global.d1ClientCnUrl`
 
-  - [ ] If using a theme from [metacatui-themes](https://github.com/NCEAS/metacatui-themes), this
-        must be made available on a ceph/PV/PVC mount; e.g:
+  - If using a theme from [metacatui-themes](https://github.com/NCEAS/metacatui-themes):
+    - [ ] it must be made available on a ceph/PV/PVC mount; e.g:
 
-      ```yaml
-        customTheme:
+          ```yaml
+          customTheme:
           enabled: true
           claimName: metacatsfwmd-metacatui-customtheme
           subPath: metacatui-themes/src/cerp/js/themes/cerp
-      ```
+          ```
+
+    - [ ] Ensure metacatui has read access
+
+          ```shell
+    -     chmod -R o+rx metacatui
+    -     ```
 
   - [ ] If the custom theme needs to be partially overridden by a separate config.js file (e.g.
     `sfwmd.js` is used to override [the CERP
