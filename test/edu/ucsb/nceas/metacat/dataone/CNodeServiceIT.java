@@ -15,6 +15,7 @@ import org.apache.commons.io.IOUtils;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
@@ -241,6 +242,41 @@ public class CNodeServiceIT {
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test object creation without object format id in the system metadata
+     */
+    @Test
+    public void testCreateWithoutObjectFormatId() throws Exception {
+        D1NodeServiceTest.printTestHeader("testCreateWithoutObjectFormatId");
+        Identifier guid = new Identifier();
+        guid.setValue("testCreate." + System.currentTimeMillis());
+        Session session =d1NodeServiceTest.getCNSession();
+        try {
+            InputStream object =
+                new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta =
+                D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(null);
+            Identifier pid = d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
+            fail("It should fail since the format id is null.");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidSystemMetadata);
+        }
+        try {
+            InputStream object =
+                new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta =
+                D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            ObjectFormatIdentifier formatIdentifier = new ObjectFormatIdentifier();
+            formatIdentifier.setValue("");
+            sysmeta.setFormatId(formatIdentifier);
+            Identifier pid = d1NodeServiceTest.cnCreate(session, guid, object, sysmeta);
+            fail("It should fail since the format id is blank.");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidSystemMetadata);
         }
     }
 

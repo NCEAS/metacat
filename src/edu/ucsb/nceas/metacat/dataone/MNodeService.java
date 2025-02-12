@@ -411,6 +411,12 @@ public class MNodeService extends D1NodeService
                     "1202",
                     "The new identifier " + newPid.getValue() + " cannot " + "update itself.");
             }
+
+            if (sysmeta.getFormatId() == null || sysmeta.getFormatId().getValue().isBlank()) {
+                throw new InvalidSystemMetadata(
+                    "1300", "The the format id from the system metadata shouldn't be null.");
+            }
+
             // lock existing pid
             SystemMetadataManager.lock(pid);
             // make sure that the newPid doesn't exists
