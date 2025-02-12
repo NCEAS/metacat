@@ -36,6 +36,7 @@ Previous Contributors
   - Peter Slaughter (slaughter@nceas.ucsb.edu)
   - Rob Nahf (rnahf@epscor.unm.edu)
   - Matthew Brooke (brooke@nceas.ucsb.edu)
+  - Ian Nesbitt (nesbitt@nceas.ucsb.edu)
 
 Patch contributors
 ------------------
