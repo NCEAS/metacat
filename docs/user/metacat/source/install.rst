@@ -272,6 +272,12 @@ Ensure the following lines exist in the service file for Tomcat (paths may vary 
     ReadWritePaths=/var/metacat
     ReadWritePaths=/etc/default/solr.in.sh
 
+Note: If you're running Metacat from a mount, you will need to add that mount location to the ``RequiresMountsFor=`` line of the systemd service file (in the ``[Unit]`` section). The following example has a Ceph mount at ``/var/repos/si`` with Metacat's main directory at ``/var/repos/si/metacat``:
+
+  ::
+
+    RequiresMountsFor=/var/log/tomcat9 /var/lib/tomcat9 /var/repos/si
+
 Apache HTTP Server (Highly Recommended)
 .......................................
 Although you have the option of running Metacat with only the Tomcat server, we
