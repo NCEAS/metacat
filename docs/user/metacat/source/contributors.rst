@@ -12,6 +12,7 @@ Current Contributors
   - Matthew Brooke (brooke@nceas.ucsb.edu) [ORCID: 0000-0002-1472-913X](https://orcid.org/0000-0002-1472-913X)
   - Dou Mok (mok@nceas.ucsb.edu) [ORCID: 0000-0002-6076-8092](https://orcid.org/0000-0002-6076-8092)
   - Matthew B. Jones (jones@nceas.ucsb.edu): [ORCID: 0000-0003-0077-4738](https://orcid.org/0000-0003-0077-4738)
+  - Ian Nesbitt (nesbitt@nceas.ucsb.edu): [ORCID: 0000-0001-5828-6070](https://orcid.org/0000-0001-5828-6070)
 
 Previous Contributors
 ------------
@@ -36,7 +37,6 @@ Previous Contributors
   - Peter Slaughter (slaughter@nceas.ucsb.edu)
   - Rob Nahf (rnahf@epscor.unm.edu)
   - Matthew Brooke (brooke@nceas.ucsb.edu)
-  - Ian Nesbitt (nesbitt@nceas.ucsb.edu)
 
 Patch contributors
 ------------------
