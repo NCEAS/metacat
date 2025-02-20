@@ -101,7 +101,9 @@
 file.**
 
 - [ ] TLS ("SSL") setup (`ingress.tls.hosts` - leave blank to use default, or change if aliases
-      needed - see [hostname aliases tip, below](#where-to-find-existing-hostname-aliases))
+      needed...
+  - [ ] `(MIGRATION ONLY)` transfer any existing aliases and rewrite rules from legacy host; see
+        [hostname aliases tip, below](#where-to-find-existing-hostname-aliases))`
 - [ ] Set up Node cert and replication etc. as needed -  [see
       README](https://github.com/NCEAS/metacat/tree/main/helm#setting-up-certificates-for-dataone-replication).
   - [ ] Don't forget to [install the ca
