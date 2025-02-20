@@ -101,7 +101,9 @@
 file.**
 
 - [ ] TLS ("SSL") setup (`ingress.tls.hosts` - leave blank to use default, or change if aliases
-      needed - see [hostname aliases tip, below](#where-to-find-existing-hostname-aliases))
+      needed...
+  - [ ] `(MIGRATION ONLY)` transfer any existing aliases and rewrite rules from legacy host; see
+        [hostname aliases tip, below](#where-to-find-existing-hostname-aliases))`
 - [ ] Set up Node cert and replication etc. as needed -  [see
       README](https://github.com/NCEAS/metacat/tree/main/helm#setting-up-certificates-for-dataone-replication).
   - [ ] Don't forget to [install the ca
@@ -277,7 +279,7 @@ happen...**
 
      ```shell
      # ssh to legacy host, then...
-     sudo systemctl stop postgresql
+     sudo systemctl stop postgresql@14-main.service
      sudo systemctl stop tomcat9
      ```
 
@@ -315,7 +317,7 @@ happen...**
 - [ ] When rsync done, start postgres, and then start tomcat.
 
      ```shell
-     sudo systemctl start postgresql
+     sudo systemctl start postgresql@14-main.service
      sudo systemctl start tomcat9
      ```
 
@@ -475,54 +477,9 @@ happen...**
   egrep "\[WARN\]: The conversion is complete"
   ```
 
-### Fix Hashstore Error - PID Doesn't Exist in `identifier` Table:
+### Fix Hashstore Conversion Errors
 
-```shell
-# If you see this in the metacat logs:
-Pid <autogen pid> is missing system metadata. Since the pid starts with autogen and looks like to be
-created by DataONE api, it should have the systemmetadata. Please look at the systemmetadata and
-identifier table to figure out the real pid.
-```
-Steps to resolve:
-
-1. Given the docid, get all revisions:
-   ```sql
-   select * from identifier where docid='<docid>';
-   ```
-2. Look for pid beginning 'autogen', and note its revision number
-3. pid should be the `obsoleted_by` from the previous revision's system metadata:
-   ```sql
-   select obsoleted_by from systemmetadata where guid='<previous revision pid>';
-   ```
-4. Check by look at `obsoletes` from the following revision, if one exists:
-   ```sql
-   select obsoletes from systemmetadata where guid='<following revision pid>';
-   ```
-5. Check if systemmetadata table has an entry for autogen pid
-   ```sql
-   select checksum from systemmetadata where guid='<autogen pid>';
-   ```
-   ...and the checksum matches that of the original file, found in:
-   ```shell
-   /var/metacat/(data or documents)/<'autogen' docid>.<revision number>
-   ```
-
-#### = = = If these exist and do not match, STOP HERE AND INVESTIGATE FURTHER! = = =
-
-6. If an autogen-pid entry was found, update it with the new pid:
-   ```sql
-   update systemmetadata set guid='<pid from steps 3 & 4>' where guid='<autogen pid>';
-   ```
-7. Replace the 'autogen' pid with the real pid in the 'identifier' table:
-   ```sql
-   update identifier set guid='<pid from steps 3 & 4>' where guid='<autogen pid>';
-   ```
-8. Set the hashstore conversion status back to `pending`:
-   ```sql
-   update version_history set storage_upgrade_status='pending' where status='1';
-   ```
-   ...and restart the metacat pod to re-run the hashstore conversion and generate the correct
-   sysmeta file in hashstore
+See the `Tips` section of the [Metacat K8s 3.0.0 to 3.1.0 Upgrade Steps Checklist](https://github.com/NCEAS/metacat/blob/main/helm/admin/3.0.0-to-3.1.0-upgrade-checklist.md#tips) for steps to resolve hashstore conversion errors
 
 ### Monitor Indexing Progress:
 
