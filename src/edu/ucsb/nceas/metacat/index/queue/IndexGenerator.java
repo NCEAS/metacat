@@ -337,4 +337,11 @@ public class IndexGenerator extends BaseService {
        return 0;
     }
 
+    /**
+     * Get the connection from the instance
+     * @return  the connection in this instance
+     */
+    public static Connection getConnection() {
+        return RabbitMQconnection;
+    }
 }
