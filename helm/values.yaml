@@ -778,6 +778,31 @@ ingress:
   ##
   tls: []
 
+  ## @param ingress.rules The Ingress rules can be defined here or left blank to be auto-populated
+  ## based on the metacat.server.name value. If defining rules here, they will be copied verbatim
+  ## to the ingress definition. For schema guidance, see:
+  ## https://kubernetes.io/docs/concepts/services-networking/ingress/
+  ## Example:
+  ##    - host: goa.nceas.ucsb.edu
+  ##      http:
+  ##        paths:
+  ##          - backend:
+  ##              service:
+  ##                name: metacatgoa-hl
+  ##                port:
+  ##                  number: 8080
+  ##            path: /goa
+  ##            pathType: Prefix
+  ##          - backend:
+  ##              service:
+  ##                name: metacatgoa-metacatui
+  ##                port:
+  ##                  number: 80
+  ##            path: /
+  ##            pathType: Prefix
+  ##
+  rules: []
+
   ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate chain
   ## For DataONE Replication -- mutual authentication with x509 client-side certs.
   ## Also see `metacat.dataone.certificate.fromHttpHeader.enabled`
