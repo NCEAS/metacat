@@ -5,8 +5,10 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.ucsb.nceas.metacat.index.queue.pool.RabbitMQChannelFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.types.v1.Identifier;
@@ -16,8 +18,6 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
-import edu.ucsb.nceas.metacat.IdentifierManager;
-import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.index.IndexEventDAO;
 import edu.ucsb.nceas.metacat.shared.BaseService;
@@ -41,9 +41,7 @@ public class IndexGenerator extends BaseService {
     public final static String DELETE_INDEX_TYPE = "delete";
     //this handle for resource map only
     public final static String SYSMETA_CHANGE_TYPE = "sysmeta"; 
-    
-    public final static int HIGHEST_PRIORITY = 10; // some special cases
-    public final static int HIGH_PRIORITY = 6; //use for the special cases
+
     //use for the operations such as create, update, updateSystem, delete, archive
     public final static int MEDIUM_PRIORITY = 4; 
     //use for resource map objects in the operations such as create, update, 
@@ -59,9 +57,9 @@ public class IndexGenerator extends BaseService {
     private final static String INDEX_QUEUE_NAME = "index";
     private final static String INDEX_ROUTING_KEY = "index";
 
-    private static Connection RabbitMQconnection = null;
-    private static Channel RabbitMQchannel = null;
+    private static Connection rabbitMQconnection = null;
     private static IndexGenerator instance = null;
+    private static GenericObjectPool<Channel> channelPool = null;
 
     private static Log logMetacat = LogFactory.getLog("IndexGenerator");
     
@@ -99,8 +97,6 @@ public class IndexGenerator extends BaseService {
                                       getString("index.rabbitmq.username", "guest");
         String RabbitMQpassword = Settings.getConfiguration().
                                     getString("index.rabbitmq.password", "guest");
-        int RabbitMQMaxPriority = Settings.getConfiguration().
-                                            getInt("index.rabbitmq.max.priority");
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(RabbitMQhost);
         factory.setPort(RabbitMQport);
@@ -119,35 +115,15 @@ public class IndexGenerator extends BaseService {
         //by this queue require that this routine key be used. The routine key 
         //INDEX_ROUTING_KEY sends messages to the index worker,
         try {
-            boolean durable = true;
-            RabbitMQconnection = factory.newConnection();
-            RabbitMQchannel = RabbitMQconnection .createChannel();
-            RabbitMQchannel.exchangeDeclare(EXCHANGE_NAME, "direct", durable);
-
-            boolean exclusive = false;
-            boolean autoDelete = false;
-            Map<String, Object> argus = new HashMap<String, Object>();
-            argus.put("x-max-priority", RabbitMQMaxPriority);
-            logMetacat.debug("IndexGenerator.init - Set RabbitMQ max priority to: " 
-                            + RabbitMQMaxPriority);
-            RabbitMQchannel.queueDeclare(INDEX_QUEUE_NAME, durable, 
-                                        exclusive, autoDelete, argus);
-            RabbitMQchannel.queueBind(INDEX_QUEUE_NAME, EXCHANGE_NAME, 
-                                    INDEX_ROUTING_KEY);
-            
-            // Channel will only send one request for each worker at a time. 
-            //This is only for consumer, so we comment it out.
-            //see https://www.rabbitmq.com/consumer-prefetch.html
-            //RabbitMQchannel.basicQos(1);
-            logMetacat.info("IndexGenerator.init - Connected to RabbitMQ queue " 
-                            + INDEX_QUEUE_NAME);
+            rabbitMQconnection = factory.newConnection();
+            RabbitMQChannelFactory channelFactory = new RabbitMQChannelFactory(rabbitMQconnection);
+            channelPool = new GenericObjectPool<>(channelFactory);
         } catch (Exception e) {
             String error = "IndexGenerator.init - Cannot connect to the RabbitMQ queue: "
                             + INDEX_QUEUE_NAME + " at " + RabbitMQhost + " with port "
                             + RabbitMQport + " since " + e.getMessage();
             throw new ServiceException(error);
         }
-       
     }
     
     /**
@@ -231,15 +207,15 @@ public class IndexGenerator extends BaseService {
         if (index_type.equals(DELETE_INDEX_TYPE)) {
             errorType = IndexEvent.DELETE_FAILURE_TO_QUEUE;
         }
-        if (RabbitMQchannel == null) {
+        if (channelPool == null) {
             try {
-                saveFailedTaskToDB(errorType, id, "RabbitMQchannel is null");
+                saveFailedTaskToDB(errorType, id, "RabbitMQchannelPool is null");
             } catch (SQLException e) {
                 additionErrorMessage = e.getMessage();
             }
             String error = "IndexGenerator.publishToIndexQueue - "
                                     + "can't publish the index task for "
-                                    + id.getValue() + " since the RabbitMQ channel "
+                                    + id.getValue() + " since the RabbitMQ channel pool"
                                     + " is null, which means Metacat cannot connect with RabbitMQ.";
             if (additionErrorMessage != null) {
                 error = error + " And also Metacat can't save the failure index task into DB since "
@@ -258,15 +234,32 @@ public class IndexGenerator extends BaseService {
                     .priority(priority)
                     .headers(headers)
                     .build();
-            RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY,
-                                            basicProperties, null);
-            logMetacat.info("IndexGenerator.publish - The index task with the "
-                            + "object identifier " + id.getValue()
-                            + ", the index type " + index_type
-                            + " (null means Metacat doesn't have the object), "
-                            + " the priority " + priority
-                            + " was push into RabbitMQ with the exchange name "
-                            + EXCHANGE_NAME);
+            // If the first time publish fails, Metacat will try to check out another channel and
+            // give another shoot.
+            for (int i = 0; i < 2; i++) {
+                boolean success = false;
+                Channel channel = channelPool.borrowObject();
+                try {
+                    channel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY, basicProperties, null);
+                    success = true;
+                } catch (Exception ex) {
+                    channelPool.invalidateObject(channel);
+                    channel = null;
+                } finally {
+                    if (channel != null) {
+                        channelPool.returnObject(channel);
+                    }
+                }
+                if (success) {
+                    logMetacat.info(
+                        "IndexGenerator.publish - The index task with the " + "object identifier "
+                            + id.getValue() + ", the index type " + index_type
+                            + " (null means Metacat doesn't have the object), " + " the priority "
+                            + priority + " was push into RabbitMQ with the exchange name "
+                            + EXCHANGE_NAME + " at the " + i + "try.");
+                    break;
+                }
+            }
         } catch (Exception e) {
             try {
                 saveFailedTaskToDB(errorType, id, e.getMessage());
@@ -321,8 +314,8 @@ public class IndexGenerator extends BaseService {
     @Override
     public void stop() throws ServiceException {
         try {
-            RabbitMQchannel.close();
-            RabbitMQconnection.close();
+            channelPool.close();
+            rabbitMQconnection.close();
             logMetacat.info("IndexGenerator.stop - stop the index queue service.");
         } catch (Exception e) {
             throw new ServiceException(e.getMessage());
@@ -342,6 +335,6 @@ public class IndexGenerator extends BaseService {
      * @return  the connection in this instance
      */
     public static Connection getConnection() {
-        return RabbitMQconnection;
+        return rabbitMQconnection;
     }
 }
