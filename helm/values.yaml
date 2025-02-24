@@ -739,22 +739,25 @@ ingress:
   defaultBackend:
     enabled: false
 
-  ## @param ingress.rewriteRules rewrite rules for the nginx ingress
-  ## These rules will be added to the section
+  ## @param ingress.rewriteRules formatted text rewrite rules for the nginx ingress
+  ## These rules will be added to the ingress definition section:
   ## metadata:
   ##   annotations:
   ##     nginx.ingress.kubernetes.io/configuration-snippet: |
-  ##       (list of rewrite rules here)
+  ##       (* * *  list of rewrite rules here  * * *)
   ##
   ## Example syntax:
   ##     rewriteRules: |
-  ##       - rewrite ^/(sitemap.+) /metacat/sitemaps/$1 redirect;
-  ##       - rewrite ^/robots.txt /metacat/robots.txt redirect;
+  ##       if ($host = "evos.nceas.ucsb.edu") {
+  ##           return 301 https://goa.nceas.ucsb.edu$request_uri;
+  ##       }
+  ##       rewrite ^/(sitemap.+) /metacat/sitemaps/$1 redirect;
+  ##       rewrite ^/robots.txt /metacat/robots.txt redirect;
   ##
-  ## (For example only; note that these two rules are already automatically included as needed - see
+  ## (For example only; note the last two rules are already automatically included as needed - see
   ## .Values.robots.* and .Values.metacat.sitemap.*)
   ##
-  rewriteRules: []
+  rewriteRules: ""
 
   ## @param ingress.tls The TLS configuration
   ##

@@ -38,8 +38,8 @@ metadata:
     {{- end }}
       rewrite ^/robots.txt /{{- index .Values.metacat "application.context" -}}
       /robots.txt redirect;
-    {{- range .Values.ingress.rewriteRules -}}
-      {{ . | nindent 6 }}
+    {{- if .Values.ingress.rewriteRules }}
+      {{- .Values.ingress.rewriteRules | nindent 6 }}
     {{- end }}
 spec:
   {{- if .Values.ingress.defaultBackend.enabled }}
