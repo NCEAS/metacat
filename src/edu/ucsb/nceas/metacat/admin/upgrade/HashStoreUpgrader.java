@@ -345,7 +345,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
      * again until some space was freed up.
      * @param futures  the set which hold the futures to be checked
      */
-    protected void removeCompleteFuture(Set<Future> futures) {
+    public static void removeCompleteFuture(Set<Future> futures) {
         if (futures != null) {
             int originalSize = futures.size();
             if (originalSize > 0) {

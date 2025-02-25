@@ -2,9 +2,16 @@ package edu.ucsb.nceas.metacat.index.queue;
 
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+import edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader;
 import edu.ucsb.nceas.metacat.index.queue.pool.RabbitMQChannelFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,14 +32,14 @@ import edu.ucsb.nceas.metacat.shared.ServiceException;
 
 /**
  * The IndexGenerator class will publish (send) the index information
- * to a RabbitMQ queue. A index worker will consume the information.
+ * to a RabbitMQ queue. An index worker will consume the information.
  * @author tao
  *
  */
 public class IndexGenerator extends BaseService {
     
     //Those strings are the types of the index tasks.
-    //The create is the index task type for the action when a new object was 
+    //"create" is the index task type for the action when a new object was
     //created. So the solr index will be generated.
     //delete is the index task type for the action when an object was deleted. 
     //So the solr index will be deleted sysmeta is the index task type for the 
@@ -56,10 +63,14 @@ public class IndexGenerator extends BaseService {
     private final static String EXCHANGE_NAME = "dataone-index";
     private final static String INDEX_QUEUE_NAME = "index";
     private final static String INDEX_ROUTING_KEY = "index";
+    private final static int MAX_TASK_SIZE = 10000;
 
     private static Connection rabbitMQconnection = null;
     private static IndexGenerator instance = null;
     private static GenericObjectPool<Channel> channelPool = null;
+    private static int nThreads;
+    private static ExecutorService executor = null;
+    private static Set<Future> futures = Collections.synchronizedSet(new HashSet<>());
 
     private static Log logMetacat = LogFactory.getLog("IndexGenerator");
     
@@ -124,8 +135,13 @@ public class IndexGenerator extends BaseService {
                             + RabbitMQport + " since " + e.getMessage();
             throw new ServiceException(error);
         }
+        nThreads = Runtime.getRuntime().availableProcessors();
+        nThreads--;                                 // Leave 1 main thread for execution
+        nThreads = Math.max(1, nThreads);           // In case only 1 processor is available
+        executor = Executors.newFixedThreadPool(nThreads);
+        logMetacat.debug("The size of the thread pool to do the submission job is " + nThreads);
     }
-    
+
     /**
      * Get the last sub-directory in the path.
      * If the path is /var/data, data will be returned. 
@@ -187,18 +203,18 @@ public class IndexGenerator extends BaseService {
     /**
      * Publish the given information to the index queue
      * @param id  the identifier of the object which will be indexed
-     * @param index_type  the type of indexing, it can be delete, create or sysmeta
+     * @param index_type  the type of indexing, it can be - delete, create or sysmeta
      * @param priority  the priority of the index task
      */
     public void publish(Identifier id, String index_type, int priority) 
                                     throws ServiceException, InvalidRequest {
         if (id == null || id.getValue() == null 
-                       || id.getValue().trim().equals("")) {
+                       || id.getValue().isBlank()) {
             throw new InvalidRequest("0000", 
                     "IndexGenerator.publishToIndexQueue - the identifier can't " 
                     + "be null or blank.");
         }
-        if (index_type == null || index_type.trim().equals("")) {
+        if (index_type == null || index_type.isBlank()) {
             throw new InvalidRequest("0000", "IndexGenerator.publishToIndexQueue" 
                                  + " - the index type can't be null or blank.");
         }
@@ -224,7 +240,7 @@ public class IndexGenerator extends BaseService {
             throw new ServiceException(error);
         }
         try {
-            Map<String, Object> headers = new HashMap<String, Object>();
+            Map<String, Object> headers = new HashMap<>();
             headers.put(HEADER_ID, id.getValue());
             headers.put(HEADER_INDEX_TYPE, index_type);
             AMQP.BasicProperties basicProperties =
@@ -234,31 +250,15 @@ public class IndexGenerator extends BaseService {
                     .priority(priority)
                     .headers(headers)
                     .build();
-            // If the first time publish fails, Metacat will try to check out another channel and
-            // give another shoot.
-            for (int i = 0; i < 2; i++) {
-                boolean success = false;
-                Channel channel = channelPool.borrowObject();
-                try {
-                    channel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY, basicProperties, null);
-                    success = true;
-                } catch (Exception ex) {
-                    channelPool.invalidateObject(channel);
-                    channel = null;
-                } finally {
-                    if (channel != null) {
-                        channelPool.returnObject(channel);
-                    }
-                }
-                if (success) {
-                    logMetacat.info(
-                        "IndexGenerator.publish - The index task with the " + "object identifier "
-                            + id.getValue() + ", the index type " + index_type
-                            + " (null means Metacat doesn't have the object), " + " the priority "
-                            + priority + " was push into RabbitMQ with the exchange name "
-                            + EXCHANGE_NAME + " at the " + i + "try.");
-                    break;
-                }
+            final String errorTypeFinal = errorType;
+            Future<?> future = executor.submit(() -> {
+                submitMessageInThread(errorTypeFinal, id, basicProperties, index_type);
+            });
+            futures.add(future);
+            if (futures.size() >= MAX_TASK_SIZE) {
+                //When it reaches the max size, we need to remove the complete futures from the
+                // set. So we can avoid the issue of out of memory.
+                HashStoreUpgrader.removeCompleteFuture(futures);
             }
         } catch (Exception e) {
             try {
@@ -277,7 +277,69 @@ public class IndexGenerator extends BaseService {
             throw new ServiceException(error);
         }
     }
-    
+
+    /**
+     * The method will be used to submit an index task in a thread
+     * @param errorTypeFinal  the error type
+     * @param id  the identifier of pid in the index task
+     * @param basicProperties  the properties associated with the index task
+     * @param index_type  the index type of the index task
+     */
+    private void submitMessageInThread(String errorTypeFinal, Identifier id,
+                                       AMQP.BasicProperties basicProperties, String index_type) {
+        // If the first time publish fails, Metacat will try to check out another channel and
+        // give another shoot.
+        int times = 1;
+        for (int i = 0; i <= times; i++) {
+            boolean success = false;
+            try {
+                Channel channel = channelPool.borrowObject();
+                try {
+                    channel.basicPublish(
+                        EXCHANGE_NAME, INDEX_ROUTING_KEY, basicProperties, null);
+                    success = true;
+                } catch (Exception ex) {
+                    channelPool.invalidateObject(channel);
+                    channel = null;
+                } finally {
+                    if (channel != null) {
+                        channelPool.returnObject(channel);
+                    }
+                }
+            } catch (Exception e) {
+                if (i == times) {
+                    // Only logs the error in the second time try
+                    String additionErrorMessage1= null;
+                    try {
+                        saveFailedTaskToDB(errorTypeFinal, id, e.getMessage());
+                    } catch (SQLException sqle) {
+                        additionErrorMessage1 = sqle.getMessage();
+                    }
+                    String error = "IndexGenerator.publishToIndexQueue - "
+                        + "can't publish the index task for "
+                        + id.getValue() + " since "
+                        + e.getMessage();
+                    if (additionErrorMessage1 != null) {
+                        error = error
+                            + ". And also Metacat can't save the failure index task into "
+                            + "DB since "
+                            + additionErrorMessage1;
+                    }
+                    logMetacat.error(error);
+                }
+            }
+            if (success) {
+                logMetacat.info(
+                    "IndexGenerator.publish - The index task with the " + "object identifier "
+                        + id.getValue() + ", the index type " + index_type
+                        + " (null means Metacat doesn't have the object), " + " the priority "
+                        + basicProperties.getPriority() + " was push into RabbitMQ with the exchange name "
+                        + EXCHANGE_NAME + " at the " + i + "try.");
+                break;
+            }
+        }
+    }
+
     /**
      * Save the failed index tasks into database
      * @param action  the failed action
