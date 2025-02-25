@@ -128,7 +128,9 @@ public class IndexGenerator extends BaseService {
         try {
             rabbitMQconnection = factory.newConnection();
             RabbitMQChannelFactory channelFactory = new RabbitMQChannelFactory(rabbitMQconnection);
-            channelPool = new GenericObjectPool<>(channelFactory);
+            if (channelPool == null) {
+                channelPool = new GenericObjectPool<>(channelFactory);
+            }
         } catch (Exception e) {
             String error = "IndexGenerator.init - Cannot connect to the RabbitMQ queue: "
                             + INDEX_QUEUE_NAME + " at " + RabbitMQhost + " with port "
@@ -404,7 +406,15 @@ public class IndexGenerator extends BaseService {
      * This method is used for testing to replace the channel pool by a mock pool
      * @param pool
      */
-    protected void setChannelPool(GenericObjectPool<Channel> pool) {
+    protected static void setChannelPool(GenericObjectPool<Channel> pool) {
         channelPool = pool;
+    }
+
+    /**
+     * Get the channel pool of this object. It is for testing only.
+     * @return the channel pool object
+     */
+    protected static GenericObjectPool<Channel> getChannelPool() {
+        return channelPool;
     }
 }
