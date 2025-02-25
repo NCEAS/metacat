@@ -399,4 +399,12 @@ public class IndexGenerator extends BaseService {
     public static Connection getConnection() {
         return rabbitMQconnection;
     }
+
+    /**
+     * This method is used for testing to replace the channel pool by a mock pool
+     * @param pool
+     */
+    protected void setChannelPool(GenericObjectPool<Channel> pool) {
+        channelPool = pool;
+    }
 }
