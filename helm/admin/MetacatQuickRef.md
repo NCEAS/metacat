@@ -103,7 +103,7 @@ file.**
 - [ ] TLS ("SSL") setup (`ingress.tls.hosts` - leave blank to use default, or change if aliases
       needed...
   - [ ] `(MIGRATION ONLY)` transfer any existing aliases and rewrite rules from legacy host; see
-        [hostname aliases tip, below](#where-to-find-existing-hostname-aliases))`
+        [hostname aliases tip, below](#where-to-find-existing-hostname-aliases)`
 - [ ] Set up Node cert and replication etc. as needed -  [see
       README](https://github.com/NCEAS/metacat/tree/main/helm#setting-up-certificates-for-dataone-replication).
   - [ ] Don't forget to [install the ca
@@ -561,21 +561,53 @@ See the `Tips` section of the [Metacat K8s 3.0.0 to 3.1.0 Upgrade Steps Checklis
 
 * Look at the legacy installation in the `/etc/apache2/sites-enabled/` directory; e.g.:
 
-    ```shell
-    # ls /etc/apache2/sites-enabled/
-      aoncadis.org.conf      arcticdata.io.conf      beta.arcticdata.io.conf
-      # ...etc
-    ```
+  ```shell
+  # ls /etc/apache2/sites-enabled/
+    aoncadis.org.conf      arcticdata.io.conf      beta.arcticdata.io.conf
+    # ...etc
+  ```
 
 * the `ServerName` and `ServerAlias` directives are in these `.conf` files, e.g.:
 
-   ```
-     <IfModule mod_ssl.c>
-     <VirtualHost *:443>
-             DocumentRoot /var/www/arcticdata.io/htdocs
-             ServerName arcticdata.io
-             ServerAlias www.arcticdata.io permafrost.arcticdata.io
-   ```
-  **NOTE:** it may not be necessary to incorporate all these aliases in the k8s environment. For
-  prod ADC, for example, we left apache running with these aliases in place, and transferred only
-  the `arcticdata.io` domain. [see Issue #1954](https://github.com/NCEAS/metacat/issues/1954)
+  ```
+   <IfModule mod_ssl.c>
+   <VirtualHost *:443>
+           DocumentRoot /var/www/arcticdata.io/htdocs
+           ServerName arcticdata.io
+           ServerAlias www.arcticdata.io permafrost.arcticdata.io
+  ```
+
+* Aliases can be set up easily, as follows:
+
+  ```yaml
+  ingress:
+    rewriteRules: |
+      if ($host = "evos.nceas.ucsb.edu") {
+        return 301 https://goa.nceas.ucsb.edu$request_uri;
+      }
+      if ($host = "gulfwatch.nceas.ucsb.edu") {
+        return 301 https://goa.nceas.ucsb.edu$request_uri;
+      }
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/server-alias: evos.nceas.ucsb.edu, gulfwatch.nceas.ucsb.edu
+
+    tls:
+      - hosts:
+          - goa.nceas.ucsb.edu
+          - evos.nceas.ucsb.edu
+          - gulfwatch.nceas.ucsb.edu
+        secretName: ingress-nginx-tls-cert
+
+    rules:
+      - host: goa.nceas.ucsb.edu
+        http:
+          paths:
+          ## ...etc.
+          ## No need to add rules for evos.nceas.ucsb.edu or gulfwatch.nceas.ucsb.edu
+  ```
+
+> _**NOTE:** sometimes, it may not be necessary to incorporate all these aliases in the k8s
+> environment. For prod ADC, for example, we left apache running with these aliases and complex
+> rewrites in place, and transferred only the `arcticdata.io` domain. [see Issue
+> #1954](https://github.com/NCEAS/metacat/issues/1954)_
