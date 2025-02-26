@@ -13,6 +13,8 @@ import java.util.concurrent.Future;
 
 import edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader;
 import edu.ucsb.nceas.metacat.index.queue.pool.RabbitMQChannelFactory;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.pool2.impl.GenericObjectPool;
@@ -63,7 +65,7 @@ public class IndexGenerator extends BaseService {
     private final static String EXCHANGE_NAME = "dataone-index";
     private final static String INDEX_QUEUE_NAME = "index";
     private final static String INDEX_ROUTING_KEY = "index";
-    private final static int MAX_TASK_SIZE = 10000;
+    private final static int DEFAULT_MAX_TASK_SIZE = 10000;
 
     private static Connection rabbitMQconnection = null;
     private static IndexGenerator instance = null;
@@ -71,7 +73,7 @@ public class IndexGenerator extends BaseService {
     private static int nThreads;
     private static ExecutorService executor = null;
     private static Set<Future> futures = Collections.synchronizedSet(new HashSet<>());
-
+    private static int maxTaskSize;
     private static Log logMetacat = LogFactory.getLog("IndexGenerator");
     
     /**
@@ -142,6 +144,13 @@ public class IndexGenerator extends BaseService {
         nThreads = Math.max(1, nThreads);           // In case only 1 processor is available
         executor = Executors.newFixedThreadPool(nThreads);
         logMetacat.debug("The size of the thread pool to do the submission job is " + nThreads);
+        try {
+            String maxTaskSizeStr = PropertyService.getProperty("index.submitting.set.size");
+            maxTaskSize = Integer.parseInt(maxTaskSizeStr);
+        } catch (PropertyNotFoundException | NumberFormatException e) {
+            maxTaskSize = DEFAULT_MAX_TASK_SIZE;
+        }
+        logMetacat.debug("The max number of index tasks the generate can hold is " + maxTaskSize);
     }
 
     /**
@@ -257,7 +266,7 @@ public class IndexGenerator extends BaseService {
                 submitMessageInThread(errorTypeFinal, id, basicProperties, index_type);
             });
             futures.add(future);
-            if (futures.size() >= MAX_TASK_SIZE) {
+            if (futures.size() >= maxTaskSize) {
                 //When it reaches the max size, we need to remove the complete futures from the
                 // set. So we can avoid the issue of out of memory.
                 HashStoreUpgrader.removeCompleteFuture(futures);
