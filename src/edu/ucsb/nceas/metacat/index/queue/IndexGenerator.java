@@ -269,7 +269,13 @@ public class IndexGenerator extends BaseService {
             if (futures.size() >= maxTaskSize) {
                 //When it reaches the max size, we need to remove the complete futures from the
                 // set. So we can avoid the issue of out of memory.
-                HashStoreUpgrader.removeCompleteFuture(futures);
+                try {
+                    HashStoreUpgrader.removeCompleteFuture(futures);
+                } catch (Exception e) {
+                    // Failure of removing a task doesn't interrupt the workflow
+                    logMetacat.warn("Metacat couldn't remove the completed index tasks: "
+                                        + e.getMessage());
+                }
             }
         } catch (Exception e) {
             try {
