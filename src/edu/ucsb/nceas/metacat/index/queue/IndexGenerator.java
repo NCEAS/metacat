@@ -318,6 +318,7 @@ public class IndexGenerator extends BaseService {
                 } catch (Exception ex) {
                     channelPool.invalidateObject(channel);
                     channel = null;
+                    throw ex;
                 } finally {
                     if (channel != null) {
                         channelPool.returnObject(channel);
@@ -350,8 +351,9 @@ public class IndexGenerator extends BaseService {
                     "IndexGenerator.publish - The index task with the " + "object identifier "
                         + id.getValue() + ", the index type " + index_type
                         + " (null means Metacat doesn't have the object), " + " the priority "
-                        + basicProperties.getPriority() + " was push into RabbitMQ with the exchange name "
-                        + EXCHANGE_NAME + " at the " + i + "try.");
+                        + basicProperties.getPriority()
+                        + " was push into RabbitMQ with the exchange name " + EXCHANGE_NAME
+                        + " at the " + i + "try.");
                 break;
             }
         }
