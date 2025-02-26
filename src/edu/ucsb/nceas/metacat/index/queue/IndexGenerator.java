@@ -434,4 +434,12 @@ public class IndexGenerator extends BaseService {
     protected static GenericObjectPool<Channel> getChannelPool() {
         return channelPool;
     }
+
+    /**
+     * Get the feature set of this object. It is for testing only
+     * @return the feature set
+     */
+    protected static Set<Future> getFutures() {
+        return futures;
+    }
 }
