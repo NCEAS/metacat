@@ -9,6 +9,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.types.v1.Identifier;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -34,10 +35,23 @@ import static org.mockito.ArgumentMatchers.anyString;
  */
 public class IndexGeneratorTest {
 
+    private Properties withProperties;
+    MockedStatic<PropertyService> closeableMock;
 
     @Before
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
+        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
+        withProperties = new Properties();
+        withProperties.setProperty("index.submitting.set.size", "3000000");
+        closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (!closeableMock.isClosed()) {
+            closeableMock.close();
+        }
     }
 
     /**
@@ -116,44 +130,39 @@ public class IndexGeneratorTest {
      */
     @Test
     public void testClearFeatureSetByMultipleThread() throws Exception {
-        Properties withProperties = new Properties();
-        withProperties.setProperty("index.submitting.set.size", "3000000");
-        try (MockedStatic<PropertyService> ignored
-                 = LeanTestUtils.initializeMockPropertyService(withProperties)) {
-            Channel mockedChannel = Mockito.mock(Channel.class);
-            GenericObjectPool<Channel> mockedPool = Mockito.mock(GenericObjectPool.class);
-            Mockito.when(mockedPool.borrowObject()).thenReturn(mockedChannel);
-            IndexGenerator.setChannelPool(mockedPool);
-            IndexGenerator generator = IndexGenerator.getInstance();
-            assertEquals(mockedPool, IndexGenerator.getChannelPool());
-            Identifier identifier = null;
-            String index_type = "create";
-            int priority = 3;
-            // Create 280000 features
-            int numberOfFutures = 1000000;
-            for (int i = 0 ; i < numberOfFutures; i++) {
-                identifier = new Identifier();
-                identifier.setValue("foo" + i );
-                generator.publish(identifier, index_type, priority);
-            }
-            Set<Future> futures = IndexGenerator.getFutures();
-            assertEquals(numberOfFutures, futures.size());
-            ExecutorService executor = Executors.newFixedThreadPool(2);
-            Future future1 = executor.submit(() -> {
-                HashStoreUpgrader.removeCompleteFuture(futures);
-                return Integer.parseInt("1");
-            });
-            Future future2 = executor.submit(() -> {
-                HashStoreUpgrader.removeCompleteFuture(futures);
-                return Integer.parseInt("2");
-            });
-            while (future1.isDone() && future2.isDone()) {
-                Thread.sleep(200);
-            }
-            assertEquals(1,future1.get());
-            assertEquals(2,future2.get());
-
+        Channel mockedChannel = Mockito.mock(Channel.class);
+        GenericObjectPool<Channel> mockedPool = Mockito.mock(GenericObjectPool.class);
+        Mockito.when(mockedPool.borrowObject()).thenReturn(mockedChannel);
+        IndexGenerator.setChannelPool(mockedPool);
+        IndexGenerator generator = IndexGenerator.getInstance();
+        assertEquals(mockedPool, IndexGenerator.getChannelPool());
+        Identifier identifier = null;
+        String index_type = "create";
+        int priority = 3;
+        // Create 280000 features
+        int numberOfFutures = 1000000;
+        for (int i = 0 ; i < numberOfFutures; i++) {
+            identifier = new Identifier();
+            identifier.setValue("foo" + i );
+            generator.publish(identifier, index_type, priority);
         }
+        Set<Future> futures = IndexGenerator.getFutures();
+        // It may contain other features from other test
+        assertTrue(futures.size() >= numberOfFutures);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future future1 = executor.submit(() -> {
+            HashStoreUpgrader.removeCompleteFuture(futures);
+            return Integer.parseInt("1");
+        });
+        Future future2 = executor.submit(() -> {
+            HashStoreUpgrader.removeCompleteFuture(futures);
+            return Integer.parseInt("2");
+        });
+        while (future1.isDone() && future2.isDone()) {
+            Thread.sleep(200);
+        }
+        assertEquals(1,future1.get());
+        assertEquals(2,future2.get());
     }
 
 }
