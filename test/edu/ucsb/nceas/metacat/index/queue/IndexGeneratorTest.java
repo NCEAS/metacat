@@ -149,7 +149,7 @@ public class IndexGeneratorTest {
         Set<Future> futures = IndexGenerator.getFutures();
         // It may contain other features from other test
         assertTrue(futures.size() >= numberOfFutures);
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+        ExecutorService executor = Executors.newFixedThreadPool(3);
         Future future1 = executor.submit(() -> {
             HashStoreUpgrader.removeCompleteFuture(futures);
             return Integer.parseInt("1");
@@ -158,11 +158,17 @@ public class IndexGeneratorTest {
             HashStoreUpgrader.removeCompleteFuture(futures);
             return Integer.parseInt("2");
         });
-        while (future1.isDone() && future2.isDone()) {
-            Thread.sleep(200);
+        Future future3 = executor.submit(() -> {
+            HashStoreUpgrader.removeCompleteFuture(futures);
+            return Integer.parseInt("3");
+        });
+        while (!future1.isDone() && !future2.isDone() && !future3.isDone()) {
+            Thread.sleep(500);
         }
         assertEquals(1,future1.get());
         assertEquals(2,future2.get());
+        assertEquals(3,future3.get());
+        assertTrue(futures.size() < numberOfFutures);
     }
 
 }
