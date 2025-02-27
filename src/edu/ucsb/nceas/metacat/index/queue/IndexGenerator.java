@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -65,6 +67,8 @@ public class IndexGenerator extends BaseService {
     private final static String EXCHANGE_NAME = "dataone-index";
     private final static String INDEX_QUEUE_NAME = "index";
     private final static String INDEX_ROUTING_KEY = "index";
+    private final static long CLEAR_FUTURE_TASK_DELAY_MILLI = 300000; //5 minutes
+    private final static long CLEAR_FUTURE_TASK_PERIOD_MILLI = 600000; //10 minutes
     private final static int DEFAULT_MAX_TASK_SIZE = 10000;
 
     private static Connection rabbitMQconnection = null;
@@ -74,6 +78,7 @@ public class IndexGenerator extends BaseService {
     private static ExecutorService executor = null;
     private static Set<Future> futures = Collections.synchronizedSet(new HashSet<>());
     private static int maxTaskSize;
+    private static Timer timer;
     private static Log logMetacat = LogFactory.getLog("IndexGenerator");
     
     /**
@@ -151,6 +156,32 @@ public class IndexGenerator extends BaseService {
             maxTaskSize = DEFAULT_MAX_TASK_SIZE;
         }
         logMetacat.debug("The max number of index tasks the generate can hold is " + maxTaskSize);
+        initFeatureSetClearTask();
+    }
+
+    /**
+     * Initialize a repeatable timer task to clear the future which is completed in the future set
+     */
+    private void initFeatureSetClearTask() {
+        timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                if (futures.size() >= DEFAULT_MAX_TASK_SIZE) {
+                    //When it reaches the max size, we need to remove the completed futures from the
+                    // set. So we can avoid the issue of out of memory.
+                    try {
+                        HashStoreUpgrader.removeCompleteFuture(futures);
+                        logMetacat.debug("Cleared the completed index tasks from the future set");
+                    } catch (Exception e) {
+                        // Failure of removing a task doesn't interrupt the workflow
+                        logMetacat.warn("Metacat couldn't remove the completed index tasks: "
+                                            + e.getMessage());
+                    }
+                }
+            }
+        };
+        timer.scheduleAtFixedRate(task, CLEAR_FUTURE_TASK_DELAY_MILLI, CLEAR_FUTURE_TASK_PERIOD_MILLI);
     }
 
     /**
@@ -267,7 +298,7 @@ public class IndexGenerator extends BaseService {
             });
             futures.add(future);
             if (futures.size() >= maxTaskSize) {
-                //When it reaches the max size, we need to remove the complete futures from the
+                //When it reaches the max size, we need to remove the completed futures from the
                 // set. So we can avoid the issue of out of memory.
                 try {
                     HashStoreUpgrader.removeCompleteFuture(futures);
