@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -211,7 +212,7 @@ public class HttpSolrQueryService extends SolrQueryService {
      */
     private void getIndexSchemaFieldFromServer() throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
         log.debug("get filed map from server (downloading files) ==========================");
-        SolrResourceLoader loader = new SolrResourceLoader();
+        SolrResourceLoader loader = new SolrResourceLoader((Paths.get("")));
         ConfigSetService service = null;
         ConfigSetService.ConfigResource configureResource  = IndexSchemaFactory.getConfigResource(service, lookupSchema(), loader, "dataone");
         Properties substitutableProperties = new Properties();
