@@ -5,6 +5,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.admin.upgrade.HashStoreUpgrader;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -110,7 +111,7 @@ public class IndexGeneratorTest {
         identifier.setValue("foo");
         generator.publish(identifier, index_type, priority);
         int times = 0;
-        while (times < 200) {
+        while (times <= D1NodeServiceTest.MAX_TRIES) {
             try {
                 //Verify the channel object called the basicPublish method once
                 Mockito.verify(mockedChannel, Mockito.times(1))
@@ -118,6 +119,9 @@ public class IndexGeneratorTest {
                 break;
             } catch (TooFewActualInvocations e) {
                 times++;
+                if (times >= D1NodeServiceTest.MAX_TRIES - 1) {
+                    throw e;
+                }
                 Thread.sleep(10);
             }
         }
