@@ -118,8 +118,11 @@ public class SolrServerFactory {
         return solrAdminClient;
     }
 	
-	private static void generateEmbeddedServer() throws ParserConfigurationException, IOException, SAXException  {
+	private static void generateEmbeddedServer() {
 	    String solrHomeDir = Settings.getConfiguration().getString(SOLR_HOME_PROPERTY_NAME);
+		if (!Paths.get(solrHomeDir).isAbsolute()) {
+			solrHomeDir = Paths.get(".").toAbsolutePath().normalize() + "/" + solrHomeDir;
+		}
         log.info("The configured solr home from properties is " + solrHomeDir);
         String configFileName = Settings.getConfiguration().getString(SOLR_CONFIG_FILE_NAME_PROPERTY_NAME);
         File configFile = new File(solrHomeDir, configFileName);
