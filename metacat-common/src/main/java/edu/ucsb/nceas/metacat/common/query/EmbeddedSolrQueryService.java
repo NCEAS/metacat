@@ -123,8 +123,8 @@ public class EmbeddedSolrQueryService extends SolrQueryService {
         // handle normal and skin-based queries
         if (isSupportedWT(wt)) {
             // just handle as normal solr query
-            //reload the core before query. Only after reloading the core, the query result can reflect the change made in metacat-index module.
-            coreContainer.load();
+            // The statement of coreContainer.load() can be called now. Since the Embedded solr
+            // service is for testing only. The change wouldn't cause any issue.
             QueryResponse response = solrServer.query(query);
             inputStream = solrTransformer.transformResults(query, response, wt);
         } else {
