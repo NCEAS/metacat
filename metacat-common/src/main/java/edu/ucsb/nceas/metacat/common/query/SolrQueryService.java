@@ -25,9 +25,9 @@ import org.dataone.service.util.Constants;
  *
  */
 public abstract class SolrQueryService {
-    
+
     public static final String WT = "wt";//the property name to specify the return type
-    
+
     protected static final String FILTERQUERY = "fq";
     protected static final String UNKNOWN = "Unknown";
     private static final String READPERMISSION = "readPermission";
@@ -39,15 +39,15 @@ public abstract class SolrQueryService {
     private static final String CLOSEPARENTHESES = ")";
     private static final String COLON = ":";
     private static final String OR = "OR";
-    
+
     private static Log log = LogFactory.getLog(SolrQueryService.class);
     private static List<String> supportedWriterTypes = null;
-    
+
     protected IndexSchema schema = null;
     protected Map<String, SchemaField> fieldMap = null;
     protected List<String> validSolrFieldNames = null;
     protected String solrSpecVersion = null;
-    
+
     static {
         supportedWriterTypes = new ArrayList<String>();
         supportedWriterTypes.add(SolrQueryResponseWriterFactory.CSV);
@@ -59,8 +59,7 @@ public abstract class SolrQueryService {
         supportedWriterTypes.add(SolrQueryResponseWriterFactory.PYTHON);
         supportedWriterTypes.add(SolrQueryResponseWriterFactory.XML);
     }
-  
-    
+
     /**
      * Query the Solr server with specified query and user's identity. If the Subjects
      * is null, there will be no access rules for the query. This is for the embedded solr server.
@@ -76,28 +75,27 @@ public abstract class SolrQueryService {
 
     /**
      * Get the fields list of the index schema
-     * @return
+     * @return the map containing the list
      * @throws Exception
      */
     public abstract Map<String, SchemaField> getIndexSchemaFields() throws Exception;
-    
-    public IndexSchema getSchema() {
-		return schema;
-	}
 
-	/**
+    public IndexSchema getSchema() {
+        return schema;
+    }
+
+    /**
      * Get the version of the solr server.
      * @return
      */
     public abstract String getSolrServerVersion();
-    
+
     /**
      * Get the list of the valid field name (moved the fields names of the CopyFieldTarget).
-     * @return
+     * @return the list of field name
      */
     protected List<String> getValidSchemaFields() {
         if (validSolrFieldNames != null && !validSolrFieldNames.isEmpty()) {
-            //System.out.println("the valid file name is\n"+validSolrFieldNames);
             return validSolrFieldNames;
         } else {
             validSolrFieldNames = new ArrayList<String>();
@@ -111,24 +109,23 @@ public abstract class SolrQueryService {
                     }
                 }
             }
-            //System.out.println("the valid file name is\n"+validSolrFieldNames);
             return validSolrFieldNames;
         }
     }
-    
+
     /**
      * If the solr server supports the specified wt.
      * @param wt
      * @return true if it supports; otherwise false.
      */
     public static boolean isSupportedWT(String wt) {
-        if (wt == null ||supportedWriterTypes.contains(wt)) {
+        if (wt == null || supportedWriterTypes.contains(wt)) {
             return true;
         } else {
             return false;
         }
     }
-    
+
     /*
      * Append the access filter query to the params
      */
@@ -148,7 +145,7 @@ public abstract class SolrQueryService {
         }
         return append;
     }
-    
+
     protected StringBuffer generateAccessFilterParamsString(Set<Subject>subjects) {
         StringBuffer query = new StringBuffer();
         boolean first = true;
@@ -199,7 +196,6 @@ public abstract class SolrQueryService {
                         }
                     }
                 }
-               
             }
         }
         return query;
