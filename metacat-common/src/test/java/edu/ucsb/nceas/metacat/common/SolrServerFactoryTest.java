@@ -2,7 +2,6 @@ package edu.ucsb.nceas.metacat.common;
 
 import static org.junit.Assert.fail;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.commons.configuration.ConfigurationException;
@@ -18,7 +17,7 @@ public class SolrServerFactoryTest extends MetacatCommonTestBase {
     public void setup () throws ConfigurationException, IOException {
         super.setup();
     }
-    
+
     @Test
     public void testCreateSolrServer() throws Exception {
         SolrClient server = SolrServerFactory.createSolrServer();
