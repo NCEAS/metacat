@@ -1,5 +1,6 @@
 package edu.ucsb.nceas.metacat.common;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
@@ -114,6 +115,12 @@ public class SolrServerFactory {
         String solrHomeDir = Settings.getConfiguration().getString(SOLR_HOME_PROPERTY_NAME);
         if (!Paths.get(solrHomeDir).isAbsolute()) {
             solrHomeDir = Paths.get(".").toAbsolutePath().normalize() + "/" + solrHomeDir;
+        }
+        Path path = Paths.get(solrHomeDir);
+        if (path.isAbsolute()) {
+            solrHomeDir = path.normalize().toString();
+        } else {
+            solrHomeDir = Paths.get("").resolve(solrHomeDir).normalize().toString();
         }
         log.info("The configured solr home from properties is " + solrHomeDir);
         Properties properties = new Properties();
