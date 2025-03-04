@@ -56,8 +56,7 @@ public class EmbeddedSolrQueryService extends SolrQueryService {
         }
         if (coreContainer == null) {
             throw new NullPointerException(
-                "EmbeddedSolrQueryService.constructor - the CoreContainer parameter can't be null"
-                    + ".");
+                "EmbeddedSolrQueryService.constructor: the CoreContainer parameter can't be null.");
         }
         if (collectionName == null || collectionName.isBlank()) {
             throw new NullPointerException(
