@@ -64,9 +64,9 @@ public class SolrServerFactory {
                     Settings.getConfiguration().getString(SOLR_ENPOINT_PROPERTY_NAME);
                 String coreName = Settings.getConfiguration().getString(CORENAME_PROPERTY_NAME);
                 if (solrServerBaseURL != null && solrServerBaseURL.endsWith(SLASH)) {
-                    solrServerBaseURL = solrServerBaseURL+coreName;
+                    solrServerBaseURL = solrServerBaseURL + coreName;
                 } else {
-                    solrServerBaseURL = solrServerBaseURL+SLASH+coreName;
+                    solrServerBaseURL = solrServerBaseURL + SLASH + coreName;
                 }
                 log.info("SolrServerFactory.createSolrServer - the final solr server base url is "
                              + solrServerBaseURL);
