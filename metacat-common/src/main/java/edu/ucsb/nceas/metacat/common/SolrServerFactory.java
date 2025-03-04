@@ -34,9 +34,9 @@ public class SolrServerFactory {
     public static final String SOLR_COLLECTION_NAME_PROPERTY_NAME = "solr.collectionName";
     public static final String SOLR_SERVER_CLASSNAME_PROPERTY_NAME = "solr.server.classname";
     public static final String SOLR_ENPOINT_PROPERTY_NAME = "solr.baseURL";
-    private static final String EMBEDDEDSERVERCLASS =
+    private static final String EMBEDDED_SERVER_CLASS =
         "org.apache.solr.client.solrj.embedded.EmbeddedSolrServer";
-    private static final String HTTPSERVERCLASS =
+    private static final String HTTP_SERVER_CLASS =
         "org.apache.solr.client.solrj.impl.CommonsHttpSolrServer";
     private static final String CORENAME_PROPERTY_NAME = "solr.coreName";
     private static final String SLASH = "/";
@@ -57,9 +57,9 @@ public class SolrServerFactory {
         if(solrServer == null) {
             String className =
                 Settings.getConfiguration().getString(SOLR_SERVER_CLASSNAME_PROPERTY_NAME);
-            if (className != null && className.equals(EMBEDDEDSERVERCLASS)) {
+            if (className != null && className.equals(EMBEDDED_SERVER_CLASS)) {
                 generateEmbeddedServer();
-            } else if (className != null && className.equals(HTTPSERVERCLASS)) {
+            } else if (className != null && className.equals(HTTP_SERVER_CLASS)) {
                 String solrServerBaseURL =
                     Settings.getConfiguration().getString(SOLR_ENPOINT_PROPERTY_NAME);
                 String coreName = Settings.getConfiguration().getString(CORENAME_PROPERTY_NAME);
@@ -92,9 +92,9 @@ public class SolrServerFactory {
         if(solrAdminClient == null) {
             String className =
                 Settings.getConfiguration().getString(SOLR_SERVER_CLASSNAME_PROPERTY_NAME);
-            if (className != null && className.equals(EMBEDDEDSERVERCLASS)) {
+            if (className != null && className.equals(EMBEDDED_SERVER_CLASS)) {
                 solrAdminClient = null;
-            } else if (className != null && className.equals(HTTPSERVERCLASS)) {
+            } else if (className != null && className.equals(HTTP_SERVER_CLASS)) {
                 String solrServerBaseURL =
                     Settings.getConfiguration().getString(SOLR_ENPOINT_PROPERTY_NAME);
                 log.info("SolrServerFactory.createSolrServer - the final solr server base url is "
