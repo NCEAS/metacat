@@ -149,55 +149,71 @@ public abstract class SolrQueryService {
     protected StringBuffer generateAccessFilterParamsString(Set<Subject>subjects) {
         StringBuffer query = new StringBuffer();
         boolean first = true;
-        if(subjects != null) {
-            for(Subject subject : subjects) {
-                if(subject != null) {
+        if (subjects != null) {
+            for (Subject subject : subjects) {
+                if (subject != null) {
                     String subjectName = subject.getValue();
-                    if(subjectName != null && !subjectName.trim().equals("")) {
-                        if(first) {
+                    if (subjectName != null && !subjectName.isBlank()) {
+                        if (first) {
                             first = false;
-                            query.append(
-                                OPENPARENTHESES + READPERMISSION + COLON + "\"" + subjectName + "\""
-                                    + CLOSEPARENTHESES);
-                            query.append(
-                                OR + OPENPARENTHESES + WRITEPERMISSION + COLON + "\"" + subjectName
-                                    + "\"" + CLOSEPARENTHESES);
-                            query.append(
-                                OR + OPENPARENTHESES + CHANGEPERMISSION + COLON + "\"" + subjectName
-                                    + "\"" + CLOSEPARENTHESES);
+                            appendPermissionToQuery(query, READPERMISSION, subjectName);
+                            query.append(OR);
+                            appendPermissionToQuery(query, WRITEPERMISSION, subjectName);
+                            query.append(OR);
+                            appendPermissionToQuery(query, CHANGEPERMISSION, subjectName);
                             if (!subjectName.equals(Constants.SUBJECT_PUBLIC)
                                 && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
-                                query.append(
-                                    OR + OPENPARENTHESES + RIGHTSHOLDER + COLON + "\"" + subjectName
-                                        + "\"" + CLOSEPARENTHESES);
+                                query.append(OR);
+                                appendPermissionToQuery(query, RIGHTSHOLDER, subjectName);
                             } else if (subjectName.equals(Constants.SUBJECT_PUBLIC)) {
-                                query.append(OR + OPENPARENTHESES + IS_PUBLIC + COLON + "true"
-                                                 + CLOSEPARENTHESES);
+                                query.append(OR);
+                                query.append(OPENPARENTHESES);
+                                query.append(IS_PUBLIC);
+                                query.append(COLON);
+                                query.append("true");
+                                query.append(CLOSEPARENTHESES);
                             }
                         } else {
-                            query.append(
-                                OR + OPENPARENTHESES + READPERMISSION + COLON + "\"" + subjectName
-                                    + "\"" + CLOSEPARENTHESES);
-                            query.append(
-                                OR + OPENPARENTHESES + WRITEPERMISSION + COLON + "\"" + subjectName
-                                    + "\"" + CLOSEPARENTHESES);
-                            query.append(
-                                OR + OPENPARENTHESES + CHANGEPERMISSION + COLON + "\"" + subjectName
-                                    + "\"" + CLOSEPARENTHESES);
+                            query.append(OR);
+                            appendPermissionToQuery(query, READPERMISSION, subjectName);
+                            query.append(OR);
+                            appendPermissionToQuery(query, WRITEPERMISSION, subjectName);
+                            query.append(OR);
+                            appendPermissionToQuery(query, CHANGEPERMISSION, subjectName);
                             if (!subjectName.equals(Constants.SUBJECT_PUBLIC)
                                 && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
-                                query.append(
-                                    OR + OPENPARENTHESES + RIGHTSHOLDER + COLON + "\"" + subjectName
-                                        + "\"" + CLOSEPARENTHESES);
+                                query.append(OR);
+                                appendPermissionToQuery(query, RIGHTSHOLDER, subjectName);
                             } else if (subjectName.equals(Constants.SUBJECT_PUBLIC)) {
-                                query.append(OR + OPENPARENTHESES + IS_PUBLIC + COLON + "true"
-                                                 + CLOSEPARENTHESES);
+                                query.append(OR);
+                                query.append(OPENPARENTHESES);
+                                query.append(IS_PUBLIC);
+                                query.append(COLON);
+                                query.append("true");
+                                query.append(CLOSEPARENTHESES);
                             }
                         }
                     }
                 }
             }
         }
+        log.debug("The access filter is " + query);
         return query;
+    }
+
+    /**
+     * Append the permission filter to the string buffer
+     * @param query  the buffer holding the query
+     * @param permission  the permission will be allowed
+     * @param subject  the subject will be allowed
+     */
+    private void appendPermissionToQuery(StringBuffer query, String permission, String subject) {
+        query.append(OPENPARENTHESES);
+        query.append(permission);
+        query.append(COLON);
+        query.append("\"");
+        query.append(subject);
+        query.append("\"");
+        query.append(CLOSEPARENTHESES);
     }
 }
