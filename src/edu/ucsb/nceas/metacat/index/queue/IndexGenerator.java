@@ -98,9 +98,12 @@ public class IndexGenerator extends BaseService {
     private void init() throws ServiceException {
         nThreads = Runtime.getRuntime().availableProcessors();
         nThreads--;// Leave 1 main thread for execution
+        logMetacat.debug("The number of threads based on the number of processors is " + nThreads);
         try {
             RabbitMQChannelFactory channelFactory = new RabbitMQChannelFactory();
             int channelMax = channelFactory.getChannelMax();
+            logMetacat.debug("The max number of channels for one connection on the RabbitMQ "
+                                 + "configuration is " + channelMax);
             //We choose the smaller number between channelMax and processor number
             // as the channel pool size and the thread pool size
             nThreads = Math.min(channelMax, nThreads);
@@ -123,7 +126,8 @@ public class IndexGenerator extends BaseService {
             throw new ServiceException(error);
         }
         executor = Executors.newFixedThreadPool(nThreads);
-        logMetacat.debug("The size of the thread pool to do the submission job is " + nThreads);
+        logMetacat.debug("The final size of the thread pool to do the submission job is "
+                             + nThreads);
         try {
             String maxTaskSizeStr = PropertyService.getProperty("index.submitting.set.size");
             maxTaskSize = Integer.parseInt(maxTaskSizeStr);
