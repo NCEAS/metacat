@@ -67,7 +67,7 @@ public class IndexGenerator extends BaseService {
     private final static long CLEAR_FUTURE_TASK_PERIOD_MILLI = 600000; //10 minutes
     private final static int DEFAULT_MAX_TASK_SIZE = 10000;
 
-    private static IndexGenerator instance = null;
+    private static volatile IndexGenerator instance = null;
     private static GenericObjectPool<Channel> channelPool = null;
     private static int nThreads;
     private static ExecutorService executor = null;
