@@ -310,7 +310,7 @@ public class IndexGenerator extends BaseService {
                                        AMQP.BasicProperties basicProperties, String index_type) {
         // If the first time publish fails, Metacat will try to check out another channel and
         // give another shoot.
-        int times = 1;
+        int times = nThreads;
         for (int i = 0; i <= times; i++) {
             boolean success = false;
             try {

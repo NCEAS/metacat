@@ -168,9 +168,11 @@ public class RabbitMQChannelFactory extends BasePooledObjectFactory<Channel> {
      * @throws TimeoutException
      */
     public int getChannelMax() throws IOException, TimeoutException {
-        if (connection == null || !connection.isOpen()) {
-            // If connection is not healthy, recreate one.
-            connection = factory.newConnection();
+        synchronized (this) {
+            if (connection == null || !connection.isOpen()) {
+                // If connection is not healthy, recreate one.
+                connection = factory.newConnection();
+            }
         }
         return connection.getChannelMax();
     }
