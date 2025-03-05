@@ -2,9 +2,7 @@ package edu.ucsb.nceas.metacat.index.queue.pool;
 
 import com.rabbitmq.client.Channel;
 import edu.ucsb.nceas.LeanTestUtils;
-import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import org.apache.commons.pool2.PooledObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,12 +20,7 @@ public class RabbitMQChannelFactoryIT {
     @Before
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
-        factory = new RabbitMQChannelFactory(IndexGenerator.getInstance().getConnection());
-    }
-
-    @After
-    public void tearDown() {
-
+        factory = new RabbitMQChannelFactory();
     }
 
     /**
