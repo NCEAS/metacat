@@ -42,7 +42,6 @@ public class IndexGeneratorTest {
     @Before
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
-        LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         withProperties = new Properties();
         withProperties.setProperty("index.submitting.set.size", "3000000");
         closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
