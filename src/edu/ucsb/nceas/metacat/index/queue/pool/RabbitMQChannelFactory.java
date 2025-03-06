@@ -52,15 +52,19 @@ public class RabbitMQChannelFactory extends BasePooledObjectFactory<Channel> {
 
     /**
      * Constructor
+     * @throws IOException
+     * @throws TimeoutException
      */
-    public RabbitMQChannelFactory() {
+    public RabbitMQChannelFactory() throws IOException, TimeoutException {
         init();
     }
 
     /**
      * Initialize the connection factory and connection
+     * @throws IOException
+     * @throws TimeoutException
      */
-    private void init() {
+    private void init() throws IOException, TimeoutException {
         // Default values for the RabbitMQ message broker server. The value of
         //'localhost' is valid for a RabbitMQ server running on a 'bare metal'
         //server, inside a VM, or within a Kubernetes where Metacat and the
@@ -112,6 +116,7 @@ public class RabbitMQChannelFactory extends BasePooledObjectFactory<Channel> {
         } catch (IOException | TimeoutException e) {
             logMetacat.error("RabbitMQ connection factory can't create a connection since "
                                  + e.getMessage());
+            throw e;
         }
     }
 

@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -170,48 +171,54 @@ public class MetacatInitializerIT {
         long time = System.currentTimeMillis();
         String newHost = originHost + time;
 
-        Configuration mockD1Config = createMockConfig(newHost);
-
-        try (MockedStatic<Settings> mock = Mockito.mockStatic(Settings.class)) {
-
-            mock.when(Settings::getConfiguration).thenReturn(mockD1Config);
-
-            IndexGenerator.refreshInstance();
+        // This is a configured metacat and the rabbitmq has a wrong host name.
+        // So it should throw an exception during initialization on both non-k8s and k8s Metacats
+        withProperties.setProperty("index.rabbitmq.hostname", newHost);
+        try (MockedStatic<PropertyService> ps1Mock = LeanTestUtils.initializeMockPropertyService(
+            withProperties)) {
+            ps1Mock.when(() -> PropertyService.getInstance((ServletContext) any()))
+                .thenReturn(Mockito.mock(PropertyService.class));
+            try (MockedStatic<ConfigurationUtil> mockCfg = Mockito.mockStatic(
+                ConfigurationUtil.class)) {
+                mockCfg.when(ConfigurationUtil::isMetacatConfigured).thenReturn(true);
+                IndexGenerator.refreshInstance();
+                MetacatInitializer metacatInitializer = new MetacatInitializer();
+                try {
+                    metacatInitializer.contextInitialized(event);
+                    fail("The initialization should fail and the test cannot get here");
+                } catch (RuntimeException e) {
+                    assertTrue("Exception message DID NOT contain expected string: " + time
+                                   + ". Entire message was:\n\n" + e.getMessage()
+                                   + "\n\nfrom exception: " + e,
+                               e.getMessage().contains(Long.toString(time)));
+                }
+            }
+        }
+        // set Metacat non-configured temporarily.
+        // Non-configured legacy Metacat wouldn't throw an exception. Non-configured k8s metacat
+        // should throw an exception, though
+        withProperties.setProperty("configutil.skinsConfigured", PropertyService.UNCONFIGURED);
+        try (MockedStatic<PropertyService> psMock = LeanTestUtils.initializeMockPropertyService(
+            withProperties)) {
+            psMock.when(() -> PropertyService.getInstance((ServletContext) any()))
+                .thenReturn(Mockito.mock(PropertyService.class));
             MetacatInitializer metacatInitializer = new MetacatInitializer();
-            try {
-                metacatInitializer.contextInitialized(event);
-                fail("The initialization should fail and the test cannot get here");
-            } catch (RuntimeException e) {
-                assertTrue("Exception message DID NOT contain expected string: " + time
-                               + ". Entire message was:\n\n" + e.getMessage()
-                               + "\n\nfrom exception: " + e,
-                           e.getMessage().contains(Long.toString(time)));
-            }
-
-            // set Metacat non-configured temporarily.
-            // Non-configured legacy Metacat wouldn't throw an exception. Non-configured k8s metacat
-            // should throw an exception, though
-            withProperties.setProperty("configutil.skinsConfigured", PropertyService.UNCONFIGURED);
-            try (MockedStatic<PropertyService> psMock = LeanTestUtils.initializeMockPropertyService(
-                withProperties)) {
-                psMock.when(() -> PropertyService.getInstance((ServletContext) any()))
-                    .thenReturn(Mockito.mock(PropertyService.class));
-                metacatInitializer = new MetacatInitializer();
-                metacatInitializer.contextInitialized(event);
-                //k8s doesn't care whether configutil.skinsConfigured - it relies on values.yaml
-                assertEquals("Should always be true if running in k8s, and false otherwise",
-                             System.getenv("METACAT_IN_K8S"),
-                             String.valueOf(MetacatInitializer.isFullyInitialized()));
-            } catch (RuntimeException e) {
-                // Non-configured k8s metacat should throw an exception from k8s initializer:
-                assertTrue("Exception not expected, when NOT running in K8s",
-                           Boolean.parseBoolean(System.getenv("METACAT_IN_K8S")));
-                final String expected = "Cannot connect to the RabbitMQ queue";
-                assertTrue("Exception message DID NOT contain expected string: " + expected
-                               + ". Entire message was:\n\n" + e.getMessage()
-                               + "\n\nfrom exception: " + e,
-                           e.getMessage().contains(expected));
-            }
+            metacatInitializer.contextInitialized(event);
+            //k8s doesn't care whether configutil.skinsConfigured - it relies on values.yaml
+            assertEquals("Should always be true if running in k8s, and false otherwise",
+                         System.getenv("METACAT_IN_K8S"),
+                         String.valueOf(MetacatInitializer.isFullyInitialized()));
+            assertFalse("Only non-k8s Metacats can get here",
+                        Boolean.parseBoolean(System.getenv("METACAT_IN_K8S")));
+        } catch (RuntimeException e) {
+            // Non-configured k8s metacat should throw an exception from k8s initializer:
+            assertTrue("Exception not expected, when NOT running in K8s",
+                       Boolean.parseBoolean(System.getenv("METACAT_IN_K8S")));
+            final String expected = newHost;
+            assertTrue("Exception message DID NOT contain expected string: " + expected
+                           + ". Entire message was:\n\n" + e.getMessage()
+                           + "\n\nfrom exception: " + e,
+                       e.getMessage().contains(expected));
         }
         IndexGenerator.refreshInstance();
     }
