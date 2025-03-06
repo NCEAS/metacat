@@ -41,8 +41,8 @@ metadata:
     {{- end }}
       rewrite ^/robots.txt /{{- index .Values.metacat "application.context" -}}
       /robots.txt redirect;
-    {{- range .Values.ingress.rewriteRules -}}
-      {{ . | nindent 6 }}
+    {{- if .Values.ingress.rewriteRules }}
+      {{- .Values.ingress.rewriteRules | nindent 6 }}
     {{- end }}
 spec:
   {{- if .Values.ingress.defaultBackend.enabled }}
@@ -65,22 +65,9 @@ spec:
   {{- end }}
   {{- end }}
   rules:
-    {{- if .Values.ingress.hosts }}
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
-      http:
-        paths:
-          {{- range .paths }}
-          - path: {{ .path }}
-            pathType: {{ .pathType }}
-            backend:
-              service:
-                name: {{ $fullName }}-hl
-                port:
-                  number: 8080
-          {{- end }}
-    {{- end }}
-    {{- else }}
+  {{- if and (.Values.ingress.rules) (ne (len .Values.ingress.rules) 0) }}
+    {{- .Values.ingress.rules | toYaml | nindent 4 }}
+  {{- else }}
     - host: {{ $serverName }}
       http:
         paths:
@@ -101,5 +88,5 @@ spec:
                 port:
                   number: 80
           {{- end }}
-    {{- end }}
+  {{- end }}
 {{- end }}

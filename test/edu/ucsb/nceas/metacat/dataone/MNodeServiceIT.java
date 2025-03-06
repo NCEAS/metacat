@@ -325,6 +325,42 @@ public class MNodeServiceIT {
         }
 
         /**
+         * Test object creation without object format id in the system metadata
+         */
+        @Test
+        public void testCreateWithoutObjectFormatId() throws Exception {
+            D1NodeServiceTest.printTestHeader("testCreateWithoutObjectFormatId");
+            Identifier guid = new Identifier();
+            guid.setValue("testCreate." + System.currentTimeMillis());
+            Session session = null;
+            session = d1NodeTest.getTestSession();
+            try {
+                InputStream object =
+                    new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                SystemMetadata sysmeta =
+                    D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+                sysmeta.setFormatId(null);
+                Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
+                fail("It should fail since the format id is null.");
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidSystemMetadata);
+            }
+            try {
+                InputStream object =
+                    new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                SystemMetadata sysmeta =
+                        D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+                ObjectFormatIdentifier formatIdentifier = new ObjectFormatIdentifier();
+                formatIdentifier.setValue("");
+                sysmeta.setFormatId(formatIdentifier);
+                Identifier pid = d1NodeTest.mnCreate(session, guid, object, sysmeta);
+                fail("It should fail since the format id is blank.");
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidSystemMetadata);
+            }
+        }
+
+        /**
          * Test object creation
          */
         @Test
@@ -781,6 +817,55 @@ public class MNodeServiceIT {
                 assertEquals(retrive1.getAuthoritativeMemberNode().getValue(),
                              originMemberNode.getValue());
 
+            } catch (Exception e) {
+                fail("Unexpected error: " + e.getMessage());
+            }
+        }
+
+        /**
+         * Test to update objects with the system metadata without the format id
+         */
+        @Test
+        public void testUpdateWithoutFormatId() {
+            D1NodeServiceTest.printTestHeader("testUpdateWiouthFormatId");
+            try {
+                Session session = d1NodeTest.getTestSession();
+                Identifier guid = new Identifier();
+                guid.setValue("testUpdate." + System.currentTimeMillis());
+                InputStream object =
+                    new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                SystemMetadata sysmeta =
+                    D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+                // original
+                Identifier pid =
+                    d1NodeTest.mnCreate(session, guid, object, sysmeta);
+
+                //Test the case that format id is null
+                Identifier newPid = new Identifier();
+                newPid.setValue(
+                    "testUpdate." + (System.currentTimeMillis() + 1));
+                object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                SystemMetadata newMeta =
+                    D1NodeServiceTest.createSystemMetadata(newPid, session.getSubject(), object);
+                newMeta.setFormatId(null);
+                object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                try {
+                    d1NodeTest.mnUpdate(session, pid, object, newPid, newMeta);
+                    fail("we shouldn't get here since the format id is null");
+                } catch (Exception e) {
+                    assertTrue(e instanceof InvalidSystemMetadata);
+                }
+
+                object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+                ObjectFormatIdentifier formatIdentifier = new ObjectFormatIdentifier();
+                formatIdentifier.setValue("");
+                newMeta.setFormatId(formatIdentifier);
+                try {
+                    d1NodeTest.mnUpdate(session, pid, object, newPid, newMeta);
+                    fail("we shouldn't get here since the format id is blank");
+                } catch (Exception e) {
+                    assertTrue(e instanceof InvalidSystemMetadata);
+                }
             } catch (Exception e) {
                 fail("Unexpected error: " + e.getMessage());
             }

@@ -396,6 +396,14 @@ public abstract class D1NodeService {
                 "1180", "The checksum object from the system metadata shouldn't be null.");
         }
 
+        if (sysmeta.getFormatId() == null || sysmeta.getFormatId().getValue().isBlank()) {
+            logMetacat.error(
+                "D1NodeService.create - the format id from the system metadata shouldn't be"
+                    + " null for the object " + pid.getValue());
+            throw new InvalidSystemMetadata(
+                "1180", "The the format id from the system metadata shouldn't be null.");
+        }
+
         try {
             String docType;
             if (isScienceMetadata(sysmeta)) {
