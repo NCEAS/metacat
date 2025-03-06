@@ -150,7 +150,7 @@ public class IndexGenerator extends BaseService {
                     //When it reaches the max size, we need to remove the completed futures from the
                     // set. So we can avoid the issue of out of memory.
                     try {
-                        HashStoreUpgrader.removeCompleteFuture(futures);
+                        removeCompleteFuture(futures);
                         logMetacat.debug("Cleared the completed index tasks from the future set");
                     } catch (Exception e) {
                         // Failure of removing a task doesn't interrupt the workflow
@@ -279,7 +279,7 @@ public class IndexGenerator extends BaseService {
                 //When it reaches the max size, we need to remove the completed futures from the
                 // set. So we can avoid the issue of out of memory.
                 try {
-                    HashStoreUpgrader.removeCompleteFuture(futures);
+                    removeCompleteFuture(futures);
                 } catch (Exception e) {
                     // Failure of removing a task doesn't interrupt the workflow
                     logMetacat.warn("Metacat couldn't remove the completed index tasks: "
@@ -441,5 +441,38 @@ public class IndexGenerator extends BaseService {
      */
     protected static Set<Future> getFutures() {
         return futures;
+    }
+
+    /**
+     * This method removes the Future objects from a set which have the done status.
+     * So the free space can be used again. If it cannot remove any one, it will wait and try
+     * again until some space was freed up.
+     * @param futures  the set which hold the futures to be checked
+     */
+    public static void removeCompleteFuture(Set<Future> futures) {
+        if (futures != null) {
+            int originalSize = futures.size();
+            if (originalSize > 0) {
+                //A 100GB file takes 15 minutes to convert, and 800GB takes 2 hours. Although the
+                // method cannot remove futures after 2 hours tries, new tasks can only be
+                // submitted every 2 hours when the set limit is reached, which slows the
+                // addition of futures and prevents out-of-memory issues.
+                for (int i = 0; i < 7200; i++) {
+                    futures.removeIf(Future::isDone);
+                    if (futures.size() >= originalSize) {
+                        logMetacat.debug("Metacat could not remove any complete futures and will "
+                                             + "wait for a while and try again.");
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            logMetacat.warn("Waiting future is interrupted " + e.getMessage());
+                        }
+                    } else {
+                        logMetacat.debug("Metacat removed some complete futures from the set.");
+                        break;
+                    }
+                }
+            }
+        }
     }
 }

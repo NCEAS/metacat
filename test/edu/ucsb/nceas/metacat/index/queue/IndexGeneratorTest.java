@@ -154,15 +154,15 @@ public class IndexGeneratorTest {
         assertTrue(futures.size() >= numberOfFutures);
         ExecutorService executor = Executors.newFixedThreadPool(3);
         Future future1 = executor.submit(() -> {
-            HashStoreUpgrader.removeCompleteFuture(futures);
+            IndexGenerator.removeCompleteFuture(futures);
             return Integer.parseInt("1");
         });
         Future future2 = executor.submit(() -> {
-            HashStoreUpgrader.removeCompleteFuture(futures);
+            IndexGenerator.removeCompleteFuture(futures);
             return Integer.parseInt("2");
         });
         Future future3 = executor.submit(() -> {
-            HashStoreUpgrader.removeCompleteFuture(futures);
+            IndexGenerator.removeCompleteFuture(futures);
             return Integer.parseInt("3");
         });
         while (!future1.isDone() && !future2.isDone() && !future3.isDone()) {
