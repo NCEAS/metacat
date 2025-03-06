@@ -95,7 +95,6 @@ ingress:
 
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-
   tls:
     - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
