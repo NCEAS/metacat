@@ -337,7 +337,7 @@ public class IndexGenerator extends BaseService {
             } catch (Exception e) {
                 if (i == times) {
                     // Only logs the error in the last try
-                    String additionErrorMessage1= null;
+                    String additionErrorMessage1 = null;
                     try {
                         saveFailedTaskToDB(errorTypeFinal, id, e.getMessage());
                     } catch (SQLException sqle) {
@@ -354,10 +354,9 @@ public class IndexGenerator extends BaseService {
                 }
             }
             if (success) {
-                logMetacat.debug(
-                    "The index task with the " + "object identifier "
+                logMetacat.debug("The index task with the object identifier "
                         + id.getValue() + ", the index type " + index_type
-                        + " (null means Metacat doesn't have the object), " + " the priority "
+                        + " (null means Metacat doesn't have the object), the priority "
                         + basicProperties.getPriority()
                         + " was push into RabbitMQ with the exchange name "
                         + RabbitMQChannelFactory.EXCHANGE_NAME
