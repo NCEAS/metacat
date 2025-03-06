@@ -109,20 +109,12 @@ postgresql:
 dataone-indexer:
   # increase minReplicas from default 3
   autoscaling:
-    minReplicas: 3
+    minReplicas: 1
     targetCPUUtilizationPercentage: 80
 
   image:
     pullPolicy: Always
     debug: *debug
-
-  topologySpreadConstraints:
-    - maxSkew: 2
-      topologyKey: kubernetes.io/hostname
-      whenUnsatisfiable: ScheduleAnyway
-      labelSelector:
-        matchLabels:
-          app.kubernetes.io/name: d1index
 
   idxworker:
     # this actually puts container in debug loop mode - no indexer running
