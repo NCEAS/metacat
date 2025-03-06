@@ -312,8 +312,8 @@ public class IndexGenerator extends BaseService {
      */
     private void submitMessageInThread(String errorTypeFinal, Identifier id,
                                        AMQP.BasicProperties basicProperties, String index_type) {
-        // If the first time publish fails, Metacat will try to check out another channel and
-        // give another shoot.
+        // If the publishing fails, Metacat will try to check out another channel and
+        // give another shoot until it goes through the all channels in the pool.
         int times = nThreads;
         for (int i = 0; i <= times; i++) {
             boolean success = false;
@@ -336,7 +336,7 @@ public class IndexGenerator extends BaseService {
                 }
             } catch (Exception e) {
                 if (i == times) {
-                    // Only logs the error in the second time try
+                    // Only logs the error in the last try
                     String additionErrorMessage1= null;
                     try {
                         saveFailedTaskToDB(errorTypeFinal, id, e.getMessage());
