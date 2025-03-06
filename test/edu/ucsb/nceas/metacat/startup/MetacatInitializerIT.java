@@ -301,42 +301,6 @@ public class MetacatInitializerIT {
         }
     }
 
-    private static Configuration createMockConfig(String newHost) {
-
-        Configuration mockD1Config = Mockito.mock(Configuration.class);
-
-        // override hostname...
-        when(mockD1Config.getString(eq("index.rabbitmq.hostname"), anyString())).thenReturn(
-            newHost);
-
-        // ...but for remaining values, retrieve those that are already in Settings
-        Configuration config = Settings.getConfiguration();
-        when(mockD1Config.getInt(eq("index.rabbitmq.hostport"), anyInt()))
-            .thenReturn(config.getInt("index.rabbitmq.hostport", 5672));
-        when(mockD1Config.getString(eq("index.rabbitmq.username"), anyString()))
-            .thenReturn(config.getString("index.rabbitmq.username", "guest"));
-        when(mockD1Config.getString(eq("index.rabbitmq.password"), anyString()))
-            .thenReturn(config.getString("index.rabbitmq.password", "guest"));
-        when(mockD1Config.getInt(eq("index.rabbitmq.max.priority")))
-            .thenReturn(config.getInt("index.rabbitmq.max.priority"));
-
-        // node properties
-        when(mockD1Config.getString(eq("dataone.nodeName")))
-            .thenReturn(config.getString("dataone.nodeName"));
-        when(mockD1Config.getString(eq("dataone.nodeId")))
-            .thenReturn(config.getString("dataone.nodeId"));
-        when(mockD1Config.getString(eq("dataone.subject")))
-            .thenReturn(config.getString("dataone.subject"));
-        when(mockD1Config.getString(eq("dataone.contactSubject")))
-            .thenReturn(config.getString("dataone.contactSubject"));
-        when(mockD1Config.getString(eq("dataone.nodeDescription")))
-            .thenReturn(config.getString("dataone.nodeDescription"));
-        when(mockD1Config.getString(eq("dataone.nodeType")))
-            .thenReturn(config.getString("dataone.nodeType"));
-
-        return mockD1Config;
-    }
-
     /**
      * Mock the ServletContextEvent to override getServletContext()
      * @return ServletContextEvent the mock ServletContextEvent
