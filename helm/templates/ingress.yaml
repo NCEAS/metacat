@@ -23,6 +23,9 @@ metadata:
       {{- include "dataone.mutual.auth.annotations" . | nindent 4 }}
     {{- end }}
     nginx.ingress.kubernetes.io/configuration-snippet: |
+    {{- if .Values.ingress.configurationSnippet }}
+      {{- .Values.ingress.configurationSnippet | nindent 6 }}
+    {{- end }}
     {{- if $mutualAuth -}}
       {{- $xProxyKeyKey := "METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY" -}}
       {{- $secrets := (printf "%s-metacat-secrets" .Release.Name) -}}

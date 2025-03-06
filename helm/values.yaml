@@ -714,11 +714,13 @@ ingress:
   annotations:
     ## @param ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size - see docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
+    ##
     nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
+
     ## @param ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size - see docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
+    ##
     nginx.ingress.kubernetes.io/client_max_body_size: "0"
-    nginx.ingress.kubernetes.io/proxy-body-size: "0"
 
   ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
   ## ingress.defaultBackend (optional) default for any requests not matching defined paths
@@ -755,6 +757,46 @@ ingress:
   ## .Values.robots.* and .Values.metacat.sitemap.*)
   ##
   rewriteRules: []
+
+  ## @param ingress.configurationSnippet text code block to add to the nginx ingress config
+  ## This block will be added to the ingress definition section, in addition to the rewrite rules:
+  ## metadata:
+  ##   annotations:
+  ##     nginx.ingress.kubernetes.io/configuration-snippet: |
+  ##       (* * *  nginx.conf code block here  * * *)
+  ##
+  ## Note that overriding this block will disable the default cors setup, unless
+  ## you copy this into your override
+  ##
+  configurationSnippet: |
+    # Metacat Cors Setup
+
+    set $cors 'true';
+
+    if ($request_method = 'OPTIONS') {
+      set $cors ${cors}options;
+    }
+
+    if ($cors = "true") {
+      more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+      more_set_headers 'Access-Control-Allow-Credentials: true';
+      more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
+      more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+
+      more_set_headers 'Access-Control-Max-Age: 1728000';
+    }
+
+    if ($cors = "trueoptions") {
+      more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+      more_set_headers 'Access-Control-Allow-Credentials: true';
+      more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
+      more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+
+      more_set_headers 'Access-Control-Max-Age: 1728000';
+      more_set_headers 'Content-Type: text/plain charset=UTF-8';
+      more_set_headers 'Content-Length: 0';
+      return 204;
+    }
 
   ## @param ingress.tls The TLS configuration
   ##
