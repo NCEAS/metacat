@@ -22,30 +22,29 @@ spec:
     spec:
       {{- if index .Values.global "dataone-indexer.enabled" }}
       initContainers:
-        - name: init-rabbitmq-metacat-dep
+        - name: dependencies
           image: busybox:latest
           command:
             - sh
             - -c
             - >
-              HOSTNAME={{ include "metacat.rabbitmq.hostname" . }};
+              ## wait for RabbitMQ to be ready...
+              ##
+              RMQHOST={{ include "metacat.rabbitmq.hostname" . }};
               {{- $amqp := index .Values "dataone-indexer" "rabbitmq" "service" "ports" "amqp" }}
-              PORT={{ index .Values "dataone-indexer" "rabbitmq" "hostport" | default $amqp -}};
-              until nc -z $HOSTNAME $PORT > /dev/null; do
-              echo waiting for RabbitMQ; sleep 1; done;
-        - name: init-solr-metacat-dep
-          image: busybox:latest
-          command:
-            - sh
-            - -c
-            - >
-              HOSTNAME={{ include "metacat.solr.hostname" . }};
-              PORT={{- index .Values "dataone-indexer" "solr" "service" "ports" "http" -}};
-              URI="/solr/{{- index .Values "dataone-indexer" "solr" "customCollection" -}}
+              RMQPORT={{ index .Values "dataone-indexer" "rabbitmq" "hostport" | default $amqp -}};
+              until nc -z $RMQHOST $RMQPORT > /dev/null; do
+              echo waiting for RabbitMQ at $RMQHOST:$RMQPORT; sleep 1; done;
+              ##
+              ## wait for Solr to be ready...
+              ##
+              SOLRHOST={{ include "metacat.solr.hostname" . }};
+              SOLRPORT={{- index .Values "dataone-indexer" "solr" "service" "ports" "http" -}};
+              SOLRURI="/solr/{{- index .Values "dataone-indexer" "solr" "customCollection" -}}
                    /admin/file?file=schema.xml&contentType=text/xml";
-              until [[ $(echo -e "GET $URI HTTP/1.1\r\nHost: $HOSTNAME\r\n\r\n"{{ print " " -}}
-              | nc $HOSTNAME $PORT | grep -c "<schema name=\"dataone") == 1 ]]; do
-              echo waiting for Solr Schema to be accessible at http://$HOSTNAME:$PORT$URI;
+              until [[ $(echo -e "GET $SOLRURI HTTP/1.1\r\nHost: $SOLRHOST\r\n\r\n"{{ print " " -}}
+              | nc $SOLRHOST $SOLRPORT | grep -c "<schema name=\"dataone") == 1 ]]; do
+              echo waiting for Solr Schema to be accessible at http://$SOLRHOST:$SOLRPORT$SOLRURI;
               sleep 1; done;
       {{- end }}
       {{- with .Values.imagePullSecrets }}
