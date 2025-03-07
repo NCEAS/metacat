@@ -508,5 +508,10 @@
             <artifactId>hashstore</artifactId>
             <version>1.1.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>2.12.1</version>
+        </dependency>
     </dependencies>
 </project>
