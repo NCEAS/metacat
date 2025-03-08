@@ -576,6 +576,10 @@ podAnnotations: {}
 ## @param podSecurityContext.supplementalGroups [array] additional GIDs used to access vol. mounts
 ## @param podSecurityContext.runAsNonRoot ensure all containers run as a non-root user.
 ##                                 Note users must be defined by numerical user id for this to work
+## @param podSecurityContext.fsGroupChangePolicy control how Kubernetes manages ownership & perms...
+##                                IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
+##                                means K8s will always chown the volume to the fsGroup, even if the
+##                                volume is already owned by the fsGroup, which is VERY slow!
 ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
 ## the group that owns the existing data on that filesystem!
 ##
@@ -586,6 +590,7 @@ podSecurityContext:
   fsGroup: &mcFsGroup 59997
   supplementalGroups: &mcSupplementalGroups [ 997, 1000 ]
   runAsNonRoot: true
+  fsGroupChangePolicy: OnRootMismatch
 
 ## @param securityContext holds container-level security attributes that override those at pod level
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
