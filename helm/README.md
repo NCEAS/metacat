@@ -155,7 +155,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### Global Properties Shared Across Sub-Charts Within This Deployment
 
 | Name                                 | Description                                                     | Value                             |
-| ------------------------------------ | --------------------------------------------------------------- | --------------------------------- |
+|--------------------------------------|-----------------------------------------------------------------|-----------------------------------|
 | `global.metacatExternalBaseUrl`      | Metacat base url accessible from outside cluster.               | `https://localhost/`              |
 | `global.d1ClientCnUrl`               | The url of the CN; used to populate metacat's 'D1Client.CN_URL' | `https://cn.dataone.org/cn`       |
 | `global.passwordsSecret`             | The name of the Secret containing application passwords         | `${RELEASE_NAME}-metacat-secrets` |
@@ -171,7 +171,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### Metacat Application-Specific Properties
 
 | Name                              | Description                                                     | Value               |
-| --------------------------------- | --------------------------------------------------------------- | ------------------- |
+|-----------------------------------|-----------------------------------------------------------------|---------------------|
 | `metacat.application.context`     | see global.metacatAppContext                                    | `metacat`           |
 | `metacat.auth.administrators`     | A semicolon-separated list of admin ORCID iDs                   | `""`                |
 | `metacat.database.connectionURI`  | postgres database URI, or lave blank to use sub-chart           | `""`                |
@@ -186,33 +186,33 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### OPTIONAL DataONE Member Node (MN) Parameters
 
-| Name                                                          | Description                                                       | Value                                                    |
-| ------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
-| `metacat.cn.server.publiccert.filename`                       | optional cert(s) used to validate jwt auth tokens,                | `/var/metacat/pubcerts/DataONEProdIntCA.pem`             |
-| `metacat.dataone.certificate.fromHttpHeader.enabled`          | Enable mutual auth with client certs                              | `false`                                                  |
-| `metacat.dataone.autoRegisterMemberNode`                      | Automatically push MN updates to CN? (yyyy-MM-dd)                 | `2023-02-28`                                             |
-| `metacat.dataone.nodeId`                                      | The unique ID of your DataONE MN - must match client cert subject | `urn:node:CHANGE_ME_TO_YOUR_VALUE!`                      |
-| `metacat.dataone.subject`                                     | The "subject" string from your DataONE MN client certificate      | `CN=urn:node:CHANGE_ME_TO_YOUR_VALUE!,DC=dataone,DC=org` |
-| `metacat.dataone.nodeName`                                    | short name for the node that can be used in user interfaces       | `My Metacat Node`                                        |
-| `metacat.dataone.nodeDescription`                             | What is the node's intended scope and purpose?                    | `Describe your Member Node briefly.`                     |
-| `metacat.dataone.contactSubject`                              | registered contact for this MN                                    | `http://orcid.org/0000-0002-8888-999X`                   |
-| `metacat.dataone.nodeSynchronize`                             | Enable Synchronization of Metadata to DataONE                     | `false`                                                  |
-| `metacat.dataone.nodeSynchronization.schedule.year`           | sync schedule year                                                | `*`                                                      |
-| `metacat.dataone.nodeSynchronization.schedule.mon`            | sync schedule month                                               | `*`                                                      |
-| `metacat.dataone.nodeSynchronization.schedule.mday`           | sync schedule day of month                                        | `*`                                                      |
-| `metacat.dataone.nodeSynchronization.schedule.wday`           | sync schedule day of week                                         | `?`                                                      |
-| `metacat.dataone.nodeSynchronization.schedule.hour`           | sync schedule hour                                                | `*`                                                      |
-| `metacat.dataone.nodeSynchronization.schedule.min`            | sync schedule minute                                              | `0/3`                                                    |
-| `metacat.dataone.nodeSynchronization.schedule.sec`            | sync schedule second                                              | `10`                                                     |
-| `metacat.dataone.nodeReplicate`                               | Accept and Store Replicas?                                        | `false`                                                  |
-| `metacat.dataone.replicationpolicy.default.numreplicas`       | # copies to store on other nodes                                  | `0`                                                      |
-| `metacat.dataone.replicationpolicy.default.preferredNodeList` | Preferred replication nodes                                       | `nil`                                                    |
-| `metacat.dataone.replicationpolicy.default.blockedNodeList`   | Nodes blocked from replication                                    | `nil`                                                    |
+| Name                                                          | Description                                                       | Value                                        |
+|---------------------------------------------------------------|-------------------------------------------------------------------|----------------------------------------------|
+| `metacat.cn.server.publiccert.filename`                       | optional cert(s) used to validate jwt auth tokens,                | `/var/metacat/pubcerts/DataONEProdIntCA.pem` |
+| `metacat.dataone.certificate.fromHttpHeader.enabled`          | Enable mutual auth with client certs                              | `false`                                      |
+| `metacat.dataone.autoRegisterMemberNode`                      | Automatically push MN updates to CN? (yyyy-MM-dd)                 | `2023-02-28`                                 |
+| `metacat.dataone.nodeId`                                      | The unique ID of your DataONE MN - must match client cert subject | `urn:node:METACAT_TEST`                      |
+| `metacat.dataone.subject`                                     | The "subject" string from your DataONE MN client certificate      | `CN=urn:node:METACAT1,DC=dataone,DC=org`     |
+| `metacat.dataone.nodeName`                                    | short name for the node that can be used in user interfaces       | `My Metacat Node`                            |
+| `metacat.dataone.nodeDescription`                             | What is the node's intended scope and purpose?                    | `Describe your Member Node briefly.`         |
+| `metacat.dataone.contactSubject`                              | registered contact for this MN                                    | `http://orcid.org/0000-0002-8888-999X`       |
+| `metacat.dataone.nodeSynchronize`                             | Enable Synchronization of Metadata to DataONE                     | `false`                                      |
+| `metacat.dataone.nodeSynchronization.schedule.year`           | sync schedule year                                                | `*`                                          |
+| `metacat.dataone.nodeSynchronization.schedule.mon`            | sync schedule month                                               | `*`                                          |
+| `metacat.dataone.nodeSynchronization.schedule.mday`           | sync schedule day of month                                        | `*`                                          |
+| `metacat.dataone.nodeSynchronization.schedule.wday`           | sync schedule day of week                                         | `?`                                          |
+| `metacat.dataone.nodeSynchronization.schedule.hour`           | sync schedule hour                                                | `*`                                          |
+| `metacat.dataone.nodeSynchronization.schedule.min`            | sync schedule minute                                              | `0/3`                                        |
+| `metacat.dataone.nodeSynchronization.schedule.sec`            | sync schedule second                                              | `10`                                         |
+| `metacat.dataone.nodeReplicate`                               | Accept and Store Replicas?                                        | `false`                                      |
+| `metacat.dataone.replicationpolicy.default.numreplicas`       | # copies to store on other nodes                                  | `0`                                          |
+| `metacat.dataone.replicationpolicy.default.preferredNodeList` | Preferred replication nodes                                       | `""`                                         |
+| `metacat.dataone.replicationpolicy.default.blockedNodeList`   | Nodes blocked from replication                                    | `""`                                         |
 
 ### OPTIONAL (but Recommended) Site Map Parameters
 
 | Name                            | Description                                                     | Value      |
-| ------------------------------- | --------------------------------------------------------------- | ---------- |
+|---------------------------------|-----------------------------------------------------------------|------------|
 | `metacat.sitemap.enabled`       | Enable sitemaps to tell search engines which URLs are available | `false`    |
 | `metacat.sitemap.interval`      | Interval (in milliseconds) between rebuilding the sitemap       | `86400000` |
 | `metacat.sitemap.location.base` | The first part of the URLs listed in sitemap_index.xml          | `/`        |
@@ -221,38 +221,39 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### robots.txt file (search engine indexing)
 
 | Name               | Description                                                          | Value |
-| ------------------ | -------------------------------------------------------------------- | ----- |
+|--------------------|----------------------------------------------------------------------|-------|
 | `robots.userAgent` | "User-agent:" defined in robots.txt file. Defaults to "*" if not set | `""`  |
 | `robots.disallow`  | the "Disallow:" value defined in robots.txt file.                    | `""`  |
 
 ### Metacat Image, Container & Pod Parameters
 
-| Name                                    | Description                                                                  | Value                   |
-| --------------------------------------- | ---------------------------------------------------------------------------- | ----------------------- |
-| `image.repository`                      | Metacat image repository                                                     | `ghcr.io/nceas/metacat` |
-| `image.pullPolicy`                      | Metacat image pull policy                                                    | `IfNotPresent`          |
-| `image.tag`                             | Overrides the image tag. Will default to the chart appVersion if set to ""   | `""`                    |
-| `image.debug`                           | Specify if container debugging should be enabled (sets log level to "DEBUG") | `false`                 |
-| `imagePullSecrets`                      | Optional list of references to secrets in the same namespace                 | `[]`                    |
-| `container.ports`                       | Optional list of additional container ports to expose within the cluster     | `[]`                    |
-| `serviceAccount.create`                 | Should a service account be created to run Metacat?                          | `false`                 |
-| `serviceAccount.annotations`            | Annotations to add to the service account                                    | `{}`                    |
-| `serviceAccount.name`                   | The name to use for the service account.                                     | `""`                    |
-| `podAnnotations`                        | Map of annotations to add to the pods                                        | `{}`                    |
-| `podSecurityContext.enabled`            | Enable security context                                                      | `true`                  |
-| `podSecurityContext.runAsUser`          | numerical User ID for the pod                                                | `59997`                 |
-| `podSecurityContext.runAsGroup`         | numerical Group ID for the pod                                               | `59997`                 |
-| `podSecurityContext.fsGroup`            | numerical Group ID used to access mounted volumes                            | `59997`                 |
-| `podSecurityContext.supplementalGroups` | additional GIDs used to access vol. mounts                                   | `[]`                    |
-| `podSecurityContext.runAsNonRoot`       | ensure all containers run as a non-root user.                                | `true`                  |
-| `securityContext`                       | holds container-level security attributes that override those at pod level   | `{}`                    |
-| `resources`                             | Resource limits for the deployment                                           | `{}`                    |
-| `tolerations`                           | Tolerations for pod assignment                                               | `[]`                    |
+| Name                                     | Description                                                                  | Value                   |
+|------------------------------------------|------------------------------------------------------------------------------|-------------------------|
+| `image.repository`                       | Metacat image repository                                                     | `ghcr.io/nceas/metacat` |
+| `image.pullPolicy`                       | Metacat image pull policy                                                    | `IfNotPresent`          |
+| `image.tag`                              | Overrides the image tag. Will default to the chart appVersion if set to ""   | `""`                    |
+| `image.debug`                            | Specify if container debugging should be enabled (sets log level to "DEBUG") | `false`                 |
+| `imagePullSecrets`                       | Optional list of references to secrets in the same namespace                 | `[]`                    |
+| `container.ports`                        | Optional list of additional container ports to expose within the cluster     | `[]`                    |
+| `serviceAccount.create`                  | Should a service account be created to run Metacat?                          | `false`                 |
+| `serviceAccount.annotations`             | Annotations to add to the service account                                    | `{}`                    |
+| `serviceAccount.name`                    | The name to use for the service account.                                     | `""`                    |
+| `podAnnotations`                         | Map of annotations to add to the pods                                        | `{}`                    |
+| `podSecurityContext.enabled`             | Enable security context                                                      | `true`                  |
+| `podSecurityContext.runAsUser`           | numerical User ID for the pod                                                | `59997`                 |
+| `podSecurityContext.runAsGroup`          | numerical Group ID for the pod                                               | `59997`                 |
+| `podSecurityContext.fsGroup`             | numerical Group ID used to access mounted volumes                            | `59997`                 |
+| `podSecurityContext.supplementalGroups`  | additional GIDs used to access vol. mounts                                   | `[]`                    |
+| `podSecurityContext.runAsNonRoot`        | ensure all containers run as a non-root user.                                | `true`                  |
+| `podSecurityContext.fsGroupChangePolicy` | control how Kubernetes manages ownership & perms...                          | `OnRootMismatch`        |
+| `securityContext`                        | holds container-level security attributes that override those at pod level   | `{}`                    |
+| `resources`                              | Resource limits for the deployment                                           | `{}`                    |
+| `tolerations`                            | Tolerations for pod assignment                                               | `[]`                    |
 
 ### Metacat Persistence
 
 | Name                        | Description                                                          | Value               |
-| --------------------------- | -------------------------------------------------------------------- | ------------------- |
+|-----------------------------|----------------------------------------------------------------------|---------------------|
 | `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims       | `true`              |
 | `persistence.storageClass`  | Storage class of backing PV                                          | `local-path`        |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use                | `""`                |
@@ -263,45 +264,47 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Networking & Monitoring
 
-| Name                                                                      | Description                                                 | Value           |
-| ------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------- |
-| `ingress.enabled`                                                         | Enable or disable the ingress                               | `true`          |
-| `ingress.className`                                                       | ClassName of the ingress provider in your cluster           | `nginx`         |
-| `ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size` | - see docs:                                                 | see values.yaml |
-| `ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size`    | - see docs:                                                 | see values.yaml |
-| `ingress.defaultBackend.enabled`                                          | enable the optional defaultBackend                          | `false`         |
-| `ingress.defaultBackend.enabled`                                          | enable the optional defaultBackend                          | `false`         |
-| `ingress.rewriteRules`                                                    | rewrite rules for the nginx ingress                         | `[]`            |
-| `ingress.tls`                                                             | The TLS configuration                                       | `[]`            |
-| `ingress.d1CaCertSecretName`                                              | Name of Secret containing DataONE CA certificate chain      | `d1-ca-chain`   |
-| `service.enabled`                                                         | Enable another optional service in addition to headless svc | `false`         |
-| `service.type`                                                            | Kubernetes Service type. Defaults to ClusterIP if not set   | `LoadBalancer`  |
-| `service.clusterIP`                                                       | IP address of the service. Auto-generated if not set        | `""`            |
-| `service.ports`                                                           | The port(s) to be exposed                                   | `[]`            |
-| `livenessProbe.enabled`                                                   | Enable livenessProbe for Metacat container                  | `true`          |
-| `livenessProbe.httpGet.path`                                              | The url path to probe.                                      | `/metacat/`     |
-| `livenessProbe.httpGet.port`                                              | The named containerPort to probe                            | `metacat-web`   |
-| `livenessProbe.initialDelaySeconds`                                       | Initial delay seconds for livenessProbe                     | `45`            |
-| `livenessProbe.periodSeconds`                                             | Period seconds for livenessProbe                            | `15`            |
-| `livenessProbe.timeoutSeconds`                                            | Timeout seconds for livenessProbe                           | `10`            |
-| `readinessProbe.enabled`                                                  | Enable readinessProbe for Metacat container                 | `true`          |
-| `readinessProbe.httpGet.path`                                             | The url path to probe.                                      | `/metacat/admin`|
-| `readinessProbe.httpGet.port`                                             | The named containerPort to probe                            | `metacat-web`   |
-| `readinessProbe.initialDelaySeconds`                                      | Initial delay seconds for readinessProbe                    | `45`            |
-| `readinessProbe.periodSeconds`                                            | Period seconds for readinessProbe                           | `5`             |
-| `readinessProbe.timeoutSeconds`                                           | Timeout seconds for readinessProbe                          | `5`             |
+| Name                                                                      | Description                                                              | Value            |
+|---------------------------------------------------------------------------|--------------------------------------------------------------------------|------------------|
+| `ingress.enabled`                                                         | Enable or disable the ingress                                            | `true`           |
+| `ingress.className`                                                       | ClassName of the ingress provider in your cluster                        | `nginx`          |
+| `ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size` | See docs:                                                                | `"1m"`           |
+| `ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size`    | See docs:                                                                | `"0"`            |
+| `ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size`         | See docs:                                                                | `"0"`            |
+| `ingress.defaultBackend.enabled`                                          | enable the optional defaultBackend                                       | `false`          |
+| `ingress.defaultBackend.enabled`                                          | enable the optional defaultBackend                                       | `false`          |
+| `ingress.rewriteRules`                                                    | formatted text rewrite rules for the nginx ingress                       | `""`             |
+| `ingress.tls`                                                             | The TLS configuration                                                    | `[]`             |
+| `ingress.rules`                                                           | The Ingress rules can be defined here or left blank to be auto-populated | `[]`             |
+| `ingress.d1CaCertSecretName`                                              | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`    |
+| `service.enabled`                                                         | Enable another optional service in addition to headless svc              | `false`          |
+| `service.type`                                                            | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`   |
+| `service.clusterIP`                                                       | IP address of the service. Auto-generated if not set                     | `""`             |
+| `service.ports`                                                           | The port(s) to be exposed                                                | `[]`             |
+| `livenessProbe.enabled`                                                   | Enable livenessProbe for Metacat container                               | `true`           |
+| `livenessProbe.httpGet.path`                                              | The url path to probe.                                                   | `/metacat/`      |
+| `livenessProbe.httpGet.port`                                              | The named containerPort to probe                                         | `metacat-web`    |
+| `livenessProbe.initialDelaySeconds`                                       | Initial delay seconds for livenessProbe                                  | `45`             |
+| `livenessProbe.periodSeconds`                                             | Period seconds for livenessProbe                                         | `15`             |
+| `livenessProbe.timeoutSeconds`                                            | Timeout seconds for livenessProbe                                        | `10`             |
+| `readinessProbe.enabled`                                                  | Enable readinessProbe for Metacat container                              | `true`           |
+| `readinessProbe.httpGet.path`                                             | The url path to probe.                                                   | `/metacat/admin` |
+| `readinessProbe.httpGet.port`                                             | The named containerPort to probe                                         | `metacat-web`    |
+| `readinessProbe.initialDelaySeconds`                                      | Initial delay seconds for readinessProbe                                 | `45`             |
+| `readinessProbe.periodSeconds`                                            | Period seconds for readinessProbe                                        | `5`              |
+| `readinessProbe.timeoutSeconds`                                           | Timeout seconds for readinessProbe                                       | `5`              |
 
 ### Postgresql Sub-Chart
 
 | Name                                                    | Description                                         | Value                             |
-| ------------------------------------------------------- | --------------------------------------------------- | ----------------------------------|
+|---------------------------------------------------------|-----------------------------------------------------|-----------------------------------|
 | `postgresql.enabled`                                    | enable the postgresql sub-chart                     | `true`                            |
 | `postgresql.auth.username`                              | Username for accessing the database used by metacat | `metacat`                         |
 | `postgresql.auth.database`                              | The name of the database used by metacat.           | `metacat`                         |
 | `postgresql.auth.existingSecret`                        | Secrets location for postgres password              | `${RELEASE_NAME}-metacat-secrets` |
 | `postgresql.auth.secretKeys.userPasswordKey`            | Identifies metacat db's account password            | `POSTGRES_PASSWORD`               |
 | `postgresql.auth.secretKeys.adminPasswordKey`           | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD`               |
-| `postgresql.primary.pgHbaConfiguration`                 | PostgreSQL Primary client authentication            | see values.yaml                   |
+| `postgresql.primary.pgHbaConfiguration`                 | PostgreSQL Primary client authentication            | See Values.yaml                   |
 | `postgresql.primary.containerSecurityContext.enabled`   | enable containerSecurityContext                     | `true`                            |
 | `postgresql.primary.containerSecurityContext.runAsUser` | uid for container to run as                         | `59996`                           |
 | `postgresql.primary.podSecurityContext.runAsNonRoot`    | pod defaults to run as non-root?                    | `true`                            |
@@ -314,14 +317,14 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### Tomcat Configuration
 
 | Name                    | Description                                              | Value |
-| ----------------------- | -------------------------------------------------------- | ----- |
+|-------------------------|----------------------------------------------------------|-------|
 | `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
 | `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
 
 ### dataone-indexer Sub-Chart
 
 | Name                                                         | Description                                       | Value                                 |
-| ------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------- |
+|--------------------------------------------------------------|---------------------------------------------------|---------------------------------------|
 | `dataone-indexer.podSecurityContext.fsGroup`                 | gid used to access mounted volumes                | `59997`                               |
 | `dataone-indexer.podSecurityContext.supplementalGroups`      | additional vol access gids                        | `[]`                                  |
 | `dataone-indexer.persistence.subPath`                        | The subdirectory of the volume to mount           | `""`                                  |

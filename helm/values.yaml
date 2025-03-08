@@ -282,9 +282,7 @@ metacat:
   ## 3. You DO NOT need to configure the Member Node client cert location. Instead, simply add it as
   ##    a secret: https://github.com/NCEAS/metacat/tree/develop/helm#install-the-client-certificate
   ##
-  ## (Default value shown - no need to uncomment unless changing from this)
-  ##
-#  dataone.certificate.fromHttpHeader.enabled: false
+  dataone.certificate.fromHttpHeader.enabled: false
 
   ## @param metacat.dataone.autoRegisterMemberNode Automatically push MN updates to CN? (yyyy-MM-dd)
   ## USE WITH CARE!
@@ -294,7 +292,7 @@ metacat:
   ## metacat startup), IN UTC (Coordinated Universal Time) ZONE.
   ## Format: yyyy-MM-dd; e.g. 2023-02-28
   ##
-#  dataone.autoRegisterMemberNode: 2023-02-28
+  dataone.autoRegisterMemberNode: 2023-02-28
 
   ## metacat.D1Client.CN_URL the url of the CN - DO NOT SET HERE
   ## D1Client.CN_URL: This is set in the global value 'global.d1ClientCnUrl', above
@@ -309,7 +307,7 @@ metacat:
   ## Node, in which case the field can be edited to set it to the value of a valid, existing Node
   ## Identifier.
   ##
-#  dataone.nodeId: urn:node:CHANGE_ME_TO_YOUR_VALUE!
+  dataone.nodeId: urn:node:METACAT_TEST
 
   ## @param metacat.dataone.subject The "subject" string from your DataONE MN client certificate
   ## The Node Subject is critical for proper operation of the node. To act as a Member Node in
@@ -326,12 +324,12 @@ metacat:
   ##       removed, and wrapped in double quotes, so it becomes:
   ##           dataone.subject: "CN=urn:node:YOUR_VALUE,DC=dataone,DC=org"
   ##
-#  dataone.subject: "CN=urn:node:CHANGE_ME_TO_YOUR_VALUE!,DC=dataone,DC=org"
+  dataone.subject: "CN=urn:node:METACAT1,DC=dataone,DC=org"
 
   ## @param metacat.dataone.nodeName short name for the node that can be used in user interfaces
   ## @param metacat.dataone.nodeDescription What is the node's intended scope and purpose?
-#  dataone.nodeName: My Metacat Node
-#  dataone.nodeDescription: Describe your Member Node briefly.
+  dataone.nodeName: My Metacat Node
+  dataone.nodeDescription: Describe your Member Node briefly.
 
   ## @param metacat.dataone.contactSubject registered contact for this MN
   ## IMPORTANT NOTE: Before registering you MN, you will need to first register your contact subject
@@ -341,7 +339,7 @@ metacat:
   ## an x509 client certificate, and use it as the value of dataone.contactSubject
   ## NOTE: you must use 'http://...' and NOT 'https://...' for this ORCID value:
   ##
-#  dataone.contactSubject: http://orcid.org/0000-0002-8888-999X
+  dataone.contactSubject: http://orcid.org/0000-0002-8888-999X
 
   ## @param metacat.dataone.nodeSynchronize Enable Synchronization of Metadata to DataONE
   ## Allows the administrator to decide whether to turn on synchronization with the DataONE
@@ -353,7 +351,7 @@ metacat:
   ## maintenance or service outages.
   ## (Default value shown - no need to uncomment unless changing from this)
   ##
-#  dataone.nodeSynchronize: false
+  dataone.nodeSynchronize: false
 
   ## metacat.dataone.nodeSynchronization.schedule: DataONE synchronization schedule (crontab format)
   ##
@@ -374,13 +372,13 @@ metacat:
   ## value like '15', which would change the schedule to synchronize at 11:15 am daily.
   ## (Default values shown - no need to uncomment unless changing from these)
   ##
-#  dataone.nodeSynchronization.schedule.year: "*"
-#  dataone.nodeSynchronization.schedule.mon: "*"
-#  dataone.nodeSynchronization.schedule.mday: "*"
-#  dataone.nodeSynchronization.schedule.wday: "?"
-#  dataone.nodeSynchronization.schedule.hour: "*"
-#  dataone.nodeSynchronization.schedule.min: "0/3"
-#  dataone.nodeSynchronization.schedule.sec: "10"
+  dataone.nodeSynchronization.schedule.year: "*"
+  dataone.nodeSynchronization.schedule.mon: "*"
+  dataone.nodeSynchronization.schedule.mday: "*"
+  dataone.nodeSynchronization.schedule.wday: "?"
+  dataone.nodeSynchronization.schedule.hour: "*"
+  dataone.nodeSynchronization.schedule.min: "0/3"
+  dataone.nodeSynchronization.schedule.sec: "10"
 
   ## @param metacat.dataone.nodeReplicate Accept and Store Replicas?
   ## Used to indicate that the administrator of this node is willing to allow replica data and
@@ -389,7 +387,7 @@ metacat:
   ## overall.
   ## (Default value shown - no need to uncomment unless changing from this)
   ##
-#  dataone.nodeReplicate: false
+  dataone.nodeReplicate: false
 
   ## @param metacat.dataone.replicationpolicy.default.numreplicas # copies to store on other nodes
   ## @param metacat.dataone.replicationpolicy.default.preferredNodeList Preferred replication nodes
@@ -408,9 +406,9 @@ metacat:
   ## values for both Default Preferred Nodes and Default Blocked Nodes is a comma-separated list
   ## of NodeReference identifiers that were assigned to the target nodes by DataONE.
   ##
-#  dataone.replicationpolicy.default.numreplicas: "0"
-#  dataone.replicationpolicy.default.preferredNodeList:
-#  dataone.replicationpolicy.default.blockedNodeList:
+  dataone.replicationpolicy.default.numreplicas: "0"
+  dataone.replicationpolicy.default.preferredNodeList: ""
+  dataone.replicationpolicy.default.blockedNodeList: ""
 
   ## @section OPTIONAL (but Recommended) Site Map Parameters
   ##
@@ -717,12 +715,19 @@ ingress:
   ## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
   ##
   annotations:
-    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size - see docs:
+    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size See docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
+    ##
     nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
-    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size - see docs:
+    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size See docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
+    ## Setting size to 0 disables checking of client request body size
+    ##
     nginx.ingress.kubernetes.io/client_max_body_size: "0"
+    ## @param ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size See docs:
+    ## https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md#proxy-body-size
+    ## Setting size to 0 disables checking of client request body size
+    ##
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
 
   ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
