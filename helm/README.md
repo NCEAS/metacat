@@ -296,23 +296,24 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Postgresql Sub-Chart
 
-| Name                                                    | Description                                         | Value                             |
-|---------------------------------------------------------|-----------------------------------------------------|-----------------------------------|
-| `postgresql.enabled`                                    | enable the postgresql sub-chart                     | `true`                            |
-| `postgresql.auth.username`                              | Username for accessing the database used by metacat | `metacat`                         |
-| `postgresql.auth.database`                              | The name of the database used by metacat.           | `metacat`                         |
-| `postgresql.auth.existingSecret`                        | Secrets location for postgres password              | `${RELEASE_NAME}-metacat-secrets` |
-| `postgresql.auth.secretKeys.userPasswordKey`            | Identifies metacat db's account password            | `POSTGRES_PASSWORD`               |
-| `postgresql.auth.secretKeys.adminPasswordKey`           | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD`               |
-| `postgresql.primary.pgHbaConfiguration`                 | PostgreSQL Primary client authentication            | See Values.yaml                   |
-| `postgresql.primary.containerSecurityContext.enabled`   | enable containerSecurityContext                     | `true`                            |
-| `postgresql.primary.containerSecurityContext.runAsUser` | uid for container to run as                         | `59996`                           |
-| `postgresql.primary.podSecurityContext.runAsNonRoot`    | pod defaults to run as non-root?                    | `true`                            |
-| `postgresql.primary.extendedConfiguration`              | Extended configuration, appended to defaults        | `max_connections = 250`           |
-| `postgresql.primary.persistence.enabled`                | Enable data persistence using PVC                   | `true`                            |
-| `postgresql.primary.persistence.existingClaim`          | Existing PVC to re-use                              | `""`                              |
-| `postgresql.primary.persistence.storageClass`           | Storage class of backing PV                         | `""`                              |
-| `postgresql.primary.persistence.size`                   | PVC Storage Request for postgres volume             | `1Gi`                             |
+| Name                                                        | Description                                         | Value                             |
+|-------------------------------------------------------------|-----------------------------------------------------|-----------------------------------|
+| `postgresql.enabled`                                        | enable the postgresql sub-chart                     | `true`                            |
+| `postgresql.auth.username`                                  | Username for accessing the database used by metacat | `metacat`                         |
+| `postgresql.auth.database`                                  | The name of the database used by metacat.           | `metacat`                         |
+| `postgresql.auth.existingSecret`                            | Secrets location for postgres password              | `${RELEASE_NAME}-metacat-secrets` |
+| `postgresql.auth.secretKeys.userPasswordKey`                | Identifies metacat db's account password            | `POSTGRES_PASSWORD`               |
+| `postgresql.auth.secretKeys.adminPasswordKey`               | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD`               |
+| `postgresql.primary.pgHbaConfiguration`                     | PostgreSQL Primary client authentication            | See Values.yaml                   |
+| `postgresql.primary.containerSecurityContext.enabled`       | enable containerSecurityContext                     | `true`                            |
+| `postgresql.primary.containerSecurityContext.runAsUser`     | uid for container to run as                         | `59996`                           |
+| `postgresql.primary.podSecurityContext.runAsNonRoot`        | pod defaults to run as non-root?                    | `true`                            |
+| `postgresql.primary.extendedConfiguration`                  | Extended configuration, appended to defaults        | `max_connections = 250`           |
+| `postgresql.primary.persistence.enabled`                    | Enable data persistence using PVC                   | `true`                            |
+| `postgresql.primary.persistence.existingClaim`              | Existing PVC to re-use                              | `""`                              |
+| `postgresql.primary.persistence.storageClass`               | Storage class of backing PV                         | `""`                              |
+| `postgresql.primary.persistence.size`                       | PVC Storage Request for postgres volume             | `1Gi`                             |
+| `postgresql.primary.podSecurityContext.fsGroupChangePolicy` | ownership & perms mgmt                              | `OnRootMismatch`                  |
 
 ### Tomcat Configuration
 
@@ -328,6 +329,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `dataone-indexer.podSecurityContext.fsGroup`                 | gid used to access mounted volumes                | `59997`                               |
 | `dataone-indexer.podSecurityContext.supplementalGroups`      | additional vol access gids                        | `[]`                                  |
 | `dataone-indexer.persistence.subPath`                        | The subdirectory of the volume to mount           | `""`                                  |
+| `dataone-indexer.podSecurityContext.fsGroupChangePolicy`     | ownership & perms mgmt                            | `OnRootMismatch`                      |
 | `dataone-indexer.rabbitmq.extraConfiguration`                | extra config, to be appended to rmq config        | `consumer_timeout = 144000000`        |
 | `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use           | `metacat-rmq-guest`                   |
 | `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password                     | `${RELEASE_NAME}-metacat-secrets`     |

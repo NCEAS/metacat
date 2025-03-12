@@ -588,7 +588,7 @@ podSecurityContext:
   fsGroup: &mcFsGroup 59997
   supplementalGroups: &mcSupplementalGroups [ 997, 1000 ]
   runAsNonRoot: true
-  fsGroupChangePolicy: OnRootMismatch
+  fsGroupChangePolicy: &defaultFsGroupChangePolicy OnRootMismatch
 
 ## @param securityContext holds container-level security attributes that override those at pod level
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
@@ -953,6 +953,11 @@ postgresql:
       ## @param postgresql.primary.podSecurityContext.runAsNonRoot pod defaults to run as non-root?
       ##
       runAsNonRoot: true
+      ## @param postgresql.primary.podSecurityContext.fsGroupChangePolicy ownership & perms mgmt
+      ##                        IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
+      ##                        means K8s will always chown the volume to the fsGroup, even if the
+      ##                        volume is already owned by the fsGroup, which is VERY slow!
+      fsGroupChangePolicy: *defaultFsGroupChangePolicy
 
     ## override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
@@ -1015,9 +1020,14 @@ dataone-indexer:
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ## @param dataone-indexer.podSecurityContext.fsGroup gid used to access mounted volumes
   ## @param dataone-indexer.podSecurityContext.supplementalGroups [array] additional vol access gids
+  ## @param dataone-indexer.podSecurityContext.fsGroupChangePolicy ownership & perms mgmt
+  ##                        IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
+  ##                        means K8s will always chown the volume to the fsGroup, even if the
+  ##                        volume is already owned by the fsGroup, which is VERY slow!
   podSecurityContext:
     fsGroup: *mcFsGroup
     supplementalGroups: *mcSupplementalGroups
+    fsGroupChangePolicy: *defaultFsGroupChangePolicy
 
   persistence:
     ## @param dataone-indexer.persistence.subPath The subdirectory of the volume to mount
