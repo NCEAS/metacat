@@ -1016,6 +1016,22 @@ postgresql:
       existingClaim: ""
       size: 1Gi
 
+  ## @param postgresql.postgresqlDataDir PostgreSQL data dir folder. Must be versioned
+  ## to avoid overwriting during postgresql major version upgrades
+  ## e.g. like "/bitnami/postgresql/17/main" (bitnami default is "/bitnami/postgresql/data")
+  ##
+  postgresqlDataDir: /bitnami/postgresql/17/main
+
+  upgrader:
+    enabled: false
+    claimName: ""
+    securityContext:
+      runAsNonRoot: false
+      runAsUser: 0
+      runAsGroup: 0
+      fsGroup: 59996
+      fsGroupChangePolicy: OnRootMismatch
+
 ## @section Tomcat Configuration
 
 ## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)

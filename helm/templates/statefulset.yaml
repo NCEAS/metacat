@@ -20,7 +20,7 @@ spec:
       labels:
         {{- include "metacat.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if index .Values.global "dataone-indexer.enabled" }}
+      {{- if or (index .Values.global "dataone-indexer.enabled") (.Values.global.PostgresqlUpgradeNeeded) }}
       initContainers:
         - name: dependencies
           image: busybox:latest
@@ -46,7 +46,67 @@ spec:
               | nc $SOLRHOST $SOLRPORT | grep -c "<schema name=\"dataone") == 1 ]]; do
               echo waiting for Solr Schema to be accessible at http://$SOLRHOST:$SOLRPORT$SOLRURI;
               sleep 1; done;
-      {{- end }}
+        {{- end }}
+        {{- if and .Values.postgresql.upgrader .Values.postgresql.upgrader.enabled }}
+        - name: "pgupgrade"
+          image: "ubuntu:24.10"
+{{/*          image: postgres:14*/}}
+          securityContext:
+            {{-  toYaml .Values.postgresql.upgrader.securityContext | nindent 12 }}
+          command:
+            - sh
+            - -c
+            - >
+              export DEBIAN_FRONTEND="noninteractive";
+              echo "America/Los_Angeles" > /etc/timezone;
+              echo "setting timezone...";
+              apt-get update && apt-get install -y tzdata;
+              echo "tzdata installed...";
+              dpkg-reconfigure --frontend noninteractive tzdata;
+              echo "installing lsb-release wget gnupg...";
+              apt-get update && apt-get install -y lsb-release wget gnupg gnupg2 gnupg1;
+              echo "...installed.";
+              echo "re-installing ca-certificates...";
+              apt-get install -y --reinstall ca-certificates;
+              echo "...done.";
+              echo "Adding PostgreSQL apt repository...";
+              wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O - | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg;
+              echo "deb  [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list;
+              echo "...done.";
+              echo "Adding postgres user & group...";
+              groupadd -g {{ .Values.postgresql.upgrader.securityContext.fsGroup }} postgres;
+              useradd -u {{ print " " -}}
+              {{ .Values.postgresql.primary.containerSecurityContext.runAsUser }}{{ print " " -}}
+              -g {{ .Values.postgresql.upgrader.securityContext.fsGroup }} -m postgres;
+              chsh -s /bin/bash postgres;
+              echo "...done.";
+              echo "Installing postgresql 14...";
+              apt-get update && apt-get install -y --no-install-recommends postgresql-14 postgresql-contrib-14;
+              service postgresql stop;
+              mv /var/lib/postgresql/14 /var/lib/postgresql/14_ORIG
+              ln -s /opt/postgresql/14  /var/lib/postgresql/14
+              chmod 750  /var/lib/postgresql/14/main/
+              echo "local       all           all         trust" > /etc/postgresql/14/main/pg_hba.conf;
+              service postgresql start;
+              while true; do sleep 1; done;
+              chown root:ssl-cert /etc/ssl/private/ssl-cert-snakeoil.key;
+              chmod 740 /etc/ssl/private/ssl-cert-snakeoil.key;
+              gpasswd -a postgres ssl-cert;
+              service postgresql stop;
+              echo "...done.";
+              echo "Installing postgresql 14...";
+              apt-get update && apt-get install -y --no-install-recommends postgresql-16 postgresql-contrib-16;
+              echo "...done.";
+              chown -R postgres:postgres /var/run/postgresql /etc/postgresql /var/log/postgresql;
+              service postgresql stop;
+              su postgres;
+              cd ~;
+              if [ -f /var/lib/postgresql/14/main/postmaster.pid ]; then echo "Removing leftover 14/main/postmaster.pid"; rm /var/lib/postgresql/14/main/postmaster.pid; fi;
+              /usr/lib/postgresql/16/bin/pg_upgrade --old-bindir=/usr/lib/postgresql/14/bin/ --old-datadir=/var/lib/postgresql/14/main --new-datadir=/var/lib/postgresql/16/main --check;
+          volumeMounts:
+            - name: {{ .Release.Name }}-postgres-pgupgrade
+              mountPath: /opt/postgresql
+        {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -147,6 +207,11 @@ spec:
         secret:
           secretName: {{ .Release.Name }}-d1-client-cert
           optional: true
+      {{- if and .Values.postgresql.upgrader .Values.postgresql.upgrader.enabled }}
+      - name: {{ .Release.Name }}-postgres-pgupgrade
+        persistentVolumeClaim:
+          claimName: {{ required "claimName_REQUIRED" .Values.postgresql.upgrader.claimName }}
+      {{- end }}
 {{- if not (.Values.persistence.enabled) }}
       - name: {{ .Release.Name }}-volume
         emptyDir: {}
