@@ -85,10 +85,19 @@ podSecurityContext:
   runAsNonRoot: true
 
 postgresql:
+  upgrader:
+    persistence:
+     existingClaim: data-metacatbrooke-postgresql-0
+
   primary:
-    upgrader:
-      enabled: false
-      claimName: data-metacatbrooke-postgresql-0
+    resources:
+      requests:
+        cpu: 4
+        memory: 32Gi
+      limits:
+        cpu: 4
+        memory: 32Gi
+
     extendedConfiguration: |
       max_connections = 250
       max_wal_size=16384

@@ -20,21 +20,30 @@ spec:
       labels:
         {{- include "metacat.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if or (index .Values.global "dataone-indexer.enabled") (.Values.global.PostgresqlUpgradeNeeded) }}
       initContainers:
         - name: dependencies
           image: busybox:latest
           command:
             - sh
             - -c
-            - >
+            - |
+              ## wait for PostgreSQL to be ready...
+              ##
+              {{ $map := (index .Values.metacat "database.connectionURI" | split "/") }}
+              PGHOST={{ index $map "_2" }}
+              PGPORT={{ .Values.postgresql.primary.service.ports.postgresql -}};
+              echo "* * * Checking if PostgreSQL is ready, at $PGHOST:$PGPORT * * *";
+              until nc -z $PGHOST $PGPORT > /dev/null; do
+              echo waiting for PostgreSQL at $PGHOST:$PGPORT; sleep 1; done;
+              ##
               ## wait for RabbitMQ to be ready...
               ##
               RMQHOST={{ include "metacat.rabbitmq.hostname" . }};
               {{- $amqp := index .Values "dataone-indexer" "rabbitmq" "service" "ports" "amqp" }}
               RMQPORT={{ index .Values "dataone-indexer" "rabbitmq" "hostport" | default $amqp -}};
+              echo "* * * Checking if RabbitMQ is ready at $RMQHOST:$RMQPORT * * *";
               until nc -z $RMQHOST $RMQPORT > /dev/null; do
-              echo waiting for RabbitMQ at $RMQHOST:$RMQPORT; sleep 1; done;
+                echo waiting for RabbitMQ at $RMQHOST:$RMQPORT; sleep 1; done;
               ##
               ## wait for Solr to be ready...
               ##
@@ -42,70 +51,76 @@ spec:
               SOLRPORT={{- index .Values "dataone-indexer" "solr" "service" "ports" "http" -}};
               SOLRURI="/solr/{{- index .Values "dataone-indexer" "solr" "customCollection" -}}
                    /admin/file?file=schema.xml&contentType=text/xml";
-              until [[ $(echo -e "GET $SOLRURI HTTP/1.1\r\nHost: $SOLRHOST\r\n\r\n"{{ print " " -}}
-              | nc $SOLRHOST $SOLRPORT | grep -c "<schema name=\"dataone") == 1 ]]; do
-              echo waiting for Solr Schema to be accessible at http://$SOLRHOST:$SOLRPORT$SOLRURI;
+              echo "* * * Checking if Solr is ready at http://$SOLRHOST:$SOLRPORT$SOLRURI * * *";
+              until [[ $(echo -e "GET $SOLRURI HTTP/1.1\r\nHost: $SOLRHOST\r\n\r\n" \
+                | nc $SOLRHOST $SOLRPORT | grep -c "<schema name=\"dataone") == 1 ]]; do
+                echo waiting for Solr Schema to be accessible at http://$SOLRHOST:$SOLRPORT$SOLRURI;
               sleep 1; done;
-        {{- end }}
         {{- if and .Values.postgresql.upgrader .Values.postgresql.upgrader.enabled }}
-        - name: "pgupgrade"
-          image: "ubuntu:24.10"
-{{/*          image: postgres:14*/}}
+        - name: pgupgrade
+          image: postgres:latest
           securityContext:
-            {{-  toYaml .Values.postgresql.upgrader.securityContext | nindent 12 }}
+            {{- toYaml .Values.postgresql.upgrader.securityContext | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-metacat-secrets
           command:
             - sh
             - -c
-            - >
-              export DEBIAN_FRONTEND="noninteractive";
-              echo "America/Los_Angeles" > /etc/timezone;
-              echo "setting timezone...";
-              apt-get update && apt-get install -y tzdata;
-              echo "tzdata installed...";
-              dpkg-reconfigure --frontend noninteractive tzdata;
-              echo "installing lsb-release wget gnupg...";
-              apt-get update && apt-get install -y lsb-release wget gnupg gnupg2 gnupg1;
-              echo "...installed.";
-              echo "re-installing ca-certificates...";
-              apt-get install -y --reinstall ca-certificates;
-              echo "...done.";
-              echo "Adding PostgreSQL apt repository...";
-              wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O - | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg;
-              echo "deb  [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list;
-              echo "...done.";
-              echo "Adding postgres user & group...";
-              groupadd -g {{ .Values.postgresql.upgrader.securityContext.fsGroup }} postgres;
-              useradd -u {{ print " " -}}
-              {{ .Values.postgresql.primary.containerSecurityContext.runAsUser }}{{ print " " -}}
-              -g {{ .Values.postgresql.upgrader.securityContext.fsGroup }} -m postgres;
-              chsh -s /bin/bash postgres;
-              echo "...done.";
-              echo "Installing postgresql 14...";
-              apt-get update && apt-get install -y --no-install-recommends postgresql-14 postgresql-contrib-14;
-              service postgresql stop;
-              mv /var/lib/postgresql/14 /var/lib/postgresql/14_ORIG
-              ln -s /opt/postgresql/14  /var/lib/postgresql/14
-              chmod 750  /var/lib/postgresql/14/main/
-              echo "local       all           all         trust" > /etc/postgresql/14/main/pg_hba.conf;
-              service postgresql start;
-              while true; do sleep 1; done;
-              chown root:ssl-cert /etc/ssl/private/ssl-cert-snakeoil.key;
-              chmod 740 /etc/ssl/private/ssl-cert-snakeoil.key;
-              gpasswd -a postgres ssl-cert;
-              service postgresql stop;
-              echo "...done.";
-              echo "Installing postgresql 14...";
-              apt-get update && apt-get install -y --no-install-recommends postgresql-16 postgresql-contrib-16;
-              echo "...done.";
-              chown -R postgres:postgres /var/run/postgresql /etc/postgresql /var/log/postgresql;
-              service postgresql stop;
-              su postgres;
-              cd ~;
-              if [ -f /var/lib/postgresql/14/main/postmaster.pid ]; then echo "Removing leftover 14/main/postmaster.pid"; rm /var/lib/postgresql/14/main/postmaster.pid; fi;
-              /usr/lib/postgresql/16/bin/pg_upgrade --old-bindir=/usr/lib/postgresql/14/bin/ --old-datadir=/var/lib/postgresql/14/main --new-datadir=/var/lib/postgresql/16/main --check;
+            - |
+              ##
+              ## Upgrade PostgreSQL if necessary
+              ##
+              echo "Checking if a PostgreSQL upgrade is necessary...";
+              PGDATA={{ .Values.postgresql.postgresqlDataDir }};
+              #
+              # * * * Exit if latest PostgreSQL version already initialized * * *
+              #
+              if [ ! -f "$PGDATA/PG_VERSION" ]; then
+                echo "No file found at $PGDATA/PG_VERSION. NEEDS INVESTIGATION!";
+                echo "This should never happen, since previous initContainer checked that postgres";
+                echo "was running, and postgres chart will initialize a new DB if none found in";
+                echo "$PGDATA. Maybe a permissions issue? Exiting initContainer...";
+                exit 1;
+              fi
+              #
+              # * * * Check if metacat has already created tables * * *
+              #
+              echo "Found version $(cat $PGDATA/PG_VERSION); checking if pg_restore needed...";
+              USER={{ .Values.postgresql.auth.username }};
+              {{ $map := (index .Values.metacat "database.connectionURI" | split "/") }}
+              HOST={{ index $map "_2" }}
+              DB={{ .Values.postgresql.auth.database }};
+              # $POSTGRES_PASSWORD should already have been set in 'envFrom:', above
+              MCTABLES=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $HOST -U $USER -d $DB -c "\dt" 2>&1);
+              echo "Result of psql -h $HOST -U $USER -d $DB -c \"\\dt\":"
+              echo "$MCTABLES";
+              if [ "$MCTABLES" != "Did not find any relations." ]; then
+                echo "Metacat tables found in $PGDATA; will NOT do a pg_restore. Exiting initContainer...";
+                exit 0;
+              fi;
+              #
+              # * * * Check if there are existing pg_dump files that can be restored * * *
+              #
+              echo "No Metacat tables found in $PGDATA";
+              echo "Looking for directories named {version}-pg_dump to restore from...";
+              MNT={{ regexReplaceAll "(.*?)/(\\d{2,3})/(?:.*)$" .Values.postgresql.postgresqlDataDir "$1" }};
+              DUMP=$(ls $MNT/ | grep "[0-9]\+-pg_dump$" | sort -r | head -n 1 2>&1);
+              echo "Dump file search result: $DUMP";
+              if [ -z "$DUMP" ]; then
+                echo "No dump files found in $MNT; exiting initContainer...";
+                exit 0;
+              fi;
+              #
+              # * * * pg_restore existing pg_dump files * * *
+              #
+              echo "Restoring from dump file $DUMP, using command:";
+              echo "pg_restore -U $USER -h $HOST -d $DB --format=directory --jobs=20 $MNT/$DUMP";
+              PGPASSWORD=$POSTGRES_PASSWORD pg_restore -U $USER -h $HOST -d $DB --format=directory --jobs=20 $MNT/$DUMP;
+              echo "FINISHED restoring from dump file $DUMP; exiting initContainer...";
           volumeMounts:
             - name: {{ .Release.Name }}-postgres-pgupgrade
-              mountPath: /opt/postgresql
+              mountPath: {{ regexReplaceAll "(.*?)/(\\d{2,3})/(?:.*)$" .Values.postgresql.postgresqlDataDir "$1" }}
         {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -210,7 +225,7 @@ spec:
       {{- if and .Values.postgresql.upgrader .Values.postgresql.upgrader.enabled }}
       - name: {{ .Release.Name }}-postgres-pgupgrade
         persistentVolumeClaim:
-          claimName: {{ required "claimName_REQUIRED" .Values.postgresql.upgrader.claimName }}
+          claimName: {{ required ".Values.postgresql.upgrader.persistence.existingClaim is REQUIRED" .Values.postgresql.upgrader.persistence.existingClaim }}
       {{- end }}
 {{- if not (.Values.persistence.enabled) }}
       - name: {{ .Release.Name }}-volume
