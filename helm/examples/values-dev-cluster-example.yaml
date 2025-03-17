@@ -85,11 +85,19 @@ podSecurityContext:
   runAsNonRoot: true
 
 postgresql:
-  ## @param postgresqlDataDir PostgreSQL data dir folder
-  ##
-  postgresqlDataDir: /bitnami/postgresql/14/main
+  upgrader:
+    persistence:
+     existingClaim: data-metacatbrooke-postgresql-0
 
   primary:
+    resources:
+      requests:
+        cpu: 4
+        memory: 32Gi
+      limits:
+        cpu: 4
+        memory: 32Gi
+
     extendedConfiguration: |
       max_connections = 250
       max_wal_size=16384

@@ -983,7 +983,8 @@ postgresql:
       enabled: true
       ## @param postgresql.primary.containerSecurityContext.runAsUser uid for container to run as
       ##
-      runAsUser: 59996
+      runAsUser: &mcpguid 59996
+      runAsGroup: &mcpggid 59996
 
     ## postgresql.primary.PodSecurityContext - common securityContext settings at pod level
     ## for all containers
@@ -993,6 +994,10 @@ postgresql:
       ## @param postgresql.primary.podSecurityContext.runAsNonRoot pod defaults to run as non-root?
       ##
       runAsNonRoot: true
+
+      ## @param primary.podSecurityContext.fsGroup Group ID for the pod
+      fsGroup: *mcpggid
+
       ## @param postgresql.primary.podSecurityContext.fsGroupChangePolicy ownership & perms mgmt
       ##                        IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
       ##                        means K8s will always chown the volume to the fsGroup, even if the
@@ -1028,6 +1033,23 @@ postgresql:
       storageClass: ""
       existingClaim: ""
       size: 1Gi
+
+  ## @param postgresql.postgresqlDataDir PostgreSQL data dir folder. Must be versioned
+  ## to avoid overwriting during postgresql major version upgrades
+  ## e.g. like "/bitnami/postgresql/17/main" (bitnami default is "/bitnami/postgresql/data")
+  ##
+  postgresqlDataDir: /bitnami/postgresql/17/main
+
+  upgrader:
+    enabled: true
+    persistence:
+      existingClaim: ""
+    securityContext:
+      runAsNonRoot: false
+      runAsUser: *mcpguid
+      runAsGroup: *mcpguid
+      fsGroup: *mcpguid
+      fsGroupChangePolicy: OnRootMismatch
 
 ## @section Tomcat Configuration
 
