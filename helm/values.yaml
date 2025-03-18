@@ -324,7 +324,7 @@ metacat:
   ##       removed, and wrapped in double quotes, so it becomes:
   ##           dataone.subject: "CN=urn:node:YOUR_VALUE,DC=dataone,DC=org"
   ##
-#  dataone.subject: "CN=urn:node:CHANGE_ME_TO_YOUR_VALUE!,DC=dataone,DC=org"
+  dataone.subject: "CN=urn:node:METACAT1,DC=dataone,DC=org"
 
   ## @param metacat.dataone.nodeName short name for the node that can be used in user interfaces
   ## @param metacat.dataone.nodeDescription What is the node's intended scope and purpose?
@@ -715,16 +715,16 @@ ingress:
   ## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
   ##
   annotations:
-    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size See docs:
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size See docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
     ##
     nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
-    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size See docs:
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size See docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
     ## Setting size to 0 disables checking of client request body size
     ##
     nginx.ingress.kubernetes.io/client_max_body_size: "0"
-    ## @param ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size See docs:
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size See docs:
     ## https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md#proxy-body-size
     ## Setting size to 0 disables checking of client request body size
     ##
@@ -769,7 +769,7 @@ ingress:
   ##
   rewriteRules: ""
 
-  ## @param ingress.configurationSnippet text code block to add to the nginx ingress config
+  ## @skip ingress.configurationSnippet text code block to add to the nginx ingress config
   ## This block will be added to the ingress definition section, in addition to the rewrite rules:
   ## metadata:
   ##   annotations:
@@ -974,8 +974,6 @@ postgresql:
       ##
       adminPasswordKey: POSTGRES_PASSWORD
 
-  ## @param postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
-  ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
   primary:
     containerSecurityContext:
       ## @param postgresql.primary.containerSecurityContext.enabled enable containerSecurityContext
@@ -984,6 +982,8 @@ postgresql:
       ## @param postgresql.primary.containerSecurityContext.runAsUser uid for container to run as
       ##
       runAsUser: &mcpguid 59996
+      ## @param postgresql.primary.containerSecurityContext.runAsGroup gid for container to run as
+      ##
       runAsGroup: &mcpggid 59996
 
     ## postgresql.primary.PodSecurityContext - common securityContext settings at pod level
@@ -995,7 +995,7 @@ postgresql:
       ##
       runAsNonRoot: true
 
-      ## @param primary.podSecurityContext.fsGroup Group ID for the pod
+      ## @param postgresql.primary.podSecurityContext.fsGroup Group ID for the pod file system
       fsGroup: *mcpggid
 
       ## @param postgresql.primary.podSecurityContext.fsGroupChangePolicy ownership & perms mgmt
@@ -1004,7 +1004,9 @@ postgresql:
       ##                        volume is already owned by the fsGroup, which is VERY slow!
       fsGroupChangePolicy: *defaultFsGroupChangePolicy
 
-    ## override the default pg_hba.conf with our own, to allow password auth, since this is the
+    ## @skip postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
+    ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
+    ## We override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
     ## TYPE       DATABASE      USER          ADDRESS         METHOD
     pgHbaConfiguration: |
@@ -1017,7 +1019,7 @@ postgresql:
     ## Must exceed metacat.database.maximumConnections, since some connections will be reserved for
     ## superuser
     ##
-    extendedConfiguration: |
+    extendedConfiguration: |-
       max_connections = 250
 
     ## Postgresql persistence
@@ -1040,12 +1042,26 @@ postgresql:
   ##
   postgresqlDataDir: /bitnami/postgresql/17/main
 
+  ## postgresql.upgrader initContainer to auto-upgrade across PostgreSQL major versions
   upgrader:
+    ## @param postgresql.upgrader.enabled Enable initContainer for postgresql major version upgrades
+    ##
     enabled: true
     persistence:
+      ## @param postgresql.upgrader.persistence.existingClaim PVC containing postgresql data files
+      ##
       existingClaim: ""
+    ## @param postgresql.upgrader.securityContext.runAsUser numerical User ID for the pod.
+    ##                                                      Must match PostgreSQL metacat user's uid
+    ## @param postgresql.upgrader.securityContext.runAsGroup numerical Group ID for the pod.
+    ##                                                      Must match PostgreSQL metacat user's gid
+    ## @param postgresql.upgrader.securityContext.fsGroup group id used to access mounted volume.
+    ##                                                      Must match PostgreSQL metacat user's gid
+    ## @param postgresql.upgrader.securityContext.fsGroupChangePolicy how k8s manages owner & perms.
+    ##                            IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
+    ##                            means K8s will always chown the volume to the fsGroup, even if the
+    ##                            volume is already owned by the fsGroup, which is VERY slow!
     securityContext:
-      runAsNonRoot: false
       runAsUser: *mcpguid
       runAsGroup: *mcpguid
       fsGroup: *mcpguid
