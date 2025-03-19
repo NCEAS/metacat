@@ -4,6 +4,7 @@ Metacat is repository software for preserving data and metadata (documentation a
 helps scientists find, understand and effectively use data sets they manage or that have been
 created by others. For more details, see https://github.com/NCEAS/metacat
 
+> [!IMPORTANT]
 > ### Before You Start:
 > 1. **This Metacat Helm chart is a beta feature**. It has been tested, and we believe it to be
 >    working well, but it has not yet been used in production - so we recommend caution with this
@@ -20,17 +21,27 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 >    for the necessary migration steps.
 >
 >
-> 3. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop),
+> 3. If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart
+>    v.2.0.0), first check the [Release Notes](../RELEASE-NOTES.md) to see if this involves a change
+>    in the major version of  the PostgreSQL application deployed by the included Bitnami PostgreSQL
+>    sub-chart. If it does, you will first need to dump your database contents before you upgrade --
+>    see the [Major Version Upgrades](#major-version-upgrades) section.
+>
+>
+> 4. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop),
 >    because the official Docker image for at least one of the dependencies (RabbitMQ) doesn't yet
 >    work in that environment.
 
 ---
+
+## Table of Contents
 
 - [Metacat Helm Chart](#metacat-helm-chart)
     * [TL;DR](#tldr)
     * [Introduction](#introduction)
     * [Prerequisites](#prerequisites)
     * [Installing the Chart](#installing-the-chart)
+    * [Major Version Upgrades](#major-version-upgrades)
     * [Uninstalling the Chart](#uninstalling-the-chart)
     * [Parameters](#parameters)
     * [Configuration and installation details](#configuration-and-installation-details)
@@ -125,6 +136,134 @@ helm install my-release oci://ghcr.io/nceas/charts/metacat --version 2.1.0  \
 > [values.yaml](./values.yaml) file for settings that include `${RELEASE_NAME}`. The instructions
 > at the beginning of [values.yaml](./values.yaml) suggest simple ways to achieve this.
 
+## Major Version Upgrades
+
+> [!IMPORTANT]
+> If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart
+> v.2.0.0), first check the [Release Notes](../RELEASE-NOTES.md) to see if this involves a change
+> in the major version of the PostgreSQL application deployed by the included Bitnami PostgreSQL
+> sub-chart. If it does, you will first need to dump your database contents before you upgrade --
+> see below.
+>
+> [!WARNING] -- the Bitnami helm chart version is different from the PostgreSQL application version;
+> see how they correspond, using the command: `helm search repo bitnami/postgresql --versions`
+
+### BEFORE UPGRADING -- with the current chart deployed and running:
+
+1. First determine the path to your current (versioned) PostgreSQL data directory. This is inferred
+   from the `postgresql.postgresqlDataDir` in Values.yaml.
+
+    ```shell
+    # don't forget to substitute your release name
+    helm get values --all $RELEASE_NAME | grep postgresqlDataDir
+    ```
+
+    Output will be something like one of the following; either:
+
+    1. DEFAULT path
+
+        ```yaml
+        ## This is the non-versioned default used by the Bitnami PostgreSQL chart, if not overridden:
+        postgresqlDataDir: /bitnami/postgresql/data
+        ```
+
+       ...or...
+
+    2. VERSIONED path
+        ```yaml
+        ## This path includes a directory whose name matches the PostgreSQL version (in
+        ## this case '14') and is the format we need, in order to be able to upgrade:
+        postgresqlDataDir: /bitnami/postgresql/14/main
+        ```
+
+   >    [!IMPORTANT]
+   >
+   >    **In order for the automated upgrade to work, you MUST be using a `VERSIONED path` (like the
+   >    example 2, above). If you have a `DEFAULT path`, it needs to be changed as follows:**
+
+      - Steps to Create a Versioned PostgreSQL Data Directory
+
+          ```shell
+          ## Use the postgresqlDataDir value you found above, and set it as the PG_DATA environment
+          ## variable; e.g:
+          PG_DATA=/bitnami/postgresql/data
+
+          ## Find the postgresql.primary.persistence.mountPath - you may need to install
+          ## the 'yq' command-line tool; e.g. brew install yq
+          ## Don't forget to substitute your release name
+          PG_MNT=$(helm get values --all $RELEASE_NAME | yq '.postgresql.primary.persistence.mountPath')
+
+          # Inspect the value to ensure this worked:
+          $ echo $PG_MNT
+          /bitnami/postgresql
+
+          # Finally, copy the data to a new, versioned path
+          kubectl exec ${RELEASE_NAME}-postgresql-0 -- env PGDATA=${PG_DATA} PGMNT=${PG_MNT} \
+            bash -c '
+              if [ -z $PGDATA ] || [ -z $PGMNT ]; then echo PGDATA or PGMNT NOT SET; exit 1; fi
+              PG_VER=$(cat $PGDATA/PG_VERSION);
+              if [ -z $PG_VER ]; then echo "ERROR: NO PG VERSION FOUND"; exit 2; fi
+              DEST=$PGMNT/$PG_VER/main
+              if [ -d $DEST ]; then
+                echo "ERROR: DIRECTORY ALREADY EXISTS AT: $DEST";
+                exit 3;
+              fi
+              mkdir -p $PGDATA $DEST;
+              cp -rp $PGDATA/* $DEST/;
+              echo "REMEMBER TO SET NEW postgresqlDataDir LOCATION TO: $DEST";'
+          ```
+
+         Finally, edit your `values.yaml` overrides, to set `postgresqlDataDir` to the new value. If
+         you're running postgreSQL v14, for example, the output of the above command will include:
+         `REMEMBER TO SET NEW postgresqlDataDir LOCATION TO: /bitnami/postgresql/14/main`, and your
+         values override should be set to:
+
+         ```yaml
+         postgresql:
+           postgresqlDataDir: /bitnami/postgresql/14/main
+         ```
+
+2. Put Metacat in "Read Only" mode, so the database will not change (run `helm upgrade` with the
+   existing chart version - don't use the new chart yet!)
+
+     ```shell
+     helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
+         --version {EXISTING-chart-version} \
+         -f {your-values-overrides} \
+         --set metacat.application\\.readOnlyMode=true
+     ## IMPORTANT - note the two backslashes!: metacat.application\\.readOnlyMode
+     ```
+
+3. Dump the data:
+
+   When you are sure you are using a `VERSIONED path` for `postgresql.postgresqlDataDir` (see step
+   1, above), make a note of the portion **up to and including the postgres version number**, with no
+   trailing slash. In the example: `/bitnami/postgresql/14/main`, the version number is `14`, so we
+   will drop the `/main`, and use the path: `/bitnami/postgresql/14` for our `PG_BASE`...
+
+    ```shell
+    ## Use the postgresqlDataDir value up to and including the postgres version number, and
+    ## set it as the PG_BASE environment variable
+    PG_BASE=/bitnami/postgresql/14
+
+    ## Then connect to the postgresql pod:
+    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "<< EOF
+      ## back up any existing pg_dump files...
+      mv -f $PG_BASE-pg_dump $PG_BASE-pg_dump-moved-$(date +%s);
+      ## ...and create a new one...
+      pg_dump -U metacat --format=directory --file=$PG_BASE-pg_dump --jobs=20 metacat;
+    EOF"
+    ```
+
+4. `helm upgrade` to the new Metacat chart. This will automatically detect the pg_dump directory,
+   and use it to `pg_restore` the data into the new version of PostgreSQL. Upgrading will also unset
+   "Read Only" mode, so Metacat will once again accept edits and uploads.
+
+     ```shell
+     helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
+         --version {NEW-chart-version} \
+         -f {your-values-overrides}
+     ```
 
 ## Uninstalling the Chart
 
