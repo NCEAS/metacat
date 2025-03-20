@@ -55,6 +55,7 @@ created by others. For more details, see https://github.com/NCEAS/metacat
     * [Appendix 2: Self-Signing Certificates for Testing Mutual Authentication](#appendix-2-self-signing-certificates-for-testing-mutual-authentication)
     * [Appendix 3: Troubleshooting Mutual Authentication](#appendix-3-troubleshooting-mutual-authentication)
     * [Appendix 4: Debugging and Logging](#appendix-4-debugging-and-logging)
+    * [Appendix 5: Steps to Create a Versioned PostgreSQL Data Directory](#appendix-5-steps-to-create-a-versioned-postgresql-data-directory)
 
 ---
 
@@ -139,19 +140,58 @@ helm install my-release oci://ghcr.io/nceas/charts/metacat --version 2.1.0  \
 ## Major Version Upgrades
 
 > [!IMPORTANT]
-> If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart
-> v.2.0.0), first check the [Release Notes](../RELEASE-NOTES.md) to see if this involves a change
-> in the major version of the PostgreSQL application deployed by the included Bitnami PostgreSQL
-> sub-chart. If it does, you will first need to dump your database contents before you upgrade --
-> see below.
->
-> [!WARNING] -- the Bitnami helm chart version is different from the PostgreSQL application version;
-> see how they correspond, using the command: `helm search repo bitnami/postgresql --versions`
+> If you are upgrading across Metacat Helm chart **major** versions (e.g. from chart v1.x.x to chart
+> v.2.x.x), always check the [Release Notes](../RELEASE-NOTES.md) to see if this involves a change
+> in the major version of the underlying **PostgreSQL** application that is deployed by the included
+> Bitnami PostgreSQL sub-chart. **If it does, you will first need to dump your database contents
+> before you upgrade** -- see below. The **Bitnami helm chart version** is different from the
+> **PostgreSQL application version**; to see how they correspond, use the command:
+> ```shell
+> helm search repo bitnami/postgresql --versions
+> ```
 
-### BEFORE UPGRADING -- with the current chart deployed and running:
+If the Metacat helm chart upgrade involves a major-version upgrade of the PostgreSQL application
+that is deployed by the included Bitnami PostgreSQL sub-chart, the following steps will be needed.
+Note that this procedure assumes the old and new data directories will be on the same volume and
+mount-point:
 
-1. First determine the path to your current (versioned) PostgreSQL data directory. This is inferred
-   from the `postgresql.postgresqlDataDir` in Values.yaml.
+1. **BEFORE UPGRADING**: with the current ("old version") chart deployed:
+   1. put Metacat into Read-Only mode:
+
+      ```shell
+      helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
+          --version [OLD-chart-version] \
+          -f [your-values-overrides] \
+          --set metacat.application\\.readOnlyMode=true
+      ```
+      > [!IMPORTANT]
+        Note the TWO backslashes in application\\.readOnlyMode!
+
+   2. Make sure your Values overrides include sufficient 'postgresql.primary.resources' requests &
+      limits for cpu & memory, to avoid the pod being 'OOMKilled' during dump/restore. We had
+      success with setting `cpu: 4` and `memory: 32Gi` for both `requests` & `limits`.
+   3. run the provided, non-destructive script:
+      [metacat/helm/admin/pg_dump_for_upgrades.sh](./admin/pg_dump_for_upgrades.sh), which will
+      check your data directory location is correctly versioned, and then carry out a `pg_dump` of
+      your existing database.
+
+      > The script is safe and non-destructive. It never deletes data, and seeks permission before
+      > making copies to new locations.
+
+2. **UPGRADE PROCESS**
+   1. Ensure your Values overrides are correct for the section:
+
+      ```yaml
+      postgresql:
+        upgrader:
+          persistence:
+           existingClaim: # [existing-postgresql-pvc-name-here]
+      ```
+
+   2. upgrade to the chart with the new major version, en
+
+1. First determine the path to your current PostgreSQL data directory. This is inferred from the
+   `postgresql.postgresqlDataDir` in Values.yaml.
 
     ```shell
     # don't forget to substitute your release name
@@ -160,68 +200,26 @@ helm install my-release oci://ghcr.io/nceas/charts/metacat --version 2.1.0  \
 
     Output will be something like one of the following; either:
 
-    1. DEFAULT path
+    1. **DEFAULT path:** This is the non-versioned default used by the Bitnami PostgreSQL chart, if not overridden
 
         ```yaml
-        ## This is the non-versioned default used by the Bitnami PostgreSQL chart, if not overridden:
         postgresqlDataDir: /bitnami/postgresql/data
         ```
 
        ...or...
 
-    2. VERSIONED path
+    2. **VERSIONED path:** This path includes a directory whose name matches the PostgreSQL version
+       (in this case '14') and is the format we need, in order to be able to upgrade:
+
         ```yaml
-        ## This path includes a directory whose name matches the PostgreSQL version (in
-        ## this case '14') and is the format we need, in order to be able to upgrade:
         postgresqlDataDir: /bitnami/postgresql/14/main
         ```
 
-   >    [!IMPORTANT]
-   >
-   >    **In order for the automated upgrade to work, you MUST be using a `VERSIONED path` (like the
-   >    example 2, above). If you have a `DEFAULT path`, it needs to be changed as follows:**
-
-      - Steps to Create a Versioned PostgreSQL Data Directory
-
-          ```shell
-          ## Use the postgresqlDataDir value you found above, and set it as the PG_DATA environment
-          ## variable; e.g:
-          PG_DATA=/bitnami/postgresql/data
-
-          ## Find the postgresql.primary.persistence.mountPath - you may need to install
-          ## the 'yq' command-line tool; e.g. brew install yq
-          ## Don't forget to substitute your release name
-          PG_MNT=$(helm get values --all $RELEASE_NAME | yq '.postgresql.primary.persistence.mountPath')
-
-          # Inspect the value to ensure this worked:
-          $ echo $PG_MNT
-          /bitnami/postgresql
-
-          # Finally, copy the data to a new, versioned path
-          kubectl exec ${RELEASE_NAME}-postgresql-0 -- env PGDATA=${PG_DATA} PGMNT=${PG_MNT} \
-            bash -c '
-              if [ -z $PGDATA ] || [ -z $PGMNT ]; then echo PGDATA or PGMNT NOT SET; exit 1; fi
-              PG_VER=$(cat $PGDATA/PG_VERSION);
-              if [ -z $PG_VER ]; then echo "ERROR: NO PG VERSION FOUND"; exit 2; fi
-              DEST=$PGMNT/$PG_VER/main
-              if [ -d $DEST ]; then
-                echo "ERROR: DIRECTORY ALREADY EXISTS AT: $DEST";
-                exit 3;
-              fi
-              mkdir -p $PGDATA $DEST;
-              cp -rp $PGDATA/* $DEST/;
-              echo "REMEMBER TO SET NEW postgresqlDataDir LOCATION TO: $DEST";'
-          ```
-
-         Finally, edit your `values.yaml` overrides, to set `postgresqlDataDir` to the new value. If
-         you're running postgreSQL v14, for example, the output of the above command will include:
-         `REMEMBER TO SET NEW postgresqlDataDir LOCATION TO: /bitnami/postgresql/14/main`, and your
-         values override should be set to:
-
-         ```yaml
-         postgresql:
-           postgresqlDataDir: /bitnami/postgresql/14/main
-         ```
+> [!IMPORTANT]
+> **In order for the automated upgrade to work, you MUST be using a `VERSIONED path` (like the
+> example 2, above). If you have a `DEFAULT path`, it needs to be changed before upgrading; see
+> [Appendix 5: Steps to Create a Versioned PostgreSQL Data
+> Directory](#appendix-5-steps-to-create-a-versioned-postgresql-data-directory)**
 
 2. Put Metacat in "Read Only" mode, so the database will not change (run `helm upgrade` with the
    existing chart version - don't use the new chart yet!)
@@ -285,7 +283,8 @@ or:
 kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associated with the release
 ```
 
-> **NOTE**: DELETING THE PVCs MAY ALSO DELETE ALL YOUR DATA. depending upon your setup! Please be
+> [!CAUTION]
+> DELETING THE PVCs MAY ALSO DELETE ALL YOUR DATA. depending upon your setup! Please be
 > cautious!
 
 
@@ -504,15 +503,14 @@ kubernetes Secrets in the cluster. The file [admin/secrets.yaml](./admin/secrets
 template that you can complete and apply using `kubectl` -- for details, see the instructions in the
 comments inside that file. Please remember to NEVER ADD UNENCRYPTED SECRETS TO GITHUB!
 
-> **Important**:
+> [!IMPORTANT]
 > 1. The deployed Secrets name includes the release name as a prefix,
 > (e.g. `my-release-metacat-secrets`), so it's important to ensure that the secrets name matches
 > the release name referenced whenever you use `helm` commands.
 > 2. The parameter `postgresql.auth.existingSecret` in [values.yaml](./values.yaml) must be set to
 > match the name of these installed secrets (which will change if the release name is changed).
 
-> **Warning**:
->
+> [!WARNING]
 > Setting a password will be ignored on new installations in cases when a previous
 > PostgreSQL release was deleted through the helm command. In that case, the old PVC will have an
 > old password, and setting it through helm won't take effect. Deleting persistent volumes (PVs)
@@ -571,7 +569,8 @@ $  helm upgrade --install ingress-nginx ingress-nginx \
                 --namespace ingress-nginx --create-namespace
 ```
 
-> **Tip**: You can inspect available Ingress classes in your cluster using:
+> [!TIP]
+> You can inspect available Ingress classes in your cluster using:
 > `$ kubectl get ingressclasses`
 >
 > Note that there are significant differences between the community version of [the
@@ -609,7 +608,8 @@ ingress:
       secretName: tls-secret
 ```
 
-> **Tip:** You can save time and reduce complexity by using a certificate manager service. For
+> [!TIP]
+> You can save time and reduce complexity by using a certificate manager service. For
 > example, our NCEAS k8s clusters include [a cert-manager
 > service](https://github.com/DataONEorg/k8s-cluster/blob/main/authentication/LetsEncrypt.md) that
 > constantly watches for Ingress modifications, and updates letsEncrypt certificates automatically,
@@ -713,7 +713,8 @@ See [Appendix 3](#appendix-3-troubleshooting-mutual-authentication) for help wit
 
 ## Appendix 1: Self-Signing TLS Certificates for HTTPS Traffic
 
-> **NOTE: For development and testing purposes only!**
+> [!NOTE]
+> For development and testing purposes only!**
 >
 > Also see the [Kubernetes nginx
 > documentation](https://kubernetes.github.io/ingress-nginx/user-guide/tls)
@@ -746,7 +747,8 @@ Whatever hostname you are using, don't forget to set the
 
 ## Appendix 2: Self-Signing Certificates for Testing Mutual Authentication
 
-> **NOTE: For development and testing purposes only!**
+> [!NOTE]
+> For development and testing purposes only!**
 >
 > Also see the [Kubernetes nginx documentation
 > ](https://kubernetes.github.io/ingress-nginx/examples/PREREQUISITES/#client-certificate-authentication)
@@ -808,7 +810,8 @@ You can check the configuration as follows:
           nginx.ingress.kubernetes.io/configuration-snippet: |
             more_set_input_headers "X-Proxy-Key: <your-secret-here>";
     ```
-    > NOTE: `<your-secret-here>` is the plaintext value associated with the key
+    > [!NOTE]
+    > `<your-secret-here>` is the plaintext value associated with the key
     > `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` in your secret
     > `<releaseName>-metacat-secrets` -- ensure it has been set correctly!
 
@@ -847,7 +850,8 @@ image:
 ```
 This has the following effects:
 1. sets the logging level to DEBUG
-   > **Tip:** you can also temporarily change logging settings without needing to
+   > [!TIP]
+   > you can also temporarily change logging settings without needing to
    > upgrade or re-install the application, by editing the log4J configuration
    > ConfigMap:
    >
@@ -865,15 +869,15 @@ This has the following effects:
     ```shell
     $ kubectl  port-forward  --namespace myNamespace  pod/mypod-0  5005:5005
     ```
-   **Tip:**
+   > [!TIP]
    > For the **indexer**, you can also set the debug flag in `values.yaml` (Note that this
      only sets the logging level to DEBUG; it does **not** enable remote debugging for the indexer):
-
-    ```yaml
-    dataone-indexer:
-      image:
-        debug: true
-    ```
+   >
+   > ```yaml
+   > dataone-indexer:
+   >   image:
+   >     debug: true
+   > ```
 
 ### To view the logs
 
@@ -908,3 +912,71 @@ Logs from an `initContainer`:
   # example: Metacat's `init-solr-metacat-dep` initContainer logs
   $ kubectl logs -f metacatknb-0 -c init-solr-metacat-dep
 ```
+
+## Appendix 5: Steps to Create a Versioned PostgreSQL Data Directory
+
+1. First determine the path to your current PostgreSQL data directory. This is inferred from the
+   `postgresql.postgresqlDataDir` in Values.yaml.
+
+    ```shell
+    # don't forget to substitute your release name
+    helm get values --all $RELEASE_NAME | grep postgresqlDataDir
+    ```
+
+   Output will be something like one of the following; either:
+
+    1. **DEFAULT path:** This is the non-versioned default used by the Bitnami PostgreSQL chart, if
+       not overridden
+
+        ```yaml
+        postgresqlDataDir: /bitnami/postgresql/data
+        ```
+
+        ...or...
+
+    2. **VERSIONED path:** This path includes a directory whose name matches the PostgreSQL version
+       (in this case '14') and is the format we need, in order to be able to upgrade:
+
+        ```yaml
+        postgresqlDataDir: /bitnami/postgresql/14/main
+        ```
+
+  ```shell
+  ## Use the postgresqlDataDir value you found above, and set it as the PG_DATA environment
+  ## variable; e.g:
+  PG_DATA=/bitnami/postgresql/data
+
+  ## Find the postgresql.primary.persistence.mountPath - you may need to install
+  ## the 'yq' command-line tool; e.g. brew install yq
+  ## Don't forget to substitute your release name
+  PG_MNT=$(helm get values --all $RELEASE_NAME | yq '.postgresql.primary.persistence.mountPath')
+
+  # Inspect the value to ensure this worked:
+  $ echo $PG_MNT
+  /bitnami/postgresql
+
+  # Finally, copy the data to a new, versioned path
+  kubectl exec ${RELEASE_NAME}-postgresql-0 -- env PGDATA=${PG_DATA} PGMNT=${PG_MNT} \
+    bash -c '
+      if [ -z $PGDATA ] || [ -z $PGMNT ]; then echo PGDATA or PGMNT NOT SET; exit 1; fi
+      PG_VER=$(cat $PGDATA/PG_VERSION);
+      if [ -z $PG_VER ]; then echo "ERROR: NO PG VERSION FOUND"; exit 2; fi
+      DEST=$PGMNT/$PG_VER/main
+      if [ -d $DEST ]; then
+        echo "ERROR: DIRECTORY ALREADY EXISTS AT: $DEST";
+        exit 3;
+      fi
+      mkdir -p $PGDATA $DEST;
+      cp -rp $PGDATA/* $DEST/;
+      echo "REMEMBER TO SET NEW postgresqlDataDir LOCATION TO: $DEST";'
+  ```
+
+ Finally, edit your `values.yaml` overrides, to set `postgresqlDataDir` to the new value. If
+ you're running postgreSQL v14, for example, the output of the above command will include:
+ `REMEMBER TO SET NEW postgresqlDataDir LOCATION TO: /bitnami/postgresql/14/main`, and your
+ values override should be set to:
+
+ ```yaml
+ postgresql:
+   postgresqlDataDir: /bitnami/postgresql/14/main
+ ```
