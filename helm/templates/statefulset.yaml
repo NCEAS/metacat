@@ -29,8 +29,7 @@ spec:
             - |
               ## wait for PostgreSQL to be ready...
               ##
-              {{ $map := (index .Values.metacat "database.connectionURI" | split "/") }}
-              PGHOST={{ index $map "_2" }}
+              PGHOST={{ include "metacat.postgresql.hostname" . }};
               PGPORT={{ .Values.postgresql.primary.service.ports.postgresql -}};
               echo "* * * Checking if PostgreSQL is ready, at $PGHOST:$PGPORT * * *";
               until nc -z $PGHOST $PGPORT > /dev/null; do
@@ -88,8 +87,7 @@ spec:
               #
               echo "Found version $(cat $PGDATA/PG_VERSION); checking if pg_restore needed...";
               USER={{ .Values.postgresql.auth.username }};
-              {{ $map := (index .Values.metacat "database.connectionURI" | split "/") }}
-              HOST={{ index $map "_2" }}
+              HOST={{ include "metacat.postgresql.hostname" . }};
               DB={{ .Values.postgresql.auth.database }};
               # $POSTGRES_PASSWORD should already have been set in 'envFrom:', above
               MCTABLES=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $HOST -U $USER -d $DB -c "\dt" 2>&1);
@@ -105,12 +103,16 @@ spec:
               echo "No Metacat tables found in $PGDATA";
               echo "Looking for directories named {version}-pg_dump to restore from...";
               MNT={{ regexReplaceAll "(.*?)/(\\d{2,3})/(?:.*)$" .Values.postgresql.postgresqlDataDir "$1" }};
-              DUMP=$(ls $MNT/ | grep "[0-9]\+-pg_dump$" | sort -r | head -n 1 2>&1);
-              echo "Dump file search result: $DUMP";
+              MAJOR_VER=$(psql -U metacat -c "SHOW server_version" -t -A | cut -d. -f1);
+              echo "Current PostgreSQL Major Version: $MAJOR_VER";
+              DUMP=$(ls $MNT/ | grep "[0-9]\+-pg_dump$" | sort -rn | awk -F'-' -v limit=$MAJOR_VER '$1 < limit {print $0}' | head -n 1 2>&1);
+              echo "All dump files:";
+              ls $MNT/ | grep "[0-9]\+-pg_dump$" | sort -rn;
               if [ -z "$DUMP" ]; then
-                echo "No dump files found in $MNT; exiting initContainer...";
+                echo "No suitable dump files found in $MNT; exiting initContainer...";
                 exit 0;
               fi;
+              echo "Choosing newest dump file before current version ($MAJOR_VER): $DUMP";
               #
               # * * * pg_restore existing pg_dump files * * *
               #
