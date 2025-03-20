@@ -22,10 +22,10 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 >
 >
 > 3. If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart
->    v.2.0.0), first check the [Release Notes](../RELEASE-NOTES.md) to see if this involves a change
->    in the major version of  the PostgreSQL application deployed by the included Bitnami PostgreSQL
->    sub-chart. If it does, you will first need to dump your database contents before you upgrade --
->    see the [Major Version Upgrades](#major-version-upgrades) section.
+>    v.2.0.0), first check the [Metacat Release Notes](../RELEASE-NOTES.md) to see if this involves
+>    a change in the major version of the PostgreSQL application deployed by the included Bitnami
+>    PostgreSQL sub-chart. If it does, you will first need to dump your database contents before you
+>    upgrade -- see the [Major Version Upgrades](#major-version-upgrades) section.
 >
 >
 > 4. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop),
@@ -139,14 +139,12 @@ helm install my-release oci://ghcr.io/nceas/charts/metacat --version 2.1.0  \
 
 > [!IMPORTANT]
 > If you are upgrading across Metacat Helm chart **major** versions (e.g. from chart v1.x.x to chart
-> v.2.x.x), always check the [Release Notes](../RELEASE-NOTES.md) to see if this involves a change
-> in the major version of the underlying **PostgreSQL** application that is deployed by the included
-> Bitnami PostgreSQL sub-chart.
->CTXT
-> **If it does, you will first need to dump your database contents before you upgrade** -- see
-> below. Note that the **Bitnami helm chart version** is different from the
-> **PostgreSQL application version**; to see how they correspond, use the command:
-> `helm search repo bitnami/postgresql --versions`
+> v.2.x.x), always check the [Metacat Release Notes](../RELEASE-NOTES.md) to see if this involves a
+> change in the major version of the underlying **PostgreSQL** application that is deployed by the
+> included Bitnami PostgreSQL sub-chart. **If it does, you will first need to dump your database
+> contents before you upgrade** -- see below. Note that the **Bitnami helm chart version** is
+> different from the **PostgreSQL application version**; to see how they correspond, use the
+> command: `helm search repo bitnami/postgresql --versions`
 
 If the Metacat helm chart upgrade involves a major-version upgrade of PostgreSQL, the following
 steps are required. (Note: this procedure assumes that both the old and the new data directories
@@ -154,15 +152,18 @@ will be on the same volume and mount-point):
 
 ### **BEFORE UPGRADING**: with the current ("old version") chart deployed:
 1. Put Metacat into Read-Only mode:
+> [!WARNING]
+> Always put Metacat in "Read Only" mode during the database upgrade, or you may lose data!
 
    ```shell
-   helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
-       --version [OLD-chart-version] \
-       -f [your-values-overrides] \
-       --set metacat.application\\.readOnlyMode=true
+      helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
+          --version [OLD-chart-version] \
+          -f [your-values-overrides] \
+          --set metacat.application\\.readOnlyMode=true
    ```
-      > [!IMPORTANT]
-     Note the TWO backslashes in application\\.readOnlyMode!
+
+> [!IMPORTANT]
+> Note the TWO backslashes in application\\.readOnlyMode!
 
 2. Make sure your Values overrides include sufficient `postgresql.primary.resources` `requests` &
    `limits` for cpu & memory, to avoid the pod running out of memory and being `OOMKilled` during
@@ -173,9 +174,9 @@ will be on the same volume and mount-point):
    which will check your data directory location is correctly versioned, and then carry out a
    `pg_dump` of your existing database.
 
-   > [!TIP]
-   > The script is safe and non-destructive. It never deletes data, and seeks permission before
-   > making copies to new locations.
+> [!TIP]
+> The script is safe and non-destructive. It never deletes data, and seeks permission before
+> making copies to new locations.
 
 ### **UPGRADE PROCESS**
 1. Ensure your Values overrides are correct for the section:
@@ -187,7 +188,7 @@ will be on the same volume and mount-point):
         existingClaim: # [existing-postgresql-pvc-name-here]
    ```
 
-2. `helm upgrade` to the new Metacat chart. This will automatically detect the pg_dump directory,
+2. `helm upgrade` to the NEW Metacat chart. This will automatically detect the pg_dump directory,
    and use it to `pg_restore` the data into the new version of PostgreSQL.
 
    ```shell
@@ -196,10 +197,10 @@ will be on the same volume and mount-point):
        -f {your-values-overrides}
    ```
 
-   > [!TIP]
-   > Upgrading (**without** the `metacat.application\\.readOnlyMode` flag) will also unset "Read
-   > Only" mode, so Metacat will once again be able to accept edits and uploads, as soon as the
-   > upgrade has completed.
+> [!TIP]
+> Upgrading (**without** the `metacat.application\\.readOnlyMode` flag) will also unset "Read
+> Only" mode, so Metacat will once again be able to accept edits and uploads, as soon as the
+> upgrade has completed.
 
 ## Uninstalling the Chart
 
@@ -748,12 +749,12 @@ You can check the configuration as follows:
           nginx.ingress.kubernetes.io/configuration-snippet: |
             more_set_input_headers "X-Proxy-Key: <your-secret-here>";
     ```
-    > [!NOTE]
-    > `<your-secret-here>` is the plaintext value associated with the key
-    > `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` in your secret
-    > `<releaseName>-metacat-secrets` -- ensure it has been set correctly!
+> [!NOTE]
+> `<your-secret-here>` is the plaintext value associated with the key
+> `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` in your secret
+> `<releaseName>-metacat-secrets` -- ensure it has been set correctly!
 
-    If you don't see these, or they are incorrect, check values.yaml for:
+- If you don't see these, or they are incorrect, check values.yaml for:
 
     ```yaml
       metacat:
@@ -788,18 +789,18 @@ image:
 ```
 This has the following effects:
 1. sets the logging level to DEBUG
-   > [!TIP]
-   > you can also temporarily change logging settings without needing to
-   > upgrade or re-install the application, by editing the log4J configuration
-   > ConfigMap:
-   >
-   >   $ `kc edit configmaps <releaseName>-metacat-configfiles`
-   >
-   > (look for the key `log4j2.k8s.properties`). The config is automatically reloaded every
-   > `monitorInterval` seconds.
-   >
-   > **Note** that these edits will be overwritten next time you do a `helm install` or
-   > `helm upgrade`!
+> [!TIP]
+> you can also temporarily change logging settings without needing to
+> upgrade or re-install the application, by editing the log4J configuration
+> ConfigMap:
+>
+> `kc edit configmaps <releaseName>-metacat-configfiles`
+>
+> (look for the key `log4j2.k8s.properties`). The config is automatically reloaded every
+> `monitorInterval` seconds.
+>
+> **Note** that these edits will be overwritten next time you do a `helm install` or
+> `helm upgrade`!
 
 2. enables remote Java debugging via port 5005. You will need to forward this port, in order to
    access it on localhost:
@@ -807,15 +808,15 @@ This has the following effects:
     ```shell
     $ kubectl  port-forward  --namespace myNamespace  pod/mypod-0  5005:5005
     ```
-   > [!TIP]
-   > For the **indexer**, you can also set the debug flag in `values.yaml` (Note that this
-     only sets the logging level to DEBUG; it does **not** enable remote debugging for the indexer):
-   >
-   > ```yaml
-   > dataone-indexer:
-   >   image:
-   >     debug: true
-   > ```
+> [!TIP]
+> For the **indexer**, you can also set the debug flag in `values.yaml` (Note that this
+ only sets the logging level to DEBUG; it does **not** enable remote debugging for the indexer):
+>
+> ```yaml
+> dataone-indexer:
+>   image:
+>     debug: true
+> ```
 
 ### To view the logs
 
