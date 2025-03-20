@@ -163,7 +163,7 @@ will be on the same volume and mount-point):
    ```
 
 > [!IMPORTANT]
-> Note the TWO backslashes in application\\.readOnlyMode!
+> Note the TWO backslashes in `metacat.application\\.readOnlyMode`!
 
 2. Make sure your Values overrides include sufficient `postgresql.primary.resources` `requests` &
    `limits` for cpu & memory, to avoid the pod running out of memory and being `OOMKilled` during
