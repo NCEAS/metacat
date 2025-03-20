@@ -103,7 +103,7 @@ spec:
               echo "No Metacat tables found in $PGDATA";
               echo "Looking for directories named {version}-pg_dump to restore from...";
               MNT={{ regexReplaceAll "(.*?)/(\\d{2,3})/(?:.*)$" .Values.postgresql.postgresqlDataDir "$1" }};
-              MAJOR_VER=$(psql -U metacat -c "SHOW server_version" -t -A | cut -d. -f1);
+              MAJOR_VER=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $HOST -U $USER -d $DB -c "SHOW server_version" -t -A | cut -d. -f1);
               echo "Current PostgreSQL Major Version: $MAJOR_VER";
               DUMP=$(ls $MNT/ | grep "[0-9]\+-pg_dump$" | sort -rn | awk -F'-' -v limit=$MAJOR_VER '$1 < limit {print $0}' | head -n 1 2>&1);
               echo "All dump files:";

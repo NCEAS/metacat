@@ -194,7 +194,7 @@ else
             shopt -s dotglob;
             echo "Copying data from $OLD_DATA to $NEW_DATA...";
             cp -pr $OLD_DATA/* $NEW_DATA/;
-            echo "...Done!";
+            echo "...Done\!";
             echo
             echo -e "$_ALERT === IMPORTANT NEXT STEPS: ===";
             echo
@@ -204,12 +204,18 @@ else
             echo "     postgresqlDataDir: $NEW_DATA";
             echo "   -------------------------------";
             echo
-            echo "2. Do a "helm upgrade"; remember to include the read-only command-line option!:";
-            echo "     --set metacat.application\\\\.readOnlyMode=true    ## 2 backslashes!)";
+            echo "2. Do a helm upgrade; remember to include the read-only command-line option\!:";
+            echo "     --set metacat.application\\\\.readOnlyMode=true    ## 2 backslashes\!)";
             echo
-            echo "3. Run this script again, and follow the instructions to do the pg_dump";
-            echo "Time taken:";
+            echo "3. Make sure Metacat is working correctly: you should see a non-zero number of"
+            echo "   objects in the database returned when you browse:"
+            echo "     https://YOUR-HOST/metacat/d1/mn/v2/object"
+            echo
+            echo "Time taken to move data:";
         '
+    echo "Exiting. After you have completed all the \"=== IMPORTANT NEXT STEPS: ===\", above,"
+    echo "please run this script again, and follow the instructions to do the pg_dump";
+    exit 6
 fi
 
 PG_DUMP_DIR="${PG_BASE}-pg_dump"
@@ -224,10 +230,10 @@ command time -h kubectl exec ${RELEASE_NAME}-postgresql-0 -- \
     bash -c '
         if [ -d $DUMP_DIR ]; then
           DUMP_BAK=${DUMP_DIR}-moved-"$(date +%s)";
-          echo -e "$_ALERT ALERT: pg_dump already exists at: $DUMP_DIR!";
+          echo -e "$_ALERT ALERT: pg_dump already exists at: ${DUMP_DIR}\!";
           echo "- moving it to $DUMP_BAK...";
           mv -f $DUMP_DIR $DUMP_BAK;
-          echo "...Done!";
+          echo "...Done\!";
         fi;
         PGDB=$POSTGRES_DB;
         if [ -z "$PGDB" ]; then
@@ -239,12 +245,12 @@ command time -h kubectl exec ${RELEASE_NAME}-postgresql-0 -- \
             echo "\$PGDB: ($PGDB)";
             echo "- from \$POSTGRES_DB: ($POSTGRES_DB) or \$POSTGRES_DATABASE ($POSTGRES_DATABASE)";
             echo "Exiting"
-            exit 6;
+            exit 7;
         fi
         echo; echo "Running pg_dump command:";
         echo "pg_dump -U $POSTGRES_USER --format=directory --file=$DUMP_DIR --jobs=20 $PGDB";
         pg_dump -U $POSTGRES_USER --format=directory --file=$DUMP_DIR --jobs=20 $PGDB;
-        echo "...Done!";
+        echo "...Done\!";
         echo "Time taken:";
     '
 
@@ -265,14 +271,18 @@ cat <<EOF
          persistence:
           existingClaim: $PG_PVC
 
-2. Now do a 'helm upgrade' using the NEW Metacat chart. This will automatically detect the pg_dump
-   you just created, and will use it to 'pg_restore' this data into the new version of PostgreSQL.
+2. Now uninstall the old chart (recommended instead of using helm upgrade):
+
+     helm uninstall $RELEASE_NAME
+
+3. Finally, install the NEW Metacat chart. This will automatically detect the pg_dump you just
+   created, and will use it to 'pg_restore' this data into the new version of PostgreSQL.
    For example:
 
-    $ helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \\
+    $ helm install $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \\
         --version [NEW-chart-version] \\
         -f [your-values-overrides]
 
-    (Upgrade WITHOUT the read-only command-line option, in order to unset "Read Only" mode, so
-     Metacat will once again accept edits and uploads when the upgrade has finished.)
+See the upgrade section of the helm README for troubleshooting help:
+    https://github.com/NCEAS/metacat/blob/main/helm/README.md
 EOF

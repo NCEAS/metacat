@@ -55,6 +55,7 @@ created by others. For more details, see https://github.com/NCEAS/metacat
     * [Appendix 2: Self-Signing Certificates for Testing Mutual Authentication](#appendix-2-self-signing-certificates-for-testing-mutual-authentication)
     * [Appendix 3: Troubleshooting Mutual Authentication](#appendix-3-troubleshooting-mutual-authentication)
     * [Appendix 4: Debugging and Logging](#appendix-4-debugging-and-logging)
+    * [Appendix 5: Upgrader InitContainer Sample Logs](#appendix-5-upgrader-initcontainer-sample-logs)
 
 ---
 
@@ -151,7 +152,9 @@ steps are required. (Note: this procedure assumes that both the old and the new 
 will be on the same volume and mount-point):
 
 ### **BEFORE UPGRADING**: with the current ("old version") chart deployed:
+
 1. Put Metacat into Read-Only mode:
+
 > [!WARNING]
 > Always put Metacat in "Read Only" mode during the database upgrade, or you may lose data!
 
@@ -188,19 +191,64 @@ will be on the same volume and mount-point):
         existingClaim: # [existing-postgresql-pvc-name-here]
    ```
 
-2. `helm upgrade` to the NEW Metacat chart. This will automatically detect the pg_dump directory,
-   and use it to `pg_restore` the data into the new version of PostgreSQL.
+2. Finally, `helm uninstall` the OLD version of the Metacat chart, and then `helm install` the NEW
+   Metacat chart. This will automatically detect the pg_dump directory, and use it to `pg_restore`
+   the data into the new version of PostgreSQL. (We recommend you do not use `helm upgrade` across
+   major versions.) Installing (**without** the `metacat.application\\.readOnlyMode` flag) will also
+   unset "Read Only" mode, so Metacat will once again be able to accept edits and uploads, as soon
+   as the upgrade has completed.
 
    ```shell
-   helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
+   helm uninstall $RELEASE_NAME
+
+   ## ...wait for uninstall to complete...
+
+   helm install $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
        --version {NEW-chart-version} \
        -f {your-values-overrides}
+
+   ## ...as metacat pod is starting up, view the initContainer logs:
+   kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
    ```
 
 > [!TIP]
-> Upgrading (**without** the `metacat.application\\.readOnlyMode` flag) will also unset "Read
-> Only" mode, so Metacat will once again be able to accept edits and uploads, as soon as the
-> upgrade has completed.
+> See example `initContainer` logs from a successful upgrade in [Appendix 5: Upgrader InitContainer
+> Sample Logs](#appendix-5-upgrader-initcontainer-sample-logs).
+
+### Troubleshooting
+
+> [!Warning]
+> If the upgrade initContainer fails for some reason, metacat will continue to start up, and will
+> initialize the new (empty) database. If this happens, `helm uninstall` **Metacat immediately**,
+> so data will not be uploaded to the wrong (empty) database, and subsequently lost!
+
+In this case, you will also see:
+
+- Error messages in the `pgupgrade` `initContainer` logs (See log examples in
+  [Appendix 5](#appendix-5-upgrader-initcontainer-sample-logs).)
+
+  ```shell
+  kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
+  ```
+
+- Browsing to `https://YOUR-HOST/metacat/d1/mn/v2/object` will show zero objects in the database:
+
+  ```xml
+  <ns2:objectList xmlns:ns2="http://ns.dataone.org/service/types/v1" count="0" start="0" total="0"/>
+  ```
+
+Re-running the upgrader (`initContainer`) will NOT `pg_restore` the database, since it will detect
+the presence of Metacat tables, and will refuse to overwrite what it believes to be existing data.
+
+We therefore recommend:
+1. Investigating and fixing the `initContainer` error. (If you need to install the chart in order to
+   do this, **make sure it is in Read Only mode!**)
+2. Doing a `helm uninstall` of the chart
+3. Manually moving the NEW data directory to a different location, so PostgreSQL can make another
+   new one on next startup.
+4. Doing a `helm install` of the chart, and watching the initContainer logs again.
+
+Note that the data still exists in the OLD data directory, and is backed up in the `pg_dump` output.
 
 ## Uninstalling the Chart
 
@@ -850,4 +898,64 @@ Logs from an `initContainer`:
 
   # example: Metacat's `init-solr-metacat-dep` initContainer logs
   $ kubectl logs -f metacatknb-0 -c dependencies
+```
+
+## Appendix 5: Upgrader InitContainer Sample Logs
+
+Sample Logs from upgrader initContainer during PostgreSQL Major Upgrades:
+
+### First Startup - Successful Upgrade
+
+```text
+$ kc logs -f pod/metacatbrooke-0 -c pgupgrade
+
+Checking if a PostgreSQL upgrade is necessary...
+Found version 17; checking if pg_restore needed...
+Result of psql -h metacatbrooke-postgresql-hl -U metacat -d metacat -c "\dt":
+Did not find any relations.
+No Metacat tables found in /bitnami/postgresql/17/main
+Looking for directories named {version}-pg_dump to restore from...
+Current PostgreSQL Major Version: 17
+All dump files:
+14-pg_dump
+Choosing newest dump file before current version (17): 14-pg_dump
+Restoring from dump file 14-pg_dump, using command:
+pg_restore -U metacat -h metacatbrooke-postgresql-hl -d metacat --format=directory --jobs=20 /bitnami/postgresql/14-pg_dump
+FINISHED restoring from dump file 14-pg_dump; exiting initContainer...
+````
+
+### Subsequent Startups - No Action Required
+
+```text
+$ kc logs -f pod/metacatbrooke-0 -c pgupgrade
+
+Checking if a PostgreSQL upgrade is necessary...
+Found version 17; checking if pg_restore needed...
+Result of psql -h metacatbrooke-postgresql-hl -U metacat -d metacat -c "\dt":
+List of relations
+Schema |         Name          | Type  |  Owner
+--------+-----------------------+-------+---------
+public | access_log            | table | metacat
+public | checksums             | table | metacat
+public | harvest_detail_log    | table | metacat
+public | harvest_log           | table | metacat
+public | harvest_site_schedule | table | metacat
+public | identifier            | table | metacat
+public | index_event           | table | metacat
+public | node_id_revisions     | table | metacat
+public | quota_usage_events    | table | metacat
+public | scheduled_job         | table | metacat
+public | scheduled_job_params  | table | metacat
+public | smmediatypeproperties | table | metacat
+public | smreplicationpolicy   | table | metacat
+public | smreplicationstatus   | table | metacat
+public | systemmetadata        | table | metacat
+public | version_history       | table | metacat
+public | xml_access            | table | metacat
+public | xml_catalog           | table | metacat
+public | xml_documents         | table | metacat
+public | xml_relation          | table | metacat
+public | xml_revisions         | table | metacat
+(21 rows)
+Metacat tables found in /bitnami/postgresql/17/main; will NOT do a pg_restore. Exiting initContainer...
 ```
