@@ -83,6 +83,7 @@ ingress:
 
 podSecurityContext:
   runAsNonRoot: true
+  fsGroupChangePolicy: OnRootMismatch
 
 postgresql:
   upgrader:

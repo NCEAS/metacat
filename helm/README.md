@@ -4,6 +4,7 @@ Metacat is repository software for preserving data and metadata (documentation a
 helps scientists find, understand and effectively use data sets they manage or that have been
 created by others. For more details, see https://github.com/NCEAS/metacat
 
+> [!IMPORTANT]
 > ### Before You Start:
 > 1. **This Metacat Helm chart is a beta feature**. It has been tested, and we believe it to be
 >    working well, but it has not yet been used in production - so we recommend caution with this
@@ -20,17 +21,27 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 >    for the necessary migration steps.
 >
 >
-> 3. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop),
+> 3. If you are upgrading from a previous Helm Chart major version (e.g. from chart v1.2.0 to chart
+>    v.2.0.0), first check the [Metacat Release Notes](../RELEASE-NOTES.md) to see if this involves
+>    a change in the major version of the PostgreSQL application deployed by the included Bitnami
+>    PostgreSQL sub-chart. If it does, you will first need to dump your database contents before you
+>    upgrade -- see the [Major Version Upgrades](#major-version-upgrades) section.
+>
+>
+> 4. This deployment does not currently work on Apple Silicon machines (e.g. in Rancher Desktop),
 >    because the official Docker image for at least one of the dependencies (RabbitMQ) doesn't yet
 >    work in that environment.
 
 ---
+
+## Table of Contents
 
 - [Metacat Helm Chart](#metacat-helm-chart)
     * [TL;DR](#tldr)
     * [Introduction](#introduction)
     * [Prerequisites](#prerequisites)
     * [Installing the Chart](#installing-the-chart)
+    * [Major Version Upgrades](#major-version-upgrades)
     * [Uninstalling the Chart](#uninstalling-the-chart)
     * [Parameters](#parameters)
     * [Configuration and installation details](#configuration-and-installation-details)
@@ -44,6 +55,7 @@ created by others. For more details, see https://github.com/NCEAS/metacat
     * [Appendix 2: Self-Signing Certificates for Testing Mutual Authentication](#appendix-2-self-signing-certificates-for-testing-mutual-authentication)
     * [Appendix 3: Troubleshooting Mutual Authentication](#appendix-3-troubleshooting-mutual-authentication)
     * [Appendix 4: Debugging and Logging](#appendix-4-debugging-and-logging)
+    * [Appendix 5: Upgrader InitContainer Sample Logs](#appendix-5-upgrader-initcontainer-sample-logs)
 
 ---
 
@@ -54,7 +66,6 @@ Starting in the root directory of the `metacat` repo:
    contents of the values overlay files (like the ones in the [./examples directory](./examples)),
    to see which settings typically need to be overridden. Save your settings in a yaml file,
    e.g: `/your/values-overrides.yaml`
-
 
 2. Add your credentials to [./admin/secrets.yaml](./admin/secrets.yaml), and add to cluster:
 
@@ -125,6 +136,119 @@ helm install my-release oci://ghcr.io/nceas/charts/metacat --version 2.1.0  \
 > [values.yaml](./values.yaml) file for settings that include `${RELEASE_NAME}`. The instructions
 > at the beginning of [values.yaml](./values.yaml) suggest simple ways to achieve this.
 
+## Major Version Upgrades
+
+> [!IMPORTANT]
+> If you are upgrading across Metacat Helm chart **major** versions (e.g. from chart v1.x.x to chart
+> v.2.x.x), always check the [Metacat Release Notes](../RELEASE-NOTES.md) to see if this involves a
+> change in the major version of the underlying **PostgreSQL** application that is deployed by the
+> included Bitnami PostgreSQL sub-chart. **If it does, you will first need to dump your database
+> contents before you upgrade** -- see below. Note that the **Bitnami helm chart version** is
+> different from the **PostgreSQL application version**; to see how they correspond, use the
+> command: `helm search repo bitnami/postgresql --versions`
+
+If the Metacat helm chart upgrade involves a major-version upgrade of PostgreSQL, the following
+steps are required. (Note: this procedure assumes that both the old and the new data directories
+will be on the same volume and mount-point):
+
+### **BEFORE UPGRADING**: with the current ("old version") chart deployed:
+
+1. Put Metacat into Read-Only mode:
+
+> [!WARNING]
+> Always put Metacat in "Read Only" mode during the database upgrade, or you may lose data!
+
+   ```shell
+      helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
+          --version [OLD-chart-version] \
+          -f [your-values-overrides] \
+          --set metacat.application\\.readOnlyMode=true
+   ```
+
+> [!IMPORTANT]
+> Note the TWO backslashes in `metacat.application\\.readOnlyMode`!
+
+2. Make sure your Values overrides include sufficient `postgresql.primary.resources` `requests` &
+   `limits` for cpu & memory, to avoid the pod running out of memory and being `OOMKilled` during
+   dump/restore. We had success with setting `cpu: 4` and `memory: 32Gi` for both `requests` and
+   `limits`, but you should determine your own values (especially for production use after the
+   upgrade is complete).
+3. Run the script: [metacat/helm/admin/pg_dump_for_upgrades.sh](./admin/pg_dump_for_upgrades.sh),
+   which will check your data directory location is correctly versioned, and then carry out a
+   `pg_dump` of your existing database.
+
+> [!TIP]
+> The script is safe and non-destructive. It never deletes data, and seeks permission before
+> making copies to new locations.
+
+### **UPGRADE PROCESS**
+1. Ensure your Values overrides are correct for the section:
+
+   ```yaml
+   postgresql:
+     upgrader:
+       persistence:
+        existingClaim: # [existing-postgresql-pvc-name-here]
+   ```
+
+2. Finally, `helm uninstall` the OLD version of the Metacat chart, and then `helm install` the NEW
+   Metacat chart. This will automatically detect the pg_dump directory, and use it to `pg_restore`
+   the data into the new version of PostgreSQL. (We recommend you do not use `helm upgrade` across
+   major versions.) Installing (**without** the `metacat.application\\.readOnlyMode` flag) will also
+   unset "Read Only" mode, so Metacat will once again be able to accept edits and uploads, as soon
+   as the upgrade has completed.
+
+   ```shell
+   helm uninstall $RELEASE_NAME
+
+   ## ...wait for uninstall to complete...
+
+   helm install $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
+       --version {NEW-chart-version} \
+       -f {your-values-overrides}
+
+   ## ...as metacat pod is starting up, view the initContainer logs:
+   kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
+   ```
+
+> [!TIP]
+> See example `initContainer` logs from a successful upgrade in [Appendix 5: Upgrader InitContainer
+> Sample Logs](#appendix-5-upgrader-initcontainer-sample-logs).
+
+### Troubleshooting
+
+> [!Warning]
+> If the upgrade initContainer fails for some reason, metacat will continue to start up, and will
+> initialize the new (empty) database. If this happens, `helm uninstall` **Metacat immediately**,
+> so data will not be uploaded to the wrong (empty) database, and subsequently lost!
+
+In this case, you will also see:
+
+- Error messages in the `pgupgrade` `initContainer` logs (See log examples in
+  [Appendix 5](#appendix-5-upgrader-initcontainer-sample-logs).)
+
+  ```shell
+  kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
+  ```
+
+- Browsing to `https://YOUR-HOST/metacat/d1/mn/v2/object` will show zero objects in the database:
+
+  ```xml
+  <ns2:objectList xmlns:ns2="http://ns.dataone.org/service/types/v1" count="0" start="0" total="0"/>
+  ```
+
+Re-running the upgrader (`initContainer`) will NOT `pg_restore` the database, since it will detect
+the presence of Metacat tables, and will refuse to overwrite what it believes to be existing data.
+
+We therefore recommend:
+1. Investigating and fixing the `initContainer` error. (If you need to install the chart in order to
+   do this, **make sure it is in Read Only mode!**)
+2. Doing a `helm uninstall` of the chart
+3. Manually moving the NEW data directory to a different location, so PostgreSQL can make another
+   new one on next startup.
+4. Doing a `helm install` of the chart, and watching the initContainer logs again.
+
+Note that the data still exists in the OLD data directory, and is backed up in the `pg_dump` output.
 
 ## Uninstalling the Chart
 
@@ -146,7 +270,8 @@ or:
 kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associated with the release
 ```
 
-> **NOTE**: DELETING THE PVCs MAY ALSO DELETE ALL YOUR DATA. depending upon your setup! Please be
+> [!CAUTION]
+> DELETING THE PVCs MAY ALSO DELETE ALL YOUR DATA. depending upon your setup! Please be
 > cautious!
 
 
@@ -155,7 +280,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### Global Properties Shared Across Sub-Charts Within This Deployment
 
 | Name                                 | Description                                                     | Value                             |
-|--------------------------------------|-----------------------------------------------------------------|-----------------------------------|
+| ------------------------------------ | --------------------------------------------------------------- | --------------------------------- |
 | `global.metacatExternalBaseUrl`      | Metacat base url accessible from outside cluster.               | `https://localhost/`              |
 | `global.d1ClientCnUrl`               | The url of the CN; used to populate metacat's 'D1Client.CN_URL' | `https://cn.dataone.org/cn`       |
 | `global.passwordsSecret`             | The name of the Secret containing application passwords         | `${RELEASE_NAME}-metacat-secrets` |
@@ -171,7 +296,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### Metacat Application-Specific Properties
 
 | Name                              | Description                                                     | Value               |
-|-----------------------------------|-----------------------------------------------------------------|---------------------|
+| --------------------------------- | --------------------------------------------------------------- | ------------------- |
 | `metacat.application.context`     | see global.metacatAppContext                                    | `metacat`           |
 | `metacat.auth.administrators`     | A semicolon-separated list of admin ORCID iDs                   | `""`                |
 | `metacat.database.connectionURI`  | postgres database URI, or lave blank to use sub-chart           | `""`                |
@@ -187,7 +312,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### OPTIONAL DataONE Member Node (MN) Parameters
 
 | Name                                                          | Description                                                       | Value                                        |
-|---------------------------------------------------------------|-------------------------------------------------------------------|----------------------------------------------|
+| ------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------- |
 | `metacat.cn.server.publiccert.filename`                       | optional cert(s) used to validate jwt auth tokens,                | `/var/metacat/pubcerts/DataONEProdIntCA.pem` |
 | `metacat.dataone.certificate.fromHttpHeader.enabled`          | Enable mutual auth with client certs                              | `false`                                      |
 | `metacat.dataone.autoRegisterMemberNode`                      | Automatically push MN updates to CN? (yyyy-MM-dd)                 | `2023-02-28`                                 |
@@ -212,7 +337,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### OPTIONAL (but Recommended) Site Map Parameters
 
 | Name                            | Description                                                     | Value      |
-|---------------------------------|-----------------------------------------------------------------|------------|
+| ------------------------------- | --------------------------------------------------------------- | ---------- |
 | `metacat.sitemap.enabled`       | Enable sitemaps to tell search engines which URLs are available | `false`    |
 | `metacat.sitemap.interval`      | Interval (in milliseconds) between rebuilding the sitemap       | `86400000` |
 | `metacat.sitemap.location.base` | The first part of the URLs listed in sitemap_index.xml          | `/`        |
@@ -221,14 +346,14 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### robots.txt file (search engine indexing)
 
 | Name               | Description                                                          | Value |
-|--------------------|----------------------------------------------------------------------|-------|
+| ------------------ | -------------------------------------------------------------------- | ----- |
 | `robots.userAgent` | "User-agent:" defined in robots.txt file. Defaults to "*" if not set | `""`  |
 | `robots.disallow`  | the "Disallow:" value defined in robots.txt file.                    | `""`  |
 
 ### Metacat Image, Container & Pod Parameters
 
 | Name                                     | Description                                                                  | Value                   |
-|------------------------------------------|------------------------------------------------------------------------------|-------------------------|
+| ---------------------------------------- | ---------------------------------------------------------------------------- | ----------------------- |
 | `image.repository`                       | Metacat image repository                                                     | `ghcr.io/nceas/metacat` |
 | `image.pullPolicy`                       | Metacat image pull policy                                                    | `IfNotPresent`          |
 | `image.tag`                              | Overrides the image tag. Will default to the chart appVersion if set to ""   | `""`                    |
@@ -253,7 +378,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 ### Metacat Persistence
 
 | Name                        | Description                                                          | Value               |
-|-----------------------------|----------------------------------------------------------------------|---------------------|
+| --------------------------- | -------------------------------------------------------------------- | ------------------- |
 | `persistence.enabled`       | Enable metacat data persistence using Persistent Volume Claims       | `true`              |
 | `persistence.storageClass`  | Storage class of backing PV                                          | `local-path`        |
 | `persistence.existingClaim` | Name of an existing Persistent Volume Claim to re-use                | `""`                |
@@ -264,72 +389,77 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Networking & Monitoring
 
-| Name                                                                      | Description                                                              | Value            |
-|---------------------------------------------------------------------------|--------------------------------------------------------------------------|------------------|
-| `ingress.enabled`                                                         | Enable or disable the ingress                                            | `true`           |
-| `ingress.className`                                                       | ClassName of the ingress provider in your cluster                        | `nginx`          |
-| `ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size` | See docs:                                                                | `"1m"`           |
-| `ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size`    | See docs:                                                                | `"0"`            |
-| `ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size`         | See docs:                                                                | `"0"`            |
-| `ingress.defaultBackend.enabled`                                          | enable the optional defaultBackend                                       | `false`          |
-| `ingress.defaultBackend.enabled`                                          | enable the optional defaultBackend                                       | `false`          |
-| `ingress.rewriteRules`                                                    | formatted text rewrite rules for the nginx ingress                       | `""`             |
-| `ingress.tls`                                                             | The TLS configuration                                                    | `[]`             |
-| `ingress.rules`                                                           | The Ingress rules can be defined here or left blank to be auto-populated | `[]`             |
-| `ingress.d1CaCertSecretName`                                              | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`    |
-| `service.enabled`                                                         | Enable another optional service in addition to headless svc              | `false`          |
-| `service.type`                                                            | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`   |
-| `service.clusterIP`                                                       | IP address of the service. Auto-generated if not set                     | `""`             |
-| `service.ports`                                                           | The port(s) to be exposed                                                | `[]`             |
-| `livenessProbe.enabled`                                                   | Enable livenessProbe for Metacat container                               | `true`           |
-| `livenessProbe.httpGet.path`                                              | The url path to probe.                                                   | `/metacat/`      |
-| `livenessProbe.httpGet.port`                                              | The named containerPort to probe                                         | `metacat-web`    |
-| `livenessProbe.initialDelaySeconds`                                       | Initial delay seconds for livenessProbe                                  | `45`             |
-| `livenessProbe.periodSeconds`                                             | Period seconds for livenessProbe                                         | `15`             |
-| `livenessProbe.timeoutSeconds`                                            | Timeout seconds for livenessProbe                                        | `10`             |
-| `readinessProbe.enabled`                                                  | Enable readinessProbe for Metacat container                              | `true`           |
-| `readinessProbe.httpGet.path`                                             | The url path to probe.                                                   | `/metacat/admin` |
-| `readinessProbe.httpGet.port`                                             | The named containerPort to probe                                         | `metacat-web`    |
-| `readinessProbe.initialDelaySeconds`                                      | Initial delay seconds for readinessProbe                                 | `45`             |
-| `readinessProbe.periodSeconds`                                            | Period seconds for readinessProbe                                        | `5`              |
-| `readinessProbe.timeoutSeconds`                                           | Timeout seconds for readinessProbe                                       | `5`              |
+| Name                                 | Description                                                              | Value            |
+| ------------------------------------ | ------------------------------------------------------------------------ | ---------------- |
+| `ingress.enabled`                    | Enable or disable the ingress                                            | `true`           |
+| `ingress.className`                  | ClassName of the ingress provider in your cluster                        | `nginx`          |
+| `ingress.defaultBackend.enabled`     | enable the optional defaultBackend                                       | `false`          |
+| `ingress.defaultBackend.enabled`     | enable the optional defaultBackend                                       | `false`          |
+| `ingress.rewriteRules`               | formatted text rewrite rules for the nginx ingress                       | `""`             |
+| `ingress.tls`                        | The TLS configuration                                                    | `[]`             |
+| `ingress.rules`                      | The Ingress rules can be defined here or left blank to be auto-populated | `[]`             |
+| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`    |
+| `service.enabled`                    | Enable another optional service in addition to headless svc              | `false`          |
+| `service.type`                       | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`   |
+| `service.clusterIP`                  | IP address of the service. Auto-generated if not set                     | `""`             |
+| `service.ports`                      | The port(s) to be exposed                                                | `[]`             |
+| `livenessProbe.enabled`              | Enable livenessProbe for Metacat container                               | `true`           |
+| `livenessProbe.httpGet.path`         | The url path to probe.                                                   | `/metacat/`      |
+| `livenessProbe.httpGet.port`         | The named containerPort to probe                                         | `metacat-web`    |
+| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe                                  | `45`             |
+| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe                                         | `15`             |
+| `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe                                        | `10`             |
+| `readinessProbe.enabled`             | Enable readinessProbe for Metacat container                              | `true`           |
+| `readinessProbe.httpGet.path`        | The url path to probe.                                                   | `/metacat/admin` |
+| `readinessProbe.httpGet.port`        | The named containerPort to probe                                         | `metacat-web`    |
+| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe                                 | `45`             |
+| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe                                        | `5`              |
+| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe                                       | `5`              |
 
 ### Postgresql Sub-Chart
 
-| Name                                                        | Description                                         | Value                             |
-|-------------------------------------------------------------|-----------------------------------------------------|-----------------------------------|
-| `postgresql.enabled`                                        | enable the postgresql sub-chart                     | `true`                            |
-| `postgresql.auth.username`                                  | Username for accessing the database used by metacat | `metacat`                         |
-| `postgresql.auth.database`                                  | The name of the database used by metacat.           | `metacat`                         |
-| `postgresql.auth.existingSecret`                            | Secrets location for postgres password              | `${RELEASE_NAME}-metacat-secrets` |
-| `postgresql.auth.secretKeys.userPasswordKey`                | Identifies metacat db's account password            | `POSTGRES_PASSWORD`               |
-| `postgresql.auth.secretKeys.adminPasswordKey`               | Dummy value - not used (see notes):                 | `POSTGRES_PASSWORD`               |
-| `postgresql.primary.pgHbaConfiguration`                     | PostgreSQL Primary client authentication            | See Values.yaml                   |
-| `postgresql.primary.containerSecurityContext.enabled`       | enable containerSecurityContext                     | `true`                            |
-| `postgresql.primary.containerSecurityContext.runAsUser`     | uid for container to run as                         | `59996`                           |
-| `postgresql.primary.podSecurityContext.runAsNonRoot`        | pod defaults to run as non-root?                    | `true`                            |
-| `postgresql.primary.extendedConfiguration`                  | Extended configuration, appended to defaults        | `max_connections = 250`           |
-| `postgresql.primary.persistence.enabled`                    | Enable data persistence using PVC                   | `true`                            |
-| `postgresql.primary.persistence.existingClaim`              | Existing PVC to re-use                              | `""`                              |
-| `postgresql.primary.persistence.storageClass`               | Storage class of backing PV                         | `""`                              |
-| `postgresql.primary.persistence.size`                       | PVC Storage Request for postgres volume             | `1Gi`                             |
-| `postgresql.primary.podSecurityContext.fsGroupChangePolicy` | ownership & perms mgmt                              | `OnRootMismatch`                  |
+| Name                                                        | Description                                                | Value                             |
+| ----------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------- |
+| `postgresql.enabled`                                        | enable the postgresql sub-chart                            | `true`                            |
+| `postgresql.auth.username`                                  | Username for accessing the database used by metacat        | `metacat`                         |
+| `postgresql.auth.database`                                  | The name of the database used by metacat.                  | `metacat`                         |
+| `postgresql.auth.existingSecret`                            | Secrets location for postgres password                     | `${RELEASE_NAME}-metacat-secrets` |
+| `postgresql.auth.secretKeys.userPasswordKey`                | Identifies metacat db's account password                   | `POSTGRES_PASSWORD`               |
+| `postgresql.auth.secretKeys.adminPasswordKey`               | Dummy value - not used (see notes):                        | `POSTGRES_PASSWORD`               |
+| `postgresql.primary.containerSecurityContext.enabled`       | enable containerSecurityContext                            | `true`                            |
+| `postgresql.primary.containerSecurityContext.runAsUser`     | uid for container to run as                                | `59996`                           |
+| `postgresql.primary.containerSecurityContext.runAsGroup`    | gid for container to run as                                | `59996`                           |
+| `postgresql.primary.podSecurityContext.runAsNonRoot`        | pod defaults to run as non-root?                           | `true`                            |
+| `postgresql.primary.podSecurityContext.fsGroup`             | Group ID for the pod file system                           | `59996`                           |
+| `postgresql.primary.podSecurityContext.fsGroupChangePolicy` | ownership & perms mgmt                                     | `OnRootMismatch`                  |
+| `postgresql.primary.extendedConfiguration`                  | Extended configuration, appended to defaults               | `max_connections = 250`           |
+| `postgresql.primary.persistence.enabled`                    | Enable data persistence using PVC                          | `true`                            |
+| `postgresql.primary.persistence.existingClaim`              | Existing PVC to re-use                                     | `""`                              |
+| `postgresql.primary.persistence.storageClass`               | Storage class of backing PV                                | `""`                              |
+| `postgresql.primary.persistence.size`                       | PVC Storage Request for postgres volume                    | `1Gi`                             |
+| `postgresql.postgresqlDataDir`                              | PostgreSQL data dir folder. Must be versioned              | `/bitnami/postgresql/17/main`     |
+| `postgresql.upgrader.enabled`                               | Enable initContainer for postgresql major version upgrades | `true`                            |
+| `postgresql.upgrader.persistence.existingClaim`             | PVC containing postgresql data files                       | `""`                              |
+| `postgresql.upgrader.securityContext.runAsUser`             | numerical User ID for the pod.                             | `59996`                           |
+| `postgresql.upgrader.securityContext.runAsGroup`            | numerical Group ID for the pod.                            | `59996`                           |
+| `postgresql.upgrader.securityContext.fsGroup`               | group id used to access mounted volume.                    | `59996`                           |
+| `postgresql.upgrader.securityContext.fsGroupChangePolicy`   | how k8s manages owner & perms.                             | `OnRootMismatch`                  |
 
 ### Tomcat Configuration
 
 | Name                    | Description                                              | Value |
-|-------------------------|----------------------------------------------------------|-------|
+| ----------------------- | -------------------------------------------------------- | ----- |
 | `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
 | `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
 
 ### dataone-indexer Sub-Chart
 
 | Name                                                         | Description                                       | Value                                 |
-|--------------------------------------------------------------|---------------------------------------------------|---------------------------------------|
+| ------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------- |
 | `dataone-indexer.podSecurityContext.fsGroup`                 | gid used to access mounted volumes                | `59997`                               |
 | `dataone-indexer.podSecurityContext.supplementalGroups`      | additional vol access gids                        | `[]`                                  |
-| `dataone-indexer.persistence.subPath`                        | The subdirectory of the volume to mount           | `""`                                  |
 | `dataone-indexer.podSecurityContext.fsGroupChangePolicy`     | ownership & perms mgmt                            | `OnRootMismatch`                      |
+| `dataone-indexer.persistence.subPath`                        | The subdirectory of the volume to mount           | `""`                                  |
 | `dataone-indexer.rabbitmq.extraConfiguration`                | extra config, to be appended to rmq config        | `consumer_timeout = 144000000`        |
 | `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use           | `metacat-rmq-guest`                   |
 | `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password                     | `${RELEASE_NAME}-metacat-secrets`     |
@@ -360,15 +490,14 @@ kubernetes Secrets in the cluster. The file [admin/secrets.yaml](./admin/secrets
 template that you can complete and apply using `kubectl` -- for details, see the instructions in the
 comments inside that file. Please remember to NEVER ADD UNENCRYPTED SECRETS TO GITHUB!
 
-> **Important**:
+> [!IMPORTANT]
 > 1. The deployed Secrets name includes the release name as a prefix,
 > (e.g. `my-release-metacat-secrets`), so it's important to ensure that the secrets name matches
 > the release name referenced whenever you use `helm` commands.
 > 2. The parameter `postgresql.auth.existingSecret` in [values.yaml](./values.yaml) must be set to
 > match the name of these installed secrets (which will change if the release name is changed).
 
-> **Warning**:
->
+> [!WARNING]
 > Setting a password will be ignored on new installations in cases when a previous
 > PostgreSQL release was deleted through the helm command. In that case, the old PVC will have an
 > old password, and setting it through helm won't take effect. Deleting persistent volumes (PVs)
@@ -427,7 +556,8 @@ $  helm upgrade --install ingress-nginx ingress-nginx \
                 --namespace ingress-nginx --create-namespace
 ```
 
-> **Tip**: You can inspect available Ingress classes in your cluster using:
+> [!TIP]
+> You can inspect available Ingress classes in your cluster using:
 > `$ kubectl get ingressclasses`
 >
 > Note that there are significant differences between the community version of [the
@@ -465,7 +595,8 @@ ingress:
       secretName: tls-secret
 ```
 
-> **Tip:** You can save time and reduce complexity by using a certificate manager service. For
+> [!TIP]
+> You can save time and reduce complexity by using a certificate manager service. For
 > example, our NCEAS k8s clusters include [a cert-manager
 > service](https://github.com/DataONEorg/k8s-cluster/blob/main/authentication/LetsEncrypt.md) that
 > constantly watches for Ingress modifications, and updates letsEncrypt certificates automatically,
@@ -569,7 +700,8 @@ See [Appendix 3](#appendix-3-troubleshooting-mutual-authentication) for help wit
 
 ## Appendix 1: Self-Signing TLS Certificates for HTTPS Traffic
 
-> **NOTE: For development and testing purposes only!**
+> [!NOTE]
+> For development and testing purposes only!**
 >
 > Also see the [Kubernetes nginx
 > documentation](https://kubernetes.github.io/ingress-nginx/user-guide/tls)
@@ -602,7 +734,8 @@ Whatever hostname you are using, don't forget to set the
 
 ## Appendix 2: Self-Signing Certificates for Testing Mutual Authentication
 
-> **NOTE: For development and testing purposes only!**
+> [!NOTE]
+> For development and testing purposes only!**
 >
 > Also see the [Kubernetes nginx documentation
 > ](https://kubernetes.github.io/ingress-nginx/examples/PREREQUISITES/#client-certificate-authentication)
@@ -664,11 +797,12 @@ You can check the configuration as follows:
           nginx.ingress.kubernetes.io/configuration-snippet: |
             more_set_input_headers "X-Proxy-Key: <your-secret-here>";
     ```
-    > NOTE: `<your-secret-here>` is the plaintext value associated with the key
-    > `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` in your secret
-    > `<releaseName>-metacat-secrets` -- ensure it has been set correctly!
+> [!NOTE]
+> `<your-secret-here>` is the plaintext value associated with the key
+> `METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY` in your secret
+> `<releaseName>-metacat-secrets` -- ensure it has been set correctly!
 
-    If you don't see these, or they are incorrect, check values.yaml for:
+- If you don't see these, or they are incorrect, check values.yaml for:
 
     ```yaml
       metacat:
@@ -703,17 +837,18 @@ image:
 ```
 This has the following effects:
 1. sets the logging level to DEBUG
-   > **Tip:** you can also temporarily change logging settings without needing to
-   > upgrade or re-install the application, by editing the log4J configuration
-   > ConfigMap:
-   >
-   >   $ `kc edit configmaps <releaseName>-metacat-configfiles`
-   >
-   > (look for the key `log4j2.k8s.properties`). The config is automatically reloaded every
-   > `monitorInterval` seconds.
-   >
-   > **Note** that these edits will be overwritten next time you do a `helm install` or
-   > `helm upgrade`!
+> [!TIP]
+> you can also temporarily change logging settings without needing to
+> upgrade or re-install the application, by editing the log4J configuration
+> ConfigMap:
+>
+> `kc edit configmaps <releaseName>-metacat-configfiles`
+>
+> (look for the key `log4j2.k8s.properties`). The config is automatically reloaded every
+> `monitorInterval` seconds.
+>
+> **Note** that these edits will be overwritten next time you do a `helm install` or
+> `helm upgrade`!
 
 2. enables remote Java debugging via port 5005. You will need to forward this port, in order to
    access it on localhost:
@@ -721,15 +856,15 @@ This has the following effects:
     ```shell
     $ kubectl  port-forward  --namespace myNamespace  pod/mypod-0  5005:5005
     ```
-   **Tip:**
-   > For the **indexer**, you can also set the debug flag in `values.yaml` (Note that this
-     only sets the logging level to DEBUG; it does **not** enable remote debugging for the indexer):
-
-    ```yaml
-    dataone-indexer:
-      image:
-        debug: true
-    ```
+> [!TIP]
+> For the **indexer**, you can also set the debug flag in `values.yaml` (Note that this
+ only sets the logging level to DEBUG; it does **not** enable remote debugging for the indexer):
+>
+> ```yaml
+> dataone-indexer:
+>   image:
+>     debug: true
+> ```
 
 ### To view the logs
 
@@ -762,5 +897,65 @@ Logs from an `initContainer`:
   $ kubectl logs -f <specific-pod-name> -c <init-container-name>
 
   # example: Metacat's `init-solr-metacat-dep` initContainer logs
-  $ kubectl logs -f metacatknb-0 -c init-solr-metacat-dep
+  $ kubectl logs -f metacatknb-0 -c dependencies
+```
+
+## Appendix 5: Upgrader InitContainer Sample Logs
+
+Sample Logs from upgrader initContainer during PostgreSQL Major Upgrades:
+
+### First Startup - Successful Upgrade
+
+```text
+$ kc logs -f pod/metacatbrooke-0 -c pgupgrade
+
+Checking if a PostgreSQL upgrade is necessary...
+Found version 17; checking if pg_restore needed...
+Result of psql -h metacatbrooke-postgresql-hl -U metacat -d metacat -c "\dt":
+Did not find any relations.
+No Metacat tables found in /bitnami/postgresql/17/main
+Looking for directories named {version}-pg_dump to restore from...
+Current PostgreSQL Major Version: 17
+All dump files:
+14-pg_dump
+Choosing newest dump file before current version (17): 14-pg_dump
+Restoring from dump file 14-pg_dump, using command:
+pg_restore -U metacat -h metacatbrooke-postgresql-hl -d metacat --format=directory --jobs=20 /bitnami/postgresql/14-pg_dump
+FINISHED restoring from dump file 14-pg_dump; exiting initContainer...
+````
+
+### Subsequent Startups - No Action Required
+
+```text
+$ kc logs -f pod/metacatbrooke-0 -c pgupgrade
+
+Checking if a PostgreSQL upgrade is necessary...
+Found version 17; checking if pg_restore needed...
+Result of psql -h metacatbrooke-postgresql-hl -U metacat -d metacat -c "\dt":
+List of relations
+Schema |         Name          | Type  |  Owner
+--------+-----------------------+-------+---------
+public | access_log            | table | metacat
+public | checksums             | table | metacat
+public | harvest_detail_log    | table | metacat
+public | harvest_log           | table | metacat
+public | harvest_site_schedule | table | metacat
+public | identifier            | table | metacat
+public | index_event           | table | metacat
+public | node_id_revisions     | table | metacat
+public | quota_usage_events    | table | metacat
+public | scheduled_job         | table | metacat
+public | scheduled_job_params  | table | metacat
+public | smmediatypeproperties | table | metacat
+public | smreplicationpolicy   | table | metacat
+public | smreplicationstatus   | table | metacat
+public | systemmetadata        | table | metacat
+public | version_history       | table | metacat
+public | xml_access            | table | metacat
+public | xml_catalog           | table | metacat
+public | xml_documents         | table | metacat
+public | xml_relation          | table | metacat
+public | xml_revisions         | table | metacat
+(21 rows)
+Metacat tables found in /bitnami/postgresql/17/main; will NOT do a pg_restore. Exiting initContainer...
 ```
