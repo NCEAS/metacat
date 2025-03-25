@@ -23,7 +23,7 @@ usage() {
     echo "Usage: $0 [-t <TAG>] [-v <VERSION>] [--devtools]"
     echo
     echo "where:  -t <TAG>  is the image tag, which is typically the metacat version being released."
-    echo "                  The image tag defaults to $TAG if the -t option is omitted"
+    echo "                  The image tag defaults to $DEFAULT_TAG if the -t option is omitted"
     echo
     echo "                  You can use '-t $TEST_TAG' to build an image that includes the metacat"
     echo "                  sourcecode and test suite. Note that:"
@@ -121,7 +121,7 @@ if [ -f "../${DISTBIN}" ]; then
     cp ../"${DISTBIN}" .
 else
     echo "Could not find ../${DISTBIN}"
-    echo "You must first build the metacat release with 'ant distbin', and ensure the filename"
+    echo "You must first build the metacat release with 'ant distbinmc', and ensure the filename"
     echo "matches ${DISTBIN}. Exiting..."
     exit 2
 fi
