@@ -45,22 +45,22 @@ ADD "$DISTBIN" /tmp/
 ADD "$DISTSRC" /home/tomcat/metacat-source/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3-bcrypt    \
-        figlet            \
-        unzip             \
-        netcat            \
+        python3-bcrypt     \
+        figlet             \
+        unzip              \
+        netcat-traditional \
         # non-critical tools:
-        iputils-ping      \
-        lsof              \
-        postgresql-client \
-        procps            \
-        telnet            \
-        vim               \
-    &&  rm -rf /var/lib/apt/lists/                                        \
-    &&  mv /tmp/metacat.war ${TC_HOME}/webapps                            \
-    &&  chown -R tomcat ${TC_HOME}                                       \
-    &&  mkdir -p /var/metacat  && chown tomcat:tomcat /var/metacat      \
-    &&  mkdir -p /home/tomcat && chown -R tomcat:tomcat /home/tomcat  \
+        iputils-ping       \
+        lsof               \
+        postgresql-client  \
+        procps             \
+        telnet             \
+        vim                \
+    &&  rm -rf /var/lib/apt/lists/                                   \
+    &&  mv /tmp/metacat.war ${TC_HOME}/webapps                       \
+    &&  chown -R tomcat ${TC_HOME}                                   \
+    &&  mkdir -p /var/metacat  && chown tomcat:tomcat /var/metacat   \
+    &&  mkdir -p /home/tomcat && chown -R tomcat:tomcat /home/tomcat \
     ## Tomcat Mods to Extend Allowed Character Set
         ## - Encoded forward slashes (%2f):
     &&  echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true"     \

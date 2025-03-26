@@ -194,7 +194,7 @@ else
             shopt -s dotglob;
             echo "Copying data from $OLD_DATA to $NEW_DATA...";
             cp -pr $OLD_DATA/* $NEW_DATA/;
-            echo "...Done\!";
+            echo "...Done.";
             echo
             echo -e "$_ALERT === IMPORTANT NEXT STEPS: ===";
             echo
@@ -233,7 +233,7 @@ command time -h kubectl exec ${RELEASE_NAME}-postgresql-0 -- \
           echo -e "$_ALERT ALERT: pg_dump already exists at: ${DUMP_DIR}\!";
           echo "- moving it to $DUMP_BAK...";
           mv -f $DUMP_DIR $DUMP_BAK;
-          echo "...Done\!";
+          echo "...Done.";
         fi;
         PGDB=$POSTGRES_DB;
         if [ -z "$PGDB" ]; then
@@ -250,7 +250,7 @@ command time -h kubectl exec ${RELEASE_NAME}-postgresql-0 -- \
         echo; echo "Running pg_dump command:";
         echo "pg_dump -U $POSTGRES_USER --format=directory --file=$DUMP_DIR --jobs=20 $PGDB";
         pg_dump -U $POSTGRES_USER --format=directory --file=$DUMP_DIR --jobs=20 $PGDB;
-        echo "...Done\!";
+        echo "...Done.";
         echo "Time taken:";
     '
 
