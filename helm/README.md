@@ -163,7 +163,7 @@ will be on the same volume and mount-point):
           --version [OLD-chart-version] \
           -f [your-values-overrides] \
           --set metacat.application\\.readOnlyMode=true
-      
+
       # # # IMPORTANT: Note the TWO backslashes in: metacat.application\\.readOnlyMode
    ```
 
@@ -235,27 +235,19 @@ will be on the same volume and mount-point):
    [metacat/helm/admin/pg_dump_for_upgrades.sh](./admin/pg_dump_for_upgrades.sh))
    - If the `pg_dump` fails, use `kubectl describe pod...` to check whether the PostgreSQL container
      ran out of memory and was `OOMKilled`. If so, you may need to increase the memory limits in
-     your values overrides for `postgresql.primary.resources`. We had success with setting `cpu: 4`
-     and `memory: 32Gi` for both `requests` and `limits`, but you should determine your own values
-     (especially for production use after the upgrade is complete).
+     your values overrides for `postgresql.primary.resources`.
 
 2. **Troubleshooting the `pg_restore` step** (from the `initContainer` in the new chart)
-
-> [!Warning]
-> If the upgrade initContainer fails for some reason, metacat will continue to start up, and will
-> initialize the new (empty) database. If this happens, `helm uninstall` **Metacat immediately**,
-> so data will not be uploaded to the wrong (empty) database, and subsequently lost!
-
-   - In this case, you will also see:
-
-     - Error messages in the `pgupgrade` `initContainer` logs (See log examples in
+   - If the upgrade initContainer fails for some reason, metacat will continue to start up, and will
+     initialize the new (empty) database. In this case, you will also see:
+     - Error messages in the Metacat pod's `pgupgrade` `initContainer` logs (See log examples in
        [Appendix 5](#appendix-5-upgrader-initcontainer-sample-logs).)
 
        ```shell
        kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
        ```
 
-     - Browsing to `https://YOUR-HOST/metacat/d1/mn/v2/object` will show zero objects in the database:
+     - `total="0"` objects in the database when browsing to `https://YOUR-HOST/metacat/d1/mn/v2/object`:
 
        ```xml
        <ns2:objectList xmlns:ns2="http://ns.dataone.org/service/types/v1" count="0" start="0" total="0"/>
@@ -264,14 +256,14 @@ will be on the same volume and mount-point):
    - Re-running the upgrader (`initContainer`) will NOT `pg_restore` the database, since it will
      detect the presence of Metacat tables, and will refuse to overwrite what it believes to be
      existing data. We therefore recommend:
-     1. Investigating and fixing the `initContainer` error. (If you need to install the chart in order to
-        do this, **make sure it is in Read Only mode!**)
+     1. Investigating and fixing the `initContainer` error. (If you need to re-install the chart in
+        order to do this, **make sure it is still in Read Only mode!**)
      2. Doing a `helm uninstall` of the chart
-     3. Manually moving the NEW data directory to a different location, so PostgreSQL can make another
-        new one on next startup. 
+     3. Manually moving the NEW data directory to a different location, so PostgreSQL can make
+        another new one on next startup.
      4. Doing a `helm install` of the chart, and watching the initContainer logs again.
 
-> [!Note] 
+> [!Note]
 > the data still exists in the OLD data directory, and is backed up in the `pg_dump` output!
 
 ## Uninstalling the Chart
