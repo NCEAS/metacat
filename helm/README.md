@@ -163,17 +163,11 @@ will be on the same volume and mount-point):
           --version [OLD-chart-version] \
           -f [your-values-overrides] \
           --set metacat.application\\.readOnlyMode=true
+      
+      # # # IMPORTANT: Note the TWO backslashes in: metacat.application\\.readOnlyMode
    ```
 
-> [!IMPORTANT]
-> Note the TWO backslashes in `metacat.application\\.readOnlyMode`!
-
-2. Make sure your Values overrides include sufficient `postgresql.primary.resources` `requests` &
-   `limits` for cpu & memory, to avoid the pod running out of memory and being `OOMKilled` during
-   dump/restore. We had success with setting `cpu: 4` and `memory: 32Gi` for both `requests` and
-   `limits`, but you should determine your own values (especially for production use after the
-   upgrade is complete).
-3. Run the script: [metacat/helm/admin/pg_dump_for_upgrades.sh](./admin/pg_dump_for_upgrades.sh),
+2. Run the script: [metacat/helm/admin/pg_dump_for_upgrades.sh](./admin/pg_dump_for_upgrades.sh),
    which will check your data directory location is correctly versioned, and then carry out a
    `pg_dump` of your existing database.
 
@@ -190,13 +184,16 @@ will be on the same volume and mount-point):
        persistence:
         existingClaim: # [existing-postgresql-pvc-name-here]
    ```
+> [!IMPORTANT]
+> You must remove the `postgresql.postgresqlDataDir: /bitnami/postgresql/14/main` override, if you
+> added it for the previous (`pg_dump`) step, since the new chart will contain the correct
+> (versioned) location by default. (Alternatively, if you are using a custom path for the next
+> DB version, change it to point there).
 
-2. Finally, `helm uninstall` the OLD version of the Metacat chart, and then `helm install` the NEW
+2. `helm uninstall` the OLD version of the Metacat chart, and then `helm install` the NEW
    Metacat chart. This will automatically detect the pg_dump directory, and use it to `pg_restore`
-   the data into the new version of PostgreSQL. (We recommend you do not use `helm upgrade` across
-   major versions.) Installing (**without** the `metacat.application\\.readOnlyMode` flag) will also
-   unset "Read Only" mode, so Metacat will once again be able to accept edits and uploads, as soon
-   as the upgrade has completed.
+   the data into the new version of PostgreSQL. (We recommend you don't use `helm upgrade` across
+   major versions.) Don't forget the `metacat.application\\.readOnlyMode` flag.
 
    ```shell
    helm uninstall $RELEASE_NAME
@@ -205,7 +202,8 @@ will be on the same volume and mount-point):
 
    helm install $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
        --version {NEW-chart-version} \
-       -f {your-values-overrides}
+       -f {your-values-overrides} \
+       --set metacat.application\\.readOnlyMode=true  ## Two slashes!
 
    ## ...as metacat pod is starting up, view the initContainer logs:
    kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
@@ -215,40 +213,66 @@ will be on the same volume and mount-point):
 > See example `initContainer` logs from a successful upgrade in [Appendix 5: Upgrader InitContainer
 > Sample Logs](#appendix-5-upgrader-initcontainer-sample-logs).
 
+3. Finally, verify that the upgrade has completed successfully, the new version of PostgreSQL is
+   running, and your data is intact. If so, you can unset "Read Only" mode by doing a `helm upgrade`
+   without the `readOnlyMode` flag, so Metacat will once again be able to accept edits and uploads:
+
+   ```shell
+   # First verify that Metacat is working correctly: you should see a non-zero number of objects
+   # returned when you browse:
+   #  https://YOUR-HOST/metacat/d1/mn/v2/object
+   #
+   # If so, then:
+   #
+   helm upgrade $RELEASE_NAME oci://ghcr.io/nceas/charts/metacat \
+       --version {NEW-chart-version} \
+       -f {your-values-overrides}  , as soon
+   ```
+
 ### Troubleshooting
+
+1. **Troubleshooting the `pg_dump` step** (from the script:
+   [metacat/helm/admin/pg_dump_for_upgrades.sh](./admin/pg_dump_for_upgrades.sh))
+   - If the `pg_dump` fails, use `kubectl describe pod...` to check whether the PostgreSQL container
+     ran out of memory and was `OOMKilled`. If so, you may need to increase the memory limits in
+     your values overrides for `postgresql.primary.resources`. We had success with setting `cpu: 4`
+     and `memory: 32Gi` for both `requests` and `limits`, but you should determine your own values
+     (especially for production use after the upgrade is complete).
+
+2. **Troubleshooting the `pg_restore` step** (from the `initContainer` in the new chart)
 
 > [!Warning]
 > If the upgrade initContainer fails for some reason, metacat will continue to start up, and will
 > initialize the new (empty) database. If this happens, `helm uninstall` **Metacat immediately**,
 > so data will not be uploaded to the wrong (empty) database, and subsequently lost!
 
-In this case, you will also see:
+   - In this case, you will also see:
 
-- Error messages in the `pgupgrade` `initContainer` logs (See log examples in
-  [Appendix 5](#appendix-5-upgrader-initcontainer-sample-logs).)
+     - Error messages in the `pgupgrade` `initContainer` logs (See log examples in
+       [Appendix 5](#appendix-5-upgrader-initcontainer-sample-logs).)
 
-  ```shell
-  kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
-  ```
+       ```shell
+       kubectl logs -f pod/${RELEASE_NAME}-0 -c pgupgrade
+       ```
 
-- Browsing to `https://YOUR-HOST/metacat/d1/mn/v2/object` will show zero objects in the database:
+     - Browsing to `https://YOUR-HOST/metacat/d1/mn/v2/object` will show zero objects in the database:
 
-  ```xml
-  <ns2:objectList xmlns:ns2="http://ns.dataone.org/service/types/v1" count="0" start="0" total="0"/>
-  ```
+       ```xml
+       <ns2:objectList xmlns:ns2="http://ns.dataone.org/service/types/v1" count="0" start="0" total="0"/>
+       ```
 
-Re-running the upgrader (`initContainer`) will NOT `pg_restore` the database, since it will detect
-the presence of Metacat tables, and will refuse to overwrite what it believes to be existing data.
+   - Re-running the upgrader (`initContainer`) will NOT `pg_restore` the database, since it will
+     detect the presence of Metacat tables, and will refuse to overwrite what it believes to be
+     existing data. We therefore recommend:
+     1. Investigating and fixing the `initContainer` error. (If you need to install the chart in order to
+        do this, **make sure it is in Read Only mode!**)
+     2. Doing a `helm uninstall` of the chart
+     3. Manually moving the NEW data directory to a different location, so PostgreSQL can make another
+        new one on next startup. 
+     4. Doing a `helm install` of the chart, and watching the initContainer logs again.
 
-We therefore recommend:
-1. Investigating and fixing the `initContainer` error. (If you need to install the chart in order to
-   do this, **make sure it is in Read Only mode!**)
-2. Doing a `helm uninstall` of the chart
-3. Manually moving the NEW data directory to a different location, so PostgreSQL can make another
-   new one on next startup.
-4. Doing a `helm install` of the chart, and watching the initContainer logs again.
-
-Note that the data still exists in the OLD data directory, and is backed up in the `pg_dump` output.
+> [!Note] 
+> the data still exists in the OLD data directory, and is backed up in the `pg_dump` output!
 
 ## Uninstalling the Chart
 
