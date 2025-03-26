@@ -116,7 +116,6 @@ postgresql:
     existingSecret: *passwordSecretName
 
 dataone-indexer:
-  # increase minReplicas from default 3
   autoscaling:
     minReplicas: 1
     targetCPUUtilizationPercentage: 80
