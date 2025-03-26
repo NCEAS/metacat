@@ -91,14 +91,6 @@ postgresql:
      existingClaim: data-metacatbrooke-postgresql-0
 
   primary:
-    resources:
-      requests:
-        cpu: 4
-        memory: 32Gi
-      limits:
-        cpu: 4
-        memory: 32Gi
-
     extendedConfiguration: |
       max_connections = 250
       max_wal_size=16384
