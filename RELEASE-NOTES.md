@@ -24,7 +24,8 @@
 
 **Release date: 2025-03-27**
 
-> [!IMPORTANT] If you are upgrading from an earlier helm chart version, please see the [Upgrade
+> [!IMPORTANT]
+> If you are upgrading from an earlier helm chart version, please see the [Upgrade
 > Notes](#upgrading-from-chart-version-1xx) below.
 
 ### New Features & Enhancements:
