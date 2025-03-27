@@ -29,7 +29,7 @@ usage() {
     echo "                  sourcecode and test suite. Note that:"
     testmode-info
     echo
-    echo "        -v <VERSION> is the metacat build version number; e.g. 3.2.0"
+    echo "        -v <VERSION> is the metacat build version number (https://semver.org/ format)"
     echo "                  (Defaults to $DEFAULT_MC_VERSION if the -v option is omitted.)"
     echo
     echo "        --devtools is FOR DEV/DEBUGGING ONLY - NOT FOR PRODUCTION USE!"

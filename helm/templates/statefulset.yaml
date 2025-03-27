@@ -230,11 +230,11 @@ spec:
           claimName: {{ required ".Values.postgresql.upgrader.persistence.existingClaim is REQUIRED" .Values.postgresql.upgrader.persistence.existingClaim }}
       {{- end }}
 {{- if not (.Values.persistence.enabled) }}
-      - name: {{ .Release.Name }}-volume
+      - name: {{ .Release.Name }}-metacat
         emptyDir: {}
 {{ else }}
   {{- if .Values.persistence.existingClaim }}
-      - name: {{ .Release.Name }}-volume
+      - name: {{ .Release.Name }}-metacat
         persistentVolumeClaim:
           claimName: {{ .Values.persistence.existingClaim }}
   {{ else }}
