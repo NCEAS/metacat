@@ -1,9 +1,8 @@
 # Metacat Release Notes
 
-
 ## Release Notes for Metacat 3.2.0
 
-**Release date: 2024-03-27**
+**Release date: 2024-03-31**
 
 ### New Features & Enhancements:
 - [Use executor service and rabbitMQ channel pool to improve the performance of submitting index
@@ -20,9 +19,10 @@
 - [Bump org.apache.wicket:wicket-core from 9.18.0 to 9.19.0](https://github.com/NCEAS/metacat/pull/2071)
 - [Bump com.rabbitmq:amqp-client from 5.21.0 to 5.25.0](https://github.com/NCEAS/metacat/pull/2065/files)
 
+
 ## Release Notes for helm chart 2.0.0
 
-**Release date: 2025-03-27**
+**Release date: 2025-03-31**
 
 > [!IMPORTANT]
 > If you are upgrading from an earlier helm chart version, please see the [Upgrade
@@ -103,6 +103,7 @@ changes to disk-based file-storage methods.
   ([Issue #1922](https://github.com/NCEAS/metacat/issues/1922))
 * Add indexes to the access_log table ([Issue #1965](https://github.com/NCEAS/metacat/issues/1965))
 * Optimize the query to get log record ([Issue #1976](https://github.com/NCEAS/metacat/issues/1976))
+
 
 ## Release Notes for helm chart 1.2.0
 
