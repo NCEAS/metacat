@@ -117,8 +117,8 @@ spec:
               # * * * pg_restore existing pg_dump files * * *
               #
               echo "Restoring from dump file $DUMP as 'postgres' admin user, using command:";
-              echo "pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 $MNT/$DUMP";
-              PGPASSWORD=$POSTGRES_PASSWORD pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 $MNT/$DUMP;
+              echo "pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 --verbose $MNT/$DUMP";
+              PGPASSWORD=$POSTGRES_PASSWORD pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 --verbose $MNT/$DUMP;
               echo "FINISHED restoring from dump file $DUMP; exiting initContainer...";
           volumeMounts:
             - name: {{ .Release.Name }}-postgres-pgupgrade
