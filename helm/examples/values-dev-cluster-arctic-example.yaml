@@ -1,4 +1,5 @@
 ## override values.yaml with values to use for running on the NCEAS dev cluster
+## EXAMPLE FILE FROM TEST ARCTIC DATA CENTER INSTALLATION, FOR REFERENCE ONLY
 ##
 ## examples:
 ## from local helm chart:
@@ -14,46 +15,58 @@
 
 ## set once here, for both metacat and indexer:
 ## Omit for production - otherwise logging is too verbose
-debug: &debug true
+##
+## NOTE: can also edit the logging level the metacat configMap, and it will be picked up
+## automatically without a pod restart
+##
+debug: &debug false
 
 global:
-  metacatUiThemeName: "default"
-  metacatUiWebRoot: "/"
+  metacatUiThemeName: "arctic"
+  metacatUiWebRoot: "/catalog"
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
-  d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
+  d1ClientCnUrl: "https://cn-stage.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
   ## Use your own release name instead of metacatbrooke
   passwordsSecret: &passwordSecretName metacatbrooke-metacat-secrets
 
+metacatui:
+  livenessProbe:
+    failureThreshold: 4
+    initialDelaySeconds: 30
+    httpGet:
+      path: /catalog/config/config.js
+      port: http
 
-## example for a custom theme (also need to set global.metacatUiThemeName: "cerp", above)
-##
-#metacatui:
-#  customTheme:
-#    enabled: true
-#    ## Use your own release name instead of metacatbrooke
-#    claimName: metacatbrooke-metacatui-customtheme
-#    subPath: metacatui-themes/src/cerp/js/themes/cerp
-#  appConfig:
-#    enabled: false
-    ## disabled because SFWMD uses cerp theme, overlaid with
-    ## SFWMD config.js at /config/config.js (created as configMap)
+  readinessProbe:
+    failureThreshold: 4
+    initialDelaySeconds: 30
+    httpGet:
+      path: /catalog/config/config.js
+      port: http
 
 metacat:
   server.name: metacat-dev.test.dataone.org
   auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
 
+  cn.server.publiccert.filename: /var/metacat/pubcerts/DataONETestIntCA.pem
+
 #  storage.hashstore.disableConversion: true
 
   ## DataONE Member Node (MN) Parameters
   dataone.certificate.fromHttpHeader.enabled: true
-  dataone.autoRegisterMemberNode: 2025-01-23
+  dataone.autoRegisterMemberNode: 2024-01-25
   dataone.nodeId: "urn:node:TestBROOKELT"
   dataone.subject: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org"
-  dataone.nodeName: TestBROOKELT Metacat Node
+  dataone.nodeName: Dev Deployment of Arctic Data Center
   dataone.nodeDescription: |
-    Dev cluster Test BROOKE LT Metacat Node. Last registered with CN on 1/23/2025
+    The US National Science Foundation Arctic Data Center operates as the primary repository
+    supporting the NSF Arctic community for data preservation and access. The Center helps the
+    research community reproducibly preserve and discover all products of NSF-funded science
+    in the Arctic, including data, metadata, software, documents, and provenance that link
+    these in an open and reproducible way.
+
   dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
   dataone.nodeSynchronize: true
   dataone.nodeReplicate: true
@@ -73,16 +86,26 @@ image:
   debug: *debug
 
 ingress:
+  defaultBackend:
+    enabled: true
+    service:
+      name: wpbrooke-wordpress
+      port:
+        number: 80
+
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
   tls:
     - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
 
+podSecurityContext:
+  runAsNonRoot: true
+
 postgresql:
-  upgrader:
-    persistence:
-     existingClaim: data-metacatbrooke-postgresql-0
+  ## @param postgresqlDataDir PostgreSQL data dir folder
+  ##
+  postgresqlDataDir: /bitnami/postgresql/14/main
 
   primary:
     extendedConfiguration: |
@@ -98,18 +121,26 @@ postgresql:
           ## Use your own release name instead of metacatbrooke
           metacatVolumeName: cephfs-metacatbrooke-metacat-postgresdata
 
-
   auth:
     existingSecret: *passwordSecretName
 
 dataone-indexer:
+  # increase minReplicas from default 3
   autoscaling:
-    minReplicas: 1
+    minReplicas: 50
     targetCPUUtilizationPercentage: 80
 
   image:
     pullPolicy: Always
     debug: *debug
+
+  topologySpreadConstraints:
+    - maxSkew: 2
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: d1index
 
   idxworker:
     # this actually puts container in debug loop mode - no indexer running
@@ -137,17 +168,3 @@ dataone-indexer:
 #  enabled: false
 #readinessProbe:
 #  enabled: false
-#
-#service:
-#  enabled: true
-#  type: LoadBalancer
-#  clusterIP: ""
-#  ports:
-#    - name: debug-port
-#      port: 5005
-#      targetPort: tc-remote-debug
-#
-#container:
-#  ports:
-#    - containerPort: 5005
-#      name: tc-remote-debug

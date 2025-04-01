@@ -272,6 +272,12 @@ Ensure the following lines exist in the service file for Tomcat (paths may vary 
     ReadWritePaths=/var/metacat
     ReadWritePaths=/etc/default/solr.in.sh
 
+Note: If you're running Metacat from a mount, you will need to add that mount location to the ``RequiresMountsFor=`` line of the systemd service file (in the ``[Unit]`` section). The following example has a Ceph mount at ``/var/repos/si`` with Metacat's main directory at ``/var/repos/si/metacat``:
+
+  ::
+
+    RequiresMountsFor=/var/log/tomcat9 /var/lib/tomcat9 /var/repos/si
+
 Apache HTTP Server (Highly Recommended)
 .......................................
 Although you have the option of running Metacat with only the Tomcat server, we
@@ -531,33 +537,33 @@ the Solr Debian packages that come with the Ubuntu operating system are obsolete
 to install the binary packages by yourself. This section provides guidance on how to setup Solr to run
 in production on \*nix platforms, such as Ubuntu.
 
-Metacat supports ``Solr 8.8.2`` to ``Solr 9.5.0``. We recommend installing ``Solr 9.5.0``.
+We strongly recommend installing the ``Solr 9.8.*`` series.
 You can download the binary releases at from `solr's download page`_ or use ``wget``:
 
 .. _solr's download page:  https://solr.apache.org/downloads.html#solr-8112
 
   ::
 
-    wget https://archive.apache.org/dist/solr/solr/9.5.0/solr-9.5.0.tgz
+    wget https://archive.apache.org/dist/solr/solr/9.8.0/solr-9.8.0.tgz
 
 1. Go to the directory which contains the Solr release file and extract the installation script
-   file by typing (assuming the downloaded file is solr-9.5.0.tgz):
+   file by typing (assuming the downloaded file is solr-9.8.0.tgz):
 
   ::
 
-    tar xzf solr-9.5.0.tgz solr-9.5.0/bin/install_solr_service.sh --strip-components=2
+    tar xzf solr-9.8.0.tgz solr-9.8.0/bin/install_solr_service.sh --strip-components=2
 
 2. Install Solr as the root user:
 
   ::
 
-    sudo bash ./install_solr_service.sh solr-9.5.0.tgz
+    sudo bash ./install_solr_service.sh solr-9.8.0.tgz
   
-If you upgrade Solr from an old 8.* version to 9.5.0, you may run this command instead:
+If you upgrade Solr from an old 8.* version to 9.8.0, you may run this command instead:
   
   ::
 
-    sudo bash ./install_solr_service.sh solr-9.5.0.tgz -f
+    sudo bash ./install_solr_service.sh solr-9.8.0.tgz -f
 
 3. Ensure the Solr defaults file is group writable:
 
@@ -808,7 +814,7 @@ Starting Requirements:
 
       ex. `sudo systemctl stop solr`
 
-1. Download/upgrade your solr version to 9.5.0
+1. Download/upgrade your solr version to 9.8.0
 
   * The solr schema and configuration changed significantly between Metacat v2.19.x and v3.0.0.
 

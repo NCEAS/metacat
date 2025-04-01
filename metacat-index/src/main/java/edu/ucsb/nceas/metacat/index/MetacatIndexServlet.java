@@ -73,6 +73,7 @@ public class MetacatIndexServlet extends HttpServlet {
             IndexWorker.loadAdditionalPropertyFile(metacatSitePropertiesFilePath.toString());
             IndexWorker worker = new IndexWorker();
             worker.start();
+            worker.startReadinessProbe();
         } catch (Exception e) {
             throw new ServletException(e.getMessage());
         }

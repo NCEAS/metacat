@@ -20,34 +20,110 @@ spec:
       labels:
         {{- include "metacat.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if index .Values.global "dataone-indexer.enabled" }}
       initContainers:
-        - name: init-rabbitmq-metacat-dep
+        - name: deps
           image: busybox:latest
           command:
             - sh
             - -c
-            - >
-              HOSTNAME={{ include "metacat.rabbitmq.hostname" . }};
+            - |
+              ## wait for PostgreSQL to be ready...
+              ##
+              PGHOST={{ include "metacat.postgresql.hostname" . }};
+              PGPORT={{ .Values.postgresql.primary.service.ports.postgresql -}};
+              echo "* * * Checking if PostgreSQL is ready, at $PGHOST:$PGPORT * * *";
+              until nc -z $PGHOST $PGPORT > /dev/null; do
+              echo waiting for PostgreSQL at $PGHOST:$PGPORT; sleep 1; done;
+              ##
+              ## wait for RabbitMQ to be ready...
+              ##
+              RMQHOST={{ include "metacat.rabbitmq.hostname" . }};
               {{- $amqp := index .Values "dataone-indexer" "rabbitmq" "service" "ports" "amqp" }}
-              PORT={{ index .Values "dataone-indexer" "rabbitmq" "hostport" | default $amqp -}};
-              until nc -z $HOSTNAME $PORT > /dev/null; do
-              echo waiting for RabbitMQ; sleep 1; done;
-        - name: init-solr-metacat-dep
-          image: busybox:latest
+              RMQPORT={{ index .Values "dataone-indexer" "rabbitmq" "hostport" | default $amqp -}};
+              echo "* * * Checking if RabbitMQ is ready at $RMQHOST:$RMQPORT * * *";
+              until nc -z $RMQHOST $RMQPORT > /dev/null; do
+                echo waiting for RabbitMQ at $RMQHOST:$RMQPORT; sleep 1; done;
+              ##
+              ## wait for Solr to be ready...
+              ##
+              SOLRHOST={{ include "metacat.solr.hostname" . }};
+              SOLRPORT={{- index .Values "dataone-indexer" "solr" "service" "ports" "http" -}};
+              SOLRURI="/solr/{{- index .Values "dataone-indexer" "solr" "customCollection" -}}
+                   /admin/file?file=schema.xml&contentType=text/xml";
+              echo "* * * Checking if Solr is ready at http://$SOLRHOST:$SOLRPORT$SOLRURI * * *";
+              until [[ $(echo -e "GET $SOLRURI HTTP/1.1\r\nHost: $SOLRHOST\r\n\r\n" \
+                | nc $SOLRHOST $SOLRPORT | grep -c "<schema name=\"dataone") == 1 ]]; do
+                echo waiting for Solr Schema to be accessible at http://$SOLRHOST:$SOLRPORT$SOLRURI;
+              sleep 2; done;
+        {{- if and .Values.postgresql.upgrader .Values.postgresql.upgrader.enabled }}
+        - name: pgupgrade
+          image: postgres:latest
+          securityContext:
+            {{- toYaml .Values.postgresql.upgrader.securityContext | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-metacat-secrets
           command:
             - sh
             - -c
-            - >
-              HOSTNAME={{ include "metacat.solr.hostname" . }};
-              PORT={{- index .Values "dataone-indexer" "solr" "service" "ports" "http" -}};
-              URI="/solr/{{- index .Values "dataone-indexer" "solr" "customCollection" -}}
-                   /admin/file?file=schema.xml&contentType=text/xml";
-              until [[ $(echo -e "GET $URI HTTP/1.1\r\nHost: $HOSTNAME\r\n\r\n"{{ print " " -}}
-              | nc $HOSTNAME $PORT | grep -c "<schema name=\"dataone") == 1 ]]; do
-              echo waiting for Solr Schema to be accessible at http://$HOSTNAME:$PORT$URI;
-              sleep 1; done;
-      {{- end }}
+            - |
+              ##
+              ## Upgrade PostgreSQL if necessary
+              ##
+              echo "Checking if a PostgreSQL upgrade is necessary...";
+              PGDATA={{ .Values.postgresql.postgresqlDataDir }};
+              #
+              # * * * Exit if latest PostgreSQL version already initialized * * *
+              #
+              if [ ! -f "$PGDATA/PG_VERSION" ]; then
+                echo "No file found at $PGDATA/PG_VERSION. NEEDS INVESTIGATION!";
+                echo "This should never happen, since previous initContainer checked that postgres";
+                echo "was running, and postgres chart will initialize a new DB if none found in";
+                echo "$PGDATA. Maybe a permissions issue? Exiting initContainer...";
+                exit 1;
+              fi
+              #
+              # * * * Check if metacat has already created tables * * *
+              #
+              echo "Found version $(cat $PGDATA/PG_VERSION); checking if pg_restore needed...";
+              USER={{ .Values.postgresql.auth.username }};
+              HOST={{ include "metacat.postgresql.hostname" . }};
+              DB={{ .Values.postgresql.auth.database }};
+              # $POSTGRES_PASSWORD should already have been set in 'envFrom:', above
+              MCTABLES=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $HOST -U $USER -d $DB -c "\dt" 2>&1);
+              echo "Result of psql -h $HOST -U $USER -d $DB -c \"\\dt\":"
+              echo "$MCTABLES";
+              if [ "$MCTABLES" != "Did not find any relations." ]; then
+                echo "Metacat tables found in $PGDATA; will NOT do a pg_restore. Exiting initContainer...";
+                exit 0;
+              fi;
+              #
+              # * * * Check if there are existing pg_dump files that can be restored * * *
+              #
+              echo "No Metacat tables found in $PGDATA";
+              echo "Looking for directories named {version}-pg_dump to restore from...";
+              MNT={{ regexReplaceAll "(.*?)/(\\d{2,3})/(?:.*)$" .Values.postgresql.postgresqlDataDir "$1" }};
+              MAJOR_VER=$(PGPASSWORD=$POSTGRES_PASSWORD psql -h $HOST -U $USER -d $DB -c "SHOW server_version" -t -A | cut -d. -f1);
+              echo "Current PostgreSQL Major Version: $MAJOR_VER";
+              DUMP=$(ls $MNT/ | grep "[0-9]\+-pg_dump$" | sort -rn | awk -F'-' -v limit=$MAJOR_VER '$1 < limit {print $0}' | head -n 1 2>&1);
+              echo "All dump files:";
+              ls $MNT/ | grep "[0-9]\+-pg_dump$" | sort -rn;
+              if [ -z "$DUMP" ]; then
+                echo "No suitable dump files found in $MNT; exiting initContainer...";
+                exit 0;
+              fi;
+              echo "Choosing newest dump file before current version ($MAJOR_VER): $DUMP";
+              #
+              # * * * pg_restore existing pg_dump files * * *
+              #
+              echo "Restoring from dump file $DUMP as 'postgres' admin user, using command:";
+              echo "pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 --verbose $MNT/$DUMP";
+              PGPASSWORD=$POSTGRES_PASSWORD pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 --verbose $MNT/$DUMP;
+              echo "FINISHED restoring from dump file $DUMP; exiting initContainer...";
+          volumeMounts:
+            - name: {{ .Release.Name }}-postgres-pgupgrade
+              mountPath: {{ regexReplaceAll "(.*?)/(\\d{2,3})/(?:.*)$" .Values.postgresql.postgresqlDataDir "$1" }}
+        {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -148,12 +224,17 @@ spec:
         secret:
           secretName: {{ .Release.Name }}-d1-client-cert
           optional: true
+      {{- if and .Values.postgresql.upgrader .Values.postgresql.upgrader.enabled }}
+      - name: {{ .Release.Name }}-postgres-pgupgrade
+        persistentVolumeClaim:
+          claimName: {{ required ".Values.postgresql.upgrader.persistence.existingClaim is REQUIRED" .Values.postgresql.upgrader.persistence.existingClaim }}
+      {{- end }}
 {{- if not (.Values.persistence.enabled) }}
-      - name: {{ .Release.Name }}-volume
+      - name: {{ .Release.Name }}-metacat
         emptyDir: {}
 {{ else }}
   {{- if .Values.persistence.existingClaim }}
-      - name: {{ .Release.Name }}-volume
+      - name: {{ .Release.Name }}-metacat
         persistentVolumeClaim:
           claimName: {{ .Values.persistence.existingClaim }}
   {{ else }}

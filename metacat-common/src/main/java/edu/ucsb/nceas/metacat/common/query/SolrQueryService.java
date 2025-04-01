@@ -1,21 +1,3 @@
-/**
- *  Copyright: 2013 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
 package edu.ucsb.nceas.metacat.common.query;
 
 import java.io.InputStream;
@@ -35,7 +17,6 @@ import org.apache.solr.schema.SchemaField;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.util.Constants;
 
-import edu.ucsb.nceas.metacat.common.query.SolrQueryResponseWriterFactory;
 
 
 /**
@@ -44,9 +25,9 @@ import edu.ucsb.nceas.metacat.common.query.SolrQueryResponseWriterFactory;
  *
  */
 public abstract class SolrQueryService {
-    
+
     public static final String WT = "wt";//the property name to specify the return type
-    
+
     protected static final String FILTERQUERY = "fq";
     protected static final String UNKNOWN = "Unknown";
     private static final String READPERMISSION = "readPermission";
@@ -58,15 +39,15 @@ public abstract class SolrQueryService {
     private static final String CLOSEPARENTHESES = ")";
     private static final String COLON = ":";
     private static final String OR = "OR";
-    
+
     private static Log log = LogFactory.getLog(SolrQueryService.class);
     private static List<String> supportedWriterTypes = null;
-    
+
     protected IndexSchema schema = null;
     protected Map<String, SchemaField> fieldMap = null;
     protected List<String> validSolrFieldNames = null;
     protected String solrSpecVersion = null;
-    
+
     static {
         supportedWriterTypes = new ArrayList<String>();
         supportedWriterTypes.add(SolrQueryResponseWriterFactory.CSV);
@@ -78,46 +59,43 @@ public abstract class SolrQueryService {
         supportedWriterTypes.add(SolrQueryResponseWriterFactory.PYTHON);
         supportedWriterTypes.add(SolrQueryResponseWriterFactory.XML);
     }
-  
-    
+
     /**
      * Query the Solr server with specified query and user's identity. If the Subjects
      * is null, there will be no access rules for the query. This is for the embedded solr server.
      * @param query the query params. 
      * @param subjects the user's identity which sent the query
-     * @param method  the method such as GET, POST and et al will be used in this query. This only works for the HTTP Solr server.
+     * @param method  the method such as GET, POST and et al will be used in this query. This only
+     *                works for the HTTP Solr server.
      * @return the response
      * @throws Exception
      */
-    public abstract InputStream query(SolrParams query, Set<Subject> subjects, SolrRequest.METHOD method) throws Exception;
-    
-    
-  
-    
+    public abstract InputStream query(
+        SolrParams query, Set<Subject> subjects, SolrRequest.METHOD method) throws Exception;
+
     /**
      * Get the fields list of the index schema
-     * @return
+     * @return the map containing the list
      * @throws Exception
      */
     public abstract Map<String, SchemaField> getIndexSchemaFields() throws Exception;
-    
-    public IndexSchema getSchema() {
-		return schema;
-	}
 
-	/**
+    public IndexSchema getSchema() {
+        return schema;
+    }
+
+    /**
      * Get the version of the solr server.
      * @return
      */
     public abstract String getSolrServerVersion();
-    
+
     /**
      * Get the list of the valid field name (moved the fields names of the CopyFieldTarget).
-     * @return
+     * @return the list of field name
      */
     protected List<String> getValidSchemaFields() {
         if (validSolrFieldNames != null && !validSolrFieldNames.isEmpty()) {
-            //System.out.println("the valid file name is\n"+validSolrFieldNames);
             return validSolrFieldNames;
         } else {
             validSolrFieldNames = new ArrayList<String>();
@@ -131,24 +109,23 @@ public abstract class SolrQueryService {
                     }
                 }
             }
-            //System.out.println("the valid file name is\n"+validSolrFieldNames);
             return validSolrFieldNames;
         }
     }
-    
+
     /**
      * If the solr server supports the specified wt.
      * @param wt
      * @return true if it supports; otherwise false.
      */
     public static boolean isSupportedWT(String wt) {
-        if (wt == null ||supportedWriterTypes.contains(wt)) {
+        if (wt == null || supportedWriterTypes.contains(wt)) {
             return true;
         } else {
             return false;
         }
     }
-    
+
     /*
      * Append the access filter query to the params
      */
@@ -160,7 +137,7 @@ public abstract class SolrQueryService {
                 log.info("=================== fq query is "+query.toString());
                 NamedList fq = new NamedList();
                 fq.add(FILTERQUERY, query.toString());
-                SolrParams fqParam = SolrParams.toSolrParams(fq);
+                SolrParams fqParam = fq.toSolrParams();
                 append = AppendedSolrParams.wrapAppended(solrParams, fqParam);
             } else {
                 append = solrParams;
@@ -168,40 +145,75 @@ public abstract class SolrQueryService {
         }
         return append;
     }
-    
+
     protected StringBuffer generateAccessFilterParamsString(Set<Subject>subjects) {
         StringBuffer query = new StringBuffer();
         boolean first = true;
-        if(subjects != null) {
-            for(Subject subject : subjects) {
-                if(subject != null) {
+        if (subjects != null) {
+            for (Subject subject : subjects) {
+                if (subject != null) {
                     String subjectName = subject.getValue();
-                    if(subjectName != null && !subjectName.trim().equals("")) {
-                        if(first) {
+                    if (subjectName != null && !subjectName.isBlank()) {
+                        if (first) {
                             first = false;
-                            query.append(OPENPARENTHESES + READPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESES);
-                            query.append(OR + OPENPARENTHESES + WRITEPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESES);
-                            query.append(OR + OPENPARENTHESES + CHANGEPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESES);
-                            if(!subjectName.equals(Constants.SUBJECT_PUBLIC) && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
-                                query.append(OR + OPENPARENTHESES + RIGHTSHOLDER + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESES);
+                            appendPermissionToQuery(query, READPERMISSION, subjectName);
+                            query.append(OR);
+                            appendPermissionToQuery(query, WRITEPERMISSION, subjectName);
+                            query.append(OR);
+                            appendPermissionToQuery(query, CHANGEPERMISSION, subjectName);
+                            if (!subjectName.equals(Constants.SUBJECT_PUBLIC)
+                                && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
+                                query.append(OR);
+                                appendPermissionToQuery(query, RIGHTSHOLDER, subjectName);
                             } else if (subjectName.equals(Constants.SUBJECT_PUBLIC)) {
-                                query.append(OR + OPENPARENTHESES + IS_PUBLIC+COLON + "true" + CLOSEPARENTHESES);
+                                query.append(OR);
+                                query.append(OPENPARENTHESES);
+                                query.append(IS_PUBLIC);
+                                query.append(COLON);
+                                query.append("true");
+                                query.append(CLOSEPARENTHESES);
                             }
                         } else {
-                            query.append(OR + OPENPARENTHESES + READPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESES);
-                            query.append(OR + OPENPARENTHESES + WRITEPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESES);
-                            query.append(OR + OPENPARENTHESES + CHANGEPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESES);
-                            if(!subjectName.equals(Constants.SUBJECT_PUBLIC) && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
-                                query.append(OR + OPENPARENTHESES + RIGHTSHOLDER + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESES);
+                            query.append(OR);
+                            appendPermissionToQuery(query, READPERMISSION, subjectName);
+                            query.append(OR);
+                            appendPermissionToQuery(query, WRITEPERMISSION, subjectName);
+                            query.append(OR);
+                            appendPermissionToQuery(query, CHANGEPERMISSION, subjectName);
+                            if (!subjectName.equals(Constants.SUBJECT_PUBLIC)
+                                && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
+                                query.append(OR);
+                                appendPermissionToQuery(query, RIGHTSHOLDER, subjectName);
                             } else if (subjectName.equals(Constants.SUBJECT_PUBLIC)) {
-                                query.append(OR + OPENPARENTHESES + IS_PUBLIC + COLON + "true" + CLOSEPARENTHESES);
+                                query.append(OR);
+                                query.append(OPENPARENTHESES);
+                                query.append(IS_PUBLIC);
+                                query.append(COLON);
+                                query.append("true");
+                                query.append(CLOSEPARENTHESES);
                             }
                         }
                     }
                 }
-               
             }
         }
+        log.debug("The access filter is " + query);
         return query;
+    }
+
+    /**
+     * Append the permission filter to the string buffer
+     * @param query  the buffer holding the query
+     * @param permission  the permission will be allowed
+     * @param subject  the subject will be allowed
+     */
+    private void appendPermissionToQuery(StringBuffer query, String permission, String subject) {
+        query.append(OPENPARENTHESES);
+        query.append(permission);
+        query.append(COLON);
+        query.append("\"");
+        query.append(subject);
+        query.append("\"");
+        query.append(CLOSEPARENTHESES);
     }
 }

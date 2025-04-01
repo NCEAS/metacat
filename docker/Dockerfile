@@ -2,10 +2,10 @@
 ARG ENVIRONMENT="prod"
 
 # The first stage is used to select the base image for production, based on the JRE
-FROM tomcat:9.0.96-jre17-temurin-jammy AS prod-base
+FROM tomcat:9.0.102-jre17-temurin-noble AS prod-base
 
 # The second stage is used for testing, if needed, based on the JDK
-FROM tomcat:9.0.96-jdk17-temurin-jammy AS test-base
+FROM tomcat:9.0.102-jdk17-temurin-noble AS test-base
 
 RUN    printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
     && printf '\n* * * * * * * * * TEST BUILD * * * * * * * * *'      \
@@ -45,22 +45,22 @@ ADD "$DISTBIN" /tmp/
 ADD "$DISTSRC" /home/tomcat/metacat-source/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3-bcrypt    \
-        figlet            \
-        unzip             \
-        netcat            \
+        python3-bcrypt     \
+        figlet             \
+        unzip              \
+        netcat-traditional \
         # non-critical tools:
-        iputils-ping      \
-        lsof              \
-        postgresql-client \
-        procps            \
-        telnet            \
-        vim               \
-    &&  rm -rf /var/lib/apt/lists/                                        \
-    &&  mv /tmp/metacat.war ${TC_HOME}/webapps                            \
-    &&  chown -R tomcat ${TC_HOME}                                       \
-    &&  mkdir -p /var/metacat  && chown tomcat:tomcat /var/metacat      \
-    &&  mkdir -p /home/tomcat && chown -R tomcat:tomcat /home/tomcat  \
+        iputils-ping       \
+        lsof               \
+        postgresql-client  \
+        procps             \
+        telnet             \
+        vim                \
+    &&  rm -rf /var/lib/apt/lists/                                   \
+    &&  mv /tmp/metacat.war ${TC_HOME}/webapps                       \
+    &&  chown -R tomcat ${TC_HOME}                                   \
+    &&  mkdir -p /var/metacat  && chown tomcat:tomcat /var/metacat   \
+    &&  mkdir -p /home/tomcat && chown -R tomcat:tomcat /home/tomcat \
     ## Tomcat Mods to Extend Allowed Character Set
         ## - Encoded forward slashes (%2f):
     &&  echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true"     \

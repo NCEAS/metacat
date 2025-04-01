@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.ecoinformatics</groupId>
     <artifactId>metacat</artifactId>
-    <version>3.1.0</version>
+    <version>3.2.0</version>
     <name>metacat</name>
     <packaging>war</packaging>
     <url>http://maven.apache.org</url>
@@ -12,7 +12,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <d1_libclient_version>2.3.1</d1_libclient_version>
         <d1_portal_version>2.3.3</d1_portal_version>
-        <metacat_common_version>3.1.0</metacat_common_version>
+        <metacat_common_version>3.2.0</metacat_common_version>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.source>17</maven.compiler.source>
     </properties>
@@ -44,12 +44,19 @@
             <name>central maven repo1 https</name>
             <url>https://repo1.maven.org/maven2</url>
         </repository>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/nceas/osti-elink</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
     </repositories>
     <dependencies>
         <dependency>
             <groupId>org.junit</groupId>
             <artifactId>junit-bom</artifactId>
-            <version>5.10.2</version>
+            <version>5.11.4</version>
             <type>pom</type>
         </dependency>
         <dependency>
@@ -273,7 +280,7 @@
         <dependency>
             <groupId>org.apache.wicket</groupId>
             <artifactId>wicket-core</artifactId>
-            <version>9.18.0</version>
+            <version>9.19.0</version>
             <exclusions>
                 <exclusion>
                   <groupId>org.slf4j</groupId>
@@ -293,7 +300,7 @@
         <dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-solrj</artifactId>
-            <version>8.11.3</version>
+            <version>9.8.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>junit</groupId>
@@ -471,7 +478,7 @@
         <dependency>
             <groupId>edu.ucsb.nceas</groupId>
             <artifactId>osti-elink</artifactId>
-            <version>1.0.0</version>
+            <version>2.0.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml -->
         <dependency>
@@ -482,7 +489,7 @@
         <dependency>
             <groupId>com.rabbitmq</groupId>
             <artifactId>amqp-client</artifactId>
-            <version>5.21.0</version>
+            <version>5.25.0</version>
         </dependency>
         <!-- API, java.xml.bind module -->
         <dependency>
@@ -500,6 +507,11 @@
             <groupId>org.dataone</groupId>
             <artifactId>hashstore</artifactId>
             <version>1.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>2.12.1</version>
         </dependency>
     </dependencies>
 </project>

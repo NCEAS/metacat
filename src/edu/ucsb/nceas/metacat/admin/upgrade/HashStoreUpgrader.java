@@ -7,6 +7,7 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
+import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -266,7 +267,7 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                 // the complete futures from the set. So the set can
                                                 // be reused again. So we can avoid the issue of
                                                 // out of memory.
-                                                removeCompleteFuture(futures);
+                                                IndexGenerator.removeCompleteFuture(futures);
                                             }
                                         } else {
                                             logMetacat.error(
@@ -338,40 +339,6 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
         }
         return true;
     }
-
-    /**
-     * This method removes the Future objects from a set which have the done status.
-     * So the free space can be used again. If it cannot remove any one, it will wait and try
-     * again until some space was freed up.
-     * @param futures  the set which hold the futures to be checked
-     */
-    protected void removeCompleteFuture(Set<Future> futures) {
-        if (futures != null) {
-            int originalSize = futures.size();
-            if (originalSize > 0) {
-                //A 100GB file takes 15 minutes to convert, and 800GB takes 2 hours. Although the
-                // method cannot remove futures after 2 hours tries, new tasks can only be
-                // submitted every 2 hours when the set limit is reached, which slows the
-                // addition of futures and prevents out-of-memory issues.
-                for (int i = 0; i < 7200; i++) {
-                    futures.removeIf(Future::isDone);
-                    if (futures.size() >= originalSize) {
-                        logMetacat.debug("Metacat could not remove any complete futures and will "
-                                             + "wait for a while and try again.");
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            logMetacat.warn("Waiting future is interrupted " + e.getMessage());
-                        }
-                    } else {
-                        logMetacat.debug("Metacat removed some complete futures from the set.");
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
 
     /**
      * Run a query to select the list of candidate pid from the systemmetadata which will be

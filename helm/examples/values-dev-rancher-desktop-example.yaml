@@ -1,0 +1,74 @@
+## override values.yaml with values to use for running on local machine (eg within Rancher Desktop)
+##
+## example:
+##    helm install metacatrd ./helm -f ./helm/values-dev-local.yaml
+##
+debug: &debug true
+
+global:
+  metacatUiThemeName: "knb"
+  metacatUiWebRoot: "/"
+  metacatExternalBaseUrl: "https://localhost:80/"
+  d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
+  storageClass: &storageClassName local-path
+  ephemeralVolumeStorageClass: local-path
+  passwordsSecret: &passwordSecretName metacatrd-metacat-secrets
+
+metacat:
+  server.name: localhost
+  auth.administrators: http://orcid.org/0000-0002-1472-913X;http://orcid.org/0000-0002-1209-5268
+
+image:
+  debug: *debug
+  pullPolicy: Always
+  tag: "DEVELOP"
+
+
+# probes will kill remote debugger
+livenessProbe:
+  enabled: false
+readinessProbe:
+  enabled: false
+
+persistence:
+  existingClaim: &mcclaim metacatrd-metacat-0
+
+
+postgresql:
+  image:
+    debug: true
+  primary:
+    resourcesPreset: "micro"
+    persistence:
+      existingClaim: &pgclaim metacatrd-metacat-postgresql-0
+  upgrader:
+    persistence:
+      existingClaim: *pgclaim
+  auth:
+    existingSecret: *passwordSecretName
+
+
+dataone-indexer:
+  persistence:
+    ## MUST MATCH name of PVC created by metacat chart. NOTE: uses deployment name
+    claimName: *mcclaim
+
+  autoscaling:
+    minReplicas: 1
+    targetCPUUtilizationPercentage: 80
+
+  rabbitmq:
+    auth:
+      existingPasswordSecret: *passwordSecretName
+
+  solr:
+    replicaCount: 1
+    collectionReplicas: 1
+    extraVolumes:
+      - name: solr-config
+        configMap:
+          ## Use your own release name instead of metacatbrooke
+          name: metacatrd-indexer-configfiles
+          defaultMode: 0777
+    zookeeper:
+      replicaCount: 1

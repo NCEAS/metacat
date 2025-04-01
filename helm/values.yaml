@@ -282,9 +282,7 @@ metacat:
   ## 3. You DO NOT need to configure the Member Node client cert location. Instead, simply add it as
   ##    a secret: https://github.com/NCEAS/metacat/tree/develop/helm#install-the-client-certificate
   ##
-  ## (Default value shown - no need to uncomment unless changing from this)
-  ##
-#  dataone.certificate.fromHttpHeader.enabled: false
+  dataone.certificate.fromHttpHeader.enabled: false
 
   ## @param metacat.dataone.autoRegisterMemberNode Automatically push MN updates to CN? (yyyy-MM-dd)
   ## USE WITH CARE!
@@ -294,7 +292,7 @@ metacat:
   ## metacat startup), IN UTC (Coordinated Universal Time) ZONE.
   ## Format: yyyy-MM-dd; e.g. 2023-02-28
   ##
-#  dataone.autoRegisterMemberNode: 2023-02-28
+  dataone.autoRegisterMemberNode: 2023-02-28
 
   ## metacat.D1Client.CN_URL the url of the CN - DO NOT SET HERE
   ## D1Client.CN_URL: This is set in the global value 'global.d1ClientCnUrl', above
@@ -309,7 +307,7 @@ metacat:
   ## Node, in which case the field can be edited to set it to the value of a valid, existing Node
   ## Identifier.
   ##
-#  dataone.nodeId: urn:node:CHANGE_ME_TO_YOUR_VALUE!
+  dataone.nodeId: urn:node:METACAT_TEST
 
   ## @param metacat.dataone.subject The "subject" string from your DataONE MN client certificate
   ## The Node Subject is critical for proper operation of the node. To act as a Member Node in
@@ -326,12 +324,12 @@ metacat:
   ##       removed, and wrapped in double quotes, so it becomes:
   ##           dataone.subject: "CN=urn:node:YOUR_VALUE,DC=dataone,DC=org"
   ##
-#  dataone.subject: "CN=urn:node:CHANGE_ME_TO_YOUR_VALUE!,DC=dataone,DC=org"
+  dataone.subject: "CN=urn:node:METACAT1,DC=dataone,DC=org"
 
   ## @param metacat.dataone.nodeName short name for the node that can be used in user interfaces
   ## @param metacat.dataone.nodeDescription What is the node's intended scope and purpose?
-#  dataone.nodeName: My Metacat Node
-#  dataone.nodeDescription: Describe your Member Node briefly.
+  dataone.nodeName: My Metacat Node
+  dataone.nodeDescription: Describe your Member Node briefly.
 
   ## @param metacat.dataone.contactSubject registered contact for this MN
   ## IMPORTANT NOTE: Before registering you MN, you will need to first register your contact subject
@@ -341,7 +339,7 @@ metacat:
   ## an x509 client certificate, and use it as the value of dataone.contactSubject
   ## NOTE: you must use 'http://...' and NOT 'https://...' for this ORCID value:
   ##
-#  dataone.contactSubject: http://orcid.org/0000-0002-8888-999X
+  dataone.contactSubject: http://orcid.org/0000-0002-8888-999X
 
   ## @param metacat.dataone.nodeSynchronize Enable Synchronization of Metadata to DataONE
   ## Allows the administrator to decide whether to turn on synchronization with the DataONE
@@ -353,7 +351,7 @@ metacat:
   ## maintenance or service outages.
   ## (Default value shown - no need to uncomment unless changing from this)
   ##
-#  dataone.nodeSynchronize: false
+  dataone.nodeSynchronize: false
 
   ## metacat.dataone.nodeSynchronization.schedule: DataONE synchronization schedule (crontab format)
   ##
@@ -374,13 +372,13 @@ metacat:
   ## value like '15', which would change the schedule to synchronize at 11:15 am daily.
   ## (Default values shown - no need to uncomment unless changing from these)
   ##
-#  dataone.nodeSynchronization.schedule.year: "*"
-#  dataone.nodeSynchronization.schedule.mon: "*"
-#  dataone.nodeSynchronization.schedule.mday: "*"
-#  dataone.nodeSynchronization.schedule.wday: "?"
-#  dataone.nodeSynchronization.schedule.hour: "*"
-#  dataone.nodeSynchronization.schedule.min: "0/3"
-#  dataone.nodeSynchronization.schedule.sec: "10"
+  dataone.nodeSynchronization.schedule.year: "*"
+  dataone.nodeSynchronization.schedule.mon: "*"
+  dataone.nodeSynchronization.schedule.mday: "*"
+  dataone.nodeSynchronization.schedule.wday: "?"
+  dataone.nodeSynchronization.schedule.hour: "*"
+  dataone.nodeSynchronization.schedule.min: "0/3"
+  dataone.nodeSynchronization.schedule.sec: "10"
 
   ## @param metacat.dataone.nodeReplicate Accept and Store Replicas?
   ## Used to indicate that the administrator of this node is willing to allow replica data and
@@ -389,7 +387,7 @@ metacat:
   ## overall.
   ## (Default value shown - no need to uncomment unless changing from this)
   ##
-#  dataone.nodeReplicate: false
+  dataone.nodeReplicate: false
 
   ## @param metacat.dataone.replicationpolicy.default.numreplicas # copies to store on other nodes
   ## @param metacat.dataone.replicationpolicy.default.preferredNodeList Preferred replication nodes
@@ -408,9 +406,9 @@ metacat:
   ## values for both Default Preferred Nodes and Default Blocked Nodes is a comma-separated list
   ## of NodeReference identifiers that were assigned to the target nodes by DataONE.
   ##
-#  dataone.replicationpolicy.default.numreplicas: "0"
-#  dataone.replicationpolicy.default.preferredNodeList:
-#  dataone.replicationpolicy.default.blockedNodeList:
+  dataone.replicationpolicy.default.numreplicas: "0"
+  dataone.replicationpolicy.default.preferredNodeList: ""
+  dataone.replicationpolicy.default.blockedNodeList: ""
 
   ## @section OPTIONAL (but Recommended) Site Map Parameters
   ##
@@ -576,6 +574,10 @@ podAnnotations: {}
 ## @param podSecurityContext.supplementalGroups [array] additional GIDs used to access vol. mounts
 ## @param podSecurityContext.runAsNonRoot ensure all containers run as a non-root user.
 ##                                 Note users must be defined by numerical user id for this to work
+## @param podSecurityContext.fsGroupChangePolicy control how Kubernetes manages ownership & perms...
+##                                IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
+##                                means K8s will always chown the volume to the fsGroup, even if the
+##                                volume is already owned by the fsGroup, which is VERY slow!
 ## NOTE: If mounting an existing volume containing data, make sure the fsGroup is set to match
 ## the group that owns the existing data on that filesystem!
 ##
@@ -586,16 +588,22 @@ podSecurityContext:
   fsGroup: &mcFsGroup 59997
   supplementalGroups: &mcSupplementalGroups [ 997, 1000 ]
   runAsNonRoot: true
+  fsGroupChangePolicy: &defaultFsGroupChangePolicy OnRootMismatch
 
 ## @param securityContext holds container-level security attributes that override those at pod level
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext: {}
 
-## @param resources Resource limits for the deployment
-##  We usually recommend not to specify default resources and to leave this as a conscious
-## choice for the user. This also increases chances charts run on environments with limited
-## resources, such as Minikube.
-resources: {}
+## @param resources Resource limits for the deployment (MUST BE OVERRIDDEN!)
+## The default values are very minimal, and not suitable for production. Please override and tune
+## for your own needs.
+resources:
+  requests:
+    cpu: 1
+    memory: 1Gi
+  limits:
+    cpu: 2
+    memory: 2Gi
 
 ## @param tolerations Tolerations for pod assignment
 tolerations: []
@@ -712,12 +720,19 @@ ingress:
   ## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
   ##
   annotations:
-    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size - see docs:
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client-body-buffer-size See docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
+    ##
     nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
-    ## @param ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size - see docs:
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size See docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
+    ## Setting size to 0 disables checking of client request body size
+    ##
     nginx.ingress.kubernetes.io/client_max_body_size: "0"
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size See docs:
+    ## https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md#proxy-body-size
+    ## Setting size to 0 disables checking of client request body size
+    ##
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
 
   ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
@@ -739,22 +754,65 @@ ingress:
   defaultBackend:
     enabled: false
 
-  ## @param ingress.rewriteRules rewrite rules for the nginx ingress
-  ## These rules will be added to the section
+  ## @param ingress.rewriteRules formatted text rewrite rules for the nginx ingress
+  ## These rules will be added to the ingress definition section:
   ## metadata:
   ##   annotations:
   ##     nginx.ingress.kubernetes.io/configuration-snippet: |
-  ##       (list of rewrite rules here)
+  ##       (* * *  list of rewrite rules here  * * *)
   ##
   ## Example syntax:
   ##     rewriteRules: |
-  ##       - rewrite ^/(sitemap.+) /metacat/sitemaps/$1 redirect;
-  ##       - rewrite ^/robots.txt /metacat/robots.txt redirect;
+  ##       if ($host = "evos.nceas.ucsb.edu") {
+  ##           return 301 https://goa.nceas.ucsb.edu$request_uri;
+  ##       }
+  ##       rewrite ^/(sitemap.+) /metacat/sitemaps/$1 redirect;
+  ##       rewrite ^/robots.txt /metacat/robots.txt redirect;
   ##
-  ## (For example only; note that these two rules are already automatically included as needed - see
+  ## (For example only; note the last two rules are already automatically included as needed - see
   ## .Values.robots.* and .Values.metacat.sitemap.*)
   ##
-  rewriteRules: []
+  rewriteRules: ""
+
+  ## @skip ingress.configurationSnippet text code block to add to the nginx ingress config
+  ## This block will be added to the ingress definition section, in addition to the rewrite rules:
+  ## metadata:
+  ##   annotations:
+  ##     nginx.ingress.kubernetes.io/configuration-snippet: |
+  ##       (* * *  nginx.conf code block here  * * *)
+  ##
+  ## Note that overriding this block will disable the default cors setup, unless
+  ## you copy this into your override
+  ##
+  configurationSnippet: |
+    # Metacat Cors Setup
+
+    set $cors 'true';
+
+    if ($request_method = 'OPTIONS') {
+      set $cors ${cors}options;
+    }
+
+    if ($cors = "true") {
+      more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+      more_set_headers 'Access-Control-Allow-Credentials: true';
+      more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
+      more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+
+      more_set_headers 'Access-Control-Max-Age: 1728000';
+    }
+
+    if ($cors = "trueoptions") {
+      more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+      more_set_headers 'Access-Control-Allow-Credentials: true';
+      more_set_headers 'Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS';
+      more_set_headers 'Access-Control-Allow-Headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+
+      more_set_headers 'Access-Control-Max-Age: 1728000';
+      more_set_headers 'Content-Type: text/plain charset=UTF-8';
+      more_set_headers 'Content-Length: 0';
+      return 204;
+    }
 
   ## @param ingress.tls The TLS configuration
   ##
@@ -777,6 +835,31 @@ ingress:
   #         secretName: tls-secret-values-yaml
   ##
   tls: []
+
+  ## @param ingress.rules The Ingress rules can be defined here or left blank to be auto-populated
+  ## based on the metacat.server.name value. If defining rules here, they will be copied verbatim
+  ## to the ingress definition. For schema guidance, see:
+  ## https://kubernetes.io/docs/concepts/services-networking/ingress/
+  ## Example:
+  ##    - host: goa.nceas.ucsb.edu
+  ##      http:
+  ##        paths:
+  ##          - backend:
+  ##              service:
+  ##                name: metacatgoa-hl
+  ##                port:
+  ##                  number: 8080
+  ##            path: /goa
+  ##            pathType: Prefix
+  ##          - backend:
+  ##              service:
+  ##                name: metacatgoa-metacatui
+  ##                port:
+  ##                  number: 80
+  ##            path: /
+  ##            pathType: Prefix
+  ##
+  rules: []
 
   ## @param ingress.d1CaCertSecretName Name of Secret containing DataONE CA certificate chain
   ## For DataONE Replication -- mutual authentication with x509 client-side certs.
@@ -896,16 +979,37 @@ postgresql:
       ##
       adminPasswordKey: POSTGRES_PASSWORD
 
-  ## @param postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
-  ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
   primary:
+    ## PostgreSQL Primary resource requests and limits
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+    ## @param postgresql.primary.resourcesPreset Set container resources preset
+    ## (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored
+    ## if primary.resources is set (primary.resources is recommended for production).
+    ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+    ##
+    resourcesPreset: "medium"
+    ## @param primary.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+    ## Example:
+    ## resources:
+    ##   requests:
+    ##     cpu: 2
+    ##     memory: 4Gi
+    ##   limits:
+    ##     cpu: 4
+    ##     memory: 32Gi
+    ##
+    resources: {}
+
     containerSecurityContext:
       ## @param postgresql.primary.containerSecurityContext.enabled enable containerSecurityContext
       ##
       enabled: true
       ## @param postgresql.primary.containerSecurityContext.runAsUser uid for container to run as
       ##
-      runAsUser: 59996
+      runAsUser: &mcpguid 59996
+      ## @param postgresql.primary.containerSecurityContext.runAsGroup gid for container to run as
+      ##
+      runAsGroup: &mcpggid 59996
 
     ## postgresql.primary.PodSecurityContext - common securityContext settings at pod level
     ## for all containers
@@ -916,12 +1020,25 @@ postgresql:
       ##
       runAsNonRoot: true
 
-    ## override the default pg_hba.conf with our own, to allow password auth, since this is the
+      ## @param postgresql.primary.podSecurityContext.fsGroup Group ID for the pod file system
+      fsGroup: *mcpggid
+
+      ## @param postgresql.primary.podSecurityContext.fsGroupChangePolicy ownership & perms mgmt
+      ##                        IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
+      ##                        means K8s will always chown the volume to the fsGroup, even if the
+      ##                        volume is already owned by the fsGroup, which is VERY slow!
+      fsGroupChangePolicy: *defaultFsGroupChangePolicy
+
+    ## @skip postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
+    ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
+    ## We override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
     ## TYPE       DATABASE      USER          ADDRESS         METHOD
     pgHbaConfiguration: |
       host        metacat       metacat       0.0.0.0/0       password
       host        metacat       metacat       ::0/0           password
+      host        all           postgres      0.0.0.0/0       password
+      host        all           postgres      ::0/0           password
       local       all           all                           trust
 
     ## @param postgresql.primary.extendedConfiguration Extended configuration, appended to defaults
@@ -929,7 +1046,7 @@ postgresql:
     ## Must exceed metacat.database.maximumConnections, since some connections will be reserved for
     ## superuser
     ##
-    extendedConfiguration: |
+    extendedConfiguration: |-
       max_connections = 250
 
     ## Postgresql persistence
@@ -945,6 +1062,37 @@ postgresql:
       storageClass: ""
       existingClaim: ""
       size: 1Gi
+
+  ## @param postgresql.postgresqlDataDir PostgreSQL data dir folder. Must be versioned
+  ## to avoid overwriting during postgresql major version upgrades
+  ## e.g. like "/bitnami/postgresql/17/main" (bitnami default is "/bitnami/postgresql/data")
+  ##
+  postgresqlDataDir: /bitnami/postgresql/17/main
+
+  ## postgresql.upgrader initContainer to auto-upgrade across PostgreSQL major versions
+  upgrader:
+    ## @param postgresql.upgrader.enabled Enable initContainer for postgresql major version upgrades
+    ##
+    enabled: true
+    persistence:
+      ## @param postgresql.upgrader.persistence.existingClaim PVC containing postgresql data files
+      ##
+      existingClaim: ""
+    ## @param postgresql.upgrader.securityContext.runAsUser numerical User ID for the pod.
+    ##                                                      Must match PostgreSQL metacat user's uid
+    ## @param postgresql.upgrader.securityContext.runAsGroup numerical Group ID for the pod.
+    ##                                                      Must match PostgreSQL metacat user's gid
+    ## @param postgresql.upgrader.securityContext.fsGroup group id used to access mounted volume.
+    ##                                                      Must match PostgreSQL metacat user's gid
+    ## @param postgresql.upgrader.securityContext.fsGroupChangePolicy how k8s manages owner & perms.
+    ##                            IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
+    ##                            means K8s will always chown the volume to the fsGroup, even if the
+    ##                            volume is already owned by the fsGroup, which is VERY slow!
+    securityContext:
+      runAsUser: *mcpguid
+      runAsGroup: *mcpguid
+      fsGroup: *mcpguid
+      fsGroupChangePolicy: OnRootMismatch
 
 ## @section Tomcat Configuration
 
@@ -977,9 +1125,14 @@ dataone-indexer:
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ## @param dataone-indexer.podSecurityContext.fsGroup gid used to access mounted volumes
   ## @param dataone-indexer.podSecurityContext.supplementalGroups [array] additional vol access gids
+  ## @param dataone-indexer.podSecurityContext.fsGroupChangePolicy ownership & perms mgmt
+  ##                        IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
+  ##                        means K8s will always chown the volume to the fsGroup, even if the
+  ##                        volume is already owned by the fsGroup, which is VERY slow!
   podSecurityContext:
     fsGroup: *mcFsGroup
     supplementalGroups: *mcSupplementalGroups
+    fsGroupChangePolicy: *defaultFsGroupChangePolicy
 
   persistence:
     ## @param dataone-indexer.persistence.subPath The subdirectory of the volume to mount

@@ -1,5 +1,78 @@
 # Metacat Release Notes
 
+## Release Notes for Metacat 3.2.0
+
+**Release date: 2024-04-02**
+
+### New Features & Enhancements:
+- [Use executor service and rabbitMQ channel pool to improve the performance of submitting index
+  tasks.](https://github.com/NCEAS/metacat/issues/2032)
+- [Increase the max number of attempts when solr version conflict errors
+  occur](https://github.com/NCEAS/metacat/pull/2060)
+
+### Version Upgrades and Bug Fixes:
+- Fixed [failing calls to `/d1/mn/v2/object` for Objects without a format
+  id](https://github.com/NCEAS/metacat/issues/1708)
+- Fixed [Tomcat startup failure when Metacat is located on a mounted volume](https://github.com/NCEAS/metacat/issues/2069)
+- [Upgrade solr library from 8.11.3 to 9.8 in metacat and
+  metacat-common](https://github.com/NCEAS/metacat/issues/1817)
+- [Bump org.apache.wicket:wicket-core from 9.18.0 to 9.19.0](https://github.com/NCEAS/metacat/pull/2071)
+- [Bump com.rabbitmq:amqp-client from 5.21.0 to 5.25.0](https://github.com/NCEAS/metacat/pull/2065/files)
+
+
+## Release Notes for helm chart 2.0.0
+
+**Release date: 2025-04-02**
+
+> [!IMPORTANT]
+> If you are upgrading from an earlier helm chart version, please see the [Upgrade
+> Notes](#upgrading-from-chart-version-1xx) below.
+
+### New Features & Enhancements:
+- [Automate k8s Postgresql Upgrades](https://github.com/NCEAS/metacat/issues/1748) - see [Upgrade
+  Notes](#upgrading-from-chart-version-1xx) below.
+- Set default container resources requests & limits for Metacat, and for PostgreSQL subchart (these
+  should be overridden for your own production needs).
+- [Enable CORS for k8s Metacat Deployments](https://github.com/NCEAS/metacat/issues/2050)
+- [Add the ability to include arbitrary yaml subtree under `spec.rules` in
+  ingress.yaml](https://github.com/NCEAS/metacat/pull/2076)
+- [allow multiline rewrite rules](https://github.com/NCEAS/metacat/pull/2077)
+- faster startup: [reduce 2 `initContainers` (Solr & RabbitMQ) to 1
+  (`dependencies`)](https://github.com/NCEAS/metacat/pull/2097)
+- [add `fsGroupChangePolicy: OnRootMismatch`](https://github.com/NCEAS/metacat/pull/2098) to speed
+  up volume mounting
+
+### Version Upgrades and Bug Fixes:
+- [Update Tomcat base image](https://github.com/NCEAS/metacat/issues/2104) from
+  tomcat:9.0.96-jre17-temurin-jammy to tomcat:9.0.102-jre17-temurin-noble, to fix potential
+  vulnerability ([CVE-2025-24813](https://nvd.nist.gov/vuln/detail/CVE-2025-24813)).
+- Increase application versions:
+  - Metacat app version: 3.2.0
+  - MetacatUI app version: 2.32.2 (subchart version 1.0.5)
+  - dataone-indexer app version: 3.2.0 (subchart version 1.2.0)
+  - PostgreSQL app version 17.4.0 (subchart version 16.4.14) - see [Upgrade
+    Notes](#upgrading-from-chart-version-1xx) below.
+- Fixed [multiline YAML values splitting into multiple
+  properties](https://github.com/NCEAS/metacat/issues/2053)
+- Fixed `413 Request Entity Too Large` error from ingress-nginx when trying to upload large files
+
+### Upgrading From Chart Version 1.x.x
+
+> [!WARNING]
+> BEFORE trying to upgrade, you will need to run a script with your old 1.x.x chart running!
+
+Upgrading from Metacat Helm chart version 1.x.x to 2.0.0 and above, involves a major-version upgrade
+of the underlying PostgreSQL database. Thus requires the use of either `pg_upgrade`, or a `pg_dump`
+followed by a `pg_restore`. [The Metacat Helm chart](https://github.com/NCEAS/metacat/issues/1748)
+uses the `pg_dump` and `pg_restore` approach. This involves two steps:
+1. Running a script to dump the old database (with your old 1.x.x chart running), and then
+2. Doing a `helm uninstall`, then a `helm install` with the new 2.0.0 chart. The new chart has an
+   `initContainer` that will automatically restore the database from the dump.
+
+> [!IMPORTANT]
+> Please be sure to follow the upgrade steps described in the ["Major Version Upgrades" section of
+> the Helm README](https://github.com/NCEAS/metacat/tree/main/helm#major-version-upgrades)!
+
 
 ## Release Notes for Metacat 3.1.0
 
@@ -30,6 +103,7 @@ changes to disk-based file-storage methods.
   ([Issue #1922](https://github.com/NCEAS/metacat/issues/1922))
 * Add indexes to the access_log table ([Issue #1965](https://github.com/NCEAS/metacat/issues/1965))
 * Optimize the query to get log record ([Issue #1976](https://github.com/NCEAS/metacat/issues/1976))
+
 
 ## Release Notes for helm chart 1.2.0
 

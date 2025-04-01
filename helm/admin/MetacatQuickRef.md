@@ -101,7 +101,9 @@
 file.**
 
 - [ ] TLS ("SSL") setup (`ingress.tls.hosts` - leave blank to use default, or change if aliases
-      needed - see [hostname aliases tip, below](#where-to-find-existing-hostname-aliases))
+      needed...
+  - [ ] `(MIGRATION ONLY)` transfer any existing aliases and rewrite rules from legacy host; see
+        [hostname aliases tip, below](#where-to-find-existing-hostname-aliases)`
 - [ ] Set up Node cert and replication etc. as needed -  [see
       README](https://github.com/NCEAS/metacat/tree/main/helm#setting-up-certificates-for-dataone-replication).
   - [ ] Don't forget to [install the ca
@@ -119,15 +121,21 @@ file.**
     - for TEST, override at least `global.metacatExternalBaseUrl` and
       `global.d1ClientCnUrl`
 
-  - [ ] If using a theme from [metacatui-themes](https://github.com/NCEAS/metacatui-themes), this
-        must be made available on a ceph/PV/PVC mount; e.g:
+  - If using a theme from [metacatui-themes](https://github.com/NCEAS/metacatui-themes):
+    - [ ] it must be made available on a ceph/PV/PVC mount; e.g:
 
-      ```yaml
-        customTheme:
+          ```yaml
+          customTheme:
           enabled: true
           claimName: metacatsfwmd-metacatui-customtheme
           subPath: metacatui-themes/src/cerp/js/themes/cerp
-      ```
+          ```
+
+    - [ ] Ensure metacatui has read access
+
+          ```shell
+    -     chmod -R o+rx metacatui
+    -     ```
 
   - [ ] If the custom theme needs to be partially overridden by a separate config.js file (e.g.
     `sfwmd.js` is used to override [the CERP
@@ -218,7 +226,12 @@ happen...**
   > how to detect when hashstore conversion finishes
 
 - [ ] When database upgrade and hashstore conversion have both finished, re-enable probes
-- [ ] Re-index all datasets (Did with 25 indexers for test.adc on dev; 50 on prod)
+- [ ] Re-index all datasets (Did with 25 indexers for test.adc on dev; 50 on prod).
+
+  > NOTE: if you will need to determine **exactly** when indexing is complete (e.g. for
+  > benchmarking purposes), ensure the indexer log level has been set to INFO before you start
+  > indexing (`kc edit configmaps ${RELEASE_NAME}-indexer-configfiles` and restart all indexer pods)
+
     ```shell
     kubectl get secret ${RELEASE_NAME}-d1-client-cert -o jsonpath="{.data.d1client\.crt}" | \
         base64 -d > DELETEME_NODE_CERT.pem
@@ -229,8 +242,7 @@ happen...**
     # don't forget to delete the cert file:
     rm DELETEME_NODE_CERT.pem
     ```
-  > [See Tips, below](#monitor-indexing-progress-via-rabbitmq-dashboard) for monitoring indexing
-  > progress via RabbitMQ dashboard.
+  > [See Tips, below](#monitor-indexing-progress) for monitoring indexing progress.
 
 
 ## 6. `(MIGRATION ONLY)` FINAL SWITCH-OVER FROM LEGACY TO K8S
@@ -267,7 +279,7 @@ happen...**
 
      ```shell
      # ssh to legacy host, then...
-     sudo systemctl stop postgresql
+     sudo systemctl stop postgresql@14-main.service
      sudo systemctl stop tomcat9
      ```
 
@@ -305,7 +317,7 @@ happen...**
 - [ ] When rsync done, start postgres, and then start tomcat.
 
      ```shell
-     sudo systemctl start postgresql
+     sudo systemctl start postgresql@14-main.service
      sudo systemctl start tomcat9
      ```
 
@@ -465,57 +477,13 @@ happen...**
   egrep "\[WARN\]: The conversion is complete"
   ```
 
-### Fix Hashstore Error - PID Doesn't Exist in `identifier` Table:
+### Fix Hashstore Conversion Errors
 
-```shell
-# If you see this in the metacat logs:
-Pid <autogen pid> is missing system metadata. Since the pid starts with autogen and looks like to be
-created by DataONE api, it should have the systemmetadata. Please look at the systemmetadata and
-identifier table to figure out the real pid.
-```
-Steps to resolve:
+See the `Tips` section of the [Metacat K8s 3.0.0 to 3.1.0 Upgrade Steps Checklist](https://github.com/NCEAS/metacat/blob/main/helm/admin/3.0.0-to-3.1.0-upgrade-checklist.md#tips) for steps to resolve hashstore conversion errors
 
-1. Given the docid, get all revisions:
-   ```sql
-   select * from identifier where docid='<docid>';
-   ```
-2. Look for pid beginning 'autogen', and note its revision number
-3. pid should be the `obsoleted_by` from the previous revision's system metadata:
-   ```sql
-   select obsoleted_by from systemmetadata where guid='<previous revision pid>';
-   ```
-4. Check by look at `obsoletes` from the following revision, if one exists:
-   ```sql
-   select obsoletes from systemmetadata where guid='<following revision pid>';
-   ```
-5. Check if systemmetadata table has an entry for autogen pid
-   ```sql
-   select checksum from systemmetadata where guid='<autogen pid>';
-   ```
-   ...and the checksum matches that of the original file, found in:
-   ```shell
-   /var/metacat/(data or documents)/<'autogen' docid>.<revision number>
-   ```
+### Monitor Indexing Progress:
 
-#### = = = If these exist and do not match, STOP HERE AND INVESTIGATE FURTHER! = = =
-
-6. If an autogen-pid entry was found, update it with the new pid:
-   ```sql
-   update systemmetadata set guid='<pid from steps 3 & 4>' where guid='<autogen pid>';
-   ```
-7. Replace the 'autogen' pid with the real pid in the 'identifier' table:
-   ```sql
-   update identifier set guid='<pid from steps 3 & 4>' where guid='<autogen pid>';
-   ```
-8. Set the hashstore conversion status back to `pending`:
-   ```sql
-   update version_history set storage_upgrade_status='pending' where status='1';
-   ```
-   ...and restart the metacat pod to re-run the hashstore conversion and generate the correct
-   sysmeta file in hashstore
-
-### Monitor Indexing Progress via RabbitMQ Dashboard:
-
+#### Using the RabbitMQ Dashboard:
 * Enable port forwarding:
    ```shell
    kubectl port-forward service/${RELEASE_NAME}-rabbitmq-headless 15672:15672
@@ -529,7 +497,20 @@ Steps to resolve:
            -o jsonpath="{.data.rabbitmq-password}" | base64 -d)
    echo "rmq_pwd: $rmq_pwd"
    ```
+  > **NOTE**: queue activity is not a reliable indicator of indexing progress, since the index
+  > workers continue to process tasks even after the queue has been emptied. The best way to
+  > determine when indexing is complete is to monitor the logs, as follows...
 
+#### Determining when indexing is complete
+
+* Ensure the indexer log level has been set to INFO
+* grep the logs for the last occurrence of `Completed the index task from the index queue`:
+   ```shell
+   kubectl logs --max-log-requests 100 -f --tail=100 -l app.kubernetes.io/name=d1index \
+        | grep "Completed the index task"
+   ```
+* You must be sure indexing has finished before trying to find the last occurrence. Note that some
+    indexing tasks can take more than an hour.
 
 ### Creating Volume Credentials Secret for the PVs
 
@@ -580,21 +561,53 @@ Steps to resolve:
 
 * Look at the legacy installation in the `/etc/apache2/sites-enabled/` directory; e.g.:
 
-    ```shell
-    # ls /etc/apache2/sites-enabled/
-      aoncadis.org.conf      arcticdata.io.conf      beta.arcticdata.io.conf
-      # ...etc
-    ```
+  ```shell
+  # ls /etc/apache2/sites-enabled/
+    aoncadis.org.conf      arcticdata.io.conf      beta.arcticdata.io.conf
+    # ...etc
+  ```
 
 * the `ServerName` and `ServerAlias` directives are in these `.conf` files, e.g.:
 
-   ```
-     <IfModule mod_ssl.c>
-     <VirtualHost *:443>
-             DocumentRoot /var/www/arcticdata.io/htdocs
-             ServerName arcticdata.io
-             ServerAlias www.arcticdata.io permafrost.arcticdata.io
-   ```
-  **NOTE:** it may not be necessary to incorporate all these aliases in the k8s environment. For
-  prod ADC, for example, we left apache running with these aliases in place, and transferred only
-  the `arcticdata.io` domain. [see Issue #1954](https://github.com/NCEAS/metacat/issues/1954)
+  ```
+   <IfModule mod_ssl.c>
+   <VirtualHost *:443>
+           DocumentRoot /var/www/arcticdata.io/htdocs
+           ServerName arcticdata.io
+           ServerAlias www.arcticdata.io permafrost.arcticdata.io
+  ```
+
+* Aliases can be set up easily, as follows:
+
+  ```yaml
+  ingress:
+    rewriteRules: |
+      if ($host = "evos.nceas.ucsb.edu") {
+        return 301 https://goa.nceas.ucsb.edu$request_uri;
+      }
+      if ($host = "gulfwatch.nceas.ucsb.edu") {
+        return 301 https://goa.nceas.ucsb.edu$request_uri;
+      }
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/server-alias: evos.nceas.ucsb.edu, gulfwatch.nceas.ucsb.edu
+
+    tls:
+      - hosts:
+          - goa.nceas.ucsb.edu
+          - evos.nceas.ucsb.edu
+          - gulfwatch.nceas.ucsb.edu
+        secretName: ingress-nginx-tls-cert
+
+    rules:
+      - host: goa.nceas.ucsb.edu
+        http:
+          paths:
+          ## ...etc.
+          ## No need to add rules for evos.nceas.ucsb.edu or gulfwatch.nceas.ucsb.edu
+  ```
+
+> _**NOTE:** sometimes, it may not be necessary to incorporate all these aliases in the k8s
+> environment. For prod ADC, for example, we left apache running with these aliases and complex
+> rewrites in place, and transferred only the `arcticdata.io` domain. [see Issue
+> #1954](https://github.com/NCEAS/metacat/issues/1954)_

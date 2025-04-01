@@ -135,6 +135,18 @@ set solr HostName
 {{- end }}
 
 {{/*
+set postgresql HostName
+*/}}
+{{- define "metacat.postgresql.hostname" -}}
+{{- $dbUri := (index .Values.metacat "database.connectionURI") }}
+{{- if not $dbUri }}
+  {{- .Release.Name }}-postgresql-hl
+{{- else }}
+  {{- regexFind "://[^/]+" $dbUri | trimPrefix "://" }}
+{{- end }}
+{{- end }}
+
+{{/*
 Renders a value that contains template.
 Usage:
 {{ include "helpers.tplvalues.render" ( dict "value" .Values.path.to.the.Value "context" $) }}
