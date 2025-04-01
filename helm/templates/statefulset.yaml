@@ -21,7 +21,7 @@ spec:
         {{- include "metacat.selectorLabels" . | nindent 8 }}
     spec:
       initContainers:
-        - name: dependencies
+        - name: deps
           image: busybox:latest
           command:
             - sh
@@ -54,7 +54,7 @@ spec:
               until [[ $(echo -e "GET $SOLRURI HTTP/1.1\r\nHost: $SOLRHOST\r\n\r\n" \
                 | nc $SOLRHOST $SOLRPORT | grep -c "<schema name=\"dataone") == 1 ]]; do
                 echo waiting for Solr Schema to be accessible at http://$SOLRHOST:$SOLRPORT$SOLRURI;
-              sleep 1; done;
+              sleep 2; done;
         {{- if and .Values.postgresql.upgrader .Values.postgresql.upgrader.enabled }}
         - name: pgupgrade
           image: postgres:latest
@@ -116,9 +116,9 @@ spec:
               #
               # * * * pg_restore existing pg_dump files * * *
               #
-              echo "Restoring from dump file $DUMP, using command:";
-              echo "pg_restore -U $USER -h $HOST -d $DB --format=directory --jobs=20 $MNT/$DUMP";
-              PGPASSWORD=$POSTGRES_PASSWORD pg_restore -U $USER -h $HOST -d $DB --format=directory --jobs=20 $MNT/$DUMP;
+              echo "Restoring from dump file $DUMP as 'postgres' admin user, using command:";
+              echo "pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 $MNT/$DUMP";
+              PGPASSWORD=$POSTGRES_PASSWORD pg_restore -U postgres -h $HOST -d $DB --format=directory --jobs=20 $MNT/$DUMP;
               echo "FINISHED restoring from dump file $DUMP; exiting initContainer...";
           volumeMounts:
             - name: {{ .Release.Name }}-postgres-pgupgrade

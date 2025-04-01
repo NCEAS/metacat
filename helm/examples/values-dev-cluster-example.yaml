@@ -79,10 +79,6 @@ ingress:
     - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
 
-podSecurityContext:
-  runAsNonRoot: true
-  fsGroupChangePolicy: OnRootMismatch
-
 postgresql:
   upgrader:
     persistence:
@@ -101,6 +97,7 @@ postgresql:
         matchLabels:
           ## Use your own release name instead of metacatbrooke
           metacatVolumeName: cephfs-metacatbrooke-metacat-postgresdata
+
 
   auth:
     existingSecret: *passwordSecretName
