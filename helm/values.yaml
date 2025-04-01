@@ -1037,6 +1037,8 @@ postgresql:
     pgHbaConfiguration: |
       host        metacat       metacat       0.0.0.0/0       password
       host        metacat       metacat       ::0/0           password
+      host        all           postgres      0.0.0.0/0       password
+      host        all           postgres      ::0/0           password
       local       all           all                           trust
 
     ## @param postgresql.primary.extendedConfiguration Extended configuration, appended to defaults
