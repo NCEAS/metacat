@@ -2,7 +2,7 @@
 
 ## Release Notes for Metacat 3.2.0
 
-**Release date: 2024-03-31**
+**Release date: 2024-04-02**
 
 ### New Features & Enhancements:
 - [Use executor service and rabbitMQ channel pool to improve the performance of submitting index
@@ -22,7 +22,7 @@
 
 ## Release Notes for helm chart 2.0.0
 
-**Release date: 2025-03-31**
+**Release date: 2025-04-02**
 
 > [!IMPORTANT]
 > If you are upgrading from an earlier helm chart version, please see the [Upgrade
