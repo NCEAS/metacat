@@ -166,6 +166,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         try {
             // The first admin page will show pending since we don't know anything about db
             if (!DatabaseUtil.isDatabaseConfigured()) {
+                logMetacat.debug("the database is not configured so return unknown as the status");
                 return UpgradeStatus.UNKNOWN;
             }
             generateFinalVersionsAndClassesMap();
@@ -182,6 +183,7 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
             // There is an upgrade. We determine the version from the finalVersionAndClassMap
             versionAndClassMap = finalVersionAndClassMap;
         }
+        logMetacat.debug("The final version map is " + versionAndClassMap);
         // We combine the status for all status of the different versions
         for (String version : versionAndClassMap.keyList()) {
             UpgradeStatus versionStatus = getStatus(version);
@@ -258,6 +260,12 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
                                                  + statusStr);
                             status = UpgradeStatus.getStatus(statusStr);
                         }
+                    } else {
+                        // There is no record for this version. So we set it to not-required
+                        logMetacat.debug("There is no record in the version_history table for "
+                                             + "version " + version + ". So set it "
+                                             + UpgradeStatus.NOT_REQUIRED );
+                        status = UpgradeStatus.NOT_REQUIRED;
                     }
                 }
             }
@@ -340,8 +348,12 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         }
         if (finalVersionAndClassMap == null || finalVersionAndClassMap.isEmpty()) {
             finalVersionAndClassMap = new ListOrderedMap<>();
-            Vector<String> neededUpgradeVersionsForDB = DBAdmin.getNeededUpgradedVersions();
+            Vector<String> neededUpgradeVersionsForDB =
+                DBAdmin.getInstance().getNeededUpgradedVersions();
+            logMetacat.debug("The neededUpgradeVersion is " + neededUpgradeVersionsForDB);
             initVersionAndClassFromProperty();
+            logMetacat.debug("The initVersionAndClassFromProperty is "
+                                 + versionAndClassMapInProperty);
             if (neededUpgradeVersionsForDB != null && !neededUpgradeVersionsForDB.isEmpty()) {
                 logMetacat.debug("There was a Metacat version upgrade in the configuration. So we"
                                      + " will combine the DB upgrade version range and the storage "

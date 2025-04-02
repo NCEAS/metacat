@@ -300,6 +300,7 @@ public class MetacatAdminServlet extends HttpServlet {
                 request.setAttribute("contextURL", SystemUtil.getContextURL());
             }
             String hashStoreStatus = HashStoreConversionAdmin.getStatus().getValue();
+            logMetacat.debug("The status of hashstore is " + hashStoreStatus);
             request.setAttribute("hashStoreStatus", hashStoreStatus  );
             // Add the db configure errors
             if (dbConfigured != null && dbConfigured.equals(MetacatAdmin.FAILURE)
