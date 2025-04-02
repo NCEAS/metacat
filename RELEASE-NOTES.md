@@ -14,6 +14,7 @@
 - Fixed [failing calls to `/d1/mn/v2/object` for Objects without a format
   id](https://github.com/NCEAS/metacat/issues/1708)
 - Fixed [Tomcat startup failure when Metacat is located on a mounted volume](https://github.com/NCEAS/metacat/issues/2069)
+- Fixed [A freshly installed Metacat 3.2.0 instance always has an incorrect hashstore conversion status](https://github.com/NCEAS/metacat/issues/2114)
 - [Upgrade solr library from 8.11.3 to 9.8 in metacat and
   metacat-common](https://github.com/NCEAS/metacat/issues/1817)
 - [Bump org.apache.wicket:wicket-core from 9.18.0 to 9.19.0](https://github.com/NCEAS/metacat/pull/2071)
