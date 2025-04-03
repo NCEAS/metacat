@@ -1082,17 +1082,9 @@ postgresql:
     ##                                                      Must match PostgreSQL metacat user's uid
     ## @param postgresql.upgrader.securityContext.runAsGroup numerical Group ID for the pod.
     ##                                                      Must match PostgreSQL metacat user's gid
-    ## @param postgresql.upgrader.securityContext.fsGroup group id used to access mounted volume.
-    ##                                                      Must match PostgreSQL metacat user's gid
-    ## @param postgresql.upgrader.securityContext.fsGroupChangePolicy how k8s manages owner & perms.
-    ##                            IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
-    ##                            means K8s will always chown the volume to the fsGroup, even if the
-    ##                            volume is already owned by the fsGroup, which is VERY slow!
     securityContext:
       runAsUser: *mcpguid
       runAsGroup: *mcpguid
-      fsGroup: *mcpguid
-      fsGroupChangePolicy: OnRootMismatch
 
 ## @section Tomcat Configuration
 
