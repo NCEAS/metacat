@@ -458,8 +458,6 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `postgresql.upgrader.persistence.existingClaim`             | PVC containing postgresql data files                       | `""`                              |
 | `postgresql.upgrader.securityContext.runAsUser`             | numerical User ID for the pod.                             | `59996`                           |
 | `postgresql.upgrader.securityContext.runAsGroup`            | numerical Group ID for the pod.                            | `59996`                           |
-| `postgresql.upgrader.securityContext.fsGroup`               | group id used to access mounted volume.                    | `59996`                           |
-| `postgresql.upgrader.securityContext.fsGroupChangePolicy`   | how k8s manages owner & perms.                             | `OnRootMismatch`                  |
 
 ### Tomcat Configuration
 
