@@ -2,7 +2,8 @@
 
 > **= = = THIS IS A TEMPLATE - MAKE YOUR OWN COPY BEFORE CHECKING BOXES! = = =**
 
-> ## IMPORTANT NOTES - before you begin...
+> [!IMPORTANT]
+> Before you begin...
 > 1. **PURPOSE:** This ordered checklist is for either:
 >    * Creating a new, empty Metacat v3.1.0+ installation on a Kubernetes (K8s) cluster, or
 >    * Migrating and upgrading an existing, non-K8s Metacat v2.19.x instance to become a Metacat
@@ -162,9 +163,9 @@ file.**
 
 ## 5M. `(MIGRATION ONLY)` First Install
 
-**== IMPORTANT! == IF MOVING DATA FROM AN EXISTING DEPLOYMENT THAT IS ALSO A DATAONE MEMBER NODE, DO
-NOT REGISTER THIS NODE WITH THE PRODUCTION CN UNTIL YOU'RE READY TO GO LIVE, or bad things will
-happen...**
+> [!CAUTION]
+> IF MOVING DATA FROM AN EXISTING DEPLOYMENT THAT IS ALSO A DATAONE MEMBER NODE, DO NOT REGISTER
+> THIS NODE WITH THE PRODUCTION CN UNTIL YOU'RE READY TO GO LIVE, or bad things will happen...
 
 - [ ] Point the deployment at the **SANDBOX CN**
 
@@ -184,12 +185,13 @@ happen...**
 - [ ] If legacy DB version was < 3.0.0, Disable `livenessProbe` & `readinessProbe` until Database
       Upgrade is finished.
 
-  > NOTE: Upgrade only writes OLD datasets -- ones not starting `autogen` -- from DB to disk.
-  These should all be finished after the first upgrade - so provided subsequent `/var/metacat/` rsyncs are
-  only additive (don't `--delete` destination files not on source), then subsequent DB upgrades
-  after incremental rsyncs will be very fast. [Tips,
-  below](#see-how-many-old-datasets-exist-in-db-before-the-upgrade) show how to check the number
-  of "old" datasets exist in DB, before the upgrade
+> [!NOTE]
+> Upgrade only writes OLD datasets -- ones not starting `autogen` -- from DB to disk.
+> These should all be finished after the first upgrade - so provided subsequent `/var/metacat/`
+> rsyncs are only additive (don't `--delete` destination files not on source), then subsequent DB
+> upgrades after incremental rsyncs will be very fast. [Tips,
+> below](#see-how-many-old-datasets-exist-in-db-before-the-upgrade) show how to check the number
+> of "old" datasets exist in DB, before the upgrade
 
 - [ ] set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run yet
 - [ ] `helm install`, debug any startup and configuration issues, and allow database upgrade to
@@ -198,9 +200,10 @@ happen...**
   > See [Tips, below](#monitor-database-upgrade-completion), for how to detect when
   > database conversion finishes
 
-  > **NOTE:** because hashstore conversion has not yet been done, it is expected for metacatUI to
-  > display `Oops! It looks like there was a problem retrieving your search results.`, and for
-  > `/metacat/d1/mn/v2/` api calls to display `Metacat has not been configured`
+> [!NOTE]
+> because hashstore conversion has not yet been done, it is expected for metacatUI to
+> display `Oops! It looks like there was a problem retrieving your search results.`, and for
+> `/metacat/d1/mn/v2/` api calls to display `Metacat has not been configured`
 
 - [ ] In the metacat database, verify that all the `systemmetadata.checksum_algorithm` entries are
       on the [list of supported
@@ -228,9 +231,10 @@ happen...**
 - [ ] When database upgrade and hashstore conversion have both finished, re-enable probes
 - [ ] Re-index all datasets (Did with 25 indexers for test.adc on dev; 50 on prod).
 
-  > NOTE: if you will need to determine **exactly** when indexing is complete (e.g. for
-  > benchmarking purposes), ensure the indexer log level has been set to INFO before you start
-  > indexing (`kc edit configmaps ${RELEASE_NAME}-indexer-configfiles` and restart all indexer pods)
+> [!NOTE]
+> if you will need to determine **exactly** when indexing is complete (e.g. for
+> benchmarking purposes), ensure the indexer log level has been set to INFO before you start
+> indexing (`kc edit configmaps ${RELEASE_NAME}-indexer-configfiles` and restart all indexer pods)
 
     ```shell
     kubectl get secret ${RELEASE_NAME}-d1-client-cert -o jsonpath="{.data.d1client\.crt}" | \
@@ -256,9 +260,9 @@ happen...**
 > - [ ] Any others that will need changing, e.g. `dataone.nodeSynchronize`, `dataone.nodeReplicate`
 >       etc.
 >
-> NOTE: If you need to accommodate hostname aliases, you'll need to update the `ingress.tls`
-> section to reflect the new hostname(s) - see [Tips,
-> below](#where-to-find-existing-hostname-aliases).
+> [!NOTE]
+> If you need to accommodate hostname aliases, you'll need to update the `ingress.tls` section to
+> reflect the new hostname(s) - see [Tips, below](#where-to-find-existing-hostname-aliases).
 
 ### = = = = = = = = = = = = = IN K8S CLUSTER: = = = = = = = = = = = = =
 - [ ] Make a backup of the `checksums` table so hashstore won't try to reconvert completed files:
@@ -497,9 +501,10 @@ See the `Tips` section of the [Metacat K8s 3.0.0 to 3.1.0 Upgrade Steps Checklis
            -o jsonpath="{.data.rabbitmq-password}" | base64 -d)
    echo "rmq_pwd: $rmq_pwd"
    ```
-  > **NOTE**: queue activity is not a reliable indicator of indexing progress, since the index
-  > workers continue to process tasks even after the queue has been emptied. The best way to
-  > determine when indexing is complete is to monitor the logs, as follows...
+> [!NOTE]
+> queue activity is not a reliable indicator of indexing progress, since the index
+> workers continue to process tasks even after the queue has been emptied. The best way to
+> determine when indexing is complete is to monitor the logs, as follows...
 
 #### Determining when indexing is complete
 
@@ -514,7 +519,9 @@ See the `Tips` section of the [Metacat K8s 3.0.0 to 3.1.0 Upgrade Steps Checklis
 
 ### Creating Volume Credentials Secret for the PVs
 
-**VERY IMPORTANT when creating volume credentials secret:**
+> [!IMPORTANT]
+> When creating volume credentials secret:
+
 1. For the userID, omit the “client.” from the beginning of the username before base64 encoding
    it; e.g.: if your username is `client.k8s-dev-metacatknb-subvol-user`, use only
    `k8s-dev-metacatknb-subvol-user`
@@ -607,7 +614,8 @@ See the `Tips` section of the [Metacat K8s 3.0.0 to 3.1.0 Upgrade Steps Checklis
           ## No need to add rules for evos.nceas.ucsb.edu or gulfwatch.nceas.ucsb.edu
   ```
 
-> _**NOTE:** sometimes, it may not be necessary to incorporate all these aliases in the k8s
+> [!NOTE]
+> _sometimes, it may not be necessary to incorporate all these aliases in the k8s
 > environment. For prod ADC, for example, we left apache running with these aliases and complex
 > rewrites in place, and transferred only the `arcticdata.io` domain. [see Issue
 > #1954](https://github.com/NCEAS/metacat/issues/1954)_
