@@ -134,8 +134,8 @@ file.**
     - [ ] Ensure metacatui has read access
 
           ```shell
-    -     chmod -R o+rx metacatui
-    -     ```
+          chmod -R o+rx metacatui
+          ```
 
   - [ ] If the custom theme needs to be partially overridden by a separate config.js file (e.g.
     `sfwmd.js` is used to override [the CERP
@@ -170,7 +170,7 @@ happen...**
 
     ```yaml
     global:
-      d1ClientCnUrl: https://cn-sandbox.dataone.org/cn
+      d1ClientCnUrl: https://cn-sandbox.test.dataone.org/cn
     ```
 
 - [ ] The Node ID (in `metacat.dataone.nodeId` and `metacat.dataone.subject`) **MUST MATCH the
@@ -387,7 +387,7 @@ happen...**
     ```yaml
     ## TODO: DELETE ME WHEN READY TO GO LIVE!
     global:
-      d1ClientCnUrl: https://cn-sandbox.dataone.org/cn
+      d1ClientCnUrl: https://cn-sandbox.test.dataone.org/cn
     ```
 
 - [ ] In order to push `dataone.*` member node properties (`dataone.nodeId`, `dataone.subject`,
