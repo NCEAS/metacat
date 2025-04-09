@@ -270,7 +270,7 @@
         <dependency>
             <groupId>com.servlets</groupId>
             <artifactId>cos</artifactId>
-            <version>05Nov2002</version>
+            <version>09May2002</version>
         </dependency>
         <dependency>
             <groupId>net.sf.opencsv</groupId>
