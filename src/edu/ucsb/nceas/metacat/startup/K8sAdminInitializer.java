@@ -5,6 +5,7 @@ import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.admin.D1Admin;
 import edu.ucsb.nceas.metacat.admin.DBAdmin;
 import edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin;
+import edu.ucsb.nceas.metacat.admin.UpgradeStatus;
 import edu.ucsb.nceas.metacat.database.DBVersion;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
@@ -140,7 +141,18 @@ public class K8sAdminInitializer {
      * when it is necessary. The convert method is self-contained, and it can figure out if it
      * needs to run the conversion.
      */
-    static void initK8sStorageUpgrade() {
+    static void initK8sStorageUpgrade() throws ServletException {
+        try {
+            UpgradeStatus status = HashStoreConversionAdmin.getStatus();
+            if (status == UpgradeStatus.IN_PROGRESS) {
+                logMetacat.debug("The hashstore conversion status is IN PROGRESS. This means "
+                                     + "the previous conversion was interrupted and Metacat will "
+                                     + "set the status FAILED to continue the process.");
+                HashStoreConversionAdmin.updateInProgressStatus(UpgradeStatus.FAILED);
+            }
+        } catch (AdminException e) {
+            throw new ServletException(e);
+        }
         HashStoreConversionAdmin.convert();
     }
 }
