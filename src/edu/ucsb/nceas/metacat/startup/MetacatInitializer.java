@@ -470,6 +470,7 @@ public class MetacatInitializer implements ServletContextListener{
                                      + "set the status FAILED to continue the process.");
                 HashStoreConversionAdmin.updateInProgressStatus(UpgradeStatus.FAILED);
             }
+            status = HashStoreConversionAdmin.getStatus();//Get the new status
             if (status == UpgradeStatus.PENDING || status == UpgradeStatus.FAILED) {
                 logMetacat.debug("Metacat starts an auto storage conversion when the database is "
                                      + "configured: " + DatabaseUtil.isDatabaseConfigured()
