@@ -135,7 +135,7 @@ public class K8sAdminInitializerTest {
             HashStoreConversionAdmin.class,
             withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS))) {
             mockStoreAdmin.when(HashStoreConversionAdmin::getStatus)
-                .thenReturn(UpgradeStatus.IN_PROGRESS).thenReturn(UpgradeStatus.FAILED);
+                .thenReturn(UpgradeStatus.IN_PROGRESS);
             mockStoreAdmin.when(
                     () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)))
                 .thenAnswer(invocation -> null);
@@ -145,6 +145,22 @@ public class K8sAdminInitializerTest {
             mockStoreAdmin.verify(
                 () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)),
                 times(1));
+            mockStoreAdmin.verify(HashStoreConversionAdmin::convert, times(1));
+        }
+        try (MockedStatic<HashStoreConversionAdmin> mockStoreAdmin = Mockito.mockStatic(
+            HashStoreConversionAdmin.class,
+            withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS))) {
+            mockStoreAdmin.when(HashStoreConversionAdmin::getStatus)
+                .thenReturn(UpgradeStatus.FAILED);
+            mockStoreAdmin.when(
+                    () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)))
+                .thenAnswer(invocation -> null);
+            mockStoreAdmin.when(HashStoreConversionAdmin::convert)
+                .thenAnswer(invocation -> null);
+            K8sAdminInitializer.initK8sStorageUpgrade();
+            mockStoreAdmin.verify(
+                () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)),
+                times(0));
             mockStoreAdmin.verify(HashStoreConversionAdmin::convert, times(1));
         }
     }
