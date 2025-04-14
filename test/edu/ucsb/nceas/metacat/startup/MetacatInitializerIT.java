@@ -38,6 +38,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
@@ -298,6 +299,59 @@ public class MetacatInitializerIT {
                     new AdminException("Can't convert storage at " + time + " does not " + "exist"))
                 .when(mockInitializer).convertStorage();
             mockInitializer.contextInitialized(event);
+        }
+
+        // Test the scenario that initial status is in progress
+        try (MockedStatic<HashStoreConversionAdmin> mockStoreAdmin = Mockito.mockStatic(
+            HashStoreConversionAdmin.class,
+            withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS))) {
+            mockStoreAdmin.when(HashStoreConversionAdmin::getStatus)
+                .thenReturn(UpgradeStatus.IN_PROGRESS).thenReturn(UpgradeStatus.IN_PROGRESS)
+                .thenReturn(UpgradeStatus.COMPLETE);
+            mockStoreAdmin.when(
+                    () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)))
+                .thenAnswer(invocation -> null);
+            mockStoreAdmin.when(HashStoreConversionAdmin::convert)
+                .thenAnswer(invocation -> null);
+            MetacatInitializer mockInitializer = Mockito.mock(
+                MetacatInitializer.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            mockInitializer.contextInitialized(event);
+            if (testAsContainerized) {
+                mockStoreAdmin.verify(
+                    () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)),
+                    times(0));
+            } else {
+                mockStoreAdmin.verify(
+                    () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)),
+                    times(1));
+            }
+        }
+        // Test the scenario that initial status is complete
+        try (MockedStatic<HashStoreConversionAdmin> mockStoreAdmin = Mockito.mockStatic(
+            HashStoreConversionAdmin.class,
+            withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS))) {
+            mockStoreAdmin.when(HashStoreConversionAdmin::getStatus)
+                .thenReturn(UpgradeStatus.FAILED).thenReturn(UpgradeStatus.COMPLETE)
+                .thenReturn(UpgradeStatus.COMPLETE);
+            mockStoreAdmin.when(
+                    () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)))
+                .thenAnswer(invocation -> null);
+            mockStoreAdmin.when(HashStoreConversionAdmin::convert)
+                .thenAnswer(invocation -> null);
+            MetacatInitializer mockInitializer = Mockito.mock(
+                MetacatInitializer.class,
+                withSettings().useConstructor().defaultAnswer(CALLS_REAL_METHODS));
+            mockInitializer.contextInitialized(event);
+            if (testAsContainerized) {
+                mockStoreAdmin.verify(
+                    () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)),
+                    times(0));
+            } else {
+                mockStoreAdmin.verify(
+                    () -> HashStoreConversionAdmin.updateInProgressStatus(any(UpgradeStatus.class)),
+                    times(0));
+            }
         }
     }
 

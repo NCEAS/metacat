@@ -464,6 +464,7 @@ public class MetacatInitializer implements ServletContextListener{
                              + "This statement is before checking the DB' status.");
         if (DatabaseUtil.isDatabaseConfigured() && PropertyService.arePropertiesConfigured()) {
             UpgradeStatus status = HashStoreConversionAdmin.getStatus();
+            logMetacat.debug("the initial status is " + status.getValue());
             if (status == UpgradeStatus.IN_PROGRESS) {
                 logMetacat.debug("The hashstore conversion status is IN PROGRESS. This means "
                                      + "the previous conversion was interrupted and Metacat will "
@@ -471,6 +472,7 @@ public class MetacatInitializer implements ServletContextListener{
                 HashStoreConversionAdmin.updateInProgressStatus(UpgradeStatus.FAILED);
             }
             status = HashStoreConversionAdmin.getStatus();//Get the new status
+            logMetacat.debug("The probably modified status is " + status.getValue());
             if (status == UpgradeStatus.PENDING || status == UpgradeStatus.FAILED) {
                 logMetacat.debug("Metacat starts an auto storage conversion when the database is "
                                      + "configured: " + DatabaseUtil.isDatabaseConfigured()
