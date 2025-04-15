@@ -1,12 +1,17 @@
 package edu.ucsb.nceas.metacat.admin;
 
 import edu.ucsb.nceas.LeanTestUtils;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Types;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -119,5 +124,59 @@ public class HashStoreConversionAdminIT {
             mocked.verify(() -> HashStoreConversionAdmin.generateFinalVersionsAndClassesMap(),
                           never());
         }
+    }
+
+    @Test
+    public void testUpdateInProgressStatus() throws Exception {
+        DBConnection conn = null;
+        int serialNumber = -1;
+        String version;
+        UpgradeStatus originalStatus;
+        //Get original version/status pair
+        try {
+            // check out DBConnection
+            conn =
+                DBConnectionPool.getDBConnection("HashStoreConversionAdminIT"
+                                                     + ".testUpdateInProgressStatus");
+            serialNumber = conn.getCheckOutSerialNumber();
+            try (PreparedStatement pstmt = conn.prepareStatement(
+                "SELECT version, storage_upgrade_status FROM version_history")) {
+                ResultSet resultSet = pstmt.executeQuery();
+                if (resultSet.next()) {
+                    version = resultSet.getString(1);
+                    String status = (String) resultSet.getObject(2);
+                    originalStatus = UpgradeStatus.getStatus(status);
+                } else {
+                    throw new Exception("We can't find anything in the version_history table.");
+                }
+            }
+        } finally {
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+        }
+        try {
+            // check out DBConnection
+            conn =
+                DBConnectionPool.getDBConnection("HashStoreConversionAdminIT"
+                                                     + ".testUpdateInProgressStatus");
+            serialNumber = conn.getCheckOutSerialNumber();
+            //Set the status of the version to in_progress
+            try (PreparedStatement pstmt = conn.prepareStatement(
+                "UPDATE version_history SET storage_upgrade_status=? WHERE version=?")) {
+                pstmt.setObject(1, UpgradeStatus.IN_PROGRESS.getValue(), Types.OTHER);
+                pstmt.setString(2, version);
+                pstmt.executeUpdate();
+            }
+            assertEquals(UpgradeStatus.IN_PROGRESS.getValue(),
+                         HashStoreConversionAdmin.getStatus(version).getValue());
+            //Modify the in_progress status to complete
+            HashStoreConversionAdmin.updateInProgressStatus(UpgradeStatus.COMPLETE);
+            assertEquals(UpgradeStatus.COMPLETE.getValue(),
+                         HashStoreConversionAdmin.getStatus(version).getValue());
+        } finally {
+            HashStoreConversionAdmin.setStatus(version, originalStatus);
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+        }
+        assertEquals(originalStatus.getValue(),
+                     HashStoreConversionAdmin.getStatus(version).getValue());
     }
 }

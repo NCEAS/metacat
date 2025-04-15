@@ -326,6 +326,37 @@ public class HashStoreConversionAdmin extends MetacatAdmin {
         }
     }
 
+    /**
+     * To update all rows in the version_history table with storage_upgrade_status of "in prgoress"
+     * to the given status
+     * @param status  the new status being set
+     * @throws AdminException
+     */
+    public static void updateInProgressStatus(UpgradeStatus status) throws AdminException {
+        DBConnection conn = null;
+        int serialNumber = -1;
+        try {
+            // check out DBConnection
+            conn =
+                DBConnectionPool.getDBConnection("HashStoreConversionAdmin.updateInProgressStatus");
+            serialNumber = conn.getCheckOutSerialNumber();
+            try (PreparedStatement pstmt = conn.prepareStatement(
+                "UPDATE version_history SET storage_upgrade_status=? WHERE "
+                    + "storage_upgrade_status=?")) {
+                pstmt.setObject(1, status.getValue(), Types.OTHER);
+                pstmt.setObject(2, UpgradeStatus.IN_PROGRESS.getValue(), Types.OTHER);
+                logMetacat.debug("The query to update the hashstore conversion status is " + pstmt);
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new AdminException(
+                "Cannot update the status " + UpgradeStatus.IN_PROGRESS.getValue() + " to "
+                    + status.getValue() + " into database since " + e.getMessage());
+        } finally {
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+        }
+    }
+
     private static void addError(String errorMessage) {
         error.add(errorMessage);
     }
