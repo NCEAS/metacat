@@ -466,13 +466,13 @@ public class MetacatInitializer implements ServletContextListener{
             UpgradeStatus status = HashStoreConversionAdmin.getStatus();
             logMetacat.debug("the initial status is " + status.getValue());
             if (status == UpgradeStatus.IN_PROGRESS) {
-                logMetacat.debug("The hashstore conversion status is IN PROGRESS. This means "
+                logMetacat.warn("The hashstore conversion status is IN PROGRESS. This means "
                                      + "the previous conversion was interrupted and Metacat will "
                                      + "set the status FAILED to continue the process.");
                 HashStoreConversionAdmin.updateInProgressStatus(UpgradeStatus.FAILED);
             }
             status = HashStoreConversionAdmin.getStatus();//Get the new status
-            logMetacat.debug("The probably modified status is " + status.getValue());
+            logMetacat.debug("The status is " + status.getValue());
             if (status == UpgradeStatus.PENDING || status == UpgradeStatus.FAILED) {
                 logMetacat.debug("Metacat starts an auto storage conversion when the database is "
                                      + "configured: " + DatabaseUtil.isDatabaseConfigured()

@@ -145,7 +145,7 @@ public class K8sAdminInitializer {
         try {
             UpgradeStatus status = HashStoreConversionAdmin.getStatus();
             if (status == UpgradeStatus.IN_PROGRESS) {
-                logMetacat.debug("The hashstore conversion status is IN PROGRESS. This means "
+                logMetacat.warn("The hashstore conversion status is IN PROGRESS. This means "
                                      + "the previous conversion was interrupted and Metacat will "
                                      + "set the status FAILED to continue the process.");
                 HashStoreConversionAdmin.updateInProgressStatus(UpgradeStatus.FAILED);
