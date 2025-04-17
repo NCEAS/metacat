@@ -5,9 +5,9 @@
 > [!IMPORTANT]
 > Before you begin...
 > 1. **PURPOSE:** This ordered checklist is for either:
->    * Creating a new, empty Metacat v3.1.0+ installation on a Kubernetes (K8s) cluster, or
+>    * Creating a new, empty Metacat v3.2.0+ installation on a Kubernetes (K8s) cluster, or
 >    * Migrating and upgrading an existing, non-K8s Metacat v2.19.x instance to become a Metacat
->      v3.1.0+ K8s installation.
+>      v3.2.0+ K8s installation.
 >    * ***Very Important: Before starting a migration, you **must** have a fully-functioning
 >      installation of Metacat version 2.19, running with PostgreSQL version 14. Migrating from
 >      other versions of Metacat and/or PostgreSQL is not supported.***
@@ -18,38 +18,85 @@
 > 4. Unmarked sections are required for both types of installation
 > 5. For more in-depth explanation and details of configuration steps, see the [Metacat Helm
 >    README](https://github.com/NCEAS/metacat/tree/main/helm#readme).
-> 6. Some references below are specific to NCEAS infrastructure (e.g. CephFS storage); adjust as
->    needed for your own installation.
+> 6. Some references below are specific to NCEAS infrastructure (e.g. ssh username/hostname; use of
+>    CephFS storage, etc); adjust as needed for your own installation.
 > 7. Assumptions: you have a working knowledge of Kubernetes deployment, including working with yaml
->    files, helm and kubectl commands, and your kubectl context is set for the target deployment
->    location
+>    files, helm and kubectl commands; your kubectl context is set for the target deployment
+>    location; you are able to ssh from the legacy host to the host where the target filesystem is
+>    mounted (in our case, cephfs).
 
 ## 1. `(MIGRATION ONLY)` Copy Data and Set Ownership & Permissions
 
+### = = = = = = = = = = = = = ON LEGACY HOST: = = = = = = = = = = = = =
 - [ ] first `rsync` the data from the 2.19 instance over to cephfs (OK to leave postgres & tomcat
       running)
     ```shell
     # can also prepend with time, and use --stats --human-readable, and/or --dry-run
     #
     # metacat:
-    sudo rsync -aHAX /var/metacat/data/      /mnt/ceph/repos/REPO-NAME/metacat/data/
-    sudo rsync -aHAX /var/metacat/dataone/   /mnt/ceph/repos/REPO-NAME/metacat/dataone/
-    sudo rsync -aHAX /var/metacat/documents/ /mnt/ceph/repos/REPO-NAME/metacat/documents/
-    sudo rsync -aHAX /var/metacat/logs/      /mnt/ceph/repos/REPO-NAME/metacat/logs/
-
-    # postgres:
-    sudo rsync -aHAX /var/lib/postgresql/    /mnt/ceph/repos/REPO-NAME/postgresql/
+    sudo rsync -aHAX -e "ssh -i $HOME/.ssh/id_ed25519" \
+                /var/metacat/data/      $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/data/
+    sudo rsync -aHAX -e "ssh -i $HOME/.ssh/id_ed25519" \
+                /var/metacat/dataone/   $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/dataone/
+    sudo rsync -aHAX -e "ssh -i $HOME/.ssh/id_ed25519" \
+                /var/metacat/documents/ $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/documents/
+    sudo rsync -aHAX -e "ssh -i $HOME/.ssh/id_ed25519" \
+                /var/metacat/logs/      $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/logs/
     ```
+
+- [ ] In the metacat database, verify that all the `systemmetadata.checksum_algorithm` entries are
+  on the [list of supported algorithms](https://github.com/DataONEorg/hashstore-java/blob/main/src/main/java/org/dataone/hashstore/filehashstore/FileHashStore.java#L63)
+  (NOTE: syntax matters! E.g. `SHA-1` is OK, but `SHA1` isn't):
+
+  ```sql
+    -- psql -U metacat -h 127.0.0.1
+    SELECT DISTINCT checksum_algorithm FROM systemmetadata WHERE checksum_algorithm NOT IN
+            ('MD2','MD5','SHA-1','SHA-256','SHA-384','SHA-512','SHA-512/224','SHA-512/256');
+
+    -- then manually update each to the correct syntax; e.g:
+    UPDATE systemmetadata SET checksum_algorithm='SHA-1' WHERE checksum_algorithm='SHA1';
+    -- ...etc
+    ```
+
+> [!NOTE]
+> The above step on the legacy host breaks search results in some cases (e.g. attempts to find
+> specific data files -- by checksum -- across packages), unless you reindex-all. Therefore, if you
+> do not anticipate that the transfer to k8s will complete quickly, it should instead be done in
+> k8s, and repeated after each rsync.
+
+- [ ] Do a `pg_dump` on the legacy host (since postgresql major version on legacy host is lower than that being deployed by helm chart):
+
+  ```shell
+  DUMP_DIR="/var/lib/postgresql/14-pg_dump"
+  PGDB=metacat
+  POSTGRES_USER=metacat
+  sudo pg_dump -U $POSTGRES_USER -h localhost --format=directory --file=$DUMP_DIR --jobs=20 $PGDB
+  ```
+
+> [!IMPORTANT]
+> 1. The dump directory must be named `[version]-pg_dump` - e.g. `14-pg_dump`
+> 2. It must be located alongside the existing _**versioned**_ postgres data dir, so for PG data
+>    dir at: `postgresql.postgresqlDataDir: /bitnami/postgresql/14/main`, for example, the existing
+>    versioned directory would be `/var/lib/postgresql/14`, and the dump dir must be created
+>    alongside it, at: `/var/lib/postgresql/14-pg_dump`
+
+- [ ] then rsync this dump directory over to ceph
+
+  ```shell
+  # from legacy host:
+  sudo rsync -aHAX -e "ssh -i $HOME/.ssh/id_ed25519" \
+      /var/lib/postgresql/14-pg_dump/ $USER@$TARGET:/mnt/ceph/repos/$REPO/postgresql/14-pg_dump/
+  ```
+
+### = = = = = = = = = = = = = ON CEPHFS-MOUNT HOST: = = = = = = = = = = = = =
 
 - [ ] After rsyncs are complete, change ownership **ON CEPHFS** as follows:
+  ```shell
+  sudo chown -R 59996:59996 /mnt/ceph/repos/$REPO/postgresql/14-pg_dump
 
-    ```shell
-    ## postgres (59996:59996) in postgresql data directory
-    sudo chown -R 59996:59996 /mnt/ceph/repos/REPO-NAME/postgresql
-
-    ## tomcat (59997:59997) in metacat directory
-    sudo chown -R 59997:59997 data dataone documents logs
-    ```
+  cd /mnt/ceph/repos/$REPO/metacat
+  sudo chown -R 59997:59997 data dataone documents logs
+  ```
 
 - [ ] ...then ensure all metacat `data` and `documents` files have `g+rw` permissions, otherwise,
       hashstore converter can't create hard links:
@@ -63,12 +110,6 @@
 - [ ] Make a copy of the [`metacat/helm/admin/secrets.yaml`](./secrets.yaml) file and rename to
       `${RELEASE_NAME}-metacat-secrets.yaml`
 - [ ] edit to replace `${RELEASE_NAME}` with the correct release name:
-
-    ```yaml
-    metadata:
-      name: ${RELEASE_NAME}-metacat-secrets
-    ```
-
 - [ ] edit to add the correct passwords for this release (some may be found in legacy
       `metacat.properties`; e.g. postgres, DOI, etc.)
 - [ ] Deploy it to the cluster:
@@ -107,13 +148,20 @@ file.**
         [hostname aliases tip, below](#where-to-find-existing-hostname-aliases)`
 - [ ] Set up Node cert and replication etc. as needed -  [see
       README](https://github.com/NCEAS/metacat/tree/main/helm#setting-up-certificates-for-dataone-replication).
-  - [ ] Don't forget to [install the ca
-        chain](https://github.com/NCEAS/metacat/tree/main/helm#install-the-ca-chain), and also
-        enable incoming client cert forwarding:
-      ```yaml
-      metacat:
-        dataone.certificate.fromHttpHeader.enabled: true
-      ```
+- [ ] [Install the ca
+      chain](https://github.com/NCEAS/metacat/tree/main/helm#install-the-ca-chain), and also
+      enable incoming client cert forwarding:
+
+    ```yaml
+    metacat:
+      dataone.certificate.fromHttpHeader.enabled: true
+    ```
+
+- [ ] `(MIGRATION ONLY)` Do a `diff` between the v2.19 properties file at
+      `$TC_HOME/webapps/metacat/WEB-INF/metacat.properties` on the legacy host, and the newest
+      `metacat.properties` from GitHub for the new version being installed, to see if any other
+      custom `metacat:` settings need to be transferred (e.g. `auth.allowedSubmitters:`, `guid.doi.username:`,
+      `guid.doi.uritemplate.metadata:`, `guid.doi.doishoulder.1:`, etc.)
 
 * MetacatUI:
   - [ ] ALWAYS set `global.metacatUiThemeName`
@@ -125,18 +173,18 @@ file.**
   - If using a theme from [metacatui-themes](https://github.com/NCEAS/metacatui-themes):
     - [ ] it must be made available on a ceph/PV/PVC mount; e.g:
 
-          ```yaml
-          customTheme:
+        ```yaml
+        customTheme:
           enabled: true
           claimName: metacatsfwmd-metacatui-customtheme
           subPath: metacatui-themes/src/cerp/js/themes/cerp
-          ```
+        ```
 
     - [ ] Ensure metacatui has read access
 
-          ```shell
-          chmod -R o+rx metacatui
-          ```
+        ```shell
+        chmod -R o+rx metacatui
+        ```
 
   - [ ] If the custom theme needs to be partially overridden by a separate config.js file (e.g.
     `sfwmd.js` is used to override [the CERP
@@ -145,9 +193,9 @@ file.**
     - [ ] set `metacatui.appConfig.enabled:` to `false`
     - [ ] Create a configMap to replace `config.js`, as follows:
 
-        ```shell
-        kubectl create configmap metacatsfwmd-metacatui-config-js --from-file=config.js=sfwmd.js
-        ```
+      ```shell
+      kubectl create configmap metacatsfwmd-metacatui-config-js --from-file=config.js=sfwmd.js
+      ```
 
 
 ## 5F. `(FRESH INSTALL ONLY)` First Install
@@ -175,18 +223,16 @@ file.**
     ```
 
 - [ ] The Node ID (in `metacat.dataone.nodeId` and `metacat.dataone.subject`) **MUST MATCH the
-      legacy deployment!** (Don't use a temp ID; this will be persisted into
-      hashstore during conversion!)
+      legacy deployment!** (Don't use a temp ID, or it will be persisted into hashstore!)
 - [ ] The `metacat.dataone.autoRegisterMemberNode:` flag **MUST NOT match today's date!**
 - [ ] Existing node already syncing to D1? Set `dataone.nodeSynchronize: false` until after final
       switch-over!
 - [ ] Existing node already accepting D1 replicas? Set `dataone.nodeReplicate: false` after final
       switch-over!
-- [ ] If legacy DB version was < 3.0.0, Disable `livenessProbe` & `readinessProbe` until Database
-      Upgrade is finished.
+- [ ] Disable `livenessProbe` & `readinessProbe` temporarily (until DB and hashstore converted)
 
 > [!NOTE]
-> Upgrade only writes OLD datasets -- ones not starting `autogen` -- from DB to disk.
+> Metacat's DB upgrade only writes OLD datasets -- ones not starting `autogen` -- from DB to disk.
 > These should all be finished after the first upgrade - so provided subsequent `/var/metacat/`
 > rsyncs are only additive (don't `--delete` destination files not on source), then subsequent DB
 > upgrades after incremental rsyncs will be very fast. [Tips,
@@ -200,52 +246,34 @@ file.**
   > See [Tips, below](#monitor-database-upgrade-completion), for how to detect when
   > database conversion finishes
 
-> [!NOTE]
+> [!TIP]
 > because hashstore conversion has not yet been done, it is expected for metacatUI to
 > display `Oops! It looks like there was a problem retrieving your search results.`, and for
 > `/metacat/d1/mn/v2/` api calls to display `Metacat has not been configured`
 
-- [ ] In the metacat database, verify that all the `systemmetadata.checksum_algorithm` entries are
-      on the [list of supported
-      algorithms](https://github.com/DataONEorg/hashstore-java/blob/main/src/main/java/org/dataone/hashstore/filehashstore/FileHashStore.java#L63)
-      (NOTE: syntax matters! E.g. `sha-1` is OK, but `sha1` isn't):
-    ```shell
-    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
-      SELECT DISTINCT checksum_algorithm FROM systemmetadata WHERE checksum_algorithm NOT IN
-            ('MD2','MD5','SHA-1','SHA-256','SHA-384','SHA-512','SHA-512/224','SHA-512/256');
-    EOF"
-
-    # then manually update each to the correct syntax; e.g:
-    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
-      UPDATE systemmetadata SET checksum_algorithm='SHA-1' WHERE checksum_algorithm='SHA1';
-    EOF"
-    # ...etc
-    ```
-
 - [ ] Delete the `storage.hashstore.disableConversion:` setting, so the hashstore converter will
-      run, and do a `helm upgrade`.
-
-  > See [Tips, below](#monitor-hashstore-conversion-progress-and-completion) for
-  > how to detect when hashstore conversion finishes
-
+      run, and do a `helm upgrade`. (How to detect when hashstore conversion finishes? See [Tips,
+      below](#monitor-hashstore-conversion-progress-and-completion))
 - [ ] When database upgrade and hashstore conversion have both finished, re-enable probes
-- [ ] Re-index all datasets (Did with 25 indexers for test.adc on dev; 50 on prod).
 
 > [!NOTE]
-> if you will need to determine **exactly** when indexing is complete (e.g. for
-> benchmarking purposes), ensure the indexer log level has been set to INFO before you start
-> indexing (`kc edit configmaps ${RELEASE_NAME}-indexer-configfiles` and restart all indexer pods)
+> Set the log level `INFO` before you start indexing, if you need to determine **exactly** when
+> indexing is complete (for benchmarking purposes).
+> To do so, `kc edit configmaps ${RELEASE_NAME}-indexer-configfiles` and restart all indexer pods.
 
-    ```shell
-    kubectl get secret ${RELEASE_NAME}-d1-client-cert -o jsonpath="{.data.d1client\.crt}" | \
-        base64 -d > DELETEME_NODE_CERT.pem
+- [ ] Re-index all datasets (Did with 25 indexers for test.adc on dev; 50 on prod).
 
-    curl -X PUT --cert ./DELETEME_NODE_CERT.pem "https://HOSTNAME/CONTEXT/d1/mn/v2/index?all=true"
-    # look for <scheduled>true</scheduled> in response
+  ```shell
+  kubectl get secret ${RELEASE_NAME}-d1-client-cert -o jsonpath="{.data.d1client\.crt}" | \
+      base64 -d > DELETEME_NODE_CERT.pem
 
-    # don't forget to delete the cert file:
-    rm DELETEME_NODE_CERT.pem
-    ```
+  curl -X PUT --cert ./DELETEME_NODE_CERT.pem "https://$HOSTNAME/CONTEXT/d1/mn/v2/index?all=true"
+  # look for <scheduled>true</scheduled> in response
+
+  # don't forget to delete the cert file:
+  rm DELETEME_NODE_CERT.pem
+  ```
+
   > [See Tips, below](#monitor-indexing-progress) for monitoring indexing progress.
 
 
@@ -268,23 +296,59 @@ file.**
 - [ ] Make a backup of the `checksums` table so hashstore won't try to reconvert completed files:
 
      ```shell
-     # inside metacat pod, run the backup script:
      kubectl exec ${RELEASE_NAME}-0 -- bash -c \
-       "$TC_HOME/webapps/metacat/WEB-INF/scripts/sql/backup-restore-checksums-table/backup-checksums-table.sh"
+       "SCRIPT=\$TC_HOME/webapps/metacat/WEB-INF/scripts/sql/backup-restore-checksums-table/backup-checksums-table.sh \
+        && chmod 750 \$SCRIPT \
+        && bash -c \$SCRIPT"
      ```
 
-- [ ] `helm delete` the running installation. (keep all secrets, PVCs etc!)
+- [ ] `helm uninstall` the running installation. (keep all secrets, PVCs etc!)
+- [ ] temporarily chown metacat and pg_dump data on cephfs (since your $USER will be writing during
+        `rsync`)
+
+    ```shell
+    sudo chown -R $USER:59996 /mnt/ceph/repos/$REPO/postgresql/14-pg_dump
+
+    cd /mnt/ceph/repos/$REPO/metacat
+
+    sudo chown -R $USER:59997 data dataone documents logs
+    ```
 
 ### = = = = = = = = = = = = = ON LEGACY HOST = = = = = = = = = = = = =
 
 **ENSURE NOBODY IS IN THE MIDDLE OF A BIG UPLOAD!** (Can schedule off-hours, but how to monitor?)
 
-- [ ] Stop postgres and tomcat
+- [ ] Edit `/var/metacat/config/metacat-site.properties` to change to:
+
+     ```properties
+     application.readOnlyMode=true
+     ```
+
+- [ ] Stop tomcat (not postgres)
 
      ```shell
-     # ssh to legacy host, then...
-     sudo systemctl stop postgresql@14-main.service
      sudo systemctl stop tomcat9
+     ```
+
+- [ ] `pg_dump` on legacy host
+
+    ```shell
+    DUMP_DIR="/var/lib/postgresql/14-pg_dump"
+    PGDB=metacat
+    POSTGRES_USER=metacat
+    sudo pg_dump -U $POSTGRES_USER -h localhost --format=directory --file=$DUMP_DIR --jobs=20 $PGDB
+    ```
+
+- [ ] Start tomcat
+
+     ```shell
+     sudo systemctl start tomcat9
+     ```
+
+- [ ] Check it's in RO mode! `https://$HOSTNAME/CONTEXT/d1/mn/v2/node` - look for:
+
+     ```xml
+      <property key="read_only_mode">true</property>
      ```
 
 - [ ] "top-up" `rsync` from legacy to ceph:
@@ -295,40 +359,20 @@ file.**
      # 2. Don't use --delete option for /var/metacat/ rsync
      # 3. Optionally use --dry-run to check first
      #
-     sudo rsync -rltDHX --stats --human-readable \
-               /var/metacat/data/         /mnt/ceph/repos/REPO-NAME/metacat/data/
+     sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
+               /var/metacat/data/         $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/data/
 
-     sudo rsync -rltDHX --stats --human-readable \
-               /var/metacat/dataone/      /mnt/ceph/repos/REPO-NAME/metacat/dataone/
+     sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
+               /var/metacat/dataone/      $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/dataone/
 
-     sudo rsync -rltDHX --stats --human-readable \
-               /var/metacat/documents/    /mnt/ceph/repos/REPO-NAME/metacat/documents/
+     sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
+               /var/metacat/documents/    $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/documents/
 
-     sudo rsync -rltDHX --stats --human-readable \
-               /var/metacat/logs/         /mnt/ceph/repos/REPO-NAME/metacat/logs/
+     sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
+               /var/metacat/logs/         $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/logs/
 
-     # postgres
-     sudo rsync -rltDHX --stats --human-readable --delete \
-               /var/lib/postgresql/       /mnt/ceph/repos/REPO-NAME/postgresql/
-     ```
-
-- [ ] While rsync is in progress, edit `/var/metacat/config/metacat-site.properties` to add:
-
-     ```properties
-     application.readOnlyMode=true
-     ```
-
-- [ ] When rsync done, start postgres, and then start tomcat.
-
-     ```shell
-     sudo systemctl start postgresql@14-main.service
-     sudo systemctl start tomcat9
-     ```
-
-- [ ] Check it's in RO mode! https://HOSTNAME/CONTEXT/d1/mn/v2/node - look for:
-
-     ```xml
-      <property key="read_only_mode">true</property>
+     sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
+         /var/lib/postgresql/14-pg_dump/  $USER@$TARGET:/mnt/ceph/repos/$REPO/postgresql/14-pg_dump/
      ```
 
 ### = = = = = = = = = = = = = IN K8S CLUSTER: = = = = = = = = = = = = =
@@ -336,42 +380,35 @@ file.**
 - [ ] fix ownership and permissions of newly-copied files:
 
      ```shell
-     ## postgres (59996:59996) in postgresql data directory
-     sudo chown -R 59996:59996 /mnt/ceph/repos/REPO-NAME/postgresql
+     sudo chown -R 59996:59996 /mnt/ceph/repos/$REPO/postgresql
 
-     ## tomcat (59997:59997) in metacat directory
-     cd /mnt/ceph/repos/REPO-NAME/metacat
+     cd /mnt/ceph/repos/$REPO/metacat
 
      sudo chown -R 59997:59997 data dataone documents logs
 
      sudo chmod -R g+rw data documents dataone
      ```
 
-- [ ] If (legacy DB version) < (k8s db version), disable Probes until Database Upgrade is finished
-- [ ] Set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run.
-- [ ] `helm-install`
-- [ ] Repeat correction of checksum algorithm names for any new records:
+- [ ] Move or delete the current PG data directory being used by k8s, so that the pg_dump will
+      automatically be ingested on next startup
 
     ```shell
-    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
-      SELECT DISTINCT checksum_algorithm FROM systemmetadata WHERE checksum_algorithm NOT IN
-            ('MD2','MD5','SHA-1','SHA-256','SHA-384','SHA-512','SHA-512/224','SHA-512/256');
-    EOF"
-
-    # then manually update each to the correct syntax; e.g:
-    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
-      UPDATE systemmetadata SET checksum_algorithm='SHA-1' WHERE checksum_algorithm='SHA1';
-    EOF"
-    # ...etc
+    # ssh to host where cephfs is mounted, then:
+    cd /mnt/ceph/repos/$REPO/postgresql
+    sudo mv 17 17-deleteme  # or delete
     ```
 
+- [ ] Disable probes again, until Database Upgrade is finished
+- [ ] Set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run.
+- [ ] `helm-install`, and ensure the `pgupgrade` initContainer finished successfully.
 - [ ] Restore the `checksums` table from the backup, so hashstore won't try to reconvert
       completed files:
 
     ```shell
-    # inside metacat pod, run the restore script:
     kubectl exec ${RELEASE_NAME}-0 -- bash -c \
-      "$TC_HOME/webapps/metacat/WEB-INF/scripts/sql/backup-restore-checksums-table/restore-checksums-table.sh"
+      "SCRIPT=\$TC_HOME/webapps/metacat/WEB-INF/scripts/sql/backup-restore-checksums-table/restore-checksums-table.sh \
+      && chmod 750 \$SCRIPT \
+      && bash -c \$SCRIPT"
     ```
 
 - [ ] Delete the `storage.hashstore.disableConversion:` setting, so the hashstore converter will
@@ -389,21 +426,22 @@ file.**
       default) by deleting this entry:
 
     ```yaml
-    ## TODO: DELETE ME WHEN READY TO GO LIVE!
+    ## TODO: DELETE ME WHEN READY TO GO LIVE! Will then default to production CN
     global:
       d1ClientCnUrl: https://cn-sandbox.test.dataone.org/cn
     ```
 
-- [ ] In order to push `dataone.*` member node properties (`dataone.nodeId`, `dataone.subject`,
-      `dataone.nodeSynchronize`, `dataone.nodeReplicate`) to the CN, set:
+- [ ] ONLY if you changed any `dataone.*` member node properties (`dataone.nodeId`, `dataone.subject`,
+      `dataone.nodeSynchronize`, `dataone.nodeReplicate`), push them to the CN by setting:
 
     ```yaml
     metacat:
       ## Set to today's date (UTC timezone), in the YYYY-MM-DD format; example:
       dataone.autoRegisterMemberNode: 2024-11-29
     ```
+
 - [ ] Do a final `helm upgrade`
-- [ ] Make sure metacatui picked up the changes - may need to do some pod-kicking
+- [ ] Make sure metacatui picked up the CN changes - may need to restart the pod manually
 
 **When everything is up and running...**
 
@@ -459,7 +497,7 @@ file.**
 
 * **To monitor progress:** check the number of rows in the `checksums` table: total # rows should
   be: `5 * (total objects)`, (approx; not accounting for conversion errors), where total object
-  count can be found from `https://HOSTNAME/CONTEXT/d1/mn/v2/object`
+  count can be found from `https://$HOSTNAME/CONTEXT/d1/mn/v2/object`
    ```shell
    # get number of entries in `checksums` table -- should be approx 5*(total objects)
    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
@@ -561,7 +599,7 @@ See the `Tips` section of the [Metacat K8s 3.0.0 to 3.1.0 Upgrade Steps Checklis
     ````
     rm: cannot remove '/var/metacat/config/metacat-site.properties': Permission denied
     ````
-* Ensure the config directory on the PV (for example: `/mnt/ceph/repos/REPO-NAME/metacat/config`) allows
+* Ensure the config directory on the PV (for example: `/mnt/ceph/repos/$REPO/metacat/config`) allows
   **group write** (`chmod 660`) after the rsync has been completed or repeated.
 
 ### Where to Find Existing Hostname Aliases
