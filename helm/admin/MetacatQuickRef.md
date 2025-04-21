@@ -314,6 +314,17 @@ file.**
     sudo chown -R $USER:59997 data dataone documents logs
     ```
 
+- [ ] Move or delete the current PG data directory being used by k8s, so that the pg_dump will
+  automatically be ingested on next startup
+
+    ```shell
+    cd /mnt/ceph/repos/$REPO/postgresql
+    sudo mv 17 17-deleteme  # or delete
+    ```
+
+- [ ] Disable probes again, until Database Upgrade is finished
+- [ ] Set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run.
+
 ### = = = = = = = = = = = = = ON LEGACY HOST = = = = = = = = = = = = =
 
 **ENSURE NOBODY IS IN THE MIDDLE OF A BIG UPLOAD!** (Can schedule off-hours, but how to monitor?)
@@ -389,17 +400,6 @@ file.**
      sudo chmod -R g+rw data documents dataone
      ```
 
-- [ ] Move or delete the current PG data directory being used by k8s, so that the pg_dump will
-      automatically be ingested on next startup
-
-    ```shell
-    # ssh to host where cephfs is mounted, then:
-    cd /mnt/ceph/repos/$REPO/postgresql
-    sudo mv 17 17-deleteme  # or delete
-    ```
-
-- [ ] Disable probes again, until Database Upgrade is finished
-- [ ] Set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run.
 - [ ] `helm-install`, and ensure the `pgupgrade` initContainer finished successfully.
 - [ ] Restore the `checksums` table from the backup, so hashstore won't try to reconvert
       completed files:
@@ -431,8 +431,9 @@ file.**
       d1ClientCnUrl: https://cn-sandbox.test.dataone.org/cn
     ```
 
-- [ ] ONLY if you changed any `dataone.*` member node properties (`dataone.nodeId`, `dataone.subject`,
-      `dataone.nodeSynchronize`, `dataone.nodeReplicate`), push them to the CN by setting:
+- [ ] ONLY if you changed any `dataone.*` member node properties (`dataone.nodeId`,
+      `dataone.subject`, `dataone.nodeSynchronize`, `dataone.nodeReplicate`), push them to the CN by
+      setting:
 
     ```yaml
     metacat:
