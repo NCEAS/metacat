@@ -440,6 +440,7 @@ file.**
       dataone.autoRegisterMemberNode: 2024-11-29
     ```
 
+- [ ] Re-enable probes
 - [ ] Do a final `helm upgrade`
 - [ ] Make sure metacatui picked up the CN changes - may need to restart the pod manually
 
@@ -451,7 +452,7 @@ file.**
     kubectl get ingress -o yaml | egrep "(\- ip:)|(\- host:)"
     ```
 
-- [ ] Take down the legacy instance
+- [ ] Take down the legacy instance (and decommission later, as necessary)
 - [ ] Index only the newer datasets:
 
     ```shell
@@ -461,6 +462,9 @@ file.**
     # where <start-time> is the time an hour or more before the previous rsync,
     #     in the format: yyyy-mm-dd HH:MM:SS (with a space; e.g. 2024-11-01 14:01:00)
     ```
+
+- [ ] `git commit` a copy of the values overrides file used for this release, and update ChangeLog
+      with the commit `sha`.
 
 ---
 
