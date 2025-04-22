@@ -314,11 +314,22 @@ file.**
     sudo chown -R $USER:59997 data dataone documents logs
     ```
 
+- [ ] Move or delete the current PG data directory being used by k8s, so that the pg_dump will
+  automatically be ingested on next startup
+
+    ```shell
+    cd /mnt/ceph/repos/$REPO/postgresql
+    sudo mv 17 17-deleteme  # or delete
+    ```
+
+- [ ] Disable probes again, until Database Upgrade is finished
+- [ ] Set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run.
+
 ### = = = = = = = = = = = = = ON LEGACY HOST = = = = = = = = = = = = =
 
 **ENSURE NOBODY IS IN THE MIDDLE OF A BIG UPLOAD!** (Can schedule off-hours, but how to monitor?)
 
-- [ ] Edit `/var/metacat/config/metacat-site.properties` to change to:
+- [ ] Edit `/var/lib/tomcat9/webapps/metacat/WEB-INF/metacat.properties` to change to:
 
      ```properties
      application.readOnlyMode=true
@@ -389,17 +400,6 @@ file.**
      sudo chmod -R g+rw data documents dataone
      ```
 
-- [ ] Move or delete the current PG data directory being used by k8s, so that the pg_dump will
-      automatically be ingested on next startup
-
-    ```shell
-    # ssh to host where cephfs is mounted, then:
-    cd /mnt/ceph/repos/$REPO/postgresql
-    sudo mv 17 17-deleteme  # or delete
-    ```
-
-- [ ] Disable probes again, until Database Upgrade is finished
-- [ ] Set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run.
 - [ ] `helm-install`, and ensure the `pgupgrade` initContainer finished successfully.
 - [ ] Restore the `checksums` table from the backup, so hashstore won't try to reconvert
       completed files:
@@ -431,8 +431,9 @@ file.**
       d1ClientCnUrl: https://cn-sandbox.test.dataone.org/cn
     ```
 
-- [ ] ONLY if you changed any `dataone.*` member node properties (`dataone.nodeId`, `dataone.subject`,
-      `dataone.nodeSynchronize`, `dataone.nodeReplicate`), push them to the CN by setting:
+- [ ] ONLY if you changed any `dataone.*` member node properties (`dataone.nodeId`,
+      `dataone.subject`, `dataone.nodeSynchronize`, `dataone.nodeReplicate`), push them to the CN by
+      setting:
 
     ```yaml
     metacat:
@@ -440,6 +441,7 @@ file.**
       dataone.autoRegisterMemberNode: 2024-11-29
     ```
 
+- [ ] Re-enable probes
 - [ ] Do a final `helm upgrade`
 - [ ] Make sure metacatui picked up the CN changes - may need to restart the pod manually
 
@@ -451,7 +453,10 @@ file.**
     kubectl get ingress -o yaml | egrep "(\- ip:)|(\- host:)"
     ```
 
-- [ ] Take down the legacy instance
+- [ ] Stop Tomcat, PostgreSQL and Apache on the legacy VM instance
+  - [ ] Use [this
+    template](https://github.nceas.ucsb.edu/NCEAS/Computing/blob/master/server_archiving.md#virtual-servers)
+    to create an [issue here](https://github.nceas.ucsb.edu/NCEAS/Computing/issues) to retire the VM
 - [ ] Index only the newer datasets:
 
     ```shell
@@ -461,6 +466,9 @@ file.**
     # where <start-time> is the time an hour or more before the previous rsync,
     #     in the format: yyyy-mm-dd HH:MM:SS (with a space; e.g. 2024-11-01 14:01:00)
     ```
+
+- [ ] `git commit` a copy of the values overrides file used for this release, and update ChangeLog
+      with the commit `sha`.
 
 ---
 
