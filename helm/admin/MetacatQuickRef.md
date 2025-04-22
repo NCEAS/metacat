@@ -124,12 +124,12 @@
 ## 3. Create Persistent Volumes
 
 > Assumes **cephfs volume credentials** already installed as a k8s Secret - see [this tip on
-> creating your own secret](#creating-volume-credentials-secret-for-the-pvs), and [this
-> DataONEorg/k8s-cluster example
+> creating your own secret](./Installation-Upgrade-Tips.md#creating-volume-credentials-secret-for-the-pvs),
+> and [this DataONEorg/k8s-cluster example
 > ](https://github.com/DataONEorg/k8s-cluster/blob/main/storage/Ceph/CephFS/helm/secret.yaml).
 
 - [ ] Get the current volume sizes from the legacy installation, to help with sizing the PVs -
-      [example](#get-sizing-information-for-pvs)
+      [example](./Installation-Upgrade-Tips.md#get-sizing-information-for-pvs)
 - [ ] Create PV for metacat data directory - [example](./pv--releasename-metacat-cephfs.yaml)
 - [ ] Create PV for PostgreSQL data directory - [example](./pv--releasename-postgres-cephfs.yaml)
 - [ ] Create PVC for PostgreSQL - [example](./pvc--releasename-postgres.yaml)
@@ -145,7 +145,7 @@ file.**
 - [ ] TLS ("SSL") setup (`ingress.tls.hosts` - leave blank to use default, or change if aliases
       needed...
   - [ ] `(MIGRATION ONLY)` transfer any existing aliases and rewrite rules from legacy host; see
-        [hostname aliases tip, below](#where-to-find-existing-hostname-aliases)`
+        [hostname aliases tip](./Installation-Upgrade-Tips.md#where-to-find-existing-hostname-aliases)`
 - [ ] Set up Node cert and replication etc. as needed -  [see
       README](https://github.com/NCEAS/metacat/tree/main/helm#setting-up-certificates-for-dataone-replication).
 - [ ] [Install the ca
@@ -235,16 +235,16 @@ file.**
 > Metacat's DB upgrade only writes OLD datasets -- ones not starting `autogen` -- from DB to disk.
 > These should all be finished after the first upgrade - so provided subsequent `/var/metacat/`
 > rsyncs are only additive (don't `--delete` destination files not on source), then subsequent DB
-> upgrades after incremental rsyncs will be very fast. [Tips,
-> below](#see-how-many-old-datasets-exist-in-db-before-the-upgrade) show how to check the number
-> of "old" datasets exist in DB, before the upgrade
+> upgrades after incremental rsyncs will be very fast.
+> [This tip](./Installation-Upgrade-Tips.md#see-how-many-old-datasets-exist-in-db-before-the-upgrade)
+> shows how to check the number of "old" datasets exist in DB, before the upgrade
 
 - [ ] set `storage.hashstore.disableConversion: true`, so the hashstore converter won't run yet
 - [ ] `helm install`, debug any startup and configuration issues, and allow database upgrade to
       finish.
 
-  > See [Tips, below](#monitor-database-upgrade-completion), for how to detect when
-  > database conversion finishes
+  > See [this tip](./Installation-Upgrade-Tips.md#monitor-database-upgrade-completion), for how
+  > to detect when database conversion finishes
 
 > [!TIP]
 > because hashstore conversion has not yet been done, it is expected for metacatUI to
@@ -252,8 +252,8 @@ file.**
 > `/metacat/d1/mn/v2/` api calls to display `Metacat has not been configured`
 
 - [ ] Delete the `storage.hashstore.disableConversion:` setting, so the hashstore converter will
-      run, and do a `helm upgrade`. (How to detect when hashstore conversion finishes? See [Tips,
-      below](#monitor-hashstore-conversion-progress-and-completion))
+      run, and do a `helm upgrade`. (How to detect when hashstore conversion finishes? See [This
+      tip](./Installation-Upgrade-Tips.md#monitor-hashstore-conversion-progress-and-completion))
 - [ ] When database upgrade and hashstore conversion have both finished, re-enable probes
 
 > [!NOTE]
@@ -274,7 +274,8 @@ file.**
   rm DELETEME_NODE_CERT.pem
   ```
 
-  > [See Tips, below](#monitor-indexing-progress) for monitoring indexing progress.
+  > [See this tip](./Installation-Upgrade-Tips.md#monitor-indexing-progress) for monitoring indexing
+  > progress.
 
 
 ## 6. `(MIGRATION ONLY)` FINAL SWITCH-OVER FROM LEGACY TO K8S
@@ -290,7 +291,7 @@ file.**
 >
 > [!NOTE]
 > If you need to accommodate hostname aliases, you'll need to update the `ingress.tls` section to
-> reflect the new hostname(s) - see [Tips, below](#where-to-find-existing-hostname-aliases).
+> reflect the new hostname(s) - see [this tip](./Installation-Upgrade-Tips.md#where-to-find-existing-hostname-aliases).
 
 ### = = = = = = = = = = = = = IN K8S CLUSTER: = = = = = = = = = = = = =
 - [ ] Make a backup of the `checksums` table so hashstore won't try to reconvert completed files:
@@ -414,8 +415,8 @@ file.**
 - [ ] Delete the `storage.hashstore.disableConversion:` setting, so the hashstore converter will
       run, and do a `helm upgrade`
 
-  > See [Tips, below](#monitor-hashstore-conversion-progress-and-completion) for
-  > how to detect when hashstore conversion finishes
+  > See [this tip](./Installation-Upgrade-Tips.md#monitor-hashstore-conversion-progress-and-completion)
+  > for how to detect when hashstore conversion finishes
 
 **When hashstore conversion has finished successfully...**
 
@@ -453,10 +454,6 @@ file.**
     kubectl get ingress -o yaml | egrep "(\- ip:)|(\- host:)"
     ```
 
-- [ ] Stop Tomcat, PostgreSQL and Apache on the legacy VM instance
-  - [ ] Use [this
-    template](https://github.nceas.ucsb.edu/NCEAS/Computing/blob/master/server_archiving.md#virtual-servers)
-    to create an [issue here](https://github.nceas.ucsb.edu/NCEAS/Computing/issues) to retire the VM
 - [ ] Index only the newer datasets:
 
     ```shell
@@ -470,198 +467,8 @@ file.**
 - [ ] `git commit` a copy of the values overrides file used for this release, and update ChangeLog
       with the commit `sha`.
 
----
-
-## Tips:
-
-### To change the database user's password for your existing database
-
-*   Note `postgres` user:
-    ```shell
-    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U postgres metacat << EOF
-      ALTER USER metacat WITH PASSWORD 'new-password-here';
-    EOF"
-    ```
-
-### See how many "old" datasets exist in DB, before the upgrade:
-
-*   ```shell
-    kubectl exec metacatarctic-postgresql-0 -- bash -c "psql -U metacat << EOF
-      select count(*) as docs from xml_documents where docid not like 'autogen%';
-      select count(*) as revs from xml_revisions where docid not like 'autogen%';
-    EOF"
-    ```
-
-### Monitor Database Upgrade Completion
-
-* check in `version_history` table:
-    ```shell
-    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
-      select version from version_history where status='1';
-    EOF"
-    ```
-
-### Monitor Hashstore Conversion Progress and Completion
-
-* **To monitor progress:** check the number of rows in the `checksums` table: total # rows should
-  be: `5 * (total objects)`, (approx; not accounting for conversion errors), where total object
-  count can be found from `https://$HOSTNAME/CONTEXT/d1/mn/v2/object`
-   ```shell
-   # get number of entries in `checksums` table -- should be approx 5*(total objects)
-   kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
-     select count(*) from checksums;
-   EOF"
-   ```
-* **To detect when hashstore conversion finishes:**
-  ```shell
-  # EITHER CHECK STATUS FROM DATABASE...
-  kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
-    select storage_upgrade_status from version_history where status='1';
-  EOF"
-
-  # ...OR CHECK LOGS
-  # If log4j root level is INFO
-  egrep "\[INFO\]: The conversion took [0-9]+ minutes.*HashStoreUpgrader:upgrade"
-
-  # If log4j root level is WARN, can also grep for this, if errors:
-  egrep "\[WARN\]: The conversion is complete"
-  ```
-
-### Fix Hashstore Conversion Errors
-
-See the `Tips` section of the [Metacat K8s 3.0.0 to 3.1.0 Upgrade Steps Checklist](https://github.com/NCEAS/metacat/blob/main/helm/admin/3.0.0-to-3.1.0-upgrade-checklist.md#tips) for steps to resolve hashstore conversion errors
-
-### Monitor Indexing Progress:
-
-#### Using the RabbitMQ Dashboard:
-* Enable port forwarding:
-   ```shell
-   kubectl port-forward service/${RELEASE_NAME}-rabbitmq-headless 15672:15672
-   ```
-
-* then browse [http://localhost:15672](http://localhost:15672). Username `metacat-rmq-guest` and
-  RabbitMQ password from metacat Secrets, or from:
-   ```shell
-   secret_name=$(kubectl get secrets | egrep ".*\-metacat-secrets" | awk '{print $1}')
-   rmq_pwd=$(kubectl get secret "$secret_name" \
-           -o jsonpath="{.data.rabbitmq-password}" | base64 -d)
-   echo "rmq_pwd: $rmq_pwd"
-   ```
-> [!NOTE]
-> queue activity is not a reliable indicator of indexing progress, since the index
-> workers continue to process tasks even after the queue has been emptied. The best way to
-> determine when indexing is complete is to monitor the logs, as follows...
-
-#### Determining when indexing is complete
-
-* Ensure the indexer log level has been set to INFO
-* grep the logs for the last occurrence of `Completed the index task from the index queue`:
-   ```shell
-   kubectl logs --max-log-requests 100 -f --tail=100 -l app.kubernetes.io/name=d1index \
-        | grep "Completed the index task"
-   ```
-* You must be sure indexing has finished before trying to find the last occurrence. Note that some
-    indexing tasks can take more than an hour.
-
-### Creating Volume Credentials Secret for the PVs
-
-> [!IMPORTANT]
-> When creating volume credentials secret:
-
-1. For the userID, omit the “client.” from the beginning of the username before base64 encoding
-   it; e.g.: if your username is `client.k8s-dev-metacatknb-subvol-user`, use only
-   `k8s-dev-metacatknb-subvol-user`
-2. Use `echo -n` when encoding; i.e:
-    ```shell
-    echo -n myUserID    |  base64
-    echo -n mypassword  |  base64
-    ```
-
-### Get sizing information for PVs
-
-  ```shell
-  $ du -sh /var/metacat /var/lib/postgresql/14
-  5.6T /var/metacat
-  255.4G /var/lib/postgresql/14
-  ```
-
-
-### If a PV can't be unmounted
-* e.g. if the PV name is `cephfs-releasename-metacat-varmetacat`:
-
-    ```shell
-    kubectl patch pv cephfs-releasename-metacat-varmetacat -p '{"metadata":{"finalizers":null}}'
-    ```
-
-### If a PV Mount is Doing Strange Things... (e.g. you're unable to change the `rootPath`)
-
-* Kubernetes sometimes has trouble changing a PV mount, even if you delete and re-create it
-* If you create a PV and then decide you need to change the `rootPath`, the old version may still be
-  'cached' on any nodes where it has previously been accessed by a pod. This can lead to confusing
-* behavior that is inconsistent across nodes.
-* To work around this, first delete the PV (after deleting any PVC that reference it), and then
-  **create it with a different name.**
-
-### If the metacat pod keeps restarting
-* Look for this in the logs:
-    ````
-    rm: cannot remove '/var/metacat/config/metacat-site.properties': Permission denied
-    ````
-* Ensure the config directory on the PV (for example: `/mnt/ceph/repos/$REPO/metacat/config`) allows
-  **group write** (`chmod 660`) after the rsync has been completed or repeated.
-
-### Where to Find Existing Hostname Aliases
-
-* Look at the legacy installation in the `/etc/apache2/sites-enabled/` directory; e.g.:
-
-  ```shell
-  # ls /etc/apache2/sites-enabled/
-    aoncadis.org.conf      arcticdata.io.conf      beta.arcticdata.io.conf
-    # ...etc
-  ```
-
-* the `ServerName` and `ServerAlias` directives are in these `.conf` files, e.g.:
-
-  ```
-   <IfModule mod_ssl.c>
-   <VirtualHost *:443>
-           DocumentRoot /var/www/arcticdata.io/htdocs
-           ServerName arcticdata.io
-           ServerAlias www.arcticdata.io permafrost.arcticdata.io
-  ```
-
-* Aliases can be set up easily, as follows:
-
-  ```yaml
-  ingress:
-    rewriteRules: |
-      if ($host = "evos.nceas.ucsb.edu") {
-        return 301 https://goa.nceas.ucsb.edu$request_uri;
-      }
-      if ($host = "gulfwatch.nceas.ucsb.edu") {
-        return 301 https://goa.nceas.ucsb.edu$request_uri;
-      }
-    annotations:
-      cert-manager.io/cluster-issuer: "letsencrypt-prod"
-      nginx.ingress.kubernetes.io/server-alias: evos.nceas.ucsb.edu, gulfwatch.nceas.ucsb.edu
-
-    tls:
-      - hosts:
-          - goa.nceas.ucsb.edu
-          - evos.nceas.ucsb.edu
-          - gulfwatch.nceas.ucsb.edu
-        secretName: ingress-nginx-tls-cert
-
-    rules:
-      - host: goa.nceas.ucsb.edu
-        http:
-          paths:
-          ## ...etc.
-          ## No need to add rules for evos.nceas.ucsb.edu or gulfwatch.nceas.ucsb.edu
-  ```
-
-> [!NOTE]
-> _sometimes, it may not be necessary to incorporate all these aliases in the k8s
-> environment. For prod ADC, for example, we left apache running with these aliases and complex
-> rewrites in place, and transferred only the `arcticdata.io` domain. [see Issue
-> #1954](https://github.com/NCEAS/metacat/issues/1954)_
+- [ ] Stop Tomcat, PostgreSQL and Apache on the legacy VM instance
+  - [ ] create an [issue here](https://github.nceas.ucsb.edu/NCEAS/Computing/issues) to retire the
+    VM ([template](https://github.nceas.ucsb.edu/NCEAS/Computing/blob/master/server_archiving.md#virtual-servers)
+  - [ ] Create an [issue here](https://github.nceas.ucsb.edu/NCEAS/Computing/issues) to Set Backups
+    for the Ceph Repo ([template](https://github.nceas.ucsb.edu/NCEAS/Computing/issues/364))
