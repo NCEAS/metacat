@@ -329,7 +329,7 @@ file.**
 
 **ENSURE NOBODY IS IN THE MIDDLE OF A BIG UPLOAD!** (Can schedule off-hours, but how to monitor?)
 
-- [ ] Edit `/var/metacat/config/metacat-site.properties` to change to:
+- [ ] Edit `/var/lib/tomcat9/webapps/metacat/WEB-INF/metacat.properties` to change to:
 
      ```properties
      application.readOnlyMode=true
@@ -453,7 +453,10 @@ file.**
     kubectl get ingress -o yaml | egrep "(\- ip:)|(\- host:)"
     ```
 
-- [ ] Take down the legacy instance (and decommission later, as necessary)
+- [ ] Stop Tomcat, PostgreSQL and Apache on the legacy VM instance
+  - [ ] Use [this
+    template](https://github.nceas.ucsb.edu/NCEAS/Computing/blob/master/server_archiving.md#virtual-servers)
+    to create an [issue here](https://github.nceas.ucsb.edu/NCEAS/Computing/issues) to retire the VM
 - [ ] Index only the newer datasets:
 
     ```shell
