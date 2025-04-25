@@ -1,5 +1,16 @@
 # Metacat Release Notes
 
+## Release Notes for Metacat 3.2.1
+
+**Release date: 2024-04-30**
+
+### Version Upgrades and Bug Fixes:
+- Fixed [Auto-restart Hashstore Conversion if Interrupted](https://github.com/NCEAS/metacat/issues/2123)
+- Fixed [Reclassify Certain Errors as WARN Instead of ERROR During Hashstore Conversion](https://github.com/NCEAS/metacat/issues/2091)
+- [Upgrade DataONE-Indexer library from 3.1.2 to 3.1.3 in metacat-index with the fixed bug of
+  restoration of disconnected RabbitMQ connections](https://github.com/DataONEorg/dataone-indexer/issues/176)
+- [Upgrade log4j library from 2.17.1 to 2.24.3 in metacat-common](https://github.com/NCEAS/metacat/pull/2124)
+
 ## Release Notes for Metacat 3.2.0
 
 **Release date: 2024-04-02**
