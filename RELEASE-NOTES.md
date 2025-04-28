@@ -2,7 +2,7 @@
 
 ## Release Notes for Metacat 3.2.1
 
-**Release date: 2024-04-30**
+**Release date: 2024-05-01**
 
 ### Version Upgrades and Bug Fixes:
 - Fixed [Auto-restart Hashstore Conversion if Interrupted](https://github.com/NCEAS/metacat/issues/2123)
@@ -10,6 +10,66 @@
 - [Upgrade DataONE-Indexer library from 3.1.2 to 3.1.3 in metacat-index with the fixed bug of
   restoration of disconnected RabbitMQ connections](https://github.com/DataONEorg/dataone-indexer/issues/176)
 - [Upgrade log4j library from 2.17.1 to 2.24.3 in metacat-common](https://github.com/NCEAS/metacat/pull/2124)
+
+
+## Release Notes for helm chart 2.1.0
+
+**Release date: 2025-05-01**
+
+> [!CAUTION]
+> If you are upgrading from an earlier helm chart version, please see the [Upgrade
+> Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+
+### New Features & Enhancements:
+- Reverted the change from chart 1.2.0, which set default container resources requests & limits for
+  Metacat, and for PostgreSQL subchart.
+  - Reverted based on feedback and helm conventions. Note that resources should still be
+    overridden appropriately, for your own production needs.
+- Updates to the [helm/admin/MetacatQuickRef.md](./helm/admin/MetacatQuickRef.md) installation,
+  upgrade, and migration checklist.
+- Reduce RabbitMQ startup time (see [dataone-indexer Issue # 202](https://github.com/DataONEorg/dataone-indexer/issues/202)).
+
+### Version Upgrades:
+- Increase application versions:
+  - Metacat app version: 3.2.1
+  - MetacatUI app version: 2.33.1 (subchart version 1.0.7)
+  - dataone-indexer app version: 3.1.3 (subchart version 1.3.0)
+
+### Chart Upgrade Notes
+
+> [!WARNING]
+> If you are upgrading from version 1.x.x of the helm chart, this will involve a major version
+> upgrade of the PostgreSQL sub-chart, and there are steps you must complete BEFORE upgrading;
+> please consult [Upgrading From Chart Version 1.x.x](#upgrading-from-chart-version-1xx), below.
+
+> [!CAUTION]
+> **ENSURE THAT THE RABBITMQ QUEUE IS EMPTY**, before upgrading (or uninstalling/re-installing) a
+> new chart version for the first time! Each new chart version will create a new PV/PVC for
+> RabbitMQ, so any queue remnants saved by the previous chart version will be ignored when the new
+> chart is deployed!
+
+- This applies only the initial installation or upgrade. After this, RabbitMQ will continue to use
+  the same newly-created PV/PVC, and the queue will not be lost. The new PVC will be named:
+  `data-[release-name]-rabbitmq-[rmq-version]-[idx]`, where `[rmq-version]` is the rabbitmq app
+  version (not the chart version), with periods replaced by dashes, and `[idx]` is the statefulset
+  ordinal index; e.g.: `data-metacatarctic-rabbitmq-3-13-7-0`
+
+- When upgrade or installation is complete, you can then safely `kubectl delete` both the old PVC
+  and the old PV (provided you're certain the queue was empty).
+
+- (This behavior can be overridden by setting `.Values.dataone-indexer.rabbitmq.nameOverride` to the
+  same name used in the previous chart version, but this is **NOT recommended**, since the RabbitMQ
+  installation then becomes an upgrade instead of a fresh install, and may require significant
+  manual intervention; see the [RabbitMQ upgrade
+  documentation](https://www.rabbitmq.com/docs/feature-flags#version-compatibility).)
+
+> [!TIP]
+> Setting `.Values.metacat.application.readOnlyMode: true` and restarting the metacat pod will put
+> Metacat in Read Only mode, which will prevent edits and uploads, and thus stop indexing tasks
+> being added to the queue, so it can be drained in preparation for the upgrade. To speed up the
+> queue consumption, You could also temporarily increase the number of index workers, using:
+> `kubectl scale deployment [release-name]-d1index --replicas=[n]`, where `[n]` is the number of
+> workers you want to run.
 
 ## Release Notes for Metacat 3.2.0
 
@@ -61,7 +121,7 @@
 - Increase application versions:
   - Metacat app version: 3.2.0
   - MetacatUI app version: 2.32.2 (subchart version 1.0.5)
-  - dataone-indexer app version: 3.2.0 (subchart version 1.2.0)
+  - dataone-indexer app version: 3.1.2 (subchart version 1.2.0)
   - PostgreSQL app version 17.4.0 (subchart version 16.4.14) - see [Upgrade
     Notes](#upgrading-from-chart-version-1xx) below.
 - Fixed [multiline YAML values splitting into multiple
