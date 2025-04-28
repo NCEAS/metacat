@@ -594,16 +594,11 @@ podSecurityContext:
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 securityContext: {}
 
-## @param resources Resource limits for the deployment (MUST BE OVERRIDDEN!)
-## The default values are very minimal, and not suitable for production. Please override and tune
-## for your own needs.
-resources:
-  requests:
-    cpu: 1
-    memory: 1Gi
-  limits:
-    cpu: 2
-    memory: 2Gi
+## @param resources Resource limits for the deployment
+##  We usually recommend not to specify default resources and to leave this as a conscious
+## choice for the user. This also increases chances charts run on environments with limited
+## resources, such as Minikube.
+resources: {}
 
 ## @param tolerations Tolerations for pod assignment
 tolerations: []
@@ -980,26 +975,6 @@ postgresql:
       adminPasswordKey: POSTGRES_PASSWORD
 
   primary:
-    ## PostgreSQL Primary resource requests and limits
-    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
-    ## @param postgresql.primary.resourcesPreset Set container resources preset
-    ## (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored
-    ## if primary.resources is set (primary.resources is recommended for production).
-    ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
-    ##
-    resourcesPreset: "medium"
-    ## @param primary.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
-    ## Example:
-    ## resources:
-    ##   requests:
-    ##     cpu: 2
-    ##     memory: 4Gi
-    ##   limits:
-    ##     cpu: 4
-    ##     memory: 32Gi
-    ##
-    resources: {}
-
     containerSecurityContext:
       ## @param postgresql.primary.containerSecurityContext.enabled enable containerSecurityContext
       ##
@@ -1156,7 +1131,7 @@ dataone-indexer:
   solr:
     ## @param dataone-indexer.solr.javaMem Java memory options to pass to the Solr container
     ##
-    javaMem: "-Xms2g -Xmx2g"
+    javaMem: "-Xms512m -Xmx2g"
 
     ## @param dataone-indexer.solr.customCollection name of the solr collection to use
     ## (optional override of indexer-assigned name). Do not leave blank

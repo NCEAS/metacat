@@ -85,6 +85,13 @@ postgresql:
      existingClaim: data-metacatbrooke-postgresql-0
 
   primary:
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
     extendedConfiguration: |
       max_connections = 250
       max_wal_size=16384
@@ -97,7 +104,6 @@ postgresql:
         matchLabels:
           ## Use your own release name instead of metacatbrooke
           metacatVolumeName: cephfs-metacatbrooke-metacat-postgresdata
-
 
   auth:
     existingSecret: *passwordSecretName

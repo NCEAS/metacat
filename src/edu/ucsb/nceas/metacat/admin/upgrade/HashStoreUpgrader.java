@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.hashstore.ObjectMetadata;
+import org.dataone.hashstore.exceptions.HashStoreRefsAlreadyExistException;
 import org.dataone.hashstore.exceptions.NonMatchingChecksumException;
 import org.dataone.hashstore.hashstoreconverter.HashStoreConverter;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -503,6 +504,10 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             logMetacat.error("Cannot move the object " + finalId + " to hashstore since "
                                 + e.getMessage());
             writeToFile(finalId, noSuchAlgorithmWriter);
+            return;
+        } catch (HashStoreRefsAlreadyExistException e) {
+            logMetacat.warn("Cannot move the object " + finalId + " to hashstore since "
+                                 + e.getMessage());
             return;
         } catch (Exception e) {
             logMetacat.error("Cannot move the object " + finalId + " to hashstore since "

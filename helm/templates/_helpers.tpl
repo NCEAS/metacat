@@ -118,7 +118,13 @@ set RabbitMQ HostName
 {{- define "metacat.rabbitmq.hostname" -}}
 {{- $rmqHost := (index .Values.metacat "index.rabbitmq.hostname") }}
 {{- if and (index .Values.global "dataone-indexer.enabled") (not $rmqHost) -}}
-    {{- $rmqHost = printf "%s-rabbitmq-headless" .Release.Name -}}
+{{- if (index .Values "dataone-indexer" "rabbitmq" "fullnameOverride") }}
+{{- $rmqFullName := (index .Values "dataone-indexer" "rabbitmq" "fullnameOverride") }}
+{{- $rmqHost = printf "%s-headless" ($rmqFullName | trunc 63 | trimSuffix "-") }}
+{{- else }}
+{{- $rmqName := (index .Values "dataone-indexer" "rabbitmq" "nameOverride") }}
+{{- $rmqHost = printf "%s-%s-headless" .Release.Name ($rmqName | trunc 63 | trimSuffix "-") }}
+{{- end }}
 {{- end }}
 {{- $rmqHost }}
 {{- end }}
