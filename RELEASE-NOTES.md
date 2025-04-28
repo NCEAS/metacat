@@ -27,7 +27,9 @@
     overridden appropriately, for your own production needs.
 - Updates to the [helm/admin/MetacatQuickRef.md](./helm/admin/MetacatQuickRef.md) installation,
   upgrade, and migration checklist.
-- Reduce RabbitMQ startup time (see [dataone-indexer Issue # 202](https://github.com/DataONEorg/dataone-indexer/issues/202)).
+- Reduce RabbitMQ startup time (see [dataone-indexer Issue #
+  202](https://github.com/DataONEorg/dataone-indexer/issues/202)). Important: see [Chart Upgrade
+  Notes](#chart-upgrade-notes) below, before upgrading.
 
 ### Version Upgrades:
 - Increase application versions:
@@ -36,6 +38,8 @@
   - dataone-indexer app version: 3.1.3 (subchart version 1.3.0)
 
 ### Chart Upgrade Notes
+
+#### STEPS YOU MUST COMPLETE BEFORE UPGRADING:
 
 > [!WARNING]
 > If you are upgrading from version 1.x.x of the helm chart, this will involve a major version
