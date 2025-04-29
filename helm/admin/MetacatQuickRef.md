@@ -229,7 +229,8 @@ whether you are using the MetacatUI sub-chart or not:
 > IF MOVING DATA FROM AN EXISTING DEPLOYMENT THAT IS ALSO A DATAONE MEMBER NODE, DO NOT REGISTER
 > THIS NODE WITH THE PRODUCTION CN UNTIL YOU'RE READY TO GO LIVE, or bad things will happen...
 
-- [ ] Point the deployment at the **SANDBOX CN**
+- [ ] Point the deployment at the **SANDBOX CN** (and if you're not using the included MetacatUI
+      sub-chart, make sure your external MetacatUI instance is also pointing to the sandbox CN):
 
     ```yaml
     global:
@@ -445,7 +446,9 @@ whether you are using the MetacatUI sub-chart or not:
     global:
       d1ClientCnUrl: https://cn-sandbox.test.dataone.org/cn
     ```
-
+- [ ] If you're not using the included MetacatUI sub-chart, make sure your external MetacatUI
+      instance is also pointing to the production CN (delete `global.d1ClientCnUrl` in its values
+      overrides, since it defaults to production). In either case, ensure the MetacatUI pod restarts
 - [ ] ONLY if you changed any `dataone.*` member node properties (`dataone.nodeId`,
       `dataone.subject`, `dataone.nodeSynchronize`, `dataone.nodeReplicate`), push them to the CN by
       setting:
