@@ -163,39 +163,53 @@ file.**
       custom `metacat:` settings need to be transferred (e.g. `auth.allowedSubmitters:`, `guid.doi.username:`,
       `guid.doi.uritemplate.metadata:`, `guid.doi.doishoulder.1:`, etc.)
 
-* MetacatUI:
-  - [ ] ALWAYS set `global.metacatUiThemeName`
-  - [ ] If using a bundled theme (arctic, knb etc.):
-    - for PROD, no further action required
-    - for TEST, override at least `global.metacatExternalBaseUrl` and
-      `global.d1ClientCnUrl`
+### MetacatUI:
+Carefully review all Metacat's `global.metacatUi*` values and update as needed, depending upon
+whether you are using the MetacatUI sub-chart or not:
+- **For separately-deployed MetacatUI:**
+  - [ ] in the Metacat values overrides, set `global.includeMetacatUi: false` and override the
+    `global.metacatUiIngressBackend` settings subtree, and `global.metacatUiWebRoot`, if needed.
+    (`global.metacatUiThemeName` is not needed in Metacat values, for this type of deployment.)
+  - [ ] in the values overrides for the separate MetacatUI chart:
+    - Set `global.metacatUiThemeName` and `global.metacatExternalBaseUrl` (REQUIRED)
+    - Override `global.metacatAppContext` if needed (default is 'metacat')
+    - Override `global.metacatUiWebRoot` if needed (default is '/')
+    - Override `global.d1ClientCnUrl` to point at the sandbox CN
+      ("https://cn-sandbox.test.dataone.org/cn"), until final release (default is production CN)
 
-  - If using a theme from [metacatui-themes](https://github.com/NCEAS/metacatui-themes):
-    - [ ] it must be made available on a ceph/PV/PVC mount; e.g:
+- **If using a bundled theme (arctic, knb etc.):**
+  - for PROD, no further action required
+  - [ ] for TEST, override at least `global.metacatExternalBaseUrl` and `global.d1ClientCnUrl`
 
-        ```yaml
-        customTheme:
-          enabled: true
-          claimName: metacatsfwmd-metacatui-customtheme
-          subPath: metacatui-themes/src/cerp/js/themes/cerp
-        ```
+- **If using a theme from [metacatui-themes](https://github.com/NCEAS/metacatui-themes):**
+  - [ ] it must be made available on a ceph/PV/PVC mount; e.g:
 
-    - [ ] Ensure metacatui has read access
+      ```yaml
+      customTheme:
+        enabled: true
+        claimName: metacatsfwmd-metacatui-customtheme
+        subPath: metacatui-themes/src/cerp/js/themes/cerp
+      ```
 
-        ```shell
-        chmod -R o+rx metacatui
-        ```
-
-  - [ ] If the custom theme needs to be partially overridden by a separate config.js file (e.g.
-    `sfwmd.js` is used to override [the CERP
-    theme](https://github.com/NCEAS/metacatui-themes/tree/main/src/cerp/js/themes/cerp) above):
-
-    - [ ] set `metacatui.appConfig.enabled:` to `false`
-    - [ ] Create a configMap to replace `config.js`, as follows:
+  - [ ] Ensure metacatui has read access
 
       ```shell
-      kubectl create configmap metacatsfwmd-metacatui-config-js --from-file=config.js=sfwmd.js
+      chmod -R o+r .
+      find . -type d -print0 | xargs -0 chmod o+x
+      # set default ACLs so new files and directories from `git pull` will also be readable
+      sudo setfacl -R -d -m o:rx .
       ```
+
+- [ ] If the custom theme needs to be partially overridden by a separate config.js file (e.g.
+  `sfwmd.js` is used to override [the CERP
+  theme](https://github.com/NCEAS/metacatui-themes/tree/main/src/cerp/js/themes/cerp) above):
+
+  - [ ] set `metacatui.appConfig.enabled:` to `false`
+  - [ ] Create a configMap to replace `config.js`, as follows:
+
+    ```shell
+    kubectl create configmap metacatsfwmd-metacatui-config-js --from-file=config.js=sfwmd.js
+    ```
 
 
 ## 5F. `(FRESH INSTALL ONLY)` First Install
