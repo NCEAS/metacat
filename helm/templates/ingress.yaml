@@ -78,8 +78,8 @@ spec:
                 name: {{ $fullName }}-hl
                 port:
                   number: 8080
-          {{- if .Values.global.includeMetacatUi }}
           {{- $webroot := regexReplaceAll "/$" .Values.global.metacatUiWebRoot "" }}
+          {{- if .Values.global.includeMetacatUi }}
           - path: {{ $webroot }}/
             pathType: Prefix
             backend:
@@ -87,6 +87,13 @@ spec:
                 name: {{ .Release.Name }}-metacatui
                 port:
                   number: 80
+          {{- else }}
+            {{- if .Values.global.metacatUiIngressBackend.enabled }}
+          - path: {{ $webroot }}/
+            pathType: Prefix
+            backend:
+              {{- omit .Values.global.metacatUiIngressBackend "enabled" | toYaml | nindent 14 }}
+            {{- end }}
           {{- end }}
   {{- end }}
 {{- end }}
