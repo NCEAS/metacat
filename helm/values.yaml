@@ -111,8 +111,41 @@ global:
 
   ## @param global.includeMetacatUi  Enable or disable the metacatui sub-chart.
   ## Set to false if you want to connect to your own existing metacatui deployment.
+  ## See global.metacatUiIngressBackend (optional) if you wish to configure the ingress for your own
+  ## existing metacatui k8s deployment in the same namespace.
   ##
   includeMetacatUi: true
+
+  ## @param global.metacatUiIngressBackend (optional) ingress backend for external metacatui release
+  ## Added verbatim to the Ingress rules configuration, to allow metacat to work alongside a
+  ## metacatui instance deployed IN THE SAME NAMESPACE [note 1], via a separate helm chart (i.e. not
+  ## a subchart of this one).
+  ## NOTE: metacatUiIngressBackend will be IGNORED unless ALL the following conditions are met:
+  ## 1. 'global.metacatUiIngressBackend.enabled' is set to 'true'
+  ## 2. 'global.includeMetacatUi' is set to 'false' (i.e. MetacatUI is not deployed as a subchart)
+  ## 3. 'ingress.enabled' is set to 'true'
+  ## 4. 'ingress.rules' is empty [] (i.e. explicit ingress.rules will always take precedence)
+  ##
+  ## NOTE 1: If you are deploying metacatui in a different namespace than metacat, then you can use
+  ##         an 'ExternalName' Service to act as a proxy. See:
+  ##         https://stackoverflow.com/questions/59844622/ingress-configuration-for-k8s-in-different-namespaces
+  ## NOTE 2: 'spec.rules.http.paths.path' will automatically be set to match any request with a
+  ##         prefix  matching whatever is set as 'global.metacatUiWebRoot', so don't forget to
+  ##         override that, if you want to use a different prefix than the default "/"
+  ##
+  metacatUiIngressBackend:
+    ## @param global.metacatUiIngressBackend.enabled Enable or disable MetacatUI support via Ingress
+    ##
+    enabled: true
+    service:
+      ## @param global.metacatUiIngressBackend.service.name Name of the metacatui service
+      ## This should be overridden with the name of the service created by the metacatui chart.
+      ##
+      name: metacatui${RELEASE_NAME}
+      port:
+        ## @param global.metacatUiIngressBackend.service.port Port exposed by the metacatui service
+        ##
+        number: 80
 
   ## @param global.metacatUiThemeName The theme name to use. Required, even if overriding config.js
   ##
@@ -736,7 +769,7 @@ ingress:
   ## If none of the hosts or paths match the HTTP request in the Ingress objects, the traffic is
   ## routed to your default backend. Not typically required, unless metacatui
   ## Content included here under `defaultBackend` will be added to the ingress definition under
-  ## `spec.defaultBackend'; for example:
+  ## 'spec.defaultBackend'; for example:
   ##
   ##   spec:
   ##     defaultBackend:
@@ -833,22 +866,23 @@ ingress:
 
   ## @param ingress.rules The Ingress rules can be defined here or left blank to be auto-populated
   ## based on the metacat.server.name value. If defining rules here, they will be copied verbatim
-  ## to the ingress definition. For schema guidance, see:
+  ## to the ingress definition, overriding any automatic configuration in the template. For schema
+  ## guidance, see:
   ## https://kubernetes.io/docs/concepts/services-networking/ingress/
   ## Example:
-  ##    - host: goa.nceas.ucsb.edu
+  ##    - host: knb.ecoinformatics.org
   ##      http:
   ##        paths:
   ##          - backend:
   ##              service:
-  ##                name: metacatgoa-hl
+  ##                name: metacatknb-hl
   ##                port:
   ##                  number: 8080
-  ##            path: /goa
+  ##            path: /knb
   ##            pathType: Prefix
   ##          - backend:
   ##              service:
-  ##                name: metacatgoa-metacatui
+  ##                name: metacatknb-metacatui
   ##                port:
   ##                  number: 80
   ##            path: /
