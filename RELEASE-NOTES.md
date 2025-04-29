@@ -21,6 +21,10 @@
 > Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
 
 ### New Features & Enhancements:
+- Add `.Values.global.metacatUiIngressBackend` to configure the ingress for a separately-deployed
+  MetacatUI installation, if the MetacatUI subchart is not being used; see the [documentation in
+  Values.yaml](https://github.com/NCEAS/metacat/blob/b5bd144ae3bf8304546e3d95880f3eba5f7d1b2d/helm/values.yaml#L119-L148)
+  for details.
 - Reverted the change from chart 1.2.0, which set default container resources requests & limits for
   Metacat, and for PostgreSQL subchart.
   - Reverted based on feedback and helm conventions. Note that resources should still be
