@@ -295,19 +295,22 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Global Properties Shared Across Sub-Charts Within This Deployment
 
-| Name                                 | Description                                                     | Value                             |
-| ------------------------------------ | --------------------------------------------------------------- | --------------------------------- |
-| `global.metacatExternalBaseUrl`      | Metacat base url accessible from outside cluster.               | `https://localhost/`              |
-| `global.d1ClientCnUrl`               | The url of the CN; used to populate metacat's 'D1Client.CN_URL' | `https://cn.dataone.org/cn`       |
-| `global.passwordsSecret`             | The name of the Secret containing application passwords         | `${RELEASE_NAME}-metacat-secrets` |
-| `global.metacatAppContext`           | The application context to use                                  | `metacat`                         |
-| `global.storageClass`                | default name of the storageClass to use for PVs                 | `local-path`                      |
-| `global.ephemeralVolumeStorageClass` | Optional global storageClass override                           | `""`                              |
-| `global.sharedVolumeSubPath`         | The subdirectory of the metacat data volume to mount            | `""`                              |
-| `global.dataone-indexer.enabled`     | Enable the dataone-indexer sub-chart                            | `true`                            |
-| `global.includeMetacatUi`            | Enable or disable the metacatui sub-chart.                      | `true`                            |
-| `global.metacatUiThemeName`          | The theme name to use. Required, even if overriding config.js   | `knb`                             |
-| `global.metacatUiWebRoot`            | The url root to be appended after the metacatui baseUrl.        | `/`                               |
+| Name                                                 | Description                                                                 | Value                             |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------- |
+| `global.metacatExternalBaseUrl`                      | Metacat base url accessible from outside cluster.                           | `https://localhost/`              |
+| `global.d1ClientCnUrl`                               | The url of the CN; used to populate metacat's 'D1Client.CN_URL'             | `https://cn.dataone.org/cn`       |
+| `global.passwordsSecret`                             | The name of the Secret containing application passwords                     | `${RELEASE_NAME}-metacat-secrets` |
+| `global.metacatAppContext`                           | The application context to use                                              | `metacat`                         |
+| `global.storageClass`                                | default name of the storageClass to use for PVs                             | `local-path`                      |
+| `global.ephemeralVolumeStorageClass`                 | Optional global storageClass override                                       | `""`                              |
+| `global.sharedVolumeSubPath`                         | The subdirectory of the metacat data volume to mount                        | `""`                              |
+| `global.dataone-indexer.enabled`                     | Enable the dataone-indexer sub-chart                                        | `true`                            |
+| `global.includeMetacatUi`                            | Enable or disable the MetacatUI sub-chart.                                  | `true`                            |
+| `global.metacatUiIngressBackend.enabled`             | Enable or disable MetacatUI support via Ingress                             | `false`                           |
+| `global.metacatUiIngressBackend.service.name`        | MetacatUI service name (used only if 'global.includeMetacatUi: false')      | `metacatui${RELEASE_NAME}`        |
+| `global.metacatUiIngressBackend.service.port.number` | Port for MetacatUI service (used only if 'global.includeMetacatUi: false')  | `80`                              |
+| `global.metacatUiThemeName`                          | MetacatUI theme name to use. (used only if 'global.includeMetacatUi: true') | `knb`                             |
+| `global.metacatUiWebRoot`                            | The url root to be appended after the MetacatUI baseUrl.                    | `/`                               |
 
 ### Metacat Application-Specific Properties
 
@@ -477,7 +480,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `dataone-indexer.rabbitmq.extraConfiguration`                | extra config, to be appended to rmq config        | `consumer_timeout = 144000000`        |
 | `dataone-indexer.rabbitmq.auth.username`                     | set the username that rabbitmq will use           | `metacat-rmq-guest`                   |
 | `dataone-indexer.rabbitmq.auth.existingPasswordSecret`       | location of rabbitmq password                     | `${RELEASE_NAME}-metacat-secrets`     |
-| `dataone-indexer.solr.javaMem`                               | Java memory options to pass to the Solr container | `-Xms2g -Xmx2g`                       |
+| `dataone-indexer.solr.javaMem`                               | Java memory options to pass to the Solr container | `-Xms512m -Xmx2g`                     |
 | `dataone-indexer.solr.customCollection`                      | name of the solr collection to use                | `metacat-index`                       |
 | `dataone-indexer.solr.coreNames`                             | Solr core names to be created                     | `["metacat-core"]`                    |
 | `dataone-indexer.solr.persistence.size`                      | solr Persistent Volume size                       | `100Gi`                               |
@@ -530,8 +533,9 @@ properties](#global-properties-shared-across-sub-charts-within-this-deployment).
 can be found in the [MetacatUI README](https://github.com/NCEAS/metacatui/tree/develop/helm#readme).
 
 If you wish to disable the subchart altogether, set `global.includeMetacatUi: false` and provide
-your own MetacatUI installation. deployed separately.
-
+your own MetacatUI installation. deployed separately. Note that you can use the values in
+`global.metacatUiIngressBackend` to configure the ingress for your separate MetacatUI installation;
+see the documentation in [Values.yaml](./Values.yaml) for details.
 
 ## Persistence
 
