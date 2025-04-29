@@ -10,14 +10,14 @@ created by others. For more details, see https://github.com/NCEAS/metacat
 >    working well, but it has not yet been used in production - so we recommend caution with this
 >    early release. If you try it, [we'd love to hear your
 >    feedback](https://www.dataone.org/contact/)! After you have read the details below, [this
->    checklist](./helm/admin/MetacatQuickRef.md) may be helpful in guiding you through the necessary
+>    checklist](./admin/MetacatQuickRef.md) may be helpful in guiding you through the necessary
 >    installation steps.
 >
 >
 > 2. If you are considering **migrating an existing Metacat installation to Kubernetes**, note that
 >    ***before starting a migration, you must have a fully-functioning installation of Metacat
 >    version 2.19, running with PostgreSQL version 14. Migrating from other versions of Metacat
->    and/or PostgreSQL is not supported.*** See [this checklist](./helm/admin/MetacatQuickRef.md)
+>    and/or PostgreSQL is not supported.*** See [this checklist](./admin/MetacatQuickRef.md)
 >    for the necessary migration steps.
 >
 >
