@@ -7,7 +7,7 @@
 ### Version Upgrades and Bug Fixes:
 - Fixed [Auto-restart Hashstore Conversion if Interrupted](https://github.com/NCEAS/metacat/issues/2123)
 - Fixed [Reclassify Certain Errors as WARN Instead of ERROR During Hashstore Conversion](https://github.com/NCEAS/metacat/issues/2091)
-- [Upgrade the eml2osti.xsl file to support both OSTI E-Link v1 and v2 APIs](https://github.com/NCEAS/metacat/issues/2146)
+- [Add support for both OSTI E-Link v1 and v2 APIs](https://github.com/NCEAS/metacat/issues/2146)
 - [Upgrade DataONE-Indexer library from 3.1.2 to 3.1.3 in metacat-index with the fixed bug of
   restoration of disconnected RabbitMQ connections](https://github.com/DataONEorg/dataone-indexer/issues/176)
 - [Upgrade log4j library from 2.17.1 to 2.24.3 in metacat-common](https://github.com/NCEAS/metacat/pull/2124)
