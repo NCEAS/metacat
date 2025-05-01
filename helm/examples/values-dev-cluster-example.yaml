@@ -17,28 +17,20 @@
 debug: &debug true
 
 global:
-  metacatUiThemeName: "default"
-  metacatUiWebRoot: "/"
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
   d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
   storageClass: &storageClassName csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
   ## Use your own release name instead of metacatbrooke
   passwordsSecret: &passwordSecretName metacatbrooke-metacat-secrets
-
-
-## example for a custom theme (also need to set global.metacatUiThemeName: "cerp", above)
-##
-#metacatui:
-#  customTheme:
-#    enabled: true
-#    ## Use your own release name instead of metacatbrooke
-#    claimName: metacatbrooke-metacatui-customtheme
-#    subPath: metacatui-themes/src/cerp/js/themes/cerp
-#  appConfig:
-#    enabled: false
-    ## disabled because SFWMD uses cerp theme, overlaid with
-    ## SFWMD config.js at /config/config.js (created as configMap)
+  ## MetacatUI is deployed as a separate chart, to allow for a different upgrade cycle.
+  ## see separate values overrides in ./values-dev-cluster-example-mcui.yaml
+  ##
+  includeMetacatUi: false        # don't include the MetacatUI sub-chart
+  metacatUiIngressBackend:
+    enabled: true                # configure the Ingress to point to the MetacatUI service
+    service:
+      name: metacatuibrooke      # Use your own release name instead of metacatbrooke
 
 metacat:
   server.name: metacat-dev.test.dataone.org
@@ -69,8 +61,22 @@ persistence:
 
 image:
   # tag: TEST
+  tag: 3.2.1-SNAPSHOT
   pullPolicy: Always
   debug: *debug
+
+resources:
+  requests:
+    cpu: 1
+    memory: 4Gi
+  limits:
+    cpu: 2
+    memory: 8Gi
+
+tomcat:
+  heapMemory:
+    min: 4G
+    max: 8G
 
 ingress:
   annotations:
@@ -118,8 +124,16 @@ dataone-indexer:
   rabbitmq:
     auth:
       existingPasswordSecret: *passwordSecretName
+    resources:
+      requests:
+        cpu: 1.0
+        memory: 2048Mi
+      limits:
+        cpu: 3.0
+        memory: 3072Mi
 
   solr:
+    resourcesPreset: "large"
     extraVolumes:
       - name: solr-config
         configMap:
