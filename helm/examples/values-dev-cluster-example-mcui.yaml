@@ -1,0 +1,26 @@
+## Values Overrides - see metacatui's values.yaml for full documentation on the following parameters
+##
+##  $  helm upgrade --install metacatuibrooke -n brooke \
+##          -f metacatui/values-prod-cluster-brooke-mcui.yaml \
+##          oci://ghcr.io/nceas/charts/metacatui --version [VERSION] --debug --render-subchart-notes
+##
+
+global:
+  metacatUiThemeName: "default"
+  metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
+  d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
+#  metacatUiWebRoot: "/"          ## delete if default is ok
+#  metacatAppContext: "metacat"   ## delete if default is ok
+
+## example for a custom theme (also need to set global.metacatUiThemeName: "cerp", above)
+##
+# customTheme:
+#   enabled: true
+#   ## Use your own release name instead of metacatbrooke
+#   claimName: metacatbrooke-metacatui-customtheme
+#   subPath: metacatui-themes/src/cerp/js/themes/cerp
+#
+## disable appConfig because SFWMD uses cerp theme, overlaid with
+## SFWMD config.js at /config/config.js (created as configMap)
+# appConfig:
+#   enabled: false
