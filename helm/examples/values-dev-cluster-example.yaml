@@ -26,11 +26,11 @@ global:
   ## MetacatUI is deployed as a separate chart, to allow for a different upgrade cycle.
   ## see separate values overrides in ./values-dev-cluster-example-mcui.yaml
   ##
-  includeMetacatUi: false        # don't include the MetacatUI sub-chart
+  includeMetacatUi: false           # don't include the MetacatUI sub-chart
   metacatUiIngressBackend:
-    enabled: true                # configure the Ingress to point to the MetacatUI service
+    enabled: true                   # configure the Ingress to point to the MetacatUI service
     service:
-      name: metacatuibrooke      # Use your own release name instead of metacatbrooke
+      name: mcuibrooke-metacatui    # Use your own service name
 
 metacat:
   server.name: metacat-dev.test.dataone.org
