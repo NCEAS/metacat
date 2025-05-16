@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION notify_trigger() RETURNS trigger AS $trigger$
 DECLARE
-  rec RECORD;
-  dat RECORD;
+  rec systemmetadata;
+  dat systemmetadata;
   payload TEXT;
 BEGIN
 
