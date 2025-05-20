@@ -80,7 +80,7 @@ Starting in the root directory of the `metacat` repo:
 
     ```shell
     $ ./helm-upstall.sh  myreleasename  mynamespace oci://ghcr.io/nceas/charts/metacat  \
-                                            --version 2.1.0  -f  /your/values-overrides.yaml
+                                          --version [version-here]  -f  /your/values-overrides.yaml
     ```
 
 To access Metacat, you'll need to create a mapping between your ingress IP address (found by:
@@ -108,7 +108,7 @@ using the [Helm](https://helm.sh) package manager.
 To install the chart with the release name `my-release`:
 
 ```shell
-helm install my-release oci://ghcr.io/nceas/charts/metacat --version 2.1.0
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version [version-here]
 ```
 
 This command deploys Metacat on the Kubernetes cluster in the default configuration that is defined
@@ -120,7 +120,7 @@ by creating a YAML file that specifies only those values that need to be overrid
 that file as part of the helm install command. For example:
 
 ```shell
-helm install my-release  -f myValues.yaml  oci://ghcr.io/nceas/charts/metacat --version 2.1.0
+helm install my-release  -f myValues.yaml  oci://ghcr.io/nceas/charts/metacat --version [version-here]
 ```
 (where `myValues.yaml` contains only the values you wish to override.)
 
@@ -128,7 +128,7 @@ Parameters may also be provided on the command line to override those in
 [values.yaml](./values.yaml); e.g.
 
 ```shell
-helm install my-release oci://ghcr.io/nceas/charts/metacat --version 2.1.0  \
+helm install my-release oci://ghcr.io/nceas/charts/metacat --version [version-here]  \
                         --set postgres.auth.existingSecret=my-release-secrets
 ```
 
