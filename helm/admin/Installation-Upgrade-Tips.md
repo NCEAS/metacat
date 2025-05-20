@@ -37,7 +37,7 @@
 ### See how many "old" datasets exist in DB, before the upgrade:
 
 *   ```shell
-    kubectl exec metacatarctic-postgresql-0 -- bash -c "psql -U metacat << EOF
+    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
       select count(*) as docs from xml_documents where docid not like 'autogen%';
       select count(*) as revs from xml_revisions where docid not like 'autogen%';
     EOF"

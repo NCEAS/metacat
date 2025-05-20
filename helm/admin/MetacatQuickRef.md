@@ -351,25 +351,10 @@ whether you are using the MetacatUI sub-chart or not:
      application.readOnlyMode=true
      ```
 
-- [ ] Stop tomcat (not postgres)
+- [ ] Restart tomcat (not postgres)
 
      ```shell
-     sudo systemctl stop tomcat9
-     ```
-
-- [ ] `pg_dump` on legacy host
-
-    ```shell
-    DUMP_DIR="/var/lib/postgresql/14-pg_dump"
-    PGDB=metacat
-    POSTGRES_USER=metacat
-    sudo pg_dump -U $POSTGRES_USER -h localhost --format=directory --file=$DUMP_DIR --jobs=20 $PGDB
-    ```
-
-- [ ] Start tomcat
-
-     ```shell
-     sudo systemctl start tomcat9
+     sudo systemctl restart tomcat9
      ```
 
 - [ ] Check it's in RO mode! `https://$HOSTNAME/CONTEXT/d1/mn/v2/node` - look for:
@@ -377,6 +362,16 @@ whether you are using the MetacatUI sub-chart or not:
      ```xml
       <property key="read_only_mode">true</property>
      ```
+
+- [ ] `pg_dump` on legacy host
+
+    ```shell
+    JOBS=20 # adjust for available cpu cores
+    DEST="/var/lib/postgresql/14-pg_dump"
+    PGDB=metacat
+    POSTGRES_USER=metacat
+    sudo pg_dump -U $POSTGRES_USER -h localhost --format=directory --file=$DEST --jobs=$JOBS $PGDB
+    ```
 
 - [ ] "top-up" `rsync` from legacy to ceph:
 
@@ -388,9 +383,6 @@ whether you are using the MetacatUI sub-chart or not:
      #
      sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
                /var/metacat/data/         $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/data/
-
-     sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
-               /var/metacat/dataone/      $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/dataone/
 
      sudo rsync -rltDHX -e "ssh -i $HOME/.ssh/id_ed25519" --stats --human-readable \
                /var/metacat/documents/    $USER@$TARGET:/mnt/ceph/repos/$REPO/metacat/documents/
@@ -411,7 +403,7 @@ whether you are using the MetacatUI sub-chart or not:
 
      cd /mnt/ceph/repos/$REPO/metacat
 
-     sudo chown -R 59997:59997 data dataone documents logs
+     sudo chown -R 59997:59997 data documents logs
 
      sudo chmod -R g+rw data documents dataone
      ```
@@ -428,10 +420,15 @@ whether you are using the MetacatUI sub-chart or not:
     ```
 
 - [ ] Delete the `storage.hashstore.disableConversion:` setting, so the hashstore converter will
-      run, and do a `helm upgrade`
+      run, and do a `helm upgrade`. Watch for completion:
 
-  > See [this tip](./Installation-Upgrade-Tips.md#monitor-hashstore-conversion-progress-and-completion)
-  > for how to detect when hashstore conversion finishes
+    ```shell
+    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
+      select storage_upgrade_status from version_history where version='3.1.0';
+    EOF"
+    ```
+
+    ...or see [this tip](./Installation-Upgrade-Tips.md#monitor-hashstore-conversion-progress-and-completion) for other monitoring options
 
 **When hashstore conversion has finished successfully...**
 
