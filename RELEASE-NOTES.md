@@ -1,5 +1,23 @@
 # Metacat Release Notes
 
+## Release Notes for helm chart 2.1.1
+
+**Release date: 2025-05-20**
+
+This is a patch release to upgrade the indexer sub-chart from 1.3.0 to 1.3.1. It does not include
+any other changes to the metacat codebase or the metacat helm chart, beyond the documentation edits
+listed below.
+
+- Bump dataone-indexer sub-chart to version 1.3.1 ([see indexer release notes for
+  details](https://github.com/DataONEorg/dataone-indexer/blob/3.1.4/RELEASE-NOTES.md))
+- Documentation-only updates to `MetacatQuickRef.md` and `Installation-Upgrade-Tips.md`
+- Updates to the example values-override files in `helm/examples`
+
+> [!CAUTION]
+> If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
+> Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+
+
 ## Release Notes for Metacat 3.2.1
 
 **Release date: 2024-05-01**
