@@ -61,7 +61,6 @@ persistence:
 
 image:
   # tag: TEST
-  tag: 3.2.1-SNAPSHOT
   pullPolicy: Always
   debug: *debug
 
