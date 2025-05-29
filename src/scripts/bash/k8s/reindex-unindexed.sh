@@ -61,6 +61,9 @@ metacat_pids_count=$(cat ./${timestamp}/${metacat_pids_file} | wc -w | xargs)
 echo "Found $metacat_pids_count objects in metacat (release name: ${release_name})"
 echo
 
+# NEEDS PORT FORWARDING RUNNING!
+solr_url="http://localhost:8983/solr/metacat-index"
+
 ###########################################
 # Function: Query Solr for data objects
 #    usage: query <queryString> (e.g q=...)
@@ -72,9 +75,6 @@ function query {
    fi
    curl --silent $cert "${solr_url}/query?${1-q=*:*&wt=json&rows=0}"
 }
-
-# NEEDS PORT FORWARDING RUNNING!
-solr_url="http://localhost:8983/solr/metacat-index"
 
 # Get the total count
 readonly result=$(query)
