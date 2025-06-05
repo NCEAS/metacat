@@ -3,10 +3,12 @@ import io
 import threading
 import concurrent.futures
 import os
+from hashstore import HashStoreFactory
 import time  # For potential delays or timeouts
 
 # --- Configuration ---
 NODE_BASE_URL = "https://valley.duckdns.org/metacat/d1/mn"
+HASH_STORE_PATH = "/var/metacat/hashstore"
 # Path to the input file containing PIDs, one PID per line
 PIDS_FILE_PATH = "pids_to_process.txt"
 # Path to the token file containing an admin's token
@@ -22,26 +24,26 @@ REQUEST_TIMEOUT = 30
 # Lock for thread-safe writing to the results file
 results_file_lock = threading.Lock()
 
-# --- Placeholder for storeMetadata ---
-# IMPORTANT: You need to ensure that the actual `storeMetadata` function
-# is available in the context where this script is run.
-# This might involve importing it from another module if it's part of your project.
-#
-# For example:
-# from your_metacat_api_module import storeMetadata
-#
-# If storeMetadata is not defined, this script will raise a NameError.
-# Below is a placeholder definition for testing purposes.
-# Remove or replace it with your actual implementation.
+properties = {
+    "store_path": HASH_STORE_PATH,
+    "store_depth": 3,
+    "store_width": 2,
+    "store_algorithm": "SHA-256",
+    "store_metadata_namespace": "https://ns.dataone.org/service/types/v2.0#SystemMetadata",
+}
+hashstore_factory = HashStoreFactory()
+module_name = "hashstore.filehashstore"
+class_name = "FileHashStore"
+metacat_hashstore = hashstore_factory.get_hashstore(module_name, class_name, properties)
+print("After initializing hashstore")
+
+
+# Save system metadata into hashstore
 def storeMetadata(metadata_stream, pid):
-    """
-    Placeholder for the actual storeMetadata function.
-    This function should take an InputStream-like object (e.g., io.BytesIO)
-    and a PID string as input.
-    """
     print(f"  [{threading.current_thread().name}] [INFO] storeMetadata called for PID: {pid}")
-    pass
-# --- End of Placeholder ---
+    metadata_stream.name = pid + ".xml"
+    metacat_hashstore.store_metadata(pid, metadata_stream)
+    return
 
 def readToken():
     try:
@@ -55,7 +57,7 @@ def readToken():
     except Exception as e:
         print(f"[ERROR] Could not read the token file {TOKEN_FILE_PATH}: {e}")
         raise e
-    pass
+    return
 
 def process_pid_wrapper(pid, session, token):
     """
