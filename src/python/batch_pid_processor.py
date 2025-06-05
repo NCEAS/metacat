@@ -5,6 +5,23 @@ import concurrent.futures
 import os
 import time  # For potential delays or timeouts
 
+# --- Configuration ---
+NODE_BASE_URL = "https://valley.duckdns.org/metacat/d1/mn"
+# Path to the input file containing PIDs, one PID per line
+PIDS_FILE_PATH = "pids_to_process.txt"
+# Path to the token file containing an admin's token
+TOKEN_FILE_PATH = "token"
+# Path to the output file for logging successfully processed PIDs
+RESULTS_FILE_PATH = "/var/metacat/.metacat/sysmeta-processed.txt"
+# Number of worker threads
+MAX_WORKERS = 10
+# Request timeout in seconds
+REQUEST_TIMEOUT = 30
+# --- End Configuration ---
+
+# Lock for thread-safe writing to the results file
+results_file_lock = threading.Lock()
+
 # --- Placeholder for storeMetadata ---
 # IMPORTANT: You need to ensure that the actual `storeMetadata` function
 # is available in the context where this script is run.
@@ -26,22 +43,21 @@ def storeMetadata(metadata_stream, pid):
     pass
 # --- End of Placeholder ---
 
-# --- Configuration ---
-NODE_BASE_URL = "https://valley.duckdns.org/metacat/d1/mn"
-# Path to the input file containing PIDs, one PID per line
-PIDS_FILE_PATH = "pids_to_process.txt"
-# Path to the output file for logging successfully processed PIDs
-RESULTS_FILE_PATH = "/var/metacat/.metacat/sysmeta-processed.txt"
-# Number of worker threads
-MAX_WORKERS = 10
-# Request timeout in seconds
-REQUEST_TIMEOUT = 30
-# --- End Configuration ---
+def readToken():
+    try:
+        with open(TOKEN_FILE_PATH, "r") as file:
+            content = file.read()
+            return content
+        print(f"Found the admin's token from {TOKEN_FILE_PATH}.")
+    except FileNotFoundError as ee:
+        print(f"[ERROR] Token file not found: {TOKEN_FILE_PATH}. Please create it with the admin's token.")
+        raise ee
+    except Exception as e:
+        print(f"[ERROR] Could not read the token file {TOKEN_FILE_PATH}: {e}")
+        raise e
+    pass
 
-# Lock for thread-safe writing to the results file
-results_file_lock = threading.Lock()
-
-def process_pid_wrapper(pid, session):
+def process_pid_wrapper(pid, session, token):
     """
     Processes a single PID:
     1. Fetch sysmeta XML.
@@ -52,7 +68,6 @@ def process_pid_wrapper(pid, session):
     """
     thread_name = threading.current_thread().name
     print(f"[{thread_name}] Processing PID: {pid}")
-
     try:
         # 1. Fetch sysmeta XML document
         meta_url = f"{NODE_BASE_URL}/v2/meta/{pid}"
@@ -74,7 +89,7 @@ def process_pid_wrapper(pid, session):
         # 3. Call the index API
         index_url = f"{NODE_BASE_URL}/v2/index?pid={pid}"
         print(f"  [{thread_name}] Calling index API: {index_url}")
-        response_index = session.get(index_url, timeout=REQUEST_TIMEOUT)
+        response_index = session.put(index_url, timeout=REQUEST_TIMEOUT)
         response_index.raise_for_status()
         print(f"  [{thread_name}] Successfully called index API for {pid}. Status: {response_index.status_code}")
 
@@ -116,21 +131,10 @@ def main():
         print(f"[ERROR] Could not create directory for results file {RESULTS_FILE_PATH}: {e}. Please check permissions.")
         return
 
-    # Create a dummy pids_to_process.txt for testing if it doesn't exist
-    if not os.path.exists(PIDS_FILE_PATH):
-        print(f"Warning: PIDs file '{PIDS_FILE_PATH}' not found. Creating a dummy file for testing.")
-        print(f"Please replace '{PIDS_FILE_PATH}' with your actual list of PIDs.")
-        try:
-            with open(PIDS_FILE_PATH, "w") as f:
-                f.write("arctic-data.10020.1\n")
-                f.write("arctic-data.10021.1\n")
-                f.write("nonexistent.pid.test\n")  # To test error handling for a PID
-                for i in range(22, 40):  # Add more PIDs for threading demo
-                    f.write(f"arctic-data.100{i:02d}.1\n")
-        except IOError as e:
-            print(f"[ERROR] Could not create dummy PIDs file '{PIDS_FILE_PATH}': {e}")
-            return
-
+    token = readToken()
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
     all_pids = []
     try:
         with open(PIDS_FILE_PATH, "r") as f:
@@ -148,6 +152,7 @@ def main():
 
     # Use a session object for connection pooling and default headers if needed
     with requests.Session() as session:
+        session.headers.update(headers)
         processed_count = 0
         failed_count = 0
         total_pids = len(all_pids)
@@ -155,7 +160,8 @@ def main():
         print(f"Starting processing with {MAX_WORKERS} worker threads...")
         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='PIDProcessor') as executor:
             # Submit all PIDs to the executor
-            future_to_pid = {executor.submit(process_pid_wrapper, pid, session): pid for pid in all_pids}
+            future_to_pid = {executor.submit(process_pid_wrapper, pid, session, token): pid for pid
+                             in all_pids}
 
             for future in concurrent.futures.as_completed(future_to_pid):
                 pid_submitted = future_to_pid[future]
