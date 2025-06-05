@@ -27,6 +27,7 @@ def storeMetadata(metadata_stream, pid):
 # --- End of Placeholder ---
 
 # --- Configuration ---
+NODE_BASE_URL = "https://valley.duckdns.org/metacat/d1/mn"
 # Path to the input file containing PIDs, one PID per line
 PIDS_FILE_PATH = "pids_to_process.txt"
 # Path to the output file for logging successfully processed PIDs
@@ -54,7 +55,7 @@ def process_pid_wrapper(pid, session):
 
     try:
         # 1. Fetch sysmeta XML document
-        meta_url = f"https://arcticdata.io/metacat/d1/mn/v2/meta/{pid}"
+        meta_url = f"{NODE_BASE_URL}/v2/meta/{pid}"
         print(f"  [{thread_name}] Fetching metadata from: {meta_url}")
         response_meta = session.get(meta_url, timeout=REQUEST_TIMEOUT)
         response_meta.raise_for_status()  # Raise an HTTPError for bad responses (4XX or 5XX)
@@ -71,7 +72,7 @@ def process_pid_wrapper(pid, session):
             return None  # Stop processing this PID if storeMetadata fails
 
         # 3. Call the index API
-        index_url = f"https://arcticdata.io/metacat/d1/mn/v2/index?pid={pid}"
+        index_url = f"{NODE_BASE_URL}/v2/index?pid={pid}"
         print(f"  [{thread_name}] Calling index API: {index_url}")
         response_index = session.get(index_url, timeout=REQUEST_TIMEOUT)
         response_index.raise_for_status()
