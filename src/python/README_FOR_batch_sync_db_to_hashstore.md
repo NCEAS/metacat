@@ -22,3 +22,7 @@ Place the Python script on a host that has access to the Hash Store directory, a
 ```
 python3 batch_sync_db_to_hashstore.py
 ```
+If you want to run the Python script in the background and redirect its output (both standard output and standard error) to a file, you can use the following command:
+```
+python3 batch_sync_db_to_hashstore.py > output.log 2>&1 &
+```
