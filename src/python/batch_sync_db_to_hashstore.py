@@ -45,6 +45,7 @@ def storeMetadata(metadata_stream, pid):
     metacat_hashstore.store_metadata(pid, metadata_stream)
     return
 
+# Read the admin token from a given file
 def readToken():
     try:
         with open(TOKEN_FILE_PATH, "r") as file:
@@ -59,10 +60,20 @@ def readToken():
         raise e
     return
 
+# Get the content of the system metadata for the given id
+def getSystemMetadataContent(pid, session, thread_name):
+    # Fetch sysmeta XML document
+    meta_url = f"{NODE_BASE_URL}/v2/meta/{pid}"
+    print(f"  [{thread_name}] Fetching metadata from: {meta_url}")
+    response_meta = session.get(meta_url, timeout=REQUEST_TIMEOUT)
+    response_meta.raise_for_status()  # Raise an HTTPError for bad responses (4XX or 5XX)
+    print(f"  [{thread_name}] Successfully fetched metadata for {pid}. Status: {response_meta.status_code}")
+    return response_meta.content
+
 def process_pid_wrapper(pid, session, token):
     """
     Processes a single PID:
-    1. Fetch sysmeta XML.
+    1. Fetch sysmeta.
     2. Call storeMetadata.
     3. Call index API.
     4. Log PID to results file on success.
@@ -71,18 +82,11 @@ def process_pid_wrapper(pid, session, token):
     thread_name = threading.current_thread().name
     print(f"[{thread_name}] Processing PID: {pid}")
     try:
-        # 1. Fetch sysmeta XML document
-        meta_url = f"{NODE_BASE_URL}/v2/meta/{pid}"
-        print(f"  [{thread_name}] Fetching metadata from: {meta_url}")
-        response_meta = session.get(meta_url, timeout=REQUEST_TIMEOUT)
-        response_meta.raise_for_status()  # Raise an HTTPError for bad responses (4XX or 5XX)
-        print(f"  [{thread_name}] Successfully fetched metadata for {pid}. Status: {response_meta.status_code}")
-        metadata_content = response_meta.content
-
-        # 2. Call storeMetadata with the sysmeta document
-        metadata_stream = io.BytesIO(metadata_content)
+        # 1. Fetch sysmeta.
+        metadata_stream = io.BytesIO(getSystemMetadataContent(pid, session, thread_name))
         try:
-            storeMetadata(metadata_stream, pid)  # Call the (placeholder or actual) Python API method
+            # 2. Call storeMetadata.
+            storeMetadata(metadata_stream, pid)
             print(f"  [{thread_name}] Successfully called storeMetadata for PID: {pid}")
         except Exception as e:
             print(f"[ERROR] [{thread_name}] storeMetadata failed for PID {pid}: {e}")
