@@ -762,6 +762,19 @@ ingress:
     ## Setting size to 0 disables checking of client request body size
     ##
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout See docs:
+    ## https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md#proxy-read-timeout
+    ## default is 60 seconds, but we set it to 300 seconds (5 minutes) to prevent 504 Gateway
+    ## Time-out when downloading zip files of huge datasets using bagit
+    ##
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-buffering See docs:
+    ## https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md#proxy-buffering
+    ## According to ingress-nginx docs, default is "off", but according to nginx docs, default is
+    ## "on", so we set it explicitly to "off", be sure
+    ##
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+
 
   ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
   ## ingress.defaultBackend (optional) default for any requests not matching defined paths
