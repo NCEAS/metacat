@@ -50,8 +50,8 @@ def read_token():
     try:
         with open(TOKEN_FILE_PATH, "r") as file:
             content = file.read()
+            print(f"Found the admin's token from the file: {TOKEN_FILE_PATH}.")
             return content
-        print(f"Found the admin's token from {TOKEN_FILE_PATH}.")
     except FileNotFoundError as ee:
         print(f"[ERROR] Token file not found: {TOKEN_FILE_PATH}. Please create it with the admin's token.")
         raise ee
