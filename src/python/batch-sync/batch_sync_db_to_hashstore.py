@@ -39,14 +39,14 @@ print("After initializing hashstore")
 
 
 # Save system metadata into hashstore
-def storeMetadata(metadata_stream, pid):
+def store_metadata(metadata_stream, pid):
     print(f"  [{threading.current_thread().name}] [INFO] storeMetadata called for PID: {pid}")
     metadata_stream.name = pid + ".xml"
     metacat_hashstore.store_metadata(pid, metadata_stream)
     return
 
 # Read the admin token from a given file
-def readToken():
+def read_token():
     try:
         with open(TOKEN_FILE_PATH, "r") as file:
             content = file.read()
@@ -61,7 +61,7 @@ def readToken():
     return
 
 # Get the content of the system metadata for the given id
-def getSystemMetadataContent(pid, session, thread_name):
+def get_system_metadata_content(pid, session, thread_name):
     # Fetch sysmeta XML document
     meta_url = f"{NODE_BASE_URL}/v2/meta/{pid}"
     print(f"  [{thread_name}] Fetching metadata from: {meta_url}")
@@ -83,10 +83,10 @@ def process_pid_wrapper(pid, session, token):
     print(f"[{thread_name}] Processing PID: {pid}")
     try:
         # 1. Fetch sysmeta.
-        metadata_stream = io.BytesIO(getSystemMetadataContent(pid, session, thread_name))
+        metadata_stream = io.BytesIO(get_system_metadata_content(pid, session, thread_name))
         try:
             # 2. Call storeMetadata.
-            storeMetadata(metadata_stream, pid)
+            store_metadata(metadata_stream, pid)
             print(f"  [{thread_name}] Successfully called storeMetadata for PID: {pid}")
         except Exception as e:
             print(f"[ERROR] [{thread_name}] storeMetadata failed for PID {pid}: {e}")
@@ -137,7 +137,7 @@ def main():
         print(f"[ERROR] Could not create directory for results file {RESULTS_FILE_PATH}: {e}. Please check permissions.")
         return
 
-    token = readToken()
+    token = read_token()
     headers = {
         "Authorization": f"Bearer {token}"
     }
