@@ -15,6 +15,8 @@ PIDS_FILE_PATH = "pids_to_process.txt"
 TOKEN_FILE_PATH = "token"
 # Path to the output file for logging successfully processed PIDs
 RESULTS_FILE_PATH = "/var/metacat/.metacat/sysmeta-processed.txt"
+# Indicating if the process skips submitting the reindex job (False or True)
+skip_index = False
 # Number of worker threads
 MAX_WORKERS = 10
 # Request timeout in seconds
@@ -92,12 +94,13 @@ def process_pid_wrapper(pid, session, token):
             print(f"[ERROR] [{thread_name}] storeMetadata failed for PID {pid}: {e}")
             return None  # Stop processing this PID if storeMetadata fails
 
-        # 3. Call the index API
-        index_url = f"{NODE_BASE_URL}/v2/index?pid={pid}"
-        print(f"  [{thread_name}] Calling index API: {index_url}")
-        response_index = session.put(index_url, timeout=REQUEST_TIMEOUT)
-        response_index.raise_for_status()
-        print(f"  [{thread_name}] Successfully called index API for {pid}. Status: {response_index.status_code}")
+        # 3. Call the index API if not skip index
+        if not skip_index:
+            index_url = f"{NODE_BASE_URL}/v2/index?pid={pid}"
+            print(f"  [{thread_name}] Calling index API: {index_url}")
+            response_index = session.put(index_url, timeout=REQUEST_TIMEOUT)
+            response_index.raise_for_status()
+            print(f"  [{thread_name}] Successfully called index API for {pid}. Status: {response_index.status_code}")
 
         # 4. Add PID to results file (thread-safe)
         try:
