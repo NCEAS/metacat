@@ -143,8 +143,11 @@ def main():
         print(f"Starting processing with {MAX_WORKERS} worker threads...")
         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='PIDProcessor') as executor:
             # Submit all PIDs to the executor
-            future_to_pid = {executor.submit(process_pid_wrapper, pid, channel): pid for pid
-                             in all_pids}
+            future_to_pid = {}
+            for pid in all_pids:
+                future = executor.submit(process_pid_wrapper, pid, channel)
+                future_to_pid[future] = pid
+                time.sleep(SUBMISSION_GAP_SEC)
 
             for future in concurrent.futures.as_completed(future_to_pid):
                 pid_submitted = future_to_pid[future]
