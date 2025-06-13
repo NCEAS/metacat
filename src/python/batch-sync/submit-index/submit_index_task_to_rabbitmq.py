@@ -7,6 +7,8 @@ import sys
 import time  # For potential delays or timeouts
 
 # --- Configuration ---
+# If the type of the index task is systemMetacat_change_only
+SYSMETA_CHANGE_ONLY = False
 # Path to the output file for logging successfully processed PIDs
 RESULTS_FILE_PATH = "/var/metacat/.metacat/sysmeta-processed.txt"
 # RabbitMQ URL
@@ -52,16 +54,19 @@ def get_rabbitmq_channel(username, password):
 def process_pid_wrapper(pid, channel):
     """
     Processes a single PID:
-    1. Constructor the rabbitmq message
+    1. Construct the rabbitmq message
     2. Publish the message to the rabbitmq service
     3. Add PID to results file
     """
     thread_name = threading.current_thread().name
-    print(f"[{thread_name}] Processing PID: {pid}")
     try:
-
-        # 1 Constructor the rabbitmq message
-        headers={'index_type': 'create', 'id': pid}
+        # 1 Construct the rabbitmq message
+        if (SYSMETA_CHANGE_ONLY):
+            index_type = "sysmeta"
+        else:
+            index_type = "create"
+        print(f"[{thread_name}] Processing PID: {pid} with the type of index task: {index_type}")
+        headers={'index_type': index_type, 'id': pid}
         properties = pika.BasicProperties(headers=headers, priority=PRIORITY)
         message = ''
         # 2 Publish the message to the rabbitmq service
