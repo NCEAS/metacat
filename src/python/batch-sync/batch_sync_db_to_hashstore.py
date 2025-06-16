@@ -111,7 +111,7 @@ def process_pid_wrapper(pid, session, token):
             return pid
         except IOError as ioe:
             print(f"[ERROR] [{thread_name}] Could not write to results file {RESULTS_FILE_PATH} for PID {pid}: {ioe}")
-            return None
+            os._exit(1)
 
     except requests.exceptions.HTTPError as http_err:
         print(f"[ERROR] [{thread_name}] HTTP error for PID {pid} at URL {http_err.request.url}: {http_err}")
