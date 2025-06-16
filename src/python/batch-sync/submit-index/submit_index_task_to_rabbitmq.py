@@ -27,7 +27,7 @@ PRIORITY = 0
 REQUEST_TIMEOUT = 30
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
-ROUTINE_KEY = "index"
+ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
 
 # --- End Configuration ---
@@ -45,7 +45,7 @@ def get_rabbitmq_channel(username, password):
         channel.queue_declare(queue=QUEUE_NAME, durable=True, arguments={'x-max-priority': 10})
         channel.queue_bind(exchange=EXCHANGE_NAME,
                            queue=QUEUE_NAME,
-                           routing_key=ROUTINE_KEY)
+                           routing_key=ROUTING_KEY)
     except Exception as e:
         print(f"[ERROR] Could not create a RabbitMQ channel: {e}")
         raise e
@@ -72,7 +72,7 @@ def process_pid_wrapper(pid, channel):
         # 2 Publish the message to the rabbitmq service
         channel.basic_publish(
             exchange=EXCHANGE_NAME,
-            routing_key=ROUTINE_KEY,
+            routing_key=ROUTING_KEY,
             body=message,
             properties=properties
         )
