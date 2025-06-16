@@ -1,108 +1,82 @@
-import requests
 import io
 import threading
 import concurrent.futures
 import os
-from hashstore import HashStoreFactory
+import pika
+import sys
 import time  # For potential delays or timeouts
 
 # --- Configuration ---
-NODE_BASE_URL = "https://valley.duckdns.org/metacat/d1/mn"
-HASH_STORE_PATH = "/var/metacat/hashstore"
-# Path to the input file containing PIDs, one PID per line
-PIDS_FILE_PATH = "pids_to_process.txt"
-# Path to the token file containing an admin's token
-TOKEN_FILE_PATH = "token"
+# If the type of the index task is systemMetacat_change_only
+SYSMETA_CHANGE_ONLY = False
 # Path to the output file for logging successfully processed PIDs
 RESULTS_FILE_PATH = "/var/metacat/.metacat/sysmeta-processed.txt"
-# Indicating if the process skips submitting the reindex job (False or True)
-skip_index = False
+# RabbitMQ URL
+RABBITMQ_URL = "localhost"
+# RabbitMQ port number
+RABBITMQ_PORT_NUMBER = 5672
+# The time gap between tow submission in seconds
+SUBMISSION_GAP_SEC = 0.5
 # Number of worker threads
-MAX_WORKERS = 10
+MAX_WORKERS = 1
+# Path to the input file containing PIDs, one PID per line
+PIDS_FILE_PATH = "pids_to_process.txt"
+# Priority of the message. We set it 0, which is the lowest one, since this should be run in background
+PRIORITY = 0
 # Request timeout in seconds
 REQUEST_TIMEOUT = 30
+# RabbitMQ queue configuration. They shouldn't be changed
+QUEUE_NAME = "index"
+ROUTING_KEY = "index"
+EXCHANGE_NAME = "dataone-index"
+
 # --- End Configuration ---
 
 # Lock for thread-safe writing to the results file
 results_file_lock = threading.Lock()
 
-properties = {
-    "store_path": HASH_STORE_PATH,
-    "store_depth": 3,
-    "store_width": 2,
-    "store_algorithm": "SHA-256",
-    "store_metadata_namespace": "https://ns.dataone.org/service/types/v2.0#SystemMetadata",
-}
-hashstore_factory = HashStoreFactory()
-module_name = "hashstore.filehashstore"
-class_name = "FileHashStore"
-metacat_hashstore = hashstore_factory.get_hashstore(module_name, class_name, properties)
-print("After initializing hashstore")
-
-
-# Save system metadata into hashstore
-def store_metadata(metadata_stream, pid):
-    print(f"  [{threading.current_thread().name}] [INFO] storeMetadata called for PID: {pid}")
-    metadata_stream.name = pid + ".xml"
-    metacat_hashstore.store_metadata(pid, metadata_stream)
-    return
-
-# Read the admin token from a given file
-def read_token():
+def get_rabbitmq_channel(username, password):
     try:
-        with open(TOKEN_FILE_PATH, "r") as file:
-            content = file.read()
-            print(f"Found the admin's token from the file: {TOKEN_FILE_PATH}.")
-            return content
-    except FileNotFoundError as ee:
-        print(f"[ERROR] Token file not found: {TOKEN_FILE_PATH}. Please create it with the admin's token.")
-        raise ee
+        credentials = pika.PlainCredentials(username, password)
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host=RABBITMQ_URL, port=RABBITMQ_PORT_NUMBER,
+                                      credentials=credentials))
+        channel = connection.channel()
+        channel.queue_declare(queue=QUEUE_NAME, durable=True, arguments={'x-max-priority': 10})
+        channel.queue_bind(exchange=EXCHANGE_NAME,
+                           queue=QUEUE_NAME,
+                           routing_key=ROUTING_KEY)
     except Exception as e:
-        print(f"[ERROR] Could not read the token file {TOKEN_FILE_PATH}: {e}")
+        print(f"[ERROR] Could not create a RabbitMQ channel: {e}")
         raise e
-    return
+    return channel
 
-# Get the content of the system metadata for the given id
-def get_system_metadata_content(pid, session, thread_name):
-    # Fetch sysmeta XML document
-    meta_url = f"{NODE_BASE_URL}/v2/meta/{pid}"
-    print(f"  [{thread_name}] Fetching metadata from: {meta_url}")
-    response_meta = session.get(meta_url, timeout=REQUEST_TIMEOUT)
-    response_meta.raise_for_status()  # Raise an HTTPError for bad responses (4XX or 5XX)
-    print(f"  [{thread_name}] Successfully fetched metadata for {pid}. Status: {response_meta.status_code}")
-    return response_meta.content
-
-def process_pid_wrapper(pid, session, token):
+def process_pid_wrapper(pid, channel):
     """
     Processes a single PID:
-    1. Fetch sysmeta.
-    2. Call storeMetadata.
-    3. Call index API.
-    4. Log PID to results file on success.
-    Returns PID on success, None on failure.
+    1. Construct the rabbitmq message
+    2. Publish the message to the rabbitmq service
+    3. Add PID to results file
     """
     thread_name = threading.current_thread().name
-    print(f"[{thread_name}] Processing PID: {pid}")
     try:
-        # 1. Fetch sysmeta.
-        metadata_stream = io.BytesIO(get_system_metadata_content(pid, session, thread_name))
-        try:
-            # 2. Call storeMetadata.
-            store_metadata(metadata_stream, pid)
-            print(f"  [{thread_name}] Successfully called storeMetadata for PID: {pid}")
-        except Exception as e:
-            print(f"[ERROR] [{thread_name}] storeMetadata failed for PID {pid}: {e}")
-            return None  # Stop processing this PID if storeMetadata fails
-
-        # 3. Call the index API if not skip index
-        if not skip_index:
-            index_url = f"{NODE_BASE_URL}/v2/index?pid={pid}"
-            print(f"  [{thread_name}] Calling index API: {index_url}")
-            response_index = session.put(index_url, timeout=REQUEST_TIMEOUT)
-            response_index.raise_for_status()
-            print(f"  [{thread_name}] Successfully called index API for {pid}. Status: {response_index.status_code}")
-
-        # 4. Add PID to results file (thread-safe)
+        # 1 Construct the rabbitmq message
+        if (SYSMETA_CHANGE_ONLY):
+            index_type = "sysmeta"
+        else:
+            index_type = "create"
+        print(f"[{thread_name}] Processing PID: {pid} with the type of index task: {index_type}")
+        headers={'index_type': index_type, 'id': pid}
+        properties = pika.BasicProperties(headers=headers, priority=PRIORITY)
+        message = ''
+        # 2 Publish the message to the rabbitmq service
+        channel.basic_publish(
+            exchange=EXCHANGE_NAME,
+            routing_key=ROUTING_KEY,
+            body=message,
+            properties=properties
+        )
+        # 3. Add PID to results file (thread-safe)
         try:
             with results_file_lock:
                 with open(RESULTS_FILE_PATH, "a") as f:
@@ -113,13 +87,13 @@ def process_pid_wrapper(pid, session, token):
             print(f"[ERROR] [{thread_name}] Could not write to results file {RESULTS_FILE_PATH} for PID {pid}: {ioe}")
             os._exit(1)
 
-    except requests.exceptions.HTTPError as http_err:
+    except channel.exceptions.HTTPError as http_err:
         print(f"[ERROR] [{thread_name}] HTTP error for PID {pid} at URL {http_err.request.url}: {http_err}")
-    except requests.exceptions.ConnectionError as conn_err:
+    except channel.exceptions.ConnectionError as conn_err:
         print(f"[ERROR] [{thread_name}] Connection error for PID {pid} (URL: {conn_err.request.url if conn_err.request else 'N/A'}): {conn_err}")
-    except requests.exceptions.Timeout as timeout_err:
+    except channel.exceptions.Timeout as timeout_err:
         print(f"[ERROR] [{thread_name}] Timeout for PID {pid} (URL: {timeout_err.request.url if timeout_err.request else 'N/A'}): {timeout_err}")
-    except requests.exceptions.RequestException as req_err:
+    except channel.exceptions.RequestException as req_err:
         print(f"[ERROR] [{thread_name}] General request error for PID {pid}: {req_err}")
     except Exception as e:
         print(f"[ERROR] [{thread_name}] An unexpected error occurred while processing PID {pid}: {e}")
@@ -130,6 +104,15 @@ def main():
     """
     Main function to read PIDs from a file and process them using a thread pool.
     """
+    arguments = sys.argv[1:]
+    if len(arguments) == 2:
+        print("Arguments:", arguments)
+        rabbitmq_username = arguments[0]
+        rabbitmq_password = arguments[1]
+        print(f"RabbitMQ username: {rabbitmq_username}")
+    else:
+        print("Usage: python3 submit_index_task_to_rabbitmq.py rabbitmq_username rabbitmq_password")
+        sys.exit()
     # Ensure the directory for results_file_path exists
     try:
         results_dir = os.path.dirname(RESULTS_FILE_PATH)
@@ -140,10 +123,6 @@ def main():
         print(f"[ERROR] Could not create directory for results file {RESULTS_FILE_PATH}: {e}. Please check permissions.")
         return
 
-    token = read_token()
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
     all_pids = []
     try:
         with open(PIDS_FILE_PATH, "r") as f:
@@ -160,8 +139,8 @@ def main():
         return
 
     # Use a session object for connection pooling and default headers if needed
-    with requests.Session() as session:
-        session.headers.update(headers)
+    # with requests.Session() as session:
+    with get_rabbitmq_channel(rabbitmq_username, rabbitmq_password) as channel:
         processed_count = 0
         failed_count = 0
         total_pids = len(all_pids)
@@ -169,8 +148,11 @@ def main():
         print(f"Starting processing with {MAX_WORKERS} worker threads...")
         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='PIDProcessor') as executor:
             # Submit all PIDs to the executor
-            future_to_pid = {executor.submit(process_pid_wrapper, pid, session, token): pid for pid
-                             in all_pids}
+            future_to_pid = {}
+            for pid in all_pids:
+                future = executor.submit(process_pid_wrapper, pid, channel)
+                future_to_pid[future] = pid
+                time.sleep(SUBMISSION_GAP_SEC)
 
             for future in concurrent.futures.as_completed(future_to_pid):
                 pid_submitted = future_to_pid[future]
