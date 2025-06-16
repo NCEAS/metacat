@@ -22,5 +22,5 @@ python3 submit_index_task_to_rabbitmq.py rabbitmq_username rabbitmq_password
 ```
 To run the script in the background, time the execution, and redirect both standard output and error to a log file, use:
 ```
-{ date; time python3 submit_index_task_to_rabbitmq.py rabbitmq_username rabbitmq_password; } > output.log 2>&1 &
+{ date; time python3 -u submit_index_task_to_rabbitmq.py rabbitmq_username rabbitmq_password; } > output.log 2>&1 &
 ```
