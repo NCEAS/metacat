@@ -1,7 +1,8 @@
 #!/bin/bash
 
 ## Script to restore the contents of the checksums table. Run this in the metacat pod. It should
-## be located in: /usr/local/tomcat/webapps/metacat/WEB-INF/sql/scripts/sql/
+## be located in:
+##   /usr/local/tomcat/webapps/metacat/WEB-INF/scripts/bash/k8s/backup-restore-checksums-table/
 ## It will automatically configure itself from existing env properties and configMap values, and
 ## will restore the table from values found in the "checksums-backup.txt" file that should be
 ## located in the metacat backups directory (defined as "application.backupDir" in the
