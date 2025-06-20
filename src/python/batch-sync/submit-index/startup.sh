@@ -63,7 +63,6 @@ echo
 echo "To delete the pod and configmap, run:"
 echo "  $ kubectl delete pod ${POD_NAME}; kubectl delete configmap ${CONFIGMAP_NAME}"
 echo
-echo
 echo "To run the script:"
 echo "(NOTE: The following paths assuming defaults have not been changed in ${SCRIPT_FILE}):"
 echo; echo "1. ensure input PIDs are available at:"
@@ -72,4 +71,4 @@ echo; echo "2. access a bash shell in the pod:"
 echo "  $ kubectl exec -it pod/python-pod -- bash"
 echo; echo "3. run the script inside the pod:"
 echo "$ { date; time python3 -u ${LOC}/${SCRIPT_FILE} rabbitmq_username rabbitmq_password; } > ${LOC}/output.log 2>&1 &"
-echo; echo "3. Enqueued PIDs saved to ${LOC}/sysmeta-processed.txt"
+echo; echo "Successfully enqueued PIDs are saved to ${LOC}/sysmeta-processed.txt"
