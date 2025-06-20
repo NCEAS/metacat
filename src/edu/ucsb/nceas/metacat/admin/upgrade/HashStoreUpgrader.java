@@ -228,14 +228,28 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                     + "systemmetadata and identifier table to "
                                                     + "figure out the real pid.");
                                         }
+                                        String docId;
+                                        try {
+                                            docId =
+                                                IdentifierManager.getInstance().getLocalId(finalId);
+                                            logMetacat.debug("Metacat found docid " + docId
+                                                                 + " for pid " + finalId);
+                                        } catch (McdbDocNotFoundException e) {
+                                            logMetacat.debug("Metacat couldn't find the docid for "
+                                                                 + "pid " + finalId + ". So it "
+                                                                 + "thinks the pid and docid "
+                                                                 + "have the same value " + finalId);
+
+                                            docId = finalId;
+                                        }
                                         // This is for the case that the object somehow hasn't been
                                         // transformed to the DataONE object: no system metadata
                                         // This method does not only create the system metadata,
                                         // but also create the map in the identifier table.
-                                        logMetacat.debug("We need to create the systemetadata for "
-                                                             + finalId);
+                                        logMetacat.debug("We need to create the systemmetadata for "
+                                                             + finalId + " with docid " + docId);
                                         sysMeta =
-                                            SystemMetadataFactory.createSystemMetadata(finalId);
+                                            SystemMetadataFactory.createSystemMetadata(docId);
                                         try {
                                             SystemMetadataManager.lock(pid);
                                             SystemMetadataManager.getInstance().store(sysMeta);
