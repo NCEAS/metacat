@@ -100,7 +100,9 @@ public class HashStoreUpgraderIT {
     }
 
     /**
-     * Test the method initCandidateList
+     * Test the method initCandidateList. It also contains the cases that objects exist in the
+     * xml_documents/revisions table and identifier table, but doesn't exist in the
+     * systemmetadata table.
      * @throws Exception
      */
     @Test
@@ -108,6 +110,7 @@ public class HashStoreUpgraderIT {
         String user = "http://orcid.org/1234/4567";
         Subject owner = new Subject();
         owner.setValue(user);
+        // The object exists in the systemmetadata table
         Identifier pid = new Identifier();
         pid.setValue("testInitCandidateList-" + System.currentTimeMillis());
         InputStream object =
@@ -116,17 +119,67 @@ public class HashStoreUpgraderIT {
         SystemMetadataManager.lock(pid);
         SystemMetadataManager.getInstance().store(sysmeta);
         SystemMetadataManager.unLock(pid);
+
+        //Incomplete records (not in the systemmetadata table, but in the identifier table and
+        // xml_documents/revisions tables)
+        String prefix = "testInitCandidateList12" + "." + System.currentTimeMillis();
+        String id1 = prefix + "." + 1;
+        String id2 = prefix + "." + 2;
+        Identifier pid1 = new Identifier();
+        pid1.setValue("pid-" + id1);
+        Identifier pid2 = new Identifier();
+        pid2.setValue("pid-" + id2);
+        String docName = "eml";
+        String docType = "eml://ecoinformatics.org/eml-2.0.1";
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection(
+                "HashStoreUpgraderTest.testInitCandidateListWithNonDataONEObject");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            // register two docids in the xml_documents and xml_revisions tables.
+            DocumentImpl.registerDocument(docName, docType, dbConn, id1, user);
+            DocumentImpl.registerDocument(docName, docType, dbConn, id2, user);
+            assertTrue("The xml_documents table should have the record " + id2,
+                       IntegrationTestUtils.hasRecord("xml_documents", dbConn, " rev=? and docid like ?"
+                           , 2, prefix));
+            assertTrue("The xml_revisions table should have the record " + id1,
+                       IntegrationTestUtils.hasRecord("xml_revisions", dbConn, " rev=? and docid like ?"
+                           , 1, prefix));
+            // Register the pid and docid into the identifier table
+            IdentifierManager.getInstance().createMapping(pid1.getValue(), id1);
+            IdentifierManager.getInstance().createMapping(pid2.getValue(), id2);
+            assertEquals(id1, IdentifierManager.getInstance().getLocalId(pid1.getValue()));
+            assertEquals(id2, IdentifierManager.getInstance().getLocalId(pid2.getValue()));
+            // But the pid1 and pid2 are not in the systemmetadata table
+            assertNull(SystemMetadataManager.getInstance().get(pid1));
+            assertNull(SystemMetadataManager.getInstance().get(pid2));
+        } finally {
+            DBConnectionPool.returnDBConnection(
+                dbConn, serialNumber);
+        }
+        boolean found = false;
+        boolean found1 = false;
+        boolean found2 = false;
         HashStoreUpgrader upgrader = new HashStoreUpgrader();
         ResultSet resultSet = upgrader.initCandidateList();
-        boolean found = false;
         while (resultSet.next()) {
             String id = resultSet.getString(1);
             if (id.equals(pid.getValue())) {
                 found = true;
+            }
+            if (id.equals(pid1.getValue())) {
+                found1 = true;
+            }
+            if (id.equals(pid2.getValue())) {
+                found2 = true;
+            }
+            if (found && found1 && found2) {
                 break;
             }
         }
-        assertTrue(found);
+        assertTrue(found && found1 && found2);
     }
 
     /**
@@ -169,6 +222,9 @@ public class HashStoreUpgraderIT {
         String deletedPid = "pid-" + deletedDocId;
         IdentifierManager.getInstance().createMapping(deletedPid, deletedDocId);
         assertEquals(deletedDocId, IdentifierManager.getInstance().getLocalId(deletedPid));
+        Identifier identifier = new Identifier();
+        identifier.setValue(deletedPid);
+        assertNull(SystemMetadataManager.getInstance().get(identifier));
 
         HashStoreUpgrader upgrader = new HashStoreUpgrader();
         ResultSet resultSet = upgrader.initCandidateList();
