@@ -368,6 +368,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             dbConn = DBConnectionPool.getDBConnection("HashStoreUpgrader.initCandidateList");
             serialNumber = dbConn.getCheckOutSerialNumber();
             stmt = dbConn.prepareStatement(query); // can't use the try-resource statement
+            logMetacat.debug("The query to select the objects which need to be converted to hash "
+                                 + "store is " + query);
             rs = stmt.executeQuery();
         } finally {
             // Return database connection to the pool
