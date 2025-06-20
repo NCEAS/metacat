@@ -47,7 +47,7 @@ spec:
         - name: metacat-volume
           mountPath: /var/metacat
         - name: script-volume
-          mountPath: /var/metacat/.metacat/reindex-script
+          mountPath: /var/metacat/.metacat/reindex-script/python
   volumes:
     - name: metacat-volume
       persistentVolumeClaim:
@@ -70,5 +70,5 @@ echo "  ${LOC}/pids_to_process.txt"
 echo; echo "2. access a bash shell in the pod:"
 echo "  $ kubectl exec -it pod/python-pod -- bash"
 echo; echo "3. run the script inside the pod:"
-echo "$ { date; time python3 -u ${LOC}/${SCRIPT_FILE} rabbitmq_username rabbitmq_password; } > ${LOC}/output.log 2>&1 &"
+echo "$ { date; time python3 -u ${LOC}/python/${SCRIPT_FILE} rabbitmq_username rabbitmq_password; } > ${LOC}/output.log 2>&1 &"
 echo; echo "Successfully enqueued PIDs are saved to ${LOC}/sysmeta-processed.txt"
