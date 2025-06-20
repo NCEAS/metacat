@@ -352,11 +352,13 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     protected ResultSet initCandidateList() throws SQLException {
         // Iterate the systemmetadata table
         String query =
-            "(WITH docid_rev (docid, rev) AS (SELECT docid, rev FROM xml_documents UNION SELECT "
-                + "docid, rev FROM  xml_revisions) SELECT CONCAT(d.docid, '.', d.rev) AS guid "
+            "WITH docid_rev (docid, rev) AS (SELECT docid, rev FROM xml_documents UNION SELECT "
+                + "docid, rev FROM  xml_revisions) (SELECT CONCAT(d.docid, '.', d.rev) AS guid "
                 + "FROM docid_rev d LEFT JOIN identifier i ON d.docid=i.docid and d.rev=i.rev "
                 + "WHERE i.docid IS NULL) UNION (SELECT s.guid FROM systemmetadata s LEFT JOIN "
-                + "checksums c ON s.guid = c.guid WHERE c.guid IS NULL);";
+                + "checksums c ON s.guid = c.guid WHERE c.guid IS NULL) UNION (SELECT i.guid FROM"
+                + " identifier i JOIN docid_rev d ON i.docid = d.docid AND i.rev = d.rev LEFT "
+                + "JOIN systemmetadata sm ON i.guid = sm.guid WHERE sm.guid IS NULL);";
         DBConnection dbConn = null;
         ResultSet rs = null;
         int serialNumber = -1;
