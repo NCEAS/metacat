@@ -131,7 +131,8 @@ public class HashStoreUpgraderIT {
 
     /**
      * Test the method initCandidateList which will omit the items which have records in the
-     * checksum table
+     * checksum table. Also, it tests the deleted object - only has the record in the identifier
+     * table, not in either the systemmetadata or xml_documents tables.
      * @throws Exception
      */
     @Test
@@ -163,12 +164,18 @@ public class HashStoreUpgraderIT {
             DBConnectionPool.returnDBConnection(
                 dbConn, serialNumber);
         }
+        //Simulate a deleted object which is only in the identifier table
+        String deletedDocId = "jing1023124b." + System.currentTimeMillis() + ".1";
+        String deletedPid = "pid-" + deletedDocId;
+        IdentifierManager.getInstance().createMapping(deletedPid, deletedDocId);
+        assertEquals(deletedDocId, IdentifierManager.getInstance().getLocalId(deletedPid));
+
         HashStoreUpgrader upgrader = new HashStoreUpgrader();
         ResultSet resultSet = upgrader.initCandidateList();
         boolean found = false;
         while (resultSet.next()) {
             String id = resultSet.getString(1);
-            if (id.equals(pid.getValue())) {
+            if (id.equals(pid.getValue()) || id.equals(deletedPid)) {
                 found = true;
                 break;
             }
