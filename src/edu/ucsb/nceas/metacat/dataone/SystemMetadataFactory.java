@@ -193,7 +193,7 @@ public class SystemMetadataFactory {
             }
         }
         sysMeta.setFormatId(fmtid);
-        logMetacat.debug("The ObjectFormat for " + localId + " is " + fmtid.getValue());
+        logMetacat.debug("The ObjectFormat for " + identifier.getValue() + " is " + fmtid.getValue());
 
 
         // for retrieving the actual object
@@ -201,11 +201,13 @@ public class SystemMetadataFactory {
             // create the checksum
             String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
             Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
-            logMetacat.debug("The checksum for " + localId + " is " + checksum.getValue());
+            logMetacat.debug("The checksum for " + identifier.getValue() + " is " + checksum.getValue());
             sysMeta.setChecksum(checksum);
         } catch (McdbDocNotFoundException e) {
             // try to read it from the legacy store
-            try (InputStream inputStream = readInputStreamFromLegacyStore(identifier)) {
+            Identifier useLocalIdAsPid = new Identifier();
+            useLocalIdAsPid.setValue(localId);
+            try (InputStream inputStream = readInputStreamFromLegacyStore(useLocalIdAsPid)) {
                 // create the checksum
                 String algorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
                 Checksum checksum = ChecksumUtil.checksum(inputStream, algorithm);
@@ -220,7 +222,9 @@ public class SystemMetadataFactory {
             fileSize = length(inputStream);
         } catch (McdbDocNotFoundException e) {
             // Try to read from the legacy store
-            try (InputStream inputStream = readInputStreamFromLegacyStore(identifier)) {
+            Identifier useLocalIdAsPid = new Identifier();
+            useLocalIdAsPid.setValue(localId);
+            try (InputStream inputStream = readInputStreamFromLegacyStore(useLocalIdAsPid)) {
                 fileSize = length(inputStream);
             }
         }
