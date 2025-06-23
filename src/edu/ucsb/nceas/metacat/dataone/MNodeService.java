@@ -2516,24 +2516,13 @@ public class MNodeService extends D1NodeService
                             oreMCsysMeta);
 
             } else {
-                // create a new ORE for them
-                // https://projects.ecoinformatics.org/ecoinfo/issues/6194
-                try {
-                    // find the local id for the NEW package.
-                    String newLocalId =
-                        IdentifierManager.getInstance().getLocalId(newIdentifier.getValue());
-
-                    @SuppressWarnings("unused")
-                    SystemMetadata extraSysMeta =
-                        SystemMetadataFactory.createSystemMetadata(newLocalId);
-                    // should be done generating the ORE here, and the same permissions were used
-                    // from the metadata object
-
-                } catch (Exception e) {
-                    // oops, guess there was a problem - no package for you
-                    logMetacat.error("Could not generate new ORE for published object: "
-                        + newIdentifier.getValue(), e);
+                String error = " with null identifier.";
+                if (potentialOreIdentifier != null) {
+                    error = potentialOreIdentifier.getValue();
                 }
+                logMetacat.error("Metacat can't create a new resource map object to integrate the"
+                                     + " new doi object " + newIdentifier.getValue() + " since"
+                                     + " it can't read the original resource map " + error);
             }
         } catch (McdbDocNotFoundException e) {
             // report as service failure
