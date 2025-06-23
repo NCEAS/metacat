@@ -4,7 +4,7 @@
     <groupId>edu.ucsb.nceas.metacat.index</groupId>
     <artifactId>metacat-index</artifactId>
     <packaging>war</packaging>
-    <version>3.2.1</version>
+    <version>3.2.2-SNAPSHOT</version>
     <name>metacat-index</name>
     <url>http://maven.apache.org</url>
     
