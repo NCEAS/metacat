@@ -10,17 +10,17 @@ import time  # For potential delays or timeouts
 # If the type of the index task is systemMetacat_change_only
 SYSMETA_CHANGE_ONLY = False
 # Path to the output file for logging successfully processed PIDs
-RESULTS_FILE_PATH = "/var/metacat/.metacat/sysmeta-processed.txt"
+RESULTS_FILE_PATH = "/var/metacat/.metacat/reindex-script/sysmeta-processed.txt"
 # RabbitMQ URL
 RABBITMQ_URL = "localhost"
 # RabbitMQ port number
 RABBITMQ_PORT_NUMBER = 5672
-# The time gap between tow submission in seconds
+# The time gap between two submission in seconds
 SUBMISSION_GAP_SEC = 0.5
 # Number of worker threads
 MAX_WORKERS = 1
 # Path to the input file containing PIDs, one PID per line
-PIDS_FILE_PATH = "pids_to_process.txt"
+PIDS_FILE_PATH = "/var/metacat/.metacat/reindex-script/pids_to_process.txt"
 # Priority of the message. We set it 0, which is the lowest one, since this should be run in background
 PRIORITY = 0
 # Request timeout in seconds
