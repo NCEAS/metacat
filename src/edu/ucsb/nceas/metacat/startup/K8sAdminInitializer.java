@@ -14,6 +14,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.ServletException;
+import java.util.concurrent.Executors;
 
 /**
  * Collection of administrative initialization tasks that need to be performed automatically on
@@ -26,6 +27,8 @@ import javax.servlet.ServletException;
  */
 public class K8sAdminInitializer {
 
+    static int D1_REG_MAX_RETRIES = 5;
+    static long D1_REG_RETRY_WAIT_MS = 60000;
     private static final Log logMetacat = LogFactory.getLog(K8sAdminInitializer.class);
 
     /**
@@ -51,7 +54,12 @@ public class K8sAdminInitializer {
         initK8sDBConfig();
 
         // check D1 Admin settings and update if necessary
-        initK8sD1Admin();
+        try {
+            initK8sD1Admin(D1Admin.getInstance());
+        } catch (AdminException e) {
+            String msg = "error calling D1Admin.getInstance(): " + e.getMessage();
+            logMetacat.error(msg, e);
+        }
 
         // convert storage to hashstore if necessary
         initK8sStorageUpgrade();
@@ -117,24 +125,42 @@ public class K8sAdminInitializer {
     /**
      * Call the D1Admin upRegD1MemberNode() method to handle DataONE Member Node registration or
      * updates that may be necessary. (In a non-k8s environment, Member Node updates are performed
-     * manually, via the admin UI)
+     * manually, via the admin UI). The method tries the registration multiple times in a separate
+     * thread, so as not to interrupt startup if the CN is busy or unavailable.
      *
-     * @throws ServletException if MN updates were unsuccessful
-     * @implNote package private to allow for unit testing
+     * @param d1Admin the D1Admin instance to use for registration
+     * @implNote package private and passing D1Admin are both to allow for unit testing
      */
-    static void initK8sD1Admin() throws ServletException {
-        logMetacat.info("Running in a container; calling D1Admin::upRegD1MemberNode");
-        try {
-            D1Admin.getInstance().upRegD1MemberNode();
-        } catch (GeneralPropertyException | AdminException e) {
-            String msg = "initializeContainerizedD1Admin(): error calling "
-                + "D1Admin.getInstance().upRegD1MemberNode: " + e.getMessage();
-            logMetacat.error(msg, e);
-            ServletException se = new ServletException(msg, e);
-            se.fillInStackTrace();
-            throw se;
-        }
+    static void initK8sD1Admin(D1Admin d1Admin) {
+        Executors.newSingleThreadExecutor().submit(() -> {
+            logMetacat.info("Running in k8s; starting async call to D1Admin::upRegD1MemberNode");
+            int attempts = 0;
+
+            while (attempts < D1_REG_MAX_RETRIES) {
+                try {
+                    d1Admin.upRegD1MemberNode();
+                    logMetacat.info(
+                        "D1Admin::upRegD1MemberNode succeeded on attempt " + (++attempts));
+                    return;
+                } catch (GeneralPropertyException | AdminException e) {
+                    attempts++;
+                    logMetacat.warn("Attempt " + attempts + " failed: " + e.getMessage(), e);
+                    if (attempts >= D1_REG_MAX_RETRIES) {
+                        logMetacat.error("All retries failed for D1Admin::upRegD1MemberNode", e);
+                        return;
+                    }
+                    try {
+                        Thread.sleep(D1_REG_RETRY_WAIT_MS);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        logMetacat.error("Retry thread interrupted; upRegD1MemberNode failed", ie);
+                        return;
+                    }
+                }
+            }
+        });
     }
+
 
     /**
      * Call the HashStoreConversionAdmin.convert() method to convert the storage to HashStore

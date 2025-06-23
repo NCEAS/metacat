@@ -2,6 +2,7 @@ package edu.ucsb.nceas.metacat.startup;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.MetacatVersion;
+import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.admin.D1Admin;
 import edu.ucsb.nceas.metacat.admin.DBAdmin;
 import edu.ucsb.nceas.metacat.admin.HashStoreConversionAdmin;
@@ -20,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.withSettings;
 
@@ -114,17 +116,26 @@ public class K8sAdminInitializerTest {
     public void initK8sD1Admin() throws Exception {
 
         try (MockedStatic<D1Admin> ignored = Mockito.mockStatic(D1Admin.class)) {
-            D1Admin mockD1Admin = Mockito.mock(D1Admin.class);
-            Mockito.when(D1Admin.getInstance()).thenReturn(mockD1Admin);
-            doNothing().when(mockD1Admin).upRegD1MemberNode();
 
-            // K8s mode
-            Mockito.verify(mockD1Admin, Mockito.times(0)).upRegD1MemberNode();
+            final int retries = 3;
+            // test will fail if this is too small, and will waste time if too large
+            final long retryWaitMs = 10;
+
+            K8sAdminInitializer.D1_REG_MAX_RETRIES = retries;
+            K8sAdminInitializer.D1_REG_RETRY_WAIT_MS = retryWaitMs;
             LeanTestUtils.setTestEnvironmentVariable(CONTAINERIZED, "true");
-            K8sAdminInitializer.initK8sD1Admin();
+            D1Admin mockD1Admin = Mockito.mock(D1Admin.class);
 
-            // Verify that upRegD1MemberNode() was called
+            doNothing().when(mockD1Admin).upRegD1MemberNode();
+            K8sAdminInitializer.initK8sD1Admin(mockD1Admin);
+            Thread.sleep(retryWaitMs * (1 + retries));
             Mockito.verify(mockD1Admin, Mockito.times(1)).upRegD1MemberNode();
+
+            Mockito.reset(mockD1Admin);
+            doThrow(new AdminException("TEST EXCEPTION")).when(mockD1Admin).upRegD1MemberNode();
+            K8sAdminInitializer.initK8sD1Admin(mockD1Admin);
+            Thread.sleep(retryWaitMs * (1 + retries));
+            Mockito.verify(mockD1Admin, Mockito.times(retries)).upRegD1MemberNode();
         }
     }
 
