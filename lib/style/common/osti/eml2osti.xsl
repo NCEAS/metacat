@@ -100,17 +100,15 @@
                 </description>
 
                 <xsl:variable name="SponsorListTMP">
-                    <xsl:for-each select="associatedParty">
-                        <xsl:if test="role='fundingOrganization'">
-                            <xsl:choose>
-                                <xsl:when test="position() = 1">
-                                    <xsl:value-of select="organizationName"/>
-                                </xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:value-of select="concat(';',organizationName)"/>
-                                </xsl:otherwise>
-                            </xsl:choose>
-                        </xsl:if>
+                    <xsl:for-each select="associatedParty[role[text()='fundingOrganization']]">
+                        <xsl:choose>
+                            <xsl:when test="position() = 1">
+                                <xsl:value-of select="organizationName"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="concat(';', organizationName)"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
                     </xsl:for-each>
                 </xsl:variable>
                 <!-- I need a for loop here which will concat altID values with ";" -->
