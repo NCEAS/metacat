@@ -264,7 +264,7 @@ public class SystemMetadataFactory {
                                  + obsoletedByStr);
         } catch (McdbDocNotFoundException mdfe) {
             // Metacat can't find the pid on the identifier table for the given doicd.
-            // It considers to use docid + rev as the pid
+            // It will use docid + rev as the pid
             if (revisions.contains(obsoletedByRev) && !docidWithoutRev.startsWith("autogen.")) {
                 obsoletedByStr = docidWithoutRev + "." + obsoletedByRev;
                 logMetacat.debug("Use docid + rev as the obsoletedBy pid " + obsoletedByStr);
@@ -284,7 +284,7 @@ public class SystemMetadataFactory {
                                  + obsoletesStr);
         } catch (McdbDocNotFoundException mdfe) {
             // Metacat can't find the pid on the identifier table for the given docid.
-            // It considers to use docid + rev as the pid
+            // It will use docid + rev as the pid
             if (revisions.contains(obsoletesRev) && !docidWithoutRev.startsWith("autogen.")) {
                 obsoletesStr = docidWithoutRev + "." + (obsoletesRev);
                 logMetacat.debug("Use docid + rev as the obsoletes pid " + obsoletesStr);
