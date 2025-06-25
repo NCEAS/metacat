@@ -13,8 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.solr.util.FileUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -39,9 +37,10 @@ import static org.junit.Assert.fail;
  * A class for testing the generation of SystemMetadata from defaults
  */
 public class SystemMetadataFactoryIT {
-    private static final Log log = LogFactory.getLog(SystemMetadataFactoryIT.class);
     MockedStatic<PropertyService> closeableMock;
     private static final String documentPath = "test/resources";
+    private final D1NodeServiceTest d1NodeServiceTest =
+        new D1NodeServiceTest("SystemMetadataFactoryIT");
 
     @Before
     public void setUp() throws Exception {
@@ -50,11 +49,13 @@ public class SystemMetadataFactoryIT {
         withProperties.setProperty("application.datafilepath", "test");
         withProperties.setProperty("application.documentfilepath", documentPath);
         closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
+        d1NodeServiceTest.setUp();
     }
 
     @After
     public void tearDown() throws Exception {
         closeableMock.close();
+        d1NodeServiceTest.tearDown();
     }
 
     /**
@@ -187,7 +188,6 @@ public class SystemMetadataFactoryIT {
         String emlWithAnnotation = "test/eml220withAnnotation.xml";
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
-        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("MNodeQueryIT");
         String prefix = "testCreateSystemMetadata" + System.currentTimeMillis();
         Session session = d1NodeServiceTest.getTestSession();
         //create a chain of objects
@@ -234,6 +234,7 @@ public class SystemMetadataFactoryIT {
         // Generate the system metadata for guid3
         String localId3 = IdentifierManager.getInstance().getLocalId(guid3.getValue());
         sysmeta3 = SystemMetadataManager.getInstance().get(guid3);
+        // We can generate the systemmetadata without deleting it first
         SystemMetadata newGenerated = SystemMetadataFactory.createSystemMetadata(localId3);
         assertEquals(sysmeta3.getIdentifier().getValue(), newGenerated.getIdentifier().getValue());
         assertEquals(sysmeta3.getSize(), newGenerated.getSize());
@@ -241,24 +242,27 @@ public class SystemMetadataFactoryIT {
         assertEquals(sysmeta3.getChecksum().getValue(), newGenerated.getChecksum().getValue());
         assertEquals(sysmeta3.getFormatId().getValue(), newGenerated.getFormatId().getValue());
         assertEquals(sysmeta3.getObsoletes().getValue(), newGenerated.getObsoletes().getValue());
+        assertEquals(guid2.getValue(), newGenerated.getObsoletes().getValue());
         assertEquals(sysmeta3.getObsoletedBy().getValue(),
                      newGenerated.getObsoletedBy().getValue());
+        assertEquals(guid4.getValue(), newGenerated.getObsoletedBy().getValue());
         Date oldUploaded = sysmeta3.getDateUploaded();
         Date newUploaded = newGenerated.getDateUploaded();
         assertNotEquals(oldUploaded, newUploaded);
         //upload time difference less than 24 hours
         assertTrue(Math.abs(oldUploaded.getTime() - newUploaded.getTime()) < 24*3600*1000);
         sysmeta2 = SystemMetadataManager.getInstance().get(guid2);
-        assertEquals(sysmeta2.getObsoletedBy().getValue(), guid3.getValue());
-        assertEquals(sysmeta2.getObsoletes().getValue(), guid.getValue());
+        assertEquals(guid3.getValue(), sysmeta2.getObsoletedBy().getValue());
+        assertEquals(guid.getValue(), sysmeta2.getObsoletes().getValue());
         sysmeta = SystemMetadataManager.getInstance().get(guid);
-        assertEquals(sysmeta.getObsoletedBy().getValue(), guid2.getValue());
+        assertEquals(guid2.getValue(), sysmeta.getObsoletedBy().getValue());
         assertNull(sysmeta.getObsoletes());
         sysmeta4 = SystemMetadataManager.getInstance().get(guid4);
-        assertEquals(sysmeta4.getObsoletes().getValue(), guid3.getValue());
+        assertEquals(guid3.getValue(), sysmeta4.getObsoletes().getValue());
         assertNull(sysmeta4.getObsoletedBy());
         // Generate the system metadata for guid (the beginning point of the chain)
         String localId = IdentifierManager.getInstance().getLocalId(guid.getValue());
+        // Generate new system metadata after delete guid's system metadata
         try {
             SystemMetadataManager.lock(guid);
             SystemMetadataManager.getInstance().delete(guid);
@@ -267,26 +271,26 @@ public class SystemMetadataFactoryIT {
         }
         newGenerated = SystemMetadataFactory.createSystemMetadata(localId);
         assertEquals(sysmeta.getIdentifier().getValue(), newGenerated.getIdentifier().getValue());
+        assertEquals(guid.getValue(), newGenerated.getIdentifier().getValue());
         assertEquals(sysmeta.getSize(), newGenerated.getSize());
         assertEquals(sysmeta.getRightsHolder().getValue(), newGenerated.getRightsHolder().getValue());
         assertEquals(sysmeta.getChecksum().getValue(), newGenerated.getChecksum().getValue());
         assertEquals(sysmeta.getFormatId().getValue(), newGenerated.getFormatId().getValue());
         assertNull(newGenerated.getObsoletes());
-        assertEquals(sysmeta.getObsoletedBy().getValue(),
-                     newGenerated.getObsoletedBy().getValue());
+        assertEquals(guid2.getValue(), newGenerated.getObsoletedBy().getValue());
         oldUploaded = sysmeta.getDateUploaded();
         newUploaded = newGenerated.getDateUploaded();
         assertNotEquals(oldUploaded, newUploaded);
         //upload time difference less than 24 hours
         assertTrue(Math.abs(oldUploaded.getTime() - newUploaded.getTime()) < 24*3600*1000);
         sysmeta2 = SystemMetadataManager.getInstance().get(guid2);
-        assertEquals(sysmeta2.getObsoletedBy().getValue(), guid3.getValue());
-        assertEquals(sysmeta2.getObsoletes().getValue(), guid.getValue());
+        assertEquals(guid3.getValue(), sysmeta2.getObsoletedBy().getValue());
+        assertEquals(guid.getValue(), sysmeta2.getObsoletes().getValue());
         sysmeta3 = SystemMetadataManager.getInstance().get(guid3);
-        assertEquals(sysmeta3.getObsoletedBy().getValue(), guid4.getValue());
-        assertEquals(sysmeta3.getObsoletes().getValue(), guid2.getValue());
+        assertEquals(guid4.getValue(), sysmeta3.getObsoletedBy().getValue());
+        assertEquals(guid2.getValue(), sysmeta3.getObsoletes().getValue());
         sysmeta4 = SystemMetadataManager.getInstance().get(guid4);
-        assertEquals(sysmeta4.getObsoletes().getValue(), guid3.getValue());
+        assertEquals(guid3.getValue(), sysmeta4.getObsoletes().getValue());
         assertNull(sysmeta4.getObsoletedBy());
         // Generate the system metadata for guid4 (the ending point of the chain)
         String localId4 = IdentifierManager.getInstance().getLocalId(guid4.getValue());
@@ -304,19 +308,111 @@ public class SystemMetadataFactoryIT {
         assertEquals(sysmeta4.getChecksum().getValue(), newGenerated.getChecksum().getValue());
         assertEquals(sysmeta4.getFormatId().getValue(), newGenerated.getFormatId().getValue());
         assertNull(newGenerated.getObsoletedBy());
-        assertEquals(sysmeta4.getObsoletes().getValue(),
-                     newGenerated.getObsoletes().getValue());
+        assertEquals(guid3.getValue(), newGenerated.getObsoletes().getValue());
         oldUploaded = sysmeta4.getDateUploaded();
         newUploaded = newGenerated.getDateUploaded();
         assertNotEquals(oldUploaded, newUploaded);
         //upload time difference less than 24 hours
         assertTrue(Math.abs(oldUploaded.getTime() - newUploaded.getTime()) < 24*3600*1000);
         sysmeta2 = SystemMetadataManager.getInstance().get(guid2);
-        assertEquals(sysmeta2.getObsoletedBy().getValue(), guid3.getValue());
-        assertEquals(sysmeta2.getObsoletes().getValue(), guid.getValue());
+        assertEquals(guid3.getValue(), sysmeta2.getObsoletedBy().getValue());
+        assertEquals(guid.getValue(), sysmeta2.getObsoletes().getValue());
         sysmeta3 = SystemMetadataManager.getInstance().get(guid3);
-        assertEquals(sysmeta3.getObsoletedBy().getValue(), guid4.getValue());
-        assertEquals(sysmeta3.getObsoletes().getValue(), guid2.getValue());
+        assertEquals(guid4.getValue(), sysmeta3.getObsoletedBy().getValue());
+        assertEquals(guid2.getValue(), sysmeta3.getObsoletes().getValue());
+    }
+
+    /**
+     * Test the createSystemMetadata method for a broken chain.
+     * The original chain is 1 <- 2 <-3 <-4.  Version 2 has been totally deleted from
+     * xml_revisions, identifier and system metadata. And version 3 has been deleted from the
+     * systemmetadata table. Then rebuild the systemmetadata. Version 3 should obsolete null.
+     * @throws Exception
+     */
+    @Test
+    public void testCreateSystemMetadataForBrokenChain() throws Exception {
+        String emlWithAnnotation = "test/eml220withAnnotation.xml";
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        String prefix = "testCreateSystemMetadata2" + System.currentTimeMillis();
+        Session session = d1NodeServiceTest.getTestSession();
+        Session mnSession = d1NodeServiceTest.getMNSession();
+        //create a chain of objects
+        Identifier guid = new Identifier();
+        guid.setValue(prefix + ".1");
+        InputStream object = new FileInputStream(emlWithAnnotation);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(emlWithAnnotation);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
+        object.close();
+        Identifier guid2 = new Identifier();
+        guid2.setValue(prefix + ".2");
+        object = new FileInputStream(emlWithAnnotation);
+        SystemMetadata sysmeta2 =
+            D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object);
+        sysmeta2.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(emlWithAnnotation);
+        d1NodeServiceTest.mnUpdate(session, guid, object, guid2, sysmeta2);
+        object.close();
+        Identifier guid3 = new Identifier();
+        guid3.setValue(prefix + ".3");
+        object = new FileInputStream(emlWithAnnotation);
+        SystemMetadata sysmeta3 =
+            D1NodeServiceTest.createSystemMetadata(guid3, session.getSubject(), object);
+        sysmeta3.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(emlWithAnnotation);
+        d1NodeServiceTest.mnUpdate(session, guid2, object, guid3, sysmeta3);
+        object.close();
+        Identifier guid4 = new Identifier();
+        guid4.setValue(prefix + ".4");
+        object = new FileInputStream(emlWithAnnotation);
+        SystemMetadata sysmeta4 =
+            D1NodeServiceTest.createSystemMetadata(guid4, session.getSubject(), object);
+        sysmeta4.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(emlWithAnnotation);
+        d1NodeServiceTest.mnUpdate(session, guid3, object, guid4, sysmeta4);
+        object.close();
+        // Delete guid2
+        String localId2 = IdentifierManager.getInstance().getLocalId(guid2.getValue());
+        MNodeService.getInstance(d1NodeServiceTest.request).delete(mnSession, guid2);
+        IdentifierManager.getInstance().removeMapping(guid2.getValue(), localId2);
+        String localId3 = IdentifierManager.getInstance().getLocalId(guid3.getValue());
+        sysmeta3 = SystemMetadataManager.getInstance().get(guid3);
+        // Delete the systemmetadata of guid3
+        try {
+            SystemMetadataManager.lock(guid3);
+            SystemMetadataManager.getInstance().delete(guid3);
+        } finally {
+            SystemMetadataManager.unLock(guid3);
+        }
+        // Generate the system metadata for guid3
+        SystemMetadata newGenerated = SystemMetadataFactory.createSystemMetadata(localId3);
+        assertEquals(sysmeta3.getIdentifier().getValue(), newGenerated.getIdentifier().getValue());
+        assertEquals(sysmeta3.getSize(), newGenerated.getSize());
+        assertEquals(sysmeta3.getRightsHolder().getValue(), newGenerated.getRightsHolder().getValue());
+        assertEquals(sysmeta3.getChecksum().getValue(), newGenerated.getChecksum().getValue());
+        assertEquals(sysmeta3.getFormatId().getValue(), newGenerated.getFormatId().getValue());
+        assertNull(newGenerated.getObsoletes());//The chain is broken
+        assertEquals(guid4.getValue(), newGenerated.getObsoletedBy().getValue());
+        Date oldUploaded = sysmeta3.getDateUploaded();
+        Date newUploaded = newGenerated.getDateUploaded();
+        assertNotEquals(oldUploaded, newUploaded);
+        //upload time difference less than 24 hours
+        assertTrue(Math.abs(oldUploaded.getTime() - newUploaded.getTime()) < 24*3600*1000);
+        sysmeta2 = SystemMetadataManager.getInstance().get(guid2);
+        assertNull(sysmeta2);
+        sysmeta = SystemMetadataManager.getInstance().get(guid);
+        assertEquals(guid2.getValue(), sysmeta.getObsoletedBy().getValue());
+        assertNull(sysmeta.getObsoletes());
+        sysmeta4 = SystemMetadataManager.getInstance().get(guid4);
+        assertEquals(guid3.getValue(), sysmeta4.getObsoletes().getValue());
+        assertNull(sysmeta4.getObsoletedBy());
     }
 
     /**
@@ -331,8 +427,7 @@ public class SystemMetadataFactoryIT {
             String emlWithAnnotation = "test/eml220withAnnotation.xml";
             ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
             formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
-            D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("MNodeQueryIT");
-            String prefix = "testCreateSystemMetadata" + System.currentTimeMillis();
+            String prefix = "testCreateSystemMetadata3" + System.currentTimeMillis();
             Session session = d1NodeServiceTest.getTestSession();
             //create a chain of objects
             Identifier guid = new Identifier();
@@ -367,7 +462,7 @@ public class SystemMetadataFactoryIT {
             object.close();
             String localId2 = IdentifierManager.getInstance().getLocalId(guid2.getValue());
             sysmeta2 = SystemMetadataManager.getInstance().get(guid2);
-            // Delete the system metadata for guid3
+            // Delete the system metadata for guid2
             try {
                 SystemMetadataManager.lock(guid2);
                 SystemMetadataManager.getInstance().delete(guid2);
@@ -385,14 +480,11 @@ public class SystemMetadataFactoryIT {
             assertEquals(localId2, newGenerated.getIdentifier().getValue());
             assertEquals(sysmeta2.getSize(), newGenerated.getSize());
             assertEquals(
-                sysmeta3.getRightsHolder().getValue(), newGenerated.getRightsHolder().getValue());
+                sysmeta2.getRightsHolder().getValue(), newGenerated.getRightsHolder().getValue());
             assertEquals(sysmeta2.getChecksum().getValue(), newGenerated.getChecksum().getValue());
             assertEquals(sysmeta2.getFormatId().getValue(), newGenerated.getFormatId().getValue());
-            assertEquals(
-                sysmeta2.getObsoletes().getValue(), newGenerated.getObsoletes().getValue());
-            assertEquals(
-                sysmeta2.getObsoletedBy().getValue(),
-                newGenerated.getObsoletedBy().getValue());
+            assertEquals(guid.getValue(), newGenerated.getObsoletes().getValue());
+            assertEquals(guid3.getValue(), newGenerated.getObsoletedBy().getValue());
             Date oldUploaded = sysmeta2.getDateUploaded();
             Date newUploaded = newGenerated.getDateUploaded();
             assertNotEquals(oldUploaded, newUploaded);
@@ -400,9 +492,9 @@ public class SystemMetadataFactoryIT {
             assertTrue(Math.abs(oldUploaded.getTime() - newUploaded.getTime()) < 24 * 3600 * 1000);
             sysmeta3 = SystemMetadataManager.getInstance().get(guid3);
             assertNull(sysmeta3.getObsoletedBy());
-            assertEquals(sysmeta3.getObsoletes().getValue(), localId2);
+            assertEquals(localId2, sysmeta3.getObsoletes().getValue());
             sysmeta = SystemMetadataManager.getInstance().get(guid);
-            assertEquals(sysmeta.getObsoletedBy().getValue(), localId2);
+            assertEquals(localId2, sysmeta.getObsoletedBy().getValue());
             assertNull(sysmeta.getObsoletes());
         } finally {
             if (legacyFile != null) {
