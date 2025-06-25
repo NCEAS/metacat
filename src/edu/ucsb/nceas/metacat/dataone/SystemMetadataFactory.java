@@ -75,6 +75,7 @@ public class SystemMetadataFactory {
     private static boolean updateExisting = true;
     private static String legacyDataDir = null;
     private static String legacyDocDir = null;
+    private static String accNumSeparator = ".";
     static {
         try {
             legacyDataDir = PropertyService.getProperty("application.datafilepath");
@@ -91,6 +92,14 @@ public class SystemMetadataFactory {
             }
         } catch (PropertyNotFoundException e) {
             logMetacat.error("Metacat can't find the property value of application.documentfilepath");
+        }
+        try {
+            accNumSeparator = PropertyService.getProperty("document.accNumSeparator");
+            logMetacat.debug("Metacat will use " + accNumSeparator + "as the docid separator.");
+        } catch (PropertyNotFoundException e) {
+            accNumSeparator = ".";
+            logMetacat.debug("Metacat can't find the property value of document.accNumSeparator."
+                                + "It will use the default docid separator: . (dot).");
         }
     }
 
@@ -266,7 +275,7 @@ public class SystemMetadataFactory {
             // Metacat can't find the pid on the identifier table for the given doicd.
             // It will use docid + rev as the pid
             if (revisions.contains(obsoletedByRev) && !docidWithoutRev.startsWith("autogen.")) {
-                obsoletedByStr = docidWithoutRev + "." + obsoletedByRev;
+                obsoletedByStr = docidWithoutRev + accNumSeparator + obsoletedByRev;
                 logMetacat.debug("Use docid + rev as the obsoletedBy pid " + obsoletedByStr);
             }
         }
@@ -286,7 +295,7 @@ public class SystemMetadataFactory {
             // Metacat can't find the pid on the identifier table for the given docid.
             // It will use docid + rev as the pid
             if (revisions.contains(obsoletesRev) && !docidWithoutRev.startsWith("autogen.")) {
-                obsoletesStr = docidWithoutRev + "." + (obsoletesRev);
+                obsoletesStr = docidWithoutRev + accNumSeparator + (obsoletesRev);
                 logMetacat.debug("Use docid + rev as the obsoletes pid " + obsoletesStr);
             }
         }
