@@ -11,7 +11,6 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
@@ -255,31 +254,50 @@ public class SystemMetadataFactory {
         Identifier obsoletedBy = null;
         Identifier obsoletes = null;
         Vector<Integer> revisions = DBUtil.getRevListFromRevisionTable(docidWithoutRev);
-        // ensure this ordering since processing depends on it
-        Collections.sort(revisions);
-        for (int existingRev : revisions) {
-            // use the docid+rev as the guid
-            String existingPid = docidWithoutRev + "." + existingRev;
-            try {
-                existingPid = IdentifierManager.getInstance().getGUID(docidWithoutRev, existingRev);
-            } catch (McdbDocNotFoundException mdfe) {
-                // we'll be defaulting to the local id
-                logMetacat.warn(
-                    "could not locate guid when processing revision history for localId: "
-                        + localId);
+        int latestVersion = DBUtil.getLatestRevisionInDocumentTable(docidWithoutRev);
+        if (latestVersion != -1) {
+            revisions.add(latestVersion);
+        }
+        logMetacat.debug("The version history of " + docidWithoutRev + " is " + revisions);
+        String obsoletedByStr = null;
+        // The obsoletedBy docid always is one bigger than the current version.
+        int obsoletedByRev = rev + 1;
+        try {
+            // We first look at the identifier table to figure out the pid
+            obsoletedByStr = IdentifierManager.getInstance().getGUID(docidWithoutRev, obsoletedByRev);
+            logMetacat.debug("Use pid from the identifier table as the obsoletedBy pid "
+                                 + obsoletedByStr);
+        } catch (McdbDocNotFoundException mdfe) {
+            // Metacat can't find the pid on the identifier table for the given doicd.
+            // It considers to use docid + rev as the pid
+            if (revisions.contains(obsoletedByRev) && !docidWithoutRev.startsWith("autogen.")) {
+                obsoletedByStr = docidWithoutRev + "." + obsoletedByRev;
+                logMetacat.debug("Use docid + rev as the obsoletedBy pid " + obsoletedByStr);
             }
-            if (existingRev < rev) {
-                // it's the old docid, until it's not
-                obsoletes = new Identifier();
-                obsoletes.setValue(existingPid);
+        }
+        if (obsoletedByStr != null) {
+            obsoletedBy = new Identifier();
+            obsoletedBy.setValue(obsoletedByStr);
+        }
+        String obsoletesStr = null;
+        // Obsoletes docid always is one lesser than the current version.
+        int obsoletesRev = rev - 1;
+        try {
+             // We first look at the identifier table to figure out the pid
+            obsoletesStr = IdentifierManager.getInstance().getGUID(docidWithoutRev, obsoletesRev);
+            logMetacat.debug("Use pid from the identifier table as the obsoletes pid "
+                                 + obsoletesStr);
+        } catch (McdbDocNotFoundException mdfe) {
+            // Metacat can't find the pid on the identifier table for the given docid.
+            // It considers to use docid + rev as the pid
+            if (revisions.contains(obsoletesRev) && !docidWithoutRev.startsWith("autogen.")) {
+                obsoletesStr = docidWithoutRev + "." + (obsoletesRev);
+                logMetacat.debug("Use docid + rev as the obsoletes pid " + obsoletesStr);
             }
-            if (existingRev > rev) {
-                // it's the newer docid
-                obsoletedBy = new Identifier();
-                obsoletedBy.setValue(existingPid);
-                // only want the version just after it
-                break;
-            }
+        }
+        if (obsoletesStr != null) {
+            obsoletes = new Identifier();
+            obsoletes.setValue(obsoletesStr);
         }
         // set them on our object
         sysMeta.setObsoletedBy(obsoletedBy);
