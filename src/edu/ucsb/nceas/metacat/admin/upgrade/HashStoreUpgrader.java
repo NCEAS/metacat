@@ -236,10 +236,9 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                                  + " for pid " + finalId);
                                         } catch (McdbDocNotFoundException e) {
                                             logMetacat.debug("Metacat couldn't find the docid for "
-                                                                 + "pid " + finalId + ", so will "
-                                                                 + "assign the pid the same value "
-                                                                 + "as the pid ( " + finalId + ")");
-
+                                                                + "pid " + finalId + ", so will "
+                                                                + "assign the docid the same value "
+                                                                + "as the pid ( " + finalId + ")");
                                             docId = finalId;
                                         }
                                         // This is for the case that the object somehow hasn't been
