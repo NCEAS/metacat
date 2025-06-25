@@ -1,10 +1,10 @@
 package edu.ucsb.nceas.metacat.dataone;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
@@ -12,6 +12,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import edu.ucsb.nceas.LeanTestUtils;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.solr.util.FileUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ReplicationPolicy;
@@ -25,7 +29,9 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import org.mockito.MockedStatic;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -33,14 +39,16 @@ import static org.junit.Assert.fail;
  * A class for testing the generation of SystemMetadata from defaults
  */
 public class SystemMetadataFactoryIT {
+    private static final Log log = LogFactory.getLog(SystemMetadataFactoryIT.class);
     MockedStatic<PropertyService> closeableMock;
+    private static final String documentPath = "test/resources";
 
     @Before
     public void setUp() throws Exception {
         LeanTestUtils.initializePropertyService(LeanTestUtils.PropertiesMode.UNIT_TEST);
         Properties withProperties = new Properties();
         withProperties.setProperty("application.datafilepath", "test");
-        withProperties.setProperty("application.documentfilepath", "test/resources");
+        withProperties.setProperty("application.documentfilepath", documentPath);
         closeableMock = LeanTestUtils.initializeMockPropertyService(withProperties);
     }
 
@@ -168,5 +176,238 @@ public class SystemMetadataFactoryIT {
             assertTrue(e instanceof FileNotFoundException);
         }
         assertTrue(SystemMetadataFactory.getFileFromLegacyStore("onlineDataFile1").exists());
+    }
+
+    /**
+     * Test the createSystemMetadata method
+     * @throws Exception
+     */
+    @Test
+    public void testCreateSystemMetadata() throws Exception {
+        String emlWithAnnotation = "test/eml220withAnnotation.xml";
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("MNodeQueryIT");
+        String prefix = "testCreateSystemMetadata" + System.currentTimeMillis();
+        Session session = d1NodeServiceTest.getTestSession();
+        //create a chain of objects
+        Identifier guid = new Identifier();
+        guid.setValue(prefix + ".1");
+        InputStream object = new FileInputStream(emlWithAnnotation);
+        SystemMetadata sysmeta =
+            D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(emlWithAnnotation);
+        d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
+        object.close();
+        Identifier guid2 = new Identifier();
+        guid2.setValue(prefix + ".2");
+        object = new FileInputStream(emlWithAnnotation);
+        SystemMetadata sysmeta2 =
+            D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object);
+        sysmeta2.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(emlWithAnnotation);
+        d1NodeServiceTest.mnUpdate(session, guid, object, guid2, sysmeta2);
+        object.close();
+        Identifier guid3 = new Identifier();
+        guid3.setValue(prefix + ".3");
+        object = new FileInputStream(emlWithAnnotation);
+        SystemMetadata sysmeta3 =
+            D1NodeServiceTest.createSystemMetadata(guid3, session.getSubject(), object);
+        sysmeta3.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(emlWithAnnotation);
+        d1NodeServiceTest.mnUpdate(session, guid2, object, guid3, sysmeta3);
+        object.close();
+        Identifier guid4 = new Identifier();
+        guid4.setValue(prefix + ".4");
+        object = new FileInputStream(emlWithAnnotation);
+        SystemMetadata sysmeta4 =
+            D1NodeServiceTest.createSystemMetadata(guid4, session.getSubject(), object);
+        sysmeta4.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(emlWithAnnotation);
+        d1NodeServiceTest.mnUpdate(session, guid3, object, guid4, sysmeta4);
+        object.close();
+        // Generate the system metadata for guid3
+        String localId3 = IdentifierManager.getInstance().getLocalId(guid3.getValue());
+        sysmeta3 = SystemMetadataManager.getInstance().get(guid3);
+        SystemMetadata newGenerated = SystemMetadataFactory.createSystemMetadata(localId3);
+        assertEquals(sysmeta3.getIdentifier().getValue(), newGenerated.getIdentifier().getValue());
+        assertEquals(sysmeta3.getSize(), newGenerated.getSize());
+        assertEquals(sysmeta3.getRightsHolder().getValue(), newGenerated.getRightsHolder().getValue());
+        assertEquals(sysmeta3.getChecksum().getValue(), newGenerated.getChecksum().getValue());
+        assertEquals(sysmeta3.getFormatId().getValue(), newGenerated.getFormatId().getValue());
+        assertEquals(sysmeta3.getObsoletes().getValue(), newGenerated.getObsoletes().getValue());
+        assertEquals(sysmeta3.getObsoletedBy().getValue(),
+                     newGenerated.getObsoletedBy().getValue());
+        Date oldUploaded = sysmeta3.getDateUploaded();
+        Date newUploaded = newGenerated.getDateUploaded();
+        assertNotEquals(oldUploaded, newUploaded);
+        //upload time difference less than 24 hours
+        assertTrue(Math.abs(oldUploaded.getTime() - newUploaded.getTime()) < 24*3600*1000);
+        sysmeta2 = SystemMetadataManager.getInstance().get(guid2);
+        assertEquals(sysmeta2.getObsoletedBy().getValue(), guid3.getValue());
+        assertEquals(sysmeta2.getObsoletes().getValue(), guid.getValue());
+        sysmeta = SystemMetadataManager.getInstance().get(guid);
+        assertEquals(sysmeta.getObsoletedBy().getValue(), guid2.getValue());
+        assertNull(sysmeta.getObsoletes());
+        sysmeta4 = SystemMetadataManager.getInstance().get(guid4);
+        assertEquals(sysmeta4.getObsoletes().getValue(), guid3.getValue());
+        assertNull(sysmeta4.getObsoletedBy());
+        // Generate the system metadata for guid (the beginning point of the chain)
+        String localId = IdentifierManager.getInstance().getLocalId(guid.getValue());
+        try {
+            SystemMetadataManager.lock(guid);
+            SystemMetadataManager.getInstance().delete(guid);
+        } finally {
+            SystemMetadataManager.unLock(guid);
+        }
+        newGenerated = SystemMetadataFactory.createSystemMetadata(localId);
+        assertEquals(sysmeta.getIdentifier().getValue(), newGenerated.getIdentifier().getValue());
+        assertEquals(sysmeta.getSize(), newGenerated.getSize());
+        assertEquals(sysmeta.getRightsHolder().getValue(), newGenerated.getRightsHolder().getValue());
+        assertEquals(sysmeta.getChecksum().getValue(), newGenerated.getChecksum().getValue());
+        assertEquals(sysmeta.getFormatId().getValue(), newGenerated.getFormatId().getValue());
+        assertNull(newGenerated.getObsoletes());
+        assertEquals(sysmeta.getObsoletedBy().getValue(),
+                     newGenerated.getObsoletedBy().getValue());
+        oldUploaded = sysmeta.getDateUploaded();
+        newUploaded = newGenerated.getDateUploaded();
+        assertNotEquals(oldUploaded, newUploaded);
+        //upload time difference less than 24 hours
+        assertTrue(Math.abs(oldUploaded.getTime() - newUploaded.getTime()) < 24*3600*1000);
+        sysmeta2 = SystemMetadataManager.getInstance().get(guid2);
+        assertEquals(sysmeta2.getObsoletedBy().getValue(), guid3.getValue());
+        assertEquals(sysmeta2.getObsoletes().getValue(), guid.getValue());
+        sysmeta3 = SystemMetadataManager.getInstance().get(guid3);
+        assertEquals(sysmeta3.getObsoletedBy().getValue(), guid4.getValue());
+        assertEquals(sysmeta3.getObsoletes().getValue(), guid2.getValue());
+        sysmeta4 = SystemMetadataManager.getInstance().get(guid4);
+        assertEquals(sysmeta4.getObsoletes().getValue(), guid3.getValue());
+        assertNull(sysmeta4.getObsoletedBy());
+        // Generate the system metadata for guid4 (the ending point of the chain)
+        String localId4 = IdentifierManager.getInstance().getLocalId(guid4.getValue());
+        try {
+            SystemMetadataManager.lock(guid4);
+            SystemMetadataManager.getInstance().delete(guid4);
+        } finally {
+            SystemMetadataManager.unLock(guid4);
+        }
+        newGenerated = SystemMetadataFactory.createSystemMetadata(localId4);
+        assertEquals(sysmeta4.getIdentifier().getValue(), newGenerated.getIdentifier().getValue());
+        assertEquals(sysmeta4.getSize(), newGenerated.getSize());
+        assertEquals(sysmeta4.getRightsHolder().getValue(),
+                     newGenerated.getRightsHolder().getValue());
+        assertEquals(sysmeta4.getChecksum().getValue(), newGenerated.getChecksum().getValue());
+        assertEquals(sysmeta4.getFormatId().getValue(), newGenerated.getFormatId().getValue());
+        assertNull(newGenerated.getObsoletedBy());
+        assertEquals(sysmeta4.getObsoletes().getValue(),
+                     newGenerated.getObsoletes().getValue());
+        oldUploaded = sysmeta4.getDateUploaded();
+        newUploaded = newGenerated.getDateUploaded();
+        assertNotEquals(oldUploaded, newUploaded);
+        //upload time difference less than 24 hours
+        assertTrue(Math.abs(oldUploaded.getTime() - newUploaded.getTime()) < 24*3600*1000);
+        sysmeta2 = SystemMetadataManager.getInstance().get(guid2);
+        assertEquals(sysmeta2.getObsoletedBy().getValue(), guid3.getValue());
+        assertEquals(sysmeta2.getObsoletes().getValue(), guid.getValue());
+        sysmeta3 = SystemMetadataManager.getInstance().get(guid3);
+        assertEquals(sysmeta3.getObsoletedBy().getValue(), guid4.getValue());
+        assertEquals(sysmeta3.getObsoletes().getValue(), guid2.getValue());
+    }
+
+    /**
+     * Test the createSystemMetadata method for the non-DataoneObject (no records in the
+     * identifier and systemmetadata tables
+     * @throws Exception
+     */
+    @Test
+    public void testCreateSystemMetadataForNonDataONEObj() throws Exception {
+        File legacyFile = null;
+        try {
+            String emlWithAnnotation = "test/eml220withAnnotation.xml";
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+            D1NodeServiceTest d1NodeServiceTest = new D1NodeServiceTest("MNodeQueryIT");
+            String prefix = "testCreateSystemMetadata" + System.currentTimeMillis();
+            Session session = d1NodeServiceTest.getTestSession();
+            //create a chain of objects
+            Identifier guid = new Identifier();
+            guid.setValue(prefix + ".1");
+            InputStream object = new FileInputStream(emlWithAnnotation);
+            SystemMetadata sysmeta =
+                D1NodeServiceTest.createSystemMetadata(guid, session.getSubject(), object);
+            sysmeta.setFormatId(formatId);
+            object.close();
+            object = new FileInputStream(emlWithAnnotation);
+            d1NodeServiceTest.mnCreate(session, guid, object, sysmeta);
+            object.close();
+            Identifier guid2 = new Identifier();
+            guid2.setValue(prefix + ".2");
+            object = new FileInputStream(emlWithAnnotation);
+            SystemMetadata sysmeta2 =
+                D1NodeServiceTest.createSystemMetadata(guid2, session.getSubject(), object);
+            sysmeta2.setFormatId(formatId);
+            object.close();
+            object = new FileInputStream(emlWithAnnotation);
+            d1NodeServiceTest.mnUpdate(session, guid, object, guid2, sysmeta2);
+            object.close();
+            Identifier guid3 = new Identifier();
+            guid3.setValue(prefix + ".3");
+            object = new FileInputStream(emlWithAnnotation);
+            SystemMetadata sysmeta3 =
+                D1NodeServiceTest.createSystemMetadata(guid3, session.getSubject(), object);
+            sysmeta3.setFormatId(formatId);
+            object.close();
+            object = new FileInputStream(emlWithAnnotation);
+            d1NodeServiceTest.mnUpdate(session, guid2, object, guid3, sysmeta3);
+            object.close();
+            String localId2 = IdentifierManager.getInstance().getLocalId(guid2.getValue());
+            sysmeta2 = SystemMetadataManager.getInstance().get(guid2);
+            // Delete the system metadata for guid3
+            try {
+                SystemMetadataManager.lock(guid2);
+                SystemMetadataManager.getInstance().delete(guid2);
+            } finally {
+                SystemMetadataManager.unLock(guid2);
+            }
+            // Delete the record from the identifier table
+            IdentifierManager.getInstance().removeMapping(guid2.getValue(), localId2);
+            // Write the file to the legacy store. Otherwise, we can't read it
+            legacyFile = new File(documentPath + "/" + localId2);
+            FileUtils.copyFile(new File(emlWithAnnotation), legacyFile);
+            // Generate the system metadata for guid2
+            SystemMetadata newGenerated = SystemMetadataFactory.createSystemMetadata(localId2);
+            // Use the docid + rev as the pid
+            assertEquals(localId2, newGenerated.getIdentifier().getValue());
+            assertEquals(sysmeta2.getSize(), newGenerated.getSize());
+            assertEquals(
+                sysmeta3.getRightsHolder().getValue(), newGenerated.getRightsHolder().getValue());
+            assertEquals(sysmeta2.getChecksum().getValue(), newGenerated.getChecksum().getValue());
+            assertEquals(sysmeta2.getFormatId().getValue(), newGenerated.getFormatId().getValue());
+            assertEquals(
+                sysmeta2.getObsoletes().getValue(), newGenerated.getObsoletes().getValue());
+            assertEquals(
+                sysmeta2.getObsoletedBy().getValue(),
+                newGenerated.getObsoletedBy().getValue());
+            Date oldUploaded = sysmeta2.getDateUploaded();
+            Date newUploaded = newGenerated.getDateUploaded();
+            assertNotEquals(oldUploaded, newUploaded);
+            //upload time difference less than 24 hours
+            assertTrue(Math.abs(oldUploaded.getTime() - newUploaded.getTime()) < 24 * 3600 * 1000);
+            sysmeta3 = SystemMetadataManager.getInstance().get(guid3);
+            assertNull(sysmeta3.getObsoletedBy());
+            assertEquals(sysmeta3.getObsoletes().getValue(), localId2);
+            sysmeta = SystemMetadataManager.getInstance().get(guid);
+            assertEquals(sysmeta.getObsoletedBy().getValue(), localId2);
+            assertNull(sysmeta.getObsoletes());
+        } finally {
+            if (legacyFile != null) {
+                org.apache.commons.io.FileUtils.delete(legacyFile);
+            }
+        }
     }
 }
