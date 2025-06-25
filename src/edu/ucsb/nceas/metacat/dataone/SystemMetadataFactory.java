@@ -97,11 +97,8 @@ public class SystemMetadataFactory {
 
     /**
      * Creates a system metadata object for insertion into metacat
-     * @param indexDataFile
-     *            Indicate if we need to index data file.
-     *
      * @param localId
-     *            The local document identifier
+     *            The local document identifier, which is doicd + "." + rev.
      * @return sysMeta The system metadata object created
      * @throws McdbException
      * @throws McdbDocNotFoundException
@@ -153,7 +150,6 @@ public class SystemMetadataFactory {
         try {
             logMetacat.debug("Getting system metadata");
             sysMeta = SystemMetadataManager.getInstance().get(identifier);
-            // TODO: if this is the case, we could return here -- what else do we gain?
             if (!updateExisting) {
                 return sysMeta;
             }
@@ -243,11 +239,8 @@ public class SystemMetadataFactory {
 
         // dates
         String createdDateString = docInfo.get("date_created");
-        String updatedDateString = docInfo.get("date_updated");
         Date createdDate = DateTimeMarshaller.deserializeDateToUTC(createdDateString);
-        Date updatedDate = DateTimeMarshaller.deserializeDateToUTC(updatedDateString);
         sysMeta.setDateUploaded(createdDate);
-        //sysMeta.setDateSysMetadataModified(updatedDate);
         // use current datetime
         sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 
