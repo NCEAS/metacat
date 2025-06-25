@@ -228,14 +228,27 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
                                                     + "systemmetadata and identifier table to "
                                                     + "figure out the real pid.");
                                         }
+                                        String docId;
+                                        try {
+                                            docId =
+                                                IdentifierManager.getInstance().getLocalId(finalId);
+                                            logMetacat.debug("Metacat found docid " + docId
+                                                                 + " for pid " + finalId);
+                                        } catch (McdbDocNotFoundException e) {
+                                            logMetacat.debug("Metacat couldn't find the docid for "
+                                                                + "pid " + finalId + ", so will "
+                                                                + "assign the docid the same value "
+                                                                + "as the pid ( " + finalId + ")");
+                                            docId = finalId;
+                                        }
                                         // This is for the case that the object somehow hasn't been
                                         // transformed to the DataONE object: no system metadata
                                         // This method does not only create the system metadata,
                                         // but also create the map in the identifier table.
-                                        logMetacat.debug("We need to create the systemetadata for "
-                                                             + finalId);
+                                        logMetacat.debug("We need to create the systemmetadata for "
+                                                             + finalId + " with docid " + docId);
                                         sysMeta =
-                                            SystemMetadataFactory.createSystemMetadata(finalId);
+                                            SystemMetadataFactory.createSystemMetadata(docId);
                                         try {
                                             SystemMetadataManager.lock(pid);
                                             SystemMetadataManager.getInstance().store(sysMeta);
@@ -352,11 +365,13 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
     protected ResultSet initCandidateList() throws SQLException {
         // Iterate the systemmetadata table
         String query =
-            "(WITH docid_rev (docid, rev) AS (SELECT docid, rev FROM xml_documents UNION SELECT "
-                + "docid, rev FROM  xml_revisions) SELECT CONCAT(d.docid, '.', d.rev) AS guid "
+            "WITH docid_rev (docid, rev) AS (SELECT docid, rev FROM xml_documents UNION SELECT "
+                + "docid, rev FROM  xml_revisions) (SELECT CONCAT(d.docid, '.', d.rev) AS guid "
                 + "FROM docid_rev d LEFT JOIN identifier i ON d.docid=i.docid and d.rev=i.rev "
                 + "WHERE i.docid IS NULL) UNION (SELECT s.guid FROM systemmetadata s LEFT JOIN "
-                + "checksums c ON s.guid = c.guid WHERE c.guid IS NULL);";
+                + "checksums c ON s.guid = c.guid WHERE c.guid IS NULL) UNION (SELECT i.guid FROM"
+                + " identifier i JOIN docid_rev d ON i.docid = d.docid AND i.rev = d.rev LEFT "
+                + "JOIN systemmetadata sm ON i.guid = sm.guid WHERE sm.guid IS NULL);";
         DBConnection dbConn = null;
         ResultSet rs = null;
         int serialNumber = -1;
@@ -366,6 +381,8 @@ public class HashStoreUpgrader implements UpgradeUtilityInterface {
             dbConn = DBConnectionPool.getDBConnection("HashStoreUpgrader.initCandidateList");
             serialNumber = dbConn.getCheckOutSerialNumber();
             stmt = dbConn.prepareStatement(query); // can't use the try-resource statement
+            logMetacat.debug("The query to select the objects which need to be converted to hash "
+                                 + "store is " + query);
             rs = stmt.executeQuery();
         } finally {
             // Return database connection to the pool
