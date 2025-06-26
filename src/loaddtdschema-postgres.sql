@@ -217,4 +217,4 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'htt
 INSERT INTO xml_catalog (entry_type, public_id, format_id) SELECT 'NonXML', 'science-on-schema.org/Dataset;ld+json', 'science-on-schema.org/Dataset;ld+json'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='science-on-schema.org/Dataset;ld+json');
 
 INSERT INTO version_history (version, status, date_created)
-  VALUES ('3.2.1',1,CURRENT_DATE);
+  VALUES ('3.2.2',1,CURRENT_DATE);
