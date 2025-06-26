@@ -28,6 +28,7 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -291,7 +292,7 @@ public class D1AdminCNUpdaterTest {
         try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
             withProperties)) {
             assertTrue(d1AdminCNUpdater.canChangeNodeId());
-            String sub = "Can't push an update of Node Capabilities to the CN";
+            String sub = "No Client cert found at location";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub,
                                     () -> runWithMockedDataBaseConnection(() -> {
                                         Node mockMN = getMockNode(PREVIOUS_NODE_ID);
@@ -311,7 +312,7 @@ public class D1AdminCNUpdaterTest {
         try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
             withProperties)) {
             assertTrue(d1AdminCNUpdater.canChangeNodeId());
-            String sub = "Can't push an update of Node Capabilities to the CN";
+            String sub = "nodeId DOES NOT MATCH client cert";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub,
                                     () -> runWithMockedDataBaseConnection(() -> {
                                         Node mockMN = getMockNode(PREVIOUS_NODE_ID);
@@ -331,8 +332,7 @@ public class D1AdminCNUpdaterTest {
         try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
             withProperties)) {
             assertTrue(d1AdminCNUpdater.canChangeNodeId());
-            String sub
-                = "node Id does not agree with the 'Subject CN' value in the client certificate";
+            String sub = "nodeId DOES NOT MATCH client cert";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub,
                                     () -> runWithMockedDataBaseConnection(() -> {
                                         Node mockMN = getMockNode("urn:node:TestMemberNodeNEW");
@@ -409,11 +409,13 @@ public class D1AdminCNUpdaterTest {
         // mock cert; malformed Subject -- no commas: only a CN and no DC components
         runWithMockedClientCert(
             "CN=urn:node:TestBROOKELT", null,
-            () -> assertTrue(d1AdminCNUpdater.nodeIdMatchesClientCert("urn:node:TestBROOKELT")));
+            () -> d1AdminCNUpdater.checkNodeIdMatchesClientCert("urn:node:TestBROOKELT"));
 
         // mock cert; malformed Subject -- no 'CN='
-        runWithMockedClientCert("urn:node:TestBROOKELT,DC=ucsb,DC=org", null,
-                                () -> assertFalse(d1AdminCNUpdater.nodeIdMatchesClientCert("urn:node:TestBROOKELT,DC=ucsb,DC=org")));
+        runWithMockedClientCert(
+            "urn:node:TestBROOKELT,DC=ucsb,DC=org", null, () -> assertThrows(
+                AdminException.class, () -> d1AdminCNUpdater.checkNodeIdMatchesClientCert(
+                    "urn:node:TestBROOKELT,DC=ucsb,DC=org")));
 
         // real test cert:
         //      $ openssl x509 -text -in test/test-credentials/test-user.pem | grep "Subject:"
@@ -421,8 +423,10 @@ public class D1AdminCNUpdaterTest {
         //
         String mnCertificatePath = "test/test-credentials/test-user.pem";
         CertificateManager.getInstance().setCertificateLocation(mnCertificatePath);
-        assertTrue(d1AdminCNUpdater.nodeIdMatchesClientCert("Jing Tao"));
-        assertFalse(d1AdminCNUpdater.nodeIdMatchesClientCert("urn:node:Bogus"));
+        d1AdminCNUpdater.checkNodeIdMatchesClientCert("Jing Tao");
+        assertThrows(
+            AdminException.class,
+            () -> d1AdminCNUpdater.checkNodeIdMatchesClientCert("urn:node:Bogus"));
     }
 
     @Test
@@ -430,15 +434,19 @@ public class D1AdminCNUpdaterTest {
         Node mockMN = getMockNode("myNode");
 
         // cn.register() succeeds and returns correct node ID
-        registerWithMockedCN(true, () -> assertTrue(d1AdminCNUpdater.registerWithCN(mockMN)), "myNode");
+        registerWithMockedCN(true, () -> d1AdminCNUpdater.registerWithCN(mockMN), "myNode");
 
         // cn.register() succeeds but returns wrong node ID
-        registerWithMockedCN(true, () -> assertFalse(d1AdminCNUpdater.registerWithCN(mockMN)), "wrongId");
-        registerWithMockedCN(true, () -> assertFalse(d1AdminCNUpdater.registerWithCN(mockMN)), "");
-        registerWithMockedCN(true, () -> assertFalse(d1AdminCNUpdater.registerWithCN(mockMN)), null);
+        registerWithMockedCN(true, () -> assertThrows(
+            AdminException.class, () -> d1AdminCNUpdater.registerWithCN(mockMN)), "wrongId");
+        registerWithMockedCN(true, () -> assertThrows(
+            AdminException.class, () -> d1AdminCNUpdater.registerWithCN(mockMN)), "");
+        registerWithMockedCN(true, () -> assertThrows(
+            AdminException.class, () -> d1AdminCNUpdater.registerWithCN(mockMN)), null);
 
         // unsuccessful update (cn.register() fails)
-        registerWithMockedCN(false, () -> assertFalse(d1AdminCNUpdater.registerWithCN(mockMN)), null);
+        registerWithMockedCN(false, () -> assertThrows(
+            AdminException.class, () -> d1AdminCNUpdater.registerWithCN(mockMN)), null);
     }
 
     @Test
@@ -446,10 +454,10 @@ public class D1AdminCNUpdaterTest {
         Node mockMN = getMockNode("myNode");
 
         // success case
-        updateMockedCN(true, () -> assertTrue(d1AdminCNUpdater.updateCN(mockMN)));
+        updateMockedCN(true, () -> d1AdminCNUpdater.updateCN(mockMN));
 
         // unsuccessful update (cn.updateNodeCapabilities() returns false)
-        updateMockedCN(false, () -> assertFalse(d1AdminCNUpdater.updateCN(mockMN)));
+        updateMockedCN(false, () -> d1AdminCNUpdater.updateCN(mockMN));
     }
 
     private static Node getMockNode(String NodeId) {

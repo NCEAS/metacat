@@ -12,6 +12,8 @@ import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
+import org.dataone.service.exceptions.NotImplemented;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
@@ -83,37 +85,26 @@ public class D1AdminCNUpdater {
             // Local change only (not permitted to register with the CN without operator consent)
             logMetacat.info("configUnregisteredMN(): Only a LOCAL nodeId change will be performed, "
                                 + "since operator consent to registered with the CN was not "
-                                + "provided.\nIf you wish to register Metacat as a DataONE Member "
+                                + "provided. If you wish to register Metacat as a DataONE Member "
                                 + "Node, you must set the Property: "
                                 + "'metacat.dataone.autoRegisterMemberNode' to match "
-                                + "today's date (in UTC timezone) in `values.yaml`.");
+                                + "today's date (UTC timezone: yyyy-MM-dd) in `values.yaml`.");
             if (!nodeId.equals(previousNodeId)) {
-                logMetacat.debug("configUnregisteredMN(): updating DataBase with new nodeId ("
-                                     + nodeId + ")...");
+                logMetacat.debug(
+                    "configUnregisteredMN(): updating DB with new nodeId (" + nodeId + ")...");
                 updateDBNodeIds(previousNodeId, nodeId);
                 logMetacat.debug("LOCAL-ONLY MN NODE ID UPDATE FINISHED * * *");
             }
             return;
         }
-        if (!nodeIdMatchesClientCert(nodeId)) {
-            // nodeId does not match client cert
-            String msg =
-                "configUnregisteredMN: An attempt to register this node as a DataONE Member Node "
-                    + "FAILED, because the new node Id (" + nodeId + ") does not agree with the "
-                    + "'Subject CN' value in the client certificate";
-            logMetacat.error(msg);
-            throw new AdminException(msg);
-        }
+        checkNodeIdMatchesClientCert(nodeId);
+
         // checks complete: try to register as a new Member Node with the CN:
         logMetacat.debug(
             "configUnregisteredMN(): * * * BEGIN REGISTRATION ATTEMPT * * * - nodeId " + nodeId);
-        if (!registerWithCN(node)) {
-            // registration attempt unsuccessful
-            String msg =
-                "configUnregisteredMN(): FAILED to register as a new Member Node with the CN";
-            logMetacat.error(msg);
-            throw new AdminException(msg);
-        }
+
+        registerWithCN(node);
+
         logMetacat.debug("configUnregisteredMN(): SUCCESS: sent registration request to CN. ");
         // If nodeId has changed, we need to update the DB
         if (!nodeId.equals(previousNodeId)) {
@@ -171,22 +162,10 @@ public class D1AdminCNUpdater {
 
         if (nodeId.equals(previousNodeId)) {
             // nodeId UNCHANGED: push an idempotent update of all other Node Capabilities to the CN
-            if (!nodeIdMatchesClientCert(nodeId)) {
-                String msg = "configPreregisteredMN: Can't push an update of Node Capabilities to"
-                    + " the CN, because the configured node Id doesn't agree with the "
-                    + "'Subject CN' value in the client certificate";
-                logMetacat.error(msg);
-                throw new AdminException(msg);
-            }
-            final String END = " an update of Member Node settings to the CN (nodeId unchanged)";
-            if (updateCN(node)) {
-                logMetacat.info("configPreregisteredMN: Successfully pushed" + END);
-                return;
-            } else {
-                String msg = "configPreregisteredMN: *** FAILED *** to push" + END;
-                logMetacat.error(msg);
-                throw new AdminException(msg);
-            }
+            checkNodeIdMatchesClientCert(nodeId);
+            updateCN(node);
+            logMetacat.info("Successfully pushed updated MN settings to CN (nodeId unchanged)");
+            return;
         }
         if (!canChangeNodeId()) {
             // nodeId CHANGED, but not permitted to push update to the CN without operator consent
@@ -195,34 +174,20 @@ public class D1AdminCNUpdater {
                     + "consent. (An attempt to change Property: 'dataone.nodeId' from:"
                     + previousNodeId + " to: " + nodeId + " failed, because Property: "
                     + "'dataone.autoRegisterMemberNode' had not been set to match today's "
-                    + "date in UTC timezone).";
+                    + "date in UTC timezone. See values.yaml).";
             logMetacat.error(msg);
             throw new AdminException(msg);
         }
-        if (!nodeIdMatchesClientCert(nodeId)) {
-            // nodeId CHANGED, but does not match client cert
-            String msg =
-                "configPreregisteredMN: An attempt to change Property: 'dataone.nodeId' from:"
-                    + previousNodeId + " to: " + nodeId + " failed, because the new node Id does "
-                    + "not agree with the 'Subject CN' value in the client certificate";
-            logMetacat.error(msg);
-            throw new AdminException(msg);
-        }
+        checkNodeIdMatchesClientCert(nodeId);
+
         // nodeId CHANGED and checks complete: try to push an update of Node Capabilities to the CN:
         logMetacat.debug("configPreregisteredMN():* * * BEGIN PREREGISTERED UPDATE ATTEMPT * * *"
                              + "(including a nodeId change from:" + previousNodeId + " to: "
                              + nodeId + ")");
-        if (!updateCN(node)) {
-            // update attempt unsuccessful
-            String msg =
-                "configPreregisteredMN(): Failed to push an update of Node Capabilities to CN "
-                    + "(including a nodeId change from:" + previousNodeId + " to: " + nodeId + ")";
-            logMetacat.error(msg);
-            throw new AdminException(msg);
-        }
-        logMetacat.debug("configPreregisteredMN(): SUCCESS: pushed an update of Node "
-                             + "Capabilities to CN. Now updating DataBase with new nodeId ("
-                             + nodeId + ")...");
+        updateCN(node);
+
+        logMetacat.debug("configPreregisteredMN(): SUCCESS: pushed an update of Node Capabilities "
+                             + "to CN. Now updating DataBase with new nodeId (" + nodeId + ")...");
         updateDBNodeIds(previousNodeId, nodeId);
         logMetacat.debug("PREREGISTERED UPDATE FINISHED * * *");
     }
@@ -230,47 +195,37 @@ public class D1AdminCNUpdater {
     /**
      * Check if the nodeId matches the "CN=" part of the client cert "Subject" field
      *
-     * @return true if the nodeId matches the "CN=" part of the client cert "Subject" field
      * @implNote package-private to allow unit testing
      */
-    boolean nodeIdMatchesClientCert(String nodeId) {
-
-        boolean matches;
+    void checkNodeIdMatchesClientCert(String nodeId) throws AdminException {
         String certPath = CertificateManager.getInstance().getCertificateLocation();
         if (certPath==null || !Files.isReadable(Paths.get(certPath))) {
-            logMetacat.error(
-                "nodeIdMatchesClientCert(): No Client cert found at location: " + certPath);
-            matches = false;
+            throw new AdminException("No Client cert found at location: " + certPath);
         } else {
             X509Certificate clientCert = CertificateManager.getInstance().loadCertificate();
             String certSubject = CertificateManager.getInstance().getSubjectDN(clientCert);
-            logMetacat.debug(
-                "nodeIdMatchesClientCert() received nodeId: " + nodeId + ". Client cert 'Subject:' "
-                    + certSubject);
+            logMetacat.debug("nodeIdMatchesClientCert() received nodeId: " + nodeId
+                    + ". Client cert 'Subject:' " + certSubject);
             if (certSubject == null || !certSubject.startsWith("CN=")) {
-                logMetacat.error("nodeIdMatchesClientCert(): Client cert 'Subject:' (" + certSubject
-                                     + ") must begin with 'CN='. returning FALSE");
-                return false;
+                throw new AdminException("Client cert 'Subject:' ("
+                                             + certSubject + ") must begin with 'CN='");
             }
             // Subject is of the form: "CN=urn:node:TestBROOKELT,DC=dataone,DC=org", so the
-            // commonName
-            // will be the part between the end of "CN="...
+            // commonName will be the part between the end of "CN=":
             final int start = 3;
             // ... and the first comma:
             int firstComma = certSubject.indexOf(",", start);
-            firstComma =
-                (firstComma < start) ? certSubject.length() : firstComma; // in case no commas
+            firstComma = (firstComma < start) ? certSubject.length() : firstComma;
             String commonName = certSubject.substring(start, firstComma);
-            matches = commonName.equals(nodeId);
-            String msg = "nodeIdMatchesClientCert(): " + String.valueOf(matches).toUpperCase()
-                + "! (nodeId: " + nodeId + "; Common Name (CN) from client cert: " + commonName;
-            if (matches) {
-                logMetacat.info(msg);
-            } else {
-                logMetacat.error(msg);
+            boolean matches = commonName.equals(nodeId);
+            String details = "nodeId: " + nodeId + "; Common Name (CN) from client cert: "
+                + "commonName = " + commonName + ")";
+            if (!matches) {
+                throw new AdminException(
+                    "nodeId DOES NOT MATCH client cert commonName (CN)! " + details);
             }
+            logMetacat.info("Success: nodeId matches client cert commonName (CN): " + details);
         }
-        return matches;
     }
 
     /**
@@ -331,14 +286,11 @@ public class D1AdminCNUpdater {
      * admin.)
      *
      * @param mNode the Member Node to be registered
-     * @return boolean <code>true</code> upon the CN receiving a successful registration request, or
-     *     <code>false</code> otherwise
      * @implNote package-private to allow unit testing
      * @see "https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html#CNRegister.register"
      */
-    boolean registerWithCN(Node mNode) {
+    void registerWithCN(Node mNode) throws AdminException {
 
-        boolean result;
         String nodeId = mNode.getIdentifier().getValue();
         final CNode cn;
         String CnUrl = "CNode is NULL";
@@ -353,24 +305,28 @@ public class D1AdminCNUpdater {
             NodeReference mnRef = cn != null ? cn.register(null, mNode) : null;
 
             String returnedNodeId = (mnRef != null) ? mnRef.getValue() : null;
-            result = (returnedNodeId != null && returnedNodeId.equals(nodeId));
-            if (!result) {
-                logMetacat.error("CNode.register() returned a node ID (" + returnedNodeId
-                                     + ") not matching the nodeId that was sent (" + nodeId + ")");
+
+            if (returnedNodeId == null || !returnedNodeId.equals(nodeId)) {
+                throw new AdminException("CNode.register() returned a node ID (" + returnedNodeId
+                                             + ") not matching the nodeId that was sent ("
+                                             + nodeId + ").");
             }
         } catch (IdentifierNotUnique e) {
-            logMetacat.error("Attempt to register a Member Node with an ID that is already in use "
+            String msg = "Attempt to register a Member Node with an ID that is already in use "
                                  + "by a different registered node (" + nodeId + "). CN URL is: "
-                                 + CnUrl + "; error message was: " + e.getMessage(), e);
-            result = false;
-
+                                 + CnUrl + "; error message was: " + e.getMessage();
+            logMetacat.error(msg, e);
+            AdminException ae = new AdminException(msg);
+            ae.initCause(e);
+            throw ae;
         } catch (BaseException e) {
-            logMetacat.error(
-                "Calling CNode.register() with CN URL: " + CnUrl + ", and nodeId: " + nodeId
-                    + "; error message was: " + e.getMessage(), e);
-            result = false;
+            String msg = e.getMessage() + " -- error while calling register() with CN URL: " + CnUrl
+                + ", and nodeId: " + nodeId + ". Is your cert valid for this CN environment?";
+            logMetacat.error(msg, e);
+            AdminException ae = new AdminException(msg);
+            ae.initCause(e);
+            throw ae;
         }
-        return result;
     }
 
     /**
@@ -386,34 +342,42 @@ public class D1AdminCNUpdater {
      *  new Node will be removed."
      *
      * @param mNode the Member Node whose config details will be sent to the CN
-     * @return <code>true</code> if CN was successfully updated; <code>false</code> otherwise
      * @implNote package-private to allow unit testing
      * @see "https://dataoneorg.github.io/api-documentation/apis/CN_APIs.html"
      *      "#CNRegister.updateNodeCapabilities"
      */
-    boolean updateCN(Node mNode) {
-        boolean result;
+     void updateCN(Node mNode) throws AdminException {
         final CNode cn;
-        String CnUrl = "CNode is NULL";
+        String cnUrl;
         try {
             cn = D1Client.getCN();
-            if (cn != null) {
-                CnUrl = cn.getNodeBaseServiceUrl();
-            }
-            logMetacat.info("Sending updated node capabilities to DataONE CN: " + CnUrl);
+        } catch (ServiceFailure | NotImplemented e) {
+            AdminException ae =
+                new AdminException("Failed to get CNode instance: " + e.getMessage());
+            ae.initCause(e);
+            throw ae;
+        }
+        if (cn == null) {
+            throw new AdminException("CNode instance is null! Cannot update Node capabilities.");
+        }
+        cnUrl = cn.getNodeBaseServiceUrl();
+        try {
+            logMetacat.info("Sending updated node capabilities to DataONE CN: " + cnUrl);
 
-            // Session is null, because libclient automatically sets up SSL session with client cert
-            result = cn != null && cn.updateNodeCapabilities(null, mNode.getIdentifier(), mNode);
+            // first param (Session) is null, because libclient automatically sets up SSL session
+            // with client cert:
+            cn.updateNodeCapabilities(null, mNode.getIdentifier(), mNode);
 
         } catch (BaseException e) {
             final String nodeId =
                 (mNode.getIdentifier() != null) ? mNode.getIdentifier().getValue() : "NULL!";
-            logMetacat.error(
-                "Calling CNode.updateNodeCapabilities() with CN URL: " + CnUrl + ", and nodeId: "
-                    + nodeId + "; error message was: " + e.getMessage(), e);
-            result = false;
+            final String msg = e.getMessage() + " -- error while calling updateNodeCapabilities() "
+                + "with CN URL: " + cnUrl + ", and nodeId: " + nodeId;
+            logMetacat.error(msg, e);
+            AdminException ae = new AdminException(msg);
+            ae.initCause(e);
+            throw ae;
         }
-        return result;
     }
 
     /**
@@ -443,7 +407,6 @@ public class D1AdminCNUpdater {
             logMetacat.error(msg, e);
             AdminException ae = new AdminException(msg);
             ae.initCause(e);
-            ae.fillInStackTrace();
             throw ae;
         } finally {
             // Return database connection to the pool
@@ -482,7 +445,7 @@ public class D1AdminCNUpdater {
      * @return true if already registered; false otherwise
      * @implNote package-private to allow unit testing
      */
-    boolean isNodeRegistered(String nodeId) {
+    boolean isNodeRegistered(String nodeId) throws ServiceFailure, NotImplemented {
         // check if this is new or an update
         boolean exists = false;
         try {
@@ -496,7 +459,8 @@ public class D1AdminCNUpdater {
         } catch (BaseException e) {
             logMetacat.error(
                 "Could not check for node with DataONE (" + e.getCode() + "/" + e.getDetail_code()
-                    + "): " + e.getDescription());
+                    + "): " + e.getDescription(), e);
+            throw e;
         }
         return exists;
     }
@@ -529,6 +493,7 @@ public class D1AdminCNUpdater {
      *
      * @param existingMemberNodeId the previous member node id
      * @param newMemberNodeId      the new member node id
+     * @return the number of rows updated in the 'systemmetadata' table
      * @throws AdminException if a problem is encountered
      * @implNote package-private to allow unit testing
      */
@@ -554,7 +519,6 @@ public class D1AdminCNUpdater {
             logMetacat.error(msg, e);
             AdminException ae = new AdminException(msg);
             ae.initCause(e);
-            ae.fillInStackTrace();
             throw ae;
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
@@ -600,7 +564,6 @@ public class D1AdminCNUpdater {
             logMetacat.error(msg, e);
             AdminException ae = new AdminException(msg);
             ae.initCause(e);
-            ae.fillInStackTrace();
             throw ae;
         } finally {
             // Return database connection to the pool
