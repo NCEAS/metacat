@@ -1530,7 +1530,7 @@ public class MNResourceHandler extends D1ResourceHandler {
             //Use the pid as the file name prefix, replacing all non-word characters
             String filename = pid.replaceAll("\\W", "_") + ".zip";
 
-            response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
+            response.setHeader("Content-Disposition", ATTACHMENT + "; filename=\"" + filename+"\"");
             response.setContentType("application/zip");
             response.setStatus(200);
             OutputStream out = response.getOutputStream();
