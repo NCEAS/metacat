@@ -1099,7 +1099,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                 filename = id.getValue() + extension;
             }
             response.setContentType(mimeType);
-            response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
+            response.setHeader("Content-Disposition", ATTACHMENT + "; filename=\"" + filename+"\"");
             out = response.getOutputStream();  
             IOUtils.copyLarge(data, out);
 
