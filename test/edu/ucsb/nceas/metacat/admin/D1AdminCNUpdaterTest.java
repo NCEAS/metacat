@@ -107,7 +107,7 @@ public class D1AdminCNUpdaterTest {
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)) {
             setK8sEnv();
-            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeIdOnCn());
             runWithMockedClientCert(
                 "CN=urn:node:NewTestMemberNode", null,
                 () -> runWithMockedDataBaseConnection(() -> {
@@ -148,7 +148,7 @@ public class D1AdminCNUpdaterTest {
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)) {
             setK8sEnv();
-            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeIdOnCn());
 
             // nodeId is unchanged from previous nodeId. Should be no calls to updateDBNodeIds()
             runWithMockedClientCert(
@@ -236,7 +236,7 @@ public class D1AdminCNUpdaterTest {
         withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)) {
-            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeIdOnCn());
             setK8sEnv();
             runWithMockedClientCert(
                 "CN=urn:node:NewTestMemberNode", null,
@@ -291,7 +291,7 @@ public class D1AdminCNUpdaterTest {
         withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
         try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
             withProperties)) {
-            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeIdOnCn());
             String sub = "No Client cert found at location";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub,
                                     () -> runWithMockedDataBaseConnection(() -> {
@@ -311,7 +311,7 @@ public class D1AdminCNUpdaterTest {
         withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
         try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
             withProperties)) {
-            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeIdOnCn());
             String sub = "nodeId DOES NOT MATCH client cert";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub,
                                     () -> runWithMockedDataBaseConnection(() -> {
@@ -331,7 +331,7 @@ public class D1AdminCNUpdaterTest {
         withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
         try (MockedStatic<PropertyService> ignored = LeanTestUtils.initializeMockPropertyService(
             withProperties)) {
-            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeIdOnCn());
             String sub = "nodeId DOES NOT MATCH client cert";
             runWithMockedClientCert("CN=urn:node:TestMemberNodeOLD", sub,
                                     () -> runWithMockedDataBaseConnection(() -> {
@@ -364,12 +364,12 @@ public class D1AdminCNUpdaterTest {
     }
 
     @Test
-    public void canChangeNodeId_legacyDeployment() {
-        assertTrue(d1AdminCNUpdater.canChangeNodeId());
+    public void canChangeNodeId_OnCn_legacyDeployment() {
+        assertTrue(d1AdminCNUpdater.canChangeNodeIdOnCn());
     }
 
     @Test
-    public void canChangeNodeId_k8sDeployment() throws Exception {
+    public void canChangeNodeId_OnCn_k8SDeployment() throws Exception {
 
         setK8sEnv();
         Properties withProperties = new Properties();
@@ -378,28 +378,28 @@ public class D1AdminCNUpdaterTest {
         withProperties.setProperty("dataone.autoRegisterMemberNode", getTodaysDateUTC());
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)){
-            assertTrue(d1AdminCNUpdater.canChangeNodeId());
+            assertTrue(d1AdminCNUpdater.canChangeNodeIdOnCn());
         }
 
         // dataone.autoRegisterMemberNode non-valid @ past date
         withProperties.setProperty("dataone.autoRegisterMemberNode", "1993-05-01");
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)){
-            assertFalse(d1AdminCNUpdater.canChangeNodeId());
+            assertFalse(d1AdminCNUpdater.canChangeNodeIdOnCn());
         }
 
         // dataone.autoRegisterMemberNode non-valid @ future date
         withProperties.setProperty("dataone.autoRegisterMemberNode", "2123-05-01");
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)){
-            assertFalse(d1AdminCNUpdater.canChangeNodeId());
+            assertFalse(d1AdminCNUpdater.canChangeNodeIdOnCn());
         }
 
         // dataone.autoRegisterMemberNode non-valid - not set
         withProperties.setProperty("dataone.autoRegisterMemberNode", "");
         try (MockedStatic<PropertyService> ignored
                  = LeanTestUtils.initializeMockPropertyService(withProperties)){
-            assertFalse(d1AdminCNUpdater.canChangeNodeId());
+            assertFalse(d1AdminCNUpdater.canChangeNodeIdOnCn());
         }
     }
 

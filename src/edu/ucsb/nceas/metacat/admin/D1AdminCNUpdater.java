@@ -81,7 +81,7 @@ public class D1AdminCNUpdater {
         String previousNodeId = getMostRecentNodeId();
         logMetacat.debug("configUnregisteredMN(): called with nodeId: " + nodeId
                              + ". Most recent previous nodeId was: " + previousNodeId);
-        if (!canChangeNodeId()) {
+        if (!canChangeNodeIdOnCn()) {
             // Local change only (not permitted to register with the CN without operator consent)
             logMetacat.info("configUnregisteredMN(): Only a LOCAL nodeId change will be performed, "
                                 + "since operator consent to registered with the CN was not "
@@ -167,7 +167,7 @@ public class D1AdminCNUpdater {
             logMetacat.info("Successfully pushed updated MN settings to CN (nodeId unchanged)");
             return;
         }
-        if (!canChangeNodeId()) {
+        if (!canChangeNodeIdOnCn()) {
             // nodeId CHANGED, but not permitted to push update to the CN without operator consent
             String msg =
                 "configPreregisteredMN: *Not Permitted* to push update to CN without operator "
@@ -243,36 +243,36 @@ public class D1AdminCNUpdater {
      * @return boolean true if it is OK to change the nodeId
      * @implNote package-private to allow unit testing
      */
-    boolean canChangeNodeId() {
+    boolean canChangeNodeIdOnCn() {
         boolean result;
         String autoRegDate = "";
         if (isRunningInK8s()) {
-            logMetacat.debug("canChangeNodeId(): Containerized/Kubernetes deployment detected");
+            logMetacat.debug("canChangeNodeIdOnCn(): Containerized/Kubernetes deployment detected");
             ZonedDateTime utc = ZonedDateTime.now(ZoneOffset.UTC);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             String todaysDateUTC = utc.format(formatter);
             try {
                 autoRegDate = PropertyService.getProperty("dataone.autoRegisterMemberNode");
                 result = todaysDateUTC.equals(autoRegDate);
-                logMetacat.debug("canChangeNodeId(): returning " + result
+                logMetacat.debug("canChangeNodeIdOnCn(): returning " + result
                                      + ", since '.Values.metacat.dataone.autoRegisterMemberNode'="
                                      + autoRegDate + ", and today's date in UTC timezone is: "
                                      + todaysDateUTC);
             } catch (PropertyNotFoundException e) {
-                logMetacat.warn("canChangeNodeId(): DataONE Member Node (MN) NodeId "
+                logMetacat.warn("canChangeNodeIdOnCn(): DataONE Member Node (MN) NodeId "
                                     + "Registration/Update not possible:"
                                     + "'.Values.metacat.dataone.autoRegisterMemberNode' not set.");
                 result = false;
 
             } catch (DateTimeParseException e) {
-                logMetacat.warn("canChangeNodeId(): DataONE Member Node (MN) NodeId "
+                logMetacat.warn("canChangeNodeIdOnCn(): DataONE Member Node (MN) NodeId "
                                     + "Registration/Update not possible:"
                                     + "'.Values.metacat.dataone.autoRegisterMemberNode' read, but"
                                     + " can't parse date: " + autoRegDate);
                 result = false;
             }
         } else { //legacy deployment: explicit consent already given by submitting the form
-            logMetacat.debug("canChangeNodeId(): Legacy (non-containerized) deployment detected. "
+            logMetacat.debug("canChangeNodeIdOnCn(): Legacy (non-containerized) deployment. "
                                  + "Returning TRUE, since explicit consent already given by "
                                  + "submitting the form ");
             result = true;
@@ -474,11 +474,13 @@ public class D1AdminCNUpdater {
      * @throws AdminException if a problem is encountered
      * @implNote package-private to allow unit testing
      */
-    void updateDBNodeIds(String existingMemberNodeId, String newMemberNodeId) throws AdminException {
+    void updateDBNodeIds(String existingMemberNodeId, String newMemberNodeId)
+        throws AdminException {
         logMetacat.debug(
             "Updating DataBase with new nodeId " + newMemberNodeId + "(from previous nodeId:"
                 + existingMemberNodeId + ")...");
-        int updatedRowCount = updateAuthoritativeMemberNodeId(existingMemberNodeId, newMemberNodeId);
+        int updatedRowCount =
+            updateAuthoritativeMemberNodeId(existingMemberNodeId, newMemberNodeId);
         logMetacat.debug(
             "...updated 'authoritive_member_node' in 'systemmetadata' table (" + updatedRowCount
                 + " rows affected)...");
