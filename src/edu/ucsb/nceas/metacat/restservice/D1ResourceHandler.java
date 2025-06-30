@@ -88,6 +88,7 @@ public class D1ResourceHandler {
     protected static final String RESOURCE_ACCESS_RULES = "accessRules";
 
     protected static final String RESOURCE_VIEWS = "views";
+    protected static final String ATTACHMENT = "attachment";
 
 
     /*
