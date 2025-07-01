@@ -1184,6 +1184,12 @@ dataone-indexer:
     ##
     subPath: *sharedVolumeSubPath
 
+  idxworker:
+    ## temp fix for resourcemaps not getting indexed
+    ## keep default for: resourcemapWaitMs: 800
+    ## increase number of tries from 25 to:
+    resourcemapMaxTries: 200
+
   rabbitmq:
     ## @param dataone-indexer.rabbitmq.extraConfiguration extra config, to be appended to rmq config
     ## Default consumer_timeout is 30 mins (i.e. 18000000mS). Increase this to 1hr to avoid timeouts
