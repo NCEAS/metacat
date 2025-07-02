@@ -68,15 +68,15 @@ existing objects in the Metacat instance. The instruction can be found on the
 
 .. |src-link-pre| raw:: html
 
-    <a href="https://knb.ecoinformatics.org/software/dist/metacat-src-
+    <a href="https://github.com/NCEAS/metacat/archive/refs/tags/
 
 .. |src-gz-link-post1| raw:: html
 
-    .tar.gz">metacat-src-
+    .tar.gz">metacat-
 
 .. |src-zip-link-post1| raw:: html
 
-    .zip">metacat-src-
+    .zip">metacat-
    
 - For Developers: Metacat `API documentation`_
 
