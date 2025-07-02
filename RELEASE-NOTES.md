@@ -6,7 +6,7 @@
 
 ## Release Notes for Metacat 3.2.2
 
-**Release date: 2025-07-02 **
+**Release date: 2025-07-02**
 
 ### Version Upgrades and Bug Fixes:
 
@@ -28,7 +28,7 @@
 
 ## Release Notes for helm chart 2.1.2
 
-**Release date: 2025-07-02 **
+**Release date: 2025-07-02**
 
 - Bump dataone-indexer sub-chart to version 1.3.2 ([see indexer release notes for
   details](https://github.com/DataONEorg/dataone-indexer/blob/3.1.5/RELEASE-NOTES.md))
