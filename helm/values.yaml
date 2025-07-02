@@ -733,7 +733,8 @@ ingress:
   ##
   className: "nginx"
 
-  ## Annotations for the ingress
+  ## Annotations for the ingress. These are mostly for enabling upload and download of large files
+  ## and data packages, without timeouts/disconnects.
   ##
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
@@ -752,16 +753,57 @@ ingress:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
     ##
     nginx.ingress.kubernetes.io/client-body-buffer-size: "1m"
+
     ## @skip ingress.annotations.nginx.ingress.kubernetes.io/client_max_body_size See docs:
     ## https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
-    ## Setting size to 0 disables checking of client request body size
+    ## Sets the maximum allowed size of the client request body. Setting to 0 disables checking of
+    ## client request body size
     ##
     nginx.ingress.kubernetes.io/client_max_body_size: "0"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/send-timeout See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_core_module.html#send_timeout
+    ## Sets a timeout for transmitting a response to the client. The timeout is set only between
+    ## two successive write operations, not for the transmission of the whole response. If the
+    ## client does not receive anything within this time, the connection is closed. Default is 60s,
+    ## but we set it to 3600 seconds to prevent 504 Gateway Time-out when downloading zip files of
+    ## huge datasets using bagit
+    ##
+    nginx.ingress.kubernetes.io/send-timeout: "3600"
+
     ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-body-size See docs:
     ## https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/configmap.md#proxy-body-size
-    ## Setting size to 0 disables checking of client request body size
+    ## Sets the maximum allowed size of the client request body - similar to the nginx
+    ## client_max_body_size directive. Setting to 0 disables checking of client request body size
     ##
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout
+    ## default is 60 seconds, but we set it to 3600 seconds to prevent 504 Gateway Time-out when
+    ## downloading zip files of huge datasets using bagit
+    ##
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout
+    ## The timeout is set only between two successive write operations, not for the transmission of
+    ## the whole request. We set it to 3600 seconds to prevent 504 Gateway Time-out when
+    ## downloading zip files of huge datasets using bagit
+    ##
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-request-buffering See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_request_buffering
+    ##
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+
+    ## @skip ingress.annotations.nginx.ingress.kubernetes.io/proxy-buffering See docs:
+    ## https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering
+    ## According to ingress-nginx docs, default is "off", but according to nginx docs, default is
+    ## "on", so we set it explicitly to "off", be sure
+    ##
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
 
   ## @param ingress.defaultBackend.enabled enable the optional defaultBackend
   ## ingress.defaultBackend (optional) default for any requests not matching defined paths
@@ -1141,6 +1183,12 @@ dataone-indexer:
     ## Useful where one PV is used for multiple services, so each has its own subtree.
     ##
     subPath: *sharedVolumeSubPath
+
+  idxworker:
+    ## temp fix for resourcemaps not getting indexed
+    ## keep default for: resourcemapWaitMs: 800
+    ## increase number of tries from 25 to:
+    resourcemapMaxTries: 200
 
   rabbitmq:
     ## @param dataone-indexer.rabbitmq.extraConfiguration extra config, to be appended to rmq config

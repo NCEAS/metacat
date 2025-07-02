@@ -593,7 +593,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         }
 
         response.setContentType(mimeType);
-        response.setHeader("Content-Disposition", "inline; filename=" + filename);
+        response.setHeader("Content-Disposition", ATTACHMENT + "; filename=" + filename);
 
         InputStream data = null;
         try {

@@ -1,5 +1,41 @@
 # Metacat Release Notes
 
+> [!CAUTION]
+> If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
+> Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
+
+## Release Notes for Metacat 3.2.2
+
+**Release date: 2025-07-02**
+
+### Version Upgrades and Bug Fixes:
+
+- Fixed: Bug: Bagit setting incorrect Content-Type ([Issue #1953](https://github.com/NCEAS/metacat/issues/1953))
+- Fixed: Metacat DataONE admin page doesn't show the error message from CN ([Issue #2040](https://github.com/NCEAS/metacat/issues/2040))
+- Fixed: Hashstore convertor may miss some objects which need to be converted ([Issue #2182](https://github.com/NCEAS/metacat/issues/2182))
+- Update `eml2osti.xsl` for OSTI Service ([Issue #2185](https://github.com/NCEAS/metacat/issues/2185)), to incorporate bug fix for [OSTI XML Sponsor List starting with semicolon causes error in OSTI submission](https://github.com/ess-dive/essdive-toolset/issues/368)
+- Upgrade Postgres from 42.7.4 to 42.7.7 ([issue #2191](https://github.com/NCEAS/metacat/issues/2191))
+- Upgrade DataONE-Indexer library to 3.1.5 in metacat-index (see [dataone-indexer Release Notes](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md#dataone-indexer-version-315--helm-chart-version-132) for details)
+
+### Other Enhancements:
+
+- Ensure Metacat Startup Doesn't Fail if CN Registration Unsuccessful ([Issue #2181](https://github.com/NCEAS/metacat/issues/2181))
+- Increase `index.resourcemap.waitingComponent.max.attempts` to 200 as a temporary fix for resourcemaps not being successfully indexed
+- Utility Scripts for Metacat Administrators:
+  - (Python) submit index tasks as low priority in the background, given a list of object IDs (PIDs) ([Issue #2176](https://github.com/NCEAS/metacat/issues/2176))
+  - (Python) Synchronize the system metadata of a list of object IDs (PIDs) from Metacat database to the corresponding files in HashStore ([Issue #2166](https://github.com/NCEAS/metacat/issues/2166))
+  - (Bash) Determine the subset of objects that have not been indexed, and submit them for indexing ([Issue #2165](https://github.com/NCEAS/metacat/issues/2165))
+
+## Release Notes for helm chart 2.1.2
+
+**Release date: 2025-07-02**
+
+- Bump dataone-indexer sub-chart to version 1.3.2 ([see indexer release notes for
+  details](https://github.com/DataONEorg/dataone-indexer/blob/3.1.5/RELEASE-NOTES.md))
+- Set [additional Ingress annotations](https://github.com/NCEAS/metacat/commit/80aa42ad) for enabling upload and download of large files and data packages, without timeouts/disconnects.
+- Increase `.Values.dataone-indexer.idxworker.resourcemapMaxTries` to 200 as a temporary fix for resourcemaps not being successfully indexed.
+
+
 ## Release Notes for helm chart 2.1.1
 
 **Release date: 2025-05-20**
@@ -20,7 +56,7 @@ listed below.
 
 ## Release Notes for Metacat 3.2.1
 
-**Release date: 2024-05-01**
+**Release date: 2025-05-01**
 
 ### Version Upgrades and Bug Fixes:
 - Fixed [Auto-restart Hashstore Conversion if Interrupted](https://github.com/NCEAS/metacat/issues/2123)

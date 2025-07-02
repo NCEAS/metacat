@@ -40,7 +40,7 @@ kubectl get secret ${release_name}-d1-client-cert -o jsonpath="{.data.d1client\.
     > ${cert_file}
 chmod 600 ${cert_file}
 
-host=$(kubectl get ingress | grep "${release_name}" | awk '{print $3}')
+host=$(kubectl get ingress | grep "${release_name}" | awk '{print $3}' | cut -d ',' -f 1)
 api_url="https://${host}/metacat/d1/mn/v2/index"
 
 result_file="modified-since-$(echo -n ${start_time} | sed -e 's/ /-/g').txt"

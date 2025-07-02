@@ -46,6 +46,7 @@ metacat:
   dataone.nodeName: TestBROOKELT Metacat Node
   dataone.nodeDescription: |
     Dev cluster Test BROOKE LT Metacat Node. Last registered with CN on 1/23/2025
+  ## FOR TESTING: NON-VERIFIED:  CN=Christopher Jones A2108,O=Google,C=US,DC=cilogon,DC=org
   dataone.contactSubject: http://orcid.org/0000-0002-1472-913X
   dataone.nodeSynchronize: true
   dataone.nodeReplicate: true
@@ -74,8 +75,8 @@ resources:
 
 tomcat:
   heapMemory:
-    min: 4G
-    max: 8G
+    min: 1G
+    max: 2G
 
 ingress:
   annotations:
@@ -93,7 +94,7 @@ postgresql:
     resources:
       requests:
         cpu: 1
-        memory: 2Gi
+        memory: 1Gi
       limits:
         cpu: 2
         memory: 4Gi
@@ -138,7 +139,15 @@ dataone-indexer:
         memory: 3072Mi
 
   solr:
-    resourcesPreset: "large"
+    javaMem: "-Xms512m -Xmx2g"
+    #    resourcesPreset: "large"  # (cpu: 1.0/1.5; mem: 2048Mi/3072Mi)
+    resources:
+      requests:
+        cpu: 1.0
+        memory: 2Gi
+      limits:
+        cpu: 1.5
+        memory: 8Gi
     extraVolumes:
       - name: solr-config
         configMap:
