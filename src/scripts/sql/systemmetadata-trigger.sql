@@ -1,7 +1,6 @@
 CREATE OR REPLACE FUNCTION notify_trigger() RETURNS trigger AS $trigger$
 DECLARE
   rec systemmetadata;
-  dat systemmetadata;
   payload TEXT;
   docid_rev TEXT;
 BEGIN
@@ -9,9 +8,6 @@ BEGIN
   -- Set record row depending on operation
   CASE TG_OP
   WHEN 'UPDATE' THEN
-     rec := NEW;
-     dat := OLD;
-  WHEN 'INSERT' THEN
      rec := NEW;
   WHEN 'DELETE' THEN
      rec := OLD;
@@ -32,9 +28,9 @@ BEGIN
     'action', LOWER(TG_OP),
     'schema', TG_TABLE_SCHEMA,
     'identity', TG_TABLE_NAME,
+    'pid', rec.guid,
     'docid', docid_rev,
-    'record', row_to_json(rec),
-    'old', row_to_json(dat)
+    'record', row_to_json(rec)
   );
 
   -- Notify the channel
@@ -46,4 +42,4 @@ $trigger$ LANGUAGE plpgsql;
 
 -- Register the trigger on the systemmetadata table
 DROP TRIGGER IF EXISTS systemmetadata_notify ON systemmetadata;
-CREATE TRIGGER systemmetadata_notify AFTER INSERT OR UPDATE OR DELETE ON systemmetadata FOR EACH ROW EXECUTE PROCEDURE notify_trigger();
+CREATE TRIGGER systemmetadata_notify AFTER UPDATE OR DELETE ON systemmetadata FOR EACH ROW EXECUTE PROCEDURE notify_trigger();
