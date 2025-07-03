@@ -3,6 +3,7 @@ DECLARE
   rec systemmetadata;
   dat systemmetadata;
   payload TEXT;
+  docid_rev TEXT;
 BEGIN
 
   -- Set record row depending on operation
@@ -17,9 +18,24 @@ BEGIN
   ELSE
      RAISE EXCEPTION 'Unknown TG_OP: "%". Should not occur!', TG_OP;
   END CASE;
-  
+
+  -- Lookup docid.rev from the identifier table using guid
+    SELECT i.docid || '.' || i.rev
+    INTO docid_rev
+    FROM identifier i
+    WHERE i.guid = rec.guid
+    LIMIT 1;
+
   -- Build the payload
-  payload := json_build_object('timestamp',CURRENT_TIMESTAMP,'action',LOWER(TG_OP),'schema',TG_TABLE_SCHEMA,'identity',TG_TABLE_NAME,'record',row_to_json(rec), 'old',row_to_json(dat));
+  payload := json_build_object(
+    'timestamp', CURRENT_TIMESTAMP,
+    'action', LOWER(TG_OP),
+    'schema', TG_TABLE_SCHEMA,
+    'identity', TG_TABLE_NAME,
+    'docid', docid_rev,
+    'record', row_to_json(rec),
+    'old', row_to_json(dat)
+  );
 
   -- Notify the channel
   PERFORM pg_notify('core_db_event',payload);
