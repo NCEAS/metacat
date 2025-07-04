@@ -103,8 +103,6 @@ def listen_and_submit():
 
     # Set up RabbitMQ channel
     channel = get_rabbitmq_channel(RABBITMQ_USERNAME, RABBITMQ_PASSWORD)
-    index_type = 'create'
-    priority = 4
     # Set up thread pool
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='TriggerProcessor') as executor:
         try:
@@ -114,6 +112,8 @@ def listen_and_submit():
                 conn.poll()
                 while conn.notifies:
                     notify = conn.notifies.pop(0)
+                    index_type = 'create'
+                    priority = 4
                     try:
                         payload = json.loads(notify.payload)
                         guid = payload.get("pid")
