@@ -1,5 +1,5 @@
 # This script is a listener of a trigger on the systemmetadata table.
-# It prints out the payload from the tigger and send the information to RabbitMQ.
+# It prints out the payload from the trigger and send the information to RabbitMQ.
 # You need to install psycopg2 first: pip install psycopg2-binary
 import psycopg2
 import select
@@ -32,6 +32,42 @@ ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
 resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 
+class ThreadSafeChannel:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self._lock = threading.Lock()
+        self._channel = None
+        self._connection = None
+        self._ensure_channel()
+
+    def _ensure_channel(self):
+        if self._connection and self._connection.is_open and self._channel and self._channel.is_open:
+            return  # still good
+
+        if self._connection:
+            try:
+                self._connection.close()
+            except:
+                pass  # suppress errors on close
+
+        credentials = pika.PlainCredentials(self.username, self.password)
+        self._connection = pika.BlockingConnection(
+            pika.ConnectionParameters(
+                host=RABBITMQ_URL,
+                port=RABBITMQ_PORT_NUMBER,
+                credentials=credentials
+            )
+        )
+        self._channel = self._connection.channel()
+        self._channel.queue_declare(queue=QUEUE_NAME, durable=True, arguments={'x-max-priority': 10})
+        self._channel.queue_bind(exchange=EXCHANGE_NAME, queue=QUEUE_NAME, routing_key=ROUTING_KEY)
+
+    def get_channel(self):
+        with self._lock:
+            self._ensure_channel()
+            return self._channel
+
 
 # Database connection parameters
 DB_CONFIG = {
@@ -58,7 +94,7 @@ def get_rabbitmq_channel(username, password):
         raise e
     return channel
 
-def process_pid_wrapper(pid, channel, index_type, doc_id, priority):
+def process_pid_wrapper(pid, channel_manager, index_type, doc_id, priority):
     """
     Processes a single PID:
     1. Construct the rabbitmq message
@@ -72,6 +108,7 @@ def process_pid_wrapper(pid, channel, index_type, doc_id, priority):
         properties = pika.BasicProperties(headers=headers, priority=priority)
         message = ''
         # 2 Publish the message to the rabbitmq service
+        channel = channel_manager.get_channel()
         channel.basic_publish(
             exchange=EXCHANGE_NAME,
             routing_key=ROUTING_KEY,
@@ -101,8 +138,8 @@ def listen_and_submit():
     cur.execute("LISTEN core_db_event;")
     print("Listening for PostgreSQL notifications on channel 'core_db_event'...")
 
-    # Set up RabbitMQ channel
-    channel = get_rabbitmq_channel(RABBITMQ_USERNAME, RABBITMQ_PASSWORD)
+    # Set up RabbitMQ channel manager
+    channel_manager = ThreadSafeChannel(RABBITMQ_USERNAME, RABBITMQ_PASSWORD)
     # Set up thread pool
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='TriggerProcessor') as executor:
         try:
@@ -125,7 +162,7 @@ def listen_and_submit():
                         if object_format and object_format in resourcemap_format_list:
                             priority = 3
                         if guid:
-                            executor.submit(process_pid_wrapper, guid, channel, index_type, doc_id, priority)
+                            executor.submit(process_pid_wrapper, guid, channel_manager, index_type, doc_id, priority)
                         else:
                             print(f"[LISTENER] No GUID found in payload: {payload}")
                     except json.JSONDecodeError:
