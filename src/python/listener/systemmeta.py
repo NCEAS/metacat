@@ -7,7 +7,6 @@ import json
 import threading
 import pika
 import concurrent.futures
-import time
 
 
 # --- Configuration ---
@@ -18,8 +17,6 @@ DB_USERNAME = "tao"
 DB_PASSWORD = "your_db_password"
 # Number of worker threads
 MAX_WORKERS = 5
-# If the type of the index task is systemMetacat_change_only
-SYSMETA_CHANGE_ONLY = False
 # RabbitMQ URL
 RABBITMQ_URL = "localhost"
 # RabbitMQ port number
@@ -27,16 +24,13 @@ RABBITMQ_PORT_NUMBER = 5672
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
-# The time gap between two submission in seconds
-SUBMISSION_GAP_SEC = 0.5
-# Priority of the message. We set it 0, which is the lowest one, since this should be run in background
-PRIORITY = 0
 # Request timeout in seconds
 REQUEST_TIMEOUT = 30
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
+resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 
 
 # Database connection parameters
@@ -64,23 +58,18 @@ def get_rabbitmq_channel(username, password):
         raise e
     return channel
 
-def process_pid_wrapper(pid, channel):
+def process_pid_wrapper(pid, channel, index_type, doc_id, priority):
     """
     Processes a single PID:
     1. Construct the rabbitmq message
     2. Publish the message to the rabbitmq service
-    3. Add PID to results file
     """
     thread_name = threading.current_thread().name
     try:
         # 1 Construct the rabbitmq message
-        if (SYSMETA_CHANGE_ONLY):
-            index_type = "sysmeta"
-        else:
-            index_type = "create"
-        print(f"[{thread_name}] Processing PID: {pid} with the type of index task: {index_type}")
-        headers={'index_type': index_type, 'id': pid}
-        properties = pika.BasicProperties(headers=headers, priority=PRIORITY)
+        print(f"[{thread_name}] Processing PID: {pid} with the type of index task: {index_type} and docid: {doc_id} and priority: {priority}")
+        headers={'index_type': index_type, 'id': pid, 'doc_id': doc_id}
+        properties = pika.BasicProperties(headers=headers, priority=priority)
         message = ''
         # 2 Publish the message to the rabbitmq service
         channel.basic_publish(
@@ -114,7 +103,8 @@ def listen_and_submit():
 
     # Set up RabbitMQ channel
     channel = get_rabbitmq_channel(RABBITMQ_USERNAME, RABBITMQ_PASSWORD)
-
+    index_type = 'create'
+    priority = 4
     # Set up thread pool
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='TriggerProcessor') as executor:
         try:
@@ -126,11 +116,16 @@ def listen_and_submit():
                     notify = conn.notifies.pop(0)
                     try:
                         payload = json.loads(notify.payload)
-                        guid = payload.get("record", {}).get("guid")
+                        guid = payload.get("pid")
+                        action = payload.get("action")
+                        if action and action.lower() == 'delete':
+                            index_type = 'delete'
+                        doc_id = payload.get("docid")
+                        object_format = payload.get("record", {}).get("object_format")
+                        if object_format and object_format in resourcemap_format_list:
+                            priority = 3
                         if guid:
-                            print(f"[LISTENER] Submitting task for PID: {guid}")
-                            executor.submit(process_pid_wrapper, guid, channel)
-                            time.sleep(SUBMISSION_GAP_SEC)
+                            executor.submit(process_pid_wrapper, guid, channel, index_type, doc_id, priority)
                         else:
                             print(f"[LISTENER] No GUID found in payload: {payload}")
                     except json.JSONDecodeError:
