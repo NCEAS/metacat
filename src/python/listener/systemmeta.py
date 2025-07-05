@@ -94,39 +94,57 @@ def get_rabbitmq_channel(username, password):
         raise e
     return channel
 
-def process_pid_wrapper(pid, channel_manager, index_type, doc_id, priority):
+"""
+    1. Parse the payload from the trigger
+    2. Processes a single PID:
+       2.1 Construct the rabbitmq message
+       2.2 Publish the message to the rabbitmq service
     """
-    Processes a single PID:
-    1. Construct the rabbitmq message
-    2. Publish the message to the rabbitmq service
-    """
+def process_pid_wrapper(channel_manager, notify):
     thread_name = threading.current_thread().name
     try:
-        # 1 Construct the rabbitmq message
-        print(f"[{thread_name}] Processing PID: {pid} with the type of index task: {index_type} and docid: {doc_id} and priority: {priority}")
-        headers={'index_type': index_type, 'id': pid, 'doc_id': doc_id}
-        properties = pika.BasicProperties(headers=headers, priority=priority)
-        message = ''
-        # 2 Publish the message to the rabbitmq service
-        channel = channel_manager.get_channel()
-        channel.basic_publish(
-            exchange=EXCHANGE_NAME,
-            routing_key=ROUTING_KEY,
-            body=message,
-            properties=properties
-        )
+        index_type = 'create'
+        priority = 4
+        # 1. Parse the payload from the trigger
+        payload = json.loads(notify.payload)
+        guid = payload.get("pid")
+        action = payload.get("action")
+        if action and action.lower() == 'delete':
+            index_type = 'delete'
+        doc_id = payload.get("docid")
+        object_format = payload.get("record", {}).get("object_format")
+        if object_format and object_format in resourcemap_format_list:
+            priority = 3
 
+        if guid:
+            # 2.1 Construct the rabbitmq message
+            print(f"[{thread_name}] Processing PID: {guid} with the type of index task: {index_type} and docid: {doc_id} and priority: {priority}")
+            headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
+            properties = pika.BasicProperties(headers=headers, priority=priority)
+            message = ''
+            # 2.2 Publish the message to the rabbitmq service
+            channel = channel_manager.get_channel()
+            channel.basic_publish(
+                exchange=EXCHANGE_NAME,
+                routing_key=ROUTING_KEY,
+                body=message,
+                properties=properties
+            )
+        else:
+            print(f"[{thread_name}] No GUID found in payload: {payload}")
+
+    except json.JSONDecodeError:
+        print(f"[ERROR] [{thread_name}] Invalid JSON payload received: {notify.payload}")
     except channel.exceptions.HTTPError as http_err:
-        print(f"[ERROR] [{thread_name}] HTTP error for PID {pid} at URL {http_err.request.url}: {http_err}")
+        print(f"[ERROR] [{thread_name}] HTTP error for PID {guid}: {http_err}")
     except channel.exceptions.ConnectionError as conn_err:
-        print(f"[ERROR] [{thread_name}] Connection error for PID {pid} (URL: {conn_err.request.url if conn_err.request else 'N/A'}): {conn_err}")
+        print(f"[ERROR] [{thread_name}] Connection error for PID {guid}: {conn_err}")
     except channel.exceptions.Timeout as timeout_err:
-        print(f"[ERROR] [{thread_name}] Timeout for PID {pid} (URL: {timeout_err.request.url if timeout_err.request else 'N/A'}): {timeout_err}")
+        print(f"[ERROR] [{thread_name}] Timeout for PID {guid}: {timeout_err}")
     except channel.exceptions.RequestException as req_err:
-        print(f"[ERROR] [{thread_name}] General request error for PID {pid}: {req_err}")
+        print(f"[ERROR] [{thread_name}] General request error for PID {guid}: {req_err}")
     except Exception as e:
-        print(f"[ERROR] [{thread_name}] An unexpected error occurred while processing PID {pid}: {e}")
-
+        print(f"[ERROR] [{thread_name}] An unexpected error occurred while processing PID {guid}: {e}")
     return None  # Return None if any step failed
 
 def listen_and_submit():
@@ -149,24 +167,7 @@ def listen_and_submit():
                 conn.poll()
                 while conn.notifies:
                     notify = conn.notifies.pop(0)
-                    index_type = 'create'
-                    priority = 4
-                    try:
-                        payload = json.loads(notify.payload)
-                        guid = payload.get("pid")
-                        action = payload.get("action")
-                        if action and action.lower() == 'delete':
-                            index_type = 'delete'
-                        doc_id = payload.get("docid")
-                        object_format = payload.get("record", {}).get("object_format")
-                        if object_format and object_format in resourcemap_format_list:
-                            priority = 3
-                        if guid:
-                            executor.submit(process_pid_wrapper, guid, channel_manager, index_type, doc_id, priority)
-                        else:
-                            print(f"[LISTENER] No GUID found in payload: {payload}")
-                    except json.JSONDecodeError:
-                        print("[LISTENER] Invalid JSON payload received")
+                    executor.submit(process_pid_wrapper, channel_manager, notify)
         except KeyboardInterrupt:
             print("Listener interrupted. Exiting.")
         finally:
