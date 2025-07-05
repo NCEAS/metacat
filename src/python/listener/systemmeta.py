@@ -75,10 +75,10 @@ class ThreadSafeChannelPool:
             if not self._is_healthy():
                 print("[CHANNEL POOL] Connection lost. Reconnecting and recreating channel pool.")
                 self._create_connection_and_channels()
-        try:
-            return self._channels.get(timeout=5)
-        except queue.Empty:
-            raise Exception("No available RabbitMQ channels in the pool.")
+            try:
+                return self._channels.get(timeout=5)
+            except queue.Empty:
+                raise Exception("No available RabbitMQ channels in the pool.")
 
     def release_channel(self, channel):
         with self._lock:
