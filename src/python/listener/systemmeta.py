@@ -51,6 +51,12 @@ class ThreadSafeChannel:
             except:
                 pass  # suppress errors on close
 
+        if self._channel:
+            try:
+                self._channel.close()
+            except:
+                pass  # suppress errors on close
+
         credentials = pika.PlainCredentials(self.username, self.password)
         self._connection = pika.BlockingConnection(
             pika.ConnectionParameters(
@@ -77,22 +83,6 @@ DB_CONFIG = {
     'host': DB_HOST_NAME,
     'port': DB_PORT_NUMBER
 }
-
-def get_rabbitmq_channel(username, password):
-    try:
-        credentials = pika.PlainCredentials(username, password)
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=RABBITMQ_URL, port=RABBITMQ_PORT_NUMBER,
-                                      credentials=credentials))
-        channel = connection.channel()
-        channel.queue_declare(queue=QUEUE_NAME, durable=True, arguments={'x-max-priority': 10})
-        channel.queue_bind(exchange=EXCHANGE_NAME,
-                           queue=QUEUE_NAME,
-                           routing_key=ROUTING_KEY)
-    except Exception as e:
-        print(f"[ERROR] Could not create a RabbitMQ channel: {e}")
-        raise e
-    return channel
 
 """
     1. Parse the payload from the trigger
