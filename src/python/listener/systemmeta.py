@@ -153,8 +153,8 @@ def listen_and_submit():
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
     cur = conn.cursor()
-    cur.execute("LISTEN core_db_event;")
-    print("Listening for PostgreSQL notifications on channel 'core_db_event'...")
+    cur.execute("LISTEN systemmetadata_event;")
+    print("Listening for PostgreSQL notifications on channel 'systemmetadata_event'...")
 
     # Set up RabbitMQ channel manager
     channel_manager = ThreadSafeChannel(RABBITMQ_USERNAME, RABBITMQ_PASSWORD)
