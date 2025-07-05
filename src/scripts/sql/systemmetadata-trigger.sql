@@ -34,7 +34,7 @@ BEGIN
   );
 
   -- Notify the channel
-  PERFORM pg_notify('core_db_event',payload);
+  PERFORM pg_notify('systemmetadata_event',payload);
   
   RETURN rec;
 END;
