@@ -81,11 +81,12 @@ class ThreadSafeChannelPool:
             raise Exception("No available RabbitMQ channels in the pool.")
 
     def release_channel(self, channel):
-        if channel and channel.is_open:
-            try:
-                self._channels.put(channel, timeout=5)
-            except queue.Full:
-                pass  # Drop it if pool is full
+        with self._lock:
+            if channel and channel.is_open:
+                try:
+                    self._channels.put(channel, timeout=5)
+                except queue.Full:
+                    pass  # Drop it if pool is full
 
     def _close_all(self):
         while not self._channels.empty():
