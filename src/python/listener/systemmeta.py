@@ -1,6 +1,9 @@
-# This script is a listener of a trigger on the systemmetadata table.
-# It prints out the payload from the trigger and send the information to RabbitMQ.
-# You need to install psycopg2 first: pip install psycopg2-binary
+# This script is a listener of a trigger on the Metacat's systemmetadata table.
+# It parses the payload from the trigger and sends a index task to RabbitMQ.
+# Needed libraries:
+# pip3 install psycopg2-binary
+# pip3 install amqpstorm
+
 import psycopg2
 import select
 import json
@@ -19,6 +22,9 @@ RABBITMQ_PASSWORD = "guest"
 DB_USERNAME = "tao"
 DB_PASSWORD = "your_db_password"
 # Number of worker threads to listen the database events
+# The pool_size of the rabbitmq channel pool and database connection pool are using it as well.
+# The number must be less than those settings: the max number of the database connection (100-200),
+# the max number of channels connection to rabbitmq (2047) and the number of the processor core number.
 MAX_WORKERS = 5
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
@@ -36,6 +42,7 @@ EXCHANGE_NAME = "dataone-index"
 resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 pg_pool = None
 
+# A class represents a RabbitMQ channel pool
 class AMQPStormChannelPool:
     def __init__(self, host, port, username, password, pool_size=5):
         self.host = host
@@ -135,6 +142,8 @@ def get_docid_from_db(guid):
         print(f"[ERROR] Failed to retrieve docid for guid {guid}: {e}")
         return None
 
+# Get a docid for multiple attempts since there is a delay to insert the record in the identifier
+# table
 def get_docid_with_retry(guid):
     for attempt in range(RETRIES):
         doc_id = get_docid_from_db(guid)
@@ -145,6 +154,7 @@ def get_docid_with_retry(guid):
     return None
 
 """
+    Parse the payload and submit the index task based the payload information
     1. Parse the payload from the trigger
     2. Processes a single PID:
        2.1 Construct the rabbitmq message
@@ -167,6 +177,7 @@ def process_pid_wrapper(channel_pool, notify):
             priority = 3
 
         if guid:
+            # Get the docid from the database
             doc_id = get_docid_with_retry(guid)
             # 2.1 Construct the rabbitmq message
             print(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
@@ -195,6 +206,7 @@ def process_pid_wrapper(channel_pool, notify):
         print(f"[ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
     return None
 
+# Method to listen the database tigger and handle the events in a multiple-thread way
 def listen_and_submit():
     # Connect to PostgreSQL
     conn = psycopg2.connect(**DB_CONFIG)
