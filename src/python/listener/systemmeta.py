@@ -7,6 +7,7 @@ import json
 import threading
 import concurrent.futures
 import queue
+import time
 from amqpstorm import Connection
 from amqpstorm.exception import AMQPError
 
@@ -25,6 +26,10 @@ RABBITMQ_PORT_NUMBER = 5672
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
+# The waiting time to get docid
+DELAY_SECONDS = 0.1
+# The retry times to get docid
+RETRIES = 10
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
@@ -100,6 +105,32 @@ DB_CONFIG = {
     'port': DB_PORT_NUMBER
 }
 
+# Look up database to get the docid for the given guid
+def get_docid_from_db(guid):
+    try:
+        with psycopg2.connect(**DB_CONFIG) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT docid || '.' || rev
+                    FROM identifier
+                    WHERE guid = %s
+                    LIMIT 1
+                """, (guid,))
+                result = cur.fetchone()
+                return result[0] if result else None
+    except Exception as e:
+        print(f"[ERROR] Failed to retrieve docid for guid {guid}: {e}")
+        return None
+
+def get_docid_with_retry(guid):
+    for attempt in range(RETRIES):
+        doc_id = get_docid_from_db(guid)
+        if doc_id:
+            print(f"tried {attempt} time(s) to get docid from the identifier table")
+            return doc_id
+        time.sleep(DELAY_SECONDS)
+    return None
+
 """
     1. Parse the payload from the trigger
     2. Processes a single PID:
@@ -111,18 +142,19 @@ def process_pid_wrapper(channel_pool, notify):
     try:
         index_type = 'create'
         priority = 4
+        doc_id = None
         # 1. Parse the payload from the trigger
         payload = json.loads(notify.payload)
         guid = payload.get("pid")
         action = payload.get("action")
         if action and action.lower() == 'delete':
             index_type = 'delete'
-        doc_id = payload.get("docid")
         object_format = payload.get("record", {}).get("object_format")
         if object_format and object_format in resourcemap_format_list:
             priority = 3
 
         if guid:
+            doc_id = get_docid_with_retry(guid)
             # 2.1 Construct the rabbitmq message
             print(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
