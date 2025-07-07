@@ -67,9 +67,21 @@ class AMQPStormChannelPool:
                 print("[CHANNEL POOL] Connection lost. Reinitializing.")
                 self._initialize_pool()
         try:
-            return self._channels.get(timeout=5)
+            for _ in range(self.pool_size):
+                channel = self._channels.get(timeout=5)
+                if channel and channel.is_open:
+                    return channel
+                else:
+                    print("[CHANNEL POOL] Found closed channel. Creating a new one.")
+                    with self._lock:
+                        new_channel = self._connection.channel()
+                        new_channel.queue.declare(QUEUE_NAME, durable=True, arguments={"x-max-priority": 10})
+                        new_channel.queue.bind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY)
+                        self._channels.put(new_channel)
+            raise Exception("No healthy AMQPStorm channels available in the pool.")
         except queue.Empty:
             raise Exception("No available AMQPStorm channels in the pool.")
+
 
     def release_channel(self, channel):
         if channel and channel.is_open:
