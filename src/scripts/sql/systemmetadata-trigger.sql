@@ -15,13 +15,6 @@ BEGIN
      RAISE EXCEPTION 'Unknown TG_OP: "%". Should not occur!', TG_OP;
   END CASE;
 
-  -- Lookup docid.rev from the identifier table using guid
-    SELECT i.docid || '.' || i.rev
-    INTO docid_rev
-    FROM identifier i
-    WHERE i.guid = rec.guid
-    LIMIT 1;
-
   -- Build the payload
   payload := json_build_object(
     'timestamp', CURRENT_TIMESTAMP,
@@ -29,7 +22,6 @@ BEGIN
     'schema', TG_TABLE_SCHEMA,
     'identity', TG_TABLE_NAME,
     'pid', rec.guid,
-    'docid', docid_rev,
     'record', row_to_json(rec)
   );
 
