@@ -8,6 +8,7 @@ import threading
 import concurrent.futures
 import queue
 import time
+from psycopg2 import pool
 from amqpstorm import Connection
 from amqpstorm.exception import AMQPError
 
@@ -17,8 +18,6 @@ RABBITMQ_USERNAME = "guest"
 RABBITMQ_PASSWORD = "guest"
 DB_USERNAME = "tao"
 DB_PASSWORD = "your_db_password"
-# Size of RabbitMQ channel pool
-POOL_SIZE = 5
 # Number of worker threads to listen the database events
 MAX_WORKERS = 5
 RABBITMQ_URL = "localhost"
@@ -35,6 +34,7 @@ QUEUE_NAME = "index"
 ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
 resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
+pg_pool = None
 
 class AMQPStormChannelPool:
     def __init__(self, host, port, username, password, pool_size=5):
@@ -108,16 +108,16 @@ DB_CONFIG = {
 # Look up database to get the docid for the given guid
 def get_docid_from_db(guid):
     try:
-        with psycopg2.connect(**DB_CONFIG) as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT docid || '.' || rev
-                    FROM identifier
-                    WHERE guid = %s
-                    LIMIT 1
-                """, (guid,))
-                result = cur.fetchone()
-                return result[0] if result else None
+        conn = pg_pool.getconn()
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT docid || '.' || rev
+                FROM identifier
+                WHERE guid = %s
+                LIMIT 1
+            """, (guid,))
+            result = cur.fetchone()
+            return result[0] if result else None
     except Exception as e:
         print(f"[ERROR] Failed to retrieve docid for guid {guid}: {e}")
         return None
@@ -190,7 +190,7 @@ def listen_and_submit():
     cur.execute("LISTEN systemmetadata_event;")
     print("Listening on PostgreSQL channel 'systemmetadata_event'...")
     # Set up RabbitMQ channel pool
-    channel_pool = AMQPStormChannelPool(RABBITMQ_URL, RABBITMQ_PORT_NUMBER, RABBITMQ_USERNAME, RABBITMQ_PASSWORD, POOL_SIZE)
+    channel_pool = AMQPStormChannelPool(RABBITMQ_URL, RABBITMQ_PORT_NUMBER, RABBITMQ_USERNAME, RABBITMQ_PASSWORD, MAX_WORKERS)
     # Set up thread pool
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='TriggerProcessor') as executor:
         try:
@@ -207,6 +207,13 @@ def listen_and_submit():
             cur.close()
             conn.close()
             channel_pool.close()
+            if pg_pool:
+                    pg_pool.closeall()
 
 if __name__ == "__main__":
+    pg_pool = pool.ThreadedConnectionPool(
+            minconn = 1,
+            maxconn = MAX_WORKERS + 2,  # extra room
+            **DB_CONFIG
+    )
     listen_and_submit()
