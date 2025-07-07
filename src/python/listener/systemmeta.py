@@ -53,10 +53,7 @@ class AMQPStormChannelPool:
             self._close_all()
             self._connection = Connection(self.host, self.username, self.password, port=self.port)
             for _ in range(self.pool_size):
-                channel = self._connection.channel()
-                channel.queue.declare(QUEUE_NAME, durable=True, arguments={"x-max-priority": 10})
-                channel.queue.bind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY)
-                self._channels.put(channel)
+                self._put_new_channel_into_queue()
 
     def _is_healthy(self):
         return self._connection and self._connection.is_open
@@ -74,10 +71,7 @@ class AMQPStormChannelPool:
                 else:
                     print("[CHANNEL POOL] Found closed channel. Creating a new one.")
                     with self._lock:
-                        new_channel = self._connection.channel()
-                        new_channel.queue.declare(QUEUE_NAME, durable=True, arguments={"x-max-priority": 10})
-                        new_channel.queue.bind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY)
-                        self._channels.put(new_channel)
+                        self._put_new_channel_into_queue()
             raise Exception("No healthy AMQPStorm channels available in the pool.")
         except queue.Empty:
             raise Exception("No available AMQPStorm channels in the pool.")
@@ -107,6 +101,13 @@ class AMQPStormChannelPool:
     def close(self):
         with self._lock:
             self._close_all()
+
+    # Generate a new RabbitMQ channel and put it into the queue
+    def _put_new_channel_into_queue(self):
+        new_channel = self._connection.channel()
+        new_channel.queue.declare(QUEUE_NAME, durable=True, arguments={"x-max-priority": 10})
+        new_channel.queue.bind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY)
+        self._channels.put(new_channel)
 
 # Database connection parameters
 DB_CONFIG = {
