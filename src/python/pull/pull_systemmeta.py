@@ -126,34 +126,6 @@ DB_CONFIG = {
     'port': DB_PORT_NUMBER
 }
 
-# Look up database to get the docid for the given guid
-def get_docid_from_db(guid):
-    try:
-        conn = pg_pool.getconn()
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT docid || '.' || rev
-                FROM identifier
-                WHERE guid = %s
-                LIMIT 1
-            """, (guid,))
-            result = cur.fetchone()
-            return result[0] if result else None
-    except Exception as e:
-        print(f"[ERROR] Failed to retrieve docid for guid {guid}: {e}")
-        return None
-
-# Get a docid for multiple attempts since there is a delay to insert the record in the identifier
-# table
-def get_docid_with_retry(guid):
-    for attempt in range(RETRIES):
-        doc_id = get_docid_from_db(guid)
-        if doc_id:
-            print(f"tried {attempt} time(s) to get docid from the identifier table")
-            return doc_id
-        time.sleep(DELAY_SECONDS)
-    return None
-
 """
     Parse the payload and submit the index task based the payload information
     1. Parse the payload from the trigger
@@ -179,7 +151,7 @@ def process_pid_wrapper(channel_pool, notify):
 
         if guid:
             # Get the docid from the database
-            doc_id = get_docid_with_retry(guid)
+            doc_id = payload.get("docid")
             # 2.1 Construct the rabbitmq message
             print(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
