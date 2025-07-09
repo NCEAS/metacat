@@ -6,7 +6,6 @@
 
 import psycopg2
 import select
-import json
 import threading
 import concurrent.futures
 import queue
@@ -127,36 +126,21 @@ DB_CONFIG = {
 }
 
 """
-    Parse the payload and submit the index task based the payload information
-    1. Parse the payload from the trigger
-    2. Processes a single PID:
-       2.1 Construct the rabbitmq message
-       2.2 Publish the message to the rabbitmq service
+    Processes a single PID:
+       1 Construct the rabbitmq message
+       2 Publish the message to the rabbitmq service
 """
-def process_pid_wrapper(channel_pool, notify):
+def process_pid_wrapper(channel_pool, guid, object_format, docid):
     thread_name = threading.current_thread().name
     try:
         index_type = 'create'
         priority = 4
-        doc_id = None
-        # 1. Parse the payload from the trigger
-        payload = json.loads(notify.payload)
-        guid = payload.get("pid")
-        action = payload.get("action")
-        if action and action.lower() == 'delete':
-            index_type = 'delete'
-        object_format = payload.get("record", {}).get("object_format")
         if object_format and object_format in resourcemap_format_list:
             priority = 3
-
         if guid:
-            # Get the docid from the database
-            doc_id = payload.get("docid")
-            # 2.1 Construct the rabbitmq message
             print(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
             headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
             message = ''
-            # 2.2 Publish the message to the rabbitmq service
             channel = None
             try:
                 channel = channel_pool.acquire_channel()
@@ -170,9 +154,7 @@ def process_pid_wrapper(channel_pool, notify):
                 if channel:
                     channel_pool.release_channel(channel)
         else:
-            print(f"[{thread_name}] No GUID found in payload: {payload}")
-    except json.JSONDecodeError:
-        print(f"[ERROR] [{thread_name}] Invalid JSON: {notify.payload}")
+            print(f"[{thread_name}] No GUID found in the query")
     except AMQPError as amqp_err:
         print(f"[ERROR] [{thread_name}] AMQPStorm error while processing PID {guid}: {amqp_err}")
     except Exception as e:
@@ -214,7 +196,8 @@ def poll_and_submit():
                     conn = pg_pool.getconn()
                     with conn.cursor() as cur:
                         cur.execute(f"""
-                            SELECT sm.guid, i.docid || '.' || i.rev AS docid, sm.date_sys_metadata_modified
+                            SELECT sm.guid, sm.object_format, i.docid || '.' || i.rev AS docid, sm
+                            .date_sys_metadata_modified
                             FROM systemmetadata sm
                             JOIN identifier i ON sm.guid = i.guid
                             WHERE sm.date_sys_metadata_modified > %s
@@ -223,15 +206,8 @@ def poll_and_submit():
                         """, (last_timestamp,))
                         rows = cur.fetchall()
 
-                        for guid, docid, modified_time in rows:
-                            payload = {
-                                "pid": guid,
-                                "docid": docid,
-                                "action": "update",
-                                "record": {},  # if needed
-                            }
-                            notify = type('Notify', (object,), {"payload": json.dumps(payload)})
-                            futures.append(executor.submit(process_pid_wrapper, channel_pool, notify))
+                        for guid, object_format, docid, modified_time in rows:
+                            futures.append(executor.submit(process_pid_wrapper, channel_pool, guid, object_format, docid))
                             max_timestamp_in_batch = max(max_timestamp_in_batch, modified_time)
 
                 except Exception as poll_error:
