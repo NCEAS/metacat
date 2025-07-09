@@ -15,6 +15,7 @@ from psycopg2 import pool
 from amqpstorm import Connection
 from amqpstorm.exception import AMQPError
 from datetime import datetime
+from concurrent.futures import wait, ALL_COMPLETED
 
 # --- Configuration ---
 # Replace with your RabbitMQ and database credentials
@@ -32,10 +33,9 @@ RABBITMQ_PORT_NUMBER = 5672
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
-# The waiting time to get docid
-DELAY_SECONDS = 0.1
-# The retry times to get docid
-RETRIES = 10
+POLL_INTERVAL = 60  # seconds
+MAX_ROWS = 2000
+LAST_TIMESTAMP_FILE = "last_timestamp"
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
@@ -179,28 +179,47 @@ def process_pid_wrapper(channel_pool, notify):
         print(f"[ERROR] [{thread_name}] Unexpected error while processing PID {guid}: {e}")
     return None
 
+def load_last_timestamp():
+    if os.path.exists(LAST_TIMESTAMP_FILE):
+        try:
+            with open(LAST_TIMESTAMP_FILE, "r") as f:
+                content = f.read().strip()
+                return datetime.fromisoformat(content)
+        except Exception as e:
+            print(f"[WARN] Could not read or parse timestamp file: {e}")
+    return datetime.now()  # fallback
+
+def save_last_timestamp(ts: datetime):
+    try:
+        with open(LAST_TIMESTAMP_FILE, "w") as f:
+            f.write(ts.isoformat())
+    except Exception as e:
+        print(f"[ERROR] Failed to write last_timestamp file: {e}")
+
 def poll_and_submit():
     global pg_pool
-    last_timestamp = datetime.min  # or load from persistent storage if needed
-
-    # Set up RabbitMQ channel pool
+    last_timestamp = load_last_timestamp()
     channel_pool = AMQPStormChannelPool(
         RABBITMQ_URL, RABBITMQ_PORT_NUMBER, RABBITMQ_USERNAME, RABBITMQ_PASSWORD, MAX_WORKERS
     )
 
-    # Set up thread pool
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='TriggerProcessor') as executor:
         try:
             while True:
+                cycle_start = time.time()
+                futures = []
+                max_timestamp_in_batch = last_timestamp
+
                 try:
                     conn = pg_pool.getconn()
                     with conn.cursor() as cur:
-                        cur.execute("""
+                        cur.execute(f"""
                             SELECT sm.guid, i.docid || '.' || i.rev AS docid, sm.date_sys_metadata_modified
                             FROM systemmetadata sm
                             JOIN identifier i ON sm.guid = i.guid
                             WHERE sm.date_sys_metadata_modified > %s
                             ORDER BY sm.date_sys_metadata_modified ASC
+                            LIMIT {MAX_ROWS}
                         """, (last_timestamp,))
                         rows = cur.fetchall()
 
@@ -209,21 +228,27 @@ def poll_and_submit():
                                 "pid": guid,
                                 "docid": docid,
                                 "action": "update",
-                                "record": {},  # fill this in if needed
+                                "record": {},  # if needed
                             }
                             notify = type('Notify', (object,), {"payload": json.dumps(payload)})
-                            executor.submit(process_pid_wrapper, channel_pool, notify)
-
-                            last_timestamp = max(last_timestamp, modified_time)
+                            futures.append(executor.submit(process_pid_wrapper, channel_pool, notify))
+                            max_timestamp_in_batch = max(max_timestamp_in_batch, modified_time)
 
                 except Exception as poll_error:
                     print(f"[ERROR] Polling failed: {poll_error}")
-
                 finally:
                     if conn:
                         pg_pool.putconn(conn)
 
-                time.sleep(5)  # polling interval
+                if futures:
+                    wait(futures, return_when=ALL_COMPLETED)
+                    last_timestamp = max_timestamp_in_batch
+                    save_last_timestamp(last_timestamp)
+
+                elapsed = time.time() - cycle_start
+                sleep_time = max(0, POLL_INTERVAL - elapsed)
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
 
         except KeyboardInterrupt:
             print("Polling interrupted. Exiting.")
