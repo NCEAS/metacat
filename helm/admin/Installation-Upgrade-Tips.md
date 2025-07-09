@@ -52,6 +52,46 @@
     EOF"
     ```
 
+### Convert Timestamps to UTC
+
+If the legacy host machine was running in a non-UTC timezone (e.g. Pacific time), we must convert
+the timestamps in several tables to UTC by running the following SQL queries:
+
+> [!CAUTION]
+> THIS MUST BE DONE IMMEDIATELY AFTER RUNNING `pg_restore`, BEFORE ANY MODIFICATIONS ARE MADE TO THE
+> DATABASE (i.e. BEFORE THE HASHSTORE CONVERSION)
+
+```SQL
+\set AUTOCOMMIT off
+
+SELECT count(*) FROM systemmetadata;
+UPDATE systemmetadata SET date_uploaded=(date_uploaded::timestamp at time zone 'America/Los_Angeles' at time zone 'UTC');
+# If their numbers math, commit; otherwise rollback
+commit;
+
+SELECT count(*) FROM systemmetadata;
+UPDATE systemmetadata SET date_modified=(date_modified::timestamp at time zone 'America/Los_Angeles' at time zone 'UTC');
+# If their numbers math, commit; otherwise rollback
+commit;
+
+SELECT count(*) FROM smreplicationstatus;
+UPDATE smreplicationstatus SET date_verified=(date_verified::timestamp at time zone 'America/Los_Angeles' at time zone 'UTC');
+# If their numbers math, commit; otherwise rollback
+commit;
+
+SELECT count(*) FROM access_log;
+UPDATE access_log SET date_logged=(date_logged::timestamp at time zone 'America/Los_Angeles' at time zone 'UTC');
+# If their numbers math, commit; otherwise rollback
+commit;
+
+SELECT count(*) FROM index_event;
+UPDATE index_event SET event_date=(event_date::timestamp at time zone 'America/Los_Angeles' at time zone 'UTC');
+
+# If their numbers match, commit; otherwise rollback
+commit;
+```
+
+
 ## HashStore Conversion
 
 ### Monitor Hashstore Conversion Progress and Completion
