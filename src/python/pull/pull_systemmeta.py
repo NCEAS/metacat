@@ -5,7 +5,7 @@
 # pip3 install amqpstorm
 
 import psycopg2
-import select
+import os
 import threading
 import concurrent.futures
 import queue
@@ -130,7 +130,7 @@ DB_CONFIG = {
        1 Construct the rabbitmq message
        2 Publish the message to the rabbitmq service
 """
-def process_pid_wrapper(channel_pool, guid, object_format, docid):
+def process_pid_wrapper(channel_pool, guid, object_format, doc_id):
     thread_name = threading.current_thread().name
     try:
         index_type = 'create'
@@ -196,18 +196,19 @@ def poll_and_submit():
                     conn = pg_pool.getconn()
                     with conn.cursor() as cur:
                         cur.execute(f"""
-                            SELECT sm.guid, sm.object_format, i.docid || '.' || i.rev AS docid, sm
-                            .date_sys_metadata_modified
+                            SELECT sm.guid, sm.object_format, i.doc_id || '.' || i.rev AS docid,
+                            sm.date_modified
                             FROM systemmetadata sm
-                            JOIN identifier i ON sm.guid = i.guid
-                            WHERE sm.date_sys_metadata_modified > %s
-                            ORDER BY sm.date_sys_metadata_modified ASC
+                            LEFT JOIN identifier i ON sm.guid = i.guid
+                            WHERE sm.date_modified > %s
+                            ORDER BY sm.date_modified ASC
                             LIMIT {MAX_ROWS}
                         """, (last_timestamp,))
                         rows = cur.fetchall()
 
-                        for guid, object_format, docid, modified_time in rows:
-                            futures.append(executor.submit(process_pid_wrapper, channel_pool, guid, object_format, docid))
+                        for guid, object_format, doc_id, modified_time in rows:
+                            futures.append(executor.submit(process_pid_wrapper, channel_pool,
+                            guid, object_format, doc_id))
                             max_timestamp_in_batch = max(max_timestamp_in_batch, modified_time)
 
                 except Exception as poll_error:
