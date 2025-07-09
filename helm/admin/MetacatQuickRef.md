@@ -409,6 +409,18 @@ whether you are using the MetacatUI sub-chart or not:
      ```
 
 - [ ] `helm-install`, and ensure the `pgupgrade` initContainer finished successfully.
+
+**When the `pgupgrade` initContainer has finished successfully...**
+
+> [!CAUTION]
+> - [ ] If the legacy host machine was running in a non-UTC timezone (e.g. Pacific time), we must
+>       convert the timestamps in several tables to UTC by running the SQL queries defined in
+>       [Installation-Upgrade-Tips.md](./Installation-Upgrade-Tips.md#convert-timestamps-to-utc).
+>
+> - A better strategy is to make the metacat pod run in the same timezone as the legacy instance,
+>   until the entire migration is complete, and only then convert the timestamps to UTC using the
+>   above queries.
+
 - [ ] Restore the `checksums` table from the backup, so hashstore won't try to reconvert
       completed files:
 
@@ -431,6 +443,25 @@ whether you are using the MetacatUI sub-chart or not:
     ...or see [this tip](./Installation-Upgrade-Tips.md#monitor-hashstore-conversion-progress-and-completion) for other monitoring options
 
 **When hashstore conversion has finished successfully...**
+
+- [ ] Run `ANALYZE` to ensure PostgreSQL's stats are updated. This will ensure that `autovacuum`
+      will run automatically (`ANALYZE` is run by `autovacuum`, but `autovacuum` won't run unless
+      `ANALYZE` has been manually run after large updates):
+
+    ```shell
+    kubectl exec ${RELEASE_NAME}-postgresql-0 -- bash -c "psql -U metacat << EOF
+      ANALYZE;
+    EOF"
+    ```
+
+- [ ] If an object went through the initial hashstore conversion, but then its sysmeta was
+      subsequently updated in legacy, we need to copy the new sysmeta from database to hashstore (because the "delta" conversion will have ignored that object). To do this, run:
+    ```shell
+    kubectl exec ${RELEASE_NAME}-0 -- bash -c \
+      "SCRIPT=\$TC_HOME/webapps/metacat/WEB-INF/scripts/sql/hashstore-conversion/copy-sysmeta-to-hashstore.sh \
+      && chmod 750 \$SCRIPT \
+      && bash -c \$SCRIPT"
+    ```
 
 - [ ] Check values overrides and update any @TODOs to match live settings. See [BEFORE STARTING,
   above](#6-migration-only-final-switch-over-from-legacy-to-k8s).
