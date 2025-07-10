@@ -1160,17 +1160,18 @@ postgresql:
 ## @section Tomcat Configuration
 tomcat:
   ## @param tomcat.jmxEnabled Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.
-  ## NOTE: JMX is enabled by default, but you can disable it by setting this to 'false'
-  ## You can view the JMX metrics using a JMX client such as VisualVM or JConsole, or by using the
-  ## JMX Exporter for Prometheus.
+  ## When JMX is enabled by setting this to 'true', you can view the JMX metrics using a JMX client
+  ## such as VisualVM or JConsole, connected via port-forwarding to the port set in tomcat.jmxPort
   ##
-  jmxEnabled: true
+  jmxEnabled: false
 
   ## @param tomcat.jmxPort The port to use for JMX connections. IMPORTANT: If you change this...
   ## you must also change the port in the tomcat.jmxCatalinaOpts section, in the following two
   ## entries:
   ##     -Dcom.sun.management.jmxremote.port=9010
   ##     -Dcom.sun.management.jmxremote.rmi.port=9010
+  ## Note that the JMX port is not (and should not be) exposed outside the cluster. It is therefore
+  ## necessary to use port-forwarding in order to connect.
   ##
   jmxPort: 9010
 
