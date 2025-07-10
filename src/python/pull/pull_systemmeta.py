@@ -175,13 +175,14 @@ def load_last_timestamp():
 def save_last_timestamp(ts: datetime):
     try:
         with open(LAST_TIMESTAMP_FILE, "w") as f:
-            f.write(ts.isoformat())
+            f.write(ts.strftime('%Y-%m-%d %H:%M:%S.%f'))
     except Exception as e:
         print(f"[ERROR] Failed to write last_timestamp file: {e}")
 
 def poll_and_submit():
     global pg_pool
     last_timestamp = load_last_timestamp()
+    print(f"The last_timestamp from the previous process is {last_timestamp}")
     channel_pool = AMQPStormChannelPool(
         RABBITMQ_URL, RABBITMQ_PORT_NUMBER, RABBITMQ_USERNAME, RABBITMQ_PASSWORD, MAX_WORKERS
     )
@@ -210,7 +211,9 @@ def poll_and_submit():
                         for guid, object_format, doc_id, modified_time in rows:
                             futures.append(executor.submit(process_pid_wrapper, channel_pool,
                             guid, object_format, doc_id))
+                            print(f"The modified_time from database is {modified_time}")
                             max_timestamp_in_batch = max(max_timestamp_in_batch, modified_time)
+                            print(f"The max time in batch is {max_timestamp_in_batch}")
 
                 except Exception as poll_error:
                     print(f"[ERROR] Polling failed: {poll_error}")
@@ -221,6 +224,7 @@ def poll_and_submit():
                 if futures:
                     wait(futures, return_when=ALL_COMPLETED)
                     last_timestamp = max_timestamp_in_batch
+                    print(f"Save the last_timestamp {last_timestamp} to file")
                     save_last_timestamp(last_timestamp)
 
                 elapsed = time.time() - cycle_start
