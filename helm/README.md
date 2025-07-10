@@ -467,7 +467,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 | Name                       | Description                                                           | Value                         |
 | -------------------------- | --------------------------------------------------------------------- | ----------------------------- |
-| `tomcat.jmxEnabled`        | Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.      | `true`                        |
+| `tomcat.jmxEnabled`        | Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.      | `false`                       |
 | `tomcat.jmxPort`           | The port to use for JMX connections. IMPORTANT: If you change this... | `9010`                        |
 | `tomcat.jmxCatalinaOpts`   | Tomcat JVM options for enabling JMX                                   | `see values.yaml`             |
 | `tomcat.heapMemory.min`    | minimum memory heap size for Tomcat (-Xms JVM parameter)              | `""`                          |
