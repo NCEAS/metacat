@@ -451,6 +451,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `postgresql.primary.podSecurityContext.runAsNonRoot`        | pod defaults to run as non-root?                           | `true`                            |
 | `postgresql.primary.podSecurityContext.fsGroup`             | Group ID for the pod file system                           | `59996`                           |
 | `postgresql.primary.podSecurityContext.fsGroupChangePolicy` | ownership & perms mgmt                                     | `OnRootMismatch`                  |
+| `postgresql.primary.pgHbaConfiguration`                     | client authentication                                      | `see values.yaml`                 |
 | `postgresql.primary.extendedConfiguration`                  | Extended configuration, appended to defaults               | `max_connections = 250`           |
 | `postgresql.primary.persistence.enabled`                    | Enable data persistence using PVC                          | `true`                            |
 | `postgresql.primary.persistence.existingClaim`              | Existing PVC to re-use                                     | `""`                              |
@@ -464,10 +465,14 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Tomcat Configuration
 
-| Name                    | Description                                              | Value |
-| ----------------------- | -------------------------------------------------------- | ----- |
-| `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
-| `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
+| Name                       | Description                                                           | Value                         |
+| -------------------------- | --------------------------------------------------------------------- | ----------------------------- |
+| `tomcat.jmxEnabled`        | Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.      | `true`                        |
+| `tomcat.jmxPort`           | The port to use for JMX connections. IMPORTANT: If you change this... | `9010`                        |
+| `tomcat.jmxCatalinaOpts`   | Tomcat JVM options for enabling JMX                                   | `see values.yaml`             |
+| `tomcat.heapMemory.min`    | minimum memory heap size for Tomcat (-Xms JVM parameter)              | `""`                          |
+| `tomcat.heapMemory.max`    | maximum memory heap size for Tomcat (-Xmx JVM parameter)              | `""`                          |
+| `tomcat.extraCatalinaOpts` | Extra JVM options to pass to Tomcat. SEE IMPORTANT NOTES BELOW:       | `["-XX:MaxRAMPercentage=75"]` |
 
 ### dataone-indexer Sub-Chart
 

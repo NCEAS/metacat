@@ -1080,7 +1080,7 @@ postgresql:
       ##                        volume is already owned by the fsGroup, which is VERY slow!
       fsGroupChangePolicy: *defaultFsGroupChangePolicy
 
-    ## @skip postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
+    ## @param postgresql.primary.pgHbaConfiguration [default: see values.yaml] client authentication
     ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
     ## We override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
@@ -1146,15 +1146,15 @@ tomcat:
   ##
   jmxEnabled: true
 
-  ## @param tomcat.jmxPort The port to use for JMX connections. IMPORTANT: If you change the port
-  ## number here, you must also change the port in the tomcat.jmxCatalinaOpts section, in the
-  ## following 2 entries:
+  ## @param tomcat.jmxPort The port to use for JMX connections. IMPORTANT: If you change this...
+  ## you must also change the port in the tomcat.jmxCatalinaOpts section, in the following two
+  ## entries:
   ##     -Dcom.sun.management.jmxremote.port=9010
   ##     -Dcom.sun.management.jmxremote.rmi.port=9010
   ##
   jmxPort: 9010
 
-  ## @param tomcat.jmxCatalinaOpts The Tomcat JVM options used to enable JMX, if jmxEnabled is true
+  ## @param tomcat.jmxCatalinaOpts [default: see values.yaml] Tomcat JVM options for enabling JMX
   ## Use these to change the port, for example, or to enable authentication.
   ##
   ## IMPORTANT: If you change the port number here, you must also change the value of
@@ -1230,6 +1230,7 @@ dataone-indexer:
     subPath: *sharedVolumeSubPath
 
   idxworker:
+    ## @skip dataone-indexer.idxworker.resourcemapMaxTries resource map indexing max attempts
     ## temp fix for resourcemaps not getting indexed
     ## keep default for: resourcemapWaitMs: 800
     ## increase number of tries from 25 to:
