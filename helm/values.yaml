@@ -1138,22 +1138,66 @@ postgresql:
       runAsGroup: *mcpguid
 
 ## @section Tomcat Configuration
-
-## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
-## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
-## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
-## setting memory limits using Kubernetes will have no effect on a Java application, unless you
-## specifically set a maximum heap size (using Java’s -Xmx setting).
-##
-## IMPORTANT NOTE
-## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
-## the memory limit set in Kubernetes. If you set a memory limit in Kubernetes, and Java exceeds
-## that, your container will be killed.
-##
 tomcat:
+  ## @param tomcat.jmxEnabled Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.
+  ## NOTE: JMX is enabled by default, but you can disable it by setting this to 'false'
+  ## You can view the JMX metrics using a JMX client such as VisualVM or JConsole, or by using the
+  ## JMX Exporter for Prometheus.
+  ##
+  jmxEnabled: true
+
+  ## @param tomcat.jmxPort The port to use for JMX connections. IMPORTANT: If you change the port
+  ## number here, you must also change the port in the tomcat.jmxCatalinaOpts section, in the
+  ## following 2 entries:
+  ##     -Dcom.sun.management.jmxremote.port=9010
+  ##     -Dcom.sun.management.jmxremote.rmi.port=9010
+  ##
+  jmxPort: 9010
+
+  ## @param tomcat.jmxCatalinaOpts The Tomcat JVM options used to enable JMX, if jmxEnabled is true
+  ## Use these to change the port, for example, or to enable authentication.
+  ##
+  ## IMPORTANT: If you change the port number here, you must also change the value of
+  ##            tomcat.jmxPort to match!
+  ##
+  ## (jmxCatalinaOpts is a yaml list, so each entry must be preceded by a dash (-) and a space. It
+  ## looks strange when the options also contain dashes, but is correct YAML syntax.)
+  ##
+  jmxCatalinaOpts:
+    - -Dcom.sun.management.jmxremote
+    - -Dcom.sun.management.jmxremote.port=9010
+    - -Dcom.sun.management.jmxremote.rmi.port=9010
+    - -Dcom.sun.management.jmxremote.local.only=false
+    - -Dcom.sun.management.jmxremote.authenticate=false
+    - -Dcom.sun.management.jmxremote.ssl=false
+    - -Djava.rmi.server.hostname=127.0.0.1
+
+  ## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
+  ## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
+  ## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
+  ##
+  ## IMPORTANT NOTE
+  ## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
+  ## the memory limit set in Kubernetes. If you set a memory limit in Kubernetes, and Java exceeds
+  ## that, your container will be killed. A safer method is to NOT set -Xmx, and instead rely upon
+  ## setting -XX:MaxRAMPercentage in extraCatalinaOpts, below.
+  ##
   heapMemory:
     min: ""
     max: ""
+
+  ## @param tomcat.extraCatalinaOpts Extra JVM options to pass to Tomcat. SEE IMPORTANT NOTES BELOW:
+  ## 1. Do not pass -Xms or -Xmx here. Those values should be passed separately, using the values:
+  ##    tomcat.heapMemory.min and tomcat.heapMemory.max
+  ## 2. Do not set JMX-related values here, without first checking they're not already defined in
+  ##    tomcat.jmxCatalinaOpts (assuming tomcat.jmxEnabled is true)
+  ## 3. -XX:MaxRAMPercentage may be set here, but note that it will be ignored by the JVM if you
+  ##    also set a value for -Xmx (i.e. -Xmx takes precedence over MaxRAMPercentage)
+  ##
+  ## (extraCatalinaOpts is a yaml list, so each entry must be preceded by a dash (-) and a space. It
+  ## looks strange when the options also contain dashes, but is correct YAML syntax.)
+  ##
+  extraCatalinaOpts: []
 
 ## @section dataone-indexer Sub-Chart
 ##
