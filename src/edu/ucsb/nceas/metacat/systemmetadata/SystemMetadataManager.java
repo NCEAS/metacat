@@ -550,6 +550,9 @@ public class SystemMetadataManager {
                 }
                 this.insertReplicationPolicy(guid, policy, nodes, dbConn);
             }
+        } else {
+            // Delete the entire existing replication policies if it is null
+            deleteReplicationPolicy(guid, dbConn);
         }
 
         // save replica information
@@ -559,6 +562,29 @@ public class SystemMetadataManager {
         AccessPolicy accessPolicy = sm.getAccessPolicy();
         if (accessPolicy != null) {
             this.insertAccessPolicy(guid, accessPolicy, dbConn);
+        } else {
+            // Delete the entire existing access policies if it is null
+            deleteAccessPolicy(guid, dbConn);
+        }
+    }
+
+    private void deleteAccessPolicy(String guid, DBConnection dbCon) throws SQLException {
+        String delete = "DELETE FROM xml_access WHERE guid = ?";
+        try (PreparedStatement stmt = dbCon.prepareStatement(delete)) {
+            //data values
+            stmt.setString(1, guid);
+            //execute
+            stmt.executeUpdate();
+        }
+    }
+
+    private void deleteReplicationPolicy(String guid, DBConnection dbCon) throws SQLException {
+        String delete = "DELETE FROM smReplicationPolicy WHERE guid = ?";
+        try (PreparedStatement stmt = dbCon.prepareStatement(delete)) {
+            //data values
+            stmt.setString(1, guid);
+            //execute
+            stmt.executeUpdate();
         }
     }
 
