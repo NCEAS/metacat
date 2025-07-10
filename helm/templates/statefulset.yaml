@@ -158,9 +158,13 @@ spec:
           ports:
             - containerPort: 8080
               name: metacat-web
-                {{- if .Values.container.ports }}
-                  {{- toYaml .Values.container.ports | nindent 12 }}
-                {{ end }}
+              {{- if .Values.container.ports }}
+                {{- toYaml .Values.container.ports | nindent 12 }}
+              {{ end }}
+            {{- if .Values.tomcat.jmxEnabled }}
+            - containerPort: {{ .Values.tomcat.jmxPort }}
+              name: jmx
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
@@ -200,6 +204,14 @@ spec:
                   name: {{ .Release.Name }}-metacat-secrets
                   key: rabbitmq-password
                   optional: false
+            - name: CATALINA_OPTS
+              value: {{ join " " .Values.tomcat.extraCatalinaOpts }}
+                      {{- if .Values.tomcat.jmxEnabled }}
+                        {{- if .Values.tomcat.extraCatalinaOpts }}
+                          {{- printf " " }}
+                        {{- end }}
+                        {{- join " " .Values.tomcat.jmxCatalinaOpts }}
+                      {{- end }}
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-metacat-secrets
