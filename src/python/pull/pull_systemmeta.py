@@ -1,5 +1,5 @@
-# This script is a listener of a trigger on the Metacat's systemmetadata table.
-# It parses the payload from the trigger and sends a index task to RabbitMQ.
+# This script pulls new records from the systemmetadata table periodically and submit the
+# information as the index tasks to the RabbitMQ service.
 # Needed libraries:
 # pip3 install psycopg2-binary
 # pip3 install amqpstorm
@@ -22,9 +22,9 @@ RABBITMQ_USERNAME = "guest"
 RABBITMQ_PASSWORD = "guest"
 DB_USERNAME = "tao"
 DB_PASSWORD = "your_db_password"
-# Number of worker threads to listen the database events
-# The pool_size of the rabbitmq channel pool and database connection pool are using it as well.
-# The number must be less than those settings: the max number of the database connection (100-200),
+# Number of worker threads to submit index tasks to RabbitMQ
+# The pool_size of the rabbitmq channel pool is using it as well.
+# The number must be less than those settings:
 # the max number of channels connection to rabbitmq (2047) and the number of the processor core number.
 MAX_WORKERS = 5
 RABBITMQ_URL = "localhost"
@@ -35,6 +35,7 @@ DB_PORT_NUMBER = 5432
 POLL_INTERVAL = 60  # seconds
 MAX_ROWS = 2000
 LAST_TIMESTAMP_FILE = "last_timestamp"
+DB_CONNECTION_POOL_SIZE = 3
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
@@ -185,7 +186,7 @@ def poll_and_submit():
         RABBITMQ_URL, RABBITMQ_PORT_NUMBER, RABBITMQ_USERNAME, RABBITMQ_PASSWORD, MAX_WORKERS
     )
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='TriggerProcessor') as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS, thread_name_prefix='PullProcessor') as executor:
         try:
             while True:
                 cycle_start = time.time()
@@ -196,7 +197,7 @@ def poll_and_submit():
                     conn = pg_pool.getconn()
                     with conn.cursor() as cur:
                         cur.execute(f"""
-                            SELECT sm.guid, sm.object_format, i.doc_id || '.' || i.rev AS docid,
+                            SELECT sm.guid, sm.object_format, i.docid || '.' || i.rev AS doc_id,
                             sm.date_modified
                             FROM systemmetadata sm
                             LEFT JOIN identifier i ON sm.guid = i.guid
@@ -237,7 +238,7 @@ def poll_and_submit():
 if __name__ == "__main__":
     pg_pool = pool.ThreadedConnectionPool(
             minconn = 1,
-            maxconn = MAX_WORKERS + 2,  # extra room
+            maxconn = DB_CONNECTION_POOL_SIZE,
             **DB_CONFIG
     )
     poll_and_submit()
