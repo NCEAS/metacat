@@ -73,10 +73,10 @@ resources:
     cpu: 2
     memory: 8Gi
 
-tomcat:
-  heapMemory:
-    min: 1G
-    max: 2G
+#tomcat:
+#  heapMemory:
+#    min: 1G
+#    max: 6G
 
 ingress:
   annotations:

@@ -1197,7 +1197,8 @@ tomcat:
   ## (extraCatalinaOpts is a yaml list, so each entry must be preceded by a dash (-) and a space. It
   ## looks strange when the options also contain dashes, but is correct YAML syntax.)
   ##
-  extraCatalinaOpts: []
+  extraCatalinaOpts:
+    - -XX:MaxRAMPercentage=75
 
 ## @section dataone-indexer Sub-Chart
 ##
