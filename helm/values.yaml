@@ -733,8 +733,9 @@ ingress:
   ##
   className: "nginx"
 
-  ## Annotations for the ingress. These are mostly for enabling upload and download of large files
-  ## and data packages, without timeouts/disconnects.
+  ## @param ingress.annotations [default: see values.yaml] `nginx.ingress.kubernetes.io` annotations
+  ## These are mostly for enabling upload and download of large files and data packages, without
+  ## timeouts or disconnects.
   ##
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
@@ -844,7 +845,7 @@ ingress:
   ##
   rewriteRules: ""
 
-  ## @skip ingress.configurationSnippet text code block to add to the nginx ingress config
+  ## @param ingress.configurationSnippet [default: see values.yaml] added to nginx ingress config...
   ## This block will be added to the ingress definition section, in addition to the rewrite rules:
   ## metadata:
   ##   annotations:
