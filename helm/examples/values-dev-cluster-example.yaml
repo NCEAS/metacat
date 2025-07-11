@@ -73,6 +73,13 @@ resources:
     cpu: 2
     memory: 4Gi
 
+tomcat:
+  ## @param tomcat.jmxEnabled Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.
+  ## When JMX is enabled by setting this to 'true', you can view the JMX metrics using a JMX client
+  ## such as VisualVM or JConsole, connected via port-forwarding to the port set in tomcat.jmxPort
+  ##
+  jmxEnabled: true
+
 ingress:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
