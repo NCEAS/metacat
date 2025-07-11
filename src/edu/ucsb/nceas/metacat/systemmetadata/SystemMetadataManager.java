@@ -569,6 +569,10 @@ public class SystemMetadataManager {
     }
 
     private void deleteAccessPolicy(String guid, DBConnection dbCon) throws SQLException {
+        if (guid == null || guid.isBlank()) {
+            logMetacat.warn("Metacat can't delete a null or blank pid from the xml_access table.");
+            return;
+        }
         String delete = "DELETE FROM xml_access WHERE guid = ?";
         try (PreparedStatement stmt = dbCon.prepareStatement(delete)) {
             //data values
@@ -579,6 +583,11 @@ public class SystemMetadataManager {
     }
 
     private void deleteReplicationPolicy(String guid, DBConnection dbCon) throws SQLException {
+        if (guid == null || guid.isBlank()) {
+            logMetacat.warn(
+                "Metacat can't delete a null or blank pid from the smReplicationPolicy table.");
+            return;
+        }
         String delete = "DELETE FROM smReplicationPolicy WHERE guid = ?";
         try (PreparedStatement stmt = dbCon.prepareStatement(delete)) {
             //data values
