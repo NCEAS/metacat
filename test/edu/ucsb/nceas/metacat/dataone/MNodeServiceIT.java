@@ -236,6 +236,98 @@ public class MNodeServiceIT {
         }
 
         /**
+         * Test to update replication policies
+         * 1. Add a new preferred replication rule
+         * 2  Add a new blocked replication rule
+         * 3. Set the replication policies to null
+         * 4. Test to create an object with replication policies
+         * @throws Exception
+         */
+        @Test
+        public void testUpdateReplicationPolicies() throws Exception {
+            String knb = "node:urn:knb";
+            String adc = "node:urn:adc";
+            Session session = d1NodeTest.getTestSession();
+            Identifier pid = new Identifier();
+            pid.setValue("testUpdateReplicationPolicies." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            // No replication policy
+            SystemMetadata sysmeta =
+                D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+            d1NodeTest.mnCreate(session, pid, object, sysmeta);
+            SystemMetadata read = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read.getIdentifier().getValue());
+            assertEquals(0, read.getReplicationPolicy().sizePreferredMemberNodeList());
+            assertEquals(0, read.getReplicationPolicy().sizeBlockedMemberNodeList());
+            assertFalse(read.getReplicationPolicy().getReplicationAllowed());
+            assertNull(read.getReplicationPolicy().getNumberReplicas());
+            // Add a preferred node
+            NodeReference prefer = new NodeReference();
+            prefer.setValue(knb);
+            read.getReplicationPolicy().setReplicationAllowed(true);
+            read.getReplicationPolicy().setNumberReplicas(2);
+            read.getReplicationPolicy().getPreferredMemberNodeList().add(prefer);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read);
+            SystemMetadata read2 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read2.getIdentifier().getValue());
+            assertEquals(1, read2.getReplicationPolicy().getPreferredMemberNodeList().size());
+            assertEquals(0, read2.getReplicationPolicy().getBlockedMemberNodeList().size());
+            assertTrue(read2.getReplicationPolicy().getReplicationAllowed());
+            assertEquals(2, read2.getReplicationPolicy().getNumberReplicas().intValue());
+            assertEquals(knb, read2.getReplicationPolicy().getPreferredMemberNodeList().get(0)
+                .getValue());
+            // Test to add a block node
+            NodeReference block = new NodeReference();
+            block.setValue(adc);
+            read2.getReplicationPolicy().getBlockedMemberNodeList().add(block);
+            read2.getReplicationPolicy().setNumberReplicas(3);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read2);
+            SystemMetadata read3 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read3.getIdentifier().getValue());
+            assertEquals(1, read3.getReplicationPolicy().getPreferredMemberNodeList().size());
+            assertEquals(1, read3.getReplicationPolicy().getBlockedMemberNodeList().size());
+            assertTrue(read3.getReplicationPolicy().getReplicationAllowed());
+            assertEquals(3, read3.getReplicationPolicy().getNumberReplicas().intValue());
+            assertEquals(knb, read3.getReplicationPolicy().getPreferredMemberNodeList().get(0)
+                .getValue());
+            assertEquals(adc, read3.getReplicationPolicy().getBlockedMemberNodeList().get(0)
+                .getValue());
+            // Test the replication policy to be null
+            read3.setReplicationPolicy(null);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read3);
+            SystemMetadata read4 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertFalse(read4.getReplicationPolicy().getReplicationAllowed());
+            assertNull(read4.getReplicationPolicy().getNumberReplicas());
+            assertEquals(0, read4.getReplicationPolicy().getPreferredMemberNodeList().size());
+            assertEquals(0, read4.getReplicationPolicy().getBlockedMemberNodeList().size());
+            assertEquals(pid.getValue(), read4.getIdentifier().getValue());
+            // Add a new object with replication policies
+            Identifier pid2 = new Identifier();
+            pid2.setValue("testUpdateReplicationPolicies2." + System.currentTimeMillis());
+            object = new ByteArrayInputStream("test2".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta2 =
+                D1NodeServiceTest.createSystemMetadata(pid2, session.getSubject(), object);
+            ReplicationPolicy replicationPolicy = new ReplicationPolicy();
+            replicationPolicy.setReplicationAllowed(true);
+            replicationPolicy.setNumberReplicas(1);
+            replicationPolicy.getPreferredMemberNodeList().add(prefer);
+            sysmeta2.setReplicationPolicy(replicationPolicy);
+            d1NodeTest.mnCreate(session, pid2, object, sysmeta2);
+            SystemMetadata read5 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid2);
+            assertEquals(pid2.getValue(), read5.getIdentifier().getValue());
+            assertEquals(1, read5.getReplicationPolicy().getPreferredMemberNodeList().size());
+            assertEquals(knb, read5.getReplicationPolicy().getPreferredMemberNodeList().get(0)
+                .getValue());
+            assertEquals(0, read5.getReplicationPolicy().getBlockedMemberNodeList().size());
+            assertTrue(read5.getReplicationPolicy().getReplicationAllowed());
+            assertEquals(1, read5.getReplicationPolicy().getNumberReplicas().intValue());
+        }
+
+        /**
          * Test the scenario that to use a delete id
          * @throws Exception
          */
