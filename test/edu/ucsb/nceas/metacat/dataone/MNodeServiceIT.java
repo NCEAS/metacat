@@ -176,6 +176,66 @@ public class MNodeServiceIT {
         }
 
         /**
+         * Test to update access policies
+         * 1. Add a new allowing rule
+         * 2. Set the access policies to null
+         * 3. Test to create an object without access policies
+         * @throws Exception
+         */
+        @Test
+        public void testUpdateAccessPolicies() throws Exception {
+            Session session = d1NodeTest.getTestSession();
+            Identifier pid = new Identifier();
+            pid.setValue("testUpdateAccessPolicies." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta =
+                D1NodeServiceTest.createSystemMetadata(pid, session.getSubject(), object);
+            d1NodeTest.mnCreate(session, pid, object, sysmeta);
+            SystemMetadata read = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read.getIdentifier().getValue());
+            assertEquals(1, read.getAccessPolicy().getAllowList().size());
+            // Add a new allowing rule
+            AccessRule allow = new AccessRule();
+            allow.addSubject(session.getSubject());
+            allow.addPermission(Permission.WRITE);
+            read.getAccessPolicy().addAllow(allow);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read);
+            SystemMetadata read2 =
+                            MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), read2.getIdentifier().getValue());
+            assertEquals(2, read2.getAccessPolicy().getAllowList().size());
+            if(read2.getAccessPolicy().getAllow(0).getSubject(0).getValue().equals("public")) {
+                assertEquals(
+                    session.getSubject().getValue(),
+                    read2.getAccessPolicy().getAllow(1).getSubject(0).getValue());
+            } else {
+                assertEquals(session.getSubject().getValue(),
+                             read2.getAccessPolicy().getAllow(0).getSubject(0).getValue());
+                assertEquals(
+                    "public", read2.getAccessPolicy().getAllow(1).getSubject(0).getValue());
+            }
+            // Test the access policy to be null
+            read2.setAccessPolicy(null);
+            MNodeService.getInstance(request).updateSystemMetadata(session, pid, read2);
+            SystemMetadata read3 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(0, read3.getAccessPolicy().getAllowList().size());
+            assertEquals(pid.getValue(), read3.getIdentifier().getValue());
+            // Add a new object without access policies
+            Identifier pid2 = new Identifier();
+            pid2.setValue("testUpdateAccessPolicies2." + System.currentTimeMillis());
+            object = new ByteArrayInputStream("test2".getBytes(StandardCharsets.UTF_8));
+            SystemMetadata sysmeta2 =
+                D1NodeServiceTest.createSystemMetadata(pid2, session.getSubject(), object);
+            sysmeta2.setAccessPolicy(null);
+            d1NodeTest.mnCreate(session, pid2, object, sysmeta2);
+            SystemMetadata read4 =
+                MNodeService.getInstance(request).getSystemMetadata(session, pid2);
+            assertEquals(pid2.getValue(), read4.getIdentifier().getValue());
+            assertEquals(0, read4.getAccessPolicy().getAllowList().size());
+        }
+
+        /**
          * Test the scenario that to use a delete id
          * @throws Exception
          */
