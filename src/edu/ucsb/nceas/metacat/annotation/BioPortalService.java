@@ -31,27 +31,30 @@ public class BioPortalService {
      * @param text
      * @return
      */
-    public static Resource lookupAnnotationClass(OntClass superClass, String text, String ontologies) {
-        
+    public static Resource lookupAnnotationClass(
+        OntClass superClass, String text, String ontologies) {
+
         // no point calling the service
         if (text == null || text.length() == 0) {
             return null;
         }
-        
+
         try {
-            
+
             String urlParameters = "apikey=" + API_KEY;
             urlParameters += "&format=xml";
             if (ontologies != null) {
                 urlParameters += "&ontologies=" + ontologies;
             }
             urlParameters += "&text=" + URLEncoder.encode(text, "UTF-8");
-            
+
             String url = REST_URL + "/annotator?" + urlParameters ;
             URL restURL = new URL(url);
             InputStream is = restURL.openStream();
-            Document doc = XMLUtilities.getXMLReaderAsDOMDocument(new InputStreamReader(is, "UTF-8"));
-            NodeList classNodeList = XMLUtilities.getNodeListWithXPath(doc, "//annotation/annotatedClass/id");
+            Document doc =
+                XMLUtilities.getXMLReaderAsDOMDocument(new InputStreamReader(is, "UTF-8"));
+            NodeList classNodeList =
+                XMLUtilities.getNodeListWithXPath(doc, "//annotation/annotatedClass/id");
             if (classNodeList != null && classNodeList.getLength() > 0) {
                 for (int i = 0; i < classNodeList.getLength(); i++) {
                     String classURI = classNodeList.item(i).getFirstChild().getNodeValue();
@@ -70,12 +73,12 @@ public class BioPortalService {
                         return subclass;
                     }
                 }
-                
+
             }
         } catch (Exception e) {
             logMetacat.error("Could not lookup BioPortal annotation for text=" + text, e);
         }
-        
+
         return null;
     }
 }
