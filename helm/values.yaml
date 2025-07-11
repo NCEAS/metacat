@@ -733,8 +733,9 @@ ingress:
   ##
   className: "nginx"
 
-  ## Annotations for the ingress. These are mostly for enabling upload and download of large files
-  ## and data packages, without timeouts/disconnects.
+  ## @param ingress.annotations [default: see values.yaml] `nginx.ingress.kubernetes.io` annotations
+  ## These are mostly for enabling upload and download of large files and data packages, without
+  ## timeouts or disconnects.
   ##
   ## NOTE: You do NOT need to do anything here for DataONE mutual authentication with x509
   ## client-side certs, provided:
@@ -844,7 +845,7 @@ ingress:
   ##
   rewriteRules: ""
 
-  ## @skip ingress.configurationSnippet text code block to add to the nginx ingress config
+  ## @param ingress.configurationSnippet [default: see values.yaml] added to nginx ingress config...
   ## This block will be added to the ingress definition section, in addition to the rewrite rules:
   ## metadata:
   ##   annotations:
@@ -1080,7 +1081,7 @@ postgresql:
       ##                        volume is already owned by the fsGroup, which is VERY slow!
       fsGroupChangePolicy: *defaultFsGroupChangePolicy
 
-    ## @skip postgresql.primary.pgHbaConfiguration PostgreSQL Primary client authentication
+    ## @param postgresql.primary.pgHbaConfiguration [default: see values.yaml] client authentication
     ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
     ## We override the default pg_hba.conf with our own, to allow password auth, since this is the
     ## only method metacat currently supports (as of June 2023)
@@ -1138,22 +1139,68 @@ postgresql:
       runAsGroup: *mcpguid
 
 ## @section Tomcat Configuration
-
-## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
-## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
-## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
-## setting memory limits using Kubernetes will have no effect on a Java application, unless you
-## specifically set a maximum heap size (using Java’s -Xmx setting).
-##
-## IMPORTANT NOTE
-## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
-## the memory limit set in Kubernetes. If you set a memory limit in Kubernetes, and Java exceeds
-## that, your container will be killed.
-##
 tomcat:
+  ## @param tomcat.jmxEnabled Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.
+  ## When JMX is enabled by setting this to 'true', you can view the JMX metrics using a JMX client
+  ## such as VisualVM or JConsole, connected via port-forwarding to the port set in tomcat.jmxPort
+  ##
+  jmxEnabled: false
+
+  ## @param tomcat.jmxPort The port to use for JMX connections. IMPORTANT: If you change this...
+  ## you must also change the port in the tomcat.jmxCatalinaOpts section, in the following two
+  ## entries:
+  ##     -Dcom.sun.management.jmxremote.port=9010
+  ##     -Dcom.sun.management.jmxremote.rmi.port=9010
+  ## Note that the JMX port is not (and should not be) exposed outside the cluster. It is therefore
+  ## necessary to use port-forwarding in order to connect.
+  ##
+  jmxPort: 9010
+
+  ## @param tomcat.jmxCatalinaOpts [default: see values.yaml] Tomcat JVM options for enabling JMX
+  ## Use these to change the port, for example, or to enable authentication.
+  ##
+  ## IMPORTANT: If you change the port number here, you must also change the value of
+  ##            tomcat.jmxPort to match!
+  ##
+  ## (jmxCatalinaOpts is a yaml list, so each entry must be preceded by a dash (-) and a space. It
+  ## looks strange when the options also contain dashes, but is correct YAML syntax.)
+  ##
+  jmxCatalinaOpts:
+    - -Dcom.sun.management.jmxremote
+    - -Dcom.sun.management.jmxremote.port=9010
+    - -Dcom.sun.management.jmxremote.rmi.port=9010
+    - -Dcom.sun.management.jmxremote.local.only=false
+    - -Dcom.sun.management.jmxremote.authenticate=false
+    - -Dcom.sun.management.jmxremote.ssl=false
+    - -Djava.rmi.server.hostname=127.0.0.1
+
+  ## @param tomcat.heapMemory.min minimum memory heap size for Tomcat (-Xms JVM parameter)
+  ## @param tomcat.heapMemory.max maximum memory heap size for Tomcat (-Xmx JVM parameter)
+  ## Typical values: Prod - min 8G, max 16G; Test - min 2G, max 4G; dev - can leave unset
+  ##
+  ## IMPORTANT NOTE
+  ## ALWAYS configure Java’s maximum heap size (-Xmx, set by tomcat.heapMemory.max) to be LOWER THAN
+  ## the memory limit set in Kubernetes. If you set a memory limit in Kubernetes, and Java exceeds
+  ## that, your container will be killed. A safer method is to NOT set -Xmx, and instead rely upon
+  ## setting -XX:MaxRAMPercentage in extraCatalinaOpts, below.
+  ##
   heapMemory:
     min: ""
     max: ""
+
+  ## @param tomcat.extraCatalinaOpts Extra JVM options to pass to Tomcat. SEE IMPORTANT NOTES BELOW:
+  ## 1. Do not pass -Xms or -Xmx here. Those values should be passed separately, using the values:
+  ##    tomcat.heapMemory.min and tomcat.heapMemory.max
+  ## 2. Do not set JMX-related values here, without first checking they're not already defined in
+  ##    tomcat.jmxCatalinaOpts (assuming tomcat.jmxEnabled is true)
+  ## 3. -XX:MaxRAMPercentage may be set here, but note that it will be ignored by the JVM if you
+  ##    also set a value for -Xmx (i.e. -Xmx takes precedence over MaxRAMPercentage)
+  ##
+  ## (extraCatalinaOpts is a yaml list, so each entry must be preceded by a dash (-) and a space. It
+  ## looks strange when the options also contain dashes, but is correct YAML syntax.)
+  ##
+  extraCatalinaOpts:
+    - -XX:MaxRAMPercentage=75
 
 ## @section dataone-indexer Sub-Chart
 ##
@@ -1185,6 +1232,7 @@ dataone-indexer:
     subPath: *sharedVolumeSubPath
 
   idxworker:
+    ## @skip dataone-indexer.idxworker.resourcemapMaxTries resource map indexing max attempts
     ## temp fix for resourcemaps not getting indexed
     ## keep default for: resourcemapWaitMs: 800
     ## increase number of tries from 25 to:

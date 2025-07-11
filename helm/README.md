@@ -408,32 +408,34 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Networking & Monitoring
 
-| Name                                 | Description                                                              | Value            |
-| ------------------------------------ | ------------------------------------------------------------------------ | ---------------- |
-| `ingress.enabled`                    | Enable or disable the ingress                                            | `true`           |
-| `ingress.className`                  | ClassName of the ingress provider in your cluster                        | `nginx`          |
-| `ingress.defaultBackend.enabled`     | enable the optional defaultBackend                                       | `false`          |
-| `ingress.defaultBackend.enabled`     | enable the optional defaultBackend                                       | `false`          |
-| `ingress.rewriteRules`               | formatted text rewrite rules for the nginx ingress                       | `""`             |
-| `ingress.tls`                        | The TLS configuration                                                    | `[]`             |
-| `ingress.rules`                      | The Ingress rules can be defined here or left blank to be auto-populated | `[]`             |
-| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`    |
-| `service.enabled`                    | Enable another optional service in addition to headless svc              | `false`          |
-| `service.type`                       | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`   |
-| `service.clusterIP`                  | IP address of the service. Auto-generated if not set                     | `""`             |
-| `service.ports`                      | The port(s) to be exposed                                                | `[]`             |
-| `livenessProbe.enabled`              | Enable livenessProbe for Metacat container                               | `true`           |
-| `livenessProbe.httpGet.path`         | The url path to probe.                                                   | `/metacat/`      |
-| `livenessProbe.httpGet.port`         | The named containerPort to probe                                         | `metacat-web`    |
-| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe                                  | `45`             |
-| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe                                         | `15`             |
-| `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe                                        | `10`             |
-| `readinessProbe.enabled`             | Enable readinessProbe for Metacat container                              | `true`           |
-| `readinessProbe.httpGet.path`        | The url path to probe.                                                   | `/metacat/admin` |
-| `readinessProbe.httpGet.port`        | The named containerPort to probe                                         | `metacat-web`    |
-| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe                                 | `45`             |
-| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe                                        | `5`              |
-| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe                                       | `5`              |
+| Name                                 | Description                                                              | Value             |
+| ------------------------------------ | ------------------------------------------------------------------------ | ----------------- |
+| `ingress.enabled`                    | Enable or disable the ingress                                            | `true`            |
+| `ingress.className`                  | ClassName of the ingress provider in your cluster                        | `nginx`           |
+| `ingress.annotations`                | `nginx.ingress.kubernetes.io` annotations                                | `see values.yaml` |
+| `ingress.defaultBackend.enabled`     | enable the optional defaultBackend                                       | `false`           |
+| `ingress.defaultBackend.enabled`     | enable the optional defaultBackend                                       | `false`           |
+| `ingress.rewriteRules`               | formatted text rewrite rules for the nginx ingress                       | `""`              |
+| `ingress.configurationSnippet`       | added to nginx ingress config...                                         | `see values.yaml` |
+| `ingress.tls`                        | The TLS configuration                                                    | `[]`              |
+| `ingress.rules`                      | The Ingress rules can be defined here or left blank to be auto-populated | `[]`              |
+| `ingress.d1CaCertSecretName`         | Name of Secret containing DataONE CA certificate chain                   | `d1-ca-chain`     |
+| `service.enabled`                    | Enable another optional service in addition to headless svc              | `false`           |
+| `service.type`                       | Kubernetes Service type. Defaults to ClusterIP if not set                | `LoadBalancer`    |
+| `service.clusterIP`                  | IP address of the service. Auto-generated if not set                     | `""`              |
+| `service.ports`                      | The port(s) to be exposed                                                | `[]`              |
+| `livenessProbe.enabled`              | Enable livenessProbe for Metacat container                               | `true`            |
+| `livenessProbe.httpGet.path`         | The url path to probe.                                                   | `/metacat/`       |
+| `livenessProbe.httpGet.port`         | The named containerPort to probe                                         | `metacat-web`     |
+| `livenessProbe.initialDelaySeconds`  | Initial delay seconds for livenessProbe                                  | `45`              |
+| `livenessProbe.periodSeconds`        | Period seconds for livenessProbe                                         | `15`              |
+| `livenessProbe.timeoutSeconds`       | Timeout seconds for livenessProbe                                        | `10`              |
+| `readinessProbe.enabled`             | Enable readinessProbe for Metacat container                              | `true`            |
+| `readinessProbe.httpGet.path`        | The url path to probe.                                                   | `/metacat/admin`  |
+| `readinessProbe.httpGet.port`        | The named containerPort to probe                                         | `metacat-web`     |
+| `readinessProbe.initialDelaySeconds` | Initial delay seconds for readinessProbe                                 | `45`              |
+| `readinessProbe.periodSeconds`       | Period seconds for readinessProbe                                        | `5`               |
+| `readinessProbe.timeoutSeconds`      | Timeout seconds for readinessProbe                                       | `5`               |
 
 ### Postgresql Sub-Chart
 
@@ -451,6 +453,7 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 | `postgresql.primary.podSecurityContext.runAsNonRoot`        | pod defaults to run as non-root?                           | `true`                            |
 | `postgresql.primary.podSecurityContext.fsGroup`             | Group ID for the pod file system                           | `59996`                           |
 | `postgresql.primary.podSecurityContext.fsGroupChangePolicy` | ownership & perms mgmt                                     | `OnRootMismatch`                  |
+| `postgresql.primary.pgHbaConfiguration`                     | client authentication                                      | `see values.yaml`                 |
 | `postgresql.primary.extendedConfiguration`                  | Extended configuration, appended to defaults               | `max_connections = 250`           |
 | `postgresql.primary.persistence.enabled`                    | Enable data persistence using PVC                          | `true`                            |
 | `postgresql.primary.persistence.existingClaim`              | Existing PVC to re-use                                     | `""`                              |
@@ -464,10 +467,14 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Tomcat Configuration
 
-| Name                    | Description                                              | Value |
-| ----------------------- | -------------------------------------------------------- | ----- |
-| `tomcat.heapMemory.min` | minimum memory heap size for Tomcat (-Xms JVM parameter) | `""`  |
-| `tomcat.heapMemory.max` | maximum memory heap size for Tomcat (-Xmx JVM parameter) | `""`  |
+| Name                       | Description                                                           | Value                         |
+| -------------------------- | --------------------------------------------------------------------- | ----------------------------- |
+| `tomcat.jmxEnabled`        | Enable JMX for Tomcat, to inspect JVM usage of CPU, memory, etc.      | `false`                       |
+| `tomcat.jmxPort`           | The port to use for JMX connections. IMPORTANT: If you change this... | `9010`                        |
+| `tomcat.jmxCatalinaOpts`   | Tomcat JVM options for enabling JMX                                   | `see values.yaml`             |
+| `tomcat.heapMemory.min`    | minimum memory heap size for Tomcat (-Xms JVM parameter)              | `""`                          |
+| `tomcat.heapMemory.max`    | maximum memory heap size for Tomcat (-Xmx JVM parameter)              | `""`                          |
+| `tomcat.extraCatalinaOpts` | Extra JVM options to pass to Tomcat. SEE IMPORTANT NOTES BELOW:       | `["-XX:MaxRAMPercentage=75"]` |
 
 ### dataone-indexer Sub-Chart
 
