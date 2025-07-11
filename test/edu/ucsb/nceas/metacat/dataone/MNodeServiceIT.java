@@ -238,7 +238,7 @@ public class MNodeServiceIT {
         /**
          * Test to update replication policies
          * 1. Add a new preferred replication rule
-         * 2  Add a new blocked replication rule
+         * 2. Add a new blocked replication rule
          * 3. Set the replication policies to null
          * 4. Test to create an object with replication policies
          * @throws Exception
