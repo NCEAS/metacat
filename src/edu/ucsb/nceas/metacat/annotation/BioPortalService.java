@@ -5,6 +5,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
 
+import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
@@ -21,7 +23,17 @@ public class BioPortalService {
     private static Log logMetacat = LogFactory.getLog(BioPortalService.class);
     
     // for looking up concepts in BioPortal
-    private static final String REST_URL = "http://data.bioontology.org";
+    private static final String DEFAULT_URL = "https://data.bioontology.org";
+    private static String restURL;
+    static {
+        try {
+            restURL = PropertyService.getProperty("annotator.bioPortal.url");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.debug("The property of annotator.bioPortal.url can't be found so Metacat"
+                                 + " uses the default URL " + DEFAULT_URL);
+            restURL = DEFAULT_URL;
+        }
+    }
     private static final String API_KEY = "24e4775e-54e0-11e0-9d7b-005056aa3316";
 
     /**
@@ -48,7 +60,7 @@ public class BioPortalService {
             }
             urlParameters += "&text=" + URLEncoder.encode(text, "UTF-8");
 
-            String url = REST_URL + "/annotator?" + urlParameters ;
+            String url = restURL + "/annotator?" + urlParameters ;
             URL restURL = new URL(url);
             InputStream is = restURL.openStream();
             Document doc =
