@@ -68,15 +68,10 @@ image:
 resources:
   requests:
     cpu: 1
-    memory: 4Gi
+    memory: 1Gi
   limits:
     cpu: 2
-    memory: 8Gi
-
-#tomcat:
-#  heapMemory:
-#    min: 1G
-#    max: 6G
+    memory: 4Gi
 
 ingress:
   annotations:
