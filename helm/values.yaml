@@ -1167,10 +1167,16 @@ tomcat:
   jmxEnabled: false
 
   ## @param tomcat.jmxPort The port to use for JMX connections. IMPORTANT: If you change this...
-  ## you must also change the port in the tomcat.jmxCatalinaOpts section, in the following two
-  ## entries:
+  ## 1. you must also change the port in the tomcat.jmxCatalinaOpts section, in the following two
+  ##    entries:
   ##     -Dcom.sun.management.jmxremote.port=9010
   ##     -Dcom.sun.management.jmxremote.rmi.port=9010
+  ##
+  ## 2. If you plan on using a different port # on localhost, it's easiest to use that same port on
+  ##    the pod, so you're using a single port for both JMX and RMI.(e.g. instead of port
+  ##    forwarding from pod:9010 to localhost:9011, expose jmx on pod:9011 and forward from pod:9011
+  ##    to localhost:9011)
+  ##
   ## Note that the JMX port is not (and should not be) exposed outside the cluster. It is therefore
   ## necessary to use port-forwarding in order to connect.
   ##
@@ -1179,8 +1185,13 @@ tomcat:
   ## @param tomcat.jmxCatalinaOpts [default: see values.yaml] Tomcat JVM options for enabling JMX
   ## Use these to change the port, for example, or to enable authentication.
   ##
-  ## IMPORTANT: If you change the port number here, you must also change the value of
-  ##            tomcat.jmxPort to match!
+  ## IMPORTANT NOTES:
+  ## 1. If you change the port numbers here, you must also change the value of tomcat.jmxPort to
+  ##    match!
+  ## 2. If you plan on using a different port # on localhost, it's easiest to use that same port on
+  ##    the pod, so you're using a single port for both JMX and RMI.(e.g. instead of port
+  ##    forwarding from pod:9010 to localhost:9011, expose jmx on pod:9011 and forward from pod:9011
+  ##    to localhost:9011)
   ##
   ## (jmxCatalinaOpts is a yaml list, so each entry must be preceded by a dash (-) and a space. It
   ## looks strange when the options also contain dashes, but is correct YAML syntax.)
