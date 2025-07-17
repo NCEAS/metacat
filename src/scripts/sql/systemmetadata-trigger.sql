@@ -34,4 +34,4 @@ $trigger$ LANGUAGE plpgsql;
 
 -- Register the trigger on the systemmetadata table
 DROP TRIGGER IF EXISTS systemmetadata_notify ON systemmetadata;
-CREATE TRIGGER systemmetadata_notify AFTER UPDATE OR DELETE ON systemmetadata FOR EACH ROW EXECUTE PROCEDURE notify_trigger();
+CREATE TRIGGER systemmetadata_notify AFTER DELETE ON systemmetadata FOR EACH ROW EXECUTE PROCEDURE notify_trigger();
