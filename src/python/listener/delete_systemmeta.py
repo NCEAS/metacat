@@ -21,25 +21,18 @@ RABBITMQ_USERNAME = "guest"
 RABBITMQ_PASSWORD = "guest"
 DB_USERNAME = "tao"
 DB_PASSWORD = "your_db_password"
-# Number of worker threads to listen the database events
-# The pool_size of the rabbitmq channel pool and database connection pool are using it as well.
-# The number must be less than those settings: the max number of the database connection (100-200),
-# the max number of channels connection to rabbitmq (2047) and the number of the processor core number.
-MAX_WORKERS = 5
+# Number of worker threads to listen the database events. Since it only handle the delete actions,
+# it can be one.
+MAX_WORKERS = 1
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
-# The waiting time to get docid
-DELAY_SECONDS = 0.1
-# The retry times to get docid
-RETRIES = 10
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
-resourcemap_format_list = ["http://www.openarchives.org/ore/terms", "http://www.w3.org/TR/rdf-syntax-grammar"]
 pg_pool = None
 
 # A class represents a RabbitMQ channel pool
@@ -125,35 +118,8 @@ DB_CONFIG = {
     'port': DB_PORT_NUMBER
 }
 
-# Look up database to get the docid for the given guid
-def get_docid_from_db(guid):
-    try:
-        conn = pg_pool.getconn()
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT docid || '.' || rev
-                FROM identifier
-                WHERE guid = %s
-                LIMIT 1
-            """, (guid,))
-            result = cur.fetchone()
-            return result[0] if result else None
-    except Exception as e:
-        print(f"[ERROR] Failed to retrieve docid for guid {guid}: {e}")
-        return None
-
-# Get a docid for multiple attempts since there is a delay to insert the record in the identifier
-# table
-def get_docid_with_retry(guid):
-    for attempt in range(RETRIES):
-        doc_id = get_docid_from_db(guid)
-        if doc_id:
-            print(f"tried {attempt} time(s) to get docid from the identifier table")
-            return doc_id
-        time.sleep(DELAY_SECONDS)
-    return None
-
 """
+    Note: this method only handles the delete actions.
     Parse the payload and submit the index task based the payload information
     1. Parse the payload from the trigger
     2. Processes a single PID:
@@ -172,30 +138,26 @@ def process_pid_wrapper(channel_pool, notify):
         action = payload.get("action")
         if action and action.lower() == 'delete':
             index_type = 'delete'
-        object_format = payload.get("record", {}).get("object_format")
-        if object_format and object_format in resourcemap_format_list:
-            priority = 3
-
         if guid:
-            # Get the docid from the database
-            doc_id = get_docid_with_retry(guid)
-            # 2.1 Construct the rabbitmq message
-            print(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, docid: {doc_id}, priority: {priority}")
-            headers = {'index_type': index_type, 'id': guid, 'doc_id': doc_id}
-            message = ''
-            # 2.2 Publish the message to the rabbitmq service
-            channel = None
-            try:
-                channel = channel_pool.acquire_channel()
-                channel.basic.publish(
-                    body=message,
-                    routing_key=ROUTING_KEY,
-                    exchange=EXCHANGE_NAME,
-                    properties={'headers': headers, 'priority': priority}
-                )
-            finally:
-                if channel:
-                    channel_pool.release_channel(channel)
+            if index_type == 'delete':
+                print(f"[{thread_name}] Processing PID: {guid} with type: {index_type}, priority: {priority}")
+                headers = {'index_type': index_type, 'id': guid}
+                message = ''
+                # 2.2 Publish the message to the rabbitmq service
+                channel = None
+                try:
+                    channel = channel_pool.acquire_channel()
+                    channel.basic.publish(
+                        body=message,
+                        routing_key=ROUTING_KEY,
+                        exchange=EXCHANGE_NAME,
+                        properties={'headers': headers, 'priority': priority}
+                    )
+                finally:
+                    if channel:
+                        channel_pool.release_channel(channel)
+            else:
+                print(f"[{thread_name}] This script only handles the delete events, rather than {index_type}")
         else:
             print(f"[{thread_name}] No GUID found in payload: {payload}")
     except json.JSONDecodeError:
@@ -232,13 +194,6 @@ def listen_and_submit():
             cur.close()
             conn.close()
             channel_pool.close()
-            if pg_pool:
-                    pg_pool.closeall()
 
 if __name__ == "__main__":
-    pg_pool = pool.ThreadedConnectionPool(
-            minconn = 1,
-            maxconn = MAX_WORKERS + 2,  # extra room
-            **DB_CONFIG
-    )
     listen_and_submit()
