@@ -1,5 +1,6 @@
 # This script is a listener of a trigger on the Metacat's systemmetadata table.
 # It parses the payload from the trigger and sends a index task to RabbitMQ.
+# Now it only handles the delete events
 # Needed libraries:
 # pip3 install psycopg2-binary
 # pip3 install amqpstorm
@@ -21,14 +22,14 @@ RABBITMQ_USERNAME = "guest"
 RABBITMQ_PASSWORD = "guest"
 DB_USERNAME = "tao"
 DB_PASSWORD = "your_db_password"
-# Number of worker threads to listen the database events. Since it only handle the delete actions,
-# it can be one.
-MAX_WORKERS = 1
 RABBITMQ_URL = "localhost"
 RABBITMQ_PORT_NUMBER = 5672
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
+# Number of worker threads to listen the database events. Since it only handle the delete actions,
+# it can be one.
+MAX_WORKERS = 1
 # RabbitMQ queue configuration. They shouldn't be changed
 QUEUE_NAME = "index"
 ROUTING_KEY = "index"
@@ -131,7 +132,6 @@ def process_pid_wrapper(channel_pool, notify):
     try:
         index_type = 'create'
         priority = 4
-        doc_id = None
         # 1. Parse the payload from the trigger
         payload = json.loads(notify.payload)
         guid = payload.get("pid")
