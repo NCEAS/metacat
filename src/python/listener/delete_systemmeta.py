@@ -12,9 +12,21 @@ import threading
 import concurrent.futures
 import queue
 import time
+import sys
+import os
 from psycopg2 import pool
 from amqpstorm import Connection
 from amqpstorm.exception import AMQPError
+
+# Get the absolute path to the 'pull' directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+module_dir = os.path.join(current_dir, '../pull')
+
+# Add 'pull' directory to sys.path
+sys.path.append(module_dir)
+
+# Now import the class of AMQPStormChannelPool
+from pull_systemmeta import AMQPStormChannelPool
 
 # --- Configuration ---
 # Replace with your RabbitMQ and database credentials
@@ -35,80 +47,6 @@ QUEUE_NAME = "index"
 ROUTING_KEY = "index"
 EXCHANGE_NAME = "dataone-index"
 pg_pool = None
-
-# A class represents a RabbitMQ channel pool
-class AMQPStormChannelPool:
-    def __init__(self, host, port, username, password, pool_size=5):
-        self.host = host
-        self.port = port
-        self.username = username
-        self.password = password
-        self.pool_size = pool_size
-        self._lock = threading.Lock()
-        self._connection = None
-        self._channels = queue.Queue(maxsize=pool_size)
-        self._initialize_pool()
-
-    def _initialize_pool(self):
-        with self._lock:
-            self._close_all()
-            self._connection = Connection(self.host, self.username, self.password, port=self.port)
-            for _ in range(self.pool_size):
-                self._put_new_channel_into_queue()
-
-    def _is_healthy(self):
-        return self._connection and self._connection.is_open
-
-    def acquire_channel(self):
-        with self._lock:
-            if not self._is_healthy():
-                print("[CHANNEL POOL] Connection lost. Reinitializing.")
-                self._initialize_pool()
-        try:
-            for _ in range(self.pool_size):
-                channel = self._channels.get(timeout=5)
-                if channel and channel.is_open:
-                    return channel
-                else:
-                    print("[CHANNEL POOL] Found closed channel. Creating a new one.")
-                    with self._lock:
-                        self._put_new_channel_into_queue()
-            raise Exception("No healthy AMQPStorm channels available in the pool.")
-        except queue.Empty:
-            raise Exception("No available AMQPStorm channels in the pool.")
-
-
-    def release_channel(self, channel):
-        if channel and channel.is_open:
-            try:
-                self._channels.put(channel, timeout=5)
-            except queue.Full:
-                pass  # Drop if full
-
-    def _close_all(self):
-        while not self._channels.empty():
-            try:
-                ch = self._channels.get_nowait()
-                if ch and ch.is_open:
-                    ch.close()
-            except Exception:
-                pass
-        if self._connection and self._connection.is_open:
-            try:
-                self._connection.close()
-            except Exception:
-                pass
-
-    def close(self):
-        with self._lock:
-            self._close_all()
-
-    # Generate a new RabbitMQ channel and put it into the queue
-    def _put_new_channel_into_queue(self):
-        new_channel = self._connection.channel()
-        new_channel.queue.declare(QUEUE_NAME, durable=True, arguments={"x-max-priority": 10})
-        new_channel.queue.bind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY)
-        self._channels.put(new_channel)
 
 # Database connection parameters
 DB_CONFIG = {
