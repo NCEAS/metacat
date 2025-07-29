@@ -1022,6 +1022,26 @@ postgresql:
   ##
   enabled: true
 
+  ## As of 8/25/25, Bitnami charges for secure container images, unless we use the "latest" tag.
+  ## As a stopgap, we reference the legacy images, which are still available for free (but note
+  ## that newer versions will not become available in the future, so we need to find an alternative
+  ## source for images...)
+  ## @param postgresql.global.security.allowInsecureImages Allow non-bitnami-hardened images
+  ## @param postgresql.image.repository source repo for main image
+  ## @param postgresql.volumePermissions.image.repository  source repo for volumePermissions image
+  ## @param postgresql.metrics.image.repository  source repo for metrics image
+  global:
+    security:
+      allowInsecureImages: true
+  image:
+    repository: bitnamilegacy/postgresql
+  volumePermissions:
+    image:
+      repository: bitnamilegacy/os-shell
+  metrics:
+    image:
+      repository: bitnamilegacy/postgres-exporter
+
   auth:
     ## @param postgresql.auth.username Username for accessing the database used by metacat
     ## For the corresponding password, see POSTGRES_PASSWORD in secrets.yaml

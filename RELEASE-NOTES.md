@@ -4,6 +4,30 @@
 > If you are upgrading from a helm chart version earlier than 2.1.0, please see the [Upgrade
 > Notes](#chart-upgrade-notes) below. Failure to do so may result in loss of data!
 
+## Release Notes for helm chart 2.1.3
+
+**Release date: 2025-07-29**
+
+> [!CAUTION]
+> We strongly recommend that you upgrade to this version of the helm chart before August 28th, 2025,
+> since previous versions will stop working after Bitnami introduces restrictions to container image
+> availability!
+
+This is a patch release to account for upcoming changes to Bitnami container image availability; see
+Bitnami's announcements:
+
+- [Upcoming changes to the Bitnami catalog (effective August 28th, 2025)](https://github.com/bitnami/containers/issues/83267)
+- [Clarification on bitnami/charts after August 28th](https://github.com/bitnami/charts/issues/35256)
+
+This latest chart pulls any Bitnami image versions used by Metacat from the `bitnamilegacy`
+repository, which will remain functional after the August cutoff. Changes in this release:
+- Bump PostgreSQL sub-chart to Helm chart version 16.7.21 (PostgreSQL app version 17.5.0), and
+  override repository source to `bitnamilegacy` for the PostgreSQL image.
+- Bump dataone-indexer sub-chart to version 1.3.3, which is a patch release to override repository
+  sources to `bitnamilegacy` for the indexer sub-charts ([see indexer release notes for
+  details](https://github.com/DataONEorg/dataone-indexer/blob/main/RELEASE-NOTES.md))
+
+
 ## Release Notes for Metacat 3.2.2
 
 **Release date: 2025-07-02**
@@ -1280,6 +1304,7 @@ Enhancements:
      3a) Use xml_index and xml_nodes table to generate the string describing the document including the returnfields requested in the search
   4. Add all the strings from step 3a to send back the resultant
      document. Here a decent amount of time was being taken by step 3a.
+
   The algorithm is now modified by addition of two tables xml_queryresult and
   xml_returnfields and a user defined parameter xml_returnfield_count. The
   new algorithm works as follows:
