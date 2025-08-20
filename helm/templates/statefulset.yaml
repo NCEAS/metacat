@@ -215,14 +215,18 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-metacat-secrets
-                  {{- if .Values.livenessProbe.enabled }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            {{- omit .Values.startupProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
-                    {{- omit .Values.livenessProbe "enabled" | toYaml | nindent 12 }}
-                  {{- end }}
-              {{- if .Values.readinessProbe.enabled }}
+            {{- omit .Values.livenessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
           readinessProbe:
-                {{- omit .Values.readinessProbe "enabled" | toYaml | nindent 12 }}
-              {{- end }}
+            {{- omit .Values.readinessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
       volumes:
       - name: {{ .Release.Name }}-config-volume
         configMap:
