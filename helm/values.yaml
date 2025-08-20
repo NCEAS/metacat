@@ -963,31 +963,39 @@ service:
       port: 8080
       targetPort: metacat-web
 
-## LivenessProbe
-## Periodic probe of container liveness. Container will be restarted if the probe fails.
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
-##
-## @param livenessProbe.enabled Enable livenessProbe for Metacat container
-## @param livenessProbe.httpGet.path The url path to probe.
+## Startup Probe
+## Liveness and readiness probes are disabled until the startupProbe passes.
+## If the startupProbe fails more than 'failureThreshold' times, the container is restarted.ß
+## @param startupProbe.enabled Enable startupProbe for the Metacat container
+## @param startupProbe.httpGet.path The url path to probe during startup
 ##                Note that the context (first path element) must match the
 ##                value of metacat.application.context
-## @param livenessProbe.httpGet.port The named containerPort to probe
-##                as defined in ./templates/statefulset.yaml
+## @param startupProbe.httpGet.port The named containerPort to probe
 ## Optional values:
-## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
-## @param livenessProbe.periodSeconds Period seconds for livenessProbe
-## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
-##
-livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
+## @param startupProbe.periodSeconds Interval (in seconds) between startup checks
+## @param startupProbe.timeoutSeconds Timeout (in seconds) for each startup check
+## @param startupProbe.successThreshold Min consecutive successes for probe to be "successful"
+## @param startupProbe.failureThreshold No. of consecutive failures before the container restarted
+##ß
+startupProbe:
   enabled: true
-  initialDelaySeconds: 45
-  periodSeconds: 15
-  timeoutSeconds: 10
   httpGet:
-    path: /metacat/
+    path: /metacat/d1/mn/v2/monitor/ping
     port: metacat-web
+  successThreshold: 1
+  failureThreshold: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
 
-## ReadinessProbe
+## @param livenessProbe.enabled Enable livenessProbe for Metacat container
+## We do not use a livenessProbe for Metacat, since it typically can have a lot of latency when
+## overloaded, but recovers elegantly. (Setting a livenessProbe would mean the container would be
+## restarted when the probe fails.)
+##
+livenessProbe:
+  enabled: false
+
+## Readiness Probe
 ## Periodic probe of container service readiness. If the probe fails, container will be removed
 ## from service endpoints (but will not be restarted unless livenessProbe fails)
 ##
@@ -996,19 +1004,19 @@ livenessProbe:    ## TODO - refine and/or create new lightweight healthcheck rou
 ##                Note that the context (first path element) must match the
 ##                value of metacat.application.context
 ## @param readinessProbe.httpGet.port The named containerPort to probe
-##                as defined in ./templates/statefulset.yaml
 ## Optional values:
 ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
 ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
 ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
 ##
-readinessProbe:    ## TODO - refine and/or create new lightweight healthcheck route
+readinessProbe:
   enabled: true
-  initialDelaySeconds: 45
-  periodSeconds: 5
-  timeoutSeconds: 5
+  periodSeconds: 15
+  timeoutSeconds: 10
+  successThreshold: 1
+  failureThreshold: 6
   httpGet:
-    path: /metacat/admin
+    path: /metacat/d1/mn/v2/monitor/ping
     port: metacat-web
 
 ## @section Postgresql Sub-Chart
