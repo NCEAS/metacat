@@ -3,6 +3,8 @@
 # Needed libraries:
 # pip3 install psycopg2-binary
 # pip3 install amqpstorm
+# You may run this script on the background by this command:
+# nohup python3 pull_systemmeta.py > pull_systemmeta.log 2>&1 &
 
 import psycopg2
 import os
@@ -32,8 +34,8 @@ RABBITMQ_PORT_NUMBER = 5672
 DB_DATABASE_NAME = "metacat"
 DB_HOST_NAME = "localhost"
 DB_PORT_NUMBER = 5432
-POLL_INTERVAL = 60  # seconds
-MAX_ROWS = 2000
+POLL_INTERVAL = 1  # second
+MAX_ROWS = 4000
 LAST_TIMESTAMP_FILE = "last_timestamp"
 DB_CONNECTION_POOL_SIZE = 3
 # RabbitMQ queue configuration. They shouldn't be changed
