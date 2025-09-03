@@ -238,14 +238,14 @@ metacat:
   ##                      by the dataone-indexer sub-chart)
   ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart
   ##
-  solr.baseURL: ""
+  solr.baseURL: ""    # leave blank to use sub-chart
 
   ## @param metacat.solr.coreName The solr core (solr standalone) or collection name (solr cloud)
   ## If you are using the included dataone-indexer sub-chart (i.e.
   ## `global.dataone-indexer.enabled: true`), leave this value unset (`solr.coreName: ""`). It will
   ## then be automatically populated from the subchart settings
   ##
-  solr.coreName: ""
+  solr.coreName: ""    # leave blank to autopopulate from subchart settings
 
   ## @param metacat.replication.logdir Location for the replication logs
   ##
@@ -253,9 +253,7 @@ metacat:
 
   ## @param metacat.index.rabbitmq.hostname the hostname of the rabbitmq instance that will be used
   ##
-  ## Leave blank to autopopulate for use with indexer sub-chart
-  ##
-  index.rabbitmq.hostname: ""
+  index.rabbitmq.hostname: ""    # Leave blank to autopopulate with indexer sub-chart hostname
 
   ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
   ## at `index.rabbitmq.hostname`.
@@ -612,9 +610,8 @@ podSecurityContext:
 securityContext: {}
 
 ## @param resources Resource limits for the deployment
-##  We usually recommend not to specify default resources and to leave this as a conscious
-## choice for the user. This also increases chances charts run on environments with limited
-## resources, such as Minikube.
+## Resource requests and limits are left as a conscious choice for the user. This increases chances
+## charts run on environments with limited resources, such as Minikube.
 resources: {}
 
 ## @param tolerations Tolerations for pod assignment
@@ -634,7 +631,7 @@ persistence:
 
   ## @param persistence.storageClass Override here or leave blank to use 'global.storageClass'
   ##
-  storageClass: ""
+  storageClass: ""    # leave blank to use 'global.storageClass'
 
   ## @param persistence.existingClaim Name of an existing Persistent Volume Claim to re-use
   ## Set a value for 'existingClaim' only if you want to re-use a Persistent Volume Claim that has
@@ -1012,7 +1009,7 @@ database:
   ##    ./admin/secret--cloudnative-pg.yaml)
   ## 2. This is NOT the same secret used by metacat (./admin/secret--metacat.yaml)
   ##
-  existingSecret: ""
+  existingSecret: ""    # Leave blank to autopopulate with the default Secret name
 
   ## CloudNative-PG-specific (CNPG) Configuration. This section allows customization of the settings
   ## for creation of a CNPG cluster, and also for the PostgreSQL config usually found in the
@@ -1027,6 +1024,23 @@ database:
     ## Postgresql database.
     ##
     enabled: true
+
+    ## @param database.cnpg.resources Resource requests and limits for each PostgreSQL container.
+    ## For a PostgreSQL workload it is recommended to set a "Guaranteed" QoS. See the CNPG docs:
+    ## https://cloudnative-pg.io/documentation/1.20/resource_management/
+    ## For your cluster's pods to get assigned to the "Guaranteed" QoS class, you must set limits
+    ## and requests for both CPU and memory TO THE SAME VALUE!
+    ##
+    resources: {}
+
+    ## Database FIle Storage settings
+    ## For explanatory notes, see top-level `persistence` section for metacat.
+    ## @param database.persistence.storageClass Override, or leave blank to use 'global.storageClass'
+    ## @param database.persistence.size PVC Storage size request for postgres volumes
+    ##
+    persistence:
+      storageClass: ""    # leave blank to use 'global.storageClass'
+      size: 1Gi
 
     ## @param database.cnpg.pg_hba [default: see values.yaml] client authentication pg_hba.conf
     ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-pg_hba-section and
@@ -1062,16 +1076,14 @@ database:
       ## @param database.cnpg.parameters.max_connections override PG default 200 max DB connections.
       ## 'max_connections' must exceed 'metacat.database.maximumConnections', since some connections
       ## will be reserved for superuser
+      ##
       max_connections: 250
-
-  ## Database FIle Storage settings
-  ## For explanatory notes, see top-level `persistence` section for metacat.
-  ## @param database.persistence.storageClass Override, or leave blank to use 'global.storageClass'
-  ## @param database.persistence.size PVC Storage size request for postgres volumes
-  ##
-  persistence:
-    storageClass: ""
-    size: 1Gi
+      ## @param database.cnpg.parameters.shared_buffers memory for caching data (PG default: 128MB)
+      ## If you have a dedicated database server with 1GB or more of RAM, a reasonable starting
+      ## value for shared_buffers is 25% of the container memory. E.g: if shared_buffers=256MB, then
+      ## the recommended value for container memory size is 1 GB (see 'database.cnpg.resources')
+      ##
+      shared_buffers: 128MB
 
 ## @section Tomcat Configuration
 tomcat:
@@ -1210,7 +1222,7 @@ dataone-indexer:
     javaMem: "-Xms512m -Xmx2g"
 
     ## @param dataone-indexer.solr.customCollection name of the solr collection to use
-    ## (optional override of indexer-assigned name). Do not leave blank
+    ## (optional override of indexer-assigned name). Do not leave blank!
     ## NOTE: if you change this value after having run metacat for the first time, you may need
     ## to delete and re-create the PVCs and PVs used by solr, in order for the new settings to
     ## become effective

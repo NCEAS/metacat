@@ -30,6 +30,8 @@ spec:
       {{- toYaml .Values.database.cnpg.pg_hba | nindent 6 }}
     pg_ident:
       {{- toYaml .Values.database.cnpg.pg_ident | nindent 6 }}
+  resources:
+    {{- toYaml .Values.database.cnpg.resources | nindent 4 }}
   storage:
     storageClass: {{ default .Values.database.persistence.storageClass .Values.global.storageClass }}
     size: {{ .Values.database.persistence.size }}
