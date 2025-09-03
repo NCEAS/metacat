@@ -107,7 +107,7 @@
 
 ## 2. Create Secrets
 
-- [ ] Make a copy of the [`metacat/helm/admin/secrets.yaml`](./secrets.yaml) file and rename to
+- [ ] Make a copy of the [`metacat/helm/admin/secrets.yaml`](secret--metacat.yaml) file and rename to
       `${RELEASE_NAME}-metacat-secrets.yaml`
 - [ ] edit to replace `${RELEASE_NAME}` with the correct release name:
 - [ ] edit to add the correct passwords for this release (some may be found in legacy
