@@ -442,14 +442,17 @@ kubectl delete pvc -l release=my-release   ## DANGER! deletes all PVCs associate
 
 ### Postgresql Sub-Chart
 
-| Name                            | Description                                               | Value             |
-| ------------------------------- | --------------------------------------------------------- | ----------------- |
-| `cnpg.database`                 | The name of the database used by metacat.                 | `metacat`         |
-| `cnpg.existingSecret`           | override name of Secret holding username and password     | `""`              |
-| `cnpg.postgresql.pg_hba`        | client authentication pg_hba.conf                         | `see values.yaml` |
-| `cnpg.postgresql.pg_ident`      | username mappings: pg_ident.conf                          | `see values.yaml` |
-| `cnpg.persistence.storageClass` | Override here or leave blank to use 'global.storageClass' | `""`              |
-| `cnpg.persistence.size`         | PVC Storage size request for postgres volumes             | `1Gi`             |
+| Name                                       | Description                                                     | Value             |
+| ------------------------------------------ | --------------------------------------------------------------- | ----------------- |
+| `database.dbName`                          | The name of the database used by metacat.                       | `metacat`         |
+| `database.port`                            | Override default database port (5432) - only if not using CNPG  | `5432`            |
+| `database.existingSecret`                  | override name of Secret holding username and password           | `""`              |
+| `database.cnpg.enabled`                    | Enable CloudNative-PG integration. Disable if using a different | `true`            |
+| `database.cnpg.pg_hba`                     | client authentication pg_hba.conf                               | `see values.yaml` |
+| `database.cnpg.pg_ident`                   | username mappings: pg_ident.conf                                | `see values.yaml` |
+| `database.cnpg.parameters.max_connections` | override PG default 200 max DB connections.                     | `250`             |
+| `database.persistence.storageClass`        | Override, or leave blank to use 'global.storageClass'           | `""`              |
+| `database.persistence.size`                | PVC Storage size request for postgres volumes                   | `1Gi`             |
 
 ### Tomcat Configuration
 

@@ -1059,7 +1059,7 @@ database:
     ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-postgresql-section
     ##
     parameters:
-      ## cnpg.postgresql.parameters.max_connections override PG default of 200 max DB connections.
+      ## @param database.cnpg.parameters.max_connections override PG default 200 max DB connections.
       ## 'max_connections' must exceed 'metacat.database.maximumConnections', since some connections
       ## will be reserved for superuser
       max_connections: 250
