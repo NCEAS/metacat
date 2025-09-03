@@ -10,7 +10,7 @@ global:
   metacatUiWebRoot: "/"
   metacatExternalBaseUrl: "https://localhost:80/"
   d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
-  storageClass: &storageClassName local-path
+  storageClass: local-path
   ephemeralVolumeStorageClass: local-path
   passwordsSecret: &passwordSecretName metacatrd-metacat-secrets
 

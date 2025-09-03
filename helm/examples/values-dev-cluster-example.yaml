@@ -5,9 +5,8 @@
 ##  helm install myrelease -n mynamespace ./helm -f ./helm/examples/values-dev-cluster-example.yaml
 ##
 ## or from pre-packaged chart:
-##  helm install myrelease -n mynamespace oci://ghcr.io/nceas/charts/metacat --version 1.2.0 \
-##       -f ./helm/examples/values-dev-cluster-example.yaml \
-##       --debug --render-subchart-notes
+##  helm install myrelease -n mynamespace -f ./helm/examples/values-dev-cluster-example.yaml \
+##       --debug --render-subchart-notes oci://ghcr.io/nceas/charts/metacat --version <myversion#>
 ##
 ## see values.yaml for full documentation on the following parameters
 ##
@@ -19,7 +18,7 @@ debug: &debug true
 global:
   metacatExternalBaseUrl: "https://metacat-dev.test.dataone.org/"
   d1ClientCnUrl: "https://cn-sandbox.test.dataone.org/cn"
-  storageClass: &storageClassName csi-cephfs-sc
+  storageClass: csi-cephfs-sc
   ephemeralVolumeStorageClass: csi-cephfs-sc-ephemeral
   ## Use your own release name instead of metacatbrooke
   passwordsSecret: &passwordSecretName metacatbrooke-metacat-secrets
@@ -53,7 +52,6 @@ metacat:
   dataone.replicationpolicy.default.numreplicas: "1"
 
 persistence:
-  storageClass: *storageClassName
   size: 100Gi
   accessModes:
     - ReadWriteMany
@@ -87,34 +85,19 @@ ingress:
     - hosts: [] # defaults to metacat.server.name
       secretName: ingress-nginx-tls-cert
 
-postgresql:
-  upgrader:
-    persistence:
-     existingClaim: data-metacatbrooke-postgresql-0
-
-  primary:
+database:
+  persistence:
+    size: 10Gi
+  cnpg:
     resources:
       requests:
         cpu: 1
         memory: 1Gi
       limits:
-        cpu: 2
-        memory: 4Gi
-    extendedConfiguration: |
-      max_connections = 250
-      max_wal_size=16384
-      min_wal_size=4096
-      shared_buffers = 1280MB
-
-    persistence:
-      size: 10Gi
-      selector:
-        matchLabels:
-          ## Use your own release name instead of metacatbrooke
-          metacatVolumeName: cephfs-metacatbrooke-metacat-postgresdata
-
-  auth:
-    existingSecret: *passwordSecretName
+        cpu: 1
+        memory: 1Gi
+    parameters:
+      shared_buffers: 256MB
 
 dataone-indexer:
   autoscaling:
@@ -155,11 +138,11 @@ dataone-indexer:
     #    resourcesPreset: "large"  # (cpu: 1.0/1.5; mem: 2048Mi/3072Mi)
     resources:
       requests:
-        cpu: 1.0
-        memory: 2Gi
+        cpu: 500m
+        memory: 1Gi
       limits:
         cpu: 1.5
-        memory: 8Gi
+        memory: 4Gi
     extraVolumes:
       - name: solr-config
         configMap:

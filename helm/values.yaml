@@ -41,7 +41,7 @@ global:
   d1ClientCnUrl: "https://cn.dataone.org/cn"
 
   ## @param global.passwordsSecret The name of the Secret containing application passwords
-  ## This is the secret deployed using your own private, edited version of `../admin/secrets.yaml`.
+  ## This is the secret deployed using your own private, edited version of `../admin/secret--metacat.yaml`.
   ##
   ## (Note the actual key passwordsSecret is not used anywhere; only the yaml anchor/alias
   ##  &passwordSecretName. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
@@ -81,12 +81,7 @@ global:
   ## ...and then explicitly set storageClass to match the name of the default storageclass
   ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
   ##
-  ## (Note the actual key storageClass is used by the postgres bitnami sub-chart, and the anchor
-  ##  &storageClassName is used elsewhere in this file. IF YOU OVERRIDE THIS VALUE IN ANOTHER
-  ## VALUES-OVERLAY FILE, YOU ALSO NEED TO OVERRIDE THE VALUES THAT USE THIS ANCHOR - search this
-  ## file for 'storageClassName')
-  ##
-  storageClass: &storageClassName local-path
+  storageClass: local-path
 
   ## @param global.ephemeralVolumeStorageClass Optional global storageClass override
   ## Can be used to assign a storageClass that has a 'Delete' Reclaim Policy, thus allowing
@@ -166,7 +161,7 @@ global:
 ## values needed to run the app and the test suite on a development machine.
 ##
 ## NOTE that certain credentials must also be provided, via Kubernetes Secrets, in order for
-## metacat to function correctly. These credentials are listed in ./admin/secrets.yaml, in the
+## metacat to function correctly. These credentials are listed in ./admin/secret--metacat.yaml, in the
 ## form of environment variables expected by metacat at runtime. Also see the mappings in the
 ## `application.envSecretKeys` property in `metacat.properties`, to determine which metacat
 ## property corresponds to each of these environment variables
@@ -183,34 +178,23 @@ metacat:
   ##
   auth.administrators: ""
 
-  ## @param metacat.database.connectionURI postgres database URI, or lave blank to use sub-chart
+  ## @param metacat.database.connectionURI postgres database URI (or blank if using CloudNative PG)
   ##
   ## Format:    jdbc:postgresql://<postgres-hostname>/<database-name>
   ##
-  ## NOTES:
-  ## 1. If you are NOT using the included postgresql sub-chart (i.e. `postgresql.enabled: false`),
-  ##    then ensure `<database-name>` is set correctly, and use the following values for
-  ##    `<postgres-hostname>`:
-  ##    *  The fully qualified domain name, for an existing postgresql instance hosted outside the
-  ##       current k8s cluster
-  ##    *  `<servicename>.<namespace>.svc.cluster.local` for an existing postgresql instance within
-  ##       the same k8s cluster
-  ##    *  `host.docker.internal` for connecting to a dev instance running on localhost
-  ##
-  ## 2. If you ARE using the included postgresql sub-chart (i.e. `postgresql.enabled: true`),
-  ##    leave this value unset (`database.connectionURI: ""`). It will then be automatically
-  ##    populated as follows:
-  ##    `<postgres-hostname>` will be set to the current value of `.Release.Name`, prepended to
-  ##                         `-postgresql-hl` (the name of the k8s headless service for the
-  ##                         postgresql statefulset)
-  ##    `<database-name>` will be set to the value of `postgresql.auth.database`
-  ##    (Note: If you are using the postgresql sub-chart but have changed the default name for the
-  ##    headless service, then specify the full database.connectionURI as outlined in (1), above)
+  ## NOTE: If using the CloudNative PG cluster that is deployed as part of the helm chart, leave
+  ## database.connectionURI blank, and it will be auto-populated. Otherwise, ensure <database-name>
+  ## is set correctly, and use the following values for <postgres-hostname>:
+  ##  *  The fully qualified domain name, for an existing postgresql instance hosted outside the
+  ##     current k8s cluster
+  ##  *  `<servicename>.<namespace>.svc.cluster.local` for an existing postgresql instance within
+  ##     the same k8s cluster
+  ##  *  `host.docker.internal` for connecting to a dev instance running on localhost
   ##
   database.connectionURI: ""
 
   ## @param metacat.guid.doi.enabled Allow users to publish Digital Object Identifiers at doi.org?
-  ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secrets.yaml)
+  ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secret--metacat.yaml)
   ## and either override or use the defaults in metacat.properties for all the entries that begin
   ## with: "guid.doi."
   ##
@@ -254,14 +238,14 @@ metacat:
   ##                      by the dataone-indexer sub-chart)
   ##    `<solr-port>` will be set to 8983, the default value used by the dataone-indexer sub-chart
   ##
-  solr.baseURL: ""
+  solr.baseURL: ""    # leave blank to use sub-chart
 
   ## @param metacat.solr.coreName The solr core (solr standalone) or collection name (solr cloud)
   ## If you are using the included dataone-indexer sub-chart (i.e.
   ## `global.dataone-indexer.enabled: true`), leave this value unset (`solr.coreName: ""`). It will
   ## then be automatically populated from the subchart settings
   ##
-  solr.coreName: ""
+  solr.coreName: ""    # leave blank to autopopulate from subchart settings
 
   ## @param metacat.replication.logdir Location for the replication logs
   ##
@@ -269,9 +253,7 @@ metacat:
 
   ## @param metacat.index.rabbitmq.hostname the hostname of the rabbitmq instance that will be used
   ##
-  ## Leave blank to autopopulate for use with indexer sub-chart
-  ##
-  index.rabbitmq.hostname: ""
+  index.rabbitmq.hostname: ""    # Leave blank to autopopulate with indexer sub-chart hostname
 
   ## @param metacat.index.rabbitmq.username the username for connecting to the RabbitMQ instance
   ## at `index.rabbitmq.hostname`.
@@ -307,7 +289,7 @@ metacat:
   ## Please do NOT enable it unless you understand what you are doing.
   ##
   ## 2. You will also need to set a shared secret between you trusted upstream ingress and Metacat -
-  ##    see METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY in `./admin/secrets.yaml`.
+  ##    see METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY in `./admin/secret--metacat.yaml`.
   ##    The ingress must be configured to send HTTP requests to Metacat with an "X-Proxy-Key" HTTP
   ##    header, with this shared secret as a value. See the `ingress` part of the `Networking &
   ##    Monitoring` section below.
@@ -628,9 +610,8 @@ podSecurityContext:
 securityContext: {}
 
 ## @param resources Resource limits for the deployment
-##  We usually recommend not to specify default resources and to leave this as a conscious
-## choice for the user. This also increases chances charts run on environments with limited
-## resources, such as Minikube.
+## Resource requests and limits are left as a conscious choice for the user. This increases chances
+## charts run on environments with limited resources, such as Minikube.
 resources: {}
 
 ## @param tolerations Tolerations for pod assignment
@@ -648,22 +629,9 @@ persistence:
   ##
   enabled: true
 
-  ## @param persistence.storageClass Storage class of backing PV
+  ## @param persistence.storageClass Override here or leave blank to use 'global.storageClass'
   ##
-  ## If <storageClass> is defined,  storageClassName: <storageClass>
-  ##
-  ## If <storageClass> set to "-",  storageClassName: ""  -- which disables dynamic PV provisioning
-  ##   (meaning claim can only be bound to an existing PV, not a dynamically-provisioned one) with
-  ##   no class (no annotation, or one set equal to "")
-  ##
-  ## NOTE when using StatefulSet with a defaultClaimTemplate - leaving storageClass unset/null does
-  ## NOT choose the default provisioner for dynamic provisioning of the underlying PV, as expected!
-  ## Instead, inspect your cluster to see what storageClass is set as default:
-  ##    $  kubectl get storageclass
-  ## ...and then explicitly set storageClass to match the name of the default storageclass
-  ## (e.g. for Rancher Desktop, use:   storageclass: local-path)
-  ##
-  storageClass: *storageClassName
+  storageClass: ""    # leave blank to use 'global.storageClass'
 
   ## @param persistence.existingClaim Name of an existing Persistent Volume Claim to re-use
   ## Set a value for 'existingClaim' only if you want to re-use a Persistent Volume Claim that has
@@ -971,17 +939,17 @@ service:
 ##                Note that the context (first path element) must match the
 ##                value of metacat.application.context
 ## @param startupProbe.httpGet.port The named containerPort to probe
-## Optional values:
-## @param startupProbe.periodSeconds Interval (in seconds) between startup checks
-## @param startupProbe.timeoutSeconds Timeout (in seconds) for each startup check
-## @param startupProbe.successThreshold Min consecutive successes for probe to be "successful"
-## @param startupProbe.failureThreshold No. of consecutive failures before the container restarted
-##ß
+##
 startupProbe:
   enabled: true
   httpGet:
     path: /metacat/d1/mn/v2/monitor/ping
     port: metacat-web
+  ## Optional values:
+  ## @param startupProbe.successThreshold Min consecutive successes for probe to be successful
+  ## @param startupProbe.failureThreshold No. of consecutive failures before the container restarted
+  ## @param startupProbe.periodSeconds Interval (in seconds) between startup checks
+  ## @param startupProbe.timeoutSeconds Timeout (in seconds) for each startup check
   successThreshold: 1
   failureThreshold: 30
   periodSeconds: 10
@@ -1005,9 +973,10 @@ livenessProbe:
 ##                value of metacat.application.context
 ## @param readinessProbe.httpGet.port The named containerPort to probe
 ## Optional values:
-## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
 ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
 ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+## @param readinessProbe.successThreshold Min consecutive successes for probe to be successful
+## @param readinessProbe.failureThreshold No. consecutive failures before container marked unhealthy
 ##
 readinessProbe:
   enabled: true
@@ -1020,151 +989,101 @@ readinessProbe:
     port: metacat-web
 
 ## @section Postgresql Sub-Chart
-postgresql:
-  ## @param postgresql.enabled enable the postgresql sub-chart
-  ## set to false if you want to connect to your own existing postgresql deployment (and ensure
-  ## metacat.database.connectionURI is set accordingly).
-  ## Once the postgres container is running, test using:
-  ##   $  kubectl exec -it <postgresql-pod-name> -- psql  -U <username>  -d <databasename>
-  ## (or from a shell in metacat container: psql  -U <username>  -h <pghostname> <databasename>)
+database:
+  ## @param database.dbName The name of the database used by metacat.
+  ## Make sure metacat.database.connectionURI is using this value
   ##
-  enabled: true
+  dbName: metacat
 
-  ## As of 8/25/25, Bitnami charges for secure container images, unless we use the "latest" tag.
-  ## As a stopgap, we reference the legacy images, which are still available for free (but note
-  ## that newer versions will not become available in the future, so we need to find an alternative
-  ## source for images...)
-  ## @param postgresql.global.security.allowInsecureImages Allow non-bitnami-hardened images
-  ## @param postgresql.image.repository source repo for main image
-  ## @param postgresql.volumePermissions.image.repository  source repo for volumePermissions image
-  ## @param postgresql.metrics.image.repository  source repo for metrics image
-  global:
-    security:
-      allowInsecureImages: true
-  image:
-    repository: bitnamilegacy/postgresql
-  volumePermissions:
-    image:
-      repository: bitnamilegacy/os-shell
-  metrics:
-    image:
-      repository: bitnamilegacy/postgres-exporter
-
-  auth:
-    ## @param postgresql.auth.username Username for accessing the database used by metacat
-    ## For the corresponding password, see POSTGRES_PASSWORD in secrets.yaml
-    ## (These values are also used by metacat to authenticate)
-    ## NOTE: config in postgresql.primary.pgHbaConfiguration must allow the username defined here!
-    ##
-    username: metacat
-
-    ## @param postgresql.auth.database The name of the database used by metacat.
-    ## Make sure metacat.database.connectionURI is using this value
-    ##
-    database: metacat
-
-    ## @param postgresql.auth.existingSecret Secrets location for postgres password
-    ## Typically the existing secrets also used by metacat - see ./admin/secrets.yaml
-    ##
-    existingSecret: *passwordSecretName
-
-    ## @param postgresql.auth.secretKeys.userPasswordKey Identifies metacat db's account password
-    ## within metacat's existing secrets
-    ##
-    secretKeys:
-      userPasswordKey: POSTGRES_PASSWORD
-
-      ## @param postgresql.auth.secretKeys.adminPasswordKey Dummy value - not used (see notes):
-      ## Bitnami expects to find it in our 'existingSecret' secrets location, and fails otherwise
-      ##
-      adminPasswordKey: POSTGRES_PASSWORD
-
-  primary:
-    containerSecurityContext:
-      ## @param postgresql.primary.containerSecurityContext.enabled enable containerSecurityContext
-      ##
-      enabled: true
-      ## @param postgresql.primary.containerSecurityContext.runAsUser uid for container to run as
-      ##
-      runAsUser: &mcpguid 59996
-      ## @param postgresql.primary.containerSecurityContext.runAsGroup gid for container to run as
-      ##
-      runAsGroup: &mcpggid 59996
-
-    ## postgresql.primary.PodSecurityContext - common securityContext settings at pod level
-    ## for all containers
-    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-    ##
-    podSecurityContext:
-      ## @param postgresql.primary.podSecurityContext.runAsNonRoot pod defaults to run as non-root?
-      ##
-      runAsNonRoot: true
-
-      ## @param postgresql.primary.podSecurityContext.fsGroup Group ID for the pod file system
-      fsGroup: *mcpggid
-
-      ## @param postgresql.primary.podSecurityContext.fsGroupChangePolicy ownership & perms mgmt
-      ##                        IMPORTANT: use "OnRootMismatch" for large volumes! Using "Always"
-      ##                        means K8s will always chown the volume to the fsGroup, even if the
-      ##                        volume is already owned by the fsGroup, which is VERY slow!
-      fsGroupChangePolicy: *defaultFsGroupChangePolicy
-
-    ## @param postgresql.primary.pgHbaConfiguration [default: see values.yaml] client authentication
-    ## configuration; ref: https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
-    ## We override the default pg_hba.conf with our own, to allow password auth, since this is the
-    ## only method metacat currently supports (as of June 2023)
-    ## TYPE       DATABASE      USER          ADDRESS         METHOD
-    pgHbaConfiguration: |
-      host        metacat       metacat       0.0.0.0/0       password
-      host        metacat       metacat       ::0/0           password
-      host        all           postgres      0.0.0.0/0       password
-      host        all           postgres      ::0/0           password
-      local       all           all                           trust
-
-    ## @param postgresql.primary.extendedConfiguration Extended configuration, appended to defaults
-    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#allow-settings-to-be-loaded-from-files-other-than-the-default-postgresqlconf
-    ## Must exceed metacat.database.maximumConnections, since some connections will be reserved for
-    ## superuser
-    ##
-    extendedConfiguration: |-
-      max_connections = 250
-
-    ## Postgresql persistence
-    ## For explanatory notes, see top-level `persistence` section for metacat, and the bitnami
-    ## postgresql README at https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md
-    ## @param postgresql.primary.persistence.enabled Enable data persistence using PVC
-    ## @param postgresql.primary.persistence.existingClaim Existing PVC to re-use
-    ## @param postgresql.primary.persistence.storageClass Storage class of backing PV
-    ## @param postgresql.primary.persistence.size PVC Storage Request for postgres volume
-    ##
-    persistence:
-      enabled: true
-      storageClass: ""
-      existingClaim: ""
-      size: 1Gi
-
-  ## @param postgresql.postgresqlDataDir PostgreSQL data dir folder. Must be versioned
-  ## to avoid overwriting during postgresql major version upgrades
-  ## e.g. like "/bitnami/postgresql/17/main" (bitnami default is "/bitnami/postgresql/data")
+  ## @param database.port Override default database port (5432) - only if not using CNPG
+  ## Otherwise leave as 5432, since this is the default for CNPG
   ##
-  postgresqlDataDir: /bitnami/postgresql/17/main
+  port: 5432
 
-  ## postgresql.upgrader initContainer to auto-upgrade across PostgreSQL major versions
-  upgrader:
-    ## @param postgresql.upgrader.enabled Enable initContainer for postgresql major version upgrades
+  ## @param database.existingSecret override name of Secret holding username and password
+  ## This is the name of the Basic Auth Secret holding the PostgreSQL database username and
+  ## password.
+  ##
+  ## Note:
+  ## 1. Leave blank to autopopulate with the default Secret name (as defined in
+  ##    ./admin/secret--cloudnative-pg.yaml)
+  ## 2. This is NOT the same secret used by metacat (./admin/secret--metacat.yaml)
+  ##
+  existingSecret: ""    # Leave blank to autopopulate with the default Secret name
+
+  ## CloudNative-PG-specific (CNPG) Configuration. This section allows customization of the settings
+  ## for creation of a CNPG cluster, and also for the PostgreSQL config usually found in the
+  ## following files:
+  ##   - postgresql.conf: main run-time configuration file of PostgreSQL
+  ##   - pg_hba.conf: clients authentication file
+  ##   - pg_ident.conf: map external users to internal users
+  ## See: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/
+  ##
+  cnpg:
+    ## @param database.cnpg.enabled Enable CloudNative-PG integration. Disable if using a different
+    ## Postgresql database.
     ##
     enabled: true
+
+    ## @param database.cnpg.resources Resource requests and limits for each PostgreSQL container.
+    ## For a PostgreSQL workload it is recommended to set a "Guaranteed" QoS. See the CNPG docs:
+    ## https://cloudnative-pg.io/documentation/1.20/resource_management/
+    ## For your cluster's pods to get assigned to the "Guaranteed" QoS class, you must set limits
+    ## and requests for both CPU and memory TO THE SAME VALUE!
+    ##
+    resources: {}
+
+    ## Database FIle Storage settings
+    ## For explanatory notes, see top-level `persistence` section for metacat.
+    ## @param database.persistence.storageClass Override, or leave blank to use 'global.storageClass'
+    ## @param database.persistence.size PVC Storage size request for postgres volumes
+    ##
     persistence:
-      ## @param postgresql.upgrader.persistence.existingClaim PVC containing postgresql data files
+      storageClass: ""    # leave blank to use 'global.storageClass'
+      size: 1Gi
+
+    ## @param database.cnpg.pg_hba [default: see values.yaml] client authentication pg_hba.conf
+    ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-pg_hba-section and
+    ## https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html
+    ## We override the default pg_hba.conf with our own, to allow password auth, since this is the
+    ## only method metacat currently supports (as of June 2023)
+    ##
+    ##  TYPE        DATABASE      USER          ADDRESS         METHOD
+    pg_hba:
+      - host        metacat       metacat       0.0.0.0/0       password
+      - host        metacat       metacat       ::0/0           password
+      - host        all           postgres      0.0.0.0/0       password
+      - host        all           postgres      ::0/0           password
+
+    ## @param database.cnpg.pg_ident [default: see values.yaml] username mappings: pg_ident.conf
+    ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-pg_ident-section
+    ## https://www.postgresql.org/docs/current/auth-username-maps.html
+    ## This allows the UNIX user 'postgres' (inside the container shell) to connect as database user
+    ## 'metacat' using peer authentication, no password and no hostname required. i.e. simply:
+    ##   $ psql -U metacat
+    ## The user will only have the DB privileges of the `metacat` user, not the `postgres` superuser
+    ## The rule applies only for local (Unix domain socket) connections, from a shell inside the
+    ## container. Remote access still requires a password.
+    ##
+    ##  MAP-NAME    SYS-USERNAME    DB-USERNAME
+    pg_ident:
+      - local       postgres        metacat
+
+    ## Extended configuration, appended to defaults
+    ## ref: https://cloudnative-pg.io/documentation/1.20/postgresql_conf/#the-postgresql-section
+    ##
+    parameters:
+      ## @param database.cnpg.parameters.max_connections override PG default 200 max DB connections.
+      ## 'max_connections' must exceed 'metacat.database.maximumConnections', since some connections
+      ## will be reserved for superuser
       ##
-      existingClaim: ""
-    ## @param postgresql.upgrader.securityContext.runAsUser numerical User ID for the pod.
-    ##                                                      Must match PostgreSQL metacat user's uid
-    ## @param postgresql.upgrader.securityContext.runAsGroup numerical Group ID for the pod.
-    ##                                                      Must match PostgreSQL metacat user's gid
-    securityContext:
-      runAsUser: *mcpguid
-      runAsGroup: *mcpguid
+      max_connections: 250
+      ## @param database.cnpg.parameters.shared_buffers memory for caching data (PG default: 128MB)
+      ## If you have a dedicated database server with 1GB or more of RAM, a reasonable starting
+      ## value for shared_buffers is 25% of the container memory. E.g: if shared_buffers=256MB, then
+      ## the recommended value for container memory size is 1 GB (see 'database.cnpg.resources')
+      ##
+      shared_buffers: 128MB
 
 ## @section Tomcat Configuration
 tomcat:
@@ -1303,7 +1222,7 @@ dataone-indexer:
     javaMem: "-Xms512m -Xmx2g"
 
     ## @param dataone-indexer.solr.customCollection name of the solr collection to use
-    ## (optional override of indexer-assigned name). Do not leave blank
+    ## (optional override of indexer-assigned name). Do not leave blank!
     ## NOTE: if you change this value after having run metacat for the first time, you may need
     ## to delete and re-create the PVCs and PVs used by solr, in order for the new settings to
     ## become effective
