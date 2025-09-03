@@ -41,7 +41,7 @@ global:
   d1ClientCnUrl: "https://cn.dataone.org/cn"
 
   ## @param global.passwordsSecret The name of the Secret containing application passwords
-  ## This is the secret deployed using your own private, edited version of `../admin/secrets.yaml`.
+  ## This is the secret deployed using your own private, edited version of `../admin/secret--metacat.yaml`.
   ##
   ## (Note the actual key passwordsSecret is not used anywhere; only the yaml anchor/alias
   ##  &passwordSecretName. IF YOU OVERRIDE THIS VALUE IN ANOTHER VALUES-OVERLAY FILE, YOU ALSO
@@ -161,7 +161,7 @@ global:
 ## values needed to run the app and the test suite on a development machine.
 ##
 ## NOTE that certain credentials must also be provided, via Kubernetes Secrets, in order for
-## metacat to function correctly. These credentials are listed in ./admin/secrets.yaml, in the
+## metacat to function correctly. These credentials are listed in ./admin/secret--metacat.yaml, in the
 ## form of environment variables expected by metacat at runtime. Also see the mappings in the
 ## `application.envSecretKeys` property in `metacat.properties`, to determine which metacat
 ## property corresponds to each of these environment variables
@@ -194,7 +194,7 @@ metacat:
   database.connectionURI: ""
 
   ## @param metacat.guid.doi.enabled Allow users to publish Digital Object Identifiers at doi.org?
-  ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secrets.yaml)
+  ## If true, you will also need to define guid.doi.username $ guid.doi.password (see secret--metacat.yaml)
   ## and either override or use the defaults in metacat.properties for all the entries that begin
   ## with: "guid.doi."
   ##
@@ -291,7 +291,7 @@ metacat:
   ## Please do NOT enable it unless you understand what you are doing.
   ##
   ## 2. You will also need to set a shared secret between you trusted upstream ingress and Metacat -
-  ##    see METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY in `./admin/secrets.yaml`.
+  ##    see METACAT_DATAONE_CERT_FROM_HTTP_HEADER_PROXY_KEY in `./admin/secret--metacat.yaml`.
   ##    The ingress must be configured to send HTTP requests to Metacat with an "X-Proxy-Key" HTTP
   ##    header, with this shared secret as a value. See the `ingress` part of the `Networking &
   ##    Monitoring` section below.
@@ -1004,8 +1004,8 @@ cnpg:
   ##
   ## Note:
   ## 1. Leave blank to autopopulate with the default Secret name (as defined in
-  ##    ./admin/cloudnative-pg-secret.yaml)
-  ## 2. This is NOT the same secret used by metacat (./admin/secrets.yaml)
+  ##    ./admin/secret--cloudnative-pg.yaml)
+  ## 2. This is NOT the same secret used by metacat (./admin/secret--metacat.yaml)
   ##
   existingSecret: ""
 

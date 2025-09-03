@@ -67,10 +67,10 @@ Starting in the root directory of the `metacat` repo:
    to see which settings typically need to be overridden. Save your settings in a yaml file,
    e.g: `/your/values-overrides.yaml`
 
-2. Add your credentials to [./admin/secrets.yaml](./admin/secrets.yaml), and add to cluster:
+2. Add your credentials to [./admin/secrets.yaml](helm/admin/secret--metacat.yaml), and add to cluster:
 
     ```shell
-    $ vim helm/admin/secrets.yaml    ## follow the instructions in this file
+    $ vim helm/admin/secret--metacat.yaml    ## follow the instructions in this file
     ```
 
 3. Deploy
@@ -496,8 +496,8 @@ of the [Metacat Administrators' Guide](https://knb.ecoinformatics.org/knb/docs/)
 ### Secrets
 
 Secret parameters (such as login credentials, auth tokens, private keys etc.) should be installed as
-kubernetes Secrets in the cluster. The files [admin/secrets.yaml](./admin/secrets.yaml) and
-[admin/cloudnative-pg-secret.yaml](./admin/cloudnative-pg-secret.yaml) provide templates that you
+kubernetes Secrets in the cluster. The files [admin/secrets.yaml](helm/admin/secret--metacat.yaml) and
+[admin/cloudnative-pg-secret.yaml](helm/admin/secret--cloudnative-pg.yaml) provide templates that you
 can complete and apply using `kubectl apply -f <filename>` -- for details, see the instructions in
 the comments inside those files. Please remember to NEVER ADD UNENCRYPTED SECRETS TO GITHUB!
 
