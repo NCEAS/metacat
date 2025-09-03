@@ -992,7 +992,7 @@ readinessProbe:
     port: metacat-web
 
 ## @section Postgresql Sub-Chart
-cnpg:
+database:
   ## @param cnpg.database The name of the database used by metacat.
   ## Make sure metacat.database.connectionURI is using this value
   ##
